@@ -48,7 +48,10 @@ const navItems = [
     { name: 'Supplements', icon: Pill, path: 'Supplements' },
     { name: 'Medications', icon: Pill, path: 'Medications' },
     { name: 'Mental Health', icon: Brain, path: 'MentalHealth' },
+    { name: 'Pet Care', icon: Heart, path: 'PetCare' },
+    { name: 'Care Reminders', icon: Heart, path: 'CareReminders' },
   ]},
+  { name: 'My People', icon: Users, path: 'People' },
   { name: 'Journal', icon: BookOpen, path: 'Journal' },
   { name: 'Settings', icon: Settings, path: 'Settings' },
 ];
