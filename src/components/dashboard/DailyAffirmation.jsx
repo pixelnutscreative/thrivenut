@@ -5,27 +5,39 @@ import { Button } from '@/components/ui/button';
 import { Sparkles, RefreshCw, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-export default function DailyAffirmation({ userName }) {
+export default function DailyAffirmation({ userName, struggles = [], improvements = [] }) {
   const [affirmation, setAffirmation] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const generateAffirmation = async () => {
     setLoading(true);
     try {
+      const struggleContext = struggles.length > 0 
+        ? `They are working through: ${struggles.join(', ')}.` 
+        : '';
+      const improvementContext = improvements.length > 0 
+        ? `They want to improve: ${improvements.join(', ')}.` 
+        : '';
+
       const response = await base44.integrations.Core.InvokeLLM({
         prompt: `Generate a single, powerful daily affirmation for someone named ${userName || 'friend'}. 
         
+${struggleContext}
+${improvementContext}
+
 The affirmation should be:
 - Personal and warm (use "you" or their name)
 - Uplifting and empowering
-- Focused on self-worth, capability, or growth
+- DIRECTLY related to what they're struggling with or trying to improve (if provided)
 - Between 1-2 sentences
-- Suitable for someone who may struggle with self-care or mental health
+- Compassionate and understanding of their challenges
+- Focused on progress, not perfection
 
-Examples of good affirmations:
-- "You are worthy of love and kindness, especially from yourself."
-- "Every small step you take today matters. You're doing better than you think."
-- "Your challenges do not define you. Your courage in facing them does."
+If they mentioned anxiety, focus on calm and safety.
+If they mentioned depression, focus on hope and small victories.
+If they mentioned ADHD, focus on their unique strengths and flexibility.
+If they mentioned self-esteem, focus on their inherent worth.
+If they mentioned relationships, focus on connection and boundaries.
 
 Return only the affirmation text, nothing else.`,
       });
@@ -41,7 +53,7 @@ Return only the affirmation text, nothing else.`,
 
   useEffect(() => {
     generateAffirmation();
-  }, [userName]);
+  }, [userName, struggles?.join(','), improvements?.join(',')]);
 
   return (
     <motion.div

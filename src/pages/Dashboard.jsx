@@ -189,7 +189,11 @@ export default function Dashboard() {
         />
 
         {preferences?.show_daily_affirmations && (
-          <DailyAffirmation userName={user?.full_name?.split(' ')[0] || 'Friend'} />
+          <DailyAffirmation 
+            userName={user?.full_name?.split(' ')[0] || 'Friend'} 
+            struggles={preferences?.mental_health_struggles || []}
+            improvements={preferences?.improvement_goals || []}
+          />
         )}
 
         {/* Self-Care Checklist (compact) */}

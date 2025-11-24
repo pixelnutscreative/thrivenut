@@ -20,6 +20,32 @@ const selfCareTasks = [
   { id: 'water', label: 'Drink Water', description: 'Stay hydrated' },
 ];
 
+const struggles = [
+  { id: 'anxiety', label: 'Anxiety', emoji: '😰' },
+  { id: 'depression', label: 'Depression', emoji: '😔' },
+  { id: 'adhd', label: 'ADHD / Focus', emoji: '🧠' },
+  { id: 'autism', label: 'Autism / Sensory', emoji: '🌈' },
+  { id: 'stress', label: 'Stress / Overwhelm', emoji: '😫' },
+  { id: 'loneliness', label: 'Loneliness', emoji: '💔' },
+  { id: 'grief', label: 'Grief / Loss', emoji: '🕊️' },
+  { id: 'trauma', label: 'Trauma / PTSD', emoji: '💜' },
+  { id: 'anger', label: 'Anger Management', emoji: '😤' },
+  { id: 'sleep', label: 'Sleep Issues', emoji: '😴' },
+];
+
+const improvementGoals = [
+  { id: 'self_esteem', label: 'Self-Esteem', emoji: '💪' },
+  { id: 'confidence', label: 'Confidence', emoji: '✨' },
+  { id: 'boundaries', label: 'Setting Boundaries', emoji: '🚧' },
+  { id: 'relationships', label: 'Relationships', emoji: '❤️' },
+  { id: 'productivity', label: 'Productivity', emoji: '📈' },
+  { id: 'mindfulness', label: 'Mindfulness', emoji: '🧘' },
+  { id: 'self_care', label: 'Self-Care', emoji: '🛁' },
+  { id: 'emotional_regulation', label: 'Emotional Regulation', emoji: '🎭' },
+  { id: 'motivation', label: 'Motivation', emoji: '🔥' },
+  { id: 'gratitude', label: 'Gratitude', emoji: '🙏' },
+];
+
 const modules = [
   { id: 'tiktok', name: 'TikTok Goals' },
   { id: 'goals', name: 'Personal Goals' },
@@ -51,6 +77,8 @@ export default function NeurodivergentSettings() {
     enable_self_care_gating: false,
     required_self_care_tasks: [],
     gated_modules: [],
+    mental_health_struggles: [],
+    improvement_goals: [],
     enable_ai_journaling: true,
     show_daily_affirmations: false,
     use_simplified_interface: false,
@@ -65,6 +93,8 @@ export default function NeurodivergentSettings() {
         enable_self_care_gating: preferences.enable_self_care_gating || false,
         required_self_care_tasks: preferences.required_self_care_tasks || [],
         gated_modules: preferences.gated_modules || [],
+        mental_health_struggles: preferences.mental_health_struggles || [],
+        improvement_goals: preferences.improvement_goals || [],
         enable_ai_journaling: preferences.enable_ai_journaling !== false,
         show_daily_affirmations: preferences.show_daily_affirmations || false,
         use_simplified_interface: preferences.use_simplified_interface || false,
@@ -106,6 +136,24 @@ export default function NeurodivergentSettings() {
       gated_modules: prev.gated_modules.includes(moduleId)
         ? prev.gated_modules.filter(id => id !== moduleId)
         : [...prev.gated_modules, moduleId]
+    }));
+  };
+
+  const toggleStruggle = (id) => {
+    setFormData(prev => ({
+      ...prev,
+      mental_health_struggles: prev.mental_health_struggles.includes(id)
+        ? prev.mental_health_struggles.filter(s => s !== id)
+        : [...prev.mental_health_struggles, id]
+    }));
+  };
+
+  const toggleImprovement = (id) => {
+    setFormData(prev => ({
+      ...prev,
+      improvement_goals: prev.improvement_goals.includes(id)
+        ? prev.improvement_goals.filter(s => s !== id)
+        : [...prev.improvement_goals, id]
     }));
   };
 
@@ -236,7 +284,7 @@ export default function NeurodivergentSettings() {
           </Card>
         </motion.div>
 
-        {/* Mental Wellness Features */}
+        {/* What You're Working On */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -246,6 +294,66 @@ export default function NeurodivergentSettings() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Heart className="w-5 h-5 text-pink-500" />
+                What You're Working On
+              </CardTitle>
+              <CardDescription>
+                This helps personalize your affirmations and AI support. 100% private. 💜
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <Label className="font-medium mb-3 block">Things I'm working through...</Label>
+                <div className="flex flex-wrap gap-2">
+                  {struggles.map(item => (
+                    <button
+                      key={item.id}
+                      onClick={() => toggleStruggle(item.id)}
+                      className={`px-3 py-2 rounded-full border-2 text-sm transition-all ${
+                        formData.mental_health_struggles.includes(item.id)
+                          ? 'border-purple-500 bg-purple-100 text-purple-800'
+                          : 'border-gray-200 hover:border-purple-300'
+                      }`}
+                    >
+                      <span className="mr-1">{item.emoji}</span>
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <Label className="font-medium mb-3 block">Things I want to improve...</Label>
+                <div className="flex flex-wrap gap-2">
+                  {improvementGoals.map(item => (
+                    <button
+                      key={item.id}
+                      onClick={() => toggleImprovement(item.id)}
+                      className={`px-3 py-2 rounded-full border-2 text-sm transition-all ${
+                        formData.improvement_goals.includes(item.id)
+                          ? 'border-pink-500 bg-pink-100 text-pink-800'
+                          : 'border-gray-200 hover:border-pink-300'
+                      }`}
+                    >
+                      <span className="mr-1">{item.emoji}</span>
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Mental Wellness Features */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-amber-500" />
                 Mental Wellness Features
               </CardTitle>
             </CardHeader>
