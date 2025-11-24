@@ -16,6 +16,8 @@ import GiftLibrary from './pages/GiftLibrary';
 import GiftEntry from './pages/GiftEntry';
 import WeeklySummary from './pages/WeeklySummary';
 import MentalHealth from './pages/MentalHealth';
+import LiveReminders from './pages/LiveReminders';
+import TikTokContacts from './pages/TikTokContacts';
 import __Layout from './Layout.jsx';
 
 
@@ -38,6 +40,8 @@ export const PAGES = {
     "GiftEntry": GiftEntry,
     "WeeklySummary": WeeklySummary,
     "MentalHealth": MentalHealth,
+    "LiveReminders": LiveReminders,
+    "TikTokContacts": TikTokContacts,
 }
 
 export const pagesConfig = {
