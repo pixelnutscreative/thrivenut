@@ -275,9 +275,10 @@ export default function Dashboard() {
       <OnboardingModal
         isOpen={showOnboarding}
         user={user}
-        onComplete={() => {
+        onComplete={async () => {
           setShowOnboarding(false);
-          queryClient.invalidateQueries({ queryKey: ['preferences'] });
+          await queryClient.invalidateQueries({ queryKey: ['preferences'] });
+          await queryClient.refetchQueries({ queryKey: ['preferences', user?.email] });
         }}
       />
     </div>
