@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { motion } from 'framer-motion';
 import { Heart, Target, Sparkles, BookOpen, Home, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { createPageUrl } from './utils';
+import { createPageUrl } from '../utils';
 
 const themes = [
   { id: 'soft_purple', name: 'Soft Purple', colors: ['#F3F1FF', '#8B7FD6', '#6B5FCC'] },
