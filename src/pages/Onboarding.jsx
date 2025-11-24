@@ -8,14 +8,9 @@ import { motion } from 'framer-motion';
 import { Heart, Target, Sparkles, BookOpen, Home, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
+import ThemeSelector from '../components/onboarding/ThemeSelector';
 
-const themes = [
-  { id: 'soft_purple', name: 'Soft Purple', colors: ['#F3F1FF', '#8B7FD6', '#6B5FCC'] },
-  { id: 'warm_peach', name: 'Warm Peach', colors: ['#FFF5F1', '#FF9B85', '#FF7A5C'] },
-  { id: 'mint_fresh', name: 'Mint Fresh', colors: ['#F0FFF7', '#7ECDA0', '#5EB87E'] },
-  { id: 'calm_blue', name: 'Calm Blue', colors: ['#F0F7FF', '#7BA3D6', '#5B8BD6'] },
-  { id: 'dark_mode', name: 'Dark Mode', colors: ['#1A1A1A', '#4A4A4A', '#6A6A6A'] }
-];
+
 
 const modules = [
   { id: 'tiktok', name: 'TikTok Content Goals', icon: TrendingUp, description: 'Track posts, lives, and engagement' },
@@ -33,9 +28,12 @@ const greetingTypes = [
 export default function Onboarding() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
-  const [selectedTheme, setSelectedTheme] = useState('soft_purple');
   const [selectedGreeting, setSelectedGreeting] = useState('positive_quote');
   const [selectedModules, setSelectedModules] = useState(['tiktok', 'goals', 'wellness', 'journal']);
+  const [themeData, setThemeData] = useState({
+    theme_type: 'clean_white',
+    metal_accent: 'gold'
+  });
   const [loading, setLoading] = useState(false);
 
   const toggleModule = (moduleId) => {
@@ -53,7 +51,7 @@ export default function Onboarding() {
       
       await base44.entities.UserPreferences.create({
         user_email: user.email,
-        theme: selectedTheme,
+        ...themeData,
         greeting_type: selectedGreeting,
         enabled_modules: selectedModules,
         onboarding_completed: true
@@ -157,31 +155,8 @@ export default function Onboarding() {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
               >
-                <h3 className="text-2xl font-bold mb-6 text-center">Pick your vibe</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {themes.map(theme => (
-                    <div
-                      key={theme.id}
-                      onClick={() => setSelectedTheme(theme.id)}
-                      className={`p-6 rounded-xl border-2 cursor-pointer transition-all ${
-                        selectedTheme === theme.id
-                          ? 'border-purple-500 ring-4 ring-purple-100'
-                          : 'border-gray-200 hover:border-purple-300'
-                      }`}
-                    >
-                      <div className="flex gap-2 mb-3">
-                        {theme.colors.map((color, idx) => (
-                          <div
-                            key={idx}
-                            className="w-8 h-8 rounded-full shadow-sm"
-                            style={{ backgroundColor: color }}
-                          />
-                        ))}
-                      </div>
-                      <p className="font-semibold text-center">{theme.name}</p>
-                    </div>
-                  ))}
-                </div>
+                <h3 className="text-2xl font-bold mb-6 text-center">Pick your appearance</h3>
+                <ThemeSelector themeData={themeData} onChange={setThemeData} />
                 <div className="flex gap-3 mt-8">
                   <Button 
                     onClick={() => setStep(1)} 
