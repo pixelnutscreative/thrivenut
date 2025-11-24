@@ -9,15 +9,17 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, ExternalLink, Trash2, Check, Calendar, BookOpen } from 'lucide-react';
+import { Plus, ExternalLink, Trash2, Check, Calendar, BookOpen, History } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
+import { Badge } from '@/components/ui/badge';
 
 const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 export default function TikTokEngagement() {
   const queryClient = useQueryClient();
   const [showModal, setShowModal] = useState(false);
+  const [expandedHistory, setExpandedHistory] = useState({});
   const [formData, setFormData] = useState({
     username: '',
     engagement_frequency: 'weekly',
@@ -48,9 +50,15 @@ export default function TikTokEngagement() {
   });
 
   const markEngagedMutation = useMutation({
-    mutationFn: (id) => base44.entities.TikTokCreator.update(id, {
-      last_engaged_date: format(new Date(), 'yyyy-MM-dd')
-    }),
+    mutationFn: async ({ id, currentHistory }) => {
+      const newTimestamp = new Date().toISOString();
+      const updatedHistory = [...(currentHistory || []), newTimestamp];
+      
+      return await base44.entities.TikTokCreator.update(id, {
+        last_engaged_date: format(new Date(), 'yyyy-MM-dd'),
+        engagement_history: updatedHistory
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tiktokCreators'] });
     },
@@ -163,14 +171,53 @@ export default function TikTokEngagement() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {creator.last_engaged_date && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Calendar className="w-4 h-4" />
-                      <span>Last: {format(new Date(creator.last_engaged_date), 'MMM d, yyyy')}</span>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <Calendar className="w-4 h-4" />
+                        <span>Last: {format(new Date(creator.last_engaged_date), 'MMM d, yyyy')}</span>
+                      </div>
+                      {creator.engagement_history && creator.engagement_history.length > 0 && (
+                        <Badge variant="secondary" className="text-xs">
+                          {creator.engagement_history.length} total
+                        </Badge>
+                      )}
                     </div>
                   )}
                   
                   {creator.notes && (
                     <p className="text-sm text-gray-600 italic">{creator.notes}</p>
+                  )}
+
+                  {/* Engagement History */}
+                  {creator.engagement_history && creator.engagement_history.length > 0 && (
+                    <div className="space-y-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setExpandedHistory(prev => ({
+                          ...prev,
+                          [creator.id]: !prev[creator.id]
+                        }))}
+                        className="w-full justify-start text-xs text-gray-600"
+                      >
+                        <History className="w-3 h-3 mr-2" />
+                        {expandedHistory[creator.id] ? 'Hide' : 'Show'} Engagement Log
+                      </Button>
+                      
+                      {expandedHistory[creator.id] && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          className="max-h-32 overflow-y-auto space-y-1 pl-2 border-l-2 border-purple-200"
+                        >
+                          {[...creator.engagement_history].reverse().map((timestamp, idx) => (
+                            <p key={idx} className="text-xs text-gray-500">
+                              ✓ {format(new Date(timestamp), 'MMM d, yyyy h:mm a')}
+                            </p>
+                          ))}
+                        </motion.div>
+                      )}
+                    </div>
                   )}
 
                   <div className="flex gap-2 pt-2">
@@ -184,8 +231,12 @@ export default function TikTokEngagement() {
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => markEngagedMutation.mutate(creator.id)}
+                      onClick={() => markEngagedMutation.mutate({ 
+                        id: creator.id, 
+                        currentHistory: creator.engagement_history 
+                      })}
                       className="border-green-300 hover:bg-green-50"
+                      title="Mark as engaged"
                     >
                       <Check className="w-4 h-4 text-green-600" />
                     </Button>
