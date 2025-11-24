@@ -176,18 +176,62 @@ export default function Layout({ children, currentPageName }) {
             <p className="text-sm text-gray-500">Crush your goals, thrive daily</p>
           </div>
 
-          <nav className="flex-1 space-y-2">
+          <nav className="flex-1 space-y-1 overflow-y-auto">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = currentPageName === item.path;
+              const isExpanded = expandedSections.includes(item.name);
+              const hasActiveSubItem = isSubItemActive(item);
+
+              if (item.isSection) {
+                return (
+                  <div key={item.name}>
+                    <button
+                      onClick={() => toggleSection(item.name)}
+                      className={`w-full flex items-center justify-between px-4 py-2 rounded-xl transition-all ${
+                        hasActiveSubItem ? 'bg-purple-50 text-purple-700' : 'text-gray-700 hover:bg-purple-50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Icon className="w-5 h-5" />
+                        <span className="font-medium">{item.name}</span>
+                      </div>
+                      {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                    </button>
+                    {isExpanded && (
+                      <div className="ml-4 mt-1 space-y-1">
+                        {item.subItems.map(subItem => {
+                          const SubIcon = subItem.icon;
+                          const subIsActive = currentPageName === subItem.path;
+                          return (
+                            <Link
+                              key={subItem.path}
+                              to={createPageUrl(subItem.path)}
+                              className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-all text-sm ${
+                                subIsActive
+                                  ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
+                                  : 'text-gray-600 hover:bg-purple-50'
+                              }`}
+                            >
+                              <SubIcon className="w-4 h-4" />
+                              <span>{subItem.name}</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+
               return (
                 <Link
                   key={item.name}
                   to={createPageUrl(item.path)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                  className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-all ${
                     isActive
-                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg scale-105'
-                      : 'text-gray-700 hover:bg-purple-50 hover:scale-102'
+                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
+                      : 'text-gray-700 hover:bg-purple-50'
                   }`}
                 >
                   <Icon className="w-5 h-5" />
