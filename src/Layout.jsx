@@ -36,8 +36,6 @@ const navItems = [
     { name: 'Creator Calendar', icon: Video, path: 'LiveSchedule' },
     { name: 'Discover Creators', icon: Users, path: 'DiscoverCreators' },
     { name: 'Live Reminders', icon: Bell, path: 'LiveReminders' },
-  ]},
-  { name: 'Gifter Songs', icon: Gift, isSection: true, subItems: [
     { name: 'Gifter Manager', icon: Gift, path: 'GifterManager' },
     { name: 'Gift Entry', icon: Gift, path: 'GiftEntry' },
     { name: 'Weekly Summary', icon: Gift, path: 'WeeklySummary' },

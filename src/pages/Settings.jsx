@@ -2,39 +2,52 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
-import { Loader2, Save, User, Image as ImageIcon, Palette, Eye } from 'lucide-react';
+import { Loader2, Save, User, Palette, Eye, Layers, MessageSquare, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useToast } from '@/components/ui/use-toast';
 import ThemeSelector from '../components/onboarding/ThemeSelector';
 import ImageUploader from '../components/settings/ImageUploader';
+import TimezoneSelector from '../components/shared/TimezoneSelector';
 import SpeakButton, { speak } from '../components/accessibility/SpeakButton';
 
 const modules = [
   { id: 'tiktok', name: 'TikTok Content Goals', description: 'Track posts, lives, and engagement' },
-  { id: 'goals', name: 'Goals & Habits', description: 'Personal goal tracking' },
-  { id: 'wellness', name: 'Wellness Tracker', description: 'Water, sleep, and mood' },
-  { id: 'journal', name: 'Daily Journal', description: 'Reflections and thoughts' }
+  { id: 'gifter', name: 'Gifter Songs & Thank Yous', description: 'Track gifters & generate songs' },
+  { id: 'goals', name: 'Personal Goals', description: 'Goal tracking for all areas' },
+  { id: 'journal', name: 'Daily Journal', description: 'Reflections and AI reframing' },
+  { id: 'wellness', name: 'Wellness Tracker', description: 'Water, sleep, mood & self-care' },
+  { id: 'supplements', name: 'Supplements & Vitamins', description: 'Track daily supplements' },
+  { id: 'medications', name: 'Medications', description: 'Medication tracking' },
+  { id: 'mental_health', name: 'Mental Health', description: 'Mental health support' },
+  { id: 'people', name: 'My People', description: 'Contacts & birthdays' },
+  { id: 'pets', name: 'Pet Care', description: 'Pet schedules & activities' },
+  { id: 'care_reminders', name: 'Care Reminders', description: 'Reminders for others' },
 ];
 
 const greetingTypes = [
   { id: 'scripture', name: 'Scripture', description: 'Daily Bible verse' },
   { id: 'positive_quote', name: 'Positive Quote', description: 'Uplifting quotes' },
-  { id: 'motivational', name: 'Motivational', description: 'Get pumped up!' }
+  { id: 'motivational', name: 'Motivational', description: 'Get pumped up!' },
+  { id: 'affirmation', name: 'Daily Affirmation', description: 'Personalized affirmations' }
 ];
 
 const accessibilityModes = [
   { id: 'standard', name: 'Standard', description: 'Default text and contrast' },
-  { id: 'high_contrast', name: 'High Contrast', description: 'Enhanced contrast for better visibility' },
-  { id: 'large_text', name: 'Large Text', description: 'Larger font sizes throughout' },
-  { id: 'extra_large_text', name: 'Extra Large Text', description: 'Maximum text size for readability' }
+  { id: 'high_contrast', name: 'High Contrast', description: 'Enhanced contrast' },
+  { id: 'large_text', name: 'Large Text', description: 'Larger font sizes' },
+  { id: 'adhd_friendly', name: 'ADHD-Friendly', description: 'Checklists & structure' },
+  { id: 'autism_friendly', name: 'Autism-Friendly', description: 'Simplified, sensory-friendly' }
 ];
 
 export default function Settings() {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('profile');
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -54,6 +67,7 @@ export default function Settings() {
     theme_type: 'clean_white',
     metal_accent: 'gold',
     greeting_type: 'positive_quote',
+    user_timezone: 'America/New_York',
     enabled_modules: ['tiktok', 'goals', 'wellness', 'journal'],
     profile_image_url: null,
     header_image_url: null,
@@ -72,6 +86,7 @@ export default function Settings() {
         primary_color: preferences.primary_color,
         accent_color: preferences.accent_color,
         greeting_type: preferences.greeting_type || 'positive_quote',
+        user_timezone: preferences.user_timezone || 'America/New_York',
         enabled_modules: preferences.enabled_modules || ['tiktok', 'goals', 'wellness', 'journal'],
         profile_image_url: preferences.profile_image_url || null,
         header_image_url: preferences.header_image_url || null,
@@ -96,6 +111,10 @@ export default function Settings() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['preferences'] });
+      toast({
+        title: "Settings saved!",
+        description: "Your preferences have been updated.",
+      });
     },
   });
 
@@ -124,7 +143,7 @@ export default function Settings() {
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 p-4 md:p-8">
       <div className="max-w-5xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-gray-800">Settings & Profile</h1>
+          <h1 className="text-3xl font-bold text-gray-800">Settings</h1>
           <Button
             onClick={handleSave}
             disabled={updatePreferencesMutation.isPending}
@@ -139,238 +158,276 @@ export default function Settings() {
           </Button>
         </div>
 
-        {/* Profile Images */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="w-5 h-5" />
-                Profile & Images
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-6">
-                <ImageUploader
-                  label="Profile Picture"
-                  currentImage={formData.profile_image_url}
-                  onImageChange={(url) => setFormData({ ...formData, profile_image_url: url })}
-                  aspectRatio="square"
-                />
-                <ImageUploader
-                  label="Header Image"
-                  currentImage={formData.header_image_url}
-                  onImageChange={(url) => setFormData({ ...formData, header_image_url: url })}
-                  aspectRatio="banner"
-                />
-              </div>
-              <ImageUploader
-                label="Custom Background (MySpace vibes ✨)"
-                currentImage={formData.background_image_url}
-                onImageChange={(url) => setFormData({ ...formData, background_image_url: url })}
-                aspectRatio="wide"
-              />
-            </CardContent>
-          </Card>
-        </motion.div>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-5 mb-6">
+            <TabsTrigger value="profile" className="flex items-center gap-2">
+              <User className="w-4 h-4" />
+              <span className="hidden sm:inline">Profile</span>
+            </TabsTrigger>
+            <TabsTrigger value="appearance" className="flex items-center gap-2">
+              <Palette className="w-4 h-4" />
+              <span className="hidden sm:inline">Appearance</span>
+            </TabsTrigger>
+            <TabsTrigger value="modules" className="flex items-center gap-2">
+              <Layers className="w-4 h-4" />
+              <span className="hidden sm:inline">Modules</span>
+            </TabsTrigger>
+            <TabsTrigger value="preferences" className="flex items-center gap-2">
+              <MessageSquare className="w-4 h-4" />
+              <span className="hidden sm:inline">Preferences</span>
+            </TabsTrigger>
+            <TabsTrigger value="accessibility" className="flex items-center gap-2">
+              <Eye className="w-4 h-4" />
+              <span className="hidden sm:inline">Access</span>
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Theme Customization */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-        >
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Palette className="w-5 h-5" />
-                Appearance
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ThemeSelector
-                themeData={formData}
-                onChange={(data) => setFormData({ ...formData, ...data })}
-              />
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Daily Greeting */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          <Card>
-            <CardHeader>
-              <CardTitle>Daily Greeting</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {greetingTypes.map(greeting => (
-                <div
-                  key={greeting.id}
-                  onClick={() => setFormData({ ...formData, greeting_type: greeting.id })}
-                  className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                    formData.greeting_type === greeting.id
-                      ? 'border-purple-500 bg-purple-50'
-                      : 'border-gray-200 hover:border-purple-300'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                      formData.greeting_type === greeting.id
-                        ? 'border-purple-500'
-                        : 'border-gray-300'
-                    }`}>
-                      {formData.greeting_type === greeting.id && (
-                        <div className="w-3 h-3 rounded-full bg-purple-500" />
-                      )}
-                    </div>
-                    <div>
-                      <h4 className="font-semibold">{greeting.name}</h4>
-                      <p className="text-sm text-gray-600">{greeting.description}</p>
-                    </div>
+          {/* Profile Tab */}
+          <TabsContent value="profile">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <User className="w-5 h-5" />
+                    Profile & Images
+                  </CardTitle>
+                  <CardDescription>Customize your profile pictures and banner</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <ImageUploader
+                      label="Profile Picture"
+                      currentImage={formData.profile_image_url}
+                      onImageChange={(url) => setFormData({ ...formData, profile_image_url: url })}
+                      aspectRatio="square"
+                    />
+                    <ImageUploader
+                      label="Header Image"
+                      currentImage={formData.header_image_url}
+                      onImageChange={(url) => setFormData({ ...formData, header_image_url: url })}
+                      aspectRatio="banner"
+                    />
                   </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </motion.div>
+                  <ImageUploader
+                    label="Custom Background (MySpace vibes ✨)"
+                    currentImage={formData.background_image_url}
+                    onImageChange={(url) => setFormData({ ...formData, background_image_url: url })}
+                    aspectRatio="wide"
+                  />
+                </CardContent>
+              </Card>
+            </motion.div>
+          </TabsContent>
 
-        {/* Accessibility Settings */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-        >
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Eye className="w-5 h-5" />
-                Accessibility
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Visual Mode */}
-              <div className="space-y-4">
-                <h4 className="font-semibold text-lg">Visual Mode</h4>
-                {accessibilityModes.map(mode => (
-                  <div
-                    key={mode.id}
-                    onClick={() => {
-                      setFormData({ ...formData, accessibility_mode: mode.id });
-                      if (formData.use_text_to_speech) {
-                        speak(`${mode.name}. ${mode.description}`);
-                      }
-                    }}
-                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                      formData.accessibility_mode === mode.id
-                        ? 'border-purple-500 bg-purple-50'
-                        : 'border-gray-200 hover:border-purple-300'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
+          {/* Appearance Tab */}
+          <TabsContent value="appearance">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Palette className="w-5 h-5" />
+                    Appearance
+                  </CardTitle>
+                  <CardDescription>Choose your theme and colors</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ThemeSelector
+                    themeData={formData}
+                    onChange={(data) => setFormData({ ...formData, ...data })}
+                  />
+                </CardContent>
+              </Card>
+            </motion.div>
+          </TabsContent>
+
+          {/* Modules Tab */}
+          <TabsContent value="modules">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Layers className="w-5 h-5" />
+                    Active Modules
+                  </CardTitle>
+                  <CardDescription>Choose which features to enable in your app</CardDescription>
+                </CardHeader>
+                <CardContent className="grid md:grid-cols-2 gap-3">
+                  {modules.map(module => (
+                    <div
+                      key={module.id}
+                      onClick={() => {
+                        toggleModule(module.id);
+                        if (formData.use_text_to_speech) {
+                          const action = formData.enabled_modules.includes(module.id) ? 'disabled' : 'enabled';
+                          speak(`${module.name} ${action}`);
+                        }
+                      }}
+                      className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                        formData.enabled_modules.includes(module.id)
+                          ? 'border-purple-500 bg-purple-50'
+                          : 'border-gray-200 hover:border-purple-300'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-start gap-3">
+                          <Checkbox checked={formData.enabled_modules.includes(module.id)} />
+                          <div>
+                            <h4 className="font-semibold">{module.name}</h4>
+                            <p className="text-sm text-gray-600">{module.description}</p>
+                          </div>
+                        </div>
+                        {formData.use_text_to_speech && (
+                          <SpeakButton text={`${module.name}. ${module.description}`} />
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </motion.div>
+          </TabsContent>
+
+          {/* Preferences Tab */}
+          <TabsContent value="preferences">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Clock className="w-5 h-5" />
+                    Timezone
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <TimezoneSelector
+                    value={formData.user_timezone}
+                    onChange={(val) => setFormData({ ...formData, user_timezone: val })}
+                  />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <MessageSquare className="w-5 h-5" />
+                    Daily Greeting
+                  </CardTitle>
+                  <CardDescription>How should we greet you each day?</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {greetingTypes.map(greeting => (
+                    <div
+                      key={greeting.id}
+                      onClick={() => setFormData({ ...formData, greeting_type: greeting.id })}
+                      className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                        formData.greeting_type === greeting.id
+                          ? 'border-purple-500 bg-purple-50'
+                          : 'border-gray-200 hover:border-purple-300'
+                      }`}
+                    >
                       <div className="flex items-center gap-3">
-                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                          formData.accessibility_mode === mode.id
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                          formData.greeting_type === greeting.id
                             ? 'border-purple-500'
                             : 'border-gray-300'
                         }`}>
-                          {formData.accessibility_mode === mode.id && (
-                            <div className="w-3 h-3 rounded-full bg-purple-500" />
+                          {formData.greeting_type === greeting.id && (
+                            <div className="w-2.5 h-2.5 rounded-full bg-purple-500" />
                           )}
                         </div>
                         <div>
-                          <h4 className="font-semibold">{mode.name}</h4>
-                          <p className="text-sm text-gray-600">{mode.description}</p>
+                          <h4 className="font-semibold">{greeting.name}</h4>
+                          <p className="text-sm text-gray-600">{greeting.description}</p>
                         </div>
                       </div>
-                      {formData.use_text_to_speech && (
-                        <SpeakButton text={`${mode.name}. ${mode.description}`} />
-                      )}
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </motion.div>
+          </TabsContent>
 
-              {/* Text to Speech Toggle */}
-              <div className="pt-4 border-t">
-                <div
-                  onClick={() => {
-                    const newValue = !formData.use_text_to_speech;
-                    setFormData({ ...formData, use_text_to_speech: newValue });
-                    if (newValue) {
-                      speak('Text to speech enabled. Click the speaker icon next to any option to hear it read aloud.');
-                    }
-                  }}
-                  className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                    formData.use_text_to_speech
-                      ? 'border-purple-500 bg-purple-50'
-                      : 'border-gray-200 hover:border-purple-300'
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <Checkbox checked={formData.use_text_to_speech} />
-                    <div className="flex-1">
-                      <h4 className="font-semibold">Enable Text-to-Speech</h4>
-                      <p className="text-sm text-gray-600">
-                        Hear options read aloud when you click on them or use the speaker button
-                      </p>
-                    </div>
+          {/* Accessibility Tab */}
+          <TabsContent value="accessibility">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Eye className="w-5 h-5" />
+                    Accessibility
+                  </CardTitle>
+                  <CardDescription>Customize the interface for your needs</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-3">
+                    <h4 className="font-semibold">Visual Mode</h4>
+                    {accessibilityModes.map(mode => (
+                      <div
+                        key={mode.id}
+                        onClick={() => {
+                          setFormData({ ...formData, accessibility_mode: mode.id });
+                          if (formData.use_text_to_speech) {
+                            speak(`${mode.name}. ${mode.description}`);
+                          }
+                        }}
+                        className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                          formData.accessibility_mode === mode.id
+                            ? 'border-purple-500 bg-purple-50'
+                            : 'border-gray-200 hover:border-purple-300'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                              formData.accessibility_mode === mode.id
+                                ? 'border-purple-500'
+                                : 'border-gray-300'
+                            }`}>
+                              {formData.accessibility_mode === mode.id && (
+                                <div className="w-2.5 h-2.5 rounded-full bg-purple-500" />
+                              )}
+                            </div>
+                            <div>
+                              <h4 className="font-semibold">{mode.name}</h4>
+                              <p className="text-sm text-gray-600">{mode.description}</p>
+                            </div>
+                          </div>
+                          {formData.use_text_to_speech && (
+                            <SpeakButton text={`${mode.name}. ${mode.description}`} />
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
 
-        {/* Enabled Modules */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-        >
-          <Card>
-            <CardHeader>
-              <CardTitle>Active Modules</CardTitle>
-            </CardHeader>
-            <CardContent className="grid md:grid-cols-2 gap-4">
-              {modules.map(module => (
-                <div
-                  key={module.id}
-                  onClick={() => {
-                    toggleModule(module.id);
-                    if (formData.use_text_to_speech) {
-                      const action = formData.enabled_modules.includes(module.id) ? 'disabled' : 'enabled';
-                      speak(`${module.name} ${action}`);
-                    }
-                  }}
-                  className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                    formData.enabled_modules.includes(module.id)
-                      ? 'border-purple-500 bg-purple-50'
-                      : 'border-gray-200 hover:border-purple-300'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-start gap-3">
-                      <Checkbox checked={formData.enabled_modules.includes(module.id)} />
-                      <div>
-                        <h4 className="font-semibold">{module.name}</h4>
-                        <p className="text-sm text-gray-600">{module.description}</p>
+                  <div className="pt-4 border-t">
+                    <div
+                      onClick={() => {
+                        const newValue = !formData.use_text_to_speech;
+                        setFormData({ ...formData, use_text_to_speech: newValue });
+                        if (newValue) {
+                          speak('Text to speech enabled.');
+                        }
+                      }}
+                      className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                        formData.use_text_to_speech
+                          ? 'border-purple-500 bg-purple-50'
+                          : 'border-gray-200 hover:border-purple-300'
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <Checkbox checked={formData.use_text_to_speech} />
+                        <div>
+                          <h4 className="font-semibold">Enable Text-to-Speech</h4>
+                          <p className="text-sm text-gray-600">Hear options read aloud</p>
+                        </div>
                       </div>
                     </div>
-                    {formData.use_text_to_speech && (
-                      <SpeakButton text={`${module.name}. ${module.description}`} />
-                    )}
                   </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </motion.div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
