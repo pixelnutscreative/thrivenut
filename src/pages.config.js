@@ -18,6 +18,9 @@ import WeeklySummary from './pages/WeeklySummary';
 import MentalHealth from './pages/MentalHealth';
 import LiveReminders from './pages/LiveReminders';
 import TikTokContacts from './pages/TikTokContacts';
+import PetCare from './pages/PetCare';
+import CareReminders from './pages/CareReminders';
+import People from './pages/People';
 import __Layout from './Layout.jsx';
 
 
@@ -42,6 +45,9 @@ export const PAGES = {
     "MentalHealth": MentalHealth,
     "LiveReminders": LiveReminders,
     "TikTokContacts": TikTokContacts,
+    "PetCare": PetCare,
+    "CareReminders": CareReminders,
+    "People": People,
 }
 
 export const pagesConfig = {
