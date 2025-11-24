@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
+import { Loader2, LogOut } from 'lucide-react';
 import GreetingCard from '../components/dashboard/GreetingCard';
 import QuickStats from '../components/dashboard/QuickStats';
 import DailyAffirmation from '../components/dashboard/DailyAffirmation';
