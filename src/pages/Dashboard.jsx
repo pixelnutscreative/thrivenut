@@ -181,7 +181,7 @@ export default function Dashboard() {
     : null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-purple-50 to-blue-50 p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-8">
         <GreetingCard 
           greetingType={preferences?.greeting_type || 'positive_quote'}

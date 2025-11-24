@@ -139,7 +139,7 @@ export default function Layout({ children, currentPageName }) {
                       <button
                         onClick={() => toggleSection(item.name)}
                         className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
-                          hasActiveSubItem ? 'bg-purple-50 text-purple-700' : 'text-gray-700 hover:bg-purple-50'
+                          hasActiveSubItem ? 'bg-teal-50 text-teal-700' : 'text-gray-700 hover:bg-teal-50'
                         }`}
                       >
                         <div className="flex items-center gap-3">
@@ -160,8 +160,8 @@ export default function Layout({ children, currentPageName }) {
                                 onClick={() => setMobileMenuOpen(false)}
                                 className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-all text-sm ${
                                   subIsActive
-                                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
-                                    : 'text-gray-600 hover:bg-purple-50'
+                                    ? 'bg-gradient-to-r from-teal-600 to-purple-400 text-white shadow-lg'
+                                    : 'text-gray-600 hover:bg-teal-50'
                                 }`}
                               >
                                 <SubIcon className="w-4 h-4" />
@@ -182,8 +182,8 @@ export default function Layout({ children, currentPageName }) {
                     onClick={() => setMobileMenuOpen(false)}
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                       isActive
-                        ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
-                        : 'text-gray-700 hover:bg-purple-50'
+                        ? 'bg-gradient-to-r from-teal-600 to-purple-400 text-white shadow-lg'
+                        : 'text-gray-700 hover:bg-teal-50'
                     }`}
                   >
                     <Icon className="w-5 h-5" />
@@ -241,7 +241,7 @@ export default function Layout({ children, currentPageName }) {
                     <button
                       onClick={() => toggleSection(item.name)}
                       className={`w-full flex items-center justify-between px-4 py-2 rounded-xl transition-all ${
-                        hasActiveSubItem ? 'bg-purple-50 text-purple-700' : 'text-gray-700 hover:bg-purple-50'
+                        hasActiveSubItem ? 'bg-teal-50 text-teal-700' : 'text-gray-700 hover:bg-teal-50'
                       }`}
                     >
                       <div className="flex items-center gap-3">
@@ -261,8 +261,8 @@ export default function Layout({ children, currentPageName }) {
                               to={createPageUrl(subItem.path)}
                               className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-all text-sm ${
                                 subIsActive
-                                  ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
-                                  : 'text-gray-600 hover:bg-purple-50'
+                                  ? 'bg-gradient-to-r from-teal-600 to-purple-400 text-white shadow-lg'
+                                  : 'text-gray-600 hover:bg-teal-50'
                               }`}
                             >
                               <SubIcon className="w-4 h-4" />
@@ -282,8 +282,8 @@ export default function Layout({ children, currentPageName }) {
                   to={createPageUrl(item.path)}
                   className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-all ${
                     isActive
-                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
-                      : 'text-gray-700 hover:bg-purple-50'
+                      ? 'bg-gradient-to-r from-teal-600 to-purple-400 text-white shadow-lg'
+                      : 'text-gray-700 hover:bg-teal-50'
                   }`}
                 >
                   <Icon className="w-5 h-5" />
