@@ -11,6 +11,10 @@ import LiveSchedule from './pages/LiveSchedule';
 import DiscoverCreators from './pages/DiscoverCreators';
 import Supplements from './pages/Supplements';
 import Medications from './pages/Medications';
+import GifterManager from './pages/GifterManager';
+import GiftLibrary from './pages/GiftLibrary';
+import GiftEntry from './pages/GiftEntry';
+import WeeklySummary from './pages/WeeklySummary';
 import __Layout from './Layout.jsx';
 
 
@@ -28,6 +32,10 @@ export const PAGES = {
     "DiscoverCreators": DiscoverCreators,
     "Supplements": Supplements,
     "Medications": Medications,
+    "GifterManager": GifterManager,
+    "GiftLibrary": GiftLibrary,
+    "GiftEntry": GiftEntry,
+    "WeeklySummary": WeeklySummary,
 }
 
 export const pagesConfig = {
