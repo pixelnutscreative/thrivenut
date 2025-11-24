@@ -80,7 +80,11 @@ export default function Onboarding() {
               animate={{ scale: 1 }}
               transition={{ duration: 0.5 }}
             >
-              <Sparkles className="w-16 h-16 mx-auto mb-4 text-purple-500" />
+              <img 
+                src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6924840d3628eabd1d7f8247/e225113d4_Untitleddesign.png" 
+                alt="ThriveNut Logo" 
+                className="w-20 h-20 mx-auto mb-4"
+              />
               <CardTitle className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
                 Welcome to ThriveNut
               </CardTitle>

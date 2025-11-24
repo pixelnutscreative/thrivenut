@@ -47,9 +47,16 @@ export default function Layout({ children, currentPageName }) {
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200 px-4 py-3">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-            ThriveNut
-          </h1>
+          <div className="flex items-center gap-2">
+            <img 
+              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6924840d3628eabd1d7f8247/e225113d4_Untitleddesign.png" 
+              alt="ThriveNut" 
+              className="w-8 h-8"
+            />
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+              ThriveNut
+            </h1>
+          </div>
           <Button
             variant="ghost"
             size="icon"
@@ -114,9 +121,16 @@ export default function Layout({ children, currentPageName }) {
       <div className="hidden lg:flex">
         <div className="fixed left-0 top-0 bottom-0 w-72 bg-white/95 backdrop-blur-sm border-r border-gray-200 p-6 flex flex-col">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
-              ThriveNut
-            </h1>
+            <div className="flex items-center gap-3 mb-2">
+              <img 
+                src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6924840d3628eabd1d7f8247/e225113d4_Untitleddesign.png" 
+                alt="ThriveNut" 
+                className="w-10 h-10"
+              />
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                ThriveNut
+              </h1>
+            </div>
             <p className="text-sm text-gray-500">Crush your goals, thrive daily</p>
           </div>
 

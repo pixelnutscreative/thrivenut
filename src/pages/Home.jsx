@@ -62,7 +62,11 @@ export default function Home() {
             className="text-center"
           >
             <div className="flex justify-center mb-6">
-              <Sparkles className="w-16 h-16 text-purple-600" />
+              <img 
+                src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6924840d3628eabd1d7f8247/e225113d4_Untitleddesign.png" 
+                alt="ThriveNut Logo" 
+                className="w-24 h-24 md:w-32 md:h-32"
+              />
             </div>
             <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 bg-clip-text text-transparent">
               ThriveNut
