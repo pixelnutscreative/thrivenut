@@ -12,12 +12,14 @@ import { motion } from 'framer-motion';
 
 const selfCareTasks = [
   { id: 'shower', label: 'Shower/Bath', description: 'Daily hygiene' },
-  { id: 'breakfast', label: 'Breakfast', description: 'Morning meal' },
-  { id: 'lunch', label: 'Lunch', description: 'Midday meal' },
-  { id: 'dinner', label: 'Dinner', description: 'Evening meal' },
+  { id: 'breakfast', label: 'Breakfast', description: 'Eat like a king 👑' },
+  { id: 'lunch', label: 'Lunch', description: 'Eat like a prince 🤴' },
+  { id: 'dinner', label: 'Dinner', description: 'Eat like a pauper 🥄' },
   { id: 'brush_teeth', label: 'Brush Teeth', description: 'Dental hygiene' },
-  { id: 'medications', label: 'Medications', description: 'Daily meds/supplements' },
+  { id: 'medications', label: 'Medications', description: 'Daily medications' },
+  { id: 'supplements', label: 'Supplements', description: 'Daily vitamins' },
   { id: 'water', label: 'Drink Water', description: 'Stay hydrated' },
+  { id: 'physical_activity', label: 'Physical Activity', description: 'Move your body' },
 ];
 
 const struggles = [
@@ -84,6 +86,7 @@ export default function NeurodivergentSettings() {
     use_simplified_interface: false,
     reduce_animations: false,
     use_checklists: false,
+    is_bible_believer: false,
   });
 
   useEffect(() => {
@@ -100,6 +103,7 @@ export default function NeurodivergentSettings() {
         use_simplified_interface: preferences.use_simplified_interface || false,
         reduce_animations: preferences.reduce_animations || false,
         use_checklists: preferences.use_checklists || false,
+        is_bible_believer: preferences.is_bible_believer || false,
       });
     }
   }, [preferences]);
@@ -399,6 +403,28 @@ export default function NeurodivergentSettings() {
                     </div>
                   </div>
                   <Switch checked={formData.show_daily_affirmations} />
+                </div>
+              </div>
+
+              <div
+                onClick={() => setFormData({...formData, is_bible_believer: !formData.is_bible_believer})}
+                className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                  formData.is_bible_believer
+                    ? 'border-amber-600 bg-amber-50'
+                    : 'border-gray-200 hover:border-amber-300'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xl">📖</span>
+                    <div>
+                      <span className="font-medium">I'm a Bible Believer</span>
+                      <p className="text-sm text-gray-600">
+                        Show morning & night Bible reading checkboxes in self-care
+                      </p>
+                    </div>
+                  </div>
+                  <Switch checked={formData.is_bible_believer} />
                 </div>
               </div>
             </CardContent>
