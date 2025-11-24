@@ -59,11 +59,12 @@ export default function Onboarding() {
         onboarding_completed: true
       });
 
-      navigate(createPageUrl('Dashboard'));
+      window.location.href = createPageUrl('Dashboard');
     } catch (error) {
       console.error('Onboarding error:', error);
+      alert('There was an error setting up your account. Please try again.');
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
