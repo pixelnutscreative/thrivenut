@@ -125,7 +125,7 @@ export default function TikTokEngagement() {
               </div>
               <Button
                 variant="outline"
-                onClick={() => window.open('[ENGAGEMENT_GUIDE_URL]', '_blank')}
+                onClick={() => window.open('https://www.tiktok.com/@pixelnutscreative/video/7568313920054627598', '_blank')}
                 className="border-blue-300 hover:bg-blue-100"
               >
                 <ExternalLink className="w-4 h-4 mr-2" />
