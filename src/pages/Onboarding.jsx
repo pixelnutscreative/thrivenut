@@ -51,7 +51,10 @@ export default function Onboarding() {
     try {
       const user = await base44.auth.me();
       
-      await base44.entities.UserPreferences.create({
+      // Check if preferences already exist
+      const existingPrefs = await base44.entities.UserPreferences.filter({ user_email: user.email });
+      
+      const prefsData = {
         user_email: user.email,
         ...themeData,
         greeting_type: selectedGreeting,
@@ -60,7 +63,15 @@ export default function Onboarding() {
         accessibility_mode: 'standard',
         use_text_to_speech: false,
         onboarding_completed: true
-      });
+      };
+      
+      if (existingPrefs && existingPrefs.length > 0) {
+        // Update existing preferences
+        await base44.entities.UserPreferences.update(existingPrefs[0].id, prefsData);
+      } else {
+        // Create new preferences
+        await base44.entities.UserPreferences.create(prefsData);
+      }
 
       window.location.href = createPageUrl('Dashboard');
     } catch (error) {
