@@ -20,7 +20,8 @@ import {
   Brain,
   Home,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Bell
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -30,8 +31,10 @@ const navItems = [
   { name: 'TikTok', icon: TrendingUp, isSection: true, subItems: [
     { name: 'TikTok Goals', icon: TrendingUp, path: 'TikTokGoals' },
     { name: 'TikTok Engagement', icon: Users, path: 'TikTokEngagement' },
+    { name: 'TikTok Contacts', icon: Users, path: 'TikTokContacts' },
     { name: 'Creator Calendar', icon: Video, path: 'LiveSchedule' },
     { name: 'Discover Creators', icon: Users, path: 'DiscoverCreators' },
+    { name: 'Live Reminders', icon: Bell, path: 'LiveReminders' },
   ]},
   { name: 'Gifter Songs', icon: Gift, isSection: true, subItems: [
     { name: 'Gifter Manager', icon: Gift, path: 'GifterManager' },
