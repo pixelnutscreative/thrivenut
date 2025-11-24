@@ -15,6 +15,7 @@ import GifterManager from './pages/GifterManager';
 import GiftLibrary from './pages/GiftLibrary';
 import GiftEntry from './pages/GiftEntry';
 import WeeklySummary from './pages/WeeklySummary';
+import MentalHealth from './pages/MentalHealth';
 import __Layout from './Layout.jsx';
 
 
@@ -36,6 +37,7 @@ export const PAGES = {
     "GiftLibrary": GiftLibrary,
     "GiftEntry": GiftEntry,
     "WeeklySummary": WeeklySummary,
+    "MentalHealth": MentalHealth,
 }
 
 export const pagesConfig = {
