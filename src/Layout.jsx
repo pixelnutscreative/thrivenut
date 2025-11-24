@@ -56,7 +56,8 @@ const navItems = [
   { name: 'My People', icon: Users, path: 'People' },
   { name: 'Journal', icon: BookOpen, path: 'Journal' },
   { name: 'Settings', icon: Settings, path: 'Settings' },
-];
+  { name: 'ND & Wellness', icon: Brain, path: 'NeurodivergentSettings' },
+  ];
 
 export default function Layout({ children, currentPageName }) {
   const navigate = useNavigate();

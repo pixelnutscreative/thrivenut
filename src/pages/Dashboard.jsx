@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import GreetingCard from '../components/dashboard/GreetingCard';
 import QuickStats from '../components/dashboard/QuickStats';
+import DailyAffirmation from '../components/dashboard/DailyAffirmation';
+import SelfCareChecklist from '../components/wellness/SelfCareChecklist';
 import WeeklyGoalCard from '../components/tiktok/WeeklyGoalCard';
 import GoalEditModal from '../components/tiktok/GoalEditModal';
 import { format, startOfWeek } from 'date-fns';
@@ -101,6 +103,35 @@ export default function Dashboard() {
     enabled: !!user,
   });
 
+  const { data: selfCareLog } = useQuery({
+    queryKey: ['selfCareToday', format(new Date(), 'yyyy-MM-dd')],
+    queryFn: async () => {
+      const logs = await base44.entities.DailySelfCareLog.filter({ 
+        date: format(new Date(), 'yyyy-MM-dd'),
+        created_by: user.email 
+      });
+      return logs[0] || null;
+    },
+    enabled: !!user,
+  });
+
+  const selfCareMutation = useMutation({
+    mutationFn: async ({ taskId, value }) => {
+      const today = format(new Date(), 'yyyy-MM-dd');
+      if (selfCareLog) {
+        return await base44.entities.DailySelfCareLog.update(selfCareLog.id, { [taskId]: value });
+      } else {
+        return await base44.entities.DailySelfCareLog.create({ 
+          date: today, 
+          [taskId]: value 
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['selfCareToday'] });
+    },
+  });
+
   const createOrUpdateGoalMutation = useMutation({
     mutationFn: async (goalData) => {
       if (contentGoal) {
@@ -156,6 +187,20 @@ export default function Dashboard() {
           greetingType={preferences?.greeting_type || 'positive_quote'}
           userName={user?.full_name?.split(' ')[0] || 'Friend'}
         />
+
+        {preferences?.show_daily_affirmations && (
+          <DailyAffirmation userName={user?.full_name?.split(' ')[0] || 'Friend'} />
+        )}
+
+        {/* Self-Care Checklist (compact) */}
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <SelfCareChecklist
+            selfCareLog={selfCareLog}
+            onToggleTask={(taskId, value) => selfCareMutation.mutate({ taskId, value })}
+            requiredTasks={preferences?.required_self_care_tasks || []}
+            compact={true}
+          />
+        </div>
 
         <QuickStats
           contentGoal={contentGoal}
