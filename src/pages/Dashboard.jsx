@@ -112,7 +112,10 @@ export default function Dashboard() {
           posts_completed: 0,
           lives_completed: 0,
           shop_lives_completed: 0,
-          engagement_completed: 0
+          engagement_completed: 0,
+          scheduled_posts: goalData.scheduled_posts || [],
+          scheduled_lives: goalData.scheduled_lives || [],
+          scheduled_engagement: goalData.scheduled_engagement || []
         });
       }
     },

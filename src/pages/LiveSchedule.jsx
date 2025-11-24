@@ -42,6 +42,8 @@ export default function LiveSchedule() {
     priority: 5,
     is_recurring: true,
     specific_date: '',
+    audience_restriction: 'all_ages',
+    video_guide_url: '',
     notes: ''
   });
 
@@ -97,6 +99,8 @@ export default function LiveSchedule() {
       priority: 5,
       is_recurring: true,
       specific_date: '',
+      audience_restriction: 'all_ages',
+      video_guide_url: '',
       notes: ''
     });
   };
@@ -590,6 +594,38 @@ export default function LiveSchedule() {
               value={formData.creator_timezone}
               onChange={(value) => setFormData({ ...formData, creator_timezone: value })}
             />
+
+            <div className="space-y-2">
+              <Label>Audience Restriction</Label>
+              <Select
+                value={formData.audience_restriction}
+                onValueChange={(value) => setFormData({ ...formData, audience_restriction: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all_ages">All Ages</SelectItem>
+                  <SelectItem value="18+">18+ Only</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-500">
+                Important for battles and co-hosting. Both accounts must match restrictions.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="video_guide">Educational Video URL (Optional)</Label>
+              <Input
+                id="video_guide"
+                placeholder="https://..."
+                value={formData.video_guide_url}
+                onChange={(e) => setFormData({ ...formData, video_guide_url: e.target.value })}
+              />
+              <p className="text-xs text-gray-500">
+                Link to a guide explaining live types and audience restrictions
+              </p>
+            </div>
 
             <div className="space-y-2">
               <Label htmlFor="notes">Notes (Optional)</Label>

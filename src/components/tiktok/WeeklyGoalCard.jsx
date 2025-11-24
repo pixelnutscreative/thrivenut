@@ -2,10 +2,11 @@ import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Plus, Video, ShoppingBag, MessageCircle, Edit } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Plus, Video, ShoppingBag, MessageCircle, Edit, Check, ExternalLink } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-export default function WeeklyGoalCard({ goal, onEdit, onIncrement }) {
+export default function WeeklyGoalCard({ goal, onEdit, onIncrement, onToggleScheduleComplete }) {
   if (!goal) {
     return (
       <Card className="shadow-md">
@@ -103,6 +104,48 @@ export default function WeeklyGoalCard({ goal, onEdit, onIncrement }) {
           );
         })}
 
+        {/* Scheduled Items */}
+        {(goal.scheduled_posts?.length > 0 || goal.scheduled_lives?.length > 0 || goal.scheduled_engagement?.length > 0) && (
+          <div className="mt-6 pt-6 border-t space-y-3">
+            <h4 className="font-semibold text-gray-700">Scheduled Activities</h4>
+            {goal.scheduled_posts?.map((schedule, index) => (
+              <ScheduledItem
+                key={`post-${index}`}
+                type="Post"
+                schedule={schedule}
+                onToggleComplete={() => onToggleScheduleComplete('scheduled_posts', index)}
+              />
+            ))}
+            {goal.scheduled_lives?.map((schedule, index) => (
+              <ScheduledItem
+                key={`live-${index}`}
+                type="Live"
+                schedule={schedule}
+                onToggleComplete={() => onToggleScheduleComplete('scheduled_lives', index)}
+                contentFormats={schedule.content_formats}
+                tiktokShopItems={schedule.tiktok_shop_items}
+                title={schedule.title}
+                description={schedule.description}
+                startTime={schedule.start_time}
+                duration={schedule.duration}
+                audienceRestriction={schedule.audience_restriction}
+                videoGuideUrl={schedule.video_guide_url}
+                isRecurring={schedule.is_recurring}
+                addedToTikTokEvents={schedule.added_to_tiktok_events}
+                postedInDiscord={schedule.posted_in_discord}
+              />
+            ))}
+            {goal.scheduled_engagement?.map((schedule, index) => (
+              <ScheduledItem
+                key={`engagement-${index}`}
+                type="Engagement"
+                schedule={schedule}
+                onToggleComplete={() => onToggleScheduleComplete('scheduled_engagement', index)}
+              />
+            ))}
+          </div>
+        )}
+
         {goal.notes && (
           <div className="mt-6 p-4 bg-purple-50 rounded-lg">
             <p className="text-sm font-medium text-gray-700 mb-1">Weekly Notes:</p>
@@ -111,5 +154,94 @@ export default function WeeklyGoalCard({ goal, onEdit, onIncrement }) {
         )}
       </CardContent>
     </Card>
+  );
+}
+
+function ScheduledItem({ 
+  type, 
+  schedule, 
+  onToggleComplete, 
+  contentFormats, 
+  tiktokShopItems,
+  title,
+  description,
+  startTime,
+  duration,
+  audienceRestriction,
+  videoGuideUrl,
+  isRecurring,
+  addedToTikTokEvents,
+  postedInDiscord
+}) {
+  return (
+    <div className="flex flex-col gap-2 p-3 border rounded-lg bg-white">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Checkbox checked={schedule.completed} onCheckedChange={onToggleComplete} />
+          <div>
+            <p className="font-medium text-gray-800">
+              {type} on {schedule.day_of_week} at {schedule.time}
+            </p>
+            {title && <p className="text-sm text-gray-600 font-semibold mt-1">{title}</p>}
+            {description && <p className="text-xs text-gray-500 mt-1">{description}</p>}
+            {startTime && duration && (
+              <p className="text-xs text-gray-600 mt-1">
+                Start: {startTime} | Duration: {duration}
+              </p>
+            )}
+            {audienceRestriction && (
+              <p className="text-xs text-purple-600 mt-1">
+                Audience: {audienceRestriction === '18+' ? '18+' : 'All Ages'}
+              </p>
+            )}
+            {contentFormats && contentFormats.length > 0 && (
+              <p className="text-xs text-gray-600 mt-1">Formats: {contentFormats.join(', ')}</p>
+            )}
+            {videoGuideUrl && (
+              <a 
+                href={videoGuideUrl} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-xs text-blue-500 hover:underline flex items-center gap-1 mt-1"
+              >
+                📚 Watch Guide
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            )}
+            {tiktokShopItems && tiktokShopItems.length > 0 && (
+              <div className="mt-1 space-y-1">
+                {tiktokShopItems.map((item, index) => (
+                  <a 
+                    key={index} 
+                    href={item.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="text-xs text-blue-500 hover:underline flex items-center gap-1"
+                  >
+                    🛍️ {item.name || "TikTok Shop Item"}
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+        {schedule.completed && <Check className="h-5 w-5 text-green-500" />}
+      </div>
+      
+      {type === 'Live' && (
+        <div className="flex flex-wrap gap-2 ml-8 text-xs">
+          {isRecurring && (
+            <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded">🔄 Recurring</span>
+          )}
+          {addedToTikTokEvents && (
+            <span className="px-2 py-1 bg-green-100 text-green-700 rounded">✅ On TikTok</span>
+          )}
+          {postedInDiscord && (
+            <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded">💬 Posted in Discord</span>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
