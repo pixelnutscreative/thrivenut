@@ -12,13 +12,15 @@ import {
   Menu, 
   X,
   LogOut,
-  TrendingUp
+  TrendingUp,
+  Users
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const navItems = [
   { name: 'Dashboard', icon: LayoutDashboard, path: 'Dashboard' },
   { name: 'TikTok Goals', icon: TrendingUp, path: 'TikTokGoals' },
+  { name: 'TikTok Engagement', icon: Users, path: 'TikTokEngagement' },
   { name: 'Goals', icon: Target, path: 'Goals' },
   { name: 'Wellness', icon: Heart, path: 'Wellness' },
   { name: 'Journal', icon: BookOpen, path: 'Journal' },

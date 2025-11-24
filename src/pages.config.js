@@ -6,6 +6,7 @@ import Goals from './pages/Goals';
 import TikTokGoals from './pages/TikTokGoals';
 import Home from './pages/Home';
 import Settings from './pages/Settings';
+import TikTokEngagement from './pages/TikTokEngagement';
 import __Layout from './Layout.jsx';
 
 
@@ -18,6 +19,7 @@ export const PAGES = {
     "TikTokGoals": TikTokGoals,
     "Home": Home,
     "Settings": Settings,
+    "TikTokEngagement": TikTokEngagement,
 }
 
 export const pagesConfig = {
