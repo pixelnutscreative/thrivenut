@@ -278,7 +278,9 @@ export default function LiveSchedule() {
     
     const liveTypes = schedule.live_types || [schedule.live_type] || ['regular'];
     const liveTypeLabel = liveTypes.map(type => liveTypeConfig[type]?.label).filter(Boolean).join(' + ') || 'Live';
-    const icsContent = [
+    
+    // Build recurrence rule if recurring
+    const icsLines = [
       'BEGIN:VCALENDAR',
       'VERSION:2.0',
       'PRODID:-//ThriveNut//Live Schedule//EN',
@@ -287,10 +289,28 @@ export default function LiveSchedule() {
       `DTEND:${endDateTime}`,
       `SUMMARY:${liveTypeLabel}: @${schedule.host_username} TikTok Live`,
       `DESCRIPTION:${schedule.notes || `Watch @${schedule.host_username}'s ${liveTypeLabel} on TikTok`}\\nhttps://tiktok.com/@${schedule.host_username}`,
-      `UID:${schedule.id}@thrivenut.app`,
-      'END:VEVENT',
-      'END:VCALENDAR'
-    ].join('\r\n');
+      `UID:${schedule.id}@thrivenut.app`
+    ];
+    
+    // Add recurrence rule for weekly recurring events
+    if (schedule.is_recurring && schedule.recurring_days && schedule.recurring_days.length > 0) {
+      const dayMap = {
+        'Monday': 'MO',
+        'Tuesday': 'TU',
+        'Wednesday': 'WE',
+        'Thursday': 'TH',
+        'Friday': 'FR',
+        'Saturday': 'SA',
+        'Sunday': 'SU'
+      };
+      const byDay = schedule.recurring_days.map(day => dayMap[day]).join(',');
+      icsLines.push(`RRULE:FREQ=WEEKLY;BYDAY=${byDay}`);
+    }
+    
+    icsLines.push('END:VEVENT');
+    icsLines.push('END:VCALENDAR');
+    
+    const icsContent = icsLines.join('\r\n');
     
     const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
     const link = document.createElement('a');
