@@ -1,0 +1,124 @@
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
+import { Sparkles, ShowerHead, Utensils, Pill, Droplet, Sun } from 'lucide-react';
+import { motion } from 'framer-motion';
+
+const selfCareTasks = [
+  { id: 'shower_completed', label: 'Take a shower', icon: ShowerHead, color: 'text-blue-500' },
+  { id: 'breakfast_completed', label: 'Eat breakfast', icon: Utensils, color: 'text-orange-500' },
+  { id: 'lunch_completed', label: 'Eat lunch', icon: Utensils, color: 'text-green-500' },
+  { id: 'dinner_completed', label: 'Eat dinner', icon: Utensils, color: 'text-purple-500' },
+  { id: 'brushed_teeth_morning', label: 'Brush teeth (AM)', icon: Sparkles, color: 'text-cyan-500' },
+  { id: 'brushed_teeth_night', label: 'Brush teeth (PM)', icon: Sparkles, color: 'text-indigo-500' },
+  { id: 'took_medications', label: 'Take medications', icon: Pill, color: 'text-pink-500' },
+  { id: 'drank_water', label: 'Drink water', icon: Droplet, color: 'text-sky-500' },
+];
+
+export default function SelfCareChecklist({ 
+  selfCareLog, 
+  onToggleTask, 
+  requiredTasks = [],
+  showOnlyRequired = false,
+  compact = false 
+}) {
+  const tasksToShow = showOnlyRequired 
+    ? selfCareTasks.filter(t => requiredTasks.includes(t.id.replace('_completed', '').replace('brushed_teeth_morning', 'brush_teeth').replace('brushed_teeth_night', 'brush_teeth')))
+    : selfCareTasks;
+
+  const completedCount = tasksToShow.filter(t => selfCareLog?.[t.id]).length;
+  const totalCount = tasksToShow.length;
+  const allComplete = completedCount === totalCount && totalCount > 0;
+
+  if (compact) {
+    return (
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium text-gray-700">Self-Care Progress</span>
+          <Badge variant={allComplete ? "default" : "secondary"} className={allComplete ? "bg-green-500" : ""}>
+            {completedCount}/{totalCount}
+          </Badge>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {tasksToShow.map((task) => {
+            const Icon = task.icon;
+            const isComplete = selfCareLog?.[task.id];
+            return (
+              <button
+                key={task.id}
+                onClick={() => onToggleTask(task.id, !isComplete)}
+                className={`p-2 rounded-lg border-2 transition-all ${
+                  isComplete 
+                    ? 'border-green-500 bg-green-50' 
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+                title={task.label}
+              >
+                <Icon className={`w-5 h-5 ${isComplete ? 'text-green-500' : 'text-gray-400'}`} />
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <Card className="shadow-lg border-0 bg-gradient-to-br from-amber-50 to-orange-50">
+      <CardHeader>
+        <CardTitle className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sun className="w-6 h-6 text-amber-500" />
+            Daily Self-Care
+          </div>
+          <Badge variant={allComplete ? "default" : "secondary"} className={allComplete ? "bg-green-500" : ""}>
+            {completedCount}/{totalCount} Complete
+          </Badge>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {allComplete && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="mb-4 p-4 bg-green-100 rounded-lg text-center"
+          >
+            <span className="text-2xl mb-2 block">🎉</span>
+            <p className="text-green-800 font-semibold">Amazing! You've taken care of yourself today!</p>
+            <p className="text-green-600 text-sm">You're doing great. Keep it up!</p>
+          </motion.div>
+        )}
+
+        <div className="space-y-3">
+          {tasksToShow.map((task, index) => {
+            const Icon = task.icon;
+            const isComplete = selfCareLog?.[task.id];
+            
+            return (
+              <motion.div
+                key={task.id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.05 }}
+                onClick={() => onToggleTask(task.id, !isComplete)}
+                className={`flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all ${
+                  isComplete 
+                    ? 'bg-green-100 border-2 border-green-300' 
+                    : 'bg-white border-2 border-gray-100 hover:border-amber-300'
+                }`}
+              >
+                <Checkbox checked={isComplete} className="pointer-events-none" />
+                <Icon className={`w-6 h-6 ${isComplete ? 'text-green-500' : task.color}`} />
+                <span className={`flex-1 font-medium ${isComplete ? 'text-green-700 line-through' : 'text-gray-700'}`}>
+                  {task.label}
+                </span>
+                {isComplete && <span className="text-green-500">✓</span>}
+              </motion.div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
