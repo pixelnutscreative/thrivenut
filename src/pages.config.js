@@ -7,6 +7,7 @@ import TikTokGoals from './pages/TikTokGoals';
 import Home from './pages/Home';
 import Settings from './pages/Settings';
 import TikTokEngagement from './pages/TikTokEngagement';
+import LiveSchedule from './pages/LiveSchedule';
 import __Layout from './Layout.jsx';
 
 
@@ -20,6 +21,7 @@ export const PAGES = {
     "Home": Home,
     "Settings": Settings,
     "TikTokEngagement": TikTokEngagement,
+    "LiveSchedule": LiveSchedule,
 }
 
 export const pagesConfig = {
