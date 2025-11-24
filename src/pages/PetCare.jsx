@@ -9,9 +9,19 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, Edit, Clock, Pill, Phone, PawPrint, Camera } from 'lucide-react';
+import { Plus, Trash2, Edit, Clock, Pill, Phone, PawPrint, Camera, CheckCircle, Circle, History, Dog } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
+
+const activityTypes = [
+  { value: 'walk', label: '🚶 Walk', icon: Dog },
+  { value: 'playtime', label: '🎾 Playtime', icon: Dog },
+  { value: 'outdoor_time', label: '🌳 Outdoor Time', icon: Dog },
+  { value: 'training', label: '🎓 Training', icon: Dog },
+  { value: 'grooming', label: '✂️ Grooming', icon: Dog },
+  { value: 'other', label: '🐾 Other', icon: Dog }
+];
 
 const petTypes = [
   { value: 'dog', label: '🐕 Dog' },
@@ -37,15 +47,36 @@ export default function PetCare() {
     birthday: '',
     photo_url: '',
     feeding_schedule: [],
+    activity_schedule: [],
     medication_schedule: [],
     vet_name: '',
     vet_phone: '',
     notes: ''
   });
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [selectedPetForHistory, setSelectedPetForHistory] = useState(null);
 
   const { data: pets = [] } = useQuery({
     queryKey: ['pets'],
     queryFn: () => base44.entities.Pet.list('-created_date'),
+  });
+
+  const today = format(new Date(), 'yyyy-MM-dd');
+
+  const { data: todaysActivityLogs = [] } = useQuery({
+    queryKey: ['petActivityLogs', today],
+    queryFn: () => base44.entities.PetActivityLog.filter({ date: today }),
+  });
+
+  const { data: allActivityLogs = [] } = useQuery({
+    queryKey: ['petActivityLogs', selectedPetForHistory?.id],
+    queryFn: () => base44.entities.PetActivityLog.filter({ pet_id: selectedPetForHistory?.id }, '-date', 50),
+    enabled: !!selectedPetForHistory,
+  });
+
+  const logActivityMutation = useMutation({
+    mutationFn: (data) => base44.entities.PetActivityLog.create(data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['petActivityLogs'] }),
   });
 
   const createMutation = useMutation({
@@ -74,7 +105,7 @@ export default function PetCare() {
     setEditingPet(null);
     setFormData({
       name: '', type: 'dog', other_type: '', breed: '', birthday: '',
-      photo_url: '', feeding_schedule: [], medication_schedule: [],
+      photo_url: '', feeding_schedule: [], activity_schedule: [], medication_schedule: [],
       vet_name: '', vet_phone: '', notes: ''
     });
   };
@@ -89,12 +120,56 @@ export default function PetCare() {
       birthday: pet.birthday || '',
       photo_url: pet.photo_url || '',
       feeding_schedule: pet.feeding_schedule || [],
+      activity_schedule: pet.activity_schedule || [],
       medication_schedule: pet.medication_schedule || [],
       vet_name: pet.vet_name || '',
       vet_phone: pet.vet_phone || '',
       notes: pet.notes || ''
     });
     setShowModal(true);
+  };
+
+  // Activity schedule functions
+  const addActivity = () => {
+    setFormData({
+      ...formData,
+      activity_schedule: [...formData.activity_schedule, { activity_type: 'walk', times_per_day: 1, preferred_time: '', duration_minutes: 30, notes: '' }]
+    });
+  };
+
+  const updateActivity = (index, field, value) => {
+    const updated = [...formData.activity_schedule];
+    updated[index][field] = value;
+    setFormData({ ...formData, activity_schedule: updated });
+  };
+
+  const removeActivity = (index) => {
+    setFormData({
+      ...formData,
+      activity_schedule: formData.activity_schedule.filter((_, i) => i !== index)
+    });
+  };
+
+  // Check if activity is completed today
+  const getActivityCompletedCount = (petId, activityType) => {
+    return todaysActivityLogs.filter(log => log.pet_id === petId && log.activity_type === activityType).length;
+  };
+
+  const handleLogActivity = (pet, activity) => {
+    logActivityMutation.mutate({
+      pet_id: pet.id,
+      pet_name: pet.name,
+      activity_type: activity.activity_type,
+      date: today,
+      time_completed: format(new Date(), 'HH:mm'),
+      duration_minutes: activity.duration_minutes,
+      notes: ''
+    });
+  };
+
+  const openHistory = (pet) => {
+    setSelectedPetForHistory(pet);
+    setShowHistoryModal(true);
   };
 
   const handleImageUpload = async (e) => {
@@ -211,6 +286,45 @@ export default function PetCare() {
                       </div>
                     )}
 
+                    {pet.activity_schedule?.length > 0 && (
+                      <div>
+                        <h4 className="font-semibold text-sm mb-2 flex items-center gap-1">
+                          <Dog className="w-4 h-4" /> Daily Activities
+                        </h4>
+                        <div className="space-y-2">
+                          {pet.activity_schedule.map((a, i) => {
+                            const completed = getActivityCompletedCount(pet.id, a.activity_type);
+                            const target = a.times_per_day || 1;
+                            const isFullyDone = completed >= target;
+                            const actLabel = activityTypes.find(t => t.value === a.activity_type)?.label || a.activity_type;
+                            return (
+                              <div key={i} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    onClick={() => handleLogActivity(pet, a)}
+                                    disabled={isFullyDone}
+                                    className="flex-shrink-0"
+                                  >
+                                    {isFullyDone ? (
+                                      <CheckCircle className="w-5 h-5 text-green-500" />
+                                    ) : (
+                                      <Circle className="w-5 h-5 text-gray-300 hover:text-purple-500" />
+                                    )}
+                                  </button>
+                                  <span className={`text-sm ${isFullyDone ? 'line-through text-gray-400' : ''}`}>
+                                    {actLabel}
+                                  </span>
+                                </div>
+                                <Badge variant="outline" className={isFullyDone ? 'bg-green-100' : ''}>
+                                  {completed}/{target}
+                                </Badge>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
                     {pet.medication_schedule?.length > 0 && (
                       <div>
                         <h4 className="font-semibold text-sm mb-2 flex items-center gap-1">
@@ -240,6 +354,9 @@ export default function PetCare() {
                     <div className="flex gap-2 pt-2 border-t">
                       <Button variant="outline" size="sm" onClick={() => handleEdit(pet)}>
                         <Edit className="w-4 h-4 mr-1" /> Edit
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => openHistory(pet)}>
+                        <History className="w-4 h-4 mr-1" /> History
                       </Button>
                       <Button
                         variant="ghost" size="sm" className="text-red-500"
@@ -339,6 +456,54 @@ export default function PetCare() {
               ))}
             </div>
 
+            {/* Activity Schedule */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>Activity Schedule (Walks, Playtime, etc.)</Label>
+                <Button type="button" variant="outline" size="sm" onClick={addActivity}>
+                  <Plus className="w-3 h-3 mr-1" /> Add
+                </Button>
+              </div>
+              {formData.activity_schedule.map((a, i) => (
+                <div key={i} className="p-3 bg-gray-50 rounded-lg space-y-2">
+                  <div className="flex gap-2 items-center">
+                    <Select value={a.activity_type} onValueChange={(v) => updateActivity(i, 'activity_type', v)}>
+                      <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {activityTypes.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <Input 
+                      type="number" 
+                      placeholder="Times/day" 
+                      value={a.times_per_day} 
+                      onChange={(e) => updateActivity(i, 'times_per_day', parseInt(e.target.value) || 1)} 
+                      className="w-24" 
+                    />
+                    <span className="text-sm text-gray-500">x/day</span>
+                    <Button variant="ghost" size="sm" onClick={() => removeActivity(i)}><Trash2 className="w-4 h-4 text-red-500" /></Button>
+                  </div>
+                  <div className="flex gap-2 items-center">
+                    <Input 
+                      type="time" 
+                      value={a.preferred_time} 
+                      onChange={(e) => updateActivity(i, 'preferred_time', e.target.value)} 
+                      className="w-28" 
+                      placeholder="Time"
+                    />
+                    <Input 
+                      type="number" 
+                      placeholder="Duration" 
+                      value={a.duration_minutes} 
+                      onChange={(e) => updateActivity(i, 'duration_minutes', parseInt(e.target.value) || 0)} 
+                      className="w-20" 
+                    />
+                    <span className="text-sm text-gray-500">mins</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
             {/* Medications */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
@@ -380,6 +545,36 @@ export default function PetCare() {
               {editingPet ? 'Update' : 'Add Pet'}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Activity History Modal */}
+      <Dialog open={showHistoryModal} onOpenChange={() => setShowHistoryModal(false)}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Activity History - {selectedPetForHistory?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-4">
+            {allActivityLogs.length === 0 ? (
+              <p className="text-center text-gray-500 py-8">No activity history yet</p>
+            ) : (
+              allActivityLogs.map((log) => {
+                const actLabel = activityTypes.find(t => t.value === log.activity_type)?.label || log.activity_type;
+                return (
+                  <div key={log.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div>
+                      <p className="font-medium">{actLabel}</p>
+                      <p className="text-sm text-gray-500">
+                        {format(new Date(log.date), 'MMM d, yyyy')} at {log.time_completed}
+                        {log.duration_minutes && ` • ${log.duration_minutes} mins`}
+                      </p>
+                    </div>
+                    <CheckCircle className="w-5 h-5 text-green-500" />
+                  </div>
+                );
+              })
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
