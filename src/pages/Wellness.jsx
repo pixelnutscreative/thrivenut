@@ -11,6 +11,7 @@ import { Droplet, Heart, Moon, Plus, Minus, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
 import SelfCareChecklist from '../components/wellness/SelfCareChecklist';
+import EliminationTracker from '../components/wellness/EliminationTracker';
 
 const moodEmojis = {
   amazing: '🤩',
@@ -86,6 +87,24 @@ export default function Wellness() {
     enabled: !!user,
   });
 
+  const { data: medicationsCount } = useQuery({
+    queryKey: ['medicationsCount'],
+    queryFn: async () => {
+      const meds = await base44.entities.Medication.filter({ is_active: true, created_by: user?.email });
+      return meds?.length || 0;
+    },
+    enabled: !!user,
+  });
+
+  const { data: supplementsCount } = useQuery({
+    queryKey: ['supplementsCount'],
+    queryFn: async () => {
+      const supps = await base44.entities.Supplement.filter({ is_active: true, created_by: user?.email });
+      return supps?.length || 0;
+    },
+    enabled: !!user,
+  });
+
   const waterMutation = useMutation({
     mutationFn: async (increment) => {
       const newGlasses = (todaysWater?.glasses || 0) + increment;
@@ -145,6 +164,33 @@ export default function Wellness() {
     },
   });
 
+  const eliminationMutation = useMutation({
+    mutationFn: async (grades) => {
+      if (selfCareLog) {
+        return await base44.entities.DailySelfCareLog.update(selfCareLog.id, { elimination_grades: grades });
+      } else {
+        return await base44.entities.DailySelfCareLog.create({ 
+          date: today, 
+          elimination_grades: grades 
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['selfCareToday'] });
+    },
+  });
+
+  const updatePreferencesMutation = useMutation({
+    mutationFn: async (items) => {
+      if (preferences) {
+        return await base44.entities.UserPreferences.update(preferences.id, { items_to_eliminate: items });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['preferences'] });
+    },
+  });
+
   const [moodForm, setMoodForm] = useState({ mood: 'good', notes: '' });
   const [sleepForm, setSleepForm] = useState({
     hours: todaysSleep?.hours || 7,
@@ -181,6 +227,9 @@ export default function Wellness() {
             selfCareLog={selfCareLog}
             onToggleTask={(taskId, value) => selfCareMutation.mutate({ taskId, value })}
             requiredTasks={preferences?.required_self_care_tasks || []}
+            preferences={preferences}
+            medicationsCount={medicationsCount || 0}
+            supplementsCount={supplementsCount || 0}
           />
         </motion.div>
 

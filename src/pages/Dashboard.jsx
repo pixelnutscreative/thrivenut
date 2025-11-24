@@ -11,6 +11,7 @@ import DailyAffirmation from '../components/dashboard/DailyAffirmation';
 import SelfCareChecklist from '../components/wellness/SelfCareChecklist';
 import WeeklyGoalCard from '../components/tiktok/WeeklyGoalCard';
 import GoalEditModal from '../components/tiktok/GoalEditModal';
+import OnboardingModal from '../components/onboarding/OnboardingModal';
 import { format, startOfWeek } from 'date-fns';
 
 export default function Dashboard() {
@@ -18,6 +19,7 @@ export default function Dashboard() {
   const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
   const [showGoalModal, setShowGoalModal] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [loading, setLoading] = useState(true);
 
   // Get current week's Monday
@@ -34,17 +36,15 @@ export default function Dashboard() {
         // Check if onboarding completed
         const prefs = await base44.entities.UserPreferences.filter({ user_email: userData.email });
         if (!prefs.length || !prefs[0].onboarding_completed) {
-          navigate(createPageUrl('Onboarding'));
-          return;
+          setShowOnboarding(true);
         }
       } catch (error) {
         console.error('Auth error:', error);
-        navigate(createPageUrl('Onboarding'));
       }
       setLoading(false);
     };
     checkAuth();
-  }, [navigate]);
+  }, []);
 
   const { data: preferences } = useQuery({
     queryKey: ['preferences', user?.email],
@@ -202,6 +202,7 @@ export default function Dashboard() {
             selfCareLog={selfCareLog}
             onToggleTask={(taskId, value) => selfCareMutation.mutate({ taskId, value })}
             requiredTasks={preferences?.required_self_care_tasks || []}
+            preferences={preferences}
             compact={true}
           />
         </div>
@@ -269,6 +270,15 @@ export default function Dashboard() {
         onClose={() => setShowGoalModal(false)}
         currentGoal={contentGoal}
         onSave={(data) => createOrUpdateGoalMutation.mutate(data)}
+      />
+
+      <OnboardingModal
+        isOpen={showOnboarding}
+        user={user}
+        onComplete={() => {
+          setShowOnboarding(false);
+          queryClient.invalidateQueries({ queryKey: ['preferences'] });
+        }}
       />
     </div>
   );
