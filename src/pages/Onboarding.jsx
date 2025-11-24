@@ -54,6 +54,8 @@ export default function Onboarding() {
         ...themeData,
         greeting_type: selectedGreeting,
         enabled_modules: selectedModules,
+        accessibility_mode: 'standard',
+        use_text_to_speech: false,
         onboarding_completed: true
       });
 
