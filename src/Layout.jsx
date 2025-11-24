@@ -14,7 +14,8 @@ import {
   LogOut,
   TrendingUp,
   Users,
-  Video
+  Video,
+  Pill
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -26,6 +27,8 @@ const navItems = [
   { name: 'Discover Creators', icon: Users, path: 'DiscoverCreators' },
   { name: 'Goals', icon: Target, path: 'Goals' },
   { name: 'Wellness', icon: Heart, path: 'Wellness' },
+  { name: 'Supplements', icon: Pill, path: 'Supplements' },
+  { name: 'Medications', icon: Pill, path: 'Medications' },
   { name: 'Journal', icon: BookOpen, path: 'Journal' },
   { name: 'Settings', icon: Settings, path: 'Settings' },
 ];
