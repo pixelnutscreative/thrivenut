@@ -7,9 +7,13 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { BookOpen, Calendar, Sparkles } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { BookOpen, Calendar, Sparkles, Brain, Shield, ChevronDown, ChevronUp } from 'lucide-react';
 import { format } from 'date-fns';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import AIReframingCard from '../components/journal/AIReframingCard';
 
 const moodTags = [
   { value: 'grateful', label: 'Grateful', emoji: '🙏', color: 'bg-green-100 text-green-800' },
@@ -18,21 +22,51 @@ const moodTags = [
   { value: 'anxious', label: 'Anxious', emoji: '😰', color: 'bg-orange-100 text-orange-800' },
   { value: 'peaceful', label: 'Peaceful', emoji: '☮️', color: 'bg-blue-100 text-blue-800' },
   { value: 'motivated', label: 'Motivated', emoji: '💪', color: 'bg-red-100 text-red-800' },
-  { value: 'tired', label: 'Tired', emoji: '😴', color: 'bg-gray-100 text-gray-800' }
+  { value: 'tired', label: 'Tired', emoji: '😴', color: 'bg-gray-100 text-gray-800' },
+  { value: 'frustrated', label: 'Frustrated', emoji: '😤', color: 'bg-rose-100 text-rose-800' },
+  { value: 'sad', label: 'Sad', emoji: '😢', color: 'bg-slate-100 text-slate-800' },
+  { value: 'angry', label: 'Angry', emoji: '😠', color: 'bg-red-100 text-red-800' }
+];
+
+const entryTypes = [
+  { value: 'general', label: 'General', description: 'Regular journal entry' },
+  { value: 'venting', label: 'Venting', description: 'Let it all out - AI can help reframe' },
+  { value: 'gratitude', label: 'Gratitude', description: 'What are you thankful for?' },
+  { value: 'reflection', label: 'Reflection', description: 'Looking back and learning' },
+  { value: 'goal_setting', label: 'Goal Setting', description: 'Planning and dreaming' }
 ];
 
 export default function Journal() {
   const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
+  const [preferences, setPreferences] = useState(null);
+  const [showAIReframe, setShowAIReframe] = useState(false);
+  const [expandedEntries, setExpandedEntries] = useState({});
+  
   const [formData, setFormData] = useState({
     date: format(new Date(), 'yyyy-MM-dd'),
     title: '',
     content: '',
-    mood_tag: 'grateful'
+    mood_tag: 'reflective',
+    entry_type: 'general',
+    ai_reframe_enabled: false
   });
 
   React.useEffect(() => {
-    base44.auth.me().then(setUser);
+    const loadUser = async () => {
+      const userData = await base44.auth.me();
+      setUser(userData);
+      
+      const prefs = await base44.entities.UserPreferences.filter({ user_email: userData.email });
+      if (prefs[0]) {
+        setPreferences(prefs[0]);
+        setFormData(prev => ({
+          ...prev,
+          ai_reframe_enabled: prefs[0].enable_ai_journaling !== false
+        }));
+      }
+    };
+    loadUser();
   }, []);
 
   const { data: entries } = useQuery({
@@ -53,8 +87,20 @@ export default function Journal() {
         date: format(new Date(), 'yyyy-MM-dd'),
         title: '',
         content: '',
-        mood_tag: 'grateful'
+        mood_tag: 'reflective',
+        entry_type: 'general',
+        ai_reframe_enabled: preferences?.enable_ai_journaling !== false
       });
+      setShowAIReframe(false);
+    },
+  });
+
+  const updateEntryMutation = useMutation({
+    mutationFn: async ({ id, data }) => {
+      return await base44.entities.JournalEntry.update(id, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['journalEntries'] });
     },
   });
 
@@ -62,6 +108,20 @@ export default function Journal() {
     if (!formData.content.trim()) return;
     createEntryMutation.mutate(formData);
   };
+
+  const handleSaveAISuggestions = (suggestions) => {
+    setFormData(prev => ({ ...prev, ai_suggestions: suggestions }));
+  };
+
+  const handleSaveReflection = (reflection) => {
+    setFormData(prev => ({ ...prev, user_reflection: reflection }));
+  };
+
+  const toggleEntryExpand = (id) => {
+    setExpandedEntries(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const isVentingMode = formData.entry_type === 'venting';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 p-4 md:p-8">
@@ -74,8 +134,17 @@ export default function Journal() {
             <BookOpen className="w-10 h-10 text-purple-600" />
             My Journal
           </h1>
-          <p className="text-gray-600">Your private space for thoughts and reflections</p>
+          <p className="text-gray-600">Your private space for thoughts, reflections, and healing</p>
         </motion.div>
+
+        {/* Disclaimer */}
+        <Alert className="bg-purple-50 border-purple-200">
+          <Shield className="w-4 h-4 text-purple-600" />
+          <AlertDescription className="text-sm text-purple-800">
+            Your journal is completely private. AI suggestions are supportive tools, not professional mental health advice.
+            If you're in crisis, please reach out to a mental health professional.
+          </AlertDescription>
+        </Alert>
 
         {/* New Entry Form */}
         <motion.div
@@ -91,6 +160,36 @@ export default function Journal() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Entry Type Selection */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">What kind of entry is this?</label>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                  {entryTypes.map(type => (
+                    <button
+                      key={type.value}
+                      onClick={() => setFormData({...formData, entry_type: type.value})}
+                      className={`p-3 rounded-lg border-2 text-left transition-all ${
+                        formData.entry_type === type.value
+                          ? 'border-purple-500 bg-purple-50'
+                          : 'border-gray-200 hover:border-purple-300'
+                      }`}
+                    >
+                      <div className="font-medium text-sm">{type.label}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {isVentingMode && (
+                <Alert className="bg-amber-50 border-amber-200">
+                  <Brain className="w-4 h-4 text-amber-600" />
+                  <AlertDescription className="text-sm text-amber-800">
+                    <strong>Venting Mode:</strong> Let it all out! After you write, AI can help you 
+                    gain perspective and reframe negative thoughts. This is a safe space. 💜
+                  </AlertDescription>
+                </Alert>
+              )}
+
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Date</label>
@@ -129,15 +228,56 @@ export default function Journal() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Your thoughts...</label>
+                <label className="text-sm font-medium">
+                  {isVentingMode ? "Let it all out... (this is a safe space)" : "Your thoughts..."}
+                </label>
                 <Textarea
-                  placeholder="What's on your mind today?"
+                  placeholder={isVentingMode 
+                    ? "Write whatever's on your mind. Don't hold back. No one will judge you here..."
+                    : "What's on your mind today?"
+                  }
                   value={formData.content}
                   onChange={(e) => setFormData({...formData, content: e.target.value})}
                   rows={8}
                   className="resize-none"
                 />
               </div>
+
+              {/* AI Reframe Toggle */}
+              {preferences?.enable_ai_journaling !== false && (
+                <div className="flex items-center justify-between p-4 bg-indigo-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <Brain className="w-5 h-5 text-indigo-600" />
+                    <div>
+                      <Label className="font-medium">Get AI Perspective & Reframing</Label>
+                      <p className="text-sm text-gray-600">
+                        Helpful questions and alternative viewpoints
+                      </p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={showAIReframe}
+                    onCheckedChange={setShowAIReframe}
+                  />
+                </div>
+              )}
+
+              {/* AI Reframing Card */}
+              <AnimatePresence>
+                {showAIReframe && formData.content.length > 20 && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                  >
+                    <AIReframingCard
+                      journalContent={formData.content}
+                      onSaveSuggestions={handleSaveAISuggestions}
+                      onSaveReflection={handleSaveReflection}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               <Button 
                 onClick={handleSubmit}
@@ -161,6 +301,10 @@ export default function Journal() {
             <div className="space-y-4">
               {entries.map((entry, index) => {
                 const moodTag = moodTags.find(tag => tag.value === entry.mood_tag);
+                const entryType = entryTypes.find(t => t.value === entry.entry_type);
+                const isExpanded = expandedEntries[entry.id];
+                const hasAISuggestions = entry.ai_suggestions;
+                
                 return (
                   <motion.div
                     key={entry.id}
@@ -179,16 +323,56 @@ export default function Journal() {
                               <h3 className="text-xl font-bold text-gray-800">{entry.title}</h3>
                             )}
                           </div>
-                          {moodTag && (
-                            <Badge className={`${moodTag.color} border-0`}>
-                              <span className="mr-1">{moodTag.emoji}</span>
-                              {moodTag.label}
-                            </Badge>
-                          )}
+                          <div className="flex items-center gap-2">
+                            {entryType && entryType.value !== 'general' && (
+                              <Badge variant="outline">{entryType.label}</Badge>
+                            )}
+                            {moodTag && (
+                              <Badge className={`${moodTag.color} border-0`}>
+                                <span className="mr-1">{moodTag.emoji}</span>
+                                {moodTag.label}
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                         <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
                           {entry.content}
                         </p>
+
+                        {/* Show AI suggestions if they exist */}
+                        {hasAISuggestions && (
+                          <div className="mt-4">
+                            <button
+                              onClick={() => toggleEntryExpand(entry.id)}
+                              className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 text-sm font-medium"
+                            >
+                              <Brain className="w-4 h-4" />
+                              {isExpanded ? 'Hide' : 'Show'} AI Insights
+                              {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                            </button>
+                            
+                            <AnimatePresence>
+                              {isExpanded && (
+                                <motion.div
+                                  initial={{ opacity: 0, height: 0 }}
+                                  animate={{ opacity: 1, height: 'auto' }}
+                                  exit={{ opacity: 0, height: 0 }}
+                                  className="mt-3 p-4 bg-indigo-50 rounded-lg"
+                                >
+                                  <pre className="text-sm text-gray-700 whitespace-pre-wrap">
+                                    {JSON.parse(entry.ai_suggestions).validation}
+                                  </pre>
+                                  {entry.user_reflection && (
+                                    <div className="mt-3 p-3 bg-white rounded-lg">
+                                      <p className="text-sm font-medium text-gray-600 mb-1">My Reflection:</p>
+                                      <p className="text-gray-700">{entry.user_reflection}</p>
+                                    </div>
+                                  )}
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
                   </motion.div>

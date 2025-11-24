@@ -22,6 +22,7 @@ import PetCare from './pages/PetCare';
 import CareReminders from './pages/CareReminders';
 import People from './pages/People';
 import GoalSharing from './pages/GoalSharing';
+import NeurodivergentSettings from './pages/NeurodivergentSettings';
 import __Layout from './Layout.jsx';
 
 
@@ -50,6 +51,7 @@ export const PAGES = {
     "CareReminders": CareReminders,
     "People": People,
     "GoalSharing": GoalSharing,
+    "NeurodivergentSettings": NeurodivergentSettings,
 }
 
 export const pagesConfig = {

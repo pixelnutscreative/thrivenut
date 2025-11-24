@@ -7,9 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
-import { Droplet, Heart, Moon, Plus, Minus } from 'lucide-react';
+import { Droplet, Heart, Moon, Plus, Minus, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
+import SelfCareChecklist from '../components/wellness/SelfCareChecklist';
 
 const moodEmojis = {
   amazing: '🤩',
@@ -22,10 +23,20 @@ const moodEmojis = {
 export default function Wellness() {
   const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
+  const [preferences, setPreferences] = useState(null);
   const today = format(new Date(), 'yyyy-MM-dd');
 
   React.useEffect(() => {
-    base44.auth.me().then(setUser);
+    const loadUser = async () => {
+      const userData = await base44.auth.me();
+      setUser(userData);
+      
+      const prefs = await base44.entities.UserPreferences.filter({ user_email: userData.email });
+      if (prefs[0]) {
+        setPreferences(prefs[0]);
+      }
+    };
+    loadUser();
   }, []);
 
   const { data: todaysWater } = useQuery({
@@ -63,6 +74,18 @@ export default function Wellness() {
     enabled: !!user,
   });
 
+  const { data: selfCareLog } = useQuery({
+    queryKey: ['selfCareToday', today],
+    queryFn: async () => {
+      const logs = await base44.entities.DailySelfCareLog.filter({ 
+        date: today,
+        created_by: user?.email 
+      });
+      return logs[0] || null;
+    },
+    enabled: !!user,
+  });
+
   const waterMutation = useMutation({
     mutationFn: async (increment) => {
       const newGlasses = (todaysWater?.glasses || 0) + increment;
@@ -80,10 +103,10 @@ export default function Wellness() {
   });
 
   const moodMutation = useMutation({
-    mutationFn: async ({ timeOfDay, mood, notes }) => {
+    mutationFn: async ({ mood, notes }) => {
       return await base44.entities.MoodLog.create({
         date: today,
-        time_of_day: timeOfDay,
+        timestamp: new Date().toISOString(),
         mood,
         notes: notes || ''
       });
@@ -106,7 +129,23 @@ export default function Wellness() {
     },
   });
 
-  const [moodForm, setMoodForm] = useState({ timeOfDay: 'morning', mood: 'good', notes: '' });
+  const selfCareMutation = useMutation({
+    mutationFn: async ({ taskId, value }) => {
+      if (selfCareLog) {
+        return await base44.entities.DailySelfCareLog.update(selfCareLog.id, { [taskId]: value });
+      } else {
+        return await base44.entities.DailySelfCareLog.create({ 
+          date: today, 
+          [taskId]: value 
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['selfCareToday'] });
+    },
+  });
+
+  const [moodForm, setMoodForm] = useState({ mood: 'good', notes: '' });
   const [sleepForm, setSleepForm] = useState({
     hours: todaysSleep?.hours || 7,
     quality: todaysSleep?.quality || 'good',
@@ -114,6 +153,10 @@ export default function Wellness() {
   });
 
   const waterPercentage = todaysWater ? (todaysWater.glasses / todaysWater.goal_glasses) * 100 : 0;
+
+  const formatTime = (isoString) => {
+    return format(new Date(isoString), 'h:mm a');
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 p-4 md:p-8">
@@ -126,6 +169,19 @@ export default function Wellness() {
             Wellness Tracker
           </h1>
           <p className="text-gray-600">Take care of your mind and body</p>
+        </motion.div>
+
+        {/* Self-Care Checklist */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+        >
+          <SelfCareChecklist
+            selfCareLog={selfCareLog}
+            onToggleTask={(taskId, value) => selfCareMutation.mutate({ taskId, value })}
+            requiredTasks={preferences?.required_self_care_tasks || []}
+          />
         </motion.div>
 
         {/* Water Intake */}
@@ -192,45 +248,37 @@ export default function Wellness() {
                   <p className="font-semibold text-gray-700">Today's Check-ins:</p>
                   <div className="flex flex-wrap gap-2">
                     {todaysMoods.map((log, i) => (
-                      <div key={i} className="px-4 py-2 bg-white rounded-full shadow-sm">
-                        <span className="text-2xl mr-2">{moodEmojis[log.mood]}</span>
-                        <span className="text-sm text-gray-600">{log.time_of_day}</span>
+                      <div key={i} className="px-4 py-2 bg-white rounded-full shadow-sm flex items-center gap-2">
+                        <span className="text-2xl">{moodEmojis[log.mood]}</span>
+                        <div className="text-sm">
+                          <span className="text-gray-600 flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {log.timestamp ? formatTime(log.timestamp) : 'Earlier'}
+                          </span>
+                        </div>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
 
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Time of Day</label>
-                  <Select value={moodForm.timeOfDay} onValueChange={(val) => setMoodForm({...moodForm, timeOfDay: val})}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="morning">Morning</SelectItem>
-                      <SelectItem value="afternoon">Afternoon</SelectItem>
-                      <SelectItem value="evening">Evening</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">How are you feeling?</label>
-                  <Select value={moodForm.mood} onValueChange={(val) => setMoodForm({...moodForm, mood: val})}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(moodEmojis).map(([key, emoji]) => (
-                        <SelectItem key={key} value={key}>
-                          <span className="mr-2">{emoji}</span>
-                          {key.charAt(0).toUpperCase() + key.slice(1)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">How are you feeling right now?</label>
+                <div className="grid grid-cols-5 gap-2">
+                  {Object.entries(moodEmojis).map(([key, emoji]) => (
+                    <button
+                      key={key}
+                      onClick={() => setMoodForm({...moodForm, mood: key})}
+                      className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center ${
+                        moodForm.mood === key
+                          ? 'border-pink-500 bg-pink-50 scale-105'
+                          : 'border-gray-200 hover:border-pink-300'
+                      }`}
+                    >
+                      <span className="text-3xl mb-1">{emoji}</span>
+                      <span className="text-xs text-gray-600 capitalize">{key}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
 
