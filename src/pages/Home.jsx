@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { TrendingUp, Target, Heart, BookOpen, Sparkles, CheckCircle } from 'lucide-react';
+import { TrendingUp, Target, Heart, BookOpen, Sparkles, CheckCircle, Gift, Music } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const features = [
@@ -21,8 +21,8 @@ const features = [
   },
   {
     icon: Heart,
-    title: 'Wellness Tracking',
-    description: 'Monitor your water intake, mood, sleep, and overall wellbeing daily',
+    title: 'Wellness & Health',
+    description: 'Track water, mood, sleep, supplements, medications, and mental health in one place',
     color: 'from-pink-500 to-rose-500'
   },
   {
@@ -37,9 +37,9 @@ const benefits = [
   'Perfect for creators and TikTok entrepreneurs',
   'Track everything in one beautiful app',
   'Daily motivation and scripture/quotes',
-  'Made for busy people who want to thrive',
-  'Mobile-friendly, access anywhere',
-  'Your data is private and secure'
+  'Gifter thank-you song generator',
+  'Medication & supplement tracking',
+  'Mobile-friendly, access anywhere'
 ];
 
 export default function Home() {
