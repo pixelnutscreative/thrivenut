@@ -47,14 +47,14 @@ const navItems = [
     { name: 'Daily Wellness', icon: Heart, path: 'Wellness' },
     { name: 'Supplements', icon: Pill, path: 'Supplements' },
     { name: 'Medications', icon: Pill, path: 'Medications' },
-    { name: 'Mental Health', icon: Brain, path: 'MentalHealth' },
+
     { name: 'Pet Care', icon: Heart, path: 'PetCare' },
     { name: 'Care Reminders', icon: Heart, path: 'CareReminders' },
   ]},
   { name: 'My People', icon: Users, path: 'People' },
   { name: 'Journal', icon: BookOpen, path: 'Journal' },
   { name: 'Settings', icon: Settings, path: 'Settings' },
-  { name: 'ND & Wellness', icon: Brain, path: 'NeurodivergentSettings' },
+  { name: 'Mental Health', icon: Brain, path: 'NeurodivergentSettings' },
   ];
 
 export default function Layout({ children, currentPageName }) {

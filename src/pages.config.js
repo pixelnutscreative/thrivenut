@@ -15,7 +15,6 @@ import GifterManager from './pages/GifterManager';
 import GiftLibrary from './pages/GiftLibrary';
 import GiftEntry from './pages/GiftEntry';
 import WeeklySummary from './pages/WeeklySummary';
-import MentalHealth from './pages/MentalHealth';
 import LiveReminders from './pages/LiveReminders';
 import TikTokContacts from './pages/TikTokContacts';
 import PetCare from './pages/PetCare';
@@ -44,7 +43,6 @@ export const PAGES = {
     "GiftLibrary": GiftLibrary,
     "GiftEntry": GiftEntry,
     "WeeklySummary": WeeklySummary,
-    "MentalHealth": MentalHealth,
     "LiveReminders": LiveReminders,
     "TikTokContacts": TikTokContacts,
     "PetCare": PetCare,

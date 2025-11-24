@@ -176,9 +176,9 @@ export default function NeurodivergentSettings() {
           <div>
             <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
               <Brain className="w-8 h-8 text-purple-600" />
-              Neurodivergent & Wellness Settings
+              Mental Health & Wellness
             </h1>
-            <p className="text-gray-600 mt-1">Customize your experience for ADHD, autism, and mental wellness support</p>
+            <p className="text-gray-600 mt-1">Personalize your support, track your journey, and customize your experience</p>
           </div>
           <Button
             onClick={handleSave}
