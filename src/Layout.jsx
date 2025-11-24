@@ -79,8 +79,8 @@ export default function Layout({ children, currentPageName }) {
     await base44.auth.logout();
   };
 
-  // Don't show layout on onboarding
-  if (currentPageName === 'Onboarding') {
+  // Don't show layout on onboarding or home page
+  if (currentPageName === 'Onboarding' || currentPageName === 'Home') {
     return children;
   }
 
