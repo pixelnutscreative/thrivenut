@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { Plus, ExternalLink, Trash2, Video, Calendar as CalendarIcon, Heart, Swords, Zap, ShoppingBag, CalendarPlus } from 'lucide-react';
+import { Plus, ExternalLink, Trash2, Video, Calendar as CalendarIcon, Heart, Swords, Zap, ShoppingBag, CalendarPlus, Edit } from 'lucide-react';
 import { motion } from 'framer-motion';
 import TimezoneSelector from '../components/shared/TimezoneSelector';
 
@@ -30,6 +30,7 @@ const liveTypeConfig = {
 export default function LiveSchedule() {
   const queryClient = useQueryClient();
   const [showModal, setShowModal] = useState(false);
+  const [editingSchedule, setEditingSchedule] = useState(null);
   const [user, setUser] = useState(null);
   const [userTimezone, setUserTimezone] = useState('America/New_York');
   const [formData, setFormData] = useState({
@@ -77,6 +78,17 @@ export default function LiveSchedule() {
       }
       
       setShowModal(false);
+      setEditingSchedule(null);
+      resetForm();
+    },
+  });
+
+  const updateScheduleMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.LiveSchedule.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['liveSchedules'] });
+      setShowModal(false);
+      setEditingSchedule(null);
       resetForm();
     },
   });
@@ -103,6 +115,39 @@ export default function LiveSchedule() {
       video_guide_url: '',
       notes: ''
     });
+    setEditingSchedule(null);
+  };
+
+  const normalizeTime = (timeStr) => {
+    if (!timeStr) return '';
+    
+    const timeParts = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+    if (!timeParts) return timeStr;
+    
+    const hours = parseInt(timeParts[1]);
+    const minutes = timeParts[2];
+    const period = timeParts[3].toUpperCase();
+    
+    return `${hours}:${minutes} ${period}`;
+  };
+
+  const handleEdit = (schedule) => {
+    setEditingSchedule(schedule);
+    setFormData({
+      host_username: schedule.host_username,
+      recurring_days: schedule.recurring_days || [],
+      time: schedule.time,
+      creator_timezone: schedule.creator_timezone || 'America/New_York',
+      live_types: schedule.live_types || ['regular'],
+      custom_type: schedule.custom_type || '',
+      priority: schedule.priority || 5,
+      is_recurring: schedule.is_recurring,
+      specific_date: schedule.specific_date || '',
+      audience_restriction: schedule.audience_restriction || 'all_ages',
+      video_guide_url: schedule.video_guide_url || '',
+      notes: schedule.notes || ''
+    });
+    setShowModal(true);
   };
 
   // Convert time from creator timezone to user timezone
@@ -157,14 +202,37 @@ export default function LiveSchedule() {
     }
   };
 
+  const convertTo24Hour = (timeStr) => {
+    if (!timeStr) return '';
+    
+    const timeParts = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+    if (!timeParts) return '';
+    
+    let hours = parseInt(timeParts[1]);
+    const minutes = timeParts[2];
+    const period = timeParts[3].toUpperCase();
+    
+    if (period === 'PM' && hours !== 12) hours += 12;
+    if (period === 'AM' && hours === 12) hours = 0;
+    
+    return `${hours.toString().padStart(2, '0')}:${minutes}`;
+  };
+
   const handleSubmit = () => {
     if (!formData.host_username.trim()) return;
     
     const cleanUsername = formData.host_username.replace('@', '').trim();
-    createScheduleMutation.mutate({
+    const normalizedData = {
       ...formData,
-      host_username: cleanUsername
-    });
+      host_username: cleanUsername,
+      time: normalizeTime(formData.time)
+    };
+    
+    if (editingSchedule) {
+      updateScheduleMutation.mutate({ id: editingSchedule.id, data: normalizedData });
+    } else {
+      createScheduleMutation.mutate(normalizedData);
+    }
   };
 
   const toggleDay = (day) => {
@@ -350,6 +418,15 @@ export default function LiveSchedule() {
                                     variant="ghost"
                                     size="sm"
                                     className="h-6 text-xs px-2"
+                                    onClick={() => handleEdit(schedule)}
+                                  >
+                                    <Edit className="w-3 h-3 mr-1" />
+                                    Edit
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-6 text-xs px-2"
                                     onClick={() => generateCalendarFile(schedule)}
                                   >
                                     <CalendarPlus className="w-3 h-3 mr-1" />
@@ -446,6 +523,14 @@ export default function LiveSchedule() {
                               <Button
                                 variant="outline"
                                 size="sm"
+                                onClick={() => handleEdit(schedule)}
+                              >
+                                <Edit className="w-3 h-3 mr-1" />
+                                Edit
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
                                 onClick={() => generateCalendarFile(schedule)}
                               >
                                 <CalendarPlus className="w-3 h-3 mr-1" />
@@ -472,11 +557,17 @@ export default function LiveSchedule() {
         )}
       </div>
 
-      {/* Add Live Modal */}
-      <Dialog open={showModal} onOpenChange={setShowModal}>
+      {/* Add/Edit Live Modal */}
+      <Dialog open={showModal} onOpenChange={(open) => {
+        setShowModal(open);
+        if (!open) {
+          setEditingSchedule(null);
+          resetForm();
+        }
+      }}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Add Live Schedule</DialogTitle>
+            <DialogTitle>{editingSchedule ? 'Edit Live Schedule' : 'Add Live Schedule'}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
@@ -583,10 +674,21 @@ export default function LiveSchedule() {
               <Label htmlFor="time">Time</Label>
               <Input
                 id="time"
-                placeholder="e.g., 7:00 PM, 10:30 AM"
-                value={formData.time}
-                onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                type="time"
+                value={formData.time ? convertTo24Hour(formData.time) : ''}
+                onChange={(e) => {
+                  const time24 = e.target.value;
+                  if (time24) {
+                    const [hours, minutes] = time24.split(':');
+                    let hour = parseInt(hours);
+                    const period = hour >= 12 ? 'PM' : 'AM';
+                    if (hour > 12) hour -= 12;
+                    if (hour === 0) hour = 12;
+                    setFormData({ ...formData, time: `${hour}:${minutes} ${period}` });
+                  }
+                }}
               />
+              <p className="text-xs text-gray-500">Select time for the live stream</p>
             </div>
 
             <TimezoneSelector
@@ -645,10 +747,10 @@ export default function LiveSchedule() {
             </Button>
             <Button
               onClick={handleSubmit}
-              disabled={!formData.host_username.trim() || createScheduleMutation.isPending}
+              disabled={!formData.host_username.trim() || createScheduleMutation.isPending || updateScheduleMutation.isPending}
               className="bg-purple-600 hover:bg-purple-700"
             >
-              Add to Calendar
+              {editingSchedule ? 'Update Schedule' : 'Add to Calendar'}
             </Button>
           </DialogFooter>
         </DialogContent>
