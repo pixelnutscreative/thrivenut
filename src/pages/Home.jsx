@@ -69,7 +69,7 @@ export default function Home() {
                 className="w-24 h-24 md:w-32 md:h-32"
               />
             </div>
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 bg-clip-text text-transparent">
+            <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-teal-600 via-teal-500 to-lavender-500 bg-clip-text text-transparent">
               ThriveNut
             </h1>
             <p className="text-2xl md:text-3xl font-semibold text-gray-800 mb-4">
@@ -82,7 +82,7 @@ export default function Home() {
               <Button
                 onClick={handleGetStarted}
                 size="lg"
-                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-8 py-6 text-lg shadow-xl hover:shadow-2xl transition-all"
+                className="bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 text-white px-8 py-6 text-lg shadow-xl hover:shadow-2xl transition-all"
               >
                 Get Started Free
               </Button>
@@ -154,7 +154,7 @@ export default function Home() {
                 transition={{ delay: index * 0.05, duration: 0.4 }}
                 className="flex items-center gap-4 p-4 bg-white rounded-xl shadow-sm"
               >
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-teal-500 to-purple-400 flex items-center justify-center">
                   <CheckCircle className="w-5 h-5 text-white" />
                 </div>
                 <p className="text-gray-700 font-medium">{benefit}</p>
@@ -172,7 +172,7 @@ export default function Home() {
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <Card className="bg-gradient-to-br from-purple-600 via-pink-600 to-orange-500 text-white border-0 shadow-2xl">
+          <Card className="bg-gradient-to-br from-teal-600 via-teal-500 to-purple-400 text-white border-0 shadow-2xl">
             <CardContent className="p-12 text-center">
               <h2 className="text-4xl font-bold mb-4">Ready to Start Thriving?</h2>
               <p className="text-xl mb-8 text-white/90">
@@ -181,7 +181,7 @@ export default function Home() {
               <Button
                 onClick={handleGetStarted}
                 size="lg"
-                className="bg-white text-purple-600 hover:bg-gray-100 px-10 py-6 text-lg font-semibold shadow-xl"
+                className="bg-white text-teal-600 hover:bg-gray-100 px-10 py-6 text-lg font-semibold shadow-xl"
               >
                 Get Started Now - It's Free! 🚀
               </Button>

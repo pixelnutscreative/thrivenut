@@ -92,7 +92,7 @@ export default function Layout({ children, currentPageName }) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-purple-50 to-blue-50">
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200 px-4 py-3">
         <div className="flex items-center justify-between">
@@ -102,7 +102,7 @@ export default function Layout({ children, currentPageName }) {
               alt="ThriveNut" 
               className="w-8 h-8"
             />
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-teal-600 to-purple-400 bg-clip-text text-transparent">
               ThriveNut
             </h1>
           </div>
@@ -221,7 +221,7 @@ export default function Layout({ children, currentPageName }) {
                 alt="ThriveNut" 
                 className="w-10 h-10"
               />
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-teal-600 to-purple-400 bg-clip-text text-transparent">
                 ThriveNut
               </h1>
             </div>
