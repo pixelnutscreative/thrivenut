@@ -8,6 +8,7 @@ import Home from './pages/Home';
 import Settings from './pages/Settings';
 import TikTokEngagement from './pages/TikTokEngagement';
 import LiveSchedule from './pages/LiveSchedule';
+import DiscoverCreators from './pages/DiscoverCreators';
 import __Layout from './Layout.jsx';
 
 
@@ -22,6 +23,7 @@ export const PAGES = {
     "Settings": Settings,
     "TikTokEngagement": TikTokEngagement,
     "LiveSchedule": LiveSchedule,
+    "DiscoverCreators": DiscoverCreators,
 }
 
 export const pagesConfig = {

@@ -257,8 +257,8 @@ export default function LiveSchedule() {
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800">Live Schedule Calendar</h1>
-            <p className="text-gray-600 mt-1">Never miss your favorite TikTok lives</p>
+            <h1 className="text-3xl font-bold text-gray-800">Creator Calendar</h1>
+            <p className="text-gray-600 mt-1">Track all your favorite TikTok creators' live schedules</p>
           </div>
           <Button
             onClick={() => setShowModal(true)}

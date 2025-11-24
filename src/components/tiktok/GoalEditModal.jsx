@@ -18,6 +18,9 @@ export default function GoalEditModal({ isOpen, onClose, currentGoal, onSave }) 
     lives_goal: currentGoal?.lives_goal || 0,
     shop_lives_goal: currentGoal?.shop_lives_goal || 0,
     engagement_goal: currentGoal?.engagement_goal || 0,
+    tiktok_username: currentGoal?.tiktok_username || '',
+    allow_in_directory: currentGoal?.allow_in_directory || false,
+    allow_search_by_username: currentGoal?.allow_search_by_username || false,
     scheduled_posts: currentGoal?.scheduled_posts || [],
     scheduled_lives: currentGoal?.scheduled_lives || [],
     scheduled_engagement: currentGoal?.scheduled_engagement || [],
@@ -38,6 +41,44 @@ export default function GoalEditModal({ isOpen, onClose, currentGoal, onSave }) 
         </DialogHeader>
         
         <div className="space-y-6 py-4">
+          {/* Sharing Settings */}
+          <div className="space-y-3 p-4 bg-purple-50 rounded-lg border-2 border-purple-200">
+            <h3 className="font-semibold text-lg text-purple-900">📢 Share Your Schedule</h3>
+            
+            <div className="space-y-2">
+              <Label htmlFor="tiktok-username">Your TikTok Username</Label>
+              <Input
+                id="tiktok-username"
+                placeholder="@username or username"
+                value={formData.tiktok_username}
+                onChange={(e) => setFormData({...formData, tiktok_username: e.target.value.replace('@', '')})}
+              />
+              <p className="text-xs text-gray-600">Required to share your schedule with other ThriveNut users</p>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="allow-directory"
+                checked={formData.allow_in_directory}
+                onCheckedChange={(checked) => setFormData({...formData, allow_in_directory: checked})}
+              />
+              <Label htmlFor="allow-directory" className="text-sm">
+                Show in Community Directory
+              </Label>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="allow-search"
+                checked={formData.allow_search_by_username}
+                onCheckedChange={(checked) => setFormData({...formData, allow_search_by_username: checked})}
+              />
+              <Label htmlFor="allow-search" className="text-sm">
+                Allow search by TikTok username
+              </Label>
+            </div>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="posts">Number of Posts</Label>
             <Input
@@ -346,6 +387,18 @@ export default function GoalEditModal({ isOpen, onClose, currentGoal, onSave }) 
                 </div>
 
                 <div className="flex flex-wrap gap-3 pt-2 border-t">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`shareable-${index}`}
+                      checked={schedule.is_shareable || false}
+                      onCheckedChange={(checked) => {
+                        const newSchedules = [...formData.scheduled_lives];
+                        newSchedules[index].is_shareable = checked;
+                        setFormData({ ...formData, scheduled_lives: newSchedules });
+                      }}
+                    />
+                    <Label htmlFor={`shareable-${index}`} className="text-sm font-semibold text-purple-700">📢 Share with Community</Label>
+                  </div>
                   <div className="flex items-center space-x-2">
                     <Checkbox
                       id={`recurring-${index}`}
