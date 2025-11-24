@@ -21,7 +21,8 @@ import {
   Home,
   ChevronDown,
   ChevronRight,
-  Bell
+  Bell,
+  Share2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -43,6 +44,7 @@ const navItems = [
     { name: 'Gift Library', icon: Gift, path: 'GiftLibrary' },
   ]},
   { name: 'Goals', icon: Target, path: 'Goals' },
+  { name: 'Goal Sharing', icon: Share2, path: 'GoalSharing' },
   { name: 'Wellness', icon: Heart, isSection: true, subItems: [
     { name: 'Daily Wellness', icon: Heart, path: 'Wellness' },
     { name: 'Supplements', icon: Pill, path: 'Supplements' },

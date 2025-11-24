@@ -96,7 +96,6 @@ export default function Settings() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['preferences'] });
-      alert('Settings saved successfully! 🎉');
     },
   });
 
