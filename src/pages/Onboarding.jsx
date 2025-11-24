@@ -32,11 +32,39 @@ const greetingTypes = [
   { id: 'affirmation', name: 'Daily Affirmation', description: 'Personalized affirmations' }
 ];
 
+const struggles = [
+  { id: 'anxiety', label: 'Anxiety', emoji: '😰' },
+  { id: 'depression', label: 'Depression', emoji: '😔' },
+  { id: 'adhd', label: 'ADHD / Focus', emoji: '🧠' },
+  { id: 'autism', label: 'Autism / Sensory', emoji: '🌈' },
+  { id: 'stress', label: 'Stress / Overwhelm', emoji: '😫' },
+  { id: 'loneliness', label: 'Loneliness', emoji: '💔' },
+  { id: 'grief', label: 'Grief / Loss', emoji: '🕊️' },
+  { id: 'trauma', label: 'Trauma / PTSD', emoji: '💜' },
+  { id: 'anger', label: 'Anger Management', emoji: '😤' },
+  { id: 'sleep', label: 'Sleep Issues', emoji: '😴' },
+];
+
+const improvementGoals = [
+  { id: 'self_esteem', label: 'Self-Esteem', emoji: '💪' },
+  { id: 'confidence', label: 'Confidence', emoji: '✨' },
+  { id: 'boundaries', label: 'Setting Boundaries', emoji: '🚧' },
+  { id: 'relationships', label: 'Relationships', emoji: '❤️' },
+  { id: 'productivity', label: 'Productivity', emoji: '📈' },
+  { id: 'mindfulness', label: 'Mindfulness', emoji: '🧘' },
+  { id: 'self_care', label: 'Self-Care', emoji: '🛁' },
+  { id: 'emotional_regulation', label: 'Emotional Regulation', emoji: '🎭' },
+  { id: 'motivation', label: 'Motivation', emoji: '🔥' },
+  { id: 'gratitude', label: 'Gratitude', emoji: '🙏' },
+];
+
 export default function Onboarding() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [selectedGreeting, setSelectedGreeting] = useState('positive_quote');
   const [selectedModules, setSelectedModules] = useState(['tiktok', 'goals', 'wellness', 'journal']);
+  const [selectedStruggles, setSelectedStruggles] = useState([]);
+  const [selectedImprovements, setSelectedImprovements] = useState([]);
   const [selectedTimezone, setSelectedTimezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/New_York');
   const [themeData, setThemeData] = useState({
     theme_type: 'clean_white',
@@ -50,6 +78,18 @@ export default function Onboarding() {
       prev.includes(moduleId) 
         ? prev.filter(id => id !== moduleId)
         : [...prev, moduleId]
+    );
+  };
+
+  const toggleStruggle = (id) => {
+    setSelectedStruggles(prev => 
+      prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]
+    );
+  };
+
+  const toggleImprovement = (id) => {
+    setSelectedImprovements(prev => 
+      prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]
     );
   };
 
@@ -74,6 +114,8 @@ export default function Onboarding() {
         greeting_type: selectedGreeting,
         user_timezone: selectedTimezone,
         enabled_modules: selectedModules,
+        mental_health_struggles: selectedStruggles,
+        improvement_goals: selectedImprovements,
         accessibility_mode: 'standard',
         use_text_to_speech: false,
         enable_self_care_gating: false,
@@ -143,14 +185,14 @@ export default function Onboarding() {
           <CardContent className="px-6 pb-8">
             {/* Progress indicator */}
             <div className="flex justify-center mb-6">
-              {[1, 2, 3, 4].map(num => (
+              {[1, 2, 3, 4, 5].map(num => (
                 <div key={num} className="flex items-center">
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm ${
                     step >= num ? 'bg-purple-500 text-white' : 'bg-gray-200 text-gray-500'
                   }`}>
                     {num}
                   </div>
-                  {num < 4 && <div className={`w-10 h-1 mx-1 ${step > num ? 'bg-purple-500' : 'bg-gray-200'}`} />}
+                  {num < 5 && <div className={`w-8 h-1 mx-1 ${step > num ? 'bg-purple-500' : 'bg-gray-200'}`} />}
                 </div>
               ))}
             </div>
@@ -277,8 +319,86 @@ export default function Onboarding() {
               </motion.div>
             )}
 
-            {/* Step 4: Choose Greeting */}
+            {/* Step 4: Mental Health Focus */}
             {step === 4 && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+              >
+                <h3 className="text-xl font-bold mb-2 text-center">What are you working on?</h3>
+                <p className="text-gray-500 text-sm text-center mb-4">
+                  This helps us personalize your affirmations and support. 100% private. 💜
+                </p>
+                
+                <div className="space-y-4 max-h-[350px] overflow-y-auto pr-2">
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-700 mb-2">Things I'm working through...</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {struggles.map(item => (
+                        <button
+                          key={item.id}
+                          onClick={() => toggleStruggle(item.id)}
+                          className={`px-3 py-2 rounded-full border-2 text-sm transition-all ${
+                            selectedStruggles.includes(item.id)
+                              ? 'border-purple-500 bg-purple-100 text-purple-800'
+                              : 'border-gray-200 hover:border-purple-300'
+                          }`}
+                        >
+                          <span className="mr-1">{item.emoji}</span>
+                          {item.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-700 mb-2">Things I want to improve...</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {improvementGoals.map(item => (
+                        <button
+                          key={item.id}
+                          onClick={() => toggleImprovement(item.id)}
+                          className={`px-3 py-2 rounded-full border-2 text-sm transition-all ${
+                            selectedImprovements.includes(item.id)
+                              ? 'border-pink-500 bg-pink-100 text-pink-800'
+                              : 'border-gray-200 hover:border-pink-300'
+                          }`}
+                        >
+                          <span className="mr-1">{item.emoji}</span>
+                          {item.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <Alert className="mt-4 bg-purple-50 border-purple-200">
+                  <Heart className="w-4 h-4 text-purple-600" />
+                  <AlertDescription className="text-sm text-purple-800">
+                    You can skip this or update it anytime. We'll use this to give you relevant affirmations and support.
+                  </AlertDescription>
+                </Alert>
+
+                <div className="flex gap-3 mt-4">
+                  <Button 
+                    onClick={() => setStep(3)} 
+                    variant="outline"
+                    className="flex-1 h-11"
+                  >
+                    Back
+                  </Button>
+                  <Button 
+                    onClick={() => setStep(5)} 
+                    className="flex-1 bg-purple-600 hover:bg-purple-700 h-11"
+                  >
+                    Continue
+                  </Button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Step 5: Choose Greeting */}
+            {step === 5 && (
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -315,7 +435,7 @@ export default function Onboarding() {
                 </div>
                 <div className="flex gap-3 mt-6">
                   <Button 
-                    onClick={() => setStep(3)} 
+                    onClick={() => setStep(4)} 
                     variant="outline"
                     className="flex-1 h-11"
                   >
