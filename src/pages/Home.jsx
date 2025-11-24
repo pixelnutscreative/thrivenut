@@ -46,7 +46,8 @@ export default function Home() {
   const navigate = useNavigate();
 
   const handleGetStarted = async () => {
-    navigate(createPageUrl('Dashboard'));
+    // This will trigger login if not authenticated, then redirect to Dashboard
+    window.location.href = createPageUrl('Dashboard');
   };
 
   return (
