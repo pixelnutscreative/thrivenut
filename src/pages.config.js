@@ -21,6 +21,7 @@ import CareReminders from './pages/CareReminders';
 import People from './pages/People';
 import GoalSharing from './pages/GoalSharing';
 import NeurodivergentSettings from './pages/NeurodivergentSettings';
+import GiftScreenshotImport from './pages/GiftScreenshotImport';
 import __Layout from './Layout.jsx';
 
 
@@ -48,6 +49,7 @@ export const PAGES = {
     "People": People,
     "GoalSharing": GoalSharing,
     "NeurodivergentSettings": NeurodivergentSettings,
+    "GiftScreenshotImport": GiftScreenshotImport,
 }
 
 export const pagesConfig = {
