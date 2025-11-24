@@ -15,20 +15,30 @@ import {
   TrendingUp,
   Users,
   Video,
-  Pill
+  Pill,
+  Gift,
+  Brain,
+  Home
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const navItems = [
+  { name: 'Home', icon: Home, path: 'Home' },
   { name: 'Dashboard', icon: LayoutDashboard, path: 'Dashboard' },
   { name: 'TikTok Goals', icon: TrendingUp, path: 'TikTokGoals' },
   { name: 'TikTok Engagement', icon: Users, path: 'TikTokEngagement' },
   { name: 'Creator Calendar', icon: Video, path: 'LiveSchedule' },
   { name: 'Discover Creators', icon: Users, path: 'DiscoverCreators' },
+  { name: 'Gifter Manager', icon: Gift, path: 'GifterManager' },
+  { name: 'Gift Entry', icon: Gift, path: 'GiftEntry' },
+  { name: 'Weekly Summary', icon: Gift, path: 'WeeklySummary' },
+  { name: 'Gift Library', icon: Gift, path: 'GiftLibrary' },
   { name: 'Goals', icon: Target, path: 'Goals' },
-  { name: 'Wellness', icon: Heart, path: 'Wellness' },
-  { name: 'Supplements', icon: Pill, path: 'Supplements' },
-  { name: 'Medications', icon: Pill, path: 'Medications' },
+  { name: 'Wellness', icon: Heart, path: 'Wellness', subItems: [
+    { name: 'Supplements', icon: Pill, path: 'Supplements' },
+    { name: 'Medications', icon: Pill, path: 'Medications' },
+    { name: 'Mental Health', icon: Brain, path: 'MentalHealth' },
+  ]},
   { name: 'Journal', icon: BookOpen, path: 'Journal' },
   { name: 'Settings', icon: Settings, path: 'Settings' },
 ];
