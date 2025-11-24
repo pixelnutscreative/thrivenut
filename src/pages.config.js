@@ -1,4 +1,3 @@
-import Onboarding from './pages/Onboarding';
 import Dashboard from './pages/Dashboard';
 import Wellness from './pages/Wellness';
 import Journal from './pages/Journal';
@@ -26,7 +25,6 @@ import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "Onboarding": Onboarding,
     "Dashboard": Dashboard,
     "Wellness": Wellness,
     "Journal": Journal,
@@ -53,7 +51,7 @@ export const PAGES = {
 }
 
 export const pagesConfig = {
-    mainPage: "Home",
+    mainPage: "Dashboard",
     Pages: PAGES,
     Layout: __Layout,
 };
