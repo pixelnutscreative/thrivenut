@@ -54,10 +54,26 @@ export default function Layout({ children, currentPageName }) {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
+  const [expandedSections, setExpandedSections] = useState(['TikTok', 'Gifter Songs', 'Wellness']);
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
   }, []);
+
+  const toggleSection = (sectionName) => {
+    setExpandedSections(prev => 
+      prev.includes(sectionName) 
+        ? prev.filter(s => s !== sectionName)
+        : [...prev, sectionName]
+    );
+  };
+
+  const isSubItemActive = (item) => {
+    if (item.subItems) {
+      return item.subItems.some(sub => sub.path === currentPageName);
+    }
+    return false;
+  };
 
   const handleLogout = async () => {
     await base44.auth.logout();
