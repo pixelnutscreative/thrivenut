@@ -233,6 +233,21 @@ export default function Wellness() {
           />
         </motion.div>
 
+        {/* Elimination Tracker */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.07 }}
+        >
+          <EliminationTracker
+            itemsToEliminate={preferences?.items_to_eliminate || []}
+            eliminationGrades={selfCareLog?.elimination_grades || []}
+            onUpdateGrades={(grades) => eliminationMutation.mutate(grades)}
+            onUpdateItems={(items) => updatePreferencesMutation.mutate(items)}
+            showItemManager={true}
+          />
+        </motion.div>
+
         {/* Water Intake */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
