@@ -5,10 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Loader2, Save, User, Image as ImageIcon, Palette } from 'lucide-react';
+import { Loader2, Save, User, Image as ImageIcon, Palette, Eye } from 'lucide-react';
 import { motion } from 'framer-motion';
 import ThemeSelector from '../components/onboarding/ThemeSelector';
 import ImageUploader from '../components/settings/ImageUploader';
+import SpeakButton, { speak } from '../components/accessibility/SpeakButton';
 
 const modules = [
   { id: 'tiktok', name: 'TikTok Content Goals', description: 'Track posts, lives, and engagement' },
@@ -21,6 +22,13 @@ const greetingTypes = [
   { id: 'scripture', name: 'Scripture', description: 'Daily Bible verse' },
   { id: 'positive_quote', name: 'Positive Quote', description: 'Uplifting quotes' },
   { id: 'motivational', name: 'Motivational', description: 'Get pumped up!' }
+];
+
+const accessibilityModes = [
+  { id: 'standard', name: 'Standard', description: 'Default text and contrast' },
+  { id: 'high_contrast', name: 'High Contrast', description: 'Enhanced contrast for better visibility' },
+  { id: 'large_text', name: 'Large Text', description: 'Larger font sizes throughout' },
+  { id: 'extra_large_text', name: 'Extra Large Text', description: 'Maximum text size for readability' }
 ];
 
 export default function Settings() {
@@ -49,7 +57,9 @@ export default function Settings() {
     enabled_modules: ['tiktok', 'goals', 'wellness', 'journal'],
     profile_image_url: null,
     header_image_url: null,
-    background_image_url: null
+    background_image_url: null,
+    accessibility_mode: 'standard',
+    use_text_to_speech: false
   });
 
   useEffect(() => {
@@ -65,7 +75,9 @@ export default function Settings() {
         enabled_modules: preferences.enabled_modules || ['tiktok', 'goals', 'wellness', 'journal'],
         profile_image_url: preferences.profile_image_url || null,
         header_image_url: preferences.header_image_url || null,
-        background_image_url: preferences.background_image_url || null
+        background_image_url: preferences.background_image_url || null,
+        accessibility_mode: preferences.accessibility_mode || 'standard',
+        use_text_to_speech: preferences.use_text_to_speech || false
       });
     }
   }, [preferences]);
@@ -229,11 +241,98 @@ export default function Settings() {
           </Card>
         </motion.div>
 
-        {/* Enabled Modules */}
+        {/* Accessibility Settings */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Eye className="w-5 h-5" />
+                Accessibility
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Visual Mode */}
+              <div className="space-y-4">
+                <h4 className="font-semibold text-lg">Visual Mode</h4>
+                {accessibilityModes.map(mode => (
+                  <div
+                    key={mode.id}
+                    onClick={() => {
+                      setFormData({ ...formData, accessibility_mode: mode.id });
+                      if (formData.use_text_to_speech) {
+                        speak(`${mode.name}. ${mode.description}`);
+                      }
+                    }}
+                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                      formData.accessibility_mode === mode.id
+                        ? 'border-purple-500 bg-purple-50'
+                        : 'border-gray-200 hover:border-purple-300'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                          formData.accessibility_mode === mode.id
+                            ? 'border-purple-500'
+                            : 'border-gray-300'
+                        }`}>
+                          {formData.accessibility_mode === mode.id && (
+                            <div className="w-3 h-3 rounded-full bg-purple-500" />
+                          )}
+                        </div>
+                        <div>
+                          <h4 className="font-semibold">{mode.name}</h4>
+                          <p className="text-sm text-gray-600">{mode.description}</p>
+                        </div>
+                      </div>
+                      {formData.use_text_to_speech && (
+                        <SpeakButton text={`${mode.name}. ${mode.description}`} />
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Text to Speech Toggle */}
+              <div className="pt-4 border-t">
+                <div
+                  onClick={() => {
+                    const newValue = !formData.use_text_to_speech;
+                    setFormData({ ...formData, use_text_to_speech: newValue });
+                    if (newValue) {
+                      speak('Text to speech enabled. Click the speaker icon next to any option to hear it read aloud.');
+                    }
+                  }}
+                  className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                    formData.use_text_to_speech
+                      ? 'border-purple-500 bg-purple-50'
+                      : 'border-gray-200 hover:border-purple-300'
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <Checkbox checked={formData.use_text_to_speech} />
+                    <div className="flex-1">
+                      <h4 className="font-semibold">Enable Text-to-Speech</h4>
+                      <p className="text-sm text-gray-600">
+                        Hear options read aloud when you click on them or use the speaker button
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Enabled Modules */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
         >
           <Card>
             <CardHeader>
@@ -243,19 +342,30 @@ export default function Settings() {
               {modules.map(module => (
                 <div
                   key={module.id}
-                  onClick={() => toggleModule(module.id)}
+                  onClick={() => {
+                    toggleModule(module.id);
+                    if (formData.use_text_to_speech) {
+                      const action = formData.enabled_modules.includes(module.id) ? 'disabled' : 'enabled';
+                      speak(`${module.name} ${action}`);
+                    }
+                  }}
                   className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
                     formData.enabled_modules.includes(module.id)
                       ? 'border-purple-500 bg-purple-50'
                       : 'border-gray-200 hover:border-purple-300'
                   }`}
                 >
-                  <div className="flex items-start gap-3">
-                    <Checkbox checked={formData.enabled_modules.includes(module.id)} />
-                    <div>
-                      <h4 className="font-semibold">{module.name}</h4>
-                      <p className="text-sm text-gray-600">{module.description}</p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-start gap-3">
+                      <Checkbox checked={formData.enabled_modules.includes(module.id)} />
+                      <div>
+                        <h4 className="font-semibold">{module.name}</h4>
+                        <p className="text-sm text-gray-600">{module.description}</p>
+                      </div>
                     </div>
+                    {formData.use_text_to_speech && (
+                      <SpeakButton text={`${module.name}. ${module.description}`} />
+                    )}
                   </div>
                 </div>
               ))}
