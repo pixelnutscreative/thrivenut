@@ -9,6 +9,8 @@ import Settings from './pages/Settings';
 import TikTokEngagement from './pages/TikTokEngagement';
 import LiveSchedule from './pages/LiveSchedule';
 import DiscoverCreators from './pages/DiscoverCreators';
+import Supplements from './pages/Supplements';
+import Medications from './pages/Medications';
 import __Layout from './Layout.jsx';
 
 
@@ -24,6 +26,8 @@ export const PAGES = {
     "TikTokEngagement": TikTokEngagement,
     "LiveSchedule": LiveSchedule,
     "DiscoverCreators": DiscoverCreators,
+    "Supplements": Supplements,
+    "Medications": Medications,
 }
 
 export const pagesConfig = {
