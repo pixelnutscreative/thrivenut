@@ -5,6 +5,7 @@ import Journal from './pages/Journal';
 import Goals from './pages/Goals';
 import TikTokGoals from './pages/TikTokGoals';
 import Home from './pages/Home';
+import Settings from './pages/Settings';
 import __Layout from './Layout.jsx';
 
 
@@ -16,6 +17,7 @@ export const PAGES = {
     "Goals": Goals,
     "TikTokGoals": TikTokGoals,
     "Home": Home,
+    "Settings": Settings,
 }
 
 export const pagesConfig = {

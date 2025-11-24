@@ -22,6 +22,7 @@ const navItems = [
   { name: 'Goals', icon: Target, path: 'Goals' },
   { name: 'Wellness', icon: Heart, path: 'Wellness' },
   { name: 'Journal', icon: BookOpen, path: 'Journal' },
+  { name: 'Settings', icon: Settings, path: 'Settings' },
 ];
 
 export default function Layout({ children, currentPageName }) {
