@@ -1,28 +1,49 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '../../utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles, ShowerHead, Utensils, Pill, Droplet, Sun } from 'lucide-react';
+import { Sparkles, ShowerHead, Utensils, Pill, Droplet, Sun, Dumbbell, BookOpen, ExternalLink } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-const selfCareTasks = [
-  { id: 'shower_completed', label: 'Take a shower', icon: ShowerHead, color: 'text-blue-500' },
-  { id: 'breakfast_completed', label: 'Eat breakfast', icon: Utensils, color: 'text-orange-500' },
-  { id: 'lunch_completed', label: 'Eat lunch', icon: Utensils, color: 'text-green-500' },
-  { id: 'dinner_completed', label: 'Eat dinner', icon: Utensils, color: 'text-purple-500' },
-  { id: 'brushed_teeth_morning', label: 'Brush teeth (AM)', icon: Sparkles, color: 'text-cyan-500' },
-  { id: 'brushed_teeth_night', label: 'Brush teeth (PM)', icon: Sparkles, color: 'text-indigo-500' },
-  { id: 'took_medications', label: 'Take medications', icon: Pill, color: 'text-pink-500' },
-  { id: 'drank_water', label: 'Drink water', icon: Droplet, color: 'text-sky-500' },
-];
+const mealTips = {
+  breakfast_completed: '👑 Eat like a king',
+  lunch_completed: '🤴 Eat like a prince', 
+  dinner_completed: '🥄 Eat like a pauper'
+};
 
 export default function SelfCareChecklist({ 
   selfCareLog, 
   onToggleTask, 
   requiredTasks = [],
   showOnlyRequired = false,
-  compact = false 
+  compact = false,
+  preferences = {},
+  medicationsCount = 0,
+  supplementsCount = 0
 }) {
+  const baseTasks = [
+    { id: 'shower_completed', label: 'Take a shower', icon: ShowerHead, color: 'text-blue-500' },
+    { id: 'breakfast_completed', label: mealTips.breakfast_completed, icon: Utensils, color: 'text-orange-500' },
+    { id: 'lunch_completed', label: mealTips.lunch_completed, icon: Utensils, color: 'text-green-500' },
+    { id: 'dinner_completed', label: mealTips.dinner_completed, icon: Utensils, color: 'text-purple-500' },
+    { id: 'brushed_teeth_morning', label: 'Brush teeth (AM)', icon: Sparkles, color: 'text-cyan-500' },
+    { id: 'brushed_teeth_night', label: 'Brush teeth (PM)', icon: Sparkles, color: 'text-indigo-500' },
+    { id: 'took_medications', label: 'Take medications', icon: Pill, color: 'text-pink-500', link: 'Medications', count: medicationsCount },
+    { id: 'took_supplements', label: 'Take supplements', icon: Pill, color: 'text-amber-500', link: 'Supplements', count: supplementsCount },
+    { id: 'drank_water', label: 'Drink water', icon: Droplet, color: 'text-sky-500' },
+    { id: 'physical_activity', label: 'Physical activity', icon: Dumbbell, color: 'text-red-500' },
+  ];
+
+  // Add Bible reading tasks if user is a believer
+  const bibleTasks = preferences?.is_bible_believer ? [
+    { id: 'bible_reading_morning', label: 'Morning Bible reading', icon: BookOpen, color: 'text-amber-600' },
+    { id: 'bible_reading_night', label: 'Night Bible reading', icon: BookOpen, color: 'text-indigo-600' },
+  ] : [];
+
+  const selfCareTasks = [...baseTasks, ...bibleTasks];
+
   const tasksToShow = showOnlyRequired 
     ? selfCareTasks.filter(t => requiredTasks.includes(t.id.replace('_completed', '').replace('brushed_teeth_morning', 'brush_teeth').replace('brushed_teeth_night', 'brush_teeth')))
     : selfCareTasks;
@@ -101,19 +122,39 @@ export default function SelfCareChecklist({
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.05 }}
-                onClick={() => onToggleTask(task.id, !isComplete)}
-                className={`flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all ${
+                className={`flex items-center gap-4 p-4 rounded-xl transition-all ${
                   isComplete 
                     ? 'bg-green-100 border-2 border-green-300' 
                     : 'bg-white border-2 border-gray-100 hover:border-amber-300'
                 }`}
               >
-                <Checkbox checked={isComplete} className="pointer-events-none" />
-                <Icon className={`w-6 h-6 ${isComplete ? 'text-green-500' : task.color}`} />
-                <span className={`flex-1 font-medium ${isComplete ? 'text-green-700 line-through' : 'text-gray-700'}`}>
-                  {task.label}
-                </span>
-                {isComplete && <span className="text-green-500">✓</span>}
+                <div 
+                  className="flex items-center gap-4 flex-1 cursor-pointer"
+                  onClick={() => onToggleTask(task.id, !isComplete)}
+                >
+                  <Checkbox checked={isComplete} className="pointer-events-none" />
+                  <Icon className={`w-6 h-6 ${isComplete ? 'text-green-500' : task.color}`} />
+                  <div className="flex-1">
+                    <span className={`font-medium ${isComplete ? 'text-green-700 line-through' : 'text-gray-700'}`}>
+                      {task.label}
+                    </span>
+                    {task.count > 0 && (
+                      <span className="ml-2 text-xs text-gray-500">({task.count} items)</span>
+                    )}
+                  </div>
+                </div>
+                
+                {task.link && (
+                  <Link 
+                    to={createPageUrl(task.link)}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    title={`Go to ${task.link}`}
+                  >
+                    <ExternalLink className="w-4 h-4 text-gray-400" />
+                  </Link>
+                )}
+                
+                {isComplete && !task.link && <span className="text-green-500">✓</span>}
               </motion.div>
             );
           })}
