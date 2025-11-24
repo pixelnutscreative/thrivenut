@@ -12,6 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Plus, ExternalLink, Trash2, Video, Calendar as CalendarIcon, Heart, Swords, Zap, ShoppingBag, CalendarPlus } from 'lucide-react';
 import { motion } from 'framer-motion';
+import TimezoneSelector from '../components/shared/TimezoneSelector';
 
 const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -29,10 +30,13 @@ const liveTypeConfig = {
 export default function LiveSchedule() {
   const queryClient = useQueryClient();
   const [showModal, setShowModal] = useState(false);
+  const [user, setUser] = useState(null);
+  const [userTimezone, setUserTimezone] = useState('America/New_York');
   const [formData, setFormData] = useState({
     host_username: '',
     recurring_days: [],
     time: '',
+    creator_timezone: 'America/New_York',
     live_types: ['regular'],
     custom_type: '',
     priority: 5,
@@ -40,6 +44,19 @@ export default function LiveSchedule() {
     specific_date: '',
     notes: ''
   });
+
+  // Fetch user and timezone preferences
+  React.useEffect(() => {
+    const fetchUser = async () => {
+      const userData = await base44.auth.me();
+      setUser(userData);
+      const prefs = await base44.entities.UserPreferences.filter({ user_email: userData.email });
+      if (prefs[0]?.user_timezone) {
+        setUserTimezone(prefs[0].user_timezone);
+      }
+    };
+    fetchUser();
+  }, []);
 
   const { data: schedules = [] } = useQuery({
     queryKey: ['liveSchedules'],
@@ -74,6 +91,7 @@ export default function LiveSchedule() {
       host_username: '',
       recurring_days: [],
       time: '',
+      creator_timezone: 'America/New_York',
       live_types: ['regular'],
       custom_type: '',
       priority: 5,
@@ -81,6 +99,58 @@ export default function LiveSchedule() {
       specific_date: '',
       notes: ''
     });
+  };
+
+  // Convert time from creator timezone to user timezone
+  const convertTime = (timeStr, fromTz, toTz) => {
+    if (!timeStr) return '';
+    
+    try {
+      const timeParts = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+      if (!timeParts) return timeStr;
+      
+      let hours = parseInt(timeParts[1]);
+      const minutes = parseInt(timeParts[2]);
+      const period = timeParts[3].toUpperCase();
+      
+      if (period === 'PM' && hours !== 12) hours += 12;
+      if (period === 'AM' && hours === 12) hours = 0;
+      
+      // Create a date object in the creator's timezone
+      const date = new Date();
+      const isoString = `${date.toISOString().split('T')[0]}T${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`;
+      
+      const creatorTime = new Date(isoString + 'Z');
+      
+      // Get offset differences
+      const creatorOffset = getTimezoneOffset(fromTz);
+      const userOffset = getTimezoneOffset(toTz);
+      const offsetDiff = userOffset - creatorOffset;
+      
+      const convertedTime = new Date(creatorTime.getTime() + offsetDiff * 60000);
+      
+      let convertedHours = convertedTime.getUTCHours();
+      const convertedMinutes = convertedTime.getUTCMinutes();
+      const convertedPeriod = convertedHours >= 12 ? 'PM' : 'AM';
+      
+      if (convertedHours === 0) convertedHours = 12;
+      else if (convertedHours > 12) convertedHours -= 12;
+      
+      return `${convertedHours}:${convertedMinutes.toString().padStart(2, '0')} ${convertedPeriod}`;
+    } catch (e) {
+      return timeStr;
+    }
+  };
+
+  const getTimezoneOffset = (tz) => {
+    try {
+      const date = new Date();
+      const utcDate = new Date(date.toLocaleString('en-US', { timeZone: 'UTC' }));
+      const tzDate = new Date(date.toLocaleString('en-US', { timeZone: tz }));
+      return (tzDate.getTime() - utcDate.getTime()) / 60000;
+    } catch (e) {
+      return 0;
+    }
   };
 
   const handleSubmit = () => {
@@ -263,7 +333,9 @@ export default function LiveSchedule() {
                                 </div>
                                 
                                 {schedule.time && (
-                                  <p className="text-xs text-gray-600 ml-6">{schedule.time}</p>
+                                  <p className="text-xs text-gray-600 ml-6">
+                                    {convertTime(schedule.time, schedule.creator_timezone || 'America/New_York', userTimezone)}
+                                  </p>
                                 )}
                                 {schedule.notes && (
                                   <p className="text-xs text-gray-500 italic mt-1 ml-6">{schedule.notes}</p>
@@ -358,7 +430,9 @@ export default function LiveSchedule() {
                               <p className="text-sm text-gray-600">{schedule.specific_date}</p>
                             )}
                             {schedule.time && (
-                              <p className="text-sm text-gray-600">{schedule.time}</p>
+                              <p className="text-sm text-gray-600">
+                                {convertTime(schedule.time, schedule.creator_timezone || 'America/New_York', userTimezone)}
+                              </p>
                             )}
                             {schedule.notes && (
                               <p className="text-sm text-gray-500 italic mt-2">{schedule.notes}</p>
@@ -510,6 +584,12 @@ export default function LiveSchedule() {
                 onChange={(e) => setFormData({ ...formData, time: e.target.value })}
               />
             </div>
+
+            <TimezoneSelector
+              label="Creator's Timezone"
+              value={formData.creator_timezone}
+              onChange={(value) => setFormData({ ...formData, creator_timezone: value })}
+            />
 
             <div className="space-y-2">
               <Label htmlFor="notes">Notes (Optional)</Label>

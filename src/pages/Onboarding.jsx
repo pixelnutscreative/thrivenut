@@ -9,6 +9,7 @@ import { Heart, Target, Sparkles, BookOpen, Home, TrendingUp } from 'lucide-reac
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import ThemeSelector from '../components/onboarding/ThemeSelector';
+import TimezoneSelector from '../components/shared/TimezoneSelector';
 
 
 
@@ -30,6 +31,7 @@ export default function Onboarding() {
   const [step, setStep] = useState(1);
   const [selectedGreeting, setSelectedGreeting] = useState('positive_quote');
   const [selectedModules, setSelectedModules] = useState(['tiktok', 'goals', 'wellness', 'journal']);
+  const [selectedTimezone, setSelectedTimezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/New_York');
   const [themeData, setThemeData] = useState({
     theme_type: 'clean_white',
     metal_accent: 'gold'
@@ -53,6 +55,7 @@ export default function Onboarding() {
         user_email: user.email,
         ...themeData,
         greeting_type: selectedGreeting,
+        user_timezone: selectedTimezone,
         enabled_modules: selectedModules,
         accessibility_mode: 'standard',
         use_text_to_speech: false,
@@ -96,14 +99,14 @@ export default function Onboarding() {
           <CardContent className="px-8 pb-10">
             {/* Progress indicator */}
             <div className="flex justify-center mb-8">
-              {[1, 2, 3].map(num => (
+              {[1, 2, 3, 4].map(num => (
                 <div key={num} className="flex items-center">
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
                     step >= num ? 'bg-purple-500 text-white' : 'bg-gray-200 text-gray-500'
                   }`}>
                     {num}
                   </div>
-                  {num < 3 && <div className={`w-16 h-1 mx-2 ${step > num ? 'bg-purple-500' : 'bg-gray-200'}`} />}
+                  {num < 4 && <div className={`w-12 h-1 mx-2 ${step > num ? 'bg-purple-500' : 'bg-gray-200'}`} />}
                 </div>
               ))}
             </div>
@@ -177,8 +180,40 @@ export default function Onboarding() {
               </motion.div>
             )}
 
-            {/* Step 3: Choose Greeting */}
+            {/* Step 3: Choose Timezone */}
             {step === 3 && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+              >
+                <h3 className="text-2xl font-bold mb-6 text-center">What's your timezone?</h3>
+                <p className="text-gray-600 text-center mb-6">
+                  We'll show all live times in your timezone, even if creators post in theirs.
+                </p>
+                <TimezoneSelector 
+                  value={selectedTimezone}
+                  onChange={setSelectedTimezone}
+                />
+                <div className="flex gap-3 mt-8">
+                  <Button 
+                    onClick={() => setStep(2)} 
+                    variant="outline"
+                    className="flex-1 h-12"
+                  >
+                    Back
+                  </Button>
+                  <Button 
+                    onClick={() => setStep(4)} 
+                    className="flex-1 bg-purple-600 hover:bg-purple-700 h-12 text-lg"
+                  >
+                    Continue
+                  </Button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Step 4: Choose Greeting */}
+            {step === 4 && (
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -215,7 +250,7 @@ export default function Onboarding() {
                 </div>
                 <div className="flex gap-3 mt-8">
                   <Button 
-                    onClick={() => setStep(2)} 
+                    onClick={() => setStep(3)} 
                     variant="outline"
                     className="flex-1 h-12"
                   >
@@ -229,8 +264,8 @@ export default function Onboarding() {
                     {loading ? 'Setting up...' : "Let's Go! 🎉"}
                   </Button>
                 </div>
-              </motion.div>
-            )}
+                </motion.div>
+                )}
           </CardContent>
         </Card>
       </motion.div>
