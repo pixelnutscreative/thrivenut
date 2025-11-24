@@ -20,7 +20,10 @@ const liveTypeConfig = {
   pop_up: { label: 'Pop-Up', icon: Zap, color: 'bg-yellow-100 text-yellow-700' },
   battle: { label: 'Battle', icon: Swords, color: 'bg-red-100 text-red-700' },
   tt_shop: { label: 'TT Shop', icon: ShoppingBag, color: 'bg-green-100 text-green-700' },
-  daily_heart_me: { label: 'Daily Heart Me', icon: Heart, color: 'bg-orange-100 text-orange-700' }
+  daily_heart_me: { label: 'Daily Heart Me', icon: Heart, color: 'bg-orange-100 text-orange-700' },
+  engagement_live: { label: 'Engagement', icon: Heart, color: 'bg-pink-100 text-pink-700' },
+  multi_guest: { label: 'Multi-Guest', icon: Video, color: 'bg-blue-100 text-blue-700' },
+  co_host: { label: 'Co-Host', icon: Video, color: 'bg-cyan-100 text-cyan-700' }
 };
 
 export default function LiveSchedule() {
@@ -30,7 +33,8 @@ export default function LiveSchedule() {
     host_username: '',
     recurring_days: [],
     time: '',
-    live_type: 'regular',
+    live_types: ['regular'],
+    custom_type: '',
     priority: 5,
     is_recurring: true,
     specific_date: '',
@@ -70,7 +74,8 @@ export default function LiveSchedule() {
       host_username: '',
       recurring_days: [],
       time: '',
-      live_type: 'regular',
+      live_types: ['regular'],
+      custom_type: '',
       priority: 5,
       is_recurring: true,
       specific_date: '',
@@ -97,6 +102,15 @@ export default function LiveSchedule() {
     }));
   };
 
+  const toggleLiveType = (type) => {
+    setFormData(prev => ({
+      ...prev,
+      live_types: prev.live_types.includes(type)
+        ? prev.live_types.filter(t => t !== type)
+        : [...prev.live_types, type]
+    }));
+  };
+
   const openTikTok = (username) => {
     window.open(`https://tiktok.com/@${username}`, '_blank');
   };
@@ -120,7 +134,8 @@ export default function LiveSchedule() {
     const startDateTime = `${startDate.replace(/-/g, '')}T${hours.toString().padStart(2, '0')}${minutes.toString().padStart(2, '0')}00`;
     const endDateTime = `${startDate.replace(/-/g, '')}T${(hours + 1).toString().padStart(2, '0')}${minutes.toString().padStart(2, '0')}00`;
     
-    const liveTypeLabel = liveTypeConfig[schedule.live_type]?.label || 'Live';
+    const liveTypes = schedule.live_types || [schedule.live_type] || ['regular'];
+    const liveTypeLabel = liveTypes.map(type => liveTypeConfig[type]?.label).filter(Boolean).join(' + ') || 'Live';
     const icsContent = [
       'BEGIN:VCALENDAR',
       'VERSION:2.0',
@@ -203,8 +218,8 @@ export default function LiveSchedule() {
                       <p className="text-sm text-gray-400 italic">No lives scheduled</p>
                     ) : (
                       schedulesByDay[day].map((schedule) => {
-                        const typeConfig = liveTypeConfig[schedule.live_type] || liveTypeConfig.regular;
-                        const TypeIcon = typeConfig.icon;
+                        const liveTypes = schedule.live_types || [schedule.live_type] || ['regular'];
+                        const hasHeartMe = liveTypes.includes('daily_heart_me');
                         
                         return (
                           <div
@@ -219,11 +234,9 @@ export default function LiveSchedule() {
                             <div className="flex items-start gap-2 pr-8">
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-1">
-                                  <TypeIcon 
-                                    className={`w-4 h-4 flex-shrink-0 ${
-                                      schedule.live_type === 'daily_heart_me' ? 'text-orange-500' : 'text-purple-600'
-                                    }`} 
-                                  />
+                                  {hasHeartMe && (
+                                    <Heart className="w-4 h-4 flex-shrink-0 text-orange-500" />
+                                  )}
                                   <span 
                                     className="font-semibold text-sm cursor-pointer hover:text-purple-600 truncate"
                                     onClick={() => openTikTok(schedule.host_username)}
@@ -233,9 +246,18 @@ export default function LiveSchedule() {
                                 </div>
                                 
                                 <div className="flex flex-wrap gap-1 mb-1">
-                                  {schedule.live_type !== 'regular' && (
-                                    <Badge className={`text-xs ${typeConfig.color}`}>
-                                      {typeConfig.label}
+                                  {liveTypes.filter(t => t !== 'regular').map(type => {
+                                    const typeConfig = liveTypeConfig[type];
+                                    if (!typeConfig) return null;
+                                    return (
+                                      <Badge key={type} className={`text-xs ${typeConfig.color}`}>
+                                        {typeConfig.label}
+                                      </Badge>
+                                    );
+                                  })}
+                                  {schedule.custom_type && (
+                                    <Badge className="text-xs bg-gray-100 text-gray-700">
+                                      {schedule.custom_type}
                                     </Badge>
                                   )}
                                 </div>
@@ -285,8 +307,8 @@ export default function LiveSchedule() {
             <h2 className="text-xl font-bold text-gray-800">Upcoming One-Time Lives</h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
               {oneTimeLives.map((schedule, index) => {
-                const typeConfig = liveTypeConfig[schedule.live_type] || liveTypeConfig.regular;
-                const TypeIcon = typeConfig.icon;
+                const liveTypes = schedule.live_types || [schedule.live_type] || ['regular'];
+                const hasHeartMe = liveTypes.includes('daily_heart_me');
                 
                 return (
                   <motion.div
@@ -304,11 +326,9 @@ export default function LiveSchedule() {
                         <div className="flex items-start pr-10">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
-                              <TypeIcon 
-                                className={`w-4 h-4 ${
-                                  schedule.live_type === 'daily_heart_me' ? 'text-orange-500' : 'text-pink-600'
-                                }`} 
-                              />
+                              {hasHeartMe && (
+                                <Heart className="w-4 h-4 text-orange-500" />
+                              )}
                               <span 
                                 className="font-semibold cursor-pointer hover:text-purple-600"
                                 onClick={() => openTikTok(schedule.host_username)}
@@ -317,11 +337,22 @@ export default function LiveSchedule() {
                               </span>
                             </div>
                             
-                            {schedule.live_type !== 'regular' && (
-                              <Badge className={`text-xs mb-2 ${typeConfig.color}`}>
-                                {typeConfig.label}
-                              </Badge>
-                            )}
+                            <div className="flex flex-wrap gap-1 mb-2">
+                              {liveTypes.filter(t => t !== 'regular').map(type => {
+                                const typeConfig = liveTypeConfig[type];
+                                if (!typeConfig) return null;
+                                return (
+                                  <Badge key={type} className={`text-xs ${typeConfig.color}`}>
+                                    {typeConfig.label}
+                                  </Badge>
+                                );
+                              })}
+                              {schedule.custom_type && (
+                                <Badge className="text-xs bg-gray-100 text-gray-700">
+                                  {schedule.custom_type}
+                                </Badge>
+                              )}
+                            </div>
                             
                             {schedule.specific_date && (
                               <p className="text-sm text-gray-600">{schedule.specific_date}</p>
@@ -382,22 +413,35 @@ export default function LiveSchedule() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="liveType">Live Type</Label>
-              <Select
-                value={formData.live_type}
-                onValueChange={(value) => setFormData({ ...formData, live_type: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="regular">Regular Live</SelectItem>
-                  <SelectItem value="pop_up">Pop-Up Live</SelectItem>
-                  <SelectItem value="battle">Battle</SelectItem>
-                  <SelectItem value="tt_shop">TT Shop Live</SelectItem>
-                  <SelectItem value="daily_heart_me">Daily Heart Me 🧡</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label>Live Types (select all that apply)</Label>
+              <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto">
+                {Object.entries(liveTypeConfig).map(([key, config]) => (
+                  <div
+                    key={key}
+                    onClick={() => toggleLiveType(key)}
+                    className={`p-2 rounded-lg border-2 cursor-pointer transition-all text-sm ${
+                      formData.live_types.includes(key)
+                        ? 'border-purple-500 bg-purple-50'
+                        : 'border-gray-200 hover:border-purple-300'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Checkbox checked={formData.live_types.includes(key)} />
+                      <span>{config.label}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="customType">Custom Type (Optional)</Label>
+              <Input
+                id="customType"
+                placeholder="e.g., Collab, Giveaway, etc."
+                value={formData.custom_type}
+                onChange={(e) => setFormData({ ...formData, custom_type: e.target.value })}
+              />
             </div>
 
             <div className="space-y-2">
