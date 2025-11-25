@@ -87,6 +87,34 @@ export default function Layout({ children, currentPageName }) {
     base44.auth.me().then(setUser).catch(() => {});
   }, []);
 
+  const { data: preferences } = useQuery({
+    queryKey: ['preferences', user?.email],
+    queryFn: async () => {
+      const prefs = await base44.entities.UserPreferences.filter({ user_email: user.email }, '-updated_date');
+      return prefs[0] || null;
+    },
+    enabled: !!user,
+  });
+
+  const enabledModules = preferences?.enabled_modules || ['tiktok', 'gifter', 'goals', 'wellness', 'supplements', 'medications', 'pets', 'care_reminders', 'people', 'journal', 'mental_health'];
+
+  // Filter nav items based on enabled modules
+  const navItems = allNavItems.filter(item => {
+    if (item.alwaysShow) return true;
+    if (item.moduleId && !enabledModules.includes(item.moduleId)) return false;
+    return true;
+  }).map(item => {
+    // Filter sub-items too
+    if (item.subItems) {
+      const filteredSubItems = item.subItems.filter(sub => {
+        if (!sub.moduleId) return true;
+        return enabledModules.includes(sub.moduleId);
+      });
+      return { ...item, subItems: filteredSubItems };
+    }
+    return item;
+  });
+
   const toggleSection = (sectionName) => {
     setExpandedSections(prev => 
       prev.includes(sectionName) 
