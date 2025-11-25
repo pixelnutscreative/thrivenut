@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Upload, Loader2, CheckCircle, Clock, XCircle, Send, Phone } from 'lucide-react';
+import { Upload, Loader2, CheckCircle, Clock, XCircle, Send, Phone, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function SuperFanAccess() {
@@ -14,6 +14,9 @@ export default function SuperFanAccess() {
   const [uploading, setUploading] = useState(false);
   const [tiktokUsername, setTiktokUsername] = useState('');
   const [screenshotUrl, setScreenshotUrl] = useState('');
+  const [checkingUsername, setCheckingUsername] = useState(false);
+  const [usernameChecked, setUsernameChecked] = useState(false);
+  const [isPreApproved, setIsPreApproved] = useState(false);
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -37,6 +40,11 @@ export default function SuperFanAccess() {
     enabled: !!user,
   });
 
+  const { data: preApprovedList = [] } = useQuery({
+    queryKey: ['preApprovedSuperFans'],
+    queryFn: () => base44.entities.PreApprovedSuperFan.list(),
+  });
+
   const submitRequestMutation = useMutation({
     mutationFn: async (data) => {
       return await base44.entities.SuperFanRequest.create(data);
@@ -47,6 +55,49 @@ export default function SuperFanAccess() {
       setTiktokUsername('');
     },
   });
+
+  const autoApproveMutation = useMutation({
+    mutationFn: async () => {
+      // Update or create user preferences with TikTok access
+      const cleanUsername = tiktokUsername.replace('@', '').trim().toLowerCase();
+      
+      if (preferences) {
+        await base44.entities.UserPreferences.update(preferences.id, {
+          tiktok_access_approved: true,
+          tiktok_username: cleanUsername
+        });
+      } else {
+        await base44.entities.UserPreferences.create({
+          user_email: user.email,
+          tiktok_access_approved: true,
+          tiktok_username: cleanUsername,
+          onboarding_completed: false
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['preferences'] });
+    },
+  });
+
+  const checkUsername = () => {
+    if (!tiktokUsername) return;
+    
+    setCheckingUsername(true);
+    const cleanUsername = tiktokUsername.replace('@', '').trim().toLowerCase();
+    
+    // Check if username is in pre-approved list
+    const found = preApprovedList.some(p => p.tiktok_username?.toLowerCase() === cleanUsername);
+    
+    setIsPreApproved(found);
+    setUsernameChecked(true);
+    setCheckingUsername(false);
+    
+    if (found) {
+      // Auto-approve!
+      autoApproveMutation.mutate();
+    }
+  };
 
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -168,61 +219,108 @@ export default function SuperFanAccess() {
         {(!existingRequest || existingRequest.status === 'denied') && (
           <Card>
             <CardHeader>
-              <CardTitle>Submit SuperFan Proof</CardTitle>
-              <CardDescription>Upload a screenshot showing your active SuperFan subscription</CardDescription>
+              <CardTitle>Check Your SuperFan Status</CardTitle>
+              <CardDescription>Enter your TikTok username to check if you're already approved</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Step 1: Check Username */}
               <div className="space-y-2">
                 <Label>Your TikTok Username</Label>
-                <Input
-                  placeholder="@username"
-                  value={tiktokUsername}
-                  onChange={(e) => setTiktokUsername(e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>SuperFan Screenshot</Label>
-                <div 
-                  className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-purple-400 transition-colors cursor-pointer"
-                  onClick={() => document.getElementById('screenshot-upload').click()}
-                >
-                  {uploading ? (
-                    <Loader2 className="w-8 h-8 animate-spin text-purple-600 mx-auto" />
-                  ) : screenshotUrl ? (
-                    <div className="space-y-2">
-                      <img src={screenshotUrl} alt="Screenshot preview" className="max-h-48 mx-auto rounded-lg" />
-                      <p className="text-sm text-green-600">Screenshot uploaded! Click to change.</p>
-                    </div>
-                  ) : (
-                    <>
-                      <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-gray-600">Click to upload screenshot</p>
-                      <p className="text-xs text-gray-400">PNG, JPG up to 10MB</p>
-                    </>
-                  )}
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="@username"
+                    value={tiktokUsername}
+                    onChange={(e) => {
+                      setTiktokUsername(e.target.value);
+                      setUsernameChecked(false);
+                      setIsPreApproved(false);
+                    }}
+                    className="flex-1"
+                  />
+                  <Button
+                    onClick={checkUsername}
+                    disabled={!tiktokUsername || checkingUsername}
+                    className="bg-purple-600 hover:bg-purple-700"
+                  >
+                    {checkingUsername ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Check'}
+                  </Button>
                 </div>
-                <input
-                  id="screenshot-upload"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                />
               </div>
 
-              <Button
-                onClick={handleSubmit}
-                disabled={!screenshotUrl || !tiktokUsername || submitRequestMutation.isPending}
-                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-              >
-                {submitRequestMutation.isPending ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <Send className="w-4 h-4 mr-2" />
-                )}
-                Submit for Review
-              </Button>
+              {/* Auto-approved! */}
+              {usernameChecked && isPreApproved && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="p-6 bg-gradient-to-r from-green-100 to-teal-100 rounded-xl border-2 border-green-300 text-center"
+                >
+                  <Sparkles className="w-12 h-12 text-green-500 mx-auto mb-3" />
+                  <h3 className="text-xl font-bold text-green-700 mb-2">You're Pre-Approved! 🎉</h3>
+                  <p className="text-green-600">Your TikTok features are being unlocked now...</p>
+                  {autoApproveMutation.isPending && <Loader2 className="w-6 h-6 animate-spin mx-auto mt-3" />}
+                  {autoApproveMutation.isSuccess && (
+                    <p className="text-green-800 font-semibold mt-2">✓ Access granted! Refresh the page to see your features.</p>
+                  )}
+                </motion.div>
+              )}
+
+              {/* Not pre-approved - show upload form */}
+              {usernameChecked && !isPreApproved && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="space-y-4 pt-4 border-t"
+                >
+                  <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
+                    <p className="text-amber-700 text-sm">
+                      Username not found in pre-approved list. Please upload your SuperFan screenshot for manual review.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>SuperFan Screenshot</Label>
+                    <div 
+                      className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-purple-400 transition-colors cursor-pointer"
+                      onClick={() => document.getElementById('screenshot-upload').click()}
+                    >
+                      {uploading ? (
+                        <Loader2 className="w-8 h-8 animate-spin text-purple-600 mx-auto" />
+                      ) : screenshotUrl ? (
+                        <div className="space-y-2">
+                          <img src={screenshotUrl} alt="Screenshot preview" className="max-h-48 mx-auto rounded-lg" />
+                          <p className="text-sm text-green-600">Screenshot uploaded! Click to change.</p>
+                        </div>
+                      ) : (
+                        <>
+                          <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                          <p className="text-gray-600">Click to upload screenshot</p>
+                          <p className="text-xs text-gray-400">PNG, JPG up to 10MB</p>
+                        </>
+                      )}
+                    </div>
+                    <input
+                      id="screenshot-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                    />
+                  </div>
+
+                  <Button
+                    onClick={handleSubmit}
+                    disabled={!screenshotUrl || !tiktokUsername || submitRequestMutation.isPending}
+                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                  >
+                    {submitRequestMutation.isPending ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Send className="w-4 h-4 mr-2" />
+                    )}
+                    Submit for Review
+                  </Button>
+                </motion.div>
+              )}
             </CardContent>
           </Card>
         )}

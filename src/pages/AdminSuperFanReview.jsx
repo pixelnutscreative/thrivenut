@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { CheckCircle, XCircle, Clock, Loader2, ExternalLink, Shield, UserPlus, Users, Search, ToggleLeft, ToggleRight } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Loader2, ExternalLink, Shield, UserPlus, Users, Search, ToggleLeft, ToggleRight, Star } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
 
