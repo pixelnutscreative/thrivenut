@@ -47,7 +47,8 @@ const allNavItems = [
   { name: 'Home', icon: Home, path: 'Home', alwaysShow: true },
   { name: 'Dashboard', icon: LayoutDashboard, path: 'Dashboard', alwaysShow: true },
   { name: 'TikTok', icon: TrendingUp, isSection: true, moduleId: 'tiktok', subItems: [
-            { name: 'TikTok Goals', icon: TrendingUp, path: 'TikTokGoals' },
+            { name: 'TikTok Dashboard', icon: TrendingUp, path: 'TikTokDashboard' },
+            { name: 'Content Schedule', icon: TrendingUp, path: 'TikTokGoals' },
             { name: 'TikTok Engagement', icon: Users, path: 'TikTokEngagement' },
             { name: 'TikTok Contacts', icon: Users, path: 'TikTokContacts' },
             { name: 'Creator Calendar', icon: Video, path: 'LiveSchedule' },

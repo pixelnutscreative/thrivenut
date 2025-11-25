@@ -335,6 +335,18 @@ export default function GoalEditModal({ isOpen, onClose, currentGoal, onSave }) 
                     />
                     <Label htmlFor={`discord-${index}`} className="text-sm">Posted in Discord</Label>
                   </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`story-${index}`}
+                      checked={schedule.shared_to_story || false}
+                      onCheckedChange={(checked) => {
+                        const newSchedules = [...formData.scheduled_lives];
+                        newSchedules[index].shared_to_story = checked;
+                        setFormData({ ...formData, scheduled_lives: newSchedules });
+                      }}
+                    />
+                    <Label htmlFor={`story-${index}`} className="text-sm">Shared to Story</Label>
+                  </div>
                 </div>
               </div>
             ))}

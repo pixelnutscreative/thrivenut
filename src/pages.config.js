@@ -23,6 +23,7 @@ import GoalSharing from './pages/GoalSharing';
 import NeurodivergentSettings from './pages/NeurodivergentSettings';
 import GiftScreenshotImport from './pages/GiftScreenshotImport';
 import SongGenerator from './pages/SongGenerator';
+import TikTokDashboard from './pages/TikTokDashboard';
 import __Layout from './Layout.jsx';
 
 
@@ -52,6 +53,7 @@ export const PAGES = {
     "NeurodivergentSettings": NeurodivergentSettings,
     "GiftScreenshotImport": GiftScreenshotImport,
     "SongGenerator": SongGenerator,
+    "TikTokDashboard": TikTokDashboard,
 }
 
 export const pagesConfig = {
