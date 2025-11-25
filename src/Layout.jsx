@@ -34,7 +34,7 @@ import TikTokAccessGate from './components/access/TikTokAccessGate';
 // Map module IDs to nav items
 const moduleNavMap = {
   tiktok: ['TikTok'],
-  gifter: ['Gifter Songs'],
+  gifter: ['Gift Gallery Gratitude'],
   goals: ['Goals', 'Goal Sharing'],
   wellness: ['Wellness'],
   supplements: ['Supplements'],
@@ -57,15 +57,15 @@ const allNavItems = [
             { name: 'Creator Calendar', icon: Video, path: 'LiveSchedule' },
             { name: 'Live Reminders', icon: Bell, path: 'LiveReminders' },
             { name: 'Discover Creators', icon: Users, path: 'DiscoverCreators' },
+            { name: '── Gift Gallery Gratitude ──', icon: Gift, isDivider: true },
+            { name: 'Weekly Gift Entry', icon: Gift, path: 'GiftEntry', moduleId: 'gifter' },
+            { name: 'Weekly Summary', icon: Gift, path: 'WeeklySummary', moduleId: 'gifter' },
+            { name: 'Song Generator', icon: Music, path: 'SongGenerator', moduleId: 'gifter' },
+            { name: '── Gifter Tools ──', icon: Gift, isDivider: true },
+            { name: 'Gift Library', icon: Gift, path: 'GiftLibrary', moduleId: 'gifter' },
+            { name: 'Gifter Manager', icon: Gift, path: 'GifterManager', moduleId: 'gifter' },
+            { name: 'AI Screenshot Import', icon: Gift, path: 'GiftScreenshotImport', moduleId: 'gifter' },
           ]},
-  { name: 'Gifter Songs', icon: Gift, isSection: true, moduleId: 'gifter', requiresTikTokAccess: true, subItems: [
-                    { name: 'Song Generator', icon: Music, path: 'SongGenerator' },
-                    { name: 'Gifter Manager', icon: Gift, path: 'GifterManager' },
-                    { name: 'Gift Entry', icon: Gift, path: 'GiftEntry' },
-                    { name: 'AI Screenshot Import', icon: Gift, path: 'GiftScreenshotImport' },
-                    { name: 'Weekly Summary', icon: Gift, path: 'WeeklySummary' },
-                    { name: 'Gift Library', icon: Gift, path: 'GiftLibrary' },
-                  ]},
   { name: 'SuperFan Access', icon: Star, path: 'SuperFanAccess', showWhenNoTikTokAccess: true },
   { name: 'Goals', icon: Target, path: 'Goals', moduleId: 'goals' },
   { name: 'Goal Sharing', icon: Share2, path: 'GoalSharing', moduleId: 'goals' },
@@ -87,7 +87,7 @@ export default function Layout({ children, currentPageName }) {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
-  const [expandedSections, setExpandedSections] = useState(['TikTok', 'Gifter Songs', 'Wellness']);
+  const [expandedSections, setExpandedSections] = useState(['TikTok', 'Wellness']);
   const [showAccessGate, setShowAccessGate] = useState(false);
 
   useEffect(() => {
