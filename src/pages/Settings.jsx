@@ -46,8 +46,8 @@ const accessibilityModes = [
 
 export default function Settings() {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
   const [user, setUser] = useState(null);
+  const [saveMessage, setSaveMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('profile');
 
