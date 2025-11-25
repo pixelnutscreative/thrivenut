@@ -47,13 +47,15 @@ export default function WeeklySummary() {
   });
 
   const { data: entries = [], isLoading } = useQuery({
-    queryKey: ['giftingEntries', selectedWeek],
-    queryFn: () => base44.entities.GiftingEntry.filter({ week: selectedWeek }),
+    queryKey: ['giftingEntries', selectedWeek, user?.email],
+    queryFn: () => base44.entities.GiftingEntry.filter({ week: selectedWeek, created_by: user.email }),
+    enabled: !!user,
   });
 
   const { data: contacts = [] } = useQuery({
-    queryKey: ['tiktokContacts'],
-    queryFn: () => base44.entities.TikTokContact.list(),
+    queryKey: ['tiktokContacts', user?.email],
+    queryFn: () => base44.entities.TikTokContact.filter({ created_by: user.email }),
+    enabled: !!user,
   });
 
   const updateEntryMutation = useMutation({

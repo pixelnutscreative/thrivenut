@@ -43,20 +43,23 @@ export default function GiftEntry() {
   });
 
   const { data: contacts = [] } = useQuery({
-    queryKey: ['tiktokContacts'],
-    queryFn: () => base44.entities.TikTokContact.list('screen_name'),
+    queryKey: ['tiktokContacts', user?.email],
+    queryFn: () => base44.entities.TikTokContact.filter({ created_by: user.email }, 'display_name'),
+    enabled: !!user,
   });
 
   const gifters = contacts.filter(c => c.is_gifter);
 
+  // Gift library is shared across all users
   const { data: gifts = [] } = useQuery({
     queryKey: ['gifts'],
     queryFn: () => base44.entities.Gift.list('name'),
   });
 
   const { data: entries = [], isLoading } = useQuery({
-    queryKey: ['giftingEntries', selectedWeek],
-    queryFn: () => base44.entities.GiftingEntry.filter({ week: selectedWeek }),
+    queryKey: ['giftingEntries', selectedWeek, user?.email],
+    queryFn: () => base44.entities.GiftingEntry.filter({ week: selectedWeek, created_by: user.email }),
+    enabled: !!user,
   });
 
   const createMutation = useMutation({
