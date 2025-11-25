@@ -13,13 +13,20 @@ import { motion } from 'framer-motion';
 
 export default function GiftEntry() {
   const queryClient = useQueryClient();
-  const [selectedWeek, setSelectedWeek] = useState(format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd'));
+  // Week ending Sunday
+  const getWeekEndingSunday = (date) => {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = day === 0 ? 0 : 7 - day;
+    d.setDate(d.getDate() + diff);
+    return format(d, 'yyyy-MM-dd');
+  };
+  const [selectedWeek, setSelectedWeek] = useState(getWeekEndingSunday(new Date()));
   const [user, setUser] = useState(null);
   const [formData, setFormData] = useState({
     gifter_id: '',
     gift_id: '',
-    rank: '',
-    campaign_tag: ''
+    rank: ''
   });
 
   useEffect(() => {
@@ -61,20 +68,20 @@ export default function GiftEntry() {
         ...data,
         week: selectedWeek,
         gifter_username: gifter?.username,
-        gifter_screen_name: gifter?.screen_name,
+        gifter_screen_name: gifter?.display_name || gifter?.username,
         gifter_phonetic: gifter?.phonetic,
         gift_name: gift?.name
       });
     },
     onSuccess: async (newEntry) => {
       queryClient.invalidateQueries({ queryKey: ['giftingEntries'] });
-      setFormData({ gifter_id: '', gift_id: '', rank: '', campaign_tag: '' });
+      setFormData({ gifter_id: '', gift_id: '', rank: '' });
       
       const rankEmoji = { '1st': '🥇', '2nd': '🥈', '3rd': '🥉' };
       await shareGifterData(
         preferences,
-        `🎁 New Gift Entry - ${format(new Date(selectedWeek), 'MMM d, yyyy')}`,
-        `New gift entry recorded:\n\n${rankEmoji[newEntry.rank] || '⭐'} ${newEntry.gifter_screen_name} (@${newEntry.gifter_username})\nGift: ${newEntry.gift_name}${newEntry.campaign_tag ? `\nCampaign: ${newEntry.campaign_tag}` : ''}\n\n---\nFrom ThriveNut Gift Entry`
+        `🎁 New Gift Entry - Week Ending ${format(new Date(selectedWeek), 'MMM d, yyyy')}`,
+        `New gift entry recorded:\n\n${rankEmoji[newEntry.rank] || '⭐'} ${newEntry.gifter_screen_name} (@${newEntry.gifter_username})\nGift: ${newEntry.gift_name}\n\n---\nFrom ThriveNut Gift Entry`
       );
     },
   });
@@ -121,13 +128,14 @@ export default function GiftEntry() {
         {/* Week Selector */}
         <Card>
           <CardContent className="p-4">
-            <Label>Select Week (Starting Monday)</Label>
+            <Label>Week Ending (Sunday)</Label>
             <Input
               type="date"
               value={selectedWeek}
               onChange={(e) => setSelectedWeek(e.target.value)}
               className="mt-2"
             />
+            <p className="text-xs text-gray-500 mt-1">Select the Sunday when the gallery closes</p>
           </CardContent>
         </Card>
 
@@ -137,74 +145,79 @@ export default function GiftEntry() {
             <CardTitle className="text-lg">Add Gift Entry</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Gifter *</Label>
-                <Select
-                  value={formData.gifter_id}
-                  onValueChange={(value) => setFormData({ ...formData, gifter_id: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select gifter" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {gifters.map(gifter => (
-                      <SelectItem key={gifter.id} value={gifter.id}>
-                        {gifter.screen_name || gifter.display_name || gifter.username} (@{gifter.username})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {selectedGifter?.phonetic && (
-                  <p className="text-xs text-purple-600 italic">
-                    🎵 Phonetic: "{selectedGifter.phonetic}"
-                  </p>
-                )}
-              </div>
+            <div className="space-y-4">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Gifter *</Label>
+                  <Select
+                    value={formData.gifter_id}
+                    onValueChange={(value) => setFormData({ ...formData, gifter_id: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select gifter" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {gifters.map(gifter => (
+                        <SelectItem key={gifter.id} value={gifter.id}>
+                          {gifter.display_name || gifter.username} (@{gifter.username})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {selectedGifter?.phonetic && (
+                    <p className="text-xs text-purple-600 italic">
+                      🎵 Phonetic: "{selectedGifter.phonetic}"
+                    </p>
+                  )}
+                </div>
 
-              <div className="space-y-2">
-                <Label>Gift *</Label>
-                <Select
-                  value={formData.gift_id}
-                  onValueChange={(value) => setFormData({ ...formData, gift_id: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select gift" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {gifts.map(gift => (
-                      <SelectItem key={gift.id} value={gift.id}>
-                        {gift.name} {gift.league_range ? `(${gift.league_range})` : ''}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="space-y-2">
+                  <Label>Gift *</Label>
+                  <Select
+                    value={formData.gift_id}
+                    onValueChange={(value) => setFormData({ ...formData, gift_id: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select gift" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {gifts.map(gift => (
+                        <SelectItem key={gift.id} value={gift.id}>
+                          {gift.name} {gift.league_range ? `(${gift.league_range})` : ''}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <div className="space-y-2">
                 <Label>Rank *</Label>
-                <Select
-                  value={formData.rank}
-                  onValueChange={(value) => setFormData({ ...formData, rank: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select rank" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1st">🥇 1st Place</SelectItem>
-                    <SelectItem value="2nd">🥈 2nd Place</SelectItem>
-                    <SelectItem value="3rd">🥉 3rd Place</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Campaign Tag (Optional)</Label>
-                <Input
-                  placeholder="e.g., Valentine's Week"
-                  value={formData.campaign_tag}
-                  onChange={(e) => setFormData({ ...formData, campaign_tag: e.target.value })}
-                />
+                <div className="flex gap-4">
+                  {['1st', '2nd', '3rd'].map(rank => (
+                    <label
+                      key={rank}
+                      className={`flex items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                        formData.rank === rank
+                          ? 'border-purple-500 bg-purple-50'
+                          : 'border-gray-200 hover:border-purple-300'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="rank"
+                        value={rank}
+                        checked={formData.rank === rank}
+                        onChange={(e) => setFormData({ ...formData, rank: e.target.value })}
+                        className="sr-only"
+                      />
+                      {rank === '1st' && <Trophy className="w-5 h-5 text-yellow-500" />}
+                      {rank === '2nd' && <Medal className="w-5 h-5 text-gray-400" />}
+                      {rank === '3rd' && <Award className="w-5 h-5 text-amber-600" />}
+                      <span className="font-medium">{rank}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -223,7 +236,7 @@ export default function GiftEntry() {
         {/* This Week's Entries */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Entries for Week of {format(new Date(selectedWeek), 'MMM d, yyyy')}</CardTitle>
+            <CardTitle className="text-lg">Entries for Week Ending {format(new Date(selectedWeek), 'MMM d, yyyy')}</CardTitle>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -248,11 +261,6 @@ export default function GiftEntry() {
                         <p className="font-semibold">{entry.gifter_screen_name}</p>
                         <p className="text-sm text-purple-600">@{entry.gifter_username}</p>
                         <p className="text-xs text-gray-500">Gift: {entry.gift_name}</p>
-                        {entry.campaign_tag && (
-                          <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
-                            {entry.campaign_tag}
-                          </span>
-                        )}
                       </div>
                     </div>
                     <Button
