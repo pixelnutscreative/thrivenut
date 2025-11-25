@@ -697,14 +697,14 @@ export default function TikTokContacts() {
 
             {/* Categories - multi-select */}
             <div className="space-y-2">
-              <Label>Categories</Label>
+              <Label className="text-gray-700 font-medium">Categories</Label>
               <div className="flex flex-wrap gap-2">
                 {categories.map(cat => (
                   <Badge
                     key={cat.id}
                     variant={formData.categories.includes(cat.id) ? 'default' : 'outline'}
-                    className="cursor-pointer"
-                    style={formData.categories.includes(cat.id) ? { backgroundColor: cat.color } : { borderColor: cat.color, color: cat.color }}
+                    className="cursor-pointer font-medium"
+                    style={formData.categories.includes(cat.id) ? { backgroundColor: cat.color, color: '#fff' } : { borderColor: cat.color, color: cat.color, borderWidth: '2px' }}
                     onClick={() => {
                       setFormData({
                         ...formData,
@@ -718,7 +718,7 @@ export default function TikTokContacts() {
                   </Badge>
                 ))}
                 {categories.length === 0 && (
-                  <p className="text-xs text-gray-500">No categories yet. Create them in Engagement settings.</p>
+                  <p className="text-sm text-gray-600">No categories yet. Click "Categories" button to create some.</p>
                 )}
               </div>
             </div>

@@ -98,23 +98,53 @@ export default function Layout({ children, currentPageName }) {
   });
 
   const enabledModules = preferences?.enabled_modules || ['tiktok', 'gifter', 'goals', 'wellness', 'supplements', 'medications', 'pets', 'care_reminders', 'people', 'journal', 'mental_health'];
+  const featureOrder = preferences?.feature_order || [];
 
-  // Filter nav items based on enabled modules
-  const navItems = allNavItems.filter(item => {
-    if (item.alwaysShow) return true;
-    if (item.moduleId && !enabledModules.includes(item.moduleId)) return false;
-    return true;
-  }).map(item => {
-    // Filter sub-items too
-    if (item.subItems) {
-      const filteredSubItems = item.subItems.filter(sub => {
-        if (!sub.moduleId) return true;
-        return enabledModules.includes(sub.moduleId);
+  // Filter and order nav items based on enabled modules and feature order
+  const getOrderedNavItems = () => {
+    // First filter based on enabled modules
+    let filtered = allNavItems.filter(item => {
+      if (item.alwaysShow) return true;
+      if (item.moduleId && !enabledModules.includes(item.moduleId)) return false;
+      return true;
+    }).map(item => {
+      if (item.subItems) {
+        const filteredSubItems = item.subItems.filter(sub => {
+          if (!sub.moduleId) return true;
+          return enabledModules.includes(sub.moduleId);
+        });
+        return { ...item, subItems: filteredSubItems };
+      }
+      return item;
+    });
+
+    // If there's a feature order, apply it
+    if (featureOrder.length > 0) {
+      const alwaysShowItems = filtered.filter(item => item.alwaysShow);
+      const orderableItems = filtered.filter(item => !item.alwaysShow && item.moduleId);
+      
+      // Sort orderable items by feature order
+      orderableItems.sort((a, b) => {
+        const aIndex = featureOrder.indexOf(a.moduleId);
+        const bIndex = featureOrder.indexOf(b.moduleId);
+        if (aIndex === -1 && bIndex === -1) return 0;
+        if (aIndex === -1) return 1;
+        if (bIndex === -1) return -1;
+        return aIndex - bIndex;
       });
-      return { ...item, subItems: filteredSubItems };
+
+      // Rebuild: Home, Dashboard first, then ordered features, then Settings at the end
+      const home = alwaysShowItems.find(i => i.name === 'Home');
+      const dashboard = alwaysShowItems.find(i => i.name === 'Dashboard');
+      const settings = alwaysShowItems.find(i => i.name === 'Settings');
+      
+      return [home, dashboard, ...orderableItems, settings].filter(Boolean);
     }
-    return item;
-  });
+
+    return filtered;
+  };
+
+  const navItems = getOrderedNavItems();
 
   const toggleSection = (sectionName) => {
     setExpandedSections(prev => 
@@ -269,7 +299,7 @@ export default function Layout({ children, currentPageName }) {
                   <Button
                     onClick={handleLogout}
                     variant="outline"
-                    className="w-full"
+                    className="w-full text-gray-700 border-gray-300 hover:bg-gray-100"
                   >
                     <LogOut className="w-4 h-4 mr-2" />
                     Sign Out
@@ -377,7 +407,7 @@ export default function Layout({ children, currentPageName }) {
                   <Button
                     onClick={handleLogout}
                     variant="outline"
-                    className={`w-full ${isDark ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : ''}`}
+                    className={`w-full ${isDark ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'text-gray-700 border-gray-300 hover:bg-gray-100'}`}
                   >
                     <LogOut className="w-4 h-4 mr-2" />
                     Sign Out
