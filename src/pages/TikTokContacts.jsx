@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Plus, Search, Trash2, Edit, Star, Phone, Mail, 
   ExternalLink, Users, Swords, Gift, Share2, Heart, UserPlus, Video, Calendar, Music, ShoppingBag,
-  ChevronDown, ChevronRight, FolderPlus
+  ChevronDown, ChevronRight, FolderPlus, Loader2
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -80,6 +80,8 @@ export default function TikTokContacts() {
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryColor, setNewCategoryColor] = useState('#8B5CF6');
   const [customRoleInput, setCustomRoleInput] = useState('');
+  const [newModForName, setNewModForName] = useState('');
+  const [newTheirModName, setNewTheirModName] = useState('');
 
   const [user, setUser] = useState(null);
 
@@ -145,6 +147,30 @@ export default function TikTokContacts() {
     mutationFn: (id) => base44.entities.EngagementCategory.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['engagementCategories'] });
+    },
+  });
+
+  // Create a new contact and link it (for met_through, mods_for, their_mods)
+  const createAndLinkMutation = useMutation({
+    mutationFn: async ({ username, linkType }) => {
+      const newContact = await base44.entities.TikTokContact.create({ 
+        username: username.replace('@', '').trim() 
+      });
+      return { newContact, linkType };
+    },
+    onSuccess: ({ newContact, linkType }) => {
+      queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] });
+      
+      if (linkType === 'met_through') {
+        setFormData(prev => ({ ...prev, met_through_id: newContact.id, met_through_name: '' }));
+        setNewMetThroughName('');
+      } else if (linkType === 'mods_for') {
+        setFormData(prev => ({ ...prev, mods_for: [...prev.mods_for, newContact.id] }));
+        setNewModForName('');
+      } else if (linkType === 'their_mods') {
+        setFormData(prev => ({ ...prev, their_mods: [...prev.their_mods, newContact.id] }));
+        setNewTheirModName('');
+      }
     },
   });
 
@@ -775,6 +801,25 @@ export default function TikTokContacts() {
                       ))}
                     </SelectContent>
                   </Select>
+                  <div className="flex gap-2 mt-2">
+                    <Input
+                      placeholder="Or add new @username..."
+                      value={newModForName}
+                      onChange={(e) => setNewModForName(e.target.value)}
+                      className="flex-1"
+                    />
+                    {newModForName && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => createAndLinkMutation.mutate({ username: newModForName, linkType: 'mods_for' })}
+                        disabled={createAndLinkMutation.isPending}
+                      >
+                        {createAndLinkMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />} Add
+                      </Button>
+                    )}
+                  </div>
                   <div className="flex flex-wrap gap-2">
                     {formData.mods_for.map(id => {
                       const contact = contacts.find(c => c.id === id);
@@ -804,6 +849,25 @@ export default function TikTokContacts() {
                       ))}
                     </SelectContent>
                   </Select>
+                  <div className="flex gap-2 mt-2">
+                    <Input
+                      placeholder="Or add new @username..."
+                      value={newTheirModName}
+                      onChange={(e) => setNewTheirModName(e.target.value)}
+                      className="flex-1"
+                    />
+                    {newTheirModName && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => createAndLinkMutation.mutate({ username: newTheirModName, linkType: 'their_mods' })}
+                        disabled={createAndLinkMutation.isPending}
+                      >
+                        {createAndLinkMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />} Add
+                      </Button>
+                    )}
+                  </div>
                   <div className="flex flex-wrap gap-2">
                     {formData.their_mods.map(id => {
                       const contact = contacts.find(c => c.id === id);
@@ -847,12 +911,10 @@ export default function TikTokContacts() {
                           type="button"
                           variant="outline"
                           size="sm"
-                          onClick={() => {
-                            createMutation.mutate({ username: newMetThroughName.replace('@', '').trim() });
-                            setNewMetThroughName('');
-                          }}
+                          onClick={() => createAndLinkMutation.mutate({ username: newMetThroughName, linkType: 'met_through' })}
+                          disabled={createAndLinkMutation.isPending}
                         >
-                          <Plus className="w-4 h-4" /> Add
+                          {createAndLinkMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />} Add
                         </Button>
                       )}
                     </div>
