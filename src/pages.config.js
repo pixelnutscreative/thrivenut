@@ -22,6 +22,7 @@ import People from './pages/People';
 import GoalSharing from './pages/GoalSharing';
 import NeurodivergentSettings from './pages/NeurodivergentSettings';
 import GiftScreenshotImport from './pages/GiftScreenshotImport';
+import SongGenerator from './pages/SongGenerator';
 import __Layout from './Layout.jsx';
 
 
@@ -50,6 +51,7 @@ export const PAGES = {
     "GoalSharing": GoalSharing,
     "NeurodivergentSettings": NeurodivergentSettings,
     "GiftScreenshotImport": GiftScreenshotImport,
+    "SongGenerator": SongGenerator,
 }
 
 export const pagesConfig = {
