@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { shareGifterData } from '../components/gifter/useGifterSharing';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +19,20 @@ export default function GiftScreenshotImport() {
   const [extractedData, setExtractedData] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [error, setError] = useState(null);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    base44.auth.me().then(setUser).catch(() => {});
+  }, []);
+
+  const { data: preferences } = useQuery({
+    queryKey: ['preferences', user?.email],
+    queryFn: async () => {
+      const prefs = await base44.entities.UserPreferences.filter({ user_email: user.email });
+      return prefs[0] || null;
+    },
+    enabled: !!user,
+  });
 
   const { data: gifters = [] } = useQuery({
     queryKey: ['gifters'],
@@ -132,9 +147,23 @@ Extract up to 3 gifters (1st, 2nd, 3rd place).`,
 
       return Promise.all(promises.filter(Boolean));
     },
-    onSuccess: () => {
+    onSuccess: async (results) => {
       queryClient.invalidateQueries({ queryKey: ['giftingEntries'] });
       queryClient.invalidateQueries({ queryKey: ['gifters'] });
+      
+      // Share the imported data
+      const rankEmoji = { '1st': '🥇', '2nd': '🥈', '3rd': '🥉' };
+      const importedList = results
+        .filter(Boolean)
+        .map(r => `${rankEmoji[r.rank] || '⭐'} ${r.gifter_screen_name} (@${r.gifter_username}) - ${r.gift_name}`)
+        .join('\n');
+      
+      await shareGifterData(
+        preferences,
+        `📸 AI Screenshot Import - ${format(new Date(selectedWeek), 'MMM d, yyyy')}`,
+        `Gifters imported from screenshot:\n\n${importedList}\n\n---\nFrom ThriveNut AI Screenshot Import`
+      );
+      
       setExtractedData(null);
       setPreviewUrl(null);
     },
