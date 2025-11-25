@@ -134,15 +134,32 @@ export default function Layout({ children, currentPageName }) {
     await base44.auth.logout();
   };
 
+  // Get theme colors
+  const primaryColor = preferences?.primary_color || '#1fd2ea';
+  const accentColor = preferences?.accent_color || '#bd84f5';
+  const isDark = preferences?.theme_type === 'dark';
+
   // Don't show layout on onboarding or home page
   if (currentPageName === 'Onboarding' || currentPageName === 'Home') {
     return children;
   }
 
+  const bgClass = isDark 
+    ? 'bg-[#1f1f23] text-gray-100' 
+    : 'bg-gradient-to-br from-teal-50 via-purple-50 to-blue-50 text-gray-900';
+
+  const sidebarClass = isDark
+    ? 'bg-[#2a2a30]/95 border-gray-700'
+    : 'bg-white/95 border-gray-200';
+
+  const textClass = isDark ? 'text-gray-100' : 'text-gray-800';
+  const subtextClass = isDark ? 'text-gray-400' : 'text-gray-500';
+  const hoverClass = isDark ? 'hover:bg-gray-700/50' : 'hover:bg-teal-50';
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-purple-50 to-blue-50">
+    <div className={`min-h-screen ${bgClass}`} style={{ '--primary-color': primaryColor, '--accent-color': accentColor }}>
       {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200 px-4 py-3">
+      <div className={`lg:hidden fixed top-0 left-0 right-0 z-50 backdrop-blur-sm border-b px-4 py-3 ${sidebarClass}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <img 
@@ -172,7 +189,7 @@ export default function Layout({ children, currentPageName }) {
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'tween' }}
-            className="lg:hidden fixed inset-0 z-40 bg-white pt-16"
+            className={`lg:hidden fixed inset-0 z-40 pt-16 ${isDark ? 'bg-[#1f1f23]' : 'bg-white'}`}
           >
             <nav className="p-6 space-y-1 overflow-y-auto max-h-[calc(100vh-8rem)]">
               {navItems.map((item) => {
@@ -187,8 +204,10 @@ export default function Layout({ children, currentPageName }) {
                       <button
                         onClick={() => toggleSection(item.name)}
                         className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
-                          hasActiveSubItem ? 'bg-teal-50 text-teal-700' : 'text-gray-700 hover:bg-teal-50'
-                        }`}
+                              hasActiveSubItem 
+                                ? (isDark ? 'bg-gray-700 text-teal-400' : 'bg-teal-50 text-teal-700')
+                                : (isDark ? 'text-gray-300 hover:bg-gray-700/50' : 'text-gray-700 hover:bg-teal-50')
+                            }`}
                       >
                         <div className="flex items-center gap-3">
                           <Icon className="w-5 h-5" />
@@ -208,9 +227,10 @@ export default function Layout({ children, currentPageName }) {
                                 onClick={() => setMobileMenuOpen(false)}
                                 className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-all text-sm ${
                                   subIsActive
-                                    ? 'bg-gradient-to-r from-teal-600 to-purple-400 text-white shadow-lg'
-                                    : 'text-gray-600 hover:bg-teal-50'
+                                    ? 'text-white shadow-lg'
+                                    : (isDark ? 'text-gray-400 hover:bg-gray-700/50' : 'text-gray-600 hover:bg-teal-50')
                                 }`}
+                                style={subIsActive ? { background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` } : {}}
                               >
                                 <SubIcon className="w-4 h-4" />
                                 <span>{subItem.name}</span>
@@ -230,9 +250,10 @@ export default function Layout({ children, currentPageName }) {
                     onClick={() => setMobileMenuOpen(false)}
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                       isActive
-                        ? 'bg-gradient-to-r from-teal-600 to-purple-400 text-white shadow-lg'
-                        : 'text-gray-700 hover:bg-teal-50'
+                        ? 'text-white shadow-lg'
+                        : (isDark ? 'text-gray-300 hover:bg-gray-700/50' : 'text-gray-700 hover:bg-teal-50')
                     }`}
+                    style={isActive ? { background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` } : {}}
                   >
                     <Icon className="w-5 h-5" />
                     <span className="font-medium">{item.name}</span>
@@ -261,7 +282,7 @@ export default function Layout({ children, currentPageName }) {
 
       {/* Desktop Sidebar */}
       <div className="hidden lg:flex">
-        <div className="fixed left-0 top-0 bottom-0 w-72 bg-white/95 backdrop-blur-sm border-r border-gray-200 p-6 flex flex-col">
+        <div className={`fixed left-0 top-0 bottom-0 w-72 backdrop-blur-sm border-r p-6 flex flex-col ${sidebarClass}`}>
           <div className="mb-8">
             <div className="flex items-center gap-3 mb-2">
               <img 
@@ -269,11 +290,14 @@ export default function Layout({ children, currentPageName }) {
                 alt="ThriveNut" 
                 className="w-10 h-10"
               />
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-teal-600 to-purple-400 bg-clip-text text-transparent">
+              <h1 
+                className="text-3xl font-bold bg-clip-text text-transparent"
+                style={{ backgroundImage: `linear-gradient(to right, ${primaryColor}, ${accentColor})` }}
+              >
                 ThriveNut
               </h1>
             </div>
-            <p className="text-sm text-gray-500">Crush your goals, thrive daily</p>
+            <p className={`text-sm ${subtextClass}`}>Crush your goals, thrive daily</p>
           </div>
 
           <nav className="flex-1 space-y-1 overflow-y-auto">
@@ -289,7 +313,9 @@ export default function Layout({ children, currentPageName }) {
                     <button
                       onClick={() => toggleSection(item.name)}
                       className={`w-full flex items-center justify-between px-4 py-2 rounded-xl transition-all ${
-                        hasActiveSubItem ? 'bg-teal-50 text-teal-700' : 'text-gray-700 hover:bg-teal-50'
+                        hasActiveSubItem 
+                          ? (isDark ? 'bg-gray-700 text-teal-400' : 'bg-teal-50 text-teal-700')
+                          : (isDark ? 'text-gray-300 hover:bg-gray-700/50' : 'text-gray-700 hover:bg-teal-50')
                       }`}
                     >
                       <div className="flex items-center gap-3">
@@ -309,9 +335,10 @@ export default function Layout({ children, currentPageName }) {
                               to={createPageUrl(subItem.path)}
                               className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-all text-sm ${
                                 subIsActive
-                                  ? 'bg-gradient-to-r from-teal-600 to-purple-400 text-white shadow-lg'
-                                  : 'text-gray-600 hover:bg-teal-50'
+                                  ? 'text-white shadow-lg'
+                                  : (isDark ? 'text-gray-400 hover:bg-gray-700/50' : 'text-gray-600 hover:bg-teal-50')
                               }`}
+                              style={subIsActive ? { background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` } : {}}
                             >
                               <SubIcon className="w-4 h-4" />
                               <span>{subItem.name}</span>
@@ -330,9 +357,10 @@ export default function Layout({ children, currentPageName }) {
                   to={createPageUrl(item.path)}
                   className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-all ${
                     isActive
-                      ? 'bg-gradient-to-r from-teal-600 to-purple-400 text-white shadow-lg'
-                      : 'text-gray-700 hover:bg-teal-50'
+                      ? 'text-white shadow-lg'
+                      : (isDark ? 'text-gray-300 hover:bg-gray-700/50' : 'text-gray-700 hover:bg-teal-50')
                   }`}
+                  style={isActive ? { background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` } : {}}
                 >
                   <Icon className="w-5 h-5" />
                   <span className="font-medium">{item.name}</span>
@@ -342,19 +370,19 @@ export default function Layout({ children, currentPageName }) {
           </nav>
 
           {user && (
-            <div className="pt-6 mt-6 border-t">
-              <p className="text-sm text-gray-500 mb-1">Signed in as</p>
-              <p className="font-semibold text-gray-800 mb-4 truncate">{user.email}</p>
-              <Button
-                onClick={handleLogout}
-                variant="outline"
-                className="w-full"
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Sign Out
-              </Button>
-            </div>
-          )}
+                <div className={`pt-6 mt-6 border-t ${isDark ? 'border-gray-700' : ''}`}>
+                  <p className={`text-sm ${subtextClass} mb-1`}>Signed in as</p>
+                  <p className={`font-semibold ${textClass} mb-4 truncate`}>{user.email}</p>
+                  <Button
+                    onClick={handleLogout}
+                    variant="outline"
+                    className={`w-full ${isDark ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : ''}`}
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sign Out
+                  </Button>
+                </div>
+              )}
         </div>
 
         {/* Main Content */}
