@@ -120,6 +120,37 @@ export default function AdminSuperFanReview() {
     },
   });
 
+  // Pre-approved TikTok usernames (stored in a separate entity)
+  const { data: preApprovedList = [] } = useQuery({
+    queryKey: ['preApprovedSuperFans'],
+    queryFn: () => base44.entities.PreApprovedSuperFan.list('tiktok_username'),
+    enabled: isAdmin,
+  });
+
+  const addPreApprovedMutation = useMutation({
+    mutationFn: async (tiktokUsername) => {
+      const cleaned = tiktokUsername.replace('@', '').trim().toLowerCase();
+      // Check if already exists
+      const existing = preApprovedList.find(p => p.tiktok_username?.toLowerCase() === cleaned);
+      if (existing) throw new Error('Already in list');
+      return await base44.entities.PreApprovedSuperFan.create({
+        tiktok_username: cleaned,
+        added_date: new Date().toISOString()
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['preApprovedSuperFans'] });
+      setNewUserTikTok('');
+    },
+  });
+
+  const removePreApprovedMutation = useMutation({
+    mutationFn: (id) => base44.entities.PreApprovedSuperFan.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['preApprovedSuperFans'] });
+    },
+  });
+
   if (!isAdmin) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 p-4 md:p-8 flex items-center justify-center">
@@ -289,12 +320,57 @@ export default function AdminSuperFanReview() {
           </TabsContent>
 
           <TabsContent value="manage" className="space-y-4 mt-4">
-            {/* Add New SuperFan */}
+            {/* Pre-Approved TikTok Usernames */}
+            <Card className="border-2 border-dashed border-purple-300 bg-purple-50/50">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Star className="w-5 h-5 text-purple-600" />
+                  Pre-Approved SuperFan Usernames
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex gap-3">
+                  <Input
+                    placeholder="@tiktokusername"
+                    value={newUserTikTok}
+                    onChange={(e) => setNewUserTikTok(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button
+                    onClick={() => addPreApprovedMutation.mutate(newUserTikTok)}
+                    disabled={!newUserTikTok || addPreApprovedMutation.isPending}
+                    className="bg-purple-600 hover:bg-purple-700"
+                  >
+                    {addPreApprovedMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4 mr-2" />}
+                    Add to List
+                  </Button>
+                </div>
+                <p className="text-xs text-gray-500">Users with these TikTok usernames will be auto-approved when they enter it on the SuperFan page</p>
+                
+                {preApprovedList.length > 0 && (
+                  <div className="flex flex-wrap gap-2 pt-2 border-t">
+                    {preApprovedList.map(item => (
+                      <Badge key={item.id} className="bg-purple-100 text-purple-700 flex items-center gap-1 px-3 py-1">
+                        @{item.tiktok_username}
+                        <button
+                          onClick={() => removePreApprovedMutation.mutate(item.id)}
+                          className="ml-1 hover:text-red-600"
+                        >
+                          <XCircle className="w-3 h-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Manual Grant by Email */}
             <Card className="border-2 border-dashed border-green-300 bg-green-50/50">
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
                   <UserPlus className="w-5 h-5 text-green-600" />
-                  Add Existing SuperFan
+                  Grant Access by Email
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -305,14 +381,8 @@ export default function AdminSuperFanReview() {
                     onChange={(e) => setNewUserEmail(e.target.value)}
                     className="flex-1"
                   />
-                  <Input
-                    placeholder="TikTok username (optional)"
-                    value={newUserTikTok}
-                    onChange={(e) => setNewUserTikTok(e.target.value)}
-                    className="flex-1"
-                  />
                   <Button
-                    onClick={() => grantAccessMutation.mutate({ email: newUserEmail, tiktokUsername: newUserTikTok })}
+                    onClick={() => grantAccessMutation.mutate({ email: newUserEmail, tiktokUsername: '' })}
                     disabled={!newUserEmail || grantAccessMutation.isPending}
                     className="bg-green-600 hover:bg-green-700"
                   >
@@ -320,7 +390,7 @@ export default function AdminSuperFanReview() {
                     Grant Access
                   </Button>
                 </div>
-                <p className="text-xs text-gray-500 mt-2">Add users who are already SuperFans without requiring screenshot proof</p>
+                <p className="text-xs text-gray-500 mt-2">Manually grant access to a specific user by email</p>
               </CardContent>
             </Card>
 
