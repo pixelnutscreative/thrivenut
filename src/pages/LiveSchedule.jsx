@@ -10,21 +10,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { Plus, ExternalLink, Trash2, Video, Calendar as CalendarIcon, Heart, Swords, Zap, ShoppingBag, CalendarPlus, Edit } from 'lucide-react';
+import { Plus, Trash2, Video, Calendar as CalendarIcon, Heart, Swords, Zap, ShoppingBag, CalendarPlus, Edit, FileText, Users, GraduationCap } from 'lucide-react';
 import { motion } from 'framer-motion';
 import TimezoneSelector from '../components/shared/TimezoneSelector';
 
 const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 const liveTypeConfig = {
-  regular: { label: 'Regular', icon: Video, color: 'bg-purple-100 text-purple-700' },
-  pop_up: { label: 'Pop-Up', icon: Zap, color: 'bg-yellow-100 text-yellow-700' },
+  regular: { label: 'Live', icon: Video, color: 'bg-blue-100 text-blue-700' },
+  pop_up: { label: 'Pop', icon: Zap, color: 'bg-yellow-100 text-yellow-700' },
   battle: { label: 'Battle', icon: Swords, color: 'bg-red-100 text-red-700' },
-  tt_shop: { label: 'TT Shop', icon: ShoppingBag, color: 'bg-green-100 text-green-700' },
-  daily_heart_me: { label: 'Daily Heart Me', icon: Heart, color: 'bg-orange-100 text-orange-700' },
-  engagement_live: { label: 'Engagement', icon: Heart, color: 'bg-pink-100 text-pink-700' },
-  multi_guest: { label: 'Multi-Guest', icon: Video, color: 'bg-blue-100 text-blue-700' },
-  co_host: { label: 'Co-Host', icon: Video, color: 'bg-cyan-100 text-cyan-700' }
+  tt_shop: { label: 'Shop', icon: ShoppingBag, color: 'bg-green-100 text-green-700' },
+  daily_heart_me: { label: 'DHM', icon: Heart, color: 'bg-orange-100 text-orange-700' },
+  engagement_live: { label: 'Engage', icon: Users, color: 'bg-pink-100 text-pink-700' },
+  multi_guest: { label: 'Multi', icon: Users, color: 'bg-indigo-100 text-indigo-700' },
+  co_host: { label: 'CoHost', icon: Users, color: 'bg-cyan-100 text-cyan-700' },
+  teaching: { label: 'Teach', icon: GraduationCap, color: 'bg-purple-100 text-purple-700' }
 };
 
 export default function LiveSchedule() {
@@ -33,6 +34,10 @@ export default function LiveSchedule() {
   const [editingSchedule, setEditingSchedule] = useState(null);
   const [user, setUser] = useState(null);
   const [userTimezone, setUserTimezone] = useState('America/New_York');
+  const [showNoteDialog, setShowNoteDialog] = useState(false);
+  const [noteContent, setNoteContent] = useState('');
+  const [dayFilter, setDayFilter] = useState('today');
+  const [selectedLiveTypes, setSelectedLiveTypes] = useState([]);
   const [formData, setFormData] = useState({
     host_username: '',
     recurring_days: [],
@@ -40,7 +45,7 @@ export default function LiveSchedule() {
     creator_timezone: 'America/New_York',
     live_types: ['regular'],
     custom_type: '',
-    priority: 5,
+    priority: 1,
     is_recurring: true,
     specific_date: '',
     audience_restriction: 'all_ages',
@@ -48,7 +53,6 @@ export default function LiveSchedule() {
     notes: ''
   });
 
-  // Fetch user and timezone preferences
   React.useEffect(() => {
     const fetchUser = async () => {
       const userData = await base44.auth.me();
@@ -71,12 +75,9 @@ export default function LiveSchedule() {
     mutationFn: (data) => base44.entities.LiveSchedule.create(data),
     onSuccess: (newSchedule) => {
       queryClient.invalidateQueries({ queryKey: ['liveSchedules'] });
-      
-      // Prompt to add to device calendar
       if (window.confirm('Would you like to add this to your device calendar?')) {
         generateCalendarFile(newSchedule);
       }
-      
       setShowModal(false);
       setEditingSchedule(null);
       resetForm();
@@ -108,7 +109,7 @@ export default function LiveSchedule() {
       creator_timezone: 'America/New_York',
       live_types: ['regular'],
       custom_type: '',
-      priority: 5,
+      priority: 1,
       is_recurring: true,
       specific_date: '',
       audience_restriction: 'all_ages',
@@ -120,14 +121,11 @@ export default function LiveSchedule() {
 
   const normalizeTime = (timeStr) => {
     if (!timeStr) return '';
-    
     const timeParts = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
     if (!timeParts) return timeStr;
-    
     const hours = parseInt(timeParts[1]);
     const minutes = timeParts[2];
     const period = timeParts[3].toUpperCase();
-    
     return `${hours}:${minutes} ${period}`;
   };
 
@@ -140,7 +138,7 @@ export default function LiveSchedule() {
       creator_timezone: schedule.creator_timezone || 'America/New_York',
       live_types: schedule.live_types || ['regular'],
       custom_type: schedule.custom_type || '',
-      priority: schedule.priority || 5,
+      priority: schedule.priority || 1,
       is_recurring: schedule.is_recurring,
       specific_date: schedule.specific_date || '',
       audience_restriction: schedule.audience_restriction || 'all_ages',
@@ -150,41 +148,28 @@ export default function LiveSchedule() {
     setShowModal(true);
   };
 
-  // Convert time from creator timezone to user timezone
   const convertTime = (timeStr, fromTz, toTz) => {
     if (!timeStr) return '';
-    
     try {
       const timeParts = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
       if (!timeParts) return timeStr;
-      
       let hours = parseInt(timeParts[1]);
       const minutes = parseInt(timeParts[2]);
       const period = timeParts[3].toUpperCase();
-      
       if (period === 'PM' && hours !== 12) hours += 12;
       if (period === 'AM' && hours === 12) hours = 0;
-      
-      // Create a date object in the creator's timezone
       const date = new Date();
       const isoString = `${date.toISOString().split('T')[0]}T${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`;
-      
       const creatorTime = new Date(isoString + 'Z');
-      
-      // Get offset differences
       const creatorOffset = getTimezoneOffset(fromTz);
       const userOffset = getTimezoneOffset(toTz);
       const offsetDiff = userOffset - creatorOffset;
-      
       const convertedTime = new Date(creatorTime.getTime() + offsetDiff * 60000);
-      
       let convertedHours = convertedTime.getUTCHours();
       const convertedMinutes = convertedTime.getUTCMinutes();
       const convertedPeriod = convertedHours >= 12 ? 'PM' : 'AM';
-      
       if (convertedHours === 0) convertedHours = 12;
       else if (convertedHours > 12) convertedHours -= 12;
-      
       return `${convertedHours}:${convertedMinutes.toString().padStart(2, '0')} ${convertedPeriod}`;
     } catch (e) {
       return timeStr;
@@ -204,30 +189,24 @@ export default function LiveSchedule() {
 
   const convertTo24Hour = (timeStr) => {
     if (!timeStr) return '';
-    
     const timeParts = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
     if (!timeParts) return '';
-    
     let hours = parseInt(timeParts[1]);
     const minutes = timeParts[2];
     const period = timeParts[3].toUpperCase();
-    
     if (period === 'PM' && hours !== 12) hours += 12;
     if (period === 'AM' && hours === 12) hours = 0;
-    
     return `${hours.toString().padStart(2, '0')}:${minutes}`;
   };
 
   const handleSubmit = () => {
     if (!formData.host_username.trim()) return;
-    
     const cleanUsername = formData.host_username.replace('@', '').trim();
     const normalizedData = {
       ...formData,
       host_username: cleanUsername,
       time: normalizeTime(formData.time)
     };
-    
     if (editingSchedule) {
       updateScheduleMutation.mutate({ id: editingSchedule.id, data: normalizedData });
     } else {
@@ -260,26 +239,19 @@ export default function LiveSchedule() {
   const generateCalendarFile = (schedule) => {
     const startDate = schedule.specific_date || new Date().toISOString().split('T')[0];
     const timeStr = schedule.time || '12:00 PM';
-    
-    // Parse time
     const timeParts = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
     let hours = 12;
     let minutes = 0;
-    
     if (timeParts) {
       hours = parseInt(timeParts[1]);
       minutes = parseInt(timeParts[2]);
       if (timeParts[3].toUpperCase() === 'PM' && hours !== 12) hours += 12;
       if (timeParts[3].toUpperCase() === 'AM' && hours === 12) hours = 0;
     }
-    
     const startDateTime = `${startDate.replace(/-/g, '')}T${hours.toString().padStart(2, '0')}${minutes.toString().padStart(2, '0')}00`;
     const endDateTime = `${startDate.replace(/-/g, '')}T${(hours + 1).toString().padStart(2, '0')}${minutes.toString().padStart(2, '0')}00`;
-    
     const liveTypes = schedule.live_types || [schedule.live_type] || ['regular'];
     const liveTypeLabel = liveTypes.map(type => liveTypeConfig[type]?.label).filter(Boolean).join(' + ') || 'Live';
-    
-    // Build recurrence rule if recurring
     const icsLines = [
       'BEGIN:VCALENDAR',
       'VERSION:2.0',
@@ -291,27 +263,14 @@ export default function LiveSchedule() {
       `DESCRIPTION:${schedule.notes || `Watch @${schedule.host_username}'s ${liveTypeLabel} on TikTok`}\\nhttps://tiktok.com/@${schedule.host_username}`,
       `UID:${schedule.id}@thrivenut.app`
     ];
-    
-    // Add recurrence rule for weekly recurring events
     if (schedule.is_recurring && schedule.recurring_days && schedule.recurring_days.length > 0) {
-      const dayMap = {
-        'Monday': 'MO',
-        'Tuesday': 'TU',
-        'Wednesday': 'WE',
-        'Thursday': 'TH',
-        'Friday': 'FR',
-        'Saturday': 'SA',
-        'Sunday': 'SU'
-      };
+      const dayMap = { 'Monday': 'MO', 'Tuesday': 'TU', 'Wednesday': 'WE', 'Thursday': 'TH', 'Friday': 'FR', 'Saturday': 'SA', 'Sunday': 'SU' };
       const byDay = schedule.recurring_days.map(day => dayMap[day]).join(',');
       icsLines.push(`RRULE:FREQ=WEEKLY;BYDAY=${byDay}`);
     }
-    
     icsLines.push('END:VEVENT');
     icsLines.push('END:VCALENDAR');
-    
     const icsContent = icsLines.join('\r\n');
-    
     const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
@@ -321,32 +280,138 @@ export default function LiveSchedule() {
     document.body.removeChild(link);
   };
 
-  // Group schedules by day and sort by priority
-  const schedulesByDay = daysOfWeek.reduce((acc, day) => {
-    acc[day] = schedules
-      .filter(s => s.is_recurring && s.recurring_days?.includes(day))
-      .sort((a, b) => {
-        // Sort by priority first (higher priority first), then by time
-        if (b.priority !== a.priority) return b.priority - a.priority;
-        const timeA = a.time || '';
-        const timeB = b.time || '';
-        return timeA.localeCompare(timeB);
-      });
-    return acc;
-  }, {});
+  // Get current day info
+  const today = new Date();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const currentDayName = today.toLocaleString('en-US', { weekday: 'long' });
+  const tomorrowDayName = tomorrow.toLocaleString('en-US', { weekday: 'long' });
 
-  // One-time lives, sorted by priority
-  const oneTimeLives = schedules
-    .filter(s => !s.is_recurring)
-    .sort((a, b) => b.priority - a.priority);
+  // Filter and sort schedules
+  const getFilteredSchedulesForDay = (day) => {
+    let filtered = schedules.filter(s => s.is_recurring && s.recurring_days?.includes(day));
+    
+    // Apply live type filter
+    if (selectedLiveTypes.length > 0) {
+      filtered = filtered.filter(s =>
+        (s.live_types || ['regular']).some(type => selectedLiveTypes.includes(type))
+      );
+    }
+    
+    // Sort by time first, then by priority (1 = highest priority)
+    return filtered.sort((a, b) => {
+      const timeA = convertTo24Hour(a.time);
+      const timeB = convertTo24Hour(b.time);
+      if (timeA && timeB && timeA !== timeB) return timeA.localeCompare(timeB);
+      return (a.priority || 5) - (b.priority || 5);
+    });
+  };
+
+  // Get days to show based on filter
+  const getDaysToShow = () => {
+    if (dayFilter === 'today') return [currentDayName];
+    if (dayFilter === 'tomorrow') return [tomorrowDayName];
+    return daysOfWeek;
+  };
+
+  const daysToShow = getDaysToShow();
+
+  // One-time lives
+  let oneTimeLives = schedules.filter(s => !s.is_recurring);
+  if (dayFilter === 'today') {
+    const todayISO = today.toISOString().split('T')[0];
+    oneTimeLives = oneTimeLives.filter(s => s.specific_date === todayISO);
+  } else if (dayFilter === 'tomorrow') {
+    const tomorrowISO = tomorrow.toISOString().split('T')[0];
+    oneTimeLives = oneTimeLives.filter(s => s.specific_date === tomorrowISO);
+  }
+  if (selectedLiveTypes.length > 0) {
+    oneTimeLives = oneTimeLives.filter(s =>
+      (s.live_types || ['regular']).some(type => selectedLiveTypes.includes(type))
+    );
+  }
+  oneTimeLives = oneTimeLives.sort((a, b) => {
+    const timeA = convertTo24Hour(a.time);
+    const timeB = convertTo24Hour(b.time);
+    if (timeA && timeB && timeA !== timeB) return timeA.localeCompare(timeB);
+    return (a.priority || 5) - (b.priority || 5);
+  });
+
+  const toggleTypeFilter = (type) => {
+    setSelectedLiveTypes(prev =>
+      prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
+    );
+  };
+
+  const ScheduleCard = ({ schedule }) => {
+    const liveTypes = schedule.live_types || ['regular'];
+    return (
+      <div className="p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors text-sm">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <span className="w-5 h-5 rounded-full bg-purple-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
+              {schedule.priority || 5}
+            </span>
+            <span
+              className="font-medium cursor-pointer hover:text-purple-600 truncate"
+              onClick={() => openTikTok(schedule.host_username)}
+            >
+              @{schedule.host_username}
+            </span>
+          </div>
+          <div className="flex items-center gap-1 flex-shrink-0">
+            {schedule.notes && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="w-6 h-6"
+                onClick={() => { setNoteContent(schedule.notes); setShowNoteDialog(true); }}
+              >
+                <FileText className="w-3 h-3 text-gray-500" />
+              </Button>
+            )}
+            <Button variant="ghost" size="icon" className="w-6 h-6" onClick={() => handleEdit(schedule)}>
+              <Edit className="w-3 h-3" />
+            </Button>
+            <Button variant="ghost" size="icon" className="w-6 h-6" onClick={() => generateCalendarFile(schedule)}>
+              <CalendarPlus className="w-3 h-3" />
+            </Button>
+            <Button variant="ghost" size="icon" className="w-6 h-6 text-red-500" onClick={() => deleteScheduleMutation.mutate(schedule.id)}>
+              <Trash2 className="w-3 h-3" />
+            </Button>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 mt-1 ml-7">
+          {schedule.time && (
+            <span className="text-xs text-gray-600">
+              {convertTime(schedule.time, schedule.creator_timezone || 'America/New_York', userTimezone)}
+            </span>
+          )}
+          <div className="flex flex-wrap gap-1">
+            {liveTypes.map(type => {
+              const config = liveTypeConfig[type];
+              if (!config) return null;
+              const Icon = config.icon;
+              return (
+                <Badge key={type} className={`text-xs px-1.5 py-0 ${config.color}`}>
+                  <Icon className="w-3 h-3 mr-0.5" />
+                  {config.label}
+                </Badge>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 p-4 md:p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="max-w-7xl mx-auto space-y-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-800">Creator Calendar</h1>
-            <p className="text-gray-600 mt-1">Track all your favorite TikTok creators' live schedules</p>
+            <p className="text-gray-600 text-sm">Track your favorite TikTok creators' live schedules</p>
           </div>
           <Button
             onClick={() => setShowModal(true)}
@@ -357,14 +422,70 @@ export default function LiveSchedule() {
           </Button>
         </div>
 
+        {/* Day Filter */}
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant={dayFilter === 'today' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setDayFilter('today')}
+            className={dayFilter === 'today' ? 'bg-purple-600' : ''}
+          >
+            Today ({currentDayName.slice(0, 3)})
+          </Button>
+          <Button
+            variant={dayFilter === 'tomorrow' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setDayFilter('tomorrow')}
+            className={dayFilter === 'tomorrow' ? 'bg-purple-600' : ''}
+          >
+            Tomorrow ({tomorrowDayName.slice(0, 3)})
+          </Button>
+          <Button
+            variant={dayFilter === 'all' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setDayFilter('all')}
+            className={dayFilter === 'all' ? 'bg-purple-600' : ''}
+          >
+            All Days
+          </Button>
+        </div>
+
+        {/* Live Type Filters */}
+        <div className="flex flex-wrap gap-1">
+          {Object.entries(liveTypeConfig).map(([key, config]) => {
+            const Icon = config.icon;
+            const isSelected = selectedLiveTypes.includes(key);
+            return (
+              <Badge
+                key={key}
+                variant={isSelected ? 'default' : 'outline'}
+                className={`cursor-pointer px-2 py-1 text-xs ${isSelected ? 'bg-purple-600 text-white' : 'bg-white'}`}
+                onClick={() => toggleTypeFilter(key)}
+              >
+                <Icon className="w-3 h-3 mr-1" />
+                {config.label}
+              </Badge>
+            );
+          })}
+          {selectedLiveTypes.length > 0 && (
+            <Badge
+              variant="outline"
+              className="cursor-pointer px-2 py-1 text-xs text-red-500 border-red-300"
+              onClick={() => setSelectedLiveTypes([])}
+            >
+              Clear
+            </Badge>
+          )}
+        </div>
+
         {/* Weekly Schedule */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-            <CalendarIcon className="w-5 h-5" />
-            Weekly Schedule
-          </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {daysOfWeek.map((day, dayIndex) => (
+        <div className={`grid gap-4 ${dayFilter === 'all' ? 'md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 'md:grid-cols-1 lg:grid-cols-2'}`}>
+          {daysToShow.map((day, dayIndex) => {
+            const daySchedules = getFilteredSchedulesForDay(day);
+            const isToday = day === currentDayName;
+            const isTomorrow = day === tomorrowDayName;
+            
+            return (
               <motion.div
                 key={day}
                 initial={{ opacity: 0, y: 20 }}
@@ -372,210 +493,67 @@ export default function LiveSchedule() {
                 transition={{ delay: dayIndex * 0.05 }}
               >
                 <Card className="h-full">
-                  <CardHeader className="pb-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white">
-                    <CardTitle className="text-lg">{day}</CardTitle>
+                  <CardHeader className={`pb-2 ${isToday ? 'bg-gradient-to-r from-green-500 to-teal-500' : isTomorrow ? 'bg-gradient-to-r from-blue-500 to-indigo-500' : 'bg-gradient-to-r from-purple-500 to-pink-500'} text-white`}>
+                    <CardTitle className="text-base flex items-center gap-2">
+                      {day}
+                      {isToday && <Badge className="bg-white/20 text-white text-xs">Today</Badge>}
+                      {isTomorrow && <Badge className="bg-white/20 text-white text-xs">Tomorrow</Badge>}
+                    </CardTitle>
                   </CardHeader>
-                  <CardContent className="pt-4 space-y-2">
-                    {schedulesByDay[day].length === 0 ? (
-                      <p className="text-sm text-gray-400 italic">No lives scheduled</p>
+                  <CardContent className="pt-3 space-y-2 max-h-96 overflow-y-auto">
+                    {daySchedules.length === 0 ? (
+                      <p className="text-xs text-gray-400 italic">No lives scheduled</p>
                     ) : (
-                      schedulesByDay[day].map((schedule) => {
-                        const liveTypes = schedule.live_types || [schedule.live_type] || ['regular'];
-                        const hasHeartMe = liveTypes.includes('daily_heart_me');
-                        
-                        return (
-                          <div
-                            key={schedule.id}
-                            className="p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors relative"
-                          >
-                            {/* Priority indicator */}
-                            <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-purple-600 text-white text-xs font-bold flex items-center justify-center">
-                              {schedule.priority}
-                            </div>
-                            
-                            <div className="flex items-start gap-2 pr-8">
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-1">
-                                  {hasHeartMe && (
-                                    <Heart className="w-4 h-4 flex-shrink-0 text-orange-500" />
-                                  )}
-                                  <span 
-                                    className="font-semibold text-sm cursor-pointer hover:text-purple-600 truncate"
-                                    onClick={() => openTikTok(schedule.host_username)}
-                                  >
-                                    @{schedule.host_username}
-                                  </span>
-                                </div>
-                                
-                                <div className="flex flex-wrap gap-1 mb-1">
-                                  {liveTypes.filter(t => t !== 'regular').map(type => {
-                                    const typeConfig = liveTypeConfig[type];
-                                    if (!typeConfig) return null;
-                                    return (
-                                      <Badge key={type} className={`text-xs ${typeConfig.color}`}>
-                                        {typeConfig.label}
-                                      </Badge>
-                                    );
-                                  })}
-                                  {schedule.custom_type && (
-                                    <Badge className="text-xs bg-gray-100 text-gray-700">
-                                      {schedule.custom_type}
-                                    </Badge>
-                                  )}
-                                </div>
-                                
-                                {schedule.time && (
-                                  <p className="text-xs text-gray-600 ml-6">
-                                    {convertTime(schedule.time, schedule.creator_timezone || 'America/New_York', userTimezone)}
-                                  </p>
-                                )}
-                                {schedule.notes && (
-                                  <p className="text-xs text-gray-500 italic mt-1 ml-6">{schedule.notes}</p>
-                                )}
-                                
-                                <div className="flex gap-1 mt-2">
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-6 text-xs px-2"
-                                    onClick={() => handleEdit(schedule)}
-                                  >
-                                    <Edit className="w-3 h-3 mr-1" />
-                                    Edit
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-6 text-xs px-2"
-                                    onClick={() => generateCalendarFile(schedule)}
-                                  >
-                                    <CalendarPlus className="w-3 h-3 mr-1" />
-                                    Add to Cal
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-6 text-xs px-2 text-red-500 hover:text-red-700"
-                                    onClick={() => deleteScheduleMutation.mutate(schedule.id)}
-                                  >
-                                    <Trash2 className="w-3 h-3" />
-                                  </Button>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })
+                      daySchedules.map((schedule) => (
+                        <ScheduleCard key={schedule.id} schedule={schedule} />
+                      ))
                     )}
                   </CardContent>
                 </Card>
               </motion.div>
-            ))}
-          </div>
+            );
+          })}
         </div>
 
         {/* One-Time Lives */}
         {oneTimeLives.length > 0 && (
-          <div className="space-y-4">
-            <h2 className="text-xl font-bold text-gray-800">Upcoming One-Time Lives</h2>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {oneTimeLives.map((schedule, index) => {
-                const liveTypes = schedule.live_types || [schedule.live_type] || ['regular'];
-                const hasHeartMe = liveTypes.includes('daily_heart_me');
-                
-                return (
-                  <motion.div
-                    key={schedule.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                  >
-                    <Card className="relative">
-                      <CardContent className="p-4">
-                        <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-purple-600 text-white text-sm font-bold flex items-center justify-center">
-                          {schedule.priority}
-                        </div>
-                        
-                        <div className="flex items-start pr-10">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              {hasHeartMe && (
-                                <Heart className="w-4 h-4 text-orange-500" />
-                              )}
-                              <span 
-                                className="font-semibold cursor-pointer hover:text-purple-600"
-                                onClick={() => openTikTok(schedule.host_username)}
-                              >
-                                @{schedule.host_username}
-                              </span>
-                            </div>
-                            
-                            <div className="flex flex-wrap gap-1 mb-2">
-                              {liveTypes.filter(t => t !== 'regular').map(type => {
-                                const typeConfig = liveTypeConfig[type];
-                                if (!typeConfig) return null;
-                                return (
-                                  <Badge key={type} className={`text-xs ${typeConfig.color}`}>
-                                    {typeConfig.label}
-                                  </Badge>
-                                );
-                              })}
-                              {schedule.custom_type && (
-                                <Badge className="text-xs bg-gray-100 text-gray-700">
-                                  {schedule.custom_type}
-                                </Badge>
-                              )}
-                            </div>
-                            
-                            {schedule.specific_date && (
-                              <p className="text-sm text-gray-600">{schedule.specific_date}</p>
-                            )}
-                            {schedule.time && (
-                              <p className="text-sm text-gray-600">
-                                {convertTime(schedule.time, schedule.creator_timezone || 'America/New_York', userTimezone)}
-                              </p>
-                            )}
-                            {schedule.notes && (
-                              <p className="text-sm text-gray-500 italic mt-2">{schedule.notes}</p>
-                            )}
-                            
-                            <div className="flex gap-2 mt-3">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleEdit(schedule)}
-                              >
-                                <Edit className="w-3 h-3 mr-1" />
-                                Edit
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => generateCalendarFile(schedule)}
-                              >
-                                <CalendarPlus className="w-3 h-3 mr-1" />
-                                Add to Calendar
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => deleteScheduleMutation.mutate(schedule.id)}
-                                className="text-red-500 hover:text-red-700"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                );
-              })}
+          <div className="space-y-3">
+            <h2 className="text-lg font-bold text-gray-800">One-Time Lives</h2>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+              {oneTimeLives.map((schedule, index) => (
+                <motion.div
+                  key={schedule.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                >
+                  <Card>
+                    <CardHeader className="pb-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white">
+                      <CardTitle className="text-sm">{schedule.specific_date}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-3">
+                      <ScheduleCard schedule={schedule} />
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
             </div>
           </div>
         )}
       </div>
+
+      {/* Note Dialog */}
+      <Dialog open={showNoteDialog} onOpenChange={setShowNoteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Notes</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-gray-700 whitespace-pre-wrap">{noteContent}</p>
+          <DialogFooter>
+            <Button onClick={() => setShowNoteDialog(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Add/Edit Live Modal */}
       <Dialog open={showModal} onOpenChange={(open) => {
@@ -603,55 +581,66 @@ export default function LiveSchedule() {
 
             <div className="space-y-2">
               <Label>Live Types (select all that apply)</Label>
-              <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto">
-                {Object.entries(liveTypeConfig).map(([key, config]) => (
-                  <div
-                    key={key}
-                    onClick={() => toggleLiveType(key)}
-                    className={`p-2 rounded-lg border-2 cursor-pointer transition-all text-sm ${
-                      formData.live_types.includes(key)
-                        ? 'border-purple-500 bg-purple-50'
-                        : 'border-gray-200 hover:border-purple-300'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Checkbox checked={formData.live_types.includes(key)} />
-                      <span>{config.label}</span>
+              <div className="grid grid-cols-3 gap-2">
+                {Object.entries(liveTypeConfig).map(([key, config]) => {
+                  const Icon = config.icon;
+                  return (
+                    <div
+                      key={key}
+                      onClick={() => toggleLiveType(key)}
+                      className={`p-2 rounded-lg border-2 cursor-pointer transition-all text-xs ${
+                        formData.live_types.includes(key)
+                          ? 'border-purple-500 bg-purple-50'
+                          : 'border-gray-200 hover:border-purple-300'
+                      }`}
+                    >
+                      <div className="flex items-center gap-1">
+                        <Checkbox checked={formData.live_types.includes(key)} />
+                        <Icon className="w-3 h-3" />
+                        <span>{config.label}</span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="customType">Custom Type (Optional)</Label>
-              <Input
-                id="customType"
-                placeholder="e.g., Collab, Giveaway, etc."
-                value={formData.custom_type}
-                onChange={(e) => setFormData({ ...formData, custom_type: e.target.value })}
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="priority">Priority (1=highest, 10=lowest)</Label>
+                <Input
+                  id="priority"
+                  type="number"
+                  min="1"
+                  max="10"
+                  value={formData.priority}
+                  onChange={(e) => setFormData({ ...formData, priority: parseInt(e.target.value) || 1 })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Audience</Label>
+                <Select
+                  value={formData.audience_restriction}
+                  onValueChange={(value) => setFormData({ ...formData, audience_restriction: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all_ages">All Ages</SelectItem>
+                    <SelectItem value="18+">18+ Only</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="priority">Priority (1-10, 10 = highest)</Label>
-              <Input
-                id="priority"
-                type="number"
-                min="1"
-                max="10"
-                value={formData.priority}
-                onChange={(e) => setFormData({ ...formData, priority: parseInt(e.target.value) || 5 })}
-              />
-            </div>
-
-            <div 
+            <div
               onClick={() => setFormData({ ...formData, is_recurring: !formData.is_recurring })}
               className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50"
             >
               <Checkbox checked={formData.is_recurring} />
               <div>
-                <p className="font-medium">Recurring Weekly</p>
+                <p className="font-medium text-sm">Recurring Weekly</p>
                 <p className="text-xs text-gray-500">Same day/time every week</p>
               </div>
             </div>
@@ -659,21 +648,18 @@ export default function LiveSchedule() {
             {formData.is_recurring ? (
               <div className="space-y-2">
                 <Label>Select Days</Label>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-4 gap-2">
                   {daysOfWeek.map(day => (
                     <div
                       key={day}
                       onClick={() => toggleDay(day)}
-                      className={`p-2 rounded-lg border-2 cursor-pointer transition-all text-sm ${
+                      className={`p-2 rounded-lg border-2 cursor-pointer transition-all text-xs text-center ${
                         formData.recurring_days.includes(day)
                           ? 'border-purple-500 bg-purple-50'
                           : 'border-gray-200 hover:border-purple-300'
                       }`}
                     >
-                      <div className="flex items-center gap-2">
-                        <Checkbox checked={formData.recurring_days.includes(day)} />
-                        <span>{day}</span>
-                      </div>
+                      {day.slice(0, 3)}
                     </div>
                   ))}
                 </div>
@@ -708,7 +694,6 @@ export default function LiveSchedule() {
                   }
                 }}
               />
-              <p className="text-xs text-gray-500">Select time for the live stream</p>
             </div>
 
             <TimezoneSelector
@@ -716,38 +701,6 @@ export default function LiveSchedule() {
               value={formData.creator_timezone}
               onChange={(value) => setFormData({ ...formData, creator_timezone: value })}
             />
-
-            <div className="space-y-2">
-              <Label>Audience Restriction</Label>
-              <Select
-                value={formData.audience_restriction}
-                onValueChange={(value) => setFormData({ ...formData, audience_restriction: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all_ages">All Ages</SelectItem>
-                  <SelectItem value="18+">18+ Only</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-gray-500">
-                Important for battles and co-hosting. Both accounts must match restrictions.
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="video_guide">Educational Video URL (Optional)</Label>
-              <Input
-                id="video_guide"
-                placeholder="https://..."
-                value={formData.video_guide_url}
-                onChange={(e) => setFormData({ ...formData, video_guide_url: e.target.value })}
-              />
-              <p className="text-xs text-gray-500">
-                Link to a guide explaining live types and audience restrictions
-              </p>
-            </div>
 
             <div className="space-y-2">
               <Label htmlFor="notes">Notes (Optional)</Label>
@@ -770,7 +723,7 @@ export default function LiveSchedule() {
               disabled={!formData.host_username.trim() || createScheduleMutation.isPending || updateScheduleMutation.isPending}
               className="bg-purple-600 hover:bg-purple-700"
             >
-              {editingSchedule ? 'Update Schedule' : 'Add to Calendar'}
+              {editingSchedule ? 'Update' : 'Add'}
             </Button>
           </DialogFooter>
         </DialogContent>
