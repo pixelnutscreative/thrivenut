@@ -43,9 +43,9 @@ export default function Goals() {
   }, []);
 
   const { data: goals } = useQuery({
-    queryKey: ['goals'],
+    queryKey: ['goals', user?.email],
     queryFn: async () => {
-      return await base44.entities.Goal.filter({ status: 'active' }, '-created_date');
+      return await base44.entities.Goal.filter({ status: 'active', created_by: user.email }, '-created_date');
     },
     enabled: !!user,
   });
