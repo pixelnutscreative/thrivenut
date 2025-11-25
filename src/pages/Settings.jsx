@@ -109,8 +109,12 @@ export default function Settings() {
 
   const updatePreferencesMutation = useMutation({
     mutationFn: async (data) => {
-      if (preferences) {
-        return await base44.entities.UserPreferences.update(preferences.id, data);
+      // Get the most recent preferences record
+      const allPrefs = await base44.entities.UserPreferences.filter({ user_email: user.email }, '-updated_date');
+      const currentPref = allPrefs[0];
+      
+      if (currentPref) {
+        return await base44.entities.UserPreferences.update(currentPref.id, data);
       } else {
         return await base44.entities.UserPreferences.create({
           user_email: user.email,
