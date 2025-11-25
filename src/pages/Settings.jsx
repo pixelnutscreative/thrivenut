@@ -9,7 +9,7 @@ import { Loader2, Save, User, Palette, Eye, Layers, MessageSquare, Clock, Share2
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { motion } from 'framer-motion';
-import { useToast } from '@/components/ui/use-toast';
+
 import ThemeSelector from '../components/onboarding/ThemeSelector';
 import ImageUploader from '../components/settings/ImageUploader';
 import TimezoneSelector from '../components/shared/TimezoneSelector';
