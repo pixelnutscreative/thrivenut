@@ -280,9 +280,22 @@ export default function Layout({ children, currentPageName }) {
                                             </button>
                                             {isExpanded && !isLocked && (
                                               <div className="ml-4 mt-1 space-y-1">
-                                                {item.subItems.map(subItem => {
+                                                {item.subItems.filter(sub => {
+                                                  if (sub.moduleId && !enabledModules.includes(sub.moduleId)) return false;
+                                                  return true;
+                                                }).map(subItem => {
                                                   const SubIcon = subItem.icon;
                                                   const subIsActive = currentPageName === subItem.path;
+                                                  
+                                                  // Render dividers differently
+                                                  if (subItem.isDivider) {
+                                                    return (
+                                                      <div key={subItem.name} className={`px-2 py-1 text-xs font-semibold ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                                                        {subItem.name}
+                                                      </div>
+                                                    );
+                                                  }
+                                                  
                                                   return (
                                                     <Link
                                                       key={subItem.path}
@@ -397,9 +410,22 @@ export default function Layout({ children, currentPageName }) {
                                         </button>
                                         {isExpanded && !isLocked && (
                                           <div className="ml-4 mt-1 space-y-1">
-                                            {item.subItems.map(subItem => {
+                                            {item.subItems.filter(sub => {
+                                              if (sub.moduleId && !enabledModules.includes(sub.moduleId)) return false;
+                                              return true;
+                                            }).map(subItem => {
                                               const SubIcon = subItem.icon;
                                               const subIsActive = currentPageName === subItem.path;
+                                              
+                                              // Render dividers differently
+                                              if (subItem.isDivider) {
+                                                return (
+                                                  <div key={subItem.name} className={`px-2 py-1 text-xs font-semibold ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                                                    {subItem.name}
+                                                  </div>
+                                                );
+                                              }
+                                              
                                               return (
                                                 <Link
                                                   key={subItem.path}
