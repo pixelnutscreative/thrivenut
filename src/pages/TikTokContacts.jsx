@@ -462,6 +462,45 @@ export default function TikTokContacts() {
           </DialogHeader>
 
           <div className="space-y-4 py-4">
+            {/* Feature Toggles - at top */}
+            <div className="p-3 bg-gray-50 rounded-lg">
+              <h4 className="font-semibold text-sm mb-2">Enable Features</h4>
+              <div className="grid grid-cols-4 gap-2">
+                <div
+                  onClick={() => setFormData({ ...formData, engagement_enabled: !formData.engagement_enabled })}
+                  className="flex items-center gap-1 p-2 border rounded-lg cursor-pointer hover:bg-white text-xs"
+                >
+                  <Checkbox checked={formData.engagement_enabled} />
+                  <Heart className="w-3 h-3 text-purple-500" />
+                  <span>Engagement</span>
+                </div>
+                <div
+                  onClick={() => setFormData({ ...formData, calendar_enabled: !formData.calendar_enabled })}
+                  className="flex items-center gap-1 p-2 border rounded-lg cursor-pointer hover:bg-white text-xs"
+                >
+                  <Checkbox checked={formData.calendar_enabled} />
+                  <Calendar className="w-3 h-3 text-blue-500" />
+                  <span>Calendar</span>
+                </div>
+                <div
+                  onClick={() => setFormData({ ...formData, is_gifter: !formData.is_gifter })}
+                  className="flex items-center gap-1 p-2 border rounded-lg cursor-pointer hover:bg-white text-xs"
+                >
+                  <Checkbox checked={formData.is_gifter} />
+                  <Gift className="w-3 h-3 text-amber-500" />
+                  <span>Gifter</span>
+                </div>
+                <div
+                  onClick={() => setFormData({ ...formData, add_to_my_people: !formData.add_to_my_people })}
+                  className="flex items-center gap-1 p-2 border rounded-lg cursor-pointer hover:bg-white text-xs"
+                >
+                  <Checkbox checked={formData.add_to_my_people} />
+                  <Users className="w-3 h-3 text-green-500" />
+                  <span>My People</span>
+                </div>
+              </div>
+            </div>
+
             {/* Basic Info */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -482,7 +521,31 @@ export default function TikTokContacts() {
               </div>
             </div>
 
-            {/* Notes - moved up */}
+            {/* Roles - directly under username */}
+            <div className="grid grid-cols-4 gap-2">
+              {Object.entries(roleConfig).map(([key, config]) => {
+                const Icon = config.icon;
+                return (
+                  <div
+                    key={key}
+                    onClick={() => toggleRole(key)}
+                    className={`p-1.5 rounded-lg border-2 cursor-pointer text-xs ${
+                      formData.role.includes(key)
+                        ? 'border-purple-500 bg-purple-50'
+                        : 'border-gray-200 hover:border-purple-300'
+                    }`}
+                  >
+                    <div className="flex items-center gap-1">
+                      <Checkbox checked={formData.role.includes(key)} className="h-3 w-3" />
+                      <Icon className="w-3 h-3" />
+                      <span className="truncate">{config.label}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Notes */}
             <div className="space-y-2">
               <Label>Notes</Label>
               <Textarea
@@ -511,77 +574,6 @@ export default function TikTokContacts() {
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 />
-              </div>
-            </div>
-
-            {/* Roles - moved above features */}
-            <Collapsible defaultOpen>
-              <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-blue-50 rounded-lg hover:bg-blue-100">
-                <h4 className="font-semibold text-sm text-blue-800">Roles & Categories</h4>
-                <ChevronDown className="w-4 h-4 text-blue-600" />
-              </CollapsibleTrigger>
-              <CollapsibleContent className="p-3 border border-t-0 rounded-b-lg">
-                <div className="grid grid-cols-3 gap-2">
-                  {Object.entries(roleConfig).map(([key, config]) => {
-                    const Icon = config.icon;
-                    return (
-                      <div
-                        key={key}
-                        onClick={() => toggleRole(key)}
-                        className={`p-2 rounded-lg border-2 cursor-pointer text-xs ${
-                          formData.role.includes(key)
-                            ? 'border-purple-500 bg-purple-50'
-                            : 'border-gray-200 hover:border-purple-300'
-                        }`}
-                      >
-                        <div className="flex items-center gap-1">
-                          <Checkbox checked={formData.role.includes(key)} />
-                          <Icon className="w-3 h-3" />
-                          <span className="truncate">{config.label}</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
-
-            {/* Feature Toggles - compact grid */}
-            <div className="p-3 bg-gray-50 rounded-lg">
-              <h4 className="font-semibold text-sm mb-2">Enable Features</h4>
-              <div className="grid grid-cols-2 gap-2">
-                <div
-                  onClick={() => setFormData({ ...formData, engagement_enabled: !formData.engagement_enabled })}
-                  className="flex items-center gap-2 p-2 border rounded-lg cursor-pointer hover:bg-white text-sm"
-                >
-                  <Checkbox checked={formData.engagement_enabled} />
-                  <Heart className="w-4 h-4 text-purple-500" />
-                  <span>Engagement</span>
-                </div>
-                <div
-                  onClick={() => setFormData({ ...formData, calendar_enabled: !formData.calendar_enabled })}
-                  className="flex items-center gap-2 p-2 border rounded-lg cursor-pointer hover:bg-white text-sm"
-                >
-                  <Checkbox checked={formData.calendar_enabled} />
-                  <Calendar className="w-4 h-4 text-blue-500" />
-                  <span>Calendar</span>
-                </div>
-                <div
-                  onClick={() => setFormData({ ...formData, is_gifter: !formData.is_gifter })}
-                  className="flex items-center gap-2 p-2 border rounded-lg cursor-pointer hover:bg-white text-sm"
-                >
-                  <Checkbox checked={formData.is_gifter} />
-                  <Gift className="w-4 h-4 text-amber-500" />
-                  <span>Gifter</span>
-                </div>
-                <div
-                  onClick={() => setFormData({ ...formData, add_to_my_people: !formData.add_to_my_people })}
-                  className="flex items-center gap-2 p-2 border rounded-lg cursor-pointer hover:bg-white text-sm"
-                >
-                  <Checkbox checked={formData.add_to_my_people} />
-                  <Users className="w-4 h-4 text-green-500" />
-                  <span>My People</span>
-                </div>
               </div>
             </div>
 
@@ -662,155 +654,147 @@ export default function TikTokContacts() {
               </div>
             )}
 
-            {/* Advanced Details - Collapsible with Tabs */}
-            <Collapsible>
-              <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-gray-100 rounded-lg hover:bg-gray-200">
-                <h4 className="font-semibold text-sm text-gray-700">Advanced Details</h4>
-                <ChevronDown className="w-4 h-4 text-gray-600" />
-              </CollapsibleTrigger>
-              <CollapsibleContent className="border border-t-0 rounded-b-lg">
-                <Tabs defaultValue="mods" className="w-full">
-                  <TabsList className="w-full grid grid-cols-3">
-                    <TabsTrigger value="mods">Mods</TabsTrigger>
-                    <TabsTrigger value="connections">Connected Through</TabsTrigger>
-                    <TabsTrigger value="details">Details</TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="mods" className="p-3 space-y-3">
-                    <div className="space-y-2">
-                      <Label>Mods For (who they mod for)</Label>
-                      <Select
-                        value=""
-                        onValueChange={(v) => {
-                          if (v && !formData.mods_for.includes(v)) {
-                            setFormData({ ...formData, mods_for: [...formData.mods_for, v] });
-                          }
-                        }}
-                      >
-                        <SelectTrigger><SelectValue placeholder="Select contact..." /></SelectTrigger>
-                        <SelectContent>
-                          {contacts.filter(c => c.id !== editingContact?.id && !formData.mods_for.includes(c.id)).map(c => (
-                            <SelectItem key={c.id} value={c.id}>@{c.username}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <div className="flex flex-wrap gap-2">
-                        {formData.mods_for.map(id => {
-                          const contact = contacts.find(c => c.id === id);
-                          return contact ? (
-                            <Badge key={id} variant="secondary" className="cursor-pointer" onClick={() => setFormData({ ...formData, mods_for: formData.mods_for.filter(m => m !== id) })}>
-                              @{contact.username} ✕
-                            </Badge>
-                          ) : null;
-                        })}
-                      </div>
-                    </div>
+            {/* Tabs for Mods, Connected Through, Details */}
+            <Tabs defaultValue="mods" className="w-full">
+              <TabsList className="w-full grid grid-cols-3">
+                <TabsTrigger value="mods" className="data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700">Mods</TabsTrigger>
+                <TabsTrigger value="connections" className="data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700">Connected Through</TabsTrigger>
+                <TabsTrigger value="details" className="data-[state=active]:bg-amber-100 data-[state=active]:text-amber-700">Details</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="mods" className="p-3 border rounded-b-lg bg-purple-50/50 space-y-3">
+                <div className="space-y-2">
+                  <Label>Mods For (who they mod for)</Label>
+                  <Select
+                    value=""
+                    onValueChange={(v) => {
+                      if (v && !formData.mods_for.includes(v)) {
+                        setFormData({ ...formData, mods_for: [...formData.mods_for, v] });
+                      }
+                    }}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Select contact..." /></SelectTrigger>
+                    <SelectContent>
+                      {contacts.filter(c => c.id !== editingContact?.id && !formData.mods_for.includes(c.id)).map(c => (
+                        <SelectItem key={c.id} value={c.id}>@{c.username}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <div className="flex flex-wrap gap-2">
+                    {formData.mods_for.map(id => {
+                      const contact = contacts.find(c => c.id === id);
+                      return contact ? (
+                        <Badge key={id} variant="secondary" className="cursor-pointer" onClick={() => setFormData({ ...formData, mods_for: formData.mods_for.filter(m => m !== id) })}>
+                          @{contact.username} ✕
+                        </Badge>
+                      ) : null;
+                    })}
+                  </div>
+                </div>
 
-                    <div className="space-y-2">
-                      <Label>Their Mods (who mods for them)</Label>
-                      <Select
-                        value=""
-                        onValueChange={(v) => {
-                          if (v && !formData.their_mods.includes(v)) {
-                            setFormData({ ...formData, their_mods: [...formData.their_mods, v] });
-                          }
-                        }}
-                      >
-                        <SelectTrigger><SelectValue placeholder="Select contact..." /></SelectTrigger>
-                        <SelectContent>
-                          {contacts.filter(c => c.id !== editingContact?.id && !formData.their_mods.includes(c.id)).map(c => (
-                            <SelectItem key={c.id} value={c.id}>@{c.username}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <div className="flex flex-wrap gap-2">
-                        {formData.their_mods.map(id => {
-                          const contact = contacts.find(c => c.id === id);
-                          return contact ? (
-                            <Badge key={id} variant="secondary" className="cursor-pointer" onClick={() => setFormData({ ...formData, their_mods: formData.their_mods.filter(m => m !== id) })}>
-                              @{contact.username} ✕
-                            </Badge>
-                          ) : null;
-                        })}
-                      </div>
-                    </div>
-                  </TabsContent>
+                <div className="space-y-2">
+                  <Label>Their Mods (who mods for them)</Label>
+                  <Select
+                    value=""
+                    onValueChange={(v) => {
+                      if (v && !formData.their_mods.includes(v)) {
+                        setFormData({ ...formData, their_mods: [...formData.their_mods, v] });
+                      }
+                    }}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Select contact..." /></SelectTrigger>
+                    <SelectContent>
+                      {contacts.filter(c => c.id !== editingContact?.id && !formData.their_mods.includes(c.id)).map(c => (
+                        <SelectItem key={c.id} value={c.id}>@{c.username}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <div className="flex flex-wrap gap-2">
+                    {formData.their_mods.map(id => {
+                      const contact = contacts.find(c => c.id === id);
+                      return contact ? (
+                        <Badge key={id} variant="secondary" className="cursor-pointer" onClick={() => setFormData({ ...formData, their_mods: formData.their_mods.filter(m => m !== id) })}>
+                          @{contact.username} ✕
+                        </Badge>
+                      ) : null;
+                    })}
+                  </div>
+                </div>
+              </TabsContent>
 
-                  <TabsContent value="connections" className="p-3 space-y-3">
-                    <div className="space-y-2">
-                      <Label>Met Through</Label>
-                      <Select
-                        value={formData.met_through_id}
-                        onValueChange={(v) => setFormData({ ...formData, met_through_id: v, met_through_name: '' })}
-                      >
-                        <SelectTrigger><SelectValue placeholder="Select or type below..." /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value={null}>None</SelectItem>
-                          {contacts.filter(c => c.id !== editingContact?.id).map(c => (
-                            <SelectItem key={c.id} value={c.id}>@{c.username}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {!formData.met_through_id && (
-                        <div className="flex gap-2">
-                          <Input
-                            placeholder="Or type a name..."
-                            value={formData.met_through_name || newMetThroughName}
-                            onChange={(e) => {
-                              setNewMetThroughName(e.target.value);
-                              setFormData({ ...formData, met_through_name: e.target.value });
-                            }}
-                          />
-                          {newMetThroughName && (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                createMutation.mutate({ username: newMetThroughName.replace('@', '').trim() });
-                                setNewMetThroughName('');
-                              }}
-                            >
-                              <Plus className="w-4 h-4" /> Add
-                            </Button>
-                          )}
-                        </div>
+              <TabsContent value="connections" className="p-3 border rounded-b-lg bg-blue-50/50 space-y-3">
+                <div className="space-y-2">
+                  <Label>Met Through</Label>
+                  <Select
+                    value={formData.met_through_id}
+                    onValueChange={(v) => setFormData({ ...formData, met_through_id: v, met_through_name: '' })}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Select or type below..." /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={null}>None</SelectItem>
+                      {contacts.filter(c => c.id !== editingContact?.id).map(c => (
+                        <SelectItem key={c.id} value={c.id}>@{c.username}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {!formData.met_through_id && (
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Or type a name..."
+                        value={formData.met_through_name || newMetThroughName}
+                        onChange={(e) => {
+                          setNewMetThroughName(e.target.value);
+                          setFormData({ ...formData, met_through_name: e.target.value });
+                        }}
+                      />
+                      {newMetThroughName && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            createMutation.mutate({ username: newMetThroughName.replace('@', '').trim() });
+                            setNewMetThroughName('');
+                          }}
+                        >
+                          <Plus className="w-4 h-4" /> Add
+                        </Button>
                       )}
                     </div>
-                  </TabsContent>
+                  )}
+                </div>
+              </TabsContent>
 
-                  <TabsContent value="details" className="p-3 space-y-3">
-                    <div className="space-y-2">
-                      <Label>Started Going Live</Label>
-                      <Input
-                        placeholder="e.g., Summer 2023, Early 2024"
-                        value={formData.started_going_live}
-                        onChange={(e) => setFormData({ ...formData, started_going_live: e.target.value })}
-                      />
-                    </div>
+              <TabsContent value="details" className="p-3 border rounded-b-lg bg-amber-50/50 space-y-3">
+                <div className="space-y-2">
+                  <Label>Started Going Live</Label>
+                  <Input
+                    placeholder="e.g., Summer 2023, Early 2024"
+                    value={formData.started_going_live}
+                    onChange={(e) => setFormData({ ...formData, started_going_live: e.target.value })}
+                  />
+                </div>
 
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-2">
-                        <Label>TikTok Live Agency</Label>
-                        <Input
-                          placeholder="e.g., Agency Name"
-                          value={formData.live_agency}
-                          onChange={(e) => setFormData({ ...formData, live_agency: e.target.value })}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>TT Shop Agency</Label>
-                        <Input
-                          placeholder="e.g., Shop Agency Name"
-                          value={formData.shop_agency}
-                          onChange={(e) => setFormData({ ...formData, shop_agency: e.target.value })}
-                        />
-                      </div>
-                    </div>
-                  </TabsContent>
-                </Tabs>
-              </CollapsibleContent>
-            </Collapsible>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label>TikTok Live Agency</Label>
+                    <Input
+                      placeholder="e.g., Agency Name"
+                      value={formData.live_agency}
+                      onChange={(e) => setFormData({ ...formData, live_agency: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>TT Shop Agency</Label>
+                    <Input
+                      placeholder="e.g., Shop Agency Name"
+                      value={formData.shop_agency}
+                      onChange={(e) => setFormData({ ...formData, shop_agency: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
           </div>
 
         </DialogContent>
