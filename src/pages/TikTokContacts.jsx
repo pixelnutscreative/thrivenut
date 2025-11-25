@@ -30,6 +30,9 @@ const roleConfig = {
   irl_friend: { label: 'Friend IRL (Before TikTok)', icon: Users, color: 'bg-green-100 text-green-700' },
   tiktok_seller: { label: 'TikTok Seller', icon: ShoppingBag, color: 'bg-orange-100 text-orange-700' },
   creator_to_watch: { label: 'Creator to Watch', icon: Video, color: 'bg-indigo-100 text-indigo-700' },
+  subscriber: { label: 'Subscriber', icon: Heart, color: 'bg-cyan-100 text-cyan-700' },
+  superfan: { label: 'Superfan', icon: Star, color: 'bg-rose-100 text-rose-700' },
+  discord: { label: 'Discord', icon: Users, color: 'bg-violet-100 text-violet-700' },
   other: { label: 'Other', icon: Users, color: 'bg-gray-100 text-gray-700' }
 };
 
@@ -420,10 +423,37 @@ export default function TikTokContacts() {
       <Dialog open={showModal} onOpenChange={closeModal}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingContact ? 'Edit Contact' : 'Add TikTok Contact'}</DialogTitle>
+            <div className="flex items-center justify-between">
+              <DialogTitle>{editingContact ? 'Edit Contact' : 'Add TikTok Contact'}</DialogTitle>
+              <div className="flex items-center gap-3 mr-6">
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, is_favorite: !formData.is_favorite })}
+                  className="p-1 hover:bg-gray-100 rounded"
+                >
+                  <Star className={`w-5 h-5 ${formData.is_favorite ? 'fill-amber-400 text-amber-400' : 'text-gray-300'}`} />
+                </button>
+                <div className="flex items-center gap-1">
+                  {colorOptions.slice(0, 5).map(color => (
+                    <div
+                      key={color}
+                      onClick={() => setFormData({ ...formData, color })}
+                      className={`w-5 h-5 rounded-full cursor-pointer ${formData.color === color ? 'ring-2 ring-offset-1 ring-gray-400' : ''}`}
+                      style={{ backgroundColor: color }}
+                    />
+                  ))}
+                  <Input
+                    type="color"
+                    value={formData.color}
+                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                    className="w-6 h-6 p-0 cursor-pointer border-0"
+                  />
+                </div>
+              </div>
+            </div>
           </DialogHeader>
 
-          <div className="space-y-6 py-4">
+          <div className="space-y-4 py-4">
             {/* Basic Info */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -442,6 +472,17 @@ export default function TikTokContacts() {
                   onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
                 />
               </div>
+            </div>
+
+            {/* Notes - moved up */}
+            <div className="space-y-2">
+              <Label>Notes</Label>
+              <Textarea
+                placeholder="Any notes..."
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                rows={2}
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -465,58 +506,76 @@ export default function TikTokContacts() {
               </div>
             </div>
 
-            {/* Feature Toggles */}
-            <div className="space-y-3 p-4 bg-gray-50 rounded-lg">
-              <h4 className="font-semibold text-sm">Enable Features</h4>
-              
-              <div
-                onClick={() => setFormData({ ...formData, engagement_enabled: !formData.engagement_enabled })}
-                className="flex items-center gap-3 p-2 border rounded-lg cursor-pointer hover:bg-white"
-              >
-                <Checkbox checked={formData.engagement_enabled} />
-                <Heart className="w-4 h-4 text-purple-500" />
-                <div>
-                  <p className="font-medium text-sm">Track Engagement</p>
-                  <p className="text-xs text-gray-500">Add to engagement tracker</p>
+            {/* Roles - moved above features */}
+            <Collapsible defaultOpen>
+              <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-blue-50 rounded-lg hover:bg-blue-100">
+                <h4 className="font-semibold text-sm text-blue-800">Roles & Categories</h4>
+                <ChevronDown className="w-4 h-4 text-blue-600" />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="p-3 border border-t-0 rounded-b-lg">
+                <div className="grid grid-cols-3 gap-2">
+                  {Object.entries(roleConfig).map(([key, config]) => {
+                    const Icon = config.icon;
+                    return (
+                      <div
+                        key={key}
+                        onClick={() => toggleRole(key)}
+                        className={`p-2 rounded-lg border-2 cursor-pointer text-xs ${
+                          formData.role.includes(key)
+                            ? 'border-purple-500 bg-purple-50'
+                            : 'border-gray-200 hover:border-purple-300'
+                        }`}
+                      >
+                        <div className="flex items-center gap-1">
+                          <Checkbox checked={formData.role.includes(key)} />
+                          <Icon className="w-3 h-3" />
+                          <span className="truncate">{config.label}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              </div>
+              </CollapsibleContent>
+            </Collapsible>
 
-              <div
-                onClick={() => setFormData({ ...formData, calendar_enabled: !formData.calendar_enabled })}
-                className="flex items-center gap-3 p-2 border rounded-lg cursor-pointer hover:bg-white"
-              >
-                <Checkbox checked={formData.calendar_enabled} />
-                <Calendar className="w-4 h-4 text-blue-500" />
-                <div>
-                  <p className="font-medium text-sm">Creator Calendar</p>
-                  <p className="text-xs text-gray-500">Track their live schedule</p>
+            {/* Feature Toggles - compact grid */}
+            <div className="p-3 bg-gray-50 rounded-lg">
+              <h4 className="font-semibold text-sm mb-2">Enable Features</h4>
+              <div className="grid grid-cols-2 gap-2">
+                <div
+                  onClick={() => setFormData({ ...formData, engagement_enabled: !formData.engagement_enabled })}
+                  className="flex items-center gap-2 p-2 border rounded-lg cursor-pointer hover:bg-white text-sm"
+                >
+                  <Checkbox checked={formData.engagement_enabled} />
+                  <Heart className="w-4 h-4 text-purple-500" />
+                  <span>Engagement</span>
+                </div>
+                <div
+                  onClick={() => setFormData({ ...formData, calendar_enabled: !formData.calendar_enabled })}
+                  className="flex items-center gap-2 p-2 border rounded-lg cursor-pointer hover:bg-white text-sm"
+                >
+                  <Checkbox checked={formData.calendar_enabled} />
+                  <Calendar className="w-4 h-4 text-blue-500" />
+                  <span>Calendar</span>
+                </div>
+                <div
+                  onClick={() => setFormData({ ...formData, is_gifter: !formData.is_gifter })}
+                  className="flex items-center gap-2 p-2 border rounded-lg cursor-pointer hover:bg-white text-sm"
+                >
+                  <Checkbox checked={formData.is_gifter} />
+                  <Gift className="w-4 h-4 text-amber-500" />
+                  <span>Gifter</span>
+                </div>
+                <div
+                  onClick={() => setFormData({ ...formData, add_to_my_people: !formData.add_to_my_people })}
+                  className="flex items-center gap-2 p-2 border rounded-lg cursor-pointer hover:bg-white text-sm"
+                >
+                  <Checkbox checked={formData.add_to_my_people} />
+                  <Users className="w-4 h-4 text-green-500" />
+                  <span>My People</span>
                 </div>
               </div>
-
-              <div
-                onClick={() => setFormData({ ...formData, is_gifter: !formData.is_gifter })}
-                className="flex items-center gap-3 p-2 border rounded-lg cursor-pointer hover:bg-white"
-              >
-                <Checkbox checked={formData.is_gifter} />
-                <Gift className="w-4 h-4 text-amber-500" />
-                <div>
-                  <p className="font-medium text-sm">Gifter (for Songs)</p>
-                  <p className="text-xs text-gray-500">Generate thank-you songs</p>
-                </div>
-              </div>
-
-              <div
-                onClick={() => setFormData({ ...formData, add_to_my_people: !formData.add_to_my_people })}
-                className="flex items-center gap-3 p-2 border rounded-lg cursor-pointer hover:bg-white"
-              >
-                <Checkbox checked={formData.add_to_my_people} />
-                <Users className="w-4 h-4 text-green-500" />
-                <div>
-                  <p className="font-medium text-sm">Add to My People</p>
-                  <p className="text-xs text-gray-500">Also save in personal contacts</p>
-                </div>
-              </div>
-              </div>
+            </div>
 
             {/* Engagement Settings */}
             {formData.engagement_enabled && (
@@ -594,38 +653,6 @@ export default function TikTokContacts() {
                 </div>
               </div>
             )}
-
-            {/* Roles - Collapsible */}
-            <Collapsible>
-              <CollapsibleTrigger className="flex items-center justify-between w-full p-4 bg-blue-50 rounded-lg hover:bg-blue-100">
-                <h4 className="font-semibold text-sm text-blue-800">Roles & Categories</h4>
-                <ChevronDown className="w-4 h-4 text-blue-600" />
-              </CollapsibleTrigger>
-              <CollapsibleContent className="p-4 border border-t-0 rounded-b-lg">
-                <div className="grid grid-cols-2 gap-2">
-                  {Object.entries(roleConfig).map(([key, config]) => {
-                    const Icon = config.icon;
-                    return (
-                      <div
-                        key={key}
-                        onClick={() => toggleRole(key)}
-                        className={`p-2 rounded-lg border-2 cursor-pointer text-xs ${
-                          formData.role.includes(key)
-                            ? 'border-purple-500 bg-purple-50'
-                            : 'border-gray-200 hover:border-purple-300'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <Checkbox checked={formData.role.includes(key)} />
-                          <Icon className="w-3 h-3" />
-                          <span>{config.label}</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
 
             {/* Advanced Details - Collapsible */}
             <Collapsible>
@@ -772,49 +799,6 @@ export default function TikTokContacts() {
                 </div>
               </CollapsibleContent>
             </Collapsible>
-
-            {/* Notes & Favorite */}
-            <div className="space-y-2">
-              <Label>Notes</Label>
-              <Textarea
-                placeholder="Any notes..."
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                rows={2}
-              />
-            </div>
-
-            <div
-              className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50"
-              onClick={() => setFormData({ ...formData, is_favorite: !formData.is_favorite })}
-            >
-              <Checkbox checked={formData.is_favorite} />
-              <Star className={`w-4 h-4 ${formData.is_favorite ? 'fill-amber-400 text-amber-400' : 'text-gray-400'}`} />
-              <span>Mark as Favorite / VIP</span>
-            </div>
-
-            {/* Color Picker */}
-            <div className="space-y-2">
-              <Label>Card Color</Label>
-              <div className="flex items-center gap-3">
-                <div className="flex flex-wrap gap-2">
-                  {colorOptions.map(color => (
-                    <div
-                      key={color}
-                      onClick={() => setFormData({ ...formData, color })}
-                      className={`w-7 h-7 rounded-full cursor-pointer transition-all ${formData.color === color ? 'ring-2 ring-offset-2 ring-gray-400 scale-110' : 'hover:scale-105'}`}
-                      style={{ backgroundColor: color }}
-                    />
-                  ))}
-                </div>
-                <Input
-                  type="color"
-                  value={formData.color}
-                  onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                  className="w-10 h-10 p-1 cursor-pointer"
-                />
-              </div>
-            </div>
           </div>
 
           <DialogFooter>
