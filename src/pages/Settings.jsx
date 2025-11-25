@@ -70,11 +70,12 @@ export default function Settings() {
   });
 
   const [formData, setFormData] = useState({
-    theme_type: 'clean_white',
-    metal_accent: 'gold',
+    theme_type: 'light',
+    primary_color: '#1fd2ea',
+    accent_color: '#bd84f5',
     greeting_type: 'positive_quote',
     user_timezone: 'America/New_York',
-    enabled_modules: ['tiktok', 'goals', 'wellness', 'journal'],
+    enabled_modules: ['tiktok', 'gifter', 'goals', 'wellness', 'supplements', 'medications', 'pets', 'care_reminders', 'people', 'journal', 'mental_health'],
     profile_image_url: null,
     header_image_url: null,
     background_image_url: null,
@@ -87,15 +88,12 @@ export default function Settings() {
   useEffect(() => {
     if (preferences) {
       setFormData({
-        theme_type: preferences.theme_type || 'clean_white',
-        metal_accent: preferences.metal_accent,
-        pastel_color: preferences.pastel_color,
-        bright_color: preferences.bright_color,
-        primary_color: preferences.primary_color,
-        accent_color: preferences.accent_color,
+        theme_type: preferences.theme_type || 'light',
+        primary_color: preferences.primary_color || '#1fd2ea',
+        accent_color: preferences.accent_color || '#bd84f5',
         greeting_type: preferences.greeting_type || 'positive_quote',
         user_timezone: preferences.user_timezone || 'America/New_York',
-        enabled_modules: preferences.enabled_modules || ['tiktok', 'goals', 'wellness', 'journal'],
+        enabled_modules: preferences.enabled_modules || ['tiktok', 'gifter', 'goals', 'wellness', 'supplements', 'medications', 'pets', 'care_reminders', 'people', 'journal', 'mental_health'],
         profile_image_url: preferences.profile_image_url || null,
         header_image_url: preferences.header_image_url || null,
         background_image_url: preferences.background_image_url || null,
