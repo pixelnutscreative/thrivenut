@@ -48,8 +48,9 @@ export default function SongGenerator() {
   });
 
   const { data: contacts = [] } = useQuery({
-    queryKey: ['tiktokContacts'],
-    queryFn: () => base44.entities.TikTokContact.list('screen_name'),
+    queryKey: ['tiktokContacts', user?.email],
+    queryFn: () => base44.entities.TikTokContact.filter({ created_by: user.email }, 'display_name'),
+    enabled: !!user,
   });
 
   const gifters = contacts.filter(c => c.is_gifter);

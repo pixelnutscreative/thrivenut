@@ -38,9 +38,9 @@ export default function TikTokGoals() {
   });
 
   const { data: allGoals } = useQuery({
-    queryKey: ['allContentGoals'],
+    queryKey: ['allContentGoals', user?.email],
     queryFn: async () => {
-      return await base44.entities.ContentGoal.list('-week_starting', 12);
+      return await base44.entities.ContentGoal.filter({ created_by: user.email }, '-week_starting', 12);
     },
     enabled: !!user,
   });
