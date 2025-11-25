@@ -28,7 +28,26 @@ export default function TikTokEngagement() {
     queryFn: () => base44.entities.TikTokContact.list('-created_date'),
   });
 
-  const engagementContacts = contacts.filter(c => c.engagement_enabled);
+  // Also fetch legacy TikTokCreator records for backwards compatibility
+  const { data: legacyCreators = [] } = useQuery({
+    queryKey: ['tiktokCreators'],
+    queryFn: () => base44.entities.TikTokCreator.list('-created_date'),
+  });
+
+  // Combine: contacts with engagement_enabled + legacy creators
+  const engagementContacts = [
+    ...contacts.filter(c => c.engagement_enabled),
+    ...legacyCreators.map(c => ({
+      ...c,
+      engagement_enabled: true,
+      engagement_frequency: c.engagement_frequency,
+      engagement_days: c.specific_days,
+      engagement_category_id: c.category_id,
+      engagement_history: c.engagement_history,
+      last_engaged_date: c.last_engaged_date,
+      _isLegacy: true
+    }))
+  ];
 
   const { data: categories = [] } = useQuery({
     queryKey: ['engagementCategories'],
@@ -36,9 +55,16 @@ export default function TikTokEngagement() {
   });
 
   const markEngagedMutation = useMutation({
-    mutationFn: async ({ id, currentHistory }) => {
+    mutationFn: async ({ id, currentHistory, isLegacy }) => {
       const newTimestamp = new Date().toISOString();
       const updatedHistory = [...(currentHistory || []), newTimestamp];
+      
+      if (isLegacy) {
+        return await base44.entities.TikTokCreator.update(id, {
+          last_engaged_date: format(new Date(), 'yyyy-MM-dd'),
+          engagement_history: updatedHistory
+        });
+      }
       
       return await base44.entities.TikTokContact.update(id, {
         last_engaged_date: format(new Date(), 'yyyy-MM-dd'),
@@ -49,6 +75,7 @@ export default function TikTokEngagement() {
       setJustEngaged(prev => ({ ...prev, [variables.id]: true }));
       setTimeout(() => {
         queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] });
+        queryClient.invalidateQueries({ queryKey: ['tiktokCreators'] });
       }, 800);
     },
   });
@@ -180,7 +207,7 @@ export default function TikTokEngagement() {
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => markEngagedMutation.mutate({ id: contact.id, currentHistory: contact.engagement_history })}
+                onClick={() => markEngagedMutation.mutate({ id: contact.id, currentHistory: contact.engagement_history, isLegacy: contact._isLegacy })}
                 className={`transition-all duration-300 ${isEngaged ? 'bg-green-500 border-green-500' : 'border-green-300 hover:bg-green-50'}`}
                 title="Mark as engaged"
               >

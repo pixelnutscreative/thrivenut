@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Plus, Search, Trash2, Edit, Star, Phone, Mail, 
-  ExternalLink, Users, Swords, Gift, Share2, Heart, UserPlus, Video, Calendar, Music
+  ExternalLink, Users, Swords, Gift, Share2, Heart, UserPlus, Video, Calendar, Music, ShoppingBag
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
@@ -21,11 +21,12 @@ import { format } from 'date-fns';
 const roleConfig = {
   battle_sniper: { label: 'Battle Sniper', icon: Swords, color: 'bg-red-100 text-red-700' },
   tapper: { label: 'Tapper', icon: Heart, color: 'bg-pink-100 text-pink-700' },
-  sharer: { label: 'Sharer', icon: Share2, color: 'bg-blue-100 text-blue-700' },
+  sharer: { label: 'Shares to Story', icon: Share2, color: 'bg-blue-100 text-blue-700' },
   gifter: { label: 'Gifter', icon: Gift, color: 'bg-amber-100 text-amber-700' },
-  supporter: { label: 'Supporter', icon: Heart, color: 'bg-purple-100 text-purple-700' },
-  friend: { label: 'Friend', icon: Users, color: 'bg-green-100 text-green-700' },
-  collab_partner: { label: 'Collab Partner', icon: UserPlus, color: 'bg-cyan-100 text-cyan-700' },
+  engaging_bestie: { label: 'Engaging Bestie', icon: Heart, color: 'bg-purple-100 text-purple-700' },
+  commenter: { label: 'Comments What They Saw', icon: Users, color: 'bg-teal-100 text-teal-700' },
+  irl_friend: { label: 'Friend IRL (Before TikTok)', icon: Users, color: 'bg-green-100 text-green-700' },
+  tiktok_seller: { label: 'TikTok Seller', icon: ShoppingBag, color: 'bg-orange-100 text-orange-700' },
   creator_to_watch: { label: 'Creator to Watch', icon: Video, color: 'bg-indigo-100 text-indigo-700' },
   other: { label: 'Other', icon: Users, color: 'bg-gray-100 text-gray-700' }
 };
