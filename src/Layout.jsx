@@ -48,12 +48,12 @@ const allNavItems = [
   { name: 'Dashboard', icon: LayoutDashboard, path: 'Dashboard', alwaysShow: true },
   { name: 'TikTok', icon: TrendingUp, isSection: true, moduleId: 'tiktok', subItems: [
             { name: 'TikTok Dashboard', icon: TrendingUp, path: 'TikTokDashboard' },
-            { name: 'Content Schedule', icon: TrendingUp, path: 'TikTokGoals' },
-            { name: 'TikTok Engagement', icon: Users, path: 'TikTokEngagement' },
             { name: 'TikTok Contacts', icon: Users, path: 'TikTokContacts' },
+            { name: 'Content Goals', icon: TrendingUp, path: 'TikTokGoals' },
+            { name: 'TikTok Engagement', icon: Users, path: 'TikTokEngagement' },
             { name: 'Creator Calendar', icon: Video, path: 'LiveSchedule' },
-            { name: 'Discover Creators', icon: Users, path: 'DiscoverCreators' },
             { name: 'Live Reminders', icon: Bell, path: 'LiveReminders' },
+            { name: 'Discover Creators', icon: Users, path: 'DiscoverCreators' },
           ]},
   { name: 'Gifter Songs', icon: Gift, isSection: true, moduleId: 'gifter', subItems: [
                     { name: 'Song Generator', icon: Music, path: 'SongGenerator' },

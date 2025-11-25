@@ -425,7 +425,7 @@ export default function TikTokContacts() {
           <DialogHeader>
             <div className="flex items-center justify-between">
               <DialogTitle>{editingContact ? 'Edit Contact' : 'Add TikTok Contact'}</DialogTitle>
-              <div className="flex items-center gap-3 mr-6">
+              <div className="flex items-center gap-2 mr-6">
                 <button
                   type="button"
                   onClick={() => setFormData({ ...formData, is_favorite: !formData.is_favorite })}
@@ -449,6 +449,14 @@ export default function TikTokContacts() {
                     className="w-6 h-6 p-0 cursor-pointer border-0"
                   />
                 </div>
+                <Button
+                  onClick={handleSubmit}
+                  disabled={!formData.username.trim() || (formData.is_gifter && !formData.screen_name.trim())}
+                  size="sm"
+                  className="bg-purple-600 hover:bg-purple-700 ml-2"
+                >
+                  {editingContact ? 'Update' : 'Add'}
+                </Button>
               </div>
             </div>
           </DialogHeader>
@@ -805,16 +813,6 @@ export default function TikTokContacts() {
             </Collapsible>
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={closeModal}>Cancel</Button>
-            <Button
-              onClick={handleSubmit}
-              disabled={!formData.username.trim() || (formData.is_gifter && !formData.screen_name.trim())}
-              className="bg-purple-600 hover:bg-purple-700"
-            >
-              {editingContact ? 'Update' : 'Add'} Contact
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
