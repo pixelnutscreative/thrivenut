@@ -21,17 +21,24 @@ export default function TikTokEngagement() {
   const [expandedHistory, setExpandedHistory] = useState({});
   const [viewMode, setViewMode] = useState('today');
   const [justEngaged, setJustEngaged] = useState({});
+  const [user, setUser] = useState(null);
+
+  React.useEffect(() => {
+    base44.auth.me().then(setUser);
+  }, []);
 
   // Fetch contacts with engagement enabled
   const { data: contacts = [] } = useQuery({
-    queryKey: ['tiktokContacts'],
-    queryFn: () => base44.entities.TikTokContact.list('-created_date'),
+    queryKey: ['tiktokContacts', user?.email],
+    queryFn: () => base44.entities.TikTokContact.filter({ created_by: user.email }, '-created_date'),
+    enabled: !!user,
   });
 
   // Also fetch legacy TikTokCreator records for backwards compatibility
   const { data: legacyCreators = [] } = useQuery({
-    queryKey: ['tiktokCreators'],
-    queryFn: () => base44.entities.TikTokCreator.list('-created_date'),
+    queryKey: ['tiktokCreators', user?.email],
+    queryFn: () => base44.entities.TikTokCreator.filter({ created_by: user.email }, '-created_date'),
+    enabled: !!user,
   });
 
   // Combine: contacts with engagement_enabled + legacy creators
@@ -50,8 +57,9 @@ export default function TikTokEngagement() {
   ];
 
   const { data: categories = [] } = useQuery({
-    queryKey: ['engagementCategories'],
-    queryFn: () => base44.entities.EngagementCategory.list('name'),
+    queryKey: ['engagementCategories', user?.email],
+    queryFn: () => base44.entities.EngagementCategory.filter({ created_by: user.email }, 'name'),
+    enabled: !!user,
   });
 
   const markEngagedMutation = useMutation({

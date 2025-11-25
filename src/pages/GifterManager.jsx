@@ -30,8 +30,9 @@ export default function GifterManager() {
 
   // Fetch contacts marked as gifters
   const { data: contacts = [], isLoading } = useQuery({
-    queryKey: ['tiktokContacts'],
-    queryFn: () => base44.entities.TikTokContact.list('-created_date'),
+    queryKey: ['tiktokContacts', user?.email],
+    queryFn: () => base44.entities.TikTokContact.filter({ created_by: user.email }, '-created_date'),
+    enabled: !!user,
   });
 
   const gifters = contacts.filter(c => c.is_gifter);
