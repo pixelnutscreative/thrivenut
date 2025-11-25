@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,8 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
+
 import { Music, Loader2, Copy, RefreshCw, Sparkles, Users, Send, Check } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
 const styles = [
@@ -29,10 +30,22 @@ export default function SongGenerator() {
   const [generatedSong, setGeneratedSong] = useState('');
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [shareWithPixel, setShareWithPixel] = useState(false);
-  const [customShareEmail, setCustomShareEmail] = useState('');
   const [shared, setShared] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    base44.auth.me().then(setUser).catch(() => {});
+  }, []);
+
+  const { data: preferences } = useQuery({
+    queryKey: ['preferences', user?.email],
+    queryFn: async () => {
+      const prefs = await base44.entities.UserPreferences.filter({ user_email: user.email });
+      return prefs[0] || null;
+    },
+    enabled: !!user,
+  });
 
   const { data: gifters = [] } = useQuery({
     queryKey: ['gifters'],
@@ -56,7 +69,29 @@ export default function SongGenerator() {
     setLoading(true);
     try {
       const response = await base44.functions.invoke('generateGifterSong', formData);
-      setGeneratedSong(response.data.song);
+      const song = response.data.song;
+      setGeneratedSong(song);
+      
+      // Auto-share based on settings
+      const recipients = [];
+      if (preferences?.share_songs_with_pixel) {
+        recipients.push('PixelNutsCreative@gmail.com');
+      }
+      if (preferences?.song_share_email) {
+        recipients.push(preferences.song_share_email);
+      }
+      
+      if (recipients.length > 0) {
+        for (const email of recipients) {
+          await base44.integrations.Core.SendEmail({
+            to: email,
+            subject: `🎵 Gifter Song for ${formData.gifter_name}`,
+            body: `Here's a thank-you song generated for ${formData.gifter_name} (@${formData.gifter_username || 'N/A'}):\n\n${song}\n\n---\nGenerated with Sunny Songbird 🎤`
+          });
+        }
+        setShared(true);
+        setTimeout(() => setShared(false), 3000);
+      }
     } catch (error) {
       console.error('Error generating song:', error);
       setGeneratedSong('Oops! Something went wrong. Please try again! 💜');
@@ -70,29 +105,7 @@ export default function SongGenerator() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const shareSong = async () => {
-    const recipients = [];
-    if (shareWithPixel) recipients.push('PixelNutsCreative@gmail.com');
-    if (customShareEmail.trim()) recipients.push(customShareEmail.trim());
-    
-    if (recipients.length === 0 || !generatedSong) return;
-    
-    setSharing(true);
-    try {
-      for (const email of recipients) {
-        await base44.integrations.Core.SendEmail({
-          to: email,
-          subject: `🎵 Gifter Song for ${formData.gifter_name}`,
-          body: `Here's a thank-you song generated for ${formData.gifter_name} (@${formData.gifter_username || 'N/A'}):\n\n${generatedSong}\n\n---\nGenerated with Sunny Songbird 🎤`
-        });
-      }
-      setShared(true);
-      setTimeout(() => setShared(false), 3000);
-    } catch (error) {
-      console.error('Error sharing song:', error);
-    }
-    setSharing(false);
-  };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-50 via-purple-50 to-pink-50 p-4 md:p-8">
@@ -252,44 +265,18 @@ export default function SongGenerator() {
                   </Button>
                 </div>
 
-                {/* Share Options */}
-                <div className="border-t pt-4 mt-4 space-y-3">
-                  <Label className="text-sm font-medium text-gray-700">Share this song</Label>
-                  
-                  <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg">
-                    <Checkbox 
-                      id="sharePixel"
-                      checked={shareWithPixel}
-                      onCheckedChange={setShareWithPixel}
-                    />
-                    <label htmlFor="sharePixel" className="text-sm cursor-pointer flex-1">
-                      Share with PixelNutsCreative (for help & collaboration)
-                    </label>
+                {/* Sharing Status */}
+                {(preferences?.share_songs_with_pixel || preferences?.song_share_email) && (
+                  <div className="border-t pt-4 mt-4">
+                    <div className="p-3 bg-teal-50 rounded-lg flex items-center gap-2">
+                      {shared ? (
+                        <><Check className="w-4 h-4 text-teal-600" /> <span className="text-sm text-teal-700">Song auto-shared based on your settings!</span></>
+                      ) : (
+                        <><Send className="w-4 h-4 text-teal-600" /> <span className="text-sm text-teal-700">Songs will be auto-shared based on your <a href="/Settings" className="underline font-medium">sharing settings</a></span></>
+                      )}
+                    </div>
                   </div>
-
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Or enter email to share with..."
-                      value={customShareEmail}
-                      onChange={(e) => setCustomShareEmail(e.target.value)}
-                      className="flex-1"
-                    />
-                  </div>
-
-                  <Button
-                    onClick={shareSong}
-                    disabled={sharing || shared || (!shareWithPixel && !customShareEmail.trim())}
-                    className="w-full bg-gradient-to-r from-teal-500 to-purple-500 hover:from-teal-600 hover:to-purple-600"
-                  >
-                    {sharing ? (
-                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Sending...</>
-                    ) : shared ? (
-                      <><Check className="w-4 h-4 mr-2" /> Shared! ✓</>
-                    ) : (
-                      <><Send className="w-4 h-4 mr-2" /> Share Song</>
-                    )}
-                  </Button>
-                </div>
+                )}
               </CardContent>
             </Card>
           </motion.div>
