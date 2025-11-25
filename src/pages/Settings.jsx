@@ -123,10 +123,8 @@ export default function Settings() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['preferences'] });
-      toast({
-        title: "Settings saved!",
-        description: "Your preferences have been updated.",
-      });
+      setSaveMessage('Settings saved!');
+      setTimeout(() => setSaveMessage(''), 3000);
     },
   });
 
