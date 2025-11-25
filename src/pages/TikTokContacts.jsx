@@ -13,8 +13,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Plus, Search, Trash2, Edit, Star, Phone, Mail, 
-  ExternalLink, Users, Swords, Gift, Share2, Heart, UserPlus, Video, Calendar, Music, ShoppingBag
+  ExternalLink, Users, Swords, Gift, Share2, Heart, UserPlus, Video, Calendar, Music, ShoppingBag,
+  ChevronDown, ChevronRight
 } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 
@@ -239,16 +241,37 @@ export default function TikTokContacts() {
       transition={{ delay: index * 0.05 }}
     >
       <Card 
-        className={`relative ${contact.is_favorite ? 'ring-2 ring-amber-400' : ''}`}
-        style={{ borderTop: `3px solid ${contact.color || '#8B5CF6'}` }}
+        className={`relative overflow-hidden ${contact.is_favorite ? 'ring-2 ring-amber-400' : ''}`}
       >
+        {/* Thick colored header bar */}
+        <div className="h-2" style={{ backgroundColor: contact.color || '#8B5CF6' }} />
+        
         <CardContent className="p-4">
-          <button
-            onClick={() => toggleFavoriteMutation.mutate({ id: contact.id, isFavorite: contact.is_favorite })}
-            className="absolute top-3 right-3"
-          >
-            <Star className={`w-5 h-5 ${contact.is_favorite ? 'fill-amber-400 text-amber-400' : 'text-gray-300'}`} />
-          </button>
+          {/* Top actions row */}
+          <div className="absolute top-4 right-3 flex items-center gap-1">
+            <button
+              onClick={() => handleEdit(contact)}
+              className="p-1 hover:bg-gray-100 rounded"
+            >
+              <Edit className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+            </button>
+            <button
+              onClick={() => {
+                if (confirm('Delete this contact?')) {
+                  deleteMutation.mutate(contact.id);
+                }
+              }}
+              className="p-1 hover:bg-gray-100 rounded"
+            >
+              <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-500" />
+            </button>
+            <button
+              onClick={() => toggleFavoriteMutation.mutate({ id: contact.id, isFavorite: contact.is_favorite })}
+              className="p-1 hover:bg-gray-100 rounded"
+            >
+              <Star className={`w-4 h-4 ${contact.is_favorite ? 'fill-amber-400 text-amber-400' : 'text-gray-300'}`} />
+            </button>
+          </div>
 
           <div className="space-y-3">
             <div>
@@ -261,27 +284,9 @@ export default function TikTokContacts() {
               {contact.display_name && (
                 <p className="text-gray-600 text-sm">{contact.display_name}</p>
               )}
-              {contact.screen_name && (
-                <p className="text-gray-500 text-xs">Screen: {contact.screen_name}</p>
-              )}
             </div>
 
-            {/* Roles */}
-            <div className="flex flex-wrap gap-1">
-              {contact.role?.map(role => {
-                const config = roleConfig[role];
-                if (!config) return null;
-                const Icon = config.icon;
-                return (
-                  <Badge key={role} className={`text-xs ${config.color}`}>
-                    <Icon className="w-3 h-3 mr-1" />
-                    {config.label}
-                  </Badge>
-                );
-              })}
-            </div>
-
-            {/* Feature badges */}
+            {/* Feature badges only */}
             <div className="flex flex-wrap gap-1">
               {contact.engagement_enabled && (
                 <Badge variant="outline" className="text-xs bg-purple-50">
@@ -301,97 +306,26 @@ export default function TikTokContacts() {
             </div>
 
             {/* Contact Info */}
-            <div className="space-y-1 text-sm">
-              {contact.phone && (
-                <a href={`tel:${contact.phone}`} className="flex items-center gap-2 text-gray-600 hover:text-purple-600">
-                  <Phone className="w-4 h-4" />
-                  {contact.phone}
-                </a>
-              )}
-              {contact.email && (
-                <a href={`mailto:${contact.email}`} className="flex items-center gap-2 text-gray-600 hover:text-purple-600">
-                  <Mail className="w-4 h-4" />
-                  {contact.email}
-                </a>
-              )}
-            </div>
-
-            {/* Mods & Connections */}
-            {(contact.mods_for?.length > 0 || contact.their_mods?.length > 0) && (
-              <div className="text-xs space-y-1">
-                {contact.mods_for?.length > 0 && (
-                  <p className="text-gray-600">
-                    <span className="font-medium">Mods for:</span>{' '}
-                    {contact.mods_for.map((id, i) => {
-                      const c = contacts.find(x => x.id === id);
-                      return c ? (
-                        <span key={id}>
-                          <a href={`https://tiktok.com/@${c.username}`} target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:underline">@{c.username}</a>
-                          {i < contact.mods_for.length - 1 ? ', ' : ''}
-                        </span>
-                      ) : null;
-                    })}
-                  </p>
+            {(contact.phone || contact.email) && (
+              <div className="space-y-1 text-sm">
+                {contact.phone && (
+                  <a href={`tel:${contact.phone}`} className="flex items-center gap-2 text-gray-600 hover:text-purple-600">
+                    <Phone className="w-4 h-4" />
+                    {contact.phone}
+                  </a>
                 )}
-                {contact.their_mods?.length > 0 && (
-                  <p className="text-gray-600">
-                    <span className="font-medium">Their mods:</span>{' '}
-                    {contact.their_mods.map((id, i) => {
-                      const c = contacts.find(x => x.id === id);
-                      return c ? (
-                        <span key={id}>
-                          <a href={`https://tiktok.com/@${c.username}`} target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:underline">@{c.username}</a>
-                          {i < contact.their_mods.length - 1 ? ', ' : ''}
-                        </span>
-                      ) : null;
-                    })}
-                  </p>
+                {contact.email && (
+                  <a href={`mailto:${contact.email}`} className="flex items-center gap-2 text-gray-600 hover:text-purple-600">
+                    <Mail className="w-4 h-4" />
+                    {contact.email}
+                  </a>
                 )}
-              </div>
-            )}
-
-            {/* Agencies */}
-            {(contact.live_agency || contact.shop_agency) && (
-              <div className="text-xs text-gray-600">
-                {contact.live_agency && <p><span className="font-medium">Live Agency:</span> {contact.live_agency}</p>}
-                {contact.shop_agency && <p><span className="font-medium">Shop Agency:</span> {contact.shop_agency}</p>}
               </div>
             )}
 
             {contact.notes && (
-              <p className="text-sm text-gray-500 italic">{contact.notes}</p>
+              <p className="text-sm text-gray-500 italic line-clamp-2">{contact.notes}</p>
             )}
-
-            {/* Actions */}
-            <div className="flex gap-2 pt-2 border-t">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => window.open(`https://tiktok.com/@${contact.username}`, '_blank')}
-              >
-                <ExternalLink className="w-4 h-4 mr-1" />
-                Profile
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleEdit(contact)}
-              >
-                <Edit className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-red-500 hover:text-red-700"
-                onClick={() => {
-                  if (confirm('Delete this contact?')) {
-                    deleteMutation.mutate(contact.id);
-                  }
-                }}
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            </div>
           </div>
         </CardContent>
       </Card>
@@ -825,21 +759,6 @@ export default function TikTokContacts() {
               </div>
             </div>
 
-            {/* Color */}
-            <div className="space-y-2">
-              <Label>Color</Label>
-              <div className="flex flex-wrap gap-2">
-                {colorOptions.map(color => (
-                  <div
-                    key={color}
-                    onClick={() => setFormData({ ...formData, color })}
-                    className={`w-8 h-8 rounded-full cursor-pointer transition-all ${formData.color === color ? 'ring-2 ring-offset-2 ring-gray-400 scale-110' : 'hover:scale-105'}`}
-                    style={{ backgroundColor: color }}
-                  />
-                ))}
-              </div>
-            </div>
-
             {/* Notes & Favorite */}
             <div className="space-y-2">
               <Label>Notes</Label>
@@ -858,6 +777,29 @@ export default function TikTokContacts() {
               <Checkbox checked={formData.is_favorite} />
               <Star className={`w-4 h-4 ${formData.is_favorite ? 'fill-amber-400 text-amber-400' : 'text-gray-400'}`} />
               <span>Mark as Favorite / VIP</span>
+            </div>
+
+            {/* Color Picker */}
+            <div className="space-y-2">
+              <Label>Card Color</Label>
+              <div className="flex items-center gap-3">
+                <div className="flex flex-wrap gap-2">
+                  {colorOptions.map(color => (
+                    <div
+                      key={color}
+                      onClick={() => setFormData({ ...formData, color })}
+                      className={`w-7 h-7 rounded-full cursor-pointer transition-all ${formData.color === color ? 'ring-2 ring-offset-2 ring-gray-400 scale-110' : 'hover:scale-105'}`}
+                      style={{ backgroundColor: color }}
+                    />
+                  ))}
+                </div>
+                <Input
+                  type="color"
+                  value={formData.color}
+                  onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                  className="w-10 h-10 p-1 cursor-pointer"
+                />
+              </div>
             </div>
           </div>
 
