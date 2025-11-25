@@ -1,18 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
+import { shareGifterData } from '../components/gifter/useGifterSharing';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Copy, Download, Loader2, Trophy, Medal, Award, Music } from 'lucide-react';
+import { Copy, Download, Loader2, Trophy, Medal, Award, Music, Send, Check } from 'lucide-react';
 import { format, startOfWeek } from 'date-fns';
 import { motion } from 'framer-motion';
 
 export default function WeeklySummary() {
   const [selectedWeek, setSelectedWeek] = useState(format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd'));
   const [copied, setCopied] = useState(false);
+  const [shared, setShared] = useState(false);
+  const [sharing, setSharing] = useState(false);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    base44.auth.me().then(setUser).catch(() => {});
+  }, []);
+
+  const { data: preferences } = useQuery({
+    queryKey: ['preferences', user?.email],
+    queryFn: async () => {
+      const prefs = await base44.entities.UserPreferences.filter({ user_email: user.email });
+      return prefs[0] || null;
+    },
+    enabled: !!user,
+  });
 
   const { data: entries = [], isLoading } = useQuery({
     queryKey: ['giftingEntries', selectedWeek],
@@ -61,6 +78,20 @@ export default function WeeklySummary() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  };
+
+  const handleShare = async () => {
+    setSharing(true);
+    const success = await shareGifterData(
+      preferences,
+      `📊 Weekly Gifter Summary - ${format(new Date(selectedWeek), 'MMM d, yyyy')}`,
+      `${formattedText}\n\n---\nFrom ThriveNut Weekly Summary`
+    );
+    if (success) {
+      setShared(true);
+      setTimeout(() => setShared(false), 3000);
+    }
+    setSharing(false);
   };
 
   const getRankIcon = (rank) => {
@@ -179,6 +210,22 @@ export default function WeeklySummary() {
                     Download .txt
                   </Button>
                 </div>
+                
+                {(preferences?.share_songs_with_pixel || preferences?.song_share_email) && (
+                  <Button
+                    onClick={handleShare}
+                    disabled={sharing || shared}
+                    className="w-full mt-3 bg-gradient-to-r from-teal-500 to-purple-500 hover:from-teal-600 hover:to-purple-600"
+                  >
+                    {sharing ? (
+                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Sharing...</>
+                    ) : shared ? (
+                      <><Check className="w-4 h-4 mr-2" /> Shared!</>
+                    ) : (
+                      <><Send className="w-4 h-4 mr-2" /> Share Summary</>
+                    )}
+                  </Button>
+                )}
                 <p className="text-xs text-gray-500 text-center">
                   Paste this into Sunny Songbird GPT to generate your thank-you song!
                 </p>

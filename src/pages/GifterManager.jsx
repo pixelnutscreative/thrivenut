@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { shareGifterData, formatGifterListForEmail } from '../components/gifter/useGifterSharing';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,10 +15,24 @@ export default function GifterManager() {
   const [showModal, setShowModal] = useState(false);
   const [editingGifter, setEditingGifter] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [user, setUser] = useState(null);
   const [formData, setFormData] = useState({
     username: '',
     screen_name: '',
     phonetic: ''
+  });
+
+  useEffect(() => {
+    base44.auth.me().then(setUser).catch(() => {});
+  }, []);
+
+  const { data: preferences } = useQuery({
+    queryKey: ['preferences', user?.email],
+    queryFn: async () => {
+      const prefs = await base44.entities.UserPreferences.filter({ user_email: user.email });
+      return prefs[0] || null;
+    },
+    enabled: !!user,
   });
 
   const { data: gifters = [], isLoading } = useQuery({
@@ -27,17 +42,29 @@ export default function GifterManager() {
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Gifter.create(data),
-    onSuccess: () => {
+    onSuccess: async (newGifter) => {
       queryClient.invalidateQueries({ queryKey: ['gifters'] });
       resetForm();
+      // Auto-share
+      await shareGifterData(
+        preferences,
+        '🎁 New Gifter Added',
+        `A new gifter was added:\n\n• ${newGifter.screen_name} (@${newGifter.username})${newGifter.phonetic ? ` - "${newGifter.phonetic}"` : ''}\n\n---\nFrom ThriveNut Gifter Manager`
+      );
     },
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Gifter.update(id, data),
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['gifters'] });
       resetForm();
+      // Auto-share
+      await shareGifterData(
+        preferences,
+        '🎁 Gifter Updated',
+        `A gifter was updated:\n\n• ${formData.screen_name} (@${formData.username})${formData.phonetic ? ` - "${formData.phonetic}"` : ''}\n\n---\nFrom ThriveNut Gifter Manager`
+      );
     },
   });
 

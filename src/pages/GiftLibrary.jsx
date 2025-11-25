@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { shareGifterData } from '../components/gifter/useGifterSharing';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,10 +16,24 @@ export default function GiftLibrary() {
   const [editingGift, setEditingGift] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [user, setUser] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     image_url: '',
     league_range: ''
+  });
+
+  useEffect(() => {
+    base44.auth.me().then(setUser).catch(() => {});
+  }, []);
+
+  const { data: preferences } = useQuery({
+    queryKey: ['preferences', user?.email],
+    queryFn: async () => {
+      const prefs = await base44.entities.UserPreferences.filter({ user_email: user.email });
+      return prefs[0] || null;
+    },
+    enabled: !!user,
   });
 
   const { data: gifts = [], isLoading } = useQuery({
@@ -28,17 +43,27 @@ export default function GiftLibrary() {
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Gift.create(data),
-    onSuccess: () => {
+    onSuccess: async (newGift) => {
       queryClient.invalidateQueries({ queryKey: ['gifts'] });
       resetForm();
+      await shareGifterData(
+        preferences,
+        '🎁 New Gift Added to Library',
+        `A new gift was added:\n\n• ${newGift.name}${newGift.league_range ? ` (${newGift.league_range})` : ''}\n\n---\nFrom ThriveNut Gift Library`
+      );
     },
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Gift.update(id, data),
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['gifts'] });
       resetForm();
+      await shareGifterData(
+        preferences,
+        '🎁 Gift Updated in Library',
+        `A gift was updated:\n\n• ${formData.name}${formData.league_range ? ` (${formData.league_range})` : ''}\n\n---\nFrom ThriveNut Gift Library`
+      );
     },
   });
 
