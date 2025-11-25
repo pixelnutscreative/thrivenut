@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { shareGifterData } from '../components/gifter/useGifterSharing';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,11 +14,25 @@ import { motion } from 'framer-motion';
 export default function GiftEntry() {
   const queryClient = useQueryClient();
   const [selectedWeek, setSelectedWeek] = useState(format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd'));
+  const [user, setUser] = useState(null);
   const [formData, setFormData] = useState({
     gifter_id: '',
     gift_id: '',
     rank: '',
     campaign_tag: ''
+  });
+
+  useEffect(() => {
+    base44.auth.me().then(setUser).catch(() => {});
+  }, []);
+
+  const { data: preferences } = useQuery({
+    queryKey: ['preferences', user?.email],
+    queryFn: async () => {
+      const prefs = await base44.entities.UserPreferences.filter({ user_email: user.email });
+      return prefs[0] || null;
+    },
+    enabled: !!user,
   });
 
   const { data: gifters = [] } = useQuery({
@@ -49,9 +64,16 @@ export default function GiftEntry() {
         gift_name: gift?.name
       });
     },
-    onSuccess: () => {
+    onSuccess: async (newEntry) => {
       queryClient.invalidateQueries({ queryKey: ['giftingEntries'] });
       setFormData({ gifter_id: '', gift_id: '', rank: '', campaign_tag: '' });
+      
+      const rankEmoji = { '1st': '🥇', '2nd': '🥈', '3rd': '🥉' };
+      await shareGifterData(
+        preferences,
+        `🎁 New Gift Entry - ${format(new Date(selectedWeek), 'MMM d, yyyy')}`,
+        `New gift entry recorded:\n\n${rankEmoji[newEntry.rank] || '⭐'} ${newEntry.gifter_screen_name} (@${newEntry.gifter_username})\nGift: ${newEntry.gift_name}${newEntry.campaign_tag ? `\nCampaign: ${newEntry.campaign_tag}` : ''}\n\n---\nFrom ThriveNut Gift Entry`
+      );
     },
   });
 
