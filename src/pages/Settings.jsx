@@ -14,20 +14,9 @@ import ThemeSelector from '../components/onboarding/ThemeSelector';
 import ImageUploader from '../components/settings/ImageUploader';
 import TimezoneSelector from '../components/shared/TimezoneSelector';
 import SpeakButton, { speak } from '../components/accessibility/SpeakButton';
+import FeatureOrderManager from '../components/settings/FeatureOrderManager';
 
-const modules = [
-  { id: 'tiktok', name: 'TikTok Content Goals', description: 'Track posts, lives, and engagement' },
-  { id: 'gifter', name: 'Gifter Songs & Thank Yous', description: 'Track gifters & generate songs' },
-  { id: 'goals', name: 'Personal Goals', description: 'Goal tracking for all areas' },
-  { id: 'journal', name: 'Daily Journal', description: 'Reflections and AI reframing' },
-  { id: 'wellness', name: 'Wellness Tracker', description: 'Water, sleep, mood & self-care' },
-  { id: 'supplements', name: 'Supplements & Vitamins', description: 'Track daily supplements' },
-  { id: 'medications', name: 'Medications', description: 'Medication tracking' },
-  { id: 'mental_health', name: 'Mental Health', description: 'Mental health support' },
-  { id: 'people', name: 'My People', description: 'Contacts & birthdays' },
-  { id: 'pets', name: 'Pet Care', description: 'Pet schedules & activities' },
-  { id: 'care_reminders', name: 'Care Reminders', description: 'Reminders for others' },
-];
+
 
 const greetingTypes = [
   { id: 'scripture', name: 'Scripture', description: 'Daily Bible verse' },
@@ -76,6 +65,7 @@ export default function Settings() {
     greeting_type: 'positive_quote',
     user_timezone: 'America/New_York',
     enabled_modules: ['tiktok', 'gifter', 'goals', 'wellness', 'supplements', 'medications', 'pets', 'care_reminders', 'people', 'journal', 'mental_health'],
+    feature_order: [],
     profile_image_url: null,
     header_image_url: null,
     background_image_url: null,
@@ -97,6 +87,7 @@ export default function Settings() {
         greeting_type: preferences.greeting_type || 'positive_quote',
         user_timezone: preferences.user_timezone || 'America/New_York',
         enabled_modules: preferences.enabled_modules || ['tiktok', 'gifter', 'goals', 'wellness', 'supplements', 'medications', 'pets', 'care_reminders', 'people', 'journal', 'mental_health'],
+        feature_order: preferences.feature_order || [],
         profile_image_url: preferences.profile_image_url || null,
         header_image_url: preferences.header_image_url || null,
         background_image_url: preferences.background_image_url || null,
@@ -134,14 +125,7 @@ export default function Settings() {
     },
   });
 
-  const toggleModule = (moduleId) => {
-    setFormData(prev => ({
-      ...prev,
-      enabled_modules: prev.enabled_modules.includes(moduleId)
-        ? prev.enabled_modules.filter(id => id !== moduleId)
-        : [...prev.enabled_modules, moduleId]
-    }));
-  };
+  
 
   const handleSave = () => {
     updatePreferencesMutation.mutate(formData);
@@ -195,9 +179,9 @@ export default function Settings() {
               <span className="hidden sm:inline">Appearance</span>
             </TabsTrigger>
             <TabsTrigger value="modules" className="flex items-center gap-2">
-              <Layers className="w-4 h-4" />
-              <span className="hidden sm:inline">Modules</span>
-            </TabsTrigger>
+                <Layers className="w-4 h-4" />
+                <span className="hidden sm:inline">Features</span>
+              </TabsTrigger>
             <TabsTrigger value="preferences" className="flex items-center gap-2">
               <MessageSquare className="w-4 h-4" />
               <span className="hidden sm:inline">Preferences</span>
@@ -274,48 +258,23 @@ export default function Settings() {
             </motion.div>
           </TabsContent>
 
-          {/* Modules Tab */}
+          {/* Features Tab */}
           <TabsContent value="modules">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Layers className="w-5 h-5" />
-                    Active Modules
+                    Features
                   </CardTitle>
-                  <CardDescription>Choose which features to enable in your app</CardDescription>
+                  <CardDescription>Enable features and drag to reorder them in the menu</CardDescription>
                 </CardHeader>
-                <CardContent className="grid md:grid-cols-2 gap-3">
-                  {modules.map(module => (
-                    <div
-                      key={module.id}
-                      onClick={() => {
-                        toggleModule(module.id);
-                        if (formData.use_text_to_speech) {
-                          const action = formData.enabled_modules.includes(module.id) ? 'disabled' : 'enabled';
-                          speak(`${module.name} ${action}`);
-                        }
-                      }}
-                      className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                        formData.enabled_modules.includes(module.id)
-                          ? 'border-purple-500 bg-purple-50'
-                          : 'border-gray-200 hover:border-purple-300'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-start gap-3">
-                          <Checkbox checked={formData.enabled_modules.includes(module.id)} />
-                          <div>
-                            <h4 className="font-semibold">{module.name}</h4>
-                            <p className="text-sm text-gray-600">{module.description}</p>
-                          </div>
-                        </div>
-                        {formData.use_text_to_speech && (
-                          <SpeakButton text={`${module.name}. ${module.description}`} />
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                <CardContent>
+                  <FeatureOrderManager
+                    enabledModules={formData.enabled_modules}
+                    featureOrder={formData.feature_order}
+                    onChange={(updates) => setFormData({ ...formData, ...updates })}
+                  />
                 </CardContent>
               </Card>
             </motion.div>
