@@ -72,16 +72,14 @@ export default function OnboardingModal({ isOpen, user, onComplete }) {
     setError(null);
     
     try {
-      const existingPrefs = await base44.entities.UserPreferences.filter({ user_email: user.email });
+      // Get all existing preferences sorted by most recent
+      const existingPrefs = await base44.entities.UserPreferences.filter({ user_email: user.email }, '-updated_date');
       
       const prefsData = {
         user_email: user.email,
-        theme_type: themeData.theme_type || 'clean_white',
-        metal_accent: themeData.metal_accent || null,
-        pastel_color: themeData.pastel_color || null,
-        bright_color: themeData.bright_color || null,
-        primary_color: themeData.primary_color || null,
-        accent_color: themeData.accent_color || null,
+        theme_type: themeData.theme_type || 'light',
+        primary_color: themeData.primary_color || '#1fd2ea',
+        accent_color: themeData.accent_color || '#bd84f5',
         greeting_type: selectedGreeting,
         user_timezone: selectedTimezone,
         enabled_modules: selectedModules,
@@ -95,7 +93,13 @@ export default function OnboardingModal({ isOpen, user, onComplete }) {
       };
       
       if (existingPrefs && existingPrefs.length > 0) {
+        // Update the most recent preferences record
         await base44.entities.UserPreferences.update(existingPrefs[0].id, prefsData);
+        
+        // Delete any duplicate preference records
+        for (let i = 1; i < existingPrefs.length; i++) {
+          await base44.entities.UserPreferences.delete(existingPrefs[i].id);
+        }
       } else {
         await base44.entities.UserPreferences.create(prefsData);
       }

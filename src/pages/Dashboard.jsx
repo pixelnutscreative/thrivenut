@@ -33,9 +33,11 @@ export default function Dashboard() {
         const userData = await base44.auth.me();
         setUser(userData);
 
-        // Check if onboarding completed
-        const prefs = await base44.entities.UserPreferences.filter({ user_email: userData.email });
-        if (!prefs.length || !prefs[0].onboarding_completed) {
+        // Check if onboarding completed - get most recent preferences
+        const prefs = await base44.entities.UserPreferences.filter({ user_email: userData.email }, '-updated_date');
+        // Check if ANY preference record has onboarding_completed = true
+        const hasCompletedOnboarding = prefs.some(p => p.onboarding_completed === true);
+        if (!hasCompletedOnboarding) {
           setShowOnboarding(true);
         }
       } catch (error) {
