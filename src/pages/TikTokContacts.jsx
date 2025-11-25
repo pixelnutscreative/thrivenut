@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Plus, Search, Trash2, Edit, Star, Phone, Mail, 
   ExternalLink, Users, Swords, Gift, Share2, Heart, UserPlus, Video, Calendar, Music, ShoppingBag,
-  ChevronDown, ChevronRight
+  ChevronDown, ChevronRight, FolderPlus
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -76,6 +76,9 @@ export default function TikTokContacts() {
     shop_agency: ''
   });
   const [newMetThroughName, setNewMetThroughName] = useState('');
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategoryColor, setNewCategoryColor] = useState('#8B5CF6');
 
   const { data: contacts = [] } = useQuery({
     queryKey: ['tiktokContacts'],
@@ -116,6 +119,23 @@ export default function TikTokContacts() {
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] });
+    },
+  });
+
+  const createCategoryMutation = useMutation({
+    mutationFn: (data) => base44.entities.EngagementCategory.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['engagementCategories'] });
+      setNewCategoryName('');
+      setNewCategoryColor('#8B5CF6');
+      setShowCategoryModal(false);
+    },
+  });
+
+  const deleteCategoryMutation = useMutation({
+    mutationFn: (id) => base44.entities.EngagementCategory.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['engagementCategories'] });
     },
   });
 
@@ -340,13 +360,22 @@ export default function TikTokContacts() {
             <h1 className="text-3xl font-bold text-gray-800">TikTok Contacts</h1>
             <p className="text-gray-600 mt-1">Your central hub for all TikTok connections</p>
           </div>
-          <Button
-            onClick={() => setShowModal(true)}
-            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Contact
-          </Button>
+          <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          onClick={() => setShowCategoryModal(true)}
+                        >
+                          <FolderPlus className="w-4 h-4 mr-2" />
+                          Categories
+                        </Button>
+                        <Button
+                          onClick={() => setShowModal(true)}
+                          className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Contact
+                        </Button>
+                      </div>
         </div>
 
         {/* Tabs */}
@@ -800,6 +829,67 @@ export default function TikTokContacts() {
             </Tabs>
           </div>
 
+        </DialogContent>
+      </Dialog>
+
+      {/* Category Management Modal */}
+      <Dialog open={showCategoryModal} onOpenChange={setShowCategoryModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Manage Categories</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            {/* Add new category */}
+            <div className="flex gap-2">
+              <Input
+                placeholder="New category name..."
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                className="flex-1"
+              />
+              <Input
+                type="color"
+                value={newCategoryColor}
+                onChange={(e) => setNewCategoryColor(e.target.value)}
+                className="w-12 p-1 cursor-pointer"
+              />
+              <Button
+                onClick={() => createCategoryMutation.mutate({ name: newCategoryName, color: newCategoryColor })}
+                disabled={!newCategoryName.trim()}
+                size="sm"
+              >
+                <Plus className="w-4 h-4" />
+              </Button>
+            </div>
+
+            {/* Existing categories */}
+            <div className="space-y-2">
+              {categories.length === 0 ? (
+                <p className="text-sm text-gray-500 text-center py-4">No categories yet. Add one above!</p>
+              ) : (
+                categories.map(cat => (
+                  <div key={cat.id} className="flex items-center justify-between p-2 border rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded-full" style={{ backgroundColor: cat.color }} />
+                      <span>{cat.name}</span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        if (confirm(`Delete "${cat.name}" category?`)) {
+                          deleteCategoryMutation.mutate(cat.id);
+                        }
+                      }}
+                    >
+                      <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-500" />
+                    </Button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
