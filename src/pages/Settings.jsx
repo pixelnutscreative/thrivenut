@@ -82,7 +82,10 @@ export default function Settings() {
     accessibility_mode: 'standard',
     use_text_to_speech: false,
     share_songs_with_pixel: false,
-    song_share_email: ''
+    song_share_email: '',
+    tiktok_username: '',
+    allow_in_community_directory: false,
+    allow_search_by_tiktok_username: false
   });
 
   useEffect(() => {
@@ -100,7 +103,10 @@ export default function Settings() {
         accessibility_mode: preferences.accessibility_mode || 'standard',
         use_text_to_speech: preferences.use_text_to_speech || false,
         share_songs_with_pixel: preferences.share_songs_with_pixel || false,
-        song_share_email: preferences.song_share_email || ''
+        song_share_email: preferences.song_share_email || '',
+        tiktok_username: preferences.tiktok_username || '',
+        allow_in_community_directory: preferences.allow_in_community_directory || false,
+        allow_search_by_tiktok_username: preferences.allow_search_by_tiktok_username || false
       });
     }
   }, [preferences]);
@@ -179,7 +185,7 @@ export default function Settings() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-6 mb-6">
+          <TabsList className="grid w-full grid-cols-7 mb-6">
             <TabsTrigger value="profile" className="flex items-center gap-2">
               <User className="w-4 h-4" />
               <span className="hidden sm:inline">Profile</span>
@@ -198,7 +204,11 @@ export default function Settings() {
             </TabsTrigger>
             <TabsTrigger value="sharing" className="flex items-center gap-2">
               <Share2 className="w-4 h-4" />
-              <span className="hidden sm:inline">Sharing</span>
+              <span className="hidden sm:inline">Songs</span>
+            </TabsTrigger>
+            <TabsTrigger value="tiktok_sharing" className="flex items-center gap-2">
+              <Share2 className="w-4 h-4" />
+              <span className="hidden sm:inline">TikTok</span>
             </TabsTrigger>
             <TabsTrigger value="accessibility" className="flex items-center gap-2">
               <Eye className="w-4 h-4" />
@@ -422,11 +432,72 @@ export default function Settings() {
                     </ul>
                   </div>
                 </CardContent>
-              </Card>
-            </motion.div>
-          </TabsContent>
+                </Card>
+                </motion.div>
+                </TabsContent>
 
-          {/* Accessibility Tab */}
+                {/* TikTok Sharing Tab */}
+                <TabsContent value="tiktok_sharing">
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Share2 className="w-5 h-5" />
+                    TikTok Live Sharing Settings
+                  </CardTitle>
+                  <CardDescription>Configure how your TikTok Live schedules are shared</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-3">
+                    <Label htmlFor="tiktok_username">Your TikTok Username</Label>
+                    <Input
+                      id="tiktok_username"
+                      placeholder="@username or username"
+                      value={formData.tiktok_username}
+                      onChange={(e) => setFormData({ ...formData, tiktok_username: e.target.value.replace('@', '') })}
+                    />
+                    <p className="text-sm text-gray-500">Required to share your schedule with other ThriveNut users</p>
+                  </div>
+
+                  <div
+                    onClick={() => setFormData({ ...formData, allow_in_community_directory: !formData.allow_in_community_directory })}
+                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                      formData.allow_in_community_directory
+                        ? 'border-purple-500 bg-purple-50'
+                        : 'border-gray-200 hover:border-purple-300'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <Checkbox checked={formData.allow_in_community_directory} />
+                      <div>
+                        <h4 className="font-semibold">Show in Community Directory</h4>
+                        <p className="text-sm text-gray-600">Allow your live schedule to appear in a public directory for other ThriveNut users</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    onClick={() => setFormData({ ...formData, allow_search_by_tiktok_username: !formData.allow_search_by_tiktok_username })}
+                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                      formData.allow_search_by_tiktok_username
+                        ? 'border-purple-500 bg-purple-50'
+                        : 'border-gray-200 hover:border-purple-300'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <Checkbox checked={formData.allow_search_by_tiktok_username} />
+                      <div>
+                        <h4 className="font-semibold">Allow search by TikTok username</h4>
+                        <p className="text-sm text-gray-600">Allow other ThriveNut users to find your shared schedule by searching your TikTok username</p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+                </Card>
+                </motion.div>
+                </TabsContent>
+
+                {/* Accessibility Tab */}
           <TabsContent value="accessibility">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               <Card>

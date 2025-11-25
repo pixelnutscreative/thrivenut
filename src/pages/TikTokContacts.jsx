@@ -61,7 +61,8 @@ export default function TikTokContacts() {
     engagement_category_id: '',
     color: '#8B5CF6',
     calendar_enabled: false,
-    is_gifter: false
+    is_gifter: false,
+    add_to_my_people: false
   });
 
   const { data: contacts = [] } = useQuery({
@@ -147,7 +148,8 @@ export default function TikTokContacts() {
       engagement_category_id: contact.engagement_category_id || '',
       color: contact.color || '#8B5CF6',
       calendar_enabled: contact.calendar_enabled || false,
-      is_gifter: contact.is_gifter || false
+      is_gifter: contact.is_gifter || false,
+      add_to_my_people: contact.add_to_my_people || false
     });
     setShowModal(true);
   };
@@ -528,7 +530,19 @@ export default function TikTokContacts() {
                   <p className="text-xs text-gray-500">Generate thank-you songs</p>
                 </div>
               </div>
-            </div>
+
+              <div
+                onClick={() => setFormData({ ...formData, add_to_my_people: !formData.add_to_my_people })}
+                className="flex items-center gap-3 p-2 border rounded-lg cursor-pointer hover:bg-white"
+              >
+                <Checkbox checked={formData.add_to_my_people} />
+                <Users className="w-4 h-4 text-green-500" />
+                <div>
+                  <p className="font-medium text-sm">Add to My People</p>
+                  <p className="text-xs text-gray-500">Also save in personal contacts</p>
+                </div>
+              </div>
+              </div>
 
             {/* Engagement Settings */}
             {formData.engagement_enabled && (
