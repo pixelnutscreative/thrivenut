@@ -465,33 +465,6 @@ export default function TikTokContacts() {
               </div>
             </div>
 
-            {/* Roles */}
-            <div className="space-y-2">
-              <Label>Roles</Label>
-              <div className="grid grid-cols-3 gap-2">
-                {Object.entries(roleConfig).map(([key, config]) => {
-                  const Icon = config.icon;
-                  return (
-                    <div
-                      key={key}
-                      onClick={() => toggleRole(key)}
-                      className={`p-2 rounded-lg border-2 cursor-pointer text-xs ${
-                        formData.role.includes(key)
-                          ? 'border-purple-500 bg-purple-50'
-                          : 'border-gray-200 hover:border-purple-300'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <Checkbox checked={formData.role.includes(key)} />
-                        <Icon className="w-3 h-3" />
-                        <span>{config.label}</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
             {/* Feature Toggles */}
             <div className="space-y-3 p-4 bg-gray-50 rounded-lg">
               <h4 className="font-semibold text-sm">Enable Features</h4>
@@ -547,8 +520,8 @@ export default function TikTokContacts() {
 
             {/* Engagement Settings */}
             {formData.engagement_enabled && (
-              <div className="space-y-4 p-4 border rounded-lg">
-                <h4 className="font-semibold text-sm">Engagement Settings</h4>
+              <div className="space-y-4 p-4 border-l-4 border-purple-400 bg-purple-50 rounded-lg">
+                <h4 className="font-semibold text-sm text-purple-800">Engagement Settings</h4>
                 
                 <div className="space-y-2">
                   <Label>Frequency</Label>
@@ -597,8 +570,8 @@ export default function TikTokContacts() {
 
             {/* Gifter Settings */}
             {formData.is_gifter && (
-              <div className="space-y-4 p-4 border rounded-lg">
-                <h4 className="font-semibold text-sm">Gifter Settings (for Songs)</h4>
+              <div className="space-y-4 p-4 border-l-4 border-amber-400 bg-amber-50 rounded-lg">
+                <h4 className="font-semibold text-sm text-amber-800">Gifter Settings (for Songs)</h4>
                 
                 <div className="space-y-2">
                   <Label>Screen Name *</Label>
@@ -622,9 +595,48 @@ export default function TikTokContacts() {
               </div>
             )}
 
-            {/* Mods & Connections */}
-            <div className="space-y-4 p-4 border rounded-lg">
-              <h4 className="font-semibold text-sm">Connections & Modding</h4>
+            {/* Roles - Collapsible */}
+            <Collapsible>
+              <CollapsibleTrigger className="flex items-center justify-between w-full p-4 bg-blue-50 rounded-lg hover:bg-blue-100">
+                <h4 className="font-semibold text-sm text-blue-800">Roles & Categories</h4>
+                <ChevronDown className="w-4 h-4 text-blue-600" />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="p-4 border border-t-0 rounded-b-lg">
+                <div className="grid grid-cols-2 gap-2">
+                  {Object.entries(roleConfig).map(([key, config]) => {
+                    const Icon = config.icon;
+                    return (
+                      <div
+                        key={key}
+                        onClick={() => toggleRole(key)}
+                        className={`p-2 rounded-lg border-2 cursor-pointer text-xs ${
+                          formData.role.includes(key)
+                            ? 'border-purple-500 bg-purple-50'
+                            : 'border-gray-200 hover:border-purple-300'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Checkbox checked={formData.role.includes(key)} />
+                          <Icon className="w-3 h-3" />
+                          <span>{config.label}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+
+            {/* Advanced Details - Collapsible */}
+            <Collapsible>
+              <CollapsibleTrigger className="flex items-center justify-between w-full p-4 bg-gray-100 rounded-lg hover:bg-gray-200">
+                <h4 className="font-semibold text-sm text-gray-700">Advanced Details</h4>
+                <ChevronDown className="w-4 h-4 text-gray-600" />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="p-4 border border-t-0 rounded-b-lg space-y-4">
+                {/* Mods & Connections */}
+                <div className="space-y-4">
+                  <h5 className="font-medium text-sm text-gray-600">Connections & Modding</h5>
               
               <div className="space-y-2">
                 <Label>Mods For (who they mod for)</Label>
@@ -723,41 +735,42 @@ export default function TikTokContacts() {
                     )}
                   </div>
                 )}
-              </div>
-            </div>
-
-            {/* Creator Details */}
-            <div className="space-y-4 p-4 border rounded-lg">
-              <h4 className="font-semibold text-sm">Creator Details</h4>
-              
-              <div className="space-y-2">
-                <Label>Started Going Live</Label>
-                <Input
-                  placeholder="e.g., Summer 2023, Early 2024"
-                  value={formData.started_going_live}
-                  onChange={(e) => setFormData({ ...formData, started_going_live: e.target.value })}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>TikTok Live Agency</Label>
-                  <Input
-                    placeholder="e.g., Agency Name"
-                    value={formData.live_agency}
-                    onChange={(e) => setFormData({ ...formData, live_agency: e.target.value })}
-                  />
                 </div>
-                <div className="space-y-2">
-                  <Label>TT Shop Agency</Label>
-                  <Input
-                    placeholder="e.g., Shop Agency Name"
-                    value={formData.shop_agency}
-                    onChange={(e) => setFormData({ ...formData, shop_agency: e.target.value })}
-                  />
+
+                {/* Creator Details */}
+                <div className="space-y-4 pt-4 border-t">
+                  <h5 className="font-medium text-sm text-gray-600">Creator Details</h5>
+                  
+                  <div className="space-y-2">
+                    <Label>Started Going Live</Label>
+                    <Input
+                      placeholder="e.g., Summer 2023, Early 2024"
+                      value={formData.started_going_live}
+                      onChange={(e) => setFormData({ ...formData, started_going_live: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>TikTok Live Agency</Label>
+                      <Input
+                        placeholder="e.g., Agency Name"
+                        value={formData.live_agency}
+                        onChange={(e) => setFormData({ ...formData, live_agency: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>TT Shop Agency</Label>
+                      <Input
+                        placeholder="e.g., Shop Agency Name"
+                        value={formData.shop_agency}
+                        onChange={(e) => setFormData({ ...formData, shop_agency: e.target.value })}
+                      />
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
+              </CollapsibleContent>
+            </Collapsible>
 
             {/* Notes & Favorite */}
             <div className="space-y-2">
