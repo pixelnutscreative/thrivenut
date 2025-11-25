@@ -10,7 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, Video, Calendar as CalendarIcon, Heart, Swords, Popcorn, ShoppingBag, CalendarPlus, Edit, FileText, Users, GraduationCap, Handshake, LayoutGrid, Camera } from 'lucide-react';
+import { Plus, Trash2, Video, Calendar as CalendarIcon, Heart, Swords, Popcorn, ShoppingBag, CalendarPlus, Edit, FileText, Users, GraduationCap, Handshake, LayoutGrid, Camera, UserPlus } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '../utils';
 import { motion } from 'framer-motion';
 import TimezoneSelector from '../components/shared/TimezoneSelector';
 
@@ -72,6 +74,14 @@ export default function LiveSchedule() {
     queryFn: () => base44.entities.LiveSchedule.list('-created_date'),
     initialData: [],
   });
+
+  // Fetch contacts with calendar enabled
+  const { data: contacts = [] } = useQuery({
+    queryKey: ['tiktokContacts'],
+    queryFn: () => base44.entities.TikTokContact.list('-created_date'),
+  });
+
+  const calendarContacts = contacts.filter(c => c.calendar_enabled);
 
   const createScheduleMutation = useMutation({
     mutationFn: (data) => base44.entities.LiveSchedule.create(data),
@@ -421,14 +431,34 @@ export default function LiveSchedule() {
             <h1 className="text-3xl font-bold text-gray-800">Creator Calendar</h1>
             <p className="text-gray-600 text-sm">Track your favorite TikTok creators' live schedules</p>
           </div>
-          <Button
-            onClick={() => setShowModal(true)}
-            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Live
-          </Button>
+          <div className="flex gap-2">
+            <Link to={createPageUrl('TikTokContacts')}>
+              <Button variant="outline">
+                <UserPlus className="w-4 h-4 mr-2" />
+                Manage Contacts
+              </Button>
+            </Link>
+            <Button
+              onClick={() => setShowModal(true)}
+              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Live
+            </Button>
+          </div>
         </div>
+
+        {/* Calendar Contacts Info */}
+        {calendarContacts.length > 0 && (
+          <Card className="bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200">
+            <CardContent className="p-4">
+              <p className="text-sm text-gray-700">
+                <strong>{calendarContacts.length}</strong> contacts marked for calendar tracking. 
+                Add their live schedules below!
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Day Filter */}
         <div className="flex flex-wrap gap-2">
