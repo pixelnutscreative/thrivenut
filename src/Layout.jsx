@@ -22,7 +22,8 @@ import {
   ChevronDown,
   ChevronRight,
   Bell,
-  Share2
+  Share2,
+  Music
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
