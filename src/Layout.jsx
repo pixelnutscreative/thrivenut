@@ -24,7 +24,8 @@ import {
   ChevronRight,
   Bell,
   Share2,
-  Music
+  Music,
+  Star
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -46,7 +47,7 @@ const moduleNavMap = {
 const allNavItems = [
   { name: 'Home', icon: Home, path: 'Home', alwaysShow: true },
   { name: 'Dashboard', icon: LayoutDashboard, path: 'Dashboard', alwaysShow: true },
-  { name: 'TikTok', icon: TrendingUp, isSection: true, moduleId: 'tiktok', subItems: [
+  { name: 'TikTok', icon: TrendingUp, isSection: true, moduleId: 'tiktok', requiresTikTokAccess: true, subItems: [
             { name: 'TikTok Dashboard', icon: TrendingUp, path: 'TikTokDashboard' },
             { name: 'TikTok Contacts', icon: Users, path: 'TikTokContacts' },
             { name: 'Content Goals', icon: TrendingUp, path: 'TikTokGoals' },
@@ -55,7 +56,7 @@ const allNavItems = [
             { name: 'Live Reminders', icon: Bell, path: 'LiveReminders' },
             { name: 'Discover Creators', icon: Users, path: 'DiscoverCreators' },
           ]},
-  { name: 'Gifter Songs', icon: Gift, isSection: true, moduleId: 'gifter', subItems: [
+  { name: 'Gifter Songs', icon: Gift, isSection: true, moduleId: 'gifter', requiresTikTokAccess: true, subItems: [
                     { name: 'Song Generator', icon: Music, path: 'SongGenerator' },
                     { name: 'Gifter Manager', icon: Gift, path: 'GifterManager' },
                     { name: 'Gift Entry', icon: Gift, path: 'GiftEntry' },
@@ -63,6 +64,7 @@ const allNavItems = [
                     { name: 'Weekly Summary', icon: Gift, path: 'WeeklySummary' },
                     { name: 'Gift Library', icon: Gift, path: 'GiftLibrary' },
                   ]},
+  { name: 'SuperFan Access', icon: Star, path: 'SuperFanAccess', showWhenNoTikTokAccess: true },
   { name: 'Goals', icon: Target, path: 'Goals', moduleId: 'goals' },
   { name: 'Goal Sharing', icon: Share2, path: 'GoalSharing', moduleId: 'goals' },
   { name: 'Wellness', icon: Heart, isSection: true, moduleId: 'wellness', subItems: [
@@ -99,12 +101,17 @@ export default function Layout({ children, currentPageName }) {
 
   const enabledModules = preferences?.enabled_modules || ['tiktok', 'gifter', 'goals', 'wellness', 'supplements', 'medications', 'pets', 'care_reminders', 'people', 'journal', 'mental_health'];
   const featureOrder = preferences?.feature_order || [];
+  const hasTikTokAccess = preferences?.tiktok_access_approved || user?.email?.toLowerCase() === 'pixelnutscreative@gmail.com';
 
   // Filter and order nav items based on enabled modules and feature order
   const getOrderedNavItems = () => {
-    // First filter based on enabled modules
+    // First filter based on enabled modules and TikTok access
     let filtered = allNavItems.filter(item => {
       if (item.alwaysShow) return true;
+      // Show SuperFan Access only when user doesn't have TikTok access
+      if (item.showWhenNoTikTokAccess) return !hasTikTokAccess;
+      // Hide TikTok features if not approved
+      if (item.requiresTikTokAccess && !hasTikTokAccess) return false;
       if (item.moduleId && !enabledModules.includes(item.moduleId)) return false;
       return true;
     }).map(item => {

@@ -24,6 +24,8 @@ import NeurodivergentSettings from './pages/NeurodivergentSettings';
 import GiftScreenshotImport from './pages/GiftScreenshotImport';
 import SongGenerator from './pages/SongGenerator';
 import TikTokDashboard from './pages/TikTokDashboard';
+import SuperFanAccess from './pages/SuperFanAccess';
+import AdminSuperFanReview from './pages/AdminSuperFanReview';
 import __Layout from './Layout.jsx';
 
 
@@ -54,6 +56,8 @@ export const PAGES = {
     "GiftScreenshotImport": GiftScreenshotImport,
     "SongGenerator": SongGenerator,
     "TikTokDashboard": TikTokDashboard,
+    "SuperFanAccess": SuperFanAccess,
+    "AdminSuperFanReview": AdminSuperFanReview,
 }
 
 export const pagesConfig = {
