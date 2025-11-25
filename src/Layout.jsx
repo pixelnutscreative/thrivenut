@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from './utils';
 import { base44 } from '@/api/base44Client';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { 
   LayoutDashboard, 
@@ -27,10 +28,25 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const navItems = [
-  { name: 'Home', icon: Home, path: 'Home' },
-  { name: 'Dashboard', icon: LayoutDashboard, path: 'Dashboard' },
-  { name: 'TikTok', icon: TrendingUp, isSection: true, subItems: [
+// Map module IDs to nav items
+const moduleNavMap = {
+  tiktok: ['TikTok'],
+  gifter: ['Gifter Songs'],
+  goals: ['Goals', 'Goal Sharing'],
+  wellness: ['Wellness'],
+  supplements: ['Supplements'],
+  medications: ['Medications'],
+  pets: ['Pet Care'],
+  care_reminders: ['Care Reminders'],
+  people: ['My People'],
+  journal: ['Journal'],
+  mental_health: ['Mental Health'],
+};
+
+const allNavItems = [
+  { name: 'Home', icon: Home, path: 'Home', alwaysShow: true },
+  { name: 'Dashboard', icon: LayoutDashboard, path: 'Dashboard', alwaysShow: true },
+  { name: 'TikTok', icon: TrendingUp, isSection: true, moduleId: 'tiktok', subItems: [
             { name: 'TikTok Goals', icon: TrendingUp, path: 'TikTokGoals' },
             { name: 'TikTok Engagement', icon: Users, path: 'TikTokEngagement' },
             { name: 'TikTok Contacts', icon: Users, path: 'TikTokContacts' },
@@ -38,7 +54,7 @@ const navItems = [
             { name: 'Discover Creators', icon: Users, path: 'DiscoverCreators' },
             { name: 'Live Reminders', icon: Bell, path: 'LiveReminders' },
           ]},
-          { name: 'Gifter Songs', icon: Gift, isSection: true, subItems: [
+  { name: 'Gifter Songs', icon: Gift, isSection: true, moduleId: 'gifter', subItems: [
                     { name: 'Song Generator', icon: Music, path: 'SongGenerator' },
                     { name: 'Gifter Manager', icon: Gift, path: 'GifterManager' },
                     { name: 'Gift Entry', icon: Gift, path: 'GiftEntry' },
@@ -46,21 +62,20 @@ const navItems = [
                     { name: 'Weekly Summary', icon: Gift, path: 'WeeklySummary' },
                     { name: 'Gift Library', icon: Gift, path: 'GiftLibrary' },
                   ]},
-  { name: 'Goals', icon: Target, path: 'Goals' },
-  { name: 'Goal Sharing', icon: Share2, path: 'GoalSharing' },
-  { name: 'Wellness', icon: Heart, isSection: true, subItems: [
+  { name: 'Goals', icon: Target, path: 'Goals', moduleId: 'goals' },
+  { name: 'Goal Sharing', icon: Share2, path: 'GoalSharing', moduleId: 'goals' },
+  { name: 'Wellness', icon: Heart, isSection: true, moduleId: 'wellness', subItems: [
     { name: 'Daily Wellness', icon: Heart, path: 'Wellness' },
-    { name: 'Supplements', icon: Pill, path: 'Supplements' },
-    { name: 'Medications', icon: Pill, path: 'Medications' },
-
-    { name: 'Pet Care', icon: Heart, path: 'PetCare' },
-    { name: 'Care Reminders', icon: Heart, path: 'CareReminders' },
+    { name: 'Supplements', icon: Pill, path: 'Supplements', moduleId: 'supplements' },
+    { name: 'Medications', icon: Pill, path: 'Medications', moduleId: 'medications' },
+    { name: 'Pet Care', icon: Heart, path: 'PetCare', moduleId: 'pets' },
+    { name: 'Care Reminders', icon: Heart, path: 'CareReminders', moduleId: 'care_reminders' },
   ]},
-  { name: 'My People', icon: Users, path: 'People' },
-  { name: 'Journal', icon: BookOpen, path: 'Journal' },
-  { name: 'Settings', icon: Settings, path: 'Settings' },
-  { name: 'Mental Health', icon: Brain, path: 'NeurodivergentSettings' },
-  ];
+  { name: 'My People', icon: Users, path: 'People', moduleId: 'people' },
+  { name: 'Journal', icon: BookOpen, path: 'Journal', moduleId: 'journal' },
+  { name: 'Settings', icon: Settings, path: 'Settings', alwaysShow: true },
+  { name: 'Mental Health', icon: Brain, path: 'NeurodivergentSettings', moduleId: 'mental_health' },
+];
 
 export default function Layout({ children, currentPageName }) {
   const navigate = useNavigate();
