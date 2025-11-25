@@ -23,8 +23,14 @@ export default function GiftLibrary() {
     league_range: ''
   });
 
+  const ADMIN_EMAIL = 'pixelnutscreative@gmail.com';
+  const [isAdmin, setIsAdmin] = useState(false);
+
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => {});
+    base44.auth.me().then(userData => {
+      setUser(userData);
+      setIsAdmin(userData?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase());
+    }).catch(() => {});
   }, []);
 
   const { data: preferences } = useQuery({
@@ -134,13 +140,15 @@ export default function GiftLibrary() {
             <h1 className="text-3xl font-bold text-gray-800">Gift Library</h1>
             <p className="text-gray-600 mt-1">All TikTok gifts by league</p>
           </div>
-          <Button
-            onClick={() => setShowModal(true)}
-            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Gift
-          </Button>
+          {isAdmin && (
+            <Button
+              onClick={() => setShowModal(true)}
+              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Gift
+            </Button>
+          )}
         </div>
 
         {/* Search */}
@@ -194,29 +202,31 @@ export default function GiftLibrary() {
                           )}
                           <p className="font-semibold text-sm truncate">{gift.name}</p>
                           
-                          {/* Hover actions */}
-                          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6"
-                              onClick={() => handleEdit(gift)}
-                            >
-                              <Edit className="w-3 h-3" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 text-red-500"
-                              onClick={() => {
-                                if (confirm('Delete this gift?')) {
-                                  deleteMutation.mutate(gift.id);
-                                }
-                              }}
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </Button>
-                          </div>
+                          {/* Hover actions - admin only */}
+                          {isAdmin && (
+                            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={() => handleEdit(gift)}
+                              >
+                                <Edit className="w-3 h-3" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 text-red-500"
+                                onClick={() => {
+                                  if (confirm('Delete this gift?')) {
+                                    deleteMutation.mutate(gift.id);
+                                  }
+                                }}
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          )}
                         </CardContent>
                       </Card>
                     </motion.div>

@@ -1,22 +1,37 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
-import { shareGifterData } from '../components/gifter/useGifterSharing';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Copy, Download, Loader2, Trophy, Medal, Award, Music, Send, Check } from 'lucide-react';
-import { format, startOfWeek } from 'date-fns';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Copy, Download, Loader2, Trophy, Medal, Award, Music, Send, Check, CheckCircle } from 'lucide-react';
+import { format } from 'date-fns';
 import { motion } from 'framer-motion';
 
+const SUNNY_SONGBIRD_EMAIL = 'sunnysongbird@example.com'; // Replace with actual email
+
 export default function WeeklySummary() {
-  const [selectedWeek, setSelectedWeek] = useState(format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd'));
+  const queryClient = useQueryClient();
+  
+  // Week ending Sunday
+  const getWeekEndingSunday = (date) => {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = day === 0 ? 0 : 7 - day;
+    d.setDate(d.getDate() + diff);
+    return format(d, 'yyyy-MM-dd');
+  };
+  
+  const [selectedWeek, setSelectedWeek] = useState(getWeekEndingSunday(new Date()));
   const [copied, setCopied] = useState(false);
-  const [shared, setShared] = useState(false);
-  const [sharing, setSharing] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [allGood, setAllGood] = useState(false);
   const [user, setUser] = useState(null);
+  const [editingEntry, setEditingEntry] = useState(null);
+  const [editForm, setEditForm] = useState({ gifter_screen_name: '', gifter_phonetic: '' });
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -36,6 +51,35 @@ export default function WeeklySummary() {
     queryFn: () => base44.entities.GiftingEntry.filter({ week: selectedWeek }),
   });
 
+  const { data: contacts = [] } = useQuery({
+    queryKey: ['tiktokContacts'],
+    queryFn: () => base44.entities.TikTokContact.list(),
+  });
+
+  const updateEntryMutation = useMutation({
+    mutationFn: async ({ entryId, data }) => {
+      // Update the entry
+      await base44.entities.GiftingEntry.update(entryId, data);
+      
+      // Also update the contact if it exists
+      const entry = entries.find(e => e.id === entryId);
+      if (entry?.gifter_id) {
+        const contact = contacts.find(c => c.id === entry.gifter_id);
+        if (contact) {
+          await base44.entities.TikTokContact.update(contact.id, {
+            display_name: data.gifter_screen_name,
+            phonetic: data.gifter_phonetic
+          });
+        }
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['giftingEntries'] });
+      queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] });
+      setEditingEntry(null);
+    },
+  });
+
   const sortedEntries = [...entries].sort((a, b) => {
     const rankOrder = { '1st': 1, '2nd': 2, '3rd': 3 };
     return (rankOrder[a.rank] || 4) - (rankOrder[b.rank] || 4);
@@ -44,20 +88,19 @@ export default function WeeklySummary() {
   const generateFormattedText = () => {
     if (sortedEntries.length === 0) return '';
 
-    const rankEmoji = { '1st': '🥇', '2nd': '🥈', '3rd': '🥉' };
-    const gifts = [...new Set(sortedEntries.map(e => e.gift_name))];
-
-    let text = `Thank-you shoutout to our top gifters this week!\n\n`;
+    let text = `Thank-you shoutout to our top gifters for the week ending ${format(new Date(selectedWeek), 'MMMM d, yyyy')}!\n\n`;
 
     sortedEntries.forEach(entry => {
-      text += `${rankEmoji[entry.rank]} ${entry.gifter_screen_name} (@${entry.gifter_username}) — ${entry.gifter_phonetic || entry.gifter_screen_name}\n`;
+      const rankLabel = entry.rank === '1st' ? '1st Place' : entry.rank === '2nd' ? '2nd Place' : '3rd Place';
+      text += `${entry.gift_name} - ${rankLabel}\n`;
+      text += `${entry.gifter_screen_name} (@${entry.gifter_username})\n`;
+      if (entry.gifter_phonetic) {
+        text += `Pronunciation: ${entry.gifter_phonetic}\n`;
+      }
+      text += '\n';
     });
 
-    if (gifts.length > 0) {
-      text += `\nGifts: ${gifts.join(', ')}`;
-    }
-
-    return text;
+    return text.trim();
   };
 
   const formattedText = generateFormattedText();
@@ -73,32 +116,49 @@ export default function WeeklySummary() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `thank-you-song-${selectedWeek}.txt`;
+    a.download = `thank-you-song-week-ending-${selectedWeek}.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
 
-  const handleShare = async () => {
-    setSharing(true);
-    const success = await shareGifterData(
-      preferences,
-      `📊 Weekly Gifter Summary - ${format(new Date(selectedWeek), 'MMM d, yyyy')}`,
-      `${formattedText}\n\n---\nFrom ThriveNut Weekly Summary`
-    );
-    if (success) {
-      setShared(true);
-      setTimeout(() => setShared(false), 3000);
+  const handleSendToSunny = async () => {
+    setSending(true);
+    try {
+      await base44.integrations.Core.SendEmail({
+        to: SUNNY_SONGBIRD_EMAIL,
+        subject: `Weekly Gifter Summary - Week Ending ${format(new Date(selectedWeek), 'MMM d, yyyy')}`,
+        body: formattedText
+      });
+      setSent(true);
+      setTimeout(() => setSent(false), 3000);
+    } catch (error) {
+      alert('Failed to send email');
     }
-    setSharing(false);
+    setSending(false);
+  };
+
+  const handleEditClick = (entry) => {
+    setEditingEntry(entry.id);
+    setEditForm({
+      gifter_screen_name: entry.gifter_screen_name || '',
+      gifter_phonetic: entry.gifter_phonetic || ''
+    });
+  };
+
+  const handleSaveEdit = () => {
+    updateEntryMutation.mutate({
+      entryId: editingEntry,
+      data: editForm
+    });
   };
 
   const getRankIcon = (rank) => {
     switch (rank) {
-      case '1st': return <Trophy className="w-6 h-6 text-yellow-500" />;
-      case '2nd': return <Medal className="w-6 h-6 text-gray-400" />;
-      case '3rd': return <Award className="w-6 h-6 text-amber-600" />;
+      case '1st': return <Trophy className="w-5 h-5 text-yellow-500" />;
+      case '2nd': return <Medal className="w-5 h-5 text-gray-400" />;
+      case '3rd': return <Award className="w-5 h-5 text-amber-600" />;
       default: return null;
     }
   };
@@ -108,17 +168,20 @@ export default function WeeklySummary() {
       <div className="max-w-4xl mx-auto space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-gray-800">Weekly Summary</h1>
-          <p className="text-gray-600 mt-1">Generate thank-you song text for your top gifters</p>
+          <p className="text-gray-600 mt-1">Review and send thank-you song info to Sunny Songbird</p>
         </div>
 
         {/* Week Selector */}
         <Card>
           <CardContent className="p-4">
-            <Label>Select Week</Label>
+            <Label>Week Ending (Sunday)</Label>
             <Input
               type="date"
               value={selectedWeek}
-              onChange={(e) => setSelectedWeek(e.target.value)}
+              onChange={(e) => {
+                setSelectedWeek(e.target.value);
+                setAllGood(false);
+              }}
               className="mt-2"
             />
           </CardContent>
@@ -138,99 +201,149 @@ export default function WeeklySummary() {
           </Card>
         ) : (
           <>
-            {/* Visual Summary */}
+            {/* Editable Table */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Music className="w-5 h-5 text-purple-600" />
-                  Top Gifters - Week of {format(new Date(selectedWeek), 'MMM d, yyyy')}
+                  Week Ending {format(new Date(selectedWeek), 'MMMM d, yyyy')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {sortedEntries.map((entry, index) => (
-                    <motion.div
-                      key={entry.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      className={`p-4 rounded-xl ${
-                        entry.rank === '1st' ? 'bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-200' :
-                        entry.rank === '2nd' ? 'bg-gradient-to-r from-gray-50 to-slate-50 border-2 border-gray-200' :
-                        'bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-200'
-                      }`}
-                    >
-                      <div className="flex items-center gap-4">
-                        {getRankIcon(entry.rank)}
-                        <div className="flex-1">
-                          <h3 className="font-bold text-lg">{entry.gifter_screen_name}</h3>
-                          <p className="text-purple-600">@{entry.gifter_username}</p>
-                          {entry.gifter_phonetic && (
-                            <p className="text-sm text-gray-600 italic mt-1">
-                              🎵 "{entry.gifter_phonetic}"
-                            </p>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Gift</TableHead>
+                      <TableHead>Place</TableHead>
+                      <TableHead>Screen Name</TableHead>
+                      <TableHead>Username</TableHead>
+                      <TableHead>Phonetic</TableHead>
+                      <TableHead></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {sortedEntries.map((entry) => (
+                      <TableRow key={entry.id}>
+                        <TableCell className="font-medium">{entry.gift_name}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            {getRankIcon(entry.rank)}
+                            <span>{entry.rank}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {editingEntry === entry.id ? (
+                            <Input
+                              value={editForm.gifter_screen_name}
+                              onChange={(e) => setEditForm({ ...editForm, gifter_screen_name: e.target.value })}
+                              className="h-8"
+                            />
+                          ) : (
+                            entry.gifter_screen_name
                           )}
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm text-gray-500">Gift</p>
-                          <p className="font-semibold">{entry.gift_name}</p>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
+                        </TableCell>
+                        <TableCell className="text-purple-600">@{entry.gifter_username}</TableCell>
+                        <TableCell>
+                          {editingEntry === entry.id ? (
+                            <Input
+                              value={editForm.gifter_phonetic}
+                              onChange={(e) => setEditForm({ ...editForm, gifter_phonetic: e.target.value })}
+                              placeholder="How to pronounce"
+                              className="h-8"
+                            />
+                          ) : (
+                            <span className="text-gray-600 italic">{entry.gifter_phonetic || '—'}</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {editingEntry === entry.id ? (
+                            <div className="flex gap-1">
+                              <Button size="sm" onClick={handleSaveEdit} disabled={updateEntryMutation.isPending}>
+                                Save
+                              </Button>
+                              <Button size="sm" variant="ghost" onClick={() => setEditingEntry(null)}>
+                                Cancel
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button size="sm" variant="ghost" onClick={() => handleEditClick(entry)}>
+                              Edit
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </CardContent>
             </Card>
 
-            {/* Formatted Text Output */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Ready to Copy Text</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Textarea
-                  value={formattedText}
-                  readOnly
-                  className="min-h-[200px] font-mono text-sm"
-                />
-                <div className="flex gap-3">
+            {/* Confirm All Good */}
+            {!allGood ? (
+              <Card className="border-2 border-dashed border-purple-300">
+                <CardContent className="p-6 text-center">
+                  <p className="text-gray-600 mb-4">Review the entries above and make any edits needed.</p>
                   <Button
-                    onClick={handleCopy}
-                    className="flex-1 bg-purple-600 hover:bg-purple-700"
+                    onClick={() => setAllGood(true)}
+                    className="bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600"
                   >
-                    <Copy className="w-4 h-4 mr-2" />
-                    {copied ? 'Copied!' : 'Copy to Clipboard'}
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    All Good - Ready to Share!
                   </Button>
-                  <Button
-                    onClick={handleDownload}
-                    variant="outline"
-                    className="flex-1"
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    Download .txt
-                  </Button>
-                </div>
-                
-                {(preferences?.share_songs_with_pixel || preferences?.song_share_email) && (
-                  <Button
-                    onClick={handleShare}
-                    disabled={sharing || shared}
-                    className="w-full mt-3 bg-gradient-to-r from-teal-500 to-purple-500 hover:from-teal-600 hover:to-purple-600"
-                  >
-                    {sharing ? (
-                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Sharing...</>
-                    ) : shared ? (
-                      <><Check className="w-4 h-4 mr-2" /> Shared!</>
-                    ) : (
-                      <><Send className="w-4 h-4 mr-2" /> Share Summary</>
-                    )}
-                  </Button>
-                )}
-                <p className="text-xs text-gray-500 text-center">
-                  Paste this into Sunny Songbird GPT to generate your thank-you song!
-                </p>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <Card className="border-2 border-green-300 bg-green-50">
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2 text-green-700">
+                      <CheckCircle className="w-5 h-5" />
+                      Ready to Share
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="bg-white p-4 rounded-lg border font-mono text-sm whitespace-pre-wrap">
+                      {formattedText}
+                    </div>
+                    
+                    <div className="grid grid-cols-3 gap-3">
+                      <Button
+                        onClick={handleCopy}
+                        className="bg-purple-600 hover:bg-purple-700"
+                      >
+                        <Copy className="w-4 h-4 mr-2" />
+                        {copied ? 'Copied!' : 'Copy'}
+                      </Button>
+                      
+                      <Button
+                        onClick={handleSendToSunny}
+                        disabled={sending || sent}
+                        className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+                      >
+                        {sending ? (
+                          <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Sending...</>
+                        ) : sent ? (
+                          <><Check className="w-4 h-4 mr-2" /> Sent!</>
+                        ) : (
+                          <><Send className="w-4 h-4 mr-2" /> Send to Sunny</>
+                        )}
+                      </Button>
+                      
+                      <Button
+                        onClick={handleDownload}
+                        variant="outline"
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        Download
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
           </>
         )}
       </div>
