@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Music, Loader2, Copy, RefreshCw, Sparkles, Users } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Music, Loader2, Copy, RefreshCw, Sparkles, Users, Send, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const styles = [
@@ -28,6 +29,10 @@ export default function SongGenerator() {
   const [generatedSong, setGeneratedSong] = useState('');
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [shareWithPixel, setShareWithPixel] = useState(false);
+  const [customShareEmail, setCustomShareEmail] = useState('');
+  const [shared, setShared] = useState(false);
+  const [sharing, setSharing] = useState(false);
 
   const { data: gifters = [] } = useQuery({
     queryKey: ['gifters'],
@@ -63,6 +68,30 @@ export default function SongGenerator() {
     navigator.clipboard.writeText(generatedSong);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const shareSong = async () => {
+    const recipients = [];
+    if (shareWithPixel) recipients.push('PixelNutsCreative@gmail.com');
+    if (customShareEmail.trim()) recipients.push(customShareEmail.trim());
+    
+    if (recipients.length === 0 || !generatedSong) return;
+    
+    setSharing(true);
+    try {
+      for (const email of recipients) {
+        await base44.integrations.Core.SendEmail({
+          to: email,
+          subject: `🎵 Gifter Song for ${formData.gifter_name}`,
+          body: `Here's a thank-you song generated for ${formData.gifter_name} (@${formData.gifter_username || 'N/A'}):\n\n${generatedSong}\n\n---\nGenerated with Sunny Songbird 🎤`
+        });
+      }
+      setShared(true);
+      setTimeout(() => setShared(false), 3000);
+    } catch (error) {
+      console.error('Error sharing song:', error);
+    }
+    setSharing(false);
   };
 
   return (
@@ -220,6 +249,45 @@ export default function SongGenerator() {
                     className="flex-1 border-pink-300"
                   >
                     <RefreshCw className="w-4 h-4 mr-2" /> Try Another Style
+                  </Button>
+                </div>
+
+                {/* Share Options */}
+                <div className="border-t pt-4 mt-4 space-y-3">
+                  <Label className="text-sm font-medium text-gray-700">Share this song</Label>
+                  
+                  <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg">
+                    <Checkbox 
+                      id="sharePixel"
+                      checked={shareWithPixel}
+                      onCheckedChange={setShareWithPixel}
+                    />
+                    <label htmlFor="sharePixel" className="text-sm cursor-pointer flex-1">
+                      Share with PixelNutsCreative (for help & collaboration)
+                    </label>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Or enter email to share with..."
+                      value={customShareEmail}
+                      onChange={(e) => setCustomShareEmail(e.target.value)}
+                      className="flex-1"
+                    />
+                  </div>
+
+                  <Button
+                    onClick={shareSong}
+                    disabled={sharing || shared || (!shareWithPixel && !customShareEmail.trim())}
+                    className="w-full bg-gradient-to-r from-teal-500 to-purple-500 hover:from-teal-600 hover:to-purple-600"
+                  >
+                    {sharing ? (
+                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Sending...</>
+                    ) : shared ? (
+                      <><Check className="w-4 h-4 mr-2" /> Shared! ✓</>
+                    ) : (
+                      <><Send className="w-4 h-4 mr-2" /> Share Song</>
+                    )}
                   </Button>
                 </div>
               </CardContent>
