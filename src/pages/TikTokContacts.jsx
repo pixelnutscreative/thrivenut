@@ -654,149 +654,153 @@ export default function TikTokContacts() {
               </div>
             )}
 
-            {/* Advanced Details - Collapsible */}
+            {/* Advanced Details - Collapsible with Tabs */}
             <Collapsible>
-              <CollapsibleTrigger className="flex items-center justify-between w-full p-4 bg-gray-100 rounded-lg hover:bg-gray-200">
+              <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-gray-100 rounded-lg hover:bg-gray-200">
                 <h4 className="font-semibold text-sm text-gray-700">Advanced Details</h4>
                 <ChevronDown className="w-4 h-4 text-gray-600" />
               </CollapsibleTrigger>
-              <CollapsibleContent className="p-4 border border-t-0 rounded-b-lg space-y-4">
-                {/* Mods & Connections */}
-                <div className="space-y-4">
-                  <h5 className="font-medium text-sm text-gray-600">Connections & Modding</h5>
-              
-              <div className="space-y-2">
-                <Label>Mods For (who they mod for)</Label>
-                <Select
-                  value=""
-                  onValueChange={(v) => {
-                    if (v && !formData.mods_for.includes(v)) {
-                      setFormData({ ...formData, mods_for: [...formData.mods_for, v] });
-                    }
-                  }}
-                >
-                  <SelectTrigger><SelectValue placeholder="Select contact..." /></SelectTrigger>
-                  <SelectContent>
-                    {contacts.filter(c => c.id !== editingContact?.id && !formData.mods_for.includes(c.id)).map(c => (
-                      <SelectItem key={c.id} value={c.id}>@{c.username}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <div className="flex flex-wrap gap-2">
-                  {formData.mods_for.map(id => {
-                    const contact = contacts.find(c => c.id === id);
-                    return contact ? (
-                      <Badge key={id} variant="secondary" className="cursor-pointer" onClick={() => setFormData({ ...formData, mods_for: formData.mods_for.filter(m => m !== id) })}>
-                        @{contact.username} ✕
-                      </Badge>
-                    ) : null;
-                  })}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Their Mods (who mods for them)</Label>
-                <Select
-                  value=""
-                  onValueChange={(v) => {
-                    if (v && !formData.their_mods.includes(v)) {
-                      setFormData({ ...formData, their_mods: [...formData.their_mods, v] });
-                    }
-                  }}
-                >
-                  <SelectTrigger><SelectValue placeholder="Select contact..." /></SelectTrigger>
-                  <SelectContent>
-                    {contacts.filter(c => c.id !== editingContact?.id && !formData.their_mods.includes(c.id)).map(c => (
-                      <SelectItem key={c.id} value={c.id}>@{c.username}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <div className="flex flex-wrap gap-2">
-                  {formData.their_mods.map(id => {
-                    const contact = contacts.find(c => c.id === id);
-                    return contact ? (
-                      <Badge key={id} variant="secondary" className="cursor-pointer" onClick={() => setFormData({ ...formData, their_mods: formData.their_mods.filter(m => m !== id) })}>
-                        @{contact.username} ✕
-                      </Badge>
-                    ) : null;
-                  })}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Met Through</Label>
-                <Select
-                  value={formData.met_through_id}
-                  onValueChange={(v) => setFormData({ ...formData, met_through_id: v, met_through_name: '' })}
-                >
-                  <SelectTrigger><SelectValue placeholder="Select or type below..." /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={null}>None</SelectItem>
-                    {contacts.filter(c => c.id !== editingContact?.id).map(c => (
-                      <SelectItem key={c.id} value={c.id}>@{c.username}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {!formData.met_through_id && (
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Or type a name..."
-                      value={formData.met_through_name || newMetThroughName}
-                      onChange={(e) => {
-                        setNewMetThroughName(e.target.value);
-                        setFormData({ ...formData, met_through_name: e.target.value });
-                      }}
-                    />
-                    {newMetThroughName && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          createMutation.mutate({ username: newMetThroughName.replace('@', '').trim() });
-                          setNewMetThroughName('');
+              <CollapsibleContent className="border border-t-0 rounded-b-lg">
+                <Tabs defaultValue="mods" className="w-full">
+                  <TabsList className="w-full grid grid-cols-3">
+                    <TabsTrigger value="mods">Mods</TabsTrigger>
+                    <TabsTrigger value="connections">Connected Through</TabsTrigger>
+                    <TabsTrigger value="details">Details</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="mods" className="p-3 space-y-3">
+                    <div className="space-y-2">
+                      <Label>Mods For (who they mod for)</Label>
+                      <Select
+                        value=""
+                        onValueChange={(v) => {
+                          if (v && !formData.mods_for.includes(v)) {
+                            setFormData({ ...formData, mods_for: [...formData.mods_for, v] });
+                          }
                         }}
                       >
-                        <Plus className="w-4 h-4" /> Add
-                      </Button>
-                    )}
-                  </div>
-                )}
-                  </div>
-                </div>
+                        <SelectTrigger><SelectValue placeholder="Select contact..." /></SelectTrigger>
+                        <SelectContent>
+                          {contacts.filter(c => c.id !== editingContact?.id && !formData.mods_for.includes(c.id)).map(c => (
+                            <SelectItem key={c.id} value={c.id}>@{c.username}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <div className="flex flex-wrap gap-2">
+                        {formData.mods_for.map(id => {
+                          const contact = contacts.find(c => c.id === id);
+                          return contact ? (
+                            <Badge key={id} variant="secondary" className="cursor-pointer" onClick={() => setFormData({ ...formData, mods_for: formData.mods_for.filter(m => m !== id) })}>
+                              @{contact.username} ✕
+                            </Badge>
+                          ) : null;
+                        })}
+                      </div>
+                    </div>
 
-                {/* Creator Details */}
-                <div className="space-y-4 pt-4 border-t">
-                  <h5 className="font-medium text-sm text-gray-600">Creator Details</h5>
-                  
-                  <div className="space-y-2">
-                    <Label>Started Going Live</Label>
-                    <Input
-                      placeholder="e.g., Summer 2023, Early 2024"
-                      value={formData.started_going_live}
-                      onChange={(e) => setFormData({ ...formData, started_going_live: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>TikTok Live Agency</Label>
+                      <Label>Their Mods (who mods for them)</Label>
+                      <Select
+                        value=""
+                        onValueChange={(v) => {
+                          if (v && !formData.their_mods.includes(v)) {
+                            setFormData({ ...formData, their_mods: [...formData.their_mods, v] });
+                          }
+                        }}
+                      >
+                        <SelectTrigger><SelectValue placeholder="Select contact..." /></SelectTrigger>
+                        <SelectContent>
+                          {contacts.filter(c => c.id !== editingContact?.id && !formData.their_mods.includes(c.id)).map(c => (
+                            <SelectItem key={c.id} value={c.id}>@{c.username}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <div className="flex flex-wrap gap-2">
+                        {formData.their_mods.map(id => {
+                          const contact = contacts.find(c => c.id === id);
+                          return contact ? (
+                            <Badge key={id} variant="secondary" className="cursor-pointer" onClick={() => setFormData({ ...formData, their_mods: formData.their_mods.filter(m => m !== id) })}>
+                              @{contact.username} ✕
+                            </Badge>
+                          ) : null;
+                        })}
+                      </div>
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="connections" className="p-3 space-y-3">
+                    <div className="space-y-2">
+                      <Label>Met Through</Label>
+                      <Select
+                        value={formData.met_through_id}
+                        onValueChange={(v) => setFormData({ ...formData, met_through_id: v, met_through_name: '' })}
+                      >
+                        <SelectTrigger><SelectValue placeholder="Select or type below..." /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={null}>None</SelectItem>
+                          {contacts.filter(c => c.id !== editingContact?.id).map(c => (
+                            <SelectItem key={c.id} value={c.id}>@{c.username}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {!formData.met_through_id && (
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="Or type a name..."
+                            value={formData.met_through_name || newMetThroughName}
+                            onChange={(e) => {
+                              setNewMetThroughName(e.target.value);
+                              setFormData({ ...formData, met_through_name: e.target.value });
+                            }}
+                          />
+                          {newMetThroughName && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                createMutation.mutate({ username: newMetThroughName.replace('@', '').trim() });
+                                setNewMetThroughName('');
+                              }}
+                            >
+                              <Plus className="w-4 h-4" /> Add
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="details" className="p-3 space-y-3">
+                    <div className="space-y-2">
+                      <Label>Started Going Live</Label>
                       <Input
-                        placeholder="e.g., Agency Name"
-                        value={formData.live_agency}
-                        onChange={(e) => setFormData({ ...formData, live_agency: e.target.value })}
+                        placeholder="e.g., Summer 2023, Early 2024"
+                        value={formData.started_going_live}
+                        onChange={(e) => setFormData({ ...formData, started_going_live: e.target.value })}
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label>TT Shop Agency</Label>
-                      <Input
-                        placeholder="e.g., Shop Agency Name"
-                        value={formData.shop_agency}
-                        onChange={(e) => setFormData({ ...formData, shop_agency: e.target.value })}
-                      />
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <Label>TikTok Live Agency</Label>
+                        <Input
+                          placeholder="e.g., Agency Name"
+                          value={formData.live_agency}
+                          onChange={(e) => setFormData({ ...formData, live_agency: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>TT Shop Agency</Label>
+                        <Input
+                          placeholder="e.g., Shop Agency Name"
+                          value={formData.shop_agency}
+                          onChange={(e) => setFormData({ ...formData, shop_agency: e.target.value })}
+                        />
+                      </div>
                     </div>
-                  </div>
-                </div>
+                  </TabsContent>
+                </Tabs>
               </CollapsibleContent>
             </Collapsible>
           </div>
