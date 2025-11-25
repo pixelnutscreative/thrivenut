@@ -52,11 +52,15 @@ export default function Settings() {
   const [activeTab, setActiveTab] = useState('profile');
 
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => {});
-    setLoading(false);
+    base44.auth.me().then(userData => {
+      setUser(userData);
+      setLoading(false);
+    }).catch(() => {
+      setLoading(false);
+    });
   }, []);
 
-  const { data: preferences } = useQuery({
+  const { data: preferences, isLoading: prefsLoading } = useQuery({
     queryKey: ['preferences', user?.email],
     queryFn: async () => {
       const prefs = await base44.entities.UserPreferences.filter({ user_email: user.email });
@@ -137,7 +141,7 @@ export default function Settings() {
     updatePreferencesMutation.mutate(formData);
   };
 
-  if (loading) {
+  if (loading || prefsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
