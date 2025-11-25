@@ -735,6 +735,7 @@ export default function TikTokContacts() {
                     )}
                   </div>
                 )}
+                  </div>
                 </div>
 
                 {/* Creator Details */}
