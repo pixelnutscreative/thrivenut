@@ -80,6 +80,7 @@ const allNavItems = [
   { name: 'Journal', icon: BookOpen, path: 'Journal', moduleId: 'journal' },
   { name: 'Settings', icon: Settings, path: 'Settings', alwaysShow: true },
   { name: 'Mental Health', icon: Brain, path: 'NeurodivergentSettings', moduleId: 'mental_health' },
+  { name: 'Admin', icon: Users, path: 'AdminSuperFanReview', adminOnly: true },
 ];
 
 export default function Layout({ children, currentPageName }) {
@@ -105,12 +106,15 @@ export default function Layout({ children, currentPageName }) {
   const enabledModules = preferences?.enabled_modules || ['tiktok', 'gifter', 'goals', 'wellness', 'supplements', 'medications', 'pets', 'care_reminders', 'people', 'journal', 'mental_health'];
   const featureOrder = preferences?.feature_order || [];
   const hasTikTokAccess = preferences?.tiktok_access_approved || user?.email?.toLowerCase() === 'pixelnutscreative@gmail.com';
+  const isAdmin = user?.email?.toLowerCase() === 'pixelnutscreative@gmail.com';
 
   // Filter and order nav items based on enabled modules and feature order
   const getOrderedNavItems = () => {
     // First filter based on enabled modules - but SHOW TikTok items always (gated by popup)
     let filtered = allNavItems.filter(item => {
       if (item.alwaysShow) return true;
+      // Admin only items
+      if (item.adminOnly) return isAdmin;
       // Hide SuperFan Access if user already has TikTok access
       if (item.showWhenNoTikTokAccess) return !hasTikTokAccess;
       // Show TikTok items for everyone (they'll be gated by popup)
