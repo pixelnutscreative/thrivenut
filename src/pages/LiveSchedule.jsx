@@ -10,20 +10,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, Video, Calendar as CalendarIcon, Heart, Swords, Zap, ShoppingBag, CalendarPlus, Edit, FileText, Users, GraduationCap } from 'lucide-react';
+import { Plus, Trash2, Video, Calendar as CalendarIcon, Heart, Swords, Popcorn, ShoppingBag, CalendarPlus, Edit, FileText, Users, GraduationCap, Handshake, LayoutGrid, Camera } from 'lucide-react';
 import { motion } from 'framer-motion';
 import TimezoneSelector from '../components/shared/TimezoneSelector';
 
 const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 const liveTypeConfig = {
-  regular: { label: 'Live', icon: Video, color: 'bg-blue-100 text-blue-700' },
-  pop_up: { label: 'Pop', icon: Zap, color: 'bg-yellow-100 text-yellow-700' },
+  regular: { label: 'Regular', icon: Camera, color: 'bg-blue-100 text-blue-700' },
+  pop_up: { label: 'Pop', icon: Popcorn, color: 'bg-yellow-100 text-yellow-700' },
   battle: { label: 'Battle', icon: Swords, color: 'bg-red-100 text-red-700' },
   tt_shop: { label: 'Shop', icon: ShoppingBag, color: 'bg-green-100 text-green-700' },
-  daily_heart_me: { label: 'DHM', icon: Heart, color: 'bg-orange-100 text-orange-700' },
-  engagement_live: { label: 'Engage', icon: Users, color: 'bg-pink-100 text-pink-700' },
-  multi_guest: { label: 'Multi', icon: Users, color: 'bg-indigo-100 text-indigo-700' },
+  daily_heart_me: { label: 'Daily', icon: Heart, color: 'bg-orange-100 text-orange-600' },
+  engagement_live: { label: 'Engage', icon: Handshake, color: 'bg-pink-100 text-pink-700' },
+  multi_guest: { label: 'Boxes', icon: LayoutGrid, color: 'bg-indigo-100 text-indigo-700' },
   co_host: { label: 'CoHost', icon: Users, color: 'bg-cyan-100 text-cyan-700' },
   teaching: { label: 'Teach', icon: GraduationCap, color: 'bg-purple-100 text-purple-700' }
 };
@@ -45,6 +45,8 @@ export default function LiveSchedule() {
     creator_timezone: 'America/New_York',
     live_types: ['regular'],
     custom_type: '',
+    uses_tikfinity: false,
+    uses_live_studio: false,
     priority: 1,
     is_recurring: true,
     specific_date: '',
@@ -138,6 +140,8 @@ export default function LiveSchedule() {
       creator_timezone: schedule.creator_timezone || 'America/New_York',
       live_types: schedule.live_types || ['regular'],
       custom_type: schedule.custom_type || '',
+      uses_tikfinity: schedule.uses_tikfinity || false,
+      uses_live_studio: schedule.uses_live_studio || false,
       priority: schedule.priority || 1,
       is_recurring: schedule.is_recurring,
       specific_date: schedule.specific_date || '',
@@ -347,59 +351,63 @@ export default function LiveSchedule() {
     const liveTypes = schedule.live_types || ['regular'];
     return (
       <div className="p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors text-sm">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0 flex-1">
-            <span className="w-5 h-5 rounded-full bg-purple-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
-              {schedule.priority || 5}
-            </span>
-            <span
-              className="font-medium cursor-pointer hover:text-purple-600 truncate"
-              onClick={() => openTikTok(schedule.host_username)}
-            >
-              @{schedule.host_username}
-            </span>
-          </div>
-          <div className="flex items-center gap-1 flex-shrink-0">
-            {schedule.notes && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="w-6 h-6"
-                onClick={() => { setNoteContent(schedule.notes); setShowNoteDialog(true); }}
-              >
-                <FileText className="w-3 h-3 text-gray-500" />
-              </Button>
-            )}
-            <Button variant="ghost" size="icon" className="w-6 h-6" onClick={() => handleEdit(schedule)}>
-              <Edit className="w-3 h-3" />
-            </Button>
-            <Button variant="ghost" size="icon" className="w-6 h-6" onClick={() => generateCalendarFile(schedule)}>
-              <CalendarPlus className="w-3 h-3" />
-            </Button>
-            <Button variant="ghost" size="icon" className="w-6 h-6 text-red-500" onClick={() => deleteScheduleMutation.mutate(schedule.id)}>
-              <Trash2 className="w-3 h-3" />
-            </Button>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 mt-1 ml-7">
+        {/* Row 1: Priority, Name, Time */}
+        <div className="flex items-center gap-2">
+          <span className="w-5 h-5 rounded-full bg-purple-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
+            {schedule.priority || 5}
+          </span>
+          <span
+            className="font-medium cursor-pointer hover:text-purple-600 flex-1"
+            onClick={() => openTikTok(schedule.host_username)}
+          >
+            @{schedule.host_username}
+          </span>
           {schedule.time && (
-            <span className="text-xs text-gray-600">
+            <span className="text-xs text-gray-600 flex-shrink-0">
               {convertTime(schedule.time, schedule.creator_timezone || 'America/New_York', userTimezone)}
             </span>
           )}
-          <div className="flex flex-wrap gap-1">
-            {liveTypes.map(type => {
-              const config = liveTypeConfig[type];
-              if (!config) return null;
-              const Icon = config.icon;
-              return (
-                <Badge key={type} className={`text-xs px-1.5 py-0 ${config.color}`}>
-                  <Icon className="w-3 h-3 mr-0.5" />
-                  {config.label}
-                </Badge>
-              );
-            })}
-          </div>
+        </div>
+        {/* Row 2: Category badges */}
+        <div className="flex flex-wrap gap-1 mt-1 ml-7">
+          {liveTypes.map(type => {
+            const config = liveTypeConfig[type];
+            if (!config) return null;
+            const Icon = config.icon;
+            return (
+              <Badge key={type} className={`text-xs px-1.5 py-0 ${config.color}`}>
+                <Icon className="w-3 h-3" />
+              </Badge>
+            );
+          })}
+          {schedule.uses_tikfinity && (
+            <Badge className="text-xs px-1.5 py-0 bg-gray-200 text-gray-700">TF</Badge>
+          )}
+          {schedule.uses_live_studio && (
+            <Badge className="text-xs px-1.5 py-0 bg-gray-200 text-gray-700">LS</Badge>
+          )}
+        </div>
+        {/* Row 3: Action icons */}
+        <div className="flex items-center gap-1 mt-1 ml-7">
+          {schedule.notes && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="w-6 h-6"
+              onClick={() => { setNoteContent(schedule.notes); setShowNoteDialog(true); }}
+            >
+              <FileText className="w-3 h-3 text-gray-500" />
+            </Button>
+          )}
+          <Button variant="ghost" size="icon" className="w-6 h-6" onClick={() => handleEdit(schedule)}>
+            <Edit className="w-3 h-3" />
+          </Button>
+          <Button variant="ghost" size="icon" className="w-6 h-6" onClick={() => generateCalendarFile(schedule)}>
+            <CalendarPlus className="w-3 h-3" />
+          </Button>
+          <Button variant="ghost" size="icon" className="w-6 h-6 text-red-500" onClick={() => deleteScheduleMutation.mutate(schedule.id)}>
+            <Trash2 className="w-3 h-3" />
+          </Button>
         </div>
       </div>
     );
@@ -631,6 +639,23 @@ export default function LiveSchedule() {
                     <SelectItem value="18+">18+ Only</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <div
+                onClick={() => setFormData({ ...formData, uses_tikfinity: !formData.uses_tikfinity })}
+                className="flex items-center gap-2 p-2 border rounded-lg cursor-pointer hover:bg-gray-50 flex-1"
+              >
+                <Checkbox checked={formData.uses_tikfinity} />
+                <span className="text-sm">Uses Tikfinity</span>
+              </div>
+              <div
+                onClick={() => setFormData({ ...formData, uses_live_studio: !formData.uses_live_studio })}
+                className="flex items-center gap-2 p-2 border rounded-lg cursor-pointer hover:bg-gray-50 flex-1"
+              >
+                <Checkbox checked={formData.uses_live_studio} />
+                <span className="text-sm">Uses TikTok LIVE Studio</span>
               </div>
             </div>
 
