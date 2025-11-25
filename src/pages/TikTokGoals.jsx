@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { TrendingUp, Calendar } from 'lucide-react';
-import { format, startOfWeek, addWeeks, subWeeks } from 'date-fns';
+import { format, startOfWeek, addWeeks } from 'date-fns';
 import { motion } from 'framer-motion';
 import WeeklyGoalCard from '../components/tiktok/WeeklyGoalCard';
 import GoalEditModal from '../components/tiktok/GoalEditModal';
@@ -53,10 +53,6 @@ export default function TikTokGoals() {
         return await base44.entities.ContentGoal.create({
           week_starting: currentWeekStart,
           ...goalData,
-          posts_completed: 0,
-          lives_completed: 0,
-          shop_lives_completed: 0,
-          engagement_completed: 0,
           status: 'in_progress'
         });
       }
@@ -68,18 +64,22 @@ export default function TikTokGoals() {
     },
   });
 
-  const incrementGoalMutation = useMutation({
-    mutationFn: async (field) => {
-      const updateData = {
-        [`${field}_completed`]: contentGoal[`${field}_completed`] + 1
-      };
-      return await base44.entities.ContentGoal.update(contentGoal.id, updateData);
+  const toggleScheduleCompleteMutation = useMutation({
+    mutationFn: async ({ scheduleType, index }) => {
+      const currentSchedules = contentGoal[scheduleType];
+      const updatedSchedules = currentSchedules.map((item, idx) =>
+        idx === index ? { ...item, completed: !item.completed } : item
+      );
+      return await base44.entities.ContentGoal.update(contentGoal.id, { [scheduleType]: updatedSchedules });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contentGoal'] });
-      queryClient.invalidateQueries({ queryKey: ['allContentGoals'] });
-    },
+    }
   });
+
+  const onToggleScheduleComplete = (scheduleType, index) => {
+    toggleScheduleCompleteMutation.mutate({ scheduleType, index });
+  };
 
   const getWeekLabel = () => {
     if (selectedWeekOffset === 0) return 'This Week';
@@ -97,9 +97,9 @@ export default function TikTokGoals() {
         >
           <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2 flex items-center gap-3">
             <TrendingUp className="w-10 h-10 text-purple-600" />
-            TikTok Content Goals
+            TikTok Content Schedule
           </h1>
-          <p className="text-gray-600">Track your content creation journey</p>
+          <p className="text-gray-600">Plan and track your TikTok content creation for the week</p>
         </motion.div>
 
         {/* Week Navigator */}
@@ -133,7 +133,7 @@ export default function TikTokGoals() {
         <WeeklyGoalCard
           goal={contentGoal}
           onEdit={() => setShowGoalModal(true)}
-          onIncrement={(field) => incrementGoalMutation.mutate(field)}
+          onToggleScheduleComplete={onToggleScheduleComplete}
         />
 
         {/* Past Weeks History */}
@@ -145,9 +145,13 @@ export default function TikTokGoals() {
             </h2>
             <div className="grid md:grid-cols-2 gap-6">
               {allGoals.filter(g => g.week_starting !== currentWeekStart).slice(0, 6).map((goal, index) => {
-                const totalGoal = goal.posts_goal + goal.lives_goal + goal.shop_lives_goal + goal.engagement_goal;
-                const totalCompleted = goal.posts_completed + goal.lives_completed + goal.shop_lives_completed + goal.engagement_completed;
-                const percentage = totalGoal > 0 ? Math.round((totalCompleted / totalGoal) * 100) : 0;
+                const totalScheduled = (goal.scheduled_posts?.length || 0) + (goal.scheduled_lives?.length || 0) + (goal.scheduled_engagement?.length || 0);
+                const totalCompleted = (
+                  (goal.scheduled_posts?.filter(p => p.completed).length || 0) +
+                  (goal.scheduled_lives?.filter(l => l.completed).length || 0) +
+                  (goal.scheduled_engagement?.filter(e => e.completed).length || 0)
+                );
+                const percentage = totalScheduled > 0 ? Math.round((totalCompleted / totalScheduled) * 100) : 0;
 
                 return (
                   <motion.div
@@ -171,22 +175,18 @@ export default function TikTokGoals() {
                             {percentage}%
                           </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div className="grid grid-cols-3 gap-4 text-sm">
                           <div>
                             <p className="text-gray-500">Posts</p>
-                            <p className="font-semibold">{goal.posts_completed}/{goal.posts_goal}</p>
+                            <p className="font-semibold">{goal.scheduled_posts?.filter(p => p.completed).length || 0}/{goal.scheduled_posts?.length || 0}</p>
                           </div>
                           <div>
                             <p className="text-gray-500">Lives</p>
-                            <p className="font-semibold">{goal.lives_completed}/{goal.lives_goal}</p>
-                          </div>
-                          <div>
-                            <p className="text-gray-500">Shop Lives</p>
-                            <p className="font-semibold">{goal.shop_lives_completed}/{goal.shop_lives_goal}</p>
+                            <p className="font-semibold">{goal.scheduled_lives?.filter(l => l.completed).length || 0}/{goal.scheduled_lives?.length || 0}</p>
                           </div>
                           <div>
                             <p className="text-gray-500">Engagement</p>
-                            <p className="font-semibold">{goal.engagement_completed}/{goal.engagement_goal}</p>
+                            <p className="font-semibold">{goal.scheduled_engagement?.filter(e => e.completed).length || 0}/{goal.scheduled_engagement?.length || 0}</p>
                           </div>
                         </div>
                       </CardContent>
