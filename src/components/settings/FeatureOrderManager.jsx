@@ -2,11 +2,11 @@ import React from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { GripVertical } from 'lucide-react';
+import { GripVertical, Lock } from 'lucide-react';
 
 const allFeatures = [
-  { id: 'tiktok', name: 'TikTok', description: 'Content goals, engagement & contacts' },
-  { id: 'gifter', name: 'Gifter Songs', description: 'Track gifters & generate songs' },
+  { id: 'tiktok', name: 'TikTok', description: 'Content goals, engagement & contacts', requiresTikTokAccess: true },
+  { id: 'gifter', name: 'Gifter Songs', description: 'Track gifters & generate songs', requiresTikTokAccess: true },
   { id: 'goals', name: 'Personal Goals', description: 'Goal tracking for all areas' },
   { id: 'journal', name: 'Daily Journal', description: 'Reflections and AI reframing' },
   { id: 'wellness', name: 'Wellness Tracker', description: 'Water, sleep, mood & self-care' },

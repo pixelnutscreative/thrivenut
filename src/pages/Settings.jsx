@@ -274,7 +274,6 @@ export default function Settings() {
                     enabledModules={formData.enabled_modules}
                     featureOrder={formData.feature_order}
                     onChange={(updates) => setFormData({ ...formData, ...updates })}
-                    hasTikTokAccess={preferences?.tiktok_access_approved === true || user?.email?.toLowerCase() === 'pixelnutscreative@gmail.com'}
                   />
                 </CardContent>
               </Card>
