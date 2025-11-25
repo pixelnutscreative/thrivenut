@@ -5,7 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Save, User, Palette, Eye, Layers, MessageSquare, Clock } from 'lucide-react';
+import { Loader2, Save, User, Palette, Eye, Layers, MessageSquare, Clock, Share2, Music } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { motion } from 'framer-motion';
 import { useToast } from '@/components/ui/use-toast';
 import ThemeSelector from '../components/onboarding/ThemeSelector';
@@ -73,7 +75,9 @@ export default function Settings() {
     header_image_url: null,
     background_image_url: null,
     accessibility_mode: 'standard',
-    use_text_to_speech: false
+    use_text_to_speech: false,
+    share_songs_with_pixel: false,
+    song_share_email: ''
   });
 
   useEffect(() => {
@@ -92,7 +96,9 @@ export default function Settings() {
         header_image_url: preferences.header_image_url || null,
         background_image_url: preferences.background_image_url || null,
         accessibility_mode: preferences.accessibility_mode || 'standard',
-        use_text_to_speech: preferences.use_text_to_speech || false
+        use_text_to_speech: preferences.use_text_to_speech || false,
+        share_songs_with_pixel: preferences.share_songs_with_pixel || false,
+        song_share_email: preferences.song_share_email || ''
       });
     }
   }, [preferences]);
@@ -159,7 +165,7 @@ export default function Settings() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-6">
+          <TabsList className="grid w-full grid-cols-6 mb-6">
             <TabsTrigger value="profile" className="flex items-center gap-2">
               <User className="w-4 h-4" />
               <span className="hidden sm:inline">Profile</span>
@@ -175,6 +181,10 @@ export default function Settings() {
             <TabsTrigger value="preferences" className="flex items-center gap-2">
               <MessageSquare className="w-4 h-4" />
               <span className="hidden sm:inline">Preferences</span>
+            </TabsTrigger>
+            <TabsTrigger value="sharing" className="flex items-center gap-2">
+              <Share2 className="w-4 h-4" />
+              <span className="hidden sm:inline">Sharing</span>
             </TabsTrigger>
             <TabsTrigger value="accessibility" className="flex items-center gap-2">
               <Eye className="w-4 h-4" />
@@ -341,6 +351,62 @@ export default function Settings() {
                       </div>
                     </div>
                   ))}
+                </CardContent>
+              </Card>
+            </motion.div>
+          </TabsContent>
+
+          {/* Sharing Tab */}
+          <TabsContent value="sharing">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Music className="w-5 h-5" />
+                    Song Sharing Settings
+                  </CardTitle>
+                  <CardDescription>Configure who can receive your generated gifter songs for help and collaboration</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div
+                    onClick={() => setFormData({ ...formData, share_songs_with_pixel: !formData.share_songs_with_pixel })}
+                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                      formData.share_songs_with_pixel
+                        ? 'border-purple-500 bg-purple-50'
+                        : 'border-gray-200 hover:border-purple-300'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <Checkbox checked={formData.share_songs_with_pixel} />
+                      <div>
+                        <h4 className="font-semibold">Share with PixelNutsCreative</h4>
+                        <p className="text-sm text-gray-600">Automatically share all generated songs with PixelNutsCreative@gmail.com for help and collaboration</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <Label>Custom Collaboration Email</Label>
+                    <Input
+                      type="email"
+                      placeholder="Enter an email to share songs with..."
+                      value={formData.song_share_email}
+                      onChange={(e) => setFormData({ ...formData, song_share_email: e.target.value })}
+                    />
+                    <p className="text-sm text-gray-500">
+                      Songs will automatically be shared with this email when generated. Great for collaborating with friends or getting feedback!
+                    </p>
+                  </div>
+
+                  <div className="p-4 bg-purple-50 rounded-xl">
+                    <h4 className="font-semibold text-purple-800 mb-2">💜 How Sharing Works</h4>
+                    <ul className="text-sm text-purple-700 space-y-1">
+                      <li>• When you generate a song, it will be emailed to your selected recipients</li>
+                      <li>• Recipients can see the gifter details and song lyrics</li>
+                      <li>• Great for getting feedback or collaborating on creative ideas</li>
+                      <li>• You can still copy songs manually to share elsewhere</li>
+                    </ul>
+                  </div>
                 </CardContent>
               </Card>
             </motion.div>
