@@ -33,7 +33,7 @@ const roleConfig = {
   subscriber: { label: 'Subscriber', icon: Heart, color: 'bg-cyan-100 text-cyan-700' },
   superfan: { label: 'Superfan', icon: Star, color: 'bg-rose-100 text-rose-700' },
   discord: { label: 'Discord', icon: Users, color: 'bg-violet-100 text-violet-700' },
-  other: { label: 'Other', icon: Users, color: 'bg-gray-100 text-gray-700' }
+  sleep_lives: { label: 'Sleep Lives', icon: Video, color: 'bg-slate-100 text-slate-700' }
 };
 
 const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -79,6 +79,7 @@ export default function TikTokContacts() {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryColor, setNewCategoryColor] = useState('#8B5CF6');
+  const [customRoleInput, setCustomRoleInput] = useState('');
 
   const { data: contacts = [] } = useQuery({
     queryKey: ['tiktokContacts'],
@@ -548,27 +549,81 @@ export default function TikTokContacts() {
             </div>
 
             {/* Roles - directly under username */}
-            <div className="grid grid-cols-4 gap-2">
-              {Object.entries(roleConfig).map(([key, config]) => {
-                const Icon = config.icon;
-                return (
-                  <div
-                    key={key}
-                    onClick={() => toggleRole(key)}
-                    className={`p-1.5 rounded-lg border-2 cursor-pointer text-xs ${
-                      formData.role.includes(key)
-                        ? 'border-purple-500 bg-purple-50'
-                        : 'border-gray-200 hover:border-purple-300'
-                    }`}
-                  >
-                    <div className="flex items-center gap-1">
-                      <Checkbox checked={formData.role.includes(key)} className="h-3 w-3" />
-                      <Icon className="w-3 h-3" />
-                      <span className="truncate">{config.label}</span>
+            <div className="space-y-2">
+              <div className="grid grid-cols-4 gap-2">
+                {Object.entries(roleConfig).map(([key, config]) => {
+                  const Icon = config.icon;
+                  return (
+                    <div
+                      key={key}
+                      onClick={() => toggleRole(key)}
+                      className={`p-1.5 rounded-lg border-2 cursor-pointer text-xs ${
+                        formData.role.includes(key)
+                          ? 'border-purple-500 bg-purple-50'
+                          : 'border-gray-200 hover:border-purple-300'
+                      }`}
+                    >
+                      <div className="flex items-center gap-1">
+                        <Checkbox checked={formData.role.includes(key)} className="h-3 w-3" />
+                        <Icon className="w-3 h-3" />
+                        <span className="truncate">{config.label}</span>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
+              
+              {/* Custom roles */}
+              <div className="flex gap-2 items-center">
+                <Input
+                  placeholder="Add custom role..."
+                  value={customRoleInput}
+                  onChange={(e) => setCustomRoleInput(e.target.value)}
+                  className="flex-1 h-8 text-xs"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && customRoleInput.trim()) {
+                      const customRole = `custom:${customRoleInput.trim()}`;
+                      if (!formData.role.includes(customRole)) {
+                        setFormData({ ...formData, role: [...formData.role, customRole] });
+                      }
+                      setCustomRoleInput('');
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-8"
+                  onClick={() => {
+                    if (customRoleInput.trim()) {
+                      const customRole = `custom:${customRoleInput.trim()}`;
+                      if (!formData.role.includes(customRole)) {
+                        setFormData({ ...formData, role: [...formData.role, customRole] });
+                      }
+                      setCustomRoleInput('');
+                    }
+                  }}
+                >
+                  <Plus className="w-3 h-3" />
+                </Button>
+              </div>
+              
+              {/* Display custom roles */}
+              {formData.role.filter(r => r.startsWith('custom:')).length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {formData.role.filter(r => r.startsWith('custom:')).map(role => (
+                    <Badge
+                      key={role}
+                      variant="secondary"
+                      className="cursor-pointer text-xs"
+                      onClick={() => setFormData({ ...formData, role: formData.role.filter(r => r !== role) })}
+                    >
+                      {role.replace('custom:', '')} ✕
+                    </Badge>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Notes */}
