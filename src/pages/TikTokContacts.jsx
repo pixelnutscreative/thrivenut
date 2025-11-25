@@ -62,8 +62,16 @@ export default function TikTokContacts() {
     color: '#8B5CF6',
     calendar_enabled: false,
     is_gifter: false,
-    add_to_my_people: false
+    add_to_my_people: false,
+    mods_for: [],
+    their_mods: [],
+    met_through_id: '',
+    met_through_name: '',
+    started_going_live: '',
+    live_agency: '',
+    shop_agency: ''
   });
+  const [newMetThroughName, setNewMetThroughName] = useState('');
 
   const { data: contacts = [] } = useQuery({
     queryKey: ['tiktokContacts'],
@@ -126,8 +134,17 @@ export default function TikTokContacts() {
       engagement_category_id: '',
       color: '#8B5CF6',
       calendar_enabled: false,
-      is_gifter: false
+      is_gifter: false,
+      add_to_my_people: false,
+      mods_for: [],
+      their_mods: [],
+      met_through_id: '',
+      met_through_name: '',
+      started_going_live: '',
+      live_agency: '',
+      shop_agency: ''
     });
+    setNewMetThroughName('');
   };
 
   const handleEdit = (contact) => {
@@ -149,8 +166,16 @@ export default function TikTokContacts() {
       color: contact.color || '#8B5CF6',
       calendar_enabled: contact.calendar_enabled || false,
       is_gifter: contact.is_gifter || false,
-      add_to_my_people: contact.add_to_my_people || false
+      add_to_my_people: contact.add_to_my_people || false,
+      mods_for: contact.mods_for || [],
+      their_mods: contact.their_mods || [],
+      met_through_id: contact.met_through_id || '',
+      met_through_name: contact.met_through_name || '',
+      started_going_live: contact.started_going_live || '',
+      live_agency: contact.live_agency || '',
+      shop_agency: contact.shop_agency || ''
     });
+    setNewMetThroughName('');
     setShowModal(true);
   };
 
@@ -290,6 +315,48 @@ export default function TikTokContacts() {
                 </a>
               )}
             </div>
+
+            {/* Mods & Connections */}
+            {(contact.mods_for?.length > 0 || contact.their_mods?.length > 0) && (
+              <div className="text-xs space-y-1">
+                {contact.mods_for?.length > 0 && (
+                  <p className="text-gray-600">
+                    <span className="font-medium">Mods for:</span>{' '}
+                    {contact.mods_for.map((id, i) => {
+                      const c = contacts.find(x => x.id === id);
+                      return c ? (
+                        <span key={id}>
+                          <a href={`https://tiktok.com/@${c.username}`} target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:underline">@{c.username}</a>
+                          {i < contact.mods_for.length - 1 ? ', ' : ''}
+                        </span>
+                      ) : null;
+                    })}
+                  </p>
+                )}
+                {contact.their_mods?.length > 0 && (
+                  <p className="text-gray-600">
+                    <span className="font-medium">Their mods:</span>{' '}
+                    {contact.their_mods.map((id, i) => {
+                      const c = contacts.find(x => x.id === id);
+                      return c ? (
+                        <span key={id}>
+                          <a href={`https://tiktok.com/@${c.username}`} target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:underline">@{c.username}</a>
+                          {i < contact.their_mods.length - 1 ? ', ' : ''}
+                        </span>
+                      ) : null;
+                    })}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Agencies */}
+            {(contact.live_agency || contact.shop_agency) && (
+              <div className="text-xs text-gray-600">
+                {contact.live_agency && <p><span className="font-medium">Live Agency:</span> {contact.live_agency}</p>}
+                {contact.shop_agency && <p><span className="font-medium">Shop Agency:</span> {contact.shop_agency}</p>}
+              </div>
+            )}
 
             {contact.notes && (
               <p className="text-sm text-gray-500 italic">{contact.notes}</p>
@@ -620,6 +687,143 @@ export default function TikTokContacts() {
                 </div>
               </div>
             )}
+
+            {/* Mods & Connections */}
+            <div className="space-y-4 p-4 border rounded-lg">
+              <h4 className="font-semibold text-sm">Connections & Modding</h4>
+              
+              <div className="space-y-2">
+                <Label>Mods For (who they mod for)</Label>
+                <Select
+                  value=""
+                  onValueChange={(v) => {
+                    if (v && !formData.mods_for.includes(v)) {
+                      setFormData({ ...formData, mods_for: [...formData.mods_for, v] });
+                    }
+                  }}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select contact..." /></SelectTrigger>
+                  <SelectContent>
+                    {contacts.filter(c => c.id !== editingContact?.id && !formData.mods_for.includes(c.id)).map(c => (
+                      <SelectItem key={c.id} value={c.id}>@{c.username}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div className="flex flex-wrap gap-2">
+                  {formData.mods_for.map(id => {
+                    const contact = contacts.find(c => c.id === id);
+                    return contact ? (
+                      <Badge key={id} variant="secondary" className="cursor-pointer" onClick={() => setFormData({ ...formData, mods_for: formData.mods_for.filter(m => m !== id) })}>
+                        @{contact.username} ✕
+                      </Badge>
+                    ) : null;
+                  })}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Their Mods (who mods for them)</Label>
+                <Select
+                  value=""
+                  onValueChange={(v) => {
+                    if (v && !formData.their_mods.includes(v)) {
+                      setFormData({ ...formData, their_mods: [...formData.their_mods, v] });
+                    }
+                  }}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select contact..." /></SelectTrigger>
+                  <SelectContent>
+                    {contacts.filter(c => c.id !== editingContact?.id && !formData.their_mods.includes(c.id)).map(c => (
+                      <SelectItem key={c.id} value={c.id}>@{c.username}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div className="flex flex-wrap gap-2">
+                  {formData.their_mods.map(id => {
+                    const contact = contacts.find(c => c.id === id);
+                    return contact ? (
+                      <Badge key={id} variant="secondary" className="cursor-pointer" onClick={() => setFormData({ ...formData, their_mods: formData.their_mods.filter(m => m !== id) })}>
+                        @{contact.username} ✕
+                      </Badge>
+                    ) : null;
+                  })}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Met Through</Label>
+                <Select
+                  value={formData.met_through_id}
+                  onValueChange={(v) => setFormData({ ...formData, met_through_id: v, met_through_name: '' })}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select or type below..." /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={null}>None</SelectItem>
+                    {contacts.filter(c => c.id !== editingContact?.id).map(c => (
+                      <SelectItem key={c.id} value={c.id}>@{c.username}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {!formData.met_through_id && (
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Or type a name..."
+                      value={formData.met_through_name || newMetThroughName}
+                      onChange={(e) => {
+                        setNewMetThroughName(e.target.value);
+                        setFormData({ ...formData, met_through_name: e.target.value });
+                      }}
+                    />
+                    {newMetThroughName && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          createMutation.mutate({ username: newMetThroughName.replace('@', '').trim() });
+                          setNewMetThroughName('');
+                        }}
+                      >
+                        <Plus className="w-4 h-4" /> Add
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Creator Details */}
+            <div className="space-y-4 p-4 border rounded-lg">
+              <h4 className="font-semibold text-sm">Creator Details</h4>
+              
+              <div className="space-y-2">
+                <Label>Started Going Live</Label>
+                <Input
+                  placeholder="e.g., Summer 2023, Early 2024"
+                  value={formData.started_going_live}
+                  onChange={(e) => setFormData({ ...formData, started_going_live: e.target.value })}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>TikTok Live Agency</Label>
+                  <Input
+                    placeholder="e.g., Agency Name"
+                    value={formData.live_agency}
+                    onChange={(e) => setFormData({ ...formData, live_agency: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>TT Shop Agency</Label>
+                  <Input
+                    placeholder="e.g., Shop Agency Name"
+                    value={formData.shop_agency}
+                    onChange={(e) => setFormData({ ...formData, shop_agency: e.target.value })}
+                  />
+                </div>
+              </div>
+            </div>
 
             {/* Color */}
             <div className="space-y-2">
