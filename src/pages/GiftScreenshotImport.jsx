@@ -34,10 +34,12 @@ export default function GiftScreenshotImport() {
     enabled: !!user,
   });
 
-  const { data: gifters = [] } = useQuery({
-    queryKey: ['gifters'],
-    queryFn: () => base44.entities.Gifter.list('screen_name'),
+  const { data: contacts = [] } = useQuery({
+    queryKey: ['tiktokContacts'],
+    queryFn: () => base44.entities.TikTokContact.list('screen_name'),
   });
+
+  const gifters = contacts.filter(c => c.is_gifter);
 
   const { data: gifts = [] } = useQuery({
     queryKey: ['gifts'],
@@ -118,10 +120,12 @@ Extract up to 3 gifters (1st, 2nd, 3rd place).`,
         );
 
         if (!gifter && entry.username) {
-          gifter = await base44.entities.Gifter.create({
+          gifter = await base44.entities.TikTokContact.create({
             username: entry.username,
             screen_name: entry.screen_name || entry.username,
-            phonetic: ''
+            display_name: entry.screen_name || entry.username,
+            phonetic: '',
+            is_gifter: true
           });
         }
 
@@ -149,7 +153,7 @@ Extract up to 3 gifters (1st, 2nd, 3rd place).`,
     },
     onSuccess: async (results) => {
       queryClient.invalidateQueries({ queryKey: ['giftingEntries'] });
-      queryClient.invalidateQueries({ queryKey: ['gifters'] });
+      queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] });
       
       // Share the imported data
       const rankEmoji = { '1st': '🥇', '2nd': '🥈', '3rd': '🥉' };

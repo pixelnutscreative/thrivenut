@@ -47,17 +47,19 @@ export default function SongGenerator() {
     enabled: !!user,
   });
 
-  const { data: gifters = [] } = useQuery({
-    queryKey: ['gifters'],
-    queryFn: () => base44.entities.Gifter.list('screen_name'),
+  const { data: contacts = [] } = useQuery({
+    queryKey: ['tiktokContacts'],
+    queryFn: () => base44.entities.TikTokContact.list('screen_name'),
   });
+
+  const gifters = contacts.filter(c => c.is_gifter);
 
   const handleGifterSelect = (gifterId) => {
     const gifter = gifters.find(g => g.id === gifterId);
     if (gifter) {
       setFormData({
         ...formData,
-        gifter_name: gifter.phonetic || gifter.screen_name,
+        gifter_name: gifter.phonetic || gifter.screen_name || gifter.display_name || gifter.username,
         gifter_username: gifter.username
       });
     }
@@ -140,7 +142,7 @@ export default function SongGenerator() {
                   <SelectContent>
                     {gifters.map(gifter => (
                       <SelectItem key={gifter.id} value={gifter.id}>
-                        {gifter.screen_name} (@{gifter.username})
+                        {gifter.screen_name || gifter.display_name || gifter.username} (@{gifter.username})
                       </SelectItem>
                     ))}
                   </SelectContent>
