@@ -53,17 +53,16 @@ export default function TikTokContacts() {
   const [formData, setFormData] = useState({
     username: '',
     display_name: '',
-    screen_name: '',
     phonetic: '',
     phone: '',
     email: '',
     role: [],
+    categories: [],
     notes: '',
     is_favorite: false,
     engagement_enabled: false,
     engagement_frequency: 'weekly',
     engagement_days: [],
-    engagement_category_id: '',
     color: '#8B5CF6',
     calendar_enabled: false,
     is_gifter: false,
@@ -126,17 +125,16 @@ export default function TikTokContacts() {
     setFormData({
       username: '',
       display_name: '',
-      screen_name: '',
       phonetic: '',
       phone: '',
       email: '',
       role: [],
+      categories: [],
       notes: '',
       is_favorite: false,
       engagement_enabled: false,
       engagement_frequency: 'weekly',
       engagement_days: [],
-      engagement_category_id: '',
       color: '#8B5CF6',
       calendar_enabled: false,
       is_gifter: false,
@@ -157,17 +155,16 @@ export default function TikTokContacts() {
     setFormData({
       username: contact.username || '',
       display_name: contact.display_name || '',
-      screen_name: contact.screen_name || '',
       phonetic: contact.phonetic || '',
       phone: contact.phone || '',
       email: contact.email || '',
       role: contact.role || [],
+      categories: contact.categories || [],
       notes: contact.notes || '',
       is_favorite: contact.is_favorite || false,
       engagement_enabled: contact.engagement_enabled || false,
       engagement_frequency: contact.engagement_frequency || 'weekly',
       engagement_days: contact.engagement_days || [],
-      engagement_category_id: contact.engagement_category_id || '',
       color: contact.color || '#8B5CF6',
       calendar_enabled: contact.calendar_enabled || false,
       is_gifter: contact.is_gifter || false,
@@ -451,7 +448,7 @@ export default function TikTokContacts() {
                 </div>
                 <Button
                   onClick={handleSubmit}
-                  disabled={!formData.username.trim() || (formData.is_gifter && !formData.screen_name.trim())}
+                  disabled={!formData.username.trim()}
                   size="sm"
                   className="bg-purple-600 hover:bg-purple-700 ml-2"
                 >
@@ -611,45 +608,51 @@ export default function TikTokContacts() {
                     </div>
                   </div>
                 )}
-
-                <div className="space-y-2">
-                  <Label>Category</Label>
-                  <Select value={formData.engagement_category_id} onValueChange={(v) => setFormData({ ...formData, engagement_category_id: v })}>
-                    <SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={null}>None</SelectItem>
-                      {categories.map(cat => (
-                        <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
               </div>
             )}
 
+            {/* Categories - multi-select */}
+            <div className="space-y-2">
+              <Label>Categories</Label>
+              <div className="flex flex-wrap gap-2">
+                {categories.map(cat => (
+                  <Badge
+                    key={cat.id}
+                    variant={formData.categories.includes(cat.id) ? 'default' : 'outline'}
+                    className="cursor-pointer"
+                    style={formData.categories.includes(cat.id) ? { backgroundColor: cat.color } : { borderColor: cat.color, color: cat.color }}
+                    onClick={() => {
+                      setFormData({
+                        ...formData,
+                        categories: formData.categories.includes(cat.id)
+                          ? formData.categories.filter(c => c !== cat.id)
+                          : [...formData.categories, cat.id]
+                      });
+                    }}
+                  >
+                    {cat.name}
+                  </Badge>
+                ))}
+                {categories.length === 0 && (
+                  <p className="text-xs text-gray-500">No categories yet. Create them in Engagement settings.</p>
+                )}
+              </div>
+            </div>
+
             {/* Gifter Settings */}
             {formData.is_gifter && (
-              <div className="space-y-4 p-4 border-l-4 border-amber-400 bg-amber-50 rounded-lg">
+              <div className="space-y-3 p-4 border-l-4 border-amber-400 bg-amber-50 rounded-lg">
                 <h4 className="font-semibold text-sm text-amber-800">Gifter Settings (for Songs)</h4>
+                <p className="text-xs text-gray-600">Display name will be used as the screen name for songs.</p>
                 
                 <div className="space-y-2">
-                  <Label>Screen Name *</Label>
-                  <Input
-                    placeholder="e.g., Sheri D"
-                    value={formData.screen_name}
-                    onChange={(e) => setFormData({ ...formData, screen_name: e.target.value })}
-                  />
-                  <p className="text-xs text-gray-500">What you see on screen during lives</p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Phonetic Pronunciation</Label>
+                  <Label>Phonetic Pronunciation (Optional)</Label>
                   <Input
                     placeholder="e.g., Sheri Dee Seven Seven Seven"
                     value={formData.phonetic}
                     onChange={(e) => setFormData({ ...formData, phonetic: e.target.value })}
                   />
-                  <p className="text-xs text-gray-500">How to pronounce for songs</p>
+                  <p className="text-xs text-gray-500">How to pronounce for songs (leave blank to use display name)</p>
                 </div>
               </div>
             )}
