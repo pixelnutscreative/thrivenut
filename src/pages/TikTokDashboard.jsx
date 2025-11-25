@@ -39,14 +39,14 @@ export default function TikTokDashboard() {
   });
 
   const { data: liveSchedules = [] } = useQuery({
-    queryKey: ['liveSchedules'],
-    queryFn: () => base44.entities.LiveSchedule.list('-created_date'),
+    queryKey: ['liveSchedules', user?.email],
+    queryFn: () => base44.entities.LiveSchedule.filter({ created_by: user.email }, '-created_date'),
     enabled: !!user,
   });
 
   const { data: contacts = [] } = useQuery({
-    queryKey: ['tiktokContacts'],
-    queryFn: () => base44.entities.TikTokContact.list('-created_date'),
+    queryKey: ['tiktokContacts', user?.email],
+    queryFn: () => base44.entities.TikTokContact.filter({ created_by: user.email }, '-created_date'),
     enabled: !!user,
   });
 

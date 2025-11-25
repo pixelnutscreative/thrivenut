@@ -81,14 +81,22 @@ export default function TikTokContacts() {
   const [newCategoryColor, setNewCategoryColor] = useState('#8B5CF6');
   const [customRoleInput, setCustomRoleInput] = useState('');
 
+  const [user, setUser] = useState(null);
+
+  React.useEffect(() => {
+    base44.auth.me().then(setUser);
+  }, []);
+
   const { data: contacts = [] } = useQuery({
-    queryKey: ['tiktokContacts'],
-    queryFn: () => base44.entities.TikTokContact.list('-created_date'),
+    queryKey: ['tiktokContacts', user?.email],
+    queryFn: () => base44.entities.TikTokContact.filter({ created_by: user.email }, '-created_date'),
+    enabled: !!user,
   });
 
   const { data: categories = [] } = useQuery({
-    queryKey: ['engagementCategories'],
-    queryFn: () => base44.entities.EngagementCategory.list('name'),
+    queryKey: ['engagementCategories', user?.email],
+    queryFn: () => base44.entities.EngagementCategory.filter({ created_by: user.email }, 'name'),
+    enabled: !!user,
   });
 
   const createMutation = useMutation({

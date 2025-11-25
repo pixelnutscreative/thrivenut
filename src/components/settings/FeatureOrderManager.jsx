@@ -54,7 +54,11 @@ export default function FeatureOrderManager({ enabledModules, featureOrder, onCh
     });
   };
 
-  const toggleFeature = (featureId) => {
+  const toggleFeature = (featureId, e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     const newEnabled = enabledModules.includes(featureId)
       ? enabledModules.filter(id => id !== featureId)
       : [...enabledModules, featureId];
@@ -91,7 +95,10 @@ export default function FeatureOrderManager({ enabledModules, featureOrder, onCh
                           
                           <Checkbox
                             checked={enabledModules.includes(feature.id)}
-                            onCheckedChange={() => toggleFeature(feature.id)}
+                            onCheckedChange={(checked) => {
+                              toggleFeature(feature.id);
+                            }}
+                            onClick={(e) => e.stopPropagation()}
                           />
                           
                           <div className="flex-1">
