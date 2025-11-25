@@ -25,9 +25,11 @@ import {
   Bell,
   Share2,
   Music,
-  Star
+  Star,
+  Lock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import TikTokAccessGate from './components/access/TikTokAccessGate';
 
 // Map module IDs to nav items
 const moduleNavMap = {
@@ -85,6 +87,7 @@ export default function Layout({ children, currentPageName }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [expandedSections, setExpandedSections] = useState(['TikTok', 'Gifter Songs', 'Wellness']);
+  const [showAccessGate, setShowAccessGate] = useState(false);
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -105,13 +108,13 @@ export default function Layout({ children, currentPageName }) {
 
   // Filter and order nav items based on enabled modules and feature order
   const getOrderedNavItems = () => {
-    // First filter based on enabled modules and TikTok access
+    // First filter based on enabled modules - but SHOW TikTok items always (gated by popup)
     let filtered = allNavItems.filter(item => {
       if (item.alwaysShow) return true;
-      // Show SuperFan Access only when user doesn't have TikTok access
+      // Hide SuperFan Access if user already has TikTok access
       if (item.showWhenNoTikTokAccess) return !hasTikTokAccess;
-      // Hide TikTok features if not approved
-      if (item.requiresTikTokAccess && !hasTikTokAccess) return false;
+      // Show TikTok items for everyone (they'll be gated by popup)
+      if (item.requiresTikTokAccess) return true;
       if (item.moduleId && !enabledModules.includes(item.moduleId)) return false;
       return true;
     }).map(item => {
@@ -149,6 +152,16 @@ export default function Layout({ children, currentPageName }) {
     }
 
     return filtered;
+  };
+
+  const handleNavClick = (item, e) => {
+    // Check if this is a TikTok-gated item and user doesn't have access
+    if (item.requiresTikTokAccess && !hasTikTokAccess) {
+      e.preventDefault();
+      setShowAccessGate(true);
+      return false;
+    }
+    return true;
   };
 
   const navItems = getOrderedNavItems();
@@ -237,67 +250,75 @@ export default function Layout({ children, currentPageName }) {
                 const hasActiveSubItem = isSubItemActive(item);
 
                 if (item.isSection) {
-                  return (
-                    <div key={item.name}>
-                      <button
-                        onClick={() => toggleSection(item.name)}
-                        className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
-                              hasActiveSubItem 
-                                ? (isDark ? 'bg-gray-700 text-teal-400' : 'bg-teal-50 text-teal-700')
-                                : (isDark ? 'text-gray-300 hover:bg-gray-700/50' : 'text-gray-700 hover:bg-teal-50')
-                            }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <Icon className="w-5 h-5" />
-                          <span className="font-medium">{item.name}</span>
-                        </div>
-                        {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                      </button>
-                      {isExpanded && (
-                        <div className="ml-4 mt-1 space-y-1">
-                          {item.subItems.map(subItem => {
-                            const SubIcon = subItem.icon;
-                            const subIsActive = currentPageName === subItem.path;
-                            return (
-                              <Link
-                                key={subItem.path}
-                                to={createPageUrl(subItem.path)}
-                                onClick={() => setMobileMenuOpen(false)}
-                                className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-all text-sm ${
-                                  subIsActive
-                                    ? 'text-white shadow-lg'
-                                    : (isDark ? 'text-gray-400 hover:bg-gray-700/50' : 'text-gray-600 hover:bg-teal-50')
-                                }`}
-                                style={subIsActive ? { background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` } : {}}
-                              >
-                                <SubIcon className="w-4 h-4" />
-                                <span>{subItem.name}</span>
-                              </Link>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  );
-                }
+                                        const isLocked = item.requiresTikTokAccess && !hasTikTokAccess;
+                                        return (
+                                          <div key={item.name}>
+                                            <button
+                                              onClick={(e) => {
+                                                if (isLocked) {
+                                                  setShowAccessGate(true);
+                                                } else {
+                                                  toggleSection(item.name);
+                                                }
+                                              }}
+                                              className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
+                                                    hasActiveSubItem 
+                                                      ? (isDark ? 'bg-gray-700 text-teal-400' : 'bg-teal-50 text-teal-700')
+                                                      : (isDark ? 'text-gray-300 hover:bg-gray-700/50' : 'text-gray-700 hover:bg-teal-50')
+                                                  }`}
+                                            >
+                                              <div className="flex items-center gap-3">
+                                                <Icon className="w-5 h-5" />
+                                                <span className="font-medium">{item.name}</span>
+                                                {isLocked && <Lock className="w-3 h-3 text-amber-500" />}
+                                              </div>
+                                              {!isLocked && (isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />)}
+                                            </button>
+                                            {isExpanded && !isLocked && (
+                                              <div className="ml-4 mt-1 space-y-1">
+                                                {item.subItems.map(subItem => {
+                                                  const SubIcon = subItem.icon;
+                                                  const subIsActive = currentPageName === subItem.path;
+                                                  return (
+                                                    <Link
+                                                      key={subItem.path}
+                                                      to={createPageUrl(subItem.path)}
+                                                      onClick={() => setMobileMenuOpen(false)}
+                                                      className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-all text-sm ${
+                                                        subIsActive
+                                                          ? 'text-white shadow-lg'
+                                                          : (isDark ? 'text-gray-400 hover:bg-gray-700/50' : 'text-gray-600 hover:bg-teal-50')
+                                                      }`}
+                                                      style={subIsActive ? { background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` } : {}}
+                                                    >
+                                                      <SubIcon className="w-4 h-4" />
+                                                      <span>{subItem.name}</span>
+                                                    </Link>
+                                                  );
+                                                })}
+                                              </div>
+                                            )}
+                                          </div>
+                                        );
+                                      }
 
-                return (
-                  <Link
-                    key={item.name}
-                    to={createPageUrl(item.path)}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                      isActive
-                        ? 'text-white shadow-lg'
-                        : (isDark ? 'text-gray-300 hover:bg-gray-700/50' : 'text-gray-700 hover:bg-teal-50')
-                    }`}
-                    style={isActive ? { background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` } : {}}
-                  >
-                    <Icon className="w-5 h-5" />
-                    <span className="font-medium">{item.name}</span>
-                  </Link>
-                );
-              })}
+                                      return (
+                                        <Link
+                                          key={item.name}
+                                          to={createPageUrl(item.path)}
+                                          onClick={() => setMobileMenuOpen(false)}
+                                          className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                                            isActive
+                                              ? 'text-white shadow-lg'
+                                              : (isDark ? 'text-gray-300 hover:bg-gray-700/50' : 'text-gray-700 hover:bg-teal-50')
+                                          }`}
+                                          style={isActive ? { background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` } : {}}
+                                        >
+                                          <Icon className="w-5 h-5" />
+                                          <span className="font-medium">{item.name}</span>
+                                        </Link>
+                                      );
+                                    })}
               
               {user && (
                 <div className="pt-6 mt-6 border-t">
@@ -346,65 +367,73 @@ export default function Layout({ children, currentPageName }) {
               const hasActiveSubItem = isSubItemActive(item);
 
               if (item.isSection) {
-                return (
-                  <div key={item.name}>
-                    <button
-                      onClick={() => toggleSection(item.name)}
-                      className={`w-full flex items-center justify-between px-4 py-2 rounded-xl transition-all ${
-                        hasActiveSubItem 
-                          ? (isDark ? 'bg-gray-700 text-teal-400' : 'bg-teal-50 text-teal-700')
-                          : (isDark ? 'text-gray-300 hover:bg-gray-700/50' : 'text-gray-700 hover:bg-teal-50')
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <Icon className="w-5 h-5" />
-                        <span className="font-medium">{item.name}</span>
-                      </div>
-                      {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                    </button>
-                    {isExpanded && (
-                      <div className="ml-4 mt-1 space-y-1">
-                        {item.subItems.map(subItem => {
-                          const SubIcon = subItem.icon;
-                          const subIsActive = currentPageName === subItem.path;
-                          return (
-                            <Link
-                              key={subItem.path}
-                              to={createPageUrl(subItem.path)}
-                              className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-all text-sm ${
-                                subIsActive
-                                  ? 'text-white shadow-lg'
-                                  : (isDark ? 'text-gray-400 hover:bg-gray-700/50' : 'text-gray-600 hover:bg-teal-50')
-                              }`}
-                              style={subIsActive ? { background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` } : {}}
-                            >
-                              <SubIcon className="w-4 h-4" />
-                              <span>{subItem.name}</span>
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              }
+                                    const isLocked = item.requiresTikTokAccess && !hasTikTokAccess;
+                                    return (
+                                      <div key={item.name}>
+                                        <button
+                                          onClick={(e) => {
+                                            if (isLocked) {
+                                              setShowAccessGate(true);
+                                            } else {
+                                              toggleSection(item.name);
+                                            }
+                                          }}
+                                          className={`w-full flex items-center justify-between px-4 py-2 rounded-xl transition-all ${
+                                            hasActiveSubItem 
+                                              ? (isDark ? 'bg-gray-700 text-teal-400' : 'bg-teal-50 text-teal-700')
+                                              : (isDark ? 'text-gray-300 hover:bg-gray-700/50' : 'text-gray-700 hover:bg-teal-50')
+                                          }`}
+                                        >
+                                          <div className="flex items-center gap-3">
+                                            <Icon className="w-5 h-5" />
+                                            <span className="font-medium">{item.name}</span>
+                                            {isLocked && <Lock className="w-3 h-3 text-amber-500" />}
+                                          </div>
+                                          {!isLocked && (isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />)}
+                                        </button>
+                                        {isExpanded && !isLocked && (
+                                          <div className="ml-4 mt-1 space-y-1">
+                                            {item.subItems.map(subItem => {
+                                              const SubIcon = subItem.icon;
+                                              const subIsActive = currentPageName === subItem.path;
+                                              return (
+                                                <Link
+                                                  key={subItem.path}
+                                                  to={createPageUrl(subItem.path)}
+                                                  className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-all text-sm ${
+                                                    subIsActive
+                                                      ? 'text-white shadow-lg'
+                                                      : (isDark ? 'text-gray-400 hover:bg-gray-700/50' : 'text-gray-600 hover:bg-teal-50')
+                                                  }`}
+                                                  style={subIsActive ? { background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` } : {}}
+                                                >
+                                                  <SubIcon className="w-4 h-4" />
+                                                  <span>{subItem.name}</span>
+                                                </Link>
+                                              );
+                                            })}
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  }
 
-              return (
-                <Link
-                  key={item.name}
-                  to={createPageUrl(item.path)}
-                  className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-all ${
-                    isActive
-                      ? 'text-white shadow-lg'
-                      : (isDark ? 'text-gray-300 hover:bg-gray-700/50' : 'text-gray-700 hover:bg-teal-50')
-                  }`}
-                  style={isActive ? { background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` } : {}}
-                >
-                  <Icon className="w-5 h-5" />
-                  <span className="font-medium">{item.name}</span>
-                </Link>
-              );
-            })}
+                                  return (
+                                    <Link
+                                      key={item.name}
+                                      to={createPageUrl(item.path)}
+                                      className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-all ${
+                                        isActive
+                                          ? 'text-white shadow-lg'
+                                          : (isDark ? 'text-gray-300 hover:bg-gray-700/50' : 'text-gray-700 hover:bg-teal-50')
+                                      }`}
+                                      style={isActive ? { background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` } : {}}
+                                    >
+                                      <Icon className="w-5 h-5" />
+                                      <span className="font-medium">{item.name}</span>
+                                    </Link>
+                                  );
+                                })}
           </nav>
 
           {user && (
@@ -430,9 +459,15 @@ export default function Layout({ children, currentPageName }) {
       </div>
 
       {/* Mobile Main Content */}
-      <div className="lg:hidden pt-16">
-        {children}
-      </div>
-    </div>
-  );
-}
+              <div className="lg:hidden pt-16">
+                {children}
+              </div>
+
+              {/* TikTok Access Gate Modal */}
+              <TikTokAccessGate 
+                isOpen={showAccessGate} 
+                onClose={() => setShowAccessGate(false)} 
+              />
+            </div>
+          );
+        }
