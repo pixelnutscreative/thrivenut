@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { CheckCircle, XCircle, Clock, Loader2, ExternalLink, Shield } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Loader2, ExternalLink, Shield, UserPlus, Users, Search, ToggleLeft, ToggleRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
 
@@ -21,6 +21,9 @@ export default function AdminSuperFanReview() {
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [adminNotes, setAdminNotes] = useState('');
   const [activeTab, setActiveTab] = useState('pending');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [newUserEmail, setNewUserEmail] = useState('');
+  const [newUserTikTok, setNewUserTikTok] = useState('');
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -80,6 +83,43 @@ export default function AdminSuperFanReview() {
     },
   });
 
+  const toggleAccessMutation = useMutation({
+    mutationFn: async ({ prefId, currentAccess }) => {
+      await base44.entities.UserPreferences.update(prefId, {
+        tiktok_access_approved: !currentAccess
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['allUserPreferences'] });
+    },
+  });
+
+  const grantAccessMutation = useMutation({
+    mutationFn: async ({ email, tiktokUsername }) => {
+      // Check if user preferences exist
+      let userPref = allPreferences.find(p => p.user_email?.toLowerCase() === email.toLowerCase());
+      
+      if (userPref) {
+        await base44.entities.UserPreferences.update(userPref.id, {
+          tiktok_access_approved: true,
+          tiktok_username: tiktokUsername || userPref.tiktok_username
+        });
+      } else {
+        await base44.entities.UserPreferences.create({
+          user_email: email,
+          tiktok_access_approved: true,
+          tiktok_username: tiktokUsername,
+          onboarding_completed: false
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['allUserPreferences'] });
+      setNewUserEmail('');
+      setNewUserTikTok('');
+    },
+  });
+
   if (!isAdmin) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 p-4 md:p-8 flex items-center justify-center">
@@ -97,6 +137,14 @@ export default function AdminSuperFanReview() {
   const pendingRequests = requests.filter(r => r.status === 'pending');
   const approvedRequests = requests.filter(r => r.status === 'approved');
   const deniedRequests = requests.filter(r => r.status === 'denied');
+
+  // Filter users with TikTok access for management
+  const usersWithAccess = allPreferences.filter(p => p.tiktok_access_approved);
+  const filteredPreferences = allPreferences.filter(p => 
+    !searchTerm || 
+    p.user_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    p.tiktok_username?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const RequestCard = ({ request }) => (
     <motion.div
@@ -172,7 +220,7 @@ export default function AdminSuperFanReview() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="pending" className="flex items-center gap-2">
               <Clock className="w-4 h-4" />
               Pending ({pendingRequests.length})
@@ -184,6 +232,10 @@ export default function AdminSuperFanReview() {
             <TabsTrigger value="denied" className="flex items-center gap-2">
               <XCircle className="w-4 h-4" />
               Denied ({deniedRequests.length})
+            </TabsTrigger>
+            <TabsTrigger value="manage" className="flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              Manage Users
             </TabsTrigger>
           </TabsList>
 
@@ -234,6 +286,94 @@ export default function AdminSuperFanReview() {
                 <RequestCard key={request.id} request={request} />
               ))
             )}
+          </TabsContent>
+
+          <TabsContent value="manage" className="space-y-4 mt-4">
+            {/* Add New SuperFan */}
+            <Card className="border-2 border-dashed border-green-300 bg-green-50/50">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <UserPlus className="w-5 h-5 text-green-600" />
+                  Add Existing SuperFan
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex gap-3">
+                  <Input
+                    placeholder="User email"
+                    value={newUserEmail}
+                    onChange={(e) => setNewUserEmail(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Input
+                    placeholder="TikTok username (optional)"
+                    value={newUserTikTok}
+                    onChange={(e) => setNewUserTikTok(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button
+                    onClick={() => grantAccessMutation.mutate({ email: newUserEmail, tiktokUsername: newUserTikTok })}
+                    disabled={!newUserEmail || grantAccessMutation.isPending}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    {grantAccessMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4 mr-2" />}
+                    Grant Access
+                  </Button>
+                </div>
+                <p className="text-xs text-gray-500 mt-2">Add users who are already SuperFans without requiring screenshot proof</p>
+              </CardContent>
+            </Card>
+
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                placeholder="Search users by email or TikTok username..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+
+            {/* Users with Access */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Users with TikTok Access ({usersWithAccess.length})</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {filteredPreferences.length === 0 ? (
+                  <p className="text-gray-500 text-center py-4">No users found</p>
+                ) : (
+                  filteredPreferences.map(pref => (
+                    <div key={pref.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div>
+                        <p className="font-medium">{pref.user_email}</p>
+                        {pref.tiktok_username && (
+                          <p className="text-sm text-purple-600">@{pref.tiktok_username}</p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Badge className={pref.tiktok_access_approved ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
+                          {pref.tiktok_access_approved ? 'Active' : 'No Access'}
+                        </Badge>
+                        <Button
+                          size="sm"
+                          variant={pref.tiktok_access_approved ? 'destructive' : 'default'}
+                          onClick={() => toggleAccessMutation.mutate({ prefId: pref.id, currentAccess: pref.tiktok_access_approved })}
+                          disabled={toggleAccessMutation.isPending}
+                        >
+                          {pref.tiktok_access_approved ? (
+                            <><ToggleRight className="w-4 h-4 mr-1" /> Suspend</>
+                          ) : (
+                            <><ToggleLeft className="w-4 h-4 mr-1" /> Grant</>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>
