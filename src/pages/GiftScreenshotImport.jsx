@@ -12,6 +12,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { format, startOfWeek } from 'date-fns';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '../utils';
 
 export default function GiftScreenshotImport() {
   const queryClient = useQueryClient();
@@ -23,6 +25,8 @@ export default function GiftScreenshotImport() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
+  const [specialMentions, setSpecialMentions] = useState([]);
+  const [savingMentions, setSavingMentions] = useState(false);
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -248,6 +252,58 @@ For example: "sheri_d_777" would be "Sheri D Seven Seven Seven", "craftymom_02" 
     const selectedGifters = extractedData?.gifters?.filter(g => g.selected);
     if (!selectedGifters?.length) return;
     createEntriesMutation.mutate(selectedGifters);
+  };
+
+  const addSpecialMention = () => {
+    setSpecialMentions([...specialMentions, { username: '', screen_name: '', phonetic: '' }]);
+  };
+
+  const updateSpecialMention = (idx, field, value) => {
+    setSpecialMentions(prev => prev.map((m, i) => i === idx ? { ...m, [field]: value } : m));
+  };
+
+  const removeSpecialMention = (idx) => {
+    setSpecialMentions(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const saveSpecialMentions = async () => {
+    setSavingMentions(true);
+    try {
+      for (const mention of specialMentions) {
+        if (!mention.username && !mention.screen_name) continue;
+        
+        // Find or create contact
+        let gifter = gifters.find(g => 
+          g.username?.toLowerCase() === mention.username?.toLowerCase()
+        );
+        
+        if (!gifter && mention.username) {
+          gifter = await base44.entities.TikTokContact.create({
+            username: mention.username.replace('@', ''),
+            display_name: mention.screen_name || mention.username,
+            phonetic: mention.phonetic || '',
+            is_gifter: true
+          });
+        }
+        
+        if (gifter) {
+          await base44.entities.GiftingEntry.create({
+            gifter_id: gifter.id,
+            gifter_username: gifter.username,
+            gifter_screen_name: mention.screen_name || gifter.display_name,
+            gifter_phonetic: mention.phonetic || gifter.phonetic,
+            gift_name: 'Special Mention',
+            rank: 'shoutout',
+            week: selectedWeek
+          });
+        }
+      }
+      
+      queryClient.invalidateQueries({ queryKey: ['giftingEntries'] });
+      setSpecialMentions([]);
+    } finally {
+      setSavingMentions(false);
+    }
   };
 
   const updateExtractedGifter = (index, field, value) => {
@@ -618,14 +674,99 @@ For example: "sheri_d_777" would be "Sheri D Seven Seven Seven", "craftymom_02" 
           </Card>
         )}
 
-        {/* Success Message */}
+        {/* Success Message with Special Mention Option */}
         {createEntriesMutation.isSuccess && (
-          <Alert className="bg-green-50 border-green-200">
-            <Check className="w-4 h-4 text-green-600" />
-            <AlertDescription className="text-green-800">
-              Successfully imported gifters! They've been added to the week of {format(new Date(selectedWeek), 'MMM d, yyyy')}.
-            </AlertDescription>
-          </Alert>
+          <Card className="border-green-300 bg-green-50">
+            <CardContent className="p-6 space-y-4">
+              <div className="flex items-center gap-2 text-green-700">
+                <Check className="w-5 h-5" />
+                <span className="font-semibold">Successfully imported to week of {format(new Date(selectedWeek), 'MMM d, yyyy')}!</span>
+              </div>
+              
+              <div className="border-t pt-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Star className="w-5 h-5 text-amber-500" />
+                  <span className="font-semibold text-gray-700">Add Special Mention for Song (Optional)</span>
+                </div>
+                <p className="text-sm text-gray-500 mb-3">
+                  Add anyone else you want included in your thank-you song - honorable mentions, special shoutouts, etc.
+                </p>
+                
+                {specialMentions.map((mention, idx) => (
+                  <div key={idx} className="flex gap-2 mb-2">
+                    <Input
+                      placeholder="@username"
+                      value={mention.username}
+                      onChange={(e) => updateSpecialMention(idx, 'username', e.target.value)}
+                      className="w-1/3"
+                    />
+                    <Input
+                      placeholder="Display name"
+                      value={mention.screen_name}
+                      onChange={(e) => updateSpecialMention(idx, 'screen_name', e.target.value)}
+                      className="w-1/3"
+                    />
+                    <Input
+                      placeholder="Phonetic 🎵"
+                      value={mention.phonetic}
+                      onChange={(e) => updateSpecialMention(idx, 'phonetic', e.target.value)}
+                      className="w-1/3"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeSpecialMention(idx)}
+                      className="text-red-500"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
+                
+                <div className="flex gap-2 mt-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={addSpecialMention}
+                    className="border-amber-300 text-amber-700 hover:bg-amber-50"
+                  >
+                    <Plus className="w-4 h-4 mr-1" /> Add Special Mention
+                  </Button>
+                  
+                  {specialMentions.length > 0 && (
+                    <Button
+                      size="sm"
+                      onClick={saveSpecialMentions}
+                      disabled={savingMentions}
+                      className="bg-amber-500 hover:bg-amber-600"
+                    >
+                      {savingMentions ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Check className="w-4 h-4 mr-1" />}
+                      Save Mentions
+                    </Button>
+                  )}
+                </div>
+              </div>
+              
+              <div className="flex gap-2 pt-2">
+                <Link to={createPageUrl('WeeklySummary') + `?week=${selectedWeek}`} className="flex-1">
+                  <Button className="w-full bg-purple-600 hover:bg-purple-700">
+                    View Weekly Summary
+                  </Button>
+                </Link>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    createEntriesMutation.reset();
+                    setPreviewUrls([]);
+                    setExtractedData(null);
+                    setSpecialMentions([]);
+                  }}
+                >
+                  Import More
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         )}
 
         {/* Tips */}
