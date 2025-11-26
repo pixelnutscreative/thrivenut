@@ -221,10 +221,12 @@ export default function WeeklyGifterGallery() {
     setAllGood(false);
   };
 
-  // Sorting
+  // Sorting - entries may have flat or nested fields
   const sortedEntries = [...entries].sort((a, b) => {
     const rankOrder = { '1st': 1, '2nd': 2, '3rd': 3, 'shoutout': 4 };
-    return (rankOrder[a.rank] || 5) - (rankOrder[b.rank] || 5);
+    const aRank = a.data?.rank || a.rank;
+    const bRank = b.data?.rank || b.rank;
+    return (rankOrder[aRank] || 5) - (rankOrder[bRank] || 5);
   });
 
   // Generate summary text
