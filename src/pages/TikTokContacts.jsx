@@ -19,6 +19,7 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
+import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
 
 const roleConfig = {
   battle_sniper: { label: 'Battle Sniper', icon: Swords, color: 'bg-red-100 text-red-700' },
@@ -89,16 +90,19 @@ export default function TikTokContacts() {
     base44.auth.me().then(setUser);
   }, []);
 
+  // Get effective email (real user or impersonated)
+  const effectiveEmail = user ? getEffectiveUserEmail(user.email) : null;
+
   const { data: contacts = [] } = useQuery({
-    queryKey: ['tiktokContacts', user?.email],
-    queryFn: () => base44.entities.TikTokContact.filter({ created_by: user.email }, '-created_date'),
-    enabled: !!user,
+    queryKey: ['tiktokContacts', effectiveEmail],
+    queryFn: () => base44.entities.TikTokContact.filter({ created_by: effectiveEmail }, '-created_date'),
+    enabled: !!effectiveEmail,
   });
 
   const { data: categories = [] } = useQuery({
-    queryKey: ['engagementCategories', user?.email],
-    queryFn: () => base44.entities.EngagementCategory.filter({ created_by: user.email }, 'name'),
-    enabled: !!user,
+    queryKey: ['engagementCategories', effectiveEmail],
+    queryFn: () => base44.entities.EngagementCategory.filter({ created_by: effectiveEmail }, 'name'),
+    enabled: !!effectiveEmail,
   });
 
   const createMutation = useMutation({
