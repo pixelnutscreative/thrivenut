@@ -51,13 +51,17 @@ export default function Settings() {
     });
   }, []);
 
+  // Get effective email (real user or impersonated)
+  const effectiveEmail = user ? getEffectiveUserEmail(user.email) : null;
+  const currentlyImpersonating = isImpersonating();
+
   const { data: preferences, isLoading: prefsLoading } = useQuery({
-    queryKey: ['preferences', user?.email],
+    queryKey: ['preferences', effectiveEmail],
     queryFn: async () => {
-      const prefs = await base44.entities.UserPreferences.filter({ user_email: user.email }, '-updated_date');
+      const prefs = await base44.entities.UserPreferences.filter({ user_email: effectiveEmail }, '-updated_date');
       return prefs[0] || null;
     },
-    enabled: !!user,
+    enabled: !!effectiveEmail,
   });
 
   const [formData, setFormData] = useState({
@@ -116,15 +120,15 @@ export default function Settings() {
 
   const updatePreferencesMutation = useMutation({
     mutationFn: async (data) => {
-      // Get the most recent preferences record
-      const allPrefs = await base44.entities.UserPreferences.filter({ user_email: user.email }, '-updated_date');
+      // Get the most recent preferences record for effective user
+      const allPrefs = await base44.entities.UserPreferences.filter({ user_email: effectiveEmail }, '-updated_date');
       const currentPref = allPrefs[0];
       
       if (currentPref) {
         return await base44.entities.UserPreferences.update(currentPref.id, data);
       } else {
         return await base44.entities.UserPreferences.create({
-          user_email: user.email,
+          user_email: effectiveEmail,
           ...data,
           onboarding_completed: true
         });
