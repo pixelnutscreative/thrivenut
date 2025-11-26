@@ -31,7 +31,7 @@ export default function MasterContactDatabase() {
     queryFn: () => base44.entities.TikTokContact.list('username', 2000),
   });
 
-  // Group contacts by username to show consolidated view
+  // Group contacts by username to show consolidated view (one entry per username)
   const consolidatedContacts = React.useMemo(() => {
     const byUsername = {};
     
@@ -39,33 +39,35 @@ export default function MasterContactDatabase() {
       const username = (contact.data?.username || contact.username || '').toLowerCase().replace('@', '').trim();
       if (!username) return;
       
+      const displayName = contact.data?.display_name || contact.display_name || '';
+      const phonetic = contact.data?.phonetic || contact.phonetic || '';
+      const owner = contact.data?.created_by || contact.created_by;
+      const isGifter = contact.data?.is_gifter || contact.is_gifter;
+      
       if (!byUsername[username]) {
         byUsername[username] = {
           username,
-          display_name: contact.data?.display_name || contact.display_name || '',
-          phonetic: contact.data?.phonetic || contact.phonetic || '',
-          owners: [],
-          contactIds: [],
-          is_gifter: false
+          display_name: displayName,
+          phonetic: phonetic,
+          owners: owner ? [owner] : [],
+          contactIds: [contact.id],
+          is_gifter: isGifter
         };
-      }
-      
-      // Collect all owners
-      const owner = contact.data?.created_by || contact.created_by;
-      if (owner && !byUsername[username].owners.includes(owner)) {
-        byUsername[username].owners.push(owner);
-      }
-      byUsername[username].contactIds.push(contact.id);
-      
-      // Use the best available display_name and phonetic
-      if (!byUsername[username].display_name && (contact.data?.display_name || contact.display_name)) {
-        byUsername[username].display_name = contact.data?.display_name || contact.display_name;
-      }
-      if (!byUsername[username].phonetic && (contact.data?.phonetic || contact.phonetic)) {
-        byUsername[username].phonetic = contact.data?.phonetic || contact.phonetic;
-      }
-      if (contact.data?.is_gifter || contact.is_gifter) {
-        byUsername[username].is_gifter = true;
+      } else {
+        // Already exists - merge data, prefer non-empty values
+        if (!byUsername[username].display_name && displayName) {
+          byUsername[username].display_name = displayName;
+        }
+        if (!byUsername[username].phonetic && phonetic) {
+          byUsername[username].phonetic = phonetic;
+        }
+        if (owner && !byUsername[username].owners.includes(owner)) {
+          byUsername[username].owners.push(owner);
+        }
+        byUsername[username].contactIds.push(contact.id);
+        if (isGifter) {
+          byUsername[username].is_gifter = true;
+        }
       }
     });
     
@@ -242,13 +244,16 @@ export default function MasterContactDatabase() {
                         isSaved ? 'bg-green-50 border-green-400' : editable ? 'bg-white border-gray-200' : 'bg-gray-50 border-gray-200'
                       }`}
                     >
-                      <div className="flex items-center gap-3">
-                        {!editable && (
-                          <Lock className="w-5 h-5 text-gray-300" title="You don't have permission to edit" />
-                        )}
+                      <div className="grid grid-cols-12 gap-2 items-center">
+                        {/* Lock icon for non-editable */}
+                        <div className="col-span-1 flex justify-center">
+                          {!editable && (
+                            <Lock className="w-4 h-4 text-gray-300" title="You don't have permission to edit" />
+                          )}
+                        </div>
                         
-                        {/* Username field */}
-                        <div className="w-40">
+                        {/* Username field - 3 cols */}
+                        <div className="col-span-3">
                           {editable ? (
                             <Input
                               value={localEdit?.username ?? contact.username}
@@ -258,15 +263,15 @@ export default function MasterContactDatabase() {
                               }}
                               onFocus={() => { if (!localEdit) handleEdit(contact); }}
                               placeholder="@username"
-                              className="h-8 text-sm font-mono"
+                              className="h-8 text-sm font-mono w-full"
                             />
                           ) : (
-                            <p className="font-mono text-sm font-semibold text-purple-700 px-3">@{contact.username}</p>
+                            <p className="font-mono text-sm font-semibold text-purple-700 truncate">@{contact.username}</p>
                           )}
                         </div>
                         
-                        {/* Display name field */}
-                        <div className="flex-1">
+                        {/* Display name field - 3 cols */}
+                        <div className="col-span-3">
                           {editable ? (
                             <Input
                               value={localEdit?.display_name ?? contact.display_name ?? ''}
@@ -276,15 +281,15 @@ export default function MasterContactDatabase() {
                               }}
                               onFocus={() => { if (!localEdit) handleEdit(contact); }}
                               placeholder="Display name"
-                              className="h-8"
+                              className="h-8 w-full"
                             />
                           ) : (
-                            <p className="px-3">{contact.display_name || <span className="text-gray-400 italic">No display name</span>}</p>
+                            <p className="truncate">{contact.display_name || <span className="text-gray-400 italic">No display name</span>}</p>
                           )}
                         </div>
                         
-                        {/* Phonetic field */}
-                        <div className="flex-1">
+                        {/* Phonetic field - 3 cols */}
+                        <div className="col-span-3">
                           {editable ? (
                             <Input
                               value={localEdit?.phonetic ?? contact.phonetic ?? ''}
@@ -294,25 +299,21 @@ export default function MasterContactDatabase() {
                               }}
                               onFocus={() => { if (!localEdit) handleEdit(contact); }}
                               placeholder="Phonetic 🎵"
-                              className="h-8"
+                              className="h-8 w-full"
                             />
                           ) : (
-                            <p className="px-3 text-sm text-gray-600">
-                              {contact.phonetic ? (
-                                <span className="flex items-center gap-1"><Music className="w-3 h-3" /> {contact.phonetic}</span>
-                              ) : (
-                                <span className="text-gray-400 italic">No phonetic</span>
-                              )}
+                            <p className="text-sm text-gray-600 truncate">
+                              {contact.phonetic || <span className="text-gray-400 italic">No phonetic</span>}
                             </p>
                           )}
                         </div>
                         
-                        {/* Badges */}
-                        <div className="flex items-center gap-2">
+                        {/* Badges - 2 cols */}
+                        <div className="col-span-2 flex items-center justify-end gap-1">
                           {contact.is_gifter && (
                             <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-700">Gifter</Badge>
                           )}
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="text-xs whitespace-nowrap">
                             {contact.owners.length} user{contact.owners.length !== 1 ? 's' : ''}
                           </Badge>
                         </div>
