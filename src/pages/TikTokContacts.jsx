@@ -24,26 +24,26 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
 
-// Icon-based roles (top row)
+// Icon-based roles (top row) - ordered in rainbow: red, orange, yellow/amber, green, teal, blue, indigo, purple, pink, gray
 const iconRoles = {
-  battle_sniper: { label: 'Battle Sniper', icon: Swords, color: 'bg-red-100 text-red-700' },
-  tapper: { label: 'Tapper', icon: Heart, color: 'bg-pink-100 text-pink-700' },
-  sharer: { label: 'Shares to Story', icon: BookOpen, color: 'bg-blue-100 text-blue-700' },
-  gifter: { label: 'Gifter', icon: Gift, color: 'bg-amber-100 text-amber-700' },
-  engaging_bestie: { label: 'Engaging Bestie', icon: Users, color: 'bg-purple-100 text-purple-700' },
-  authentic_commenter: { label: 'Authentic Commenter', icon: MessageCircle, color: 'bg-teal-100 text-teal-700' },
-  tiktok_seller: { label: 'TikTok Seller', icon: DollarSign, color: 'bg-orange-100 text-orange-700' },
-  tiktok_shop_affiliate: { label: 'TikTok Shop Affiliate', icon: ShoppingBag, color: 'bg-lime-100 text-lime-700' },
-  creator_to_watch: { label: 'Creator to Watch', icon: Video, color: 'bg-indigo-100 text-indigo-700' },
-  sleep_lives: { label: 'Sleep Lives', icon: Moon, color: 'bg-slate-100 text-slate-700' }
+  battle_sniper: { label: 'Battle Sniper', icon: Swords, color: 'bg-red-100 text-red-700', borderColor: 'border-red-300' },
+  tiktok_seller: { label: 'TikTok Seller', icon: DollarSign, color: 'bg-orange-100 text-orange-700', borderColor: 'border-orange-300' },
+  gifter: { label: 'Gifter', icon: Gift, color: 'bg-amber-100 text-amber-700', borderColor: 'border-amber-300' },
+  tiktok_shop_affiliate: { label: 'TikTok Shop Affiliate', icon: ShoppingBag, color: 'bg-lime-100 text-lime-700', borderColor: 'border-lime-300' },
+  authentic_commenter: { label: 'Authentic Commenter', icon: MessageCircle, color: 'bg-teal-100 text-teal-700', borderColor: 'border-teal-300' },
+  sharer: { label: 'Shares to Story', icon: BookOpen, color: 'bg-blue-100 text-blue-700', borderColor: 'border-blue-300' },
+  creator_to_watch: { label: 'Creator to Watch', icon: Video, color: 'bg-indigo-100 text-indigo-700', borderColor: 'border-indigo-300' },
+  engaging_bestie: { label: 'Engaging Bestie', icon: Users, color: 'bg-purple-100 text-purple-700', borderColor: 'border-purple-300' },
+  tapper: { label: 'Tapper', icon: Heart, color: 'bg-pink-100 text-pink-700', borderColor: 'border-pink-300' },
+  sleep_lives: { label: 'Sleep Lives', icon: Moon, color: 'bg-slate-100 text-slate-700', borderColor: 'border-slate-300' }
 };
 
 // Text-based roles (second row)
 const textRoles = {
-  subscriber: { label: 'Subscriber', text: 'Sub', color: 'bg-cyan-100 text-cyan-700' },
-  superfan: { label: 'Superfan', text: 'Superfan', color: 'bg-rose-100 text-rose-700' },
-  irl_friend: { label: 'Friend IRL', text: 'IRL', color: 'bg-green-100 text-green-700' },
-  discord: { label: 'Discord', icon: Sparkles, color: 'bg-violet-100 text-violet-700' }
+  subscriber: { label: 'Subscriber', text: 'Sub', color: 'bg-cyan-100 text-cyan-700', borderColor: 'border-cyan-300' },
+  superfan: { label: 'Superfan', text: 'Superfan', color: 'bg-rose-100 text-rose-700', borderColor: 'border-rose-300' },
+  irl_friend: { label: 'Friend IRL', text: 'IRL', color: 'bg-green-100 text-green-700', borderColor: 'border-green-300' },
+  discord: { label: 'Discord', text: 'Discord', color: 'bg-violet-100 text-violet-700', borderColor: 'border-violet-300' }
 };
 
 // Combined for form usage
@@ -625,8 +625,8 @@ export default function TikTokContacts() {
                       base44.entities.TikTokContact.update(contact.id, { role: newRoles });
                       queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] });
                     }}
-                    className={`p-1.5 rounded-full transition-all cursor-pointer hover:scale-110 ${
-                      isActive ? config.color : 'bg-gray-100 text-gray-300 hover:bg-gray-200'
+                    className={`p-1.5 rounded-full border transition-all cursor-pointer hover:scale-110 ${
+                      isActive ? config.color + ' border-transparent' : 'bg-white text-gray-300 ' + config.borderColor + ' hover:bg-gray-50'
                     }`}
                     title={config.label}
                   >
@@ -651,7 +651,6 @@ export default function TikTokContacts() {
             <div className="flex flex-wrap items-center gap-1">
               {Object.entries(textRoles).map(([roleKey, config]) => {
                 const isActive = contact.role?.includes(roleKey);
-                const RoleIcon = config.icon;
                 return (
                   <button
                     key={roleKey}
@@ -663,16 +662,12 @@ export default function TikTokContacts() {
                       base44.entities.TikTokContact.update(contact.id, { role: newRoles });
                       queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] });
                     }}
-                    className={`px-2 py-1 rounded-full text-xs font-medium transition-all cursor-pointer hover:scale-105 ${
-                      isActive ? config.color : 'bg-gray-100 text-gray-300 hover:bg-gray-200'
+                    className={`px-2 py-1 rounded-full text-xs font-medium border transition-all cursor-pointer hover:scale-105 ${
+                      isActive ? config.color + ' border-transparent' : 'bg-white text-gray-400 ' + config.borderColor + ' hover:bg-gray-50'
                     }`}
                     title={config.label}
                   >
-                    {RoleIcon ? (
-                      <RoleIcon className="w-3 h-3" />
-                    ) : (
-                      <span>{config.text}</span>
-                    )}
+                    <span>{config.text}</span>
                   </button>
                 );
               })}
