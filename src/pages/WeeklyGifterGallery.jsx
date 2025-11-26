@@ -103,8 +103,8 @@ export default function WeeklyGifterGallery() {
 
   const isAdmin = user?.email?.toLowerCase() === 'pixelnutscreative@gmail.com';
 
-  // Get unique gifters - dedupe by username (case insensitive)
-  const giftersRaw = contacts.filter(c => c.is_gifter || c.data?.is_gifter);
+  // Get unique gifters from ALL contacts app-wide (master list) - dedupe by username (case insensitive)
+  const giftersRaw = allContacts.filter(c => c.is_gifter || c.data?.is_gifter);
   const seenUsernames = new Set();
   const gifters = giftersRaw.filter(g => {
     const username = (g.username || g.data?.username || '').toLowerCase().trim();
@@ -112,8 +112,8 @@ export default function WeeklyGifterGallery() {
     seenUsernames.add(username);
     return true;
   }).sort((a, b) => {
-    const aName = (a.display_name || a.username || '').toLowerCase();
-    const bName = (b.display_name || b.username || '').toLowerCase();
+    const aName = (a.display_name || a.data?.display_name || a.username || a.data?.username || '').toLowerCase();
+    const bName = (b.display_name || b.data?.display_name || b.username || b.data?.username || '').toLowerCase();
     return aName.localeCompare(bName);
   });
 
