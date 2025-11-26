@@ -90,9 +90,10 @@ export default function WeeklyGifterGallery() {
     enabled: !!effectiveEmail,
   });
 
+  // Master contact database - ALL contacts from ALL users for matching usernames/phonetics
   const { data: allContacts = [] } = useQuery({
     queryKey: ['allTiktokContacts'],
-    queryFn: () => base44.entities.TikTokContact.list('username'),
+    queryFn: () => base44.entities.TikTokContact.list('username', 1000),
   });
 
   const { data: managedAccounts = [] } = useQuery({
@@ -395,15 +396,15 @@ export default function WeeklyGifterGallery() {
           // Analyze this single image
           const result = await base44.integrations.Core.InvokeLLM({
             prompt: `Analyze this TikTok gifting leaderboard screenshot and extract ALL gifters visible.
-            
-Look for:
-- Usernames (usually start with @)
-- Display names / screen names  
-- Their placement (1st, 2nd, 3rd place, or any ranking number visible)
-- Any gift names visible
 
-IMPORTANT: Extract EVERY gifter you can see, not just top 3. Include 4th, 5th, etc if visible.
-For each username, generate a "suggested_phonetic" field with how it would be pronounced naturally in English for a song.`,
+          Look for:
+          - Usernames (usually start with @)
+          - Display names / screen names  
+          - Their placement (1st, 2nd, 3rd place, or any ranking number visible)
+          - Any gift names visible
+
+          CRITICAL: Extract EVERY SINGLE gifter you can see in the image, not just top 3. Include ALL visible entries - 4th, 5th, 6th, 7th, 8th, 9th, 10th, etc. Count them all.
+          For each username, generate a "suggested_phonetic" field with how it would be pronounced naturally in English for a song.`,
             file_urls: [file_url],
             response_json_schema: {
               type: "object",
@@ -413,13 +414,17 @@ For each username, generate a "suggested_phonetic" field with how it would be pr
                   items: {
                     type: "object",
                     properties: {
-                       rank: { type: "string", description: "1st, 2nd, 3rd, 4th, etc" },
+                       rank: { type: "string", description: "1st, 2nd, 3rd, 4th, 5th, 6th, 7th, 8th, 9th, 10th, etc" },
                        username: { type: "string", description: "TikTok username without @" },
                        screen_name: { type: "string", description: "Display name shown" },
                        suggested_phonetic: { type: "string", description: "How the username/name would be pronounced for a song" },
                        gift_name: { type: "string", description: "Name of gift if visible" }
                      }
                   }
+                },
+                total_count: {
+                  type: "number",
+                  description: "Total number of gifters extracted from this image"
                 }
               }
             }
@@ -429,24 +434,32 @@ For each username, generate a "suggested_phonetic" field with how it would be pr
           if (result.gifters) {
             const newGifters = result.gifters
               .filter(g => {
-                const key = g.username?.toLowerCase()?.replace('@', '');
+                const key = g.username?.toLowerCase()?.replace('@', '')?.replace(/\s+/g, '');
                 if (!key || seenUsernames.has(key)) return false;
                 seenUsernames.add(key);
                 return true;
               })
               .map(gifter => {
-                const username = gifter.username?.toLowerCase()?.replace('@', '');
-                // First check the current user's own contacts (which has their saved display_name/phonetic)
-                const ownContact = contacts.find(c => c.username?.toLowerCase() === username);
-                // Fall back to allContacts if not found in user's contacts
-                const exactMatch = ownContact || allContacts.find(c => c.username?.toLowerCase() === username);
-                
+                const username = gifter.username?.toLowerCase()?.replace('@', '')?.replace(/\s+/g, '');
+
+                // Search ALL contacts app-wide for matching username (master database)
+                // This ensures we use existing display_name and phonetic from any user's contacts
+                const masterMatch = allContacts.find(c => {
+                  const cUsername = (c.data?.username || c.username || '')?.toLowerCase()?.replace('@', '')?.replace(/\s+/g, '');
+                  return cUsername === username;
+                });
+
+                // Use master match data if available
+                const matchedDisplayName = masterMatch?.data?.display_name || masterMatch?.display_name;
+                const matchedPhonetic = masterMatch?.data?.phonetic || masterMatch?.phonetic;
+                const matchedUsername = masterMatch?.data?.username || masterMatch?.username;
+
                 return {
                   ...gifter,
-                  matched_contact: exactMatch || null,
-                  screen_name: exactMatch?.display_name || gifter.screen_name,
-                  phonetic: exactMatch?.phonetic || gifter.suggested_phonetic || '',
-                  username: exactMatch?.username || gifter.username,
+                  matched_contact: masterMatch || null,
+                  screen_name: matchedDisplayName || gifter.screen_name || gifter.username,
+                  phonetic: matchedPhonetic || gifter.suggested_phonetic || '',
+                  username: matchedUsername || gifter.username,
                   selected: true
                 };
               });
