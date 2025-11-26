@@ -32,7 +32,7 @@ export default function WeeklyGifterGallery() {
   const [user, setUser] = useState(null);
   
   // Manual entry form
-  const [formData, setFormData] = useState({ gifter_id: '', gift_id: '', rank: '' });
+  const [formData, setFormData] = useState({ gifter_id: '', gift_id: '', rank: '', shoutout_reason: '' });
   
   // Edit form
   const [editingEntry, setEditingEntry] = useState(null);
@@ -103,7 +103,19 @@ export default function WeeklyGifterGallery() {
 
   const isAdmin = user?.email?.toLowerCase() === 'pixelnutscreative@gmail.com';
 
-  const gifters = contacts.filter(c => c.is_gifter || c.data?.is_gifter);
+  // Get unique gifters - dedupe by username (case insensitive)
+  const giftersRaw = contacts.filter(c => c.is_gifter || c.data?.is_gifter);
+  const seenUsernames = new Set();
+  const gifters = giftersRaw.filter(g => {
+    const username = (g.username || g.data?.username || '').toLowerCase().trim();
+    if (!username || seenUsernames.has(username)) return false;
+    seenUsernames.add(username);
+    return true;
+  }).sort((a, b) => {
+    const aName = (a.display_name || a.username || '').toLowerCase();
+    const bName = (b.display_name || b.username || '').toLowerCase();
+    return aName.localeCompare(bName);
+  });
 
   const { data: gifts = [] } = useQuery({
     queryKey: ['gifts'],
@@ -143,12 +155,13 @@ export default function WeeklyGifterGallery() {
         gifter_username: gifter?.username,
         gifter_screen_name: gifter?.display_name || gifter?.username,
         gifter_phonetic: gifter?.phonetic,
-        gift_name: gift?.name
+        gift_name: gift?.name,
+        shoutout_reason: data.rank === 'shoutout' ? data.shoutout_reason : ''
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['giftingEntries'] });
-      setFormData({ gifter_id: '', gift_id: '', rank: '' });
+      setFormData({ gifter_id: '', gift_id: '', rank: '', shoutout_reason: '' });
     },
   });
 
@@ -724,10 +737,15 @@ export default function WeeklyGifterGallery() {
                               <div>
                                 <p className="font-semibold">{gifterScreenName}</p>
                                 <p className="text-sm text-purple-600">@{gifterUsername}</p>
-                                <div className="flex gap-2 mt-1">
+                                <div className="flex flex-wrap gap-2 mt-1">
                                   <Badge variant="secondary" className="text-xs">{giftName}</Badge>
                                   {gifterPhonetic && (
                                     <Badge variant="outline" className="text-xs">🎵 {gifterPhonetic}</Badge>
+                                  )}
+                                  {(entry.data?.shoutout_reason || entry.shoutout_reason) && (
+                                    <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700">
+                                      {entry.data?.shoutout_reason || entry.shoutout_reason}
+                                    </Badge>
                                   )}
                                 </div>
                               </div>
@@ -876,6 +894,18 @@ export default function WeeklyGifterGallery() {
                     ))}
                   </div>
                 </div>
+
+                {formData.rank === 'shoutout' && (
+                  <div className="space-y-2 p-4 bg-purple-50 rounded-lg border border-purple-200">
+                    <Label>Shoutout Reason</Label>
+                    <Input
+                      placeholder="e.g., Always supports the stream, Amazing community member..."
+                      value={formData.shoutout_reason}
+                      onChange={(e) => setFormData({ ...formData, shoutout_reason: e.target.value })}
+                    />
+                    <p className="text-xs text-purple-600">Describe why this person deserves a special shoutout</p>
+                  </div>
+                )}
 
                 <Button
                   onClick={() => createMutation.mutate(formData)}
