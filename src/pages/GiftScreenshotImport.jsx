@@ -17,7 +17,8 @@ export default function GiftScreenshotImport() {
   const [uploading, setUploading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [extractedData, setExtractedData] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(null);
+  const [previewUrls, setPreviewUrls] = useState([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
 
@@ -49,28 +50,41 @@ export default function GiftScreenshotImport() {
   });
 
   const handleFileUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
 
     setError(null);
     setExtractedData(null);
     setUploading(true);
+    setPreviewUrls([]);
+    setCurrentImageIndex(0);
 
     try {
-      // Show preview
-      const reader = new FileReader();
-      reader.onload = (e) => setPreviewUrl(e.target.result);
-      reader.readAsDataURL(file);
-
-      // Upload file
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      // Show previews and upload all files
+      const previews = [];
+      const uploadedUrls = [];
       
+      for (const file of files) {
+        // Create preview
+        const preview = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target.result);
+          reader.readAsDataURL(file);
+        });
+        previews.push(preview);
+        
+        // Upload file
+        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+        uploadedUrls.push(file_url);
+      }
+      
+      setPreviewUrls(previews);
       setUploading(false);
       setAnalyzing(true);
 
-      // Use AI to extract data from screenshot
+      // Use AI to extract data from all screenshots
       const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Analyze this TikTok gifting leaderboard screenshot and extract the top gifters.
+        prompt: `Analyze these TikTok gifting leaderboard screenshots and extract the top gifters.
         
 Look for:
 - Usernames (usually start with @)
@@ -78,9 +92,11 @@ Look for:
 - Their placement (1st, 2nd, 3rd place)
 - Any gift names visible
 
+${files.length > 1 ? `There are ${files.length} images - combine the data from all of them, avoiding duplicates.` : ''}
+
 Return the data in the specified JSON format. If you can't find certain information, leave it as null.
 Extract up to 3 gifters (1st, 2nd, 3rd place).`,
-        file_urls: [file_url],
+        file_urls: uploadedUrls,
         response_json_schema: {
           type: "object",
           properties: {
@@ -106,7 +122,7 @@ Extract up to 3 gifters (1st, 2nd, 3rd place).`,
       setAnalyzing(false);
     } catch (err) {
       console.error('Error processing screenshot:', err);
-      setError('Failed to process screenshot. Please try again.');
+      setError('Failed to process screenshots. Please try again.');
       setUploading(false);
       setAnalyzing(false);
     }
@@ -171,7 +187,8 @@ Extract up to 3 gifters (1st, 2nd, 3rd place).`,
       );
       
       setExtractedData(null);
-      setPreviewUrl(null);
+      setPreviewUrls([]);
+      setCurrentImageIndex(0);
     },
   });
 
@@ -233,36 +250,63 @@ Extract up to 3 gifters (1st, 2nd, 3rd place).`,
         <Card className="border-2 border-dashed border-purple-300 bg-purple-50/50">
           <CardContent className="p-8">
             <div className="text-center">
-              {previewUrl ? (
+              {previewUrls.length > 0 ? (
                 <div className="space-y-4">
-                  <img 
-                    src={previewUrl} 
-                    alt="Screenshot preview" 
-                    className="max-h-64 mx-auto rounded-lg shadow-lg"
-                  />
+                  <div className="relative">
+                    <img 
+                      src={previewUrls[currentImageIndex]} 
+                      alt={`Screenshot ${currentImageIndex + 1}`} 
+                      className="max-h-64 mx-auto rounded-lg shadow-lg"
+                    />
+                    {previewUrls.length > 1 && (
+                      <div className="flex items-center justify-center gap-2 mt-3">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentImageIndex(i => Math.max(0, i - 1))}
+                          disabled={currentImageIndex === 0}
+                        >
+                          ←
+                        </Button>
+                        <span className="text-sm text-gray-600">
+                          {currentImageIndex + 1} of {previewUrls.length}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentImageIndex(i => Math.min(previewUrls.length - 1, i + 1))}
+                          disabled={currentImageIndex === previewUrls.length - 1}
+                        >
+                          →
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                   <Button
                     variant="outline"
                     onClick={() => {
-                      setPreviewUrl(null);
+                      setPreviewUrls([]);
+                      setCurrentImageIndex(0);
                       setExtractedData(null);
                     }}
                   >
-                    Upload Different Image
+                    Upload Different Images
                   </Button>
                 </div>
               ) : (
                 <>
                   <ImageIcon className="w-16 h-16 text-purple-400 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                    Upload Leaderboard Screenshot
+                    Upload Leaderboard Screenshots
                   </h3>
                   <p className="text-gray-500 mb-4 text-sm">
-                    Take a screenshot of your TikTok gifting leaderboard and upload it here
+                    Upload one or more screenshots of your TikTok gifting leaderboard
                   </p>
                   <label className="cursor-pointer">
                     <Input
                       type="file"
                       accept="image/*"
+                      multiple
                       onChange={handleFileUpload}
                       className="hidden"
                     />
@@ -271,7 +315,7 @@ Extract up to 3 gifters (1st, 2nd, 3rd place).`,
                         {uploading ? (
                           <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Uploading...</>
                         ) : (
-                          <><Upload className="w-4 h-4 mr-2" /> Choose Screenshot</>
+                          <><Upload className="w-4 h-4 mr-2" /> Choose Screenshots</>
                         )}
                       </span>
                     </Button>
@@ -377,7 +421,8 @@ Extract up to 3 gifters (1st, 2nd, 3rd place).`,
                       variant="outline"
                       onClick={() => {
                         setExtractedData(null);
-                        setPreviewUrl(null);
+                        setPreviewUrls([]);
+                        setCurrentImageIndex(0);
                       }}
                       className="flex-1"
                     >
