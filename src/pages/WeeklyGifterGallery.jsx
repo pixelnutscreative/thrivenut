@@ -435,24 +435,33 @@ export default function WeeklyGifterGallery() {
           if (result.gifters) {
             const newGifters = result.gifters
               .filter(g => {
-                const key = g.username?.toLowerCase()?.replace('@', '')?.replace(/\s+/g, '');
-                // Only filter out if completely empty username
-                if (!key) return false;
+                // Allow entries even without username - we match by screen_name (display name)
+                const screenName = (g.screen_name || g.username || '')?.toLowerCase()?.trim();
+                if (!screenName) return false;
                 // Create a unique key including rank and gift to allow same person multiple times
-                const uniqueKey = `${key}-${g.rank}-${g.gift_name || 'unknown'}`;
+                const uniqueKey = `${screenName}-${g.rank}-${g.gift_name || 'unknown'}`;
                 if (seenUsernames.has(uniqueKey)) return false;
                 seenUsernames.add(uniqueKey);
                 return true;
               })
               .map(gifter => {
-                const username = gifter.username?.toLowerCase()?.replace('@', '')?.replace(/\s+/g, '');
+                const screenName = (gifter.screen_name || '')?.toLowerCase()?.trim();
+                const extractedUsername = gifter.username?.toLowerCase()?.replace('@', '')?.replace(/\s+/g, '');
 
-                // Search ALL contacts app-wide for matching username (master database)
-                // This ensures we use existing display_name and phonetic from any user's contacts
-                const masterMatch = allContacts.find(c => {
-                  const cUsername = (c.data?.username || c.username || '')?.toLowerCase()?.replace('@', '')?.replace(/\s+/g, '');
-                  return cUsername === username;
+                // Search ALL contacts app-wide - FIRST try matching by display_name (what shows on screenshots)
+                // Then fall back to username matching
+                let masterMatch = allContacts.find(c => {
+                  const cDisplayName = (c.data?.display_name || c.display_name || '')?.toLowerCase()?.trim();
+                  return cDisplayName && screenName && cDisplayName === screenName;
                 });
+                
+                // If no display_name match, try username match
+                if (!masterMatch && extractedUsername) {
+                  masterMatch = allContacts.find(c => {
+                    const cUsername = (c.data?.username || c.username || '')?.toLowerCase()?.replace('@', '')?.replace(/\s+/g, '');
+                    return cUsername === extractedUsername;
+                  });
+                }
 
                 // Use master match data if available
                 const matchedDisplayName = masterMatch?.data?.display_name || masterMatch?.display_name;
@@ -462,9 +471,10 @@ export default function WeeklyGifterGallery() {
                 return {
                   ...gifter,
                   matched_contact: masterMatch || null,
-                  screen_name: matchedDisplayName || gifter.screen_name || gifter.username,
+                  screen_name: matchedDisplayName || gifter.screen_name || '',
                   phonetic: matchedPhonetic || gifter.suggested_phonetic || '',
-                  username: matchedUsername || gifter.username,
+                  // Only use username if we found a match in master DB, otherwise leave blank so user knows to input it
+                  username: matchedUsername || '',
                   selected: true
                 };
               });
