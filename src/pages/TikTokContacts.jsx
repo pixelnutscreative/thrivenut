@@ -165,6 +165,54 @@ export default function TikTokContacts() {
     },
   });
 
+  // Bulk import mutation
+  const bulkImportMutation = useMutation({
+    mutationFn: async (contactsToImport) => {
+      const results = [];
+      for (const contact of contactsToImport) {
+        if (!contact.selected) continue;
+        // Check if username already exists
+        const existing = contacts.find(c => 
+          c.username?.toLowerCase() === contact.username?.toLowerCase()
+        );
+        if (existing) {
+          // Update existing contact with new data
+          await base44.entities.TikTokContact.update(existing.id, {
+            display_name: contact.display_name || existing.display_name,
+            phone: contact.phone || existing.phone,
+            email: contact.email || existing.email,
+          });
+          results.push({ ...contact, action: 'updated' });
+        } else {
+          // Create new contact
+          await base44.entities.TikTokContact.create({
+            username: contact.username,
+            display_name: contact.display_name,
+            phone: contact.phone,
+            email: contact.email,
+            role: ['custom:TikTok Lead'],
+          });
+          results.push({ ...contact, action: 'created' });
+        }
+      }
+      return results;
+    },
+    onSuccess: (results) => {
+      queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] });
+      const created = results.filter(r => r.action === 'created').length;
+      const updated = results.filter(r => r.action === 'updated').length;
+      setImportSuccess(`Imported ${created} new contacts, updated ${updated} existing.`);
+      setTimeout(() => {
+        setShowImportModal(false);
+        setCsvData([]);
+        setImportSuccess(null);
+      }, 2000);
+    },
+    onError: (error) => {
+      setImportError('Import failed: ' + error.message);
+    },
+  });
+
   // Create a new contact and link it (for met_through, mods_for, their_mods)
   const createAndLinkMutation = useMutation({
     mutationFn: async ({ username, linkType }) => {
