@@ -248,12 +248,18 @@ export default function WeeklyGifterGallery() {
         );
 
         if (!gifter && entry.username) {
-          gifter = await base44.entities.TikTokContact.create({
+          // Create contact with the effective owner (supports impersonation)
+          const contactData = {
             username: entry.username,
             display_name: entry.screen_name || entry.username,
             phonetic: entry.phonetic || '',
             is_gifter: true
-          });
+          };
+          // If impersonating, set the created_by to the impersonated user
+          if (effectiveEmail && effectiveEmail !== user?.email) {
+            contactData.created_by = effectiveEmail;
+          }
+          gifter = await base44.entities.TikTokContact.create(contactData);
         }
 
         if (!gifter) return null;
@@ -262,7 +268,8 @@ export default function WeeklyGifterGallery() {
           ? gifts.find(g => g.name?.toLowerCase().includes(entry.gift_name?.toLowerCase()))
           : null;
 
-        return base44.entities.GiftingEntry.create({
+        // Create entry with the effective owner (supports impersonation)
+        const entryData = {
           gifter_id: gifter.id,
           gifter_username: gifter.username,
           gifter_screen_name: entry.screen_name || gifter.display_name,
@@ -271,7 +278,12 @@ export default function WeeklyGifterGallery() {
           gift_name: gift?.name || entry.gift_name || 'Unknown',
           rank: entry.rank,
           week: selectedWeek
-        });
+        };
+        // If impersonating, set the created_by to the impersonated user
+        if (effectiveEmail && effectiveEmail !== user?.email) {
+          entryData.created_by = effectiveEmail;
+        }
+        return base44.entities.GiftingEntry.create(entryData);
       });
 
       return Promise.all(promises.filter(Boolean));
