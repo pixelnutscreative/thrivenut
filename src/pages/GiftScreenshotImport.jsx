@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Upload, Loader2, Sparkles, Check, X, Trophy, Medal, Award, ImageIcon } from 'lucide-react';
+import { Upload, Loader2, Sparkles, Check, X, Trophy, Medal, Award, ImageIcon, UserCheck, HelpCircle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { format, startOfWeek } from 'date-fns';
 import { motion } from 'framer-motion';
 
@@ -39,6 +40,12 @@ export default function GiftScreenshotImport() {
     queryKey: ['tiktokContacts', user?.email],
     queryFn: () => base44.entities.TikTokContact.filter({ created_by: user.email }, 'display_name'),
     enabled: !!user,
+  });
+
+  // Fetch ALL contacts across system for matching
+  const { data: allContacts = [] } = useQuery({
+    queryKey: ['allTiktokContacts'],
+    queryFn: () => base44.entities.TikTokContact.list('username'),
   });
 
   const gifters = contacts.filter(c => c.is_gifter);
@@ -118,7 +125,46 @@ Extract up to 3 gifters (1st, 2nd, 3rd place).`,
         }
       });
 
-      setExtractedData(result);
+      // Enhance extracted data with matches from existing contacts
+      const enhancedGifters = result.gifters?.map(gifter => {
+        const username = gifter.username?.toLowerCase()?.replace('@', '');
+        const screenName = gifter.screen_name?.toLowerCase();
+        
+        // Find matches in all contacts
+        const exactMatch = allContacts.find(c => 
+          c.username?.toLowerCase() === username
+        );
+        
+        // Partial match on username or screen name
+        const partialMatches = allContacts.filter(c => {
+          if (!username && !screenName) return false;
+          const cUsername = c.username?.toLowerCase() || '';
+          const cDisplayName = c.display_name?.toLowerCase() || '';
+          
+          // Check if extracted username is contained in or contains the contact username
+          const usernameMatch = username && (
+            cUsername.includes(username) || username.includes(cUsername)
+          );
+          // Check screen name similarity
+          const screenNameMatch = screenName && (
+            cDisplayName.includes(screenName) || screenName.includes(cDisplayName)
+          );
+          
+          return usernameMatch || screenNameMatch;
+        }).slice(0, 3); // Limit to top 3 suggestions
+        
+        return {
+          ...gifter,
+          matched_contact: exactMatch || null,
+          suggested_contacts: exactMatch ? [] : partialMatches,
+          // Pre-fill from exact match
+          screen_name: exactMatch?.display_name || gifter.screen_name,
+          phonetic: exactMatch?.phonetic || '',
+          username: exactMatch?.username || gifter.username
+        };
+      }) || [];
+
+      setExtractedData({ ...result, gifters: enhancedGifters });
       setAnalyzing(false);
     } catch (err) {
       console.error('Error processing screenshot:', err);
@@ -142,7 +188,7 @@ Extract up to 3 gifters (1st, 2nd, 3rd place).`,
             username: entry.username,
             screen_name: entry.screen_name || entry.username,
             display_name: entry.screen_name || entry.username,
-            phonetic: '',
+            phonetic: entry.phonetic || '',
             is_gifter: true
           });
         }
@@ -387,7 +433,55 @@ Extract up to 3 gifters (1st, 2nd, 3rd place).`,
                         </Button>
                       </div>
                       
-                      <div className="grid md:grid-cols-3 gap-3">
+                      {/* Match status */}
+                      {gifter.matched_contact && (
+                        <div className="flex items-center gap-2 text-green-700 bg-green-50 p-2 rounded-lg text-sm">
+                          <UserCheck className="w-4 h-4" />
+                          <span>Matched to existing contact: <strong>@{gifter.matched_contact.username}</strong></span>
+                          {gifter.matched_contact.phonetic && (
+                            <Badge variant="secondary" className="text-xs">Has phonetic</Badge>
+                          )}
+                        </div>
+                      )}
+                      
+                      {/* Suggestions if no exact match */}
+                      {!gifter.matched_contact && gifter.suggested_contacts?.length > 0 && (
+                        <div className="bg-amber-50 p-2 rounded-lg">
+                          <div className="flex items-center gap-2 text-amber-700 text-sm mb-2">
+                            <HelpCircle className="w-4 h-4" />
+                            <span>Possible matches found:</span>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {gifter.suggested_contacts.map((suggestion, sIdx) => (
+                              <Badge
+                                key={sIdx}
+                                variant="outline"
+                                className="cursor-pointer hover:bg-amber-100 border-amber-300"
+                                onClick={() => {
+                                  updateExtractedGifter(index, 'username', suggestion.username);
+                                  updateExtractedGifter(index, 'screen_name', suggestion.display_name || suggestion.username);
+                                  if (suggestion.phonetic) {
+                                    updateExtractedGifter(index, 'phonetic', suggestion.phonetic);
+                                  }
+                                  // Mark as matched
+                                  setExtractedData(prev => ({
+                                    ...prev,
+                                    gifters: prev.gifters.map((g, i) => 
+                                      i === index ? { ...g, matched_contact: suggestion, suggested_contacts: [] } : g
+                                    )
+                                  }));
+                                }}
+                              >
+                                @{suggestion.username}
+                                {suggestion.display_name && ` (${suggestion.display_name})`}
+                                {suggestion.phonetic && ' 🎵'}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="grid md:grid-cols-4 gap-3">
                         <div>
                           <Label className="text-xs">Username</Label>
                           <Input
@@ -405,7 +499,15 @@ Extract up to 3 gifters (1st, 2nd, 3rd place).`,
                           />
                         </div>
                         <div>
-                          <Label className="text-xs">Gift (if visible)</Label>
+                          <Label className="text-xs">Phonetic 🎵</Label>
+                          <Input
+                            value={gifter.phonetic || ''}
+                            onChange={(e) => updateExtractedGifter(index, 'phonetic', e.target.value)}
+                            placeholder="For songs"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Gift</Label>
                           <Input
                             value={gifter.gift_name || ''}
                             onChange={(e) => updateExtractedGifter(index, 'gift_name', e.target.value)}
