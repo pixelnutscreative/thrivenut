@@ -101,8 +101,24 @@ export default function MasterContactDatabase() {
       
       return Promise.all(promises);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['masterContacts'] });
+    onSuccess: (_, variables) => {
+      // Mark this contact as saved temporarily
+      queryClient.setQueryData(['masterContacts'], (old) => {
+        if (!old) return old;
+        return old.map(c => {
+          const cUsername = (c.data?.username || c.username || '').toLowerCase().replace('@', '').trim();
+          if (cUsername === variables.originalUsername.toLowerCase()) {
+            return { ...c, _saved: true };
+          }
+          return c;
+        });
+      });
+      
+      // Clear saved state after 2 seconds
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['masterContacts'] });
+      }, 2000);
+      
       queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] });
       queryClient.invalidateQueries({ queryKey: ['allTiktokContacts'] });
       setEditingUsername(null);
@@ -196,7 +212,8 @@ export default function MasterContactDatabase() {
               <div className="space-y-2">
                 {filteredContacts.map((contact, index) => {
                   const editable = canEdit(contact);
-                  const isEditing = editingUsername === contact.username;
+                  const localEdit = editingUsername === contact.username ? editForm : null;
+                  const isSaved = contact._saved;
                   
                   return (
                     <motion.div
@@ -204,96 +221,105 @@ export default function MasterContactDatabase() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: Math.min(index * 0.02, 0.5) }}
-                      className={`p-3 rounded-lg border ${
-                        isEditing ? 'bg-indigo-50 border-indigo-300' : editable ? 'bg-white hover:bg-gray-50' : 'bg-gray-50'
+                      className={`p-3 rounded-lg border-2 transition-all ${
+                        isSaved ? 'bg-green-50 border-green-400' : editable ? 'bg-white border-gray-200' : 'bg-gray-50 border-gray-200'
                       }`}
                     >
-                      {isEditing ? (
-                        <div className="flex items-center gap-3">
-                          <div className="w-36">
+                      <div className="flex items-center gap-3">
+                        {/* Save/Done button */}
+                        {editable && (
+                          <button
+                            onClick={() => {
+                              if (localEdit) {
+                                handleSave(contact.username);
+                              } else {
+                                handleEdit(contact);
+                              }
+                            }}
+                            disabled={updateMutation.isPending}
+                            className={`w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all ${
+                              isSaved || localEdit
+                                ? 'bg-green-500 border-green-500 hover:bg-green-600' 
+                                : 'border-gray-300 bg-white hover:border-green-400'
+                            }`}
+                          >
+                            {(isSaved || localEdit) && <Check className="w-4 h-4 text-white" />}
+                          </button>
+                        )}
+                        {!editable && (
+                          <Lock className="w-5 h-5 text-gray-300" title="You don't have permission to edit" />
+                        )}
+                        
+                        {/* Username field */}
+                        <div className="w-40">
+                          {editable ? (
                             <Input
-                              value={editForm.username}
-                              onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
+                              value={localEdit?.username ?? contact.username}
+                              onChange={(e) => {
+                                if (!localEdit) handleEdit(contact);
+                                setEditForm(prev => ({ ...prev, username: e.target.value }));
+                              }}
+                              onFocus={() => { if (!localEdit) handleEdit(contact); }}
                               placeholder="@username"
                               className="h-8 text-sm font-mono"
                             />
-                          </div>
-                          <div className="flex-1">
+                          ) : (
+                            <p className="font-mono text-sm font-semibold text-purple-700 px-3">@{contact.username}</p>
+                          )}
+                        </div>
+                        
+                        {/* Display name field */}
+                        <div className="flex-1">
+                          {editable ? (
                             <Input
-                              value={editForm.display_name}
-                              onChange={(e) => setEditForm({ ...editForm, display_name: e.target.value })}
+                              value={localEdit?.display_name ?? contact.display_name ?? ''}
+                              onChange={(e) => {
+                                if (!localEdit) handleEdit(contact);
+                                setEditForm(prev => ({ ...prev, display_name: e.target.value }));
+                              }}
+                              onFocus={() => { if (!localEdit) handleEdit(contact); }}
                               placeholder="Display name"
                               className="h-8"
                             />
-                          </div>
-                          <div className="flex-1">
+                          ) : (
+                            <p className="px-3">{contact.display_name || <span className="text-gray-400 italic">No display name</span>}</p>
+                          )}
+                        </div>
+                        
+                        {/* Phonetic field */}
+                        <div className="flex-1">
+                          {editable ? (
                             <Input
-                              value={editForm.phonetic}
-                              onChange={(e) => setEditForm({ ...editForm, phonetic: e.target.value })}
+                              value={localEdit?.phonetic ?? contact.phonetic ?? ''}
+                              onChange={(e) => {
+                                if (!localEdit) handleEdit(contact);
+                                setEditForm(prev => ({ ...prev, phonetic: e.target.value }));
+                              }}
+                              onFocus={() => { if (!localEdit) handleEdit(contact); }}
                               placeholder="Phonetic 🎵"
                               className="h-8"
                             />
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Button
-                              size="sm"
-                              onClick={() => handleSave(contact.username)}
-                              disabled={updateMutation.isPending}
-                              className="h-8 bg-green-600 hover:bg-green-700"
-                            >
-                              <Save className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={handleCancel}
-                              className="h-8"
-                            >
-                              <X className="w-4 h-4" />
-                            </Button>
-                          </div>
+                          ) : (
+                            <p className="px-3 text-sm text-gray-600">
+                              {contact.phonetic ? (
+                                <span className="flex items-center gap-1"><Music className="w-3 h-3" /> {contact.phonetic}</span>
+                              ) : (
+                                <span className="text-gray-400 italic">No phonetic</span>
+                              )}
+                            </p>
+                          )}
                         </div>
-                      ) : (
-                        <div className="flex items-center gap-4">
-                          <div className="w-36">
-                            <p className="font-mono text-sm font-semibold text-purple-700">@{contact.username}</p>
-                          </div>
-                          <div className="flex-1">
-                            <p className="font-medium">{contact.display_name || <span className="text-gray-400 italic">No display name</span>}</p>
-                          </div>
-                          <div className="flex-1">
-                            {contact.phonetic ? (
-                              <p className="text-sm text-gray-600 flex items-center gap-1">
-                                <Music className="w-3 h-3" /> {contact.phonetic}
-                              </p>
-                            ) : (
-                              <span className="text-gray-400 italic text-sm">No phonetic</span>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {contact.is_gifter && (
-                              <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-700">Gifter</Badge>
-                            )}
-                            <Badge variant="outline" className="text-xs">
-                              {contact.owners.length} user{contact.owners.length !== 1 ? 's' : ''}
-                            </Badge>
-                          </div>
-                          <div className="ml-2">
-                            {editable ? (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleEdit(contact)}
-                                className="h-8 text-indigo-600 hover:text-indigo-800"
-                              >
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                            ) : (
-                              <Lock className="w-4 h-4 text-gray-300" title="You don't have permission to edit" />
-                            )}
-                          </div>
+                        
+                        {/* Badges */}
+                        <div className="flex items-center gap-2">
+                          {contact.is_gifter && (
+                            <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-700">Gifter</Badge>
+                          )}
+                          <Badge variant="outline" className="text-xs">
+                            {contact.owners.length} user{contact.owners.length !== 1 ? 's' : ''}
+                          </Badge>
                         </div>
-                      )}
+                      </div>
                     </motion.div>
                   );
                 })}

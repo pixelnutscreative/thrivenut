@@ -959,34 +959,37 @@ export default function WeeklyGifterGallery() {
                           key={index}
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
-                          className={`p-4 rounded-lg space-y-3 border-2 transition-all cursor-pointer ${
+                          className={`p-4 rounded-lg border-2 transition-all ${
                             gifter.selected ? 'bg-teal-50 border-teal-400' : 'bg-white border-gray-200'
                           }`}
-                          onClick={() => updateExtractedGifter(index, 'selected', !gifter.selected)}
                         >
-                          <div className="flex items-center justify-between" onClick={(e) => e.stopPropagation()}>
-                            <div className="flex items-center gap-3 cursor-pointer" onClick={() => updateExtractedGifter(index, 'selected', !gifter.selected)}>
-                              <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
-                                gifter.selected ? 'bg-teal-500 border-teal-500' : 'border-gray-300 bg-white'
-                              }`}>
-                                {gifter.selected && <Check className="w-4 h-4 text-white" />}
-                              </div>
-                              {getRankIcon(gifter.rank)}
-                              <span className="font-semibold">{gifter.rank || 'Gifter'}</span>
-                              {gifter.matched_contact && (
-                                <Badge className="bg-green-100 text-green-700 text-xs">
-                                  <UserCheck className="w-3 h-3 mr-1" /> From Master DB
-                                </Badge>
-                              )}
-                            </div>
-                            <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); removeExtractedGifter(index); }} className="text-red-500">
+                          {/* Header row */}
+                          <div className="flex items-center gap-3 mb-3">
+                            <button
+                              onClick={() => updateExtractedGifter(index, 'selected', !gifter.selected)}
+                              className={`w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all ${
+                                gifter.selected ? 'bg-green-500 border-green-500' : 'border-gray-300 bg-white hover:border-green-400'
+                              }`}
+                            >
+                              {gifter.selected && <Check className="w-4 h-4 text-white" />}
+                            </button>
+                            {getRankIcon(gifter.rank)}
+                            <span className="font-bold">{gifter.rank || 'Gifter'}</span>
+                            {gifter.matched_contact && (
+                              <Badge className="bg-green-100 text-green-700 text-xs">
+                                <UserCheck className="w-3 h-3 mr-1" /> From Master DB
+                              </Badge>
+                            )}
+                            <div className="flex-1" />
+                            <Button variant="ghost" size="sm" onClick={() => removeExtractedGifter(index)} className="text-red-400 hover:text-red-600 h-7 w-7 p-0">
                               <X className="w-4 h-4" />
                             </Button>
                           </div>
                           
-                          <div className="grid md:grid-cols-5 gap-3" onClick={(e) => e.stopPropagation()}>
+                          {/* Always-editable fields */}
+                          <div className="grid grid-cols-5 gap-2">
                             <Select value={gifter.rank || ''} onValueChange={(v) => updateExtractedGifter(index, 'rank', v)}>
-                              <SelectTrigger className="h-9">
+                              <SelectTrigger className="h-9 text-sm">
                                 <SelectValue placeholder="Rank" />
                               </SelectTrigger>
                               <SelectContent>
@@ -1003,10 +1006,40 @@ export default function WeeklyGifterGallery() {
                                 <SelectItem value="shoutout">⭐ Shoutout</SelectItem>
                               </SelectContent>
                             </Select>
-                            <Input value={gifter.username || ''} onChange={(e) => updateExtractedGifter(index, 'username', e.target.value)} placeholder="@username" />
-                            <Input value={gifter.screen_name || ''} onChange={(e) => updateExtractedGifter(index, 'screen_name', e.target.value)} placeholder="Screen name" />
-                            <Input value={gifter.phonetic || ''} onChange={(e) => updateExtractedGifter(index, 'phonetic', e.target.value)} placeholder="Phonetic 🎵" />
-                            <Input value={gifter.gift_name || ''} onChange={(e) => updateExtractedGifter(index, 'gift_name', e.target.value)} placeholder="Gift name" />
+                            <Input 
+                              value={gifter.username || ''} 
+                              onChange={(e) => updateExtractedGifter(index, 'username', e.target.value)} 
+                              placeholder="@username" 
+                              className="h-9"
+                            />
+                            <Input 
+                              value={gifter.screen_name || ''} 
+                              onChange={(e) => updateExtractedGifter(index, 'screen_name', e.target.value)} 
+                              placeholder="Display name" 
+                              className="h-9"
+                            />
+                            <Input 
+                              value={gifter.phonetic || ''} 
+                              onChange={(e) => updateExtractedGifter(index, 'phonetic', e.target.value)} 
+                              placeholder="Phonetic 🎵" 
+                              className="h-9"
+                            />
+                            <Select 
+                              value={gifter.gift_name || ''} 
+                              onValueChange={(v) => updateExtractedGifter(index, 'gift_name', v)}
+                            >
+                              <SelectTrigger className="h-9 text-sm">
+                                <SelectValue placeholder="Gift" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {gifts.map(gift => (
+                                  <SelectItem key={gift.id} value={gift.name}>{gift.name}</SelectItem>
+                                ))}
+                                {gifter.gift_name && !gifts.find(g => g.name === gifter.gift_name) && (
+                                  <SelectItem value={gifter.gift_name}>{gifter.gift_name} (custom)</SelectItem>
+                                )}
+                              </SelectContent>
+                            </Select>
                           </div>
                         </motion.div>
                       ))}
