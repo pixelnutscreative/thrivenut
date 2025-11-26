@@ -15,7 +15,7 @@ import {
   Plus, Search, Trash2, Edit, Star, Phone, Mail, 
   ExternalLink, Users, Swords, Gift, Share2, Heart, UserPlus, Video, Calendar, Music, ShoppingBag,
   ChevronDown, ChevronRight, FolderPlus, Loader2, Upload, Check, X, FileSpreadsheet, Filter, MessageCircle,
-  BookOpen, DollarSign, Moon, Sparkles, Lightbulb, Flag, Shield
+  BookOpen, DollarSign, Moon, Sparkles, Lightbulb
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuSeparator, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -61,6 +61,16 @@ const veteranBranches = [
   { value: 'Other', label: 'Other/Unknown' }
 ];
 
+const serviceTypes = [
+  { value: 'first_responder', label: 'First Responder (Police, Fire, EMS)' },
+  { value: 'healthcare', label: 'Healthcare (Nurse, Doctor, etc.)' },
+  { value: 'nonprofit', label: 'Nonprofit' },
+  { value: 'ministry', label: 'Ministry/Faith-Based' },
+  { value: 'military_family', label: 'Military Family' },
+  { value: 'education', label: 'Education (Teacher, etc.)' },
+  { value: 'other', label: 'Other Service' }
+];
+
 const colorOptions = [
   '#8B5CF6', '#EC4899', '#EF4444', '#F59E0B', '#10B981', 
   '#3B82F6', '#6366F1', '#84CC16', '#14B8A6', '#F97316'
@@ -90,6 +100,10 @@ export default function TikTokContacts() {
     color: '#8B5CF6',
     is_veteran: false,
     veteran_branch: '',
+    is_service_professional: false,
+    service_type: '',
+    is_mlm: false,
+    occupation: '',
     calendar_enabled: false,
     is_gifter: false,
     add_to_my_people: false,
@@ -373,6 +387,10 @@ export default function TikTokContacts() {
       color: contact.color || '#8B5CF6',
       is_veteran: contact.is_veteran || false,
       veteran_branch: contact.veteran_branch || '',
+      is_service_professional: contact.is_service_professional || false,
+      service_type: contact.service_type || '',
+      is_mlm: contact.is_mlm || false,
+      occupation: contact.occupation || '',
       calendar_enabled: contact.calendar_enabled || false,
       is_gifter: contact.is_gifter || false,
       add_to_my_people: contact.add_to_my_people || false,
@@ -749,17 +767,25 @@ export default function TikTokContacts() {
             </div>
           )}
 
-          {/* Veteran Flag - Bottom Left */}
-          {contact.is_veteran && (
-            <div 
-              className="absolute bottom-3 left-3 flex items-center gap-1 px-2 py-1 rounded-full bg-gradient-to-r from-red-100 via-white to-blue-100 border border-red-200 text-xs font-semibold"
-              title={contact.veteran_branch ? `Veteran - ${contact.veteran_branch}` : 'Veteran'}
-            >
-              <Flag className="w-3 h-3 text-red-600" />
-              <span className="text-blue-800">VET</span>
-              {contact.veteran_branch && <span className="text-gray-600">• {contact.veteran_branch}</span>}
-            </div>
-          )}
+          {/* Bottom Left Badges */}
+          <div className="absolute bottom-3 left-3 flex items-center gap-1">
+            {contact.is_veteran && (
+              <span 
+                className="text-lg"
+                title={contact.veteran_branch ? `Veteran - ${contact.veteran_branch}` : 'Veteran'}
+              >
+                🇺🇸
+              </span>
+            )}
+            {contact.is_service_professional && (
+              <span 
+                className="text-lg"
+                title={contact.service_type ? serviceTypes.find(s => s.value === contact.service_type)?.label : 'Service Professional'}
+              >
+                ❤️
+              </span>
+            )}
+          </div>
         </CardContent>
       </Card>
     </motion.div>
@@ -1490,7 +1516,7 @@ export default function TikTokContacts() {
                     className="flex items-center gap-2 cursor-pointer"
                   >
                     <Checkbox checked={formData.is_veteran} />
-                    <Flag className="w-4 h-4 text-red-600" />
+                    <span className="text-lg">🇺🇸</span>
                     <Label className="cursor-pointer font-semibold text-blue-800">Veteran</Label>
                   </div>
 
@@ -1510,6 +1536,56 @@ export default function TikTokContacts() {
                       </Select>
                     </div>
                   )}
+                </div>
+
+                {/* Service Professional Section */}
+                <div className="p-3 rounded-lg bg-pink-50 border border-pink-200 space-y-3">
+                  <div
+                    onClick={() => setFormData({ ...formData, is_service_professional: !formData.is_service_professional })}
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    <Checkbox checked={formData.is_service_professional} />
+                    <span className="text-lg">❤️</span>
+                    <Label className="cursor-pointer font-semibold text-pink-800">Service Professional</Label>
+                  </div>
+
+                  {formData.is_service_professional && (
+                    <div className="space-y-2 pl-6">
+                      <Label className="text-sm text-gray-600">Type of Service</Label>
+                      <Select 
+                        value={formData.service_type} 
+                        onValueChange={(v) => setFormData({ ...formData, service_type: v })}
+                      >
+                        <SelectTrigger><SelectValue placeholder="Select type..." /></SelectTrigger>
+                        <SelectContent>
+                          {serviceTypes.map(type => (
+                            <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
+
+                {/* Occupation & MLM */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label>Occupation / Job Title</Label>
+                    <Input
+                      placeholder="e.g., Nurse, Teacher, Engineer"
+                      value={formData.occupation}
+                      onChange={(e) => setFormData({ ...formData, occupation: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2 flex items-end">
+                    <div
+                      onClick={() => setFormData({ ...formData, is_mlm: !formData.is_mlm })}
+                      className="flex items-center gap-2 p-2 border rounded-lg cursor-pointer hover:bg-white h-10"
+                    >
+                      <Checkbox checked={formData.is_mlm} />
+                      <Label className="cursor-pointer text-sm">MLM / Network Marketing</Label>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
