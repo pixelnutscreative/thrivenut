@@ -81,6 +81,7 @@ const allNavItems = [
   { name: 'Mental Health', icon: Brain, path: 'NeurodivergentSettings', moduleId: 'mental_health' },
   { name: 'Admin', icon: Users, path: 'AdminSuperFanReview', adminOnly: true },
     { name: 'User Management', icon: UserCog, path: 'AdminImpersonate', adminOnly: true },
+    { name: 'Master Contacts', icon: Users, path: 'MasterContactDatabase', adminOnly: true },
 ];
 
 export default function Layout({ children, currentPageName }) {

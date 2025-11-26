@@ -24,6 +24,7 @@ import SuperFanAccess from './pages/SuperFanAccess';
 import AdminSuperFanReview from './pages/AdminSuperFanReview';
 import AdminImpersonate from './pages/AdminImpersonate';
 import WeeklyGifterGallery from './pages/WeeklyGifterGallery';
+import MasterContactDatabase from './pages/MasterContactDatabase';
 import __Layout from './Layout.jsx';
 
 
@@ -54,6 +55,7 @@ export const PAGES = {
     "AdminSuperFanReview": AdminSuperFanReview,
     "AdminImpersonate": AdminImpersonate,
     "WeeklyGifterGallery": WeeklyGifterGallery,
+    "MasterContactDatabase": MasterContactDatabase,
 }
 
 export const pagesConfig = {
