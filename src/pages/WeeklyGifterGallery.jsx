@@ -94,11 +94,13 @@ export default function WeeklyGifterGallery() {
   const { data: entries = [], isLoading } = useQuery({
     queryKey: ['giftingEntries', selectedWeek, effectiveEmail],
     queryFn: async () => {
-      // For impersonation: check data.created_by field which stores the actual owner
+      // For impersonation: the actual owner is stored in the nested data object
+      // The API returns flat fields AND a data object - check both patterns
       const allEntries = await base44.entities.GiftingEntry.filter({ week: selectedWeek });
       return allEntries.filter(e => {
-        const dataOwner = e.data?.created_by || e.created_by;
-        return dataOwner === effectiveEmail;
+        // Check nested data.created_by first (for moved records), then top-level
+        const owner = e.data?.created_by || e.created_by;
+        return owner === effectiveEmail;
       });
     },
     enabled: !!effectiveEmail,
