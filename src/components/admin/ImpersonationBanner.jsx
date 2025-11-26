@@ -40,6 +40,9 @@ export default function ImpersonationBanner() {
 // Helper to get the current "user" identifier (real or impersonated)
 export function getEffectiveUserEmail(realUserEmail) {
   const impersonating = sessionStorage.getItem('impersonating');
+  if (impersonating) {
+    console.log('IMPERSONATION: Using', impersonating);
+  }
   return impersonating || realUserEmail;
 }
 
