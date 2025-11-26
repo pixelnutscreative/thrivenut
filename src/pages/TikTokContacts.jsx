@@ -74,8 +74,11 @@ export default function TikTokContacts() {
     met_through_name: '',
     started_going_live: '',
     live_agency: '',
-    shop_agency: ''
+    shop_agency: '',
+    other_tiktok_accounts: [],
+    social_links: {}
   });
+  const [newOtherTikTok, setNewOtherTikTok] = useState('');
   const [newMetThroughName, setNewMetThroughName] = useState('');
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
@@ -204,9 +207,12 @@ export default function TikTokContacts() {
       met_through_name: '',
       started_going_live: '',
       live_agency: '',
-      shop_agency: ''
+      shop_agency: '',
+      other_tiktok_accounts: [],
+      social_links: {}
     });
     setNewMetThroughName('');
+    setNewOtherTikTok('');
   };
 
   const handleEdit = (contact) => {
@@ -234,9 +240,12 @@ export default function TikTokContacts() {
       met_through_name: contact.met_through_name || '',
       started_going_live: contact.started_going_live || '',
       live_agency: contact.live_agency || '',
-      shop_agency: contact.shop_agency || ''
+      shop_agency: contact.shop_agency || '',
+      other_tiktok_accounts: contact.other_tiktok_accounts || [],
+      social_links: contact.social_links || {}
     });
     setNewMetThroughName('');
+    setNewOtherTikTok('');
     setShowModal(true);
   };
 
@@ -779,13 +788,165 @@ export default function TikTokContacts() {
               </div>
             )}
 
-            {/* Tabs for Mods, Connected Through, Details */}
-            <Tabs defaultValue="mods" className="w-full">
-              <TabsList className="w-full grid grid-cols-3">
+            {/* Tabs for Mods, Connected Through, Social, Details */}
+            <Tabs defaultValue="social" className="w-full">
+              <TabsList className="w-full grid grid-cols-4">
+                <TabsTrigger value="social" className="data-[state=active]:bg-teal-100 data-[state=active]:text-teal-700">Social Links</TabsTrigger>
                 <TabsTrigger value="mods" className="data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700">Mods</TabsTrigger>
-                <TabsTrigger value="connections" className="data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700">Connected Through</TabsTrigger>
+                <TabsTrigger value="connections" className="data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700">Connected</TabsTrigger>
                 <TabsTrigger value="details" className="data-[state=active]:bg-amber-100 data-[state=active]:text-amber-700">Details</TabsTrigger>
               </TabsList>
+              
+              <TabsContent value="social" className="p-3 border rounded-b-lg bg-teal-50/50 space-y-4">
+                {/* Other TikTok Accounts */}
+                <div className="space-y-2">
+                  <Label className="font-semibold">Other TikTok Accounts</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="@otheraccount"
+                      value={newOtherTikTok}
+                      onChange={(e) => setNewOtherTikTok(e.target.value)}
+                      className="flex-1"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && newOtherTikTok.trim()) {
+                          const cleaned = newOtherTikTok.replace('@', '').trim();
+                          if (!formData.other_tiktok_accounts.includes(cleaned)) {
+                            setFormData({ ...formData, other_tiktok_accounts: [...formData.other_tiktok_accounts, cleaned] });
+                          }
+                          setNewOtherTikTok('');
+                        }
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        if (newOtherTikTok.trim()) {
+                          const cleaned = newOtherTikTok.replace('@', '').trim();
+                          if (!formData.other_tiktok_accounts.includes(cleaned)) {
+                            setFormData({ ...formData, other_tiktok_accounts: [...formData.other_tiktok_accounts, cleaned] });
+                          }
+                          setNewOtherTikTok('');
+                        }
+                      }}
+                    >
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  {formData.other_tiktok_accounts.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {formData.other_tiktok_accounts.map((acc, idx) => (
+                        <Badge
+                          key={idx}
+                          variant="secondary"
+                          className="cursor-pointer bg-pink-100 text-pink-700"
+                          onClick={() => setFormData({ ...formData, other_tiktok_accounts: formData.other_tiktok_accounts.filter((_, i) => i !== idx) })}
+                        >
+                          @{acc} ✕
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Other Social Media Links */}
+                <div className="space-y-3">
+                  <Label className="font-semibold">Other Social Media</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs text-gray-500">Instagram</Label>
+                      <Input
+                        placeholder="@username"
+                        value={formData.social_links?.instagram || ''}
+                        onChange={(e) => setFormData({ ...formData, social_links: { ...formData.social_links, instagram: e.target.value } })}
+                        className="h-8"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-gray-500">Facebook</Label>
+                      <Input
+                        placeholder="username or URL"
+                        value={formData.social_links?.facebook || ''}
+                        onChange={(e) => setFormData({ ...formData, social_links: { ...formData.social_links, facebook: e.target.value } })}
+                        className="h-8"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-gray-500">YouTube</Label>
+                      <Input
+                        placeholder="channel name or URL"
+                        value={formData.social_links?.youtube || ''}
+                        onChange={(e) => setFormData({ ...formData, social_links: { ...formData.social_links, youtube: e.target.value } })}
+                        className="h-8"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-gray-500">X (Twitter)</Label>
+                      <Input
+                        placeholder="@handle"
+                        value={formData.social_links?.twitter || ''}
+                        onChange={(e) => setFormData({ ...formData, social_links: { ...formData.social_links, twitter: e.target.value } })}
+                        className="h-8"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-gray-500">LinkedIn</Label>
+                      <Input
+                        placeholder="profile URL"
+                        value={formData.social_links?.linkedin || ''}
+                        onChange={(e) => setFormData({ ...formData, social_links: { ...formData.social_links, linkedin: e.target.value } })}
+                        className="h-8"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-gray-500">Threads</Label>
+                      <Input
+                        placeholder="@username"
+                        value={formData.social_links?.threads || ''}
+                        onChange={(e) => setFormData({ ...formData, social_links: { ...formData.social_links, threads: e.target.value } })}
+                        className="h-8"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-gray-500">Twitch</Label>
+                      <Input
+                        placeholder="username"
+                        value={formData.social_links?.twitch || ''}
+                        onChange={(e) => setFormData({ ...formData, social_links: { ...formData.social_links, twitch: e.target.value } })}
+                        className="h-8"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-gray-500">Discord</Label>
+                      <Input
+                        placeholder="username#1234 or server"
+                        value={formData.social_links?.discord || ''}
+                        onChange={(e) => setFormData({ ...formData, social_links: { ...formData.social_links, discord: e.target.value } })}
+                        className="h-8"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-gray-500">Snapchat</Label>
+                      <Input
+                        placeholder="username"
+                        value={formData.social_links?.snapchat || ''}
+                        onChange={(e) => setFormData({ ...formData, social_links: { ...formData.social_links, snapchat: e.target.value } })}
+                        className="h-8"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-gray-500">Pinterest</Label>
+                      <Input
+                        placeholder="username"
+                        value={formData.social_links?.pinterest || ''}
+                        onChange={(e) => setFormData({ ...formData, social_links: { ...formData.social_links, pinterest: e.target.value } })}
+                        className="h-8"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
               
               <TabsContent value="mods" className="p-3 border rounded-b-lg bg-purple-50/50 space-y-3">
                 <div className="space-y-2">
