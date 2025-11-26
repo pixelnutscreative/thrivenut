@@ -524,7 +524,15 @@ For each username, generate a "suggested_phonetic" field with how it would be pr
                         transition={{ delay: index * 0.05 }}
                         className="p-4 bg-gray-50 rounded-lg"
                       >
-                        {editingEntry === entry.id ? (
+                        {(() => {
+                          // Normalize entry fields (handle nested data object)
+                          const rank = entry.data?.rank || entry.rank;
+                          const gifterScreenName = entry.data?.gifter_screen_name || entry.gifter_screen_name;
+                          const gifterUsername = entry.data?.gifter_username || entry.gifter_username;
+                          const giftName = entry.data?.gift_name || entry.gift_name;
+                          const gifterPhonetic = entry.data?.gifter_phonetic || entry.gifter_phonetic;
+                          
+                          return editingEntry === entry.id ? (
                           <div className="space-y-3">
                             <div className="grid grid-cols-2 gap-3">
                               <div>
@@ -553,14 +561,14 @@ For each username, generate a "suggested_phonetic" field with how it would be pr
                         ) : (
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                              {getRankIcon(entry.rank)}
+                              {getRankIcon(rank)}
                               <div>
-                                <p className="font-semibold">{entry.gifter_screen_name}</p>
-                                <p className="text-sm text-purple-600">@{entry.gifter_username}</p>
+                                <p className="font-semibold">{gifterScreenName}</p>
+                                <p className="text-sm text-purple-600">@{gifterUsername}</p>
                                 <div className="flex gap-2 mt-1">
-                                  <Badge variant="secondary" className="text-xs">{entry.gift_name}</Badge>
-                                  {entry.gifter_phonetic && (
-                                    <Badge variant="outline" className="text-xs">🎵 {entry.gifter_phonetic}</Badge>
+                                  <Badge variant="secondary" className="text-xs">{giftName}</Badge>
+                                  {gifterPhonetic && (
+                                    <Badge variant="outline" className="text-xs">🎵 {gifterPhonetic}</Badge>
                                   )}
                                 </div>
                               </div>
@@ -571,7 +579,7 @@ For each username, generate a "suggested_phonetic" field with how it would be pr
                                 size="sm"
                                 onClick={() => {
                                   setEditingEntry(entry.id);
-                                  setEditForm({ gifter_screen_name: entry.gifter_screen_name || '', gifter_phonetic: entry.gifter_phonetic || '' });
+                                  setEditForm({ gifter_screen_name: gifterScreenName || '', gifter_phonetic: gifterPhonetic || '' });
                                 }}
                               >
                                 <Edit className="w-4 h-4" />
@@ -586,7 +594,8 @@ For each username, generate a "suggested_phonetic" field with how it would be pr
                               </Button>
                             </div>
                           </div>
-                        )}
+                        );
+                        })()}
                       </motion.div>
                     ))}
                   </CardContent>
