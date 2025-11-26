@@ -908,7 +908,7 @@ export default function TikTokContacts() {
                 className={`cursor-pointer px-3 py-1.5 ${filterVeterans ? 'bg-red-600' : 'bg-gradient-to-r from-red-50 via-white to-blue-50 text-blue-700 border-red-200'}`}
                 onClick={() => setFilterVeterans(!filterVeterans)}
               >
-                <Flag className="w-3 h-3 mr-1" />
+                <span className="mr-1">🇺🇸</span>
                 Veterans
               </Badge>
 
