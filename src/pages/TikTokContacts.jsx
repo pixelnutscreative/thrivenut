@@ -14,7 +14,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Plus, Search, Trash2, Edit, Star, Phone, Mail, 
   ExternalLink, Users, Swords, Gift, Share2, Heart, UserPlus, Video, Calendar, Music, ShoppingBag,
-  ChevronDown, ChevronRight, FolderPlus, Loader2, Upload, Check, X, FileSpreadsheet, Filter, MessageCircle
+  ChevronDown, ChevronRight, FolderPlus, Loader2, Upload, Check, X, FileSpreadsheet, Filter, MessageCircle,
+  BookOpen, DollarSign, Moon
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuSeparator, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -26,17 +27,18 @@ import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
 const roleConfig = {
   battle_sniper: { label: 'Battle Sniper', icon: Swords, color: 'bg-red-100 text-red-700' },
   tapper: { label: 'Tapper', icon: Heart, color: 'bg-pink-100 text-pink-700' },
-  sharer: { label: 'Shares to Story', icon: Share2, color: 'bg-blue-100 text-blue-700' },
+  sharer: { label: 'Shares to Story', icon: BookOpen, color: 'bg-blue-100 text-blue-700' },
   gifter: { label: 'Gifter', icon: Gift, color: 'bg-amber-100 text-amber-700' },
-  engaging_bestie: { label: 'Engaging Bestie', icon: Heart, color: 'bg-purple-100 text-purple-700' },
-  commenter: { label: 'Comments What They Saw', icon: Users, color: 'bg-teal-100 text-teal-700' },
+  engaging_bestie: { label: 'Engaging Bestie', icon: Users, color: 'bg-purple-100 text-purple-700' },
+  authentic_commenter: { label: 'Authentic Commenter', icon: MessageCircle, color: 'bg-teal-100 text-teal-700' },
   irl_friend: { label: 'Friend IRL (Before TikTok)', icon: Users, color: 'bg-green-100 text-green-700' },
-  tiktok_seller: { label: 'TikTok Seller', icon: ShoppingBag, color: 'bg-orange-100 text-orange-700' },
+  tiktok_seller: { label: 'TikTok Seller', icon: DollarSign, color: 'bg-orange-100 text-orange-700' },
+  tiktok_shop_affiliate: { label: 'TikTok Shop Affiliate', icon: ShoppingBag, color: 'bg-lime-100 text-lime-700' },
   creator_to_watch: { label: 'Creator to Watch', icon: Video, color: 'bg-indigo-100 text-indigo-700' },
   subscriber: { label: 'Subscriber', icon: Heart, color: 'bg-cyan-100 text-cyan-700' },
   superfan: { label: 'Superfan', icon: Star, color: 'bg-rose-100 text-rose-700' },
   discord: { label: 'Discord', icon: Users, color: 'bg-violet-100 text-violet-700' },
-  sleep_lives: { label: 'Sleep Lives', icon: Video, color: 'bg-slate-100 text-slate-700' }
+  sleep_lives: { label: 'Sleep Lives', icon: Moon, color: 'bg-slate-100 text-slate-700' }
 };
 
 const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -601,6 +603,35 @@ export default function TikTokContacts() {
 
             {contact.notes && (
               <p className="text-sm text-gray-500 italic line-clamp-2">{contact.notes}</p>
+            )}
+
+            {/* Role Icons */}
+            {contact.role && contact.role.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {contact.role.filter(r => !r.startsWith('custom:')).map(role => {
+                  const config = roleConfig[role];
+                  if (!config) return null;
+                  const RoleIcon = config.icon;
+                  return (
+                    <div
+                      key={role}
+                      className={`p-1.5 rounded-full ${config.color}`}
+                      title={config.label}
+                    >
+                      <RoleIcon className="w-3 h-3" />
+                    </div>
+                  );
+                })}
+                {contact.role.filter(r => r.startsWith('custom:')).map(role => (
+                  <div
+                    key={role}
+                    className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-xs"
+                    title={role.replace('custom:', '')}
+                  >
+                    {role.replace('custom:', '')}
+                  </div>
+                ))}
+              </div>
             )}
 
             {/* Feature Toggles */}
