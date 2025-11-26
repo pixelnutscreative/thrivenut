@@ -76,20 +76,16 @@ export default function WeeklyGifterGallery() {
     queryKey: ['tiktokContacts', effectiveEmail],
     queryFn: async () => {
       const allContacts = await base44.entities.TikTokContact.list('display_name', 500);
-      console.log('CONTACTS DEBUG: effectiveEmail =', effectiveEmail);
-      console.log('CONTACTS DEBUG: total contacts =', allContacts.length);
       
-      const filtered = allContacts.filter(c => {
-        const owner = c.data?.created_by || c.created_by;
-        const match = owner === effectiveEmail;
-        if (c.is_gifter || c.data?.is_gifter) {
-          console.log('CONTACTS DEBUG: gifter', c.username || c.data?.username, 'owner =', owner, 'match =', match);
+      // Filter: check data.created_by first (for impersonated records), then top-level created_by
+      return allContacts.filter(c => {
+        // data.created_by is set when impersonating - check it FIRST
+        if (c.data?.created_by) {
+          return c.data.created_by === effectiveEmail;
         }
-        return match;
+        // Otherwise use top-level created_by
+        return c.created_by === effectiveEmail;
       });
-      
-      console.log('CONTACTS DEBUG: filtered count =', filtered.length);
-      return filtered;
     },
     enabled: !!effectiveEmail,
   });
