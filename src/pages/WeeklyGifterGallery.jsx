@@ -448,13 +448,7 @@ For each username, generate a "suggested_phonetic" field with how it would be pr
               </Button>
               <div className="text-center">
                 <p className="text-sm text-gray-500">Week Ending</p>
-                <p className="font-bold text-lg">{format(addDays(new Date(selectedWeek), 6), 'MMMM d, yyyy')}</p>
-                <Input
-                  type="date"
-                  value={selectedWeek}
-                  onChange={(e) => { setSelectedWeek(e.target.value); setAllGood(false); }}
-                  className="mt-2 w-40 mx-auto text-center"
-                />
+                <p className="font-bold text-lg">{format(new Date(selectedWeek), 'MMMM d, yyyy')}</p>
               </div>
               <Button variant="outline" size="sm" onClick={goToNextWeek}>
                 Next Week <ChevronRight className="w-4 h-4 ml-1" />
