@@ -94,48 +94,66 @@ export default function GiftScreenshotImport() {
       setUploading(false);
       setAnalyzing(true);
 
-      // Use AI to extract data from all screenshots
-      const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Analyze these TikTok gifting leaderboard screenshots and extract the top gifters.
+      // Process images in batches of 5 to handle many uploads
+      const BATCH_SIZE = 5;
+      let allGifters = [];
+      
+      for (let i = 0; i < uploadedUrls.length; i += BATCH_SIZE) {
+        const batchUrls = uploadedUrls.slice(i, i + BATCH_SIZE);
         
+        const result = await base44.integrations.Core.InvokeLLM({
+          prompt: `Analyze these TikTok gifting leaderboard screenshots and extract ALL gifters visible.
+          
 Look for:
 - Usernames (usually start with @)
-- Display names / screen names
-- Their placement (1st, 2nd, 3rd place)
+- Display names / screen names  
+- Their placement (1st, 2nd, 3rd place, or any ranking number visible)
 - Any gift names visible
 
-${files.length > 1 ? `There are ${files.length} images - combine the data from all of them, avoiding duplicates.` : ''}
+${batchUrls.length > 1 ? `There are ${batchUrls.length} images in this batch - extract data from ALL of them.` : ''}
 
-Return the data in the specified JSON format. If you can't find certain information, leave it as null.
-Extract up to 3 gifters (1st, 2nd, 3rd place).
-
-IMPORTANT: For each username, also generate a "suggested_phonetic" field with how you think it would be pronounced naturally in English for a song. 
-For example: "sheri_d_777" would be "Sheri D Seven Seven Seven", "craftymom_02" would be "Crafty Mom Oh Two", "123john" would be "One Two Three John".`,
-        file_urls: uploadedUrls,
-        response_json_schema: {
-          type: "object",
-          properties: {
-            gifters: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                   rank: { type: "string", enum: ["1st", "2nd", "3rd"] },
-                   username: { type: "string", description: "TikTok username without @" },
-                   screen_name: { type: "string", description: "Display name shown" },
-                   suggested_phonetic: { type: "string", description: "How the username/name would be pronounced for a song" },
-                   gift_name: { type: "string", description: "Name of gift if visible" }
-                 }
-              }
-            },
-            confidence: { type: "string", enum: ["high", "medium", "low"] },
-            notes: { type: "string", description: "Any notes about the extraction" }
+IMPORTANT: Extract EVERY gifter you can see, not just top 3. Include 4th, 5th, etc if visible.
+For each username, generate a "suggested_phonetic" field with how it would be pronounced naturally in English for a song. 
+For example: "sheri_d_777" = "Sheri D Seven Seven Seven", "craftymom_02" = "Crafty Mom Oh Two".`,
+          file_urls: batchUrls,
+          response_json_schema: {
+            type: "object",
+            properties: {
+              gifters: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                     rank: { type: "string", description: "1st, 2nd, 3rd, 4th, etc" },
+                     username: { type: "string", description: "TikTok username without @" },
+                     screen_name: { type: "string", description: "Display name shown" },
+                     suggested_phonetic: { type: "string", description: "How the username/name would be pronounced for a song" },
+                     gift_name: { type: "string", description: "Name of gift if visible" }
+                   }
+                }
+              },
+              confidence: { type: "string", enum: ["high", "medium", "low"] },
+              notes: { type: "string", description: "Any notes about the extraction" }
+            }
           }
+        });
+        
+        if (result.gifters) {
+          allGifters = [...allGifters, ...result.gifters];
         }
+      }
+      
+      // Deduplicate by username
+      const seenUsernames = new Set();
+      const uniqueGifters = allGifters.filter(g => {
+        const key = g.username?.toLowerCase()?.replace('@', '');
+        if (!key || seenUsernames.has(key)) return false;
+        seenUsernames.add(key);
+        return true;
       });
 
       // Enhance extracted data with matches from existing contacts
-      const enhancedGifters = result.gifters?.map(gifter => {
+      const enhancedGifters = uniqueGifters.map(gifter => {
         const username = gifter.username?.toLowerCase()?.replace('@', '');
         const screenName = gifter.screen_name?.toLowerCase();
         
@@ -150,31 +168,32 @@ For example: "sheri_d_777" would be "Sheri D Seven Seven Seven", "craftymom_02" 
           const cUsername = c.username?.toLowerCase() || '';
           const cDisplayName = c.display_name?.toLowerCase() || '';
           
-          // Check if extracted username is contained in or contains the contact username
           const usernameMatch = username && (
             cUsername.includes(username) || username.includes(cUsername)
           );
-          // Check screen name similarity
           const screenNameMatch = screenName && (
             cDisplayName.includes(screenName) || screenName.includes(cDisplayName)
           );
           
           return usernameMatch || screenNameMatch;
-        }).slice(0, 3); // Limit to top 3 suggestions
+        }).slice(0, 3);
         
         return {
           ...gifter,
           matched_contact: exactMatch || null,
           suggested_contacts: exactMatch ? [] : partialMatches,
-          // Pre-fill from exact match, or use AI suggestion
           screen_name: exactMatch?.display_name || gifter.screen_name,
           phonetic: exactMatch?.phonetic || gifter.suggested_phonetic || '',
           username: exactMatch?.username || gifter.username,
-          selected: true // Default to selected for import
+          selected: true
         };
-      }) || [];
+      });
 
-      setExtractedData({ ...result, gifters: enhancedGifters });
+      setExtractedData({ 
+        gifters: enhancedGifters, 
+        confidence: enhancedGifters.length > 0 ? 'high' : 'low',
+        notes: `Extracted ${enhancedGifters.length} unique gifters from ${uploadedUrls.length} images`
+      });
       setAnalyzing(false);
     } catch (err) {
       console.error('Error processing screenshot:', err);
