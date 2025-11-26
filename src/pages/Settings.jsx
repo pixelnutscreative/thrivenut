@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Save, User, Palette, Eye, Layers, MessageSquare, Clock, Share2, Music, Sparkles } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Loader2, Save, User, Palette, Eye, Layers, MessageSquare, Clock, Share2, Music, Sparkles, ChevronDown } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
@@ -186,7 +187,7 @@ export default function Settings() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-6 mb-6">
+          <TabsList className="grid w-full grid-cols-4 mb-6">
             <TabsTrigger value="profile" className="flex items-center gap-2">
               <User className="w-4 h-4" />
               <span className="hidden sm:inline">Profile</span>
@@ -203,67 +204,164 @@ export default function Settings() {
               <MessageSquare className="w-4 h-4" />
               <span className="hidden sm:inline">Preferences</span>
             </TabsTrigger>
-            {/* Hidden for now - songs managed via impersonation
-            <TabsTrigger value="sharing" className="flex items-center gap-2">
-              <Share2 className="w-4 h-4" />
-              <span className="hidden sm:inline">Songs</span>
-            </TabsTrigger>
-            */}
-            <TabsTrigger value="tiktok_sharing" className="flex items-center gap-2">
-              <Share2 className="w-4 h-4" />
-              <span className="hidden sm:inline">TikTok</span>
-            </TabsTrigger>
-            <TabsTrigger value="accessibility" className="flex items-center gap-2">
-              <Eye className="w-4 h-4" />
-              <span className="hidden sm:inline">Access</span>
-            </TabsTrigger>
           </TabsList>
 
-          {/* Profile Tab */}
+          {/* Profile Tab - now includes TikTok info */}
           <TabsContent value="profile">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <User className="w-5 h-5" />
-                    Profile & Images
+                    Profile
                   </CardTitle>
-                  <CardDescription>Customize your profile pictures and banner</CardDescription>
+                  <CardDescription>Your profile picture and personal info</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <ImageUploader
-                      label="Profile Picture"
-                      currentImage={formData.profile_image_url}
-                      onImageChange={(url) => setFormData({ ...formData, profile_image_url: url })}
-                      aspectRatio="square"
-                    />
-                    <ImageUploader
-                      label="Header Image"
-                      currentImage={formData.header_image_url}
-                      onImageChange={(url) => setFormData({ ...formData, header_image_url: url })}
-                      aspectRatio="banner"
+                  <ImageUploader
+                    label="Profile Picture"
+                    currentImage={formData.profile_image_url}
+                    onImageChange={(url) => setFormData({ ...formData, profile_image_url: url })}
+                    aspectRatio="square"
+                  />
+                </CardContent>
+              </Card>
+
+              {/* TikTok Profile Info */}
+              <Card className="border-purple-200">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Share2 className="w-5 h-5 text-purple-500" />
+                    TikTok Profile
+                  </CardTitle>
+                  <CardDescription>Your TikTok info for songs and sharing</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>TikTok Username</Label>
+                      <Input
+                        placeholder="@username"
+                        value={formData.tiktok_username}
+                        onChange={(e) => setFormData({ ...formData, tiktok_username: e.target.value.replace('@', '') })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Display Name (for songs)</Label>
+                      <Input
+                        placeholder="e.g., Pixel, Queen Sarah"
+                        value={formData.tiktok_display_name}
+                        onChange={(e) => setFormData({ ...formData, tiktok_display_name: e.target.value })}
+                      />
+                      <p className="text-xs text-gray-500">How Sunny Songbird will call you</p>
+                    </div>
+                  </div>
+                  
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>League Level</Label>
+                      <Select value={formData.league_level} onValueChange={(v) => setFormData({ ...formData, league_level: v })}>
+                        <SelectTrigger><SelectValue placeholder="Select league" /></SelectTrigger>
+                        <SelectContent>
+                          {['A1', 'A2', 'A3', 'A4', 'A5', 'B1', 'B2', 'B3', 'B4', 'B5', 'C1', 'C2', 'C3', 'C4', 'C5', 'D1', 'D2', 'D3', 'D4', 'D5'].map(l => (
+                            <SelectItem key={l} value={l}>{l}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Default Song Tone</Label>
+                      <Select value={formData.default_song_tone} onValueChange={(v) => setFormData({ ...formData, default_song_tone: v })}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="upbeat">🎉 Upbeat</SelectItem>
+                          <SelectItem value="chill">😌 Chill</SelectItem>
+                          <SelectItem value="hype">🔥 Hype</SelectItem>
+                          <SelectItem value="emotional">💜 Emotional</SelectItem>
+                          <SelectItem value="funny">😂 Funny</SelectItem>
+                          <SelectItem value="epic">⚡ Epic</SelectItem>
+                          <SelectItem value="cozy">☕ Cozy</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Room Vibe / Theme</Label>
+                    <Textarea
+                      placeholder="e.g., Beach party vibes, chill zone, neon club energy..."
+                      value={formData.room_vibe}
+                      onChange={(e) => setFormData({ ...formData, room_vibe: e.target.value })}
+                      rows={2}
                     />
                   </div>
-                  <ImageUploader
-                    label="Custom Background (MySpace vibes ✨)"
-                    currentImage={formData.background_image_url}
-                    onImageChange={(url) => setFormData({ ...formData, background_image_url: url })}
-                    aspectRatio="wide"
-                  />
+
+                  <div 
+                    onClick={() => setFormData({ ...formData, include_levelup_verse: !formData.include_levelup_verse })}
+                    className={`p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                      formData.include_levelup_verse ? 'border-purple-400 bg-purple-50' : 'border-gray-200 hover:border-purple-300'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Checkbox checked={formData.include_levelup_verse} />
+                      <div>
+                        <h4 className="font-semibold text-sm">Include Level-Up Verse in Songs</h4>
+                        <p className="text-xs text-gray-600">Add encouragement to level up!</p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Community Sharing */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Community Sharing</CardTitle>
+                  <CardDescription>Control how others can find you</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div
+                    onClick={() => setFormData({ ...formData, allow_in_community_directory: !formData.allow_in_community_directory })}
+                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                      formData.allow_in_community_directory ? 'border-purple-500 bg-purple-50' : 'border-gray-200 hover:border-purple-300'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <Checkbox checked={formData.allow_in_community_directory} />
+                      <div>
+                        <h4 className="font-semibold">Show in Community Directory</h4>
+                        <p className="text-sm text-gray-600">Let your live schedule appear for other ThriveNut users</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    onClick={() => setFormData({ ...formData, allow_search_by_tiktok_username: !formData.allow_search_by_tiktok_username })}
+                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                      formData.allow_search_by_tiktok_username ? 'border-purple-500 bg-purple-50' : 'border-gray-200 hover:border-purple-300'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <Checkbox checked={formData.allow_search_by_tiktok_username} />
+                      <div>
+                        <h4 className="font-semibold">Allow search by TikTok username</h4>
+                        <p className="text-sm text-gray-600">Let others find you by searching your TikTok username</p>
+                      </div>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </motion.div>
           </TabsContent>
 
-          {/* Appearance Tab */}
+          {/* Appearance Tab - now includes background image */}
           <TabsContent value="appearance">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Palette className="w-5 h-5" />
-                    Appearance
+                    Theme & Colors
                   </CardTitle>
                   <CardDescription>Choose your theme and colors</CardDescription>
                 </CardHeader>
@@ -271,6 +369,21 @@ export default function Settings() {
                   <ThemeSelector
                     themeData={formData}
                     onChange={(data) => setFormData({ ...formData, ...data })}
+                  />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Custom Background</CardTitle>
+                  <CardDescription>Add a custom background image (MySpace vibes ✨)</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ImageUploader
+                    label="Background Image"
+                    currentImage={formData.background_image_url}
+                    onImageChange={(url) => setFormData({ ...formData, background_image_url: url })}
+                    aspectRatio="wide"
                   />
                 </CardContent>
               </Card>
@@ -299,7 +412,7 @@ export default function Settings() {
             </motion.div>
           </TabsContent>
 
-          {/* Preferences Tab */}
+          {/* Preferences Tab - now includes accessibility in collapsible */}
           <TabsContent value="preferences">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
               <Card>
@@ -355,288 +468,79 @@ export default function Settings() {
                   ))}
                 </CardContent>
               </Card>
-            </motion.div>
-          </TabsContent>
 
-          {/* Sharing Tab */}
-          <TabsContent value="sharing">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Music className="w-5 h-5" />
-                    Song Sharing Settings
-                  </CardTitle>
-                  <CardDescription>Configure who can receive your generated gifter songs for help and collaboration</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div
-                    onClick={() => setFormData({ ...formData, share_songs_with_pixel: !formData.share_songs_with_pixel })}
-                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                      formData.share_songs_with_pixel
-                        ? 'border-purple-500 bg-purple-50'
-                        : 'border-gray-200 hover:border-purple-300'
-                    }`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <Checkbox checked={formData.share_songs_with_pixel} />
-                      <div>
-                        <h4 className="font-semibold">Share with PixelNutsCreative</h4>
-                        <p className="text-sm text-gray-600">Automatically share all generated songs with PixelNutsCreative@gmail.com for help and collaboration</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <Label>Custom Collaboration Email</Label>
-                    <Input
-                      type="email"
-                      placeholder="Enter an email to share songs with..."
-                      value={formData.song_share_email}
-                      onChange={(e) => setFormData({ ...formData, song_share_email: e.target.value })}
-                    />
-                    <p className="text-sm text-gray-500">
-                      Songs will automatically be shared with this email when generated. Great for collaborating with friends or getting feedback!
-                    </p>
-                  </div>
-
-                  <div className="p-4 bg-purple-50 rounded-xl">
-                    <h4 className="font-semibold text-purple-800 mb-2">💜 How Sharing Works</h4>
-                    <ul className="text-sm text-purple-700 space-y-1">
-                      <li>• When you generate a song, it will be emailed to your selected recipients</li>
-                      <li>• Recipients can see the gifter details and song lyrics</li>
-                      <li>• Great for getting feedback or collaborating on creative ideas</li>
-                      <li>• You can still copy songs manually to share elsewhere</li>
-                    </ul>
-                  </div>
-                </CardContent>
-                </Card>
-                </motion.div>
-                </TabsContent>
-
-                {/* TikTok Sharing Tab */}
-                <TabsContent value="tiktok_sharing">
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-                
-                {/* Sunny Songbird Settings */}
-                <Card className="border-amber-200 bg-gradient-to-r from-amber-50 to-yellow-50">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-amber-500" />
-                    Sunny Songbird Settings
-                  </CardTitle>
-                  <CardDescription>Your default song settings - used every time you generate a song!</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Your Display Name (for songs)</Label>
-                      <Input
-                        placeholder="e.g., Pixel, Queen Sarah, DJ Mike"
-                        value={formData.tiktok_display_name}
-                        onChange={(e) => setFormData({ ...formData, tiktok_display_name: e.target.value })}
-                      />
-                      <p className="text-xs text-gray-500">How Sunny will call you in your songs</p>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Your League Level</Label>
-                      <Select value={formData.league_level} onValueChange={(v) => setFormData({ ...formData, league_level: v })}>
-                        <SelectTrigger><SelectValue placeholder="Select league" /></SelectTrigger>
-                        <SelectContent>
-                          {['A1', 'A2', 'A3', 'A4', 'A5', 'B1', 'B2', 'B3', 'B4', 'B5', 'C1', 'C2', 'C3', 'C4', 'C5', 'D1', 'D2', 'D3', 'D4', 'D5'].map(l => (
-                            <SelectItem key={l} value={l}>{l}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label>Room Vibe / Theme</Label>
-                    <Textarea
-                      placeholder="e.g., Beach party vibes, chill zone with lo-fi beats, neon club energy, cozy coffee shop, gamer cave..."
-                      value={formData.room_vibe}
-                      onChange={(e) => setFormData({ ...formData, room_vibe: e.target.value })}
-                      rows={2}
-                    />
-                    <p className="text-xs text-gray-500">Sunny will weave this vibe into your songs</p>
-                  </div>
-                  
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Default Song Tone</Label>
-                      <Select value={formData.default_song_tone} onValueChange={(v) => setFormData({ ...formData, default_song_tone: v })}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="upbeat">🎉 Upbeat</SelectItem>
-                          <SelectItem value="chill">😌 Chill</SelectItem>
-                          <SelectItem value="hype">🔥 Hype</SelectItem>
-                          <SelectItem value="emotional">💜 Emotional</SelectItem>
-                          <SelectItem value="funny">😂 Funny</SelectItem>
-                          <SelectItem value="epic">⚡ Epic</SelectItem>
-                          <SelectItem value="cozy">☕ Cozy</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div 
-                      onClick={() => setFormData({ ...formData, include_levelup_verse: !formData.include_levelup_verse })}
-                      className={`p-3 rounded-xl border-2 cursor-pointer transition-all ${
-                        formData.include_levelup_verse
-                          ? 'border-amber-400 bg-amber-50'
-                          : 'border-gray-200 hover:border-amber-300'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <Checkbox checked={formData.include_levelup_verse} />
-                        <div>
-                          <h4 className="font-semibold text-sm">Include Level-Up Verse</h4>
-                          <p className="text-xs text-gray-600">Add encouragement to level up!</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-                </Card>
-
+              {/* Accessibility - Collapsible */}
+              <Collapsible>
                 <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Share2 className="w-5 h-5" />
-                    TikTok Live Sharing Settings
-                  </CardTitle>
-                  <CardDescription>Configure how your TikTok Live schedules are shared</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="space-y-3">
-                    <Label htmlFor="tiktok_username">Your TikTok Username</Label>
-                    <Input
-                      id="tiktok_username"
-                      placeholder="@username or username"
-                      value={formData.tiktok_username}
-                      onChange={(e) => setFormData({ ...formData, tiktok_username: e.target.value.replace('@', '') })}
-                    />
-                    <p className="text-sm text-gray-500">Required to share your schedule with other ThriveNut users</p>
-                  </div>
-
-                  <div
-                    onClick={() => setFormData({ ...formData, allow_in_community_directory: !formData.allow_in_community_directory })}
-                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                      formData.allow_in_community_directory
-                        ? 'border-purple-500 bg-purple-50'
-                        : 'border-gray-200 hover:border-purple-300'
-                    }`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <Checkbox checked={formData.allow_in_community_directory} />
-                      <div>
-                        <h4 className="font-semibold">Show in Community Directory</h4>
-                        <p className="text-sm text-gray-600">Allow your live schedule to appear in a public directory for other ThriveNut users</p>
+                  <CollapsibleTrigger className="w-full">
+                    <CardHeader className="cursor-pointer hover:bg-gray-50 rounded-t-lg">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Eye className="w-5 h-5" />
+                          <CardTitle>Accessibility Options</CardTitle>
+                        </div>
+                        <ChevronDown className="w-5 h-5 text-gray-500" />
                       </div>
-                    </div>
-                  </div>
-
-                  <div
-                    onClick={() => setFormData({ ...formData, allow_search_by_tiktok_username: !formData.allow_search_by_tiktok_username })}
-                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                      formData.allow_search_by_tiktok_username
-                        ? 'border-purple-500 bg-purple-50'
-                        : 'border-gray-200 hover:border-purple-300'
-                    }`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <Checkbox checked={formData.allow_search_by_tiktok_username} />
-                      <div>
-                        <h4 className="font-semibold">Allow search by TikTok username</h4>
-                        <p className="text-sm text-gray-600">Allow other ThriveNut users to find your shared schedule by searching your TikTok username</p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-                </Card>
-                </motion.div>
-                </TabsContent>
-
-                {/* Accessibility Tab */}
-          <TabsContent value="accessibility">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Eye className="w-5 h-5" />
-                    Accessibility
-                  </CardTitle>
-                  <CardDescription>Customize the interface for your needs</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="space-y-3">
-                    <h4 className="font-semibold">Visual Mode</h4>
-                    {accessibilityModes.map(mode => (
-                      <div
-                        key={mode.id}
-                        onClick={() => {
-                          setFormData({ ...formData, accessibility_mode: mode.id });
-                          if (formData.use_text_to_speech) {
-                            speak(`${mode.name}. ${mode.description}`);
-                          }
-                        }}
-                        className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                          formData.accessibility_mode === mode.id
-                            ? 'border-purple-500 bg-purple-50'
-                            : 'border-gray-200 hover:border-purple-300'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                      <CardDescription className="text-left">Visual modes and text-to-speech</CardDescription>
+                    </CardHeader>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <CardContent className="space-y-6 pt-0">
+                      <div className="space-y-3">
+                        <h4 className="font-semibold">Visual Mode</h4>
+                        {accessibilityModes.map(mode => (
+                          <div
+                            key={mode.id}
+                            onClick={() => setFormData({ ...formData, accessibility_mode: mode.id })}
+                            className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
                               formData.accessibility_mode === mode.id
-                                ? 'border-purple-500'
-                                : 'border-gray-300'
-                            }`}>
-                              {formData.accessibility_mode === mode.id && (
-                                <div className="w-2.5 h-2.5 rounded-full bg-purple-500" />
-                              )}
-                            </div>
-                            <div>
-                              <h4 className="font-semibold">{mode.name}</h4>
-                              <p className="text-sm text-gray-600">{mode.description}</p>
+                                ? 'border-purple-500 bg-purple-50'
+                                : 'border-gray-200 hover:border-purple-300'
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                                formData.accessibility_mode === mode.id ? 'border-purple-500' : 'border-gray-300'
+                              }`}>
+                                {formData.accessibility_mode === mode.id && (
+                                  <div className="w-2.5 h-2.5 rounded-full bg-purple-500" />
+                                )}
+                              </div>
+                              <div>
+                                <h4 className="font-semibold">{mode.name}</h4>
+                                <p className="text-sm text-gray-600">{mode.description}</p>
+                              </div>
                             </div>
                           </div>
-                          {formData.use_text_to_speech && (
-                            <SpeakButton text={`${mode.name}. ${mode.description}`} />
-                          )}
-                        </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
 
-                  <div className="pt-4 border-t">
-                    <div
-                      onClick={() => {
-                        const newValue = !formData.use_text_to_speech;
-                        setFormData({ ...formData, use_text_to_speech: newValue });
-                        if (newValue) {
-                          speak('Text to speech enabled.');
-                        }
-                      }}
-                      className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                        formData.use_text_to_speech
-                          ? 'border-purple-500 bg-purple-50'
-                          : 'border-gray-200 hover:border-purple-300'
-                      }`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <Checkbox checked={formData.use_text_to_speech} />
-                        <div>
-                          <h4 className="font-semibold">Enable Text-to-Speech</h4>
-                          <p className="text-sm text-gray-600">Hear options read aloud</p>
+                      <div className="pt-4 border-t">
+                        <div
+                          onClick={() => setFormData({ ...formData, use_text_to_speech: !formData.use_text_to_speech })}
+                          className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                            formData.use_text_to_speech
+                              ? 'border-purple-500 bg-purple-50'
+                              : 'border-gray-200 hover:border-purple-300'
+                          }`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <Checkbox checked={formData.use_text_to_speech} />
+                            <div>
+                              <h4 className="font-semibold">Enable Text-to-Speech</h4>
+                              <p className="text-sm text-gray-600">Hear options read aloud (works on this page only for now)</p>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                    </CardContent>
+                  </CollapsibleContent>
+                </Card>
+              </Collapsible>
             </motion.div>
           </TabsContent>
+
+          {/* Hidden tabs kept for potential future use */}
         </Tabs>
       </div>
     </div>
