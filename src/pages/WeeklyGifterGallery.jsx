@@ -95,7 +95,14 @@ export default function WeeklyGifterGallery() {
 
   const { data: entries = [], isLoading } = useQuery({
     queryKey: ['giftingEntries', selectedWeek, effectiveEmail],
-    queryFn: () => base44.entities.GiftingEntry.filter({ week: selectedWeek, created_by: effectiveEmail }),
+    queryFn: async () => {
+      // Check both top-level created_by AND data.created_by for impersonation support
+      const allEntries = await base44.entities.GiftingEntry.filter({ week: selectedWeek });
+      return allEntries.filter(e => 
+        e.created_by === effectiveEmail || 
+        e.data?.created_by === effectiveEmail
+      );
+    },
     enabled: !!effectiveEmail,
   });
 
@@ -216,7 +223,7 @@ export default function WeeklyGifterGallery() {
   // Generate summary text
   const generateFormattedText = () => {
     if (sortedEntries.length === 0) return '';
-    let text = `Thank-you shoutout to our top gifters for the week ending ${format(addDays(new Date(selectedWeek), 6), 'MMMM d, yyyy')}!\n\n`;
+    let text = `Thank-you shoutout to our top gifters for the week ending ${format(new Date(selectedWeek), 'MMMM d, yyyy')}!\n\n`;
     sortedEntries.forEach(entry => {
       const rankLabel = entry.rank === '1st' ? '🥇 1st Place' : entry.rank === '2nd' ? '🥈 2nd Place' : entry.rank === '3rd' ? '🥉 3rd Place' : '⭐ Special Shoutout';
       text += `${entry.gift_name} - ${rankLabel}\n`;
