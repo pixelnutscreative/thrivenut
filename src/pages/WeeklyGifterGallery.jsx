@@ -70,9 +70,13 @@ export default function WeeklyGifterGallery() {
     queryKey: ['tiktokContacts', effectiveEmail],
     queryFn: async () => {
       // For impersonation: check data.created_by field which stores the actual owner
-      const allContacts = await base44.entities.TikTokContact.list('display_name');
+      const allContacts = await base44.entities.TikTokContact.list('display_name', 500);
+      console.log('All contacts count:', allContacts.length);
+      console.log('Effective email:', effectiveEmail);
+      console.log('Sample contact:', allContacts[0]);
       return allContacts.filter(c => {
         const dataOwner = c.data?.created_by || c.created_by;
+        console.log('Contact owner check:', c.username, dataOwner, '===', effectiveEmail, dataOwner === effectiveEmail);
         return dataOwner === effectiveEmail;
       });
     },
