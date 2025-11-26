@@ -12,7 +12,9 @@ import SelfCareChecklist from '../components/wellness/SelfCareChecklist';
 import WeeklyGoalCard from '../components/tiktok/WeeklyGoalCard';
 import GoalEditModal from '../components/tiktok/GoalEditModal';
 import OnboardingModal from '../components/onboarding/OnboardingModal';
+import SpecialEventsCard from '../components/dashboard/SpecialEventsCard';
 import { format, startOfWeek } from 'date-fns';
+import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -117,6 +119,15 @@ export default function Dashboard() {
     enabled: !!user,
   });
 
+  // Get effective email for impersonation support
+  const effectiveEmail = user ? getEffectiveUserEmail(user.email) : null;
+
+  const { data: tiktokContacts = [] } = useQuery({
+    queryKey: ['tiktokContacts', effectiveEmail],
+    queryFn: () => base44.entities.TikTokContact.filter({ created_by: effectiveEmail }),
+    enabled: !!effectiveEmail,
+  });
+
   const selfCareMutation = useMutation({
     mutationFn: async ({ taskId, value }) => {
       const today = format(new Date(), 'yyyy-MM-dd');
@@ -197,6 +208,9 @@ export default function Dashboard() {
             improvements={preferences?.improvement_goals || []}
           />
         )}
+
+        {/* Special Events - Birthdays & Sobriety Anniversaries */}
+        <SpecialEventsCard contacts={tiktokContacts} />
 
         {/* Self-Care Checklist (compact) */}
         <div className="bg-white rounded-xl shadow-lg p-6">
