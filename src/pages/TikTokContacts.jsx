@@ -14,8 +14,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Plus, Search, Trash2, Edit, Star, Phone, Mail, 
   ExternalLink, Users, Swords, Gift, Share2, Heart, UserPlus, Video, Calendar, Music, ShoppingBag,
-  ChevronDown, ChevronRight, FolderPlus, Loader2, Upload, Check, X, FileSpreadsheet
+  ChevronDown, ChevronRight, FolderPlus, Loader2, Upload, Check, X, FileSpreadsheet, Filter, MessageCircle
 } from 'lucide-react';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuSeparator, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -50,7 +51,7 @@ export default function TikTokContacts() {
   const [showModal, setShowModal] = useState(false);
   const [editingContact, setEditingContact] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterRole, setFilterRole] = useState('all');
+  const [filterRoles, setFilterRoles] = useState([]);
   const [activeTab, setActiveTab] = useState('all');
   const [formData, setFormData] = useState({
     username: '',
@@ -474,13 +475,24 @@ export default function TikTokContacts() {
     ));
   };
 
+  // Quick filter roles (shown as separate buttons)
+  const quickFilterRoles = ['subscriber', 'superfan', 'irl_friend', 'discord'];
+  // All other roles go in the dropdown
+  const dropdownRoles = Object.keys(roleConfig).filter(r => !quickFilterRoles.includes(r));
+
+  const toggleFilterRole = (role) => {
+    setFilterRoles(prev => 
+      prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role]
+    );
+  };
+
   const filteredContacts = contacts
     .filter(c => {
       const matchesSearch = 
         c.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         c.display_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         c.screen_name?.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesRole = filterRole === 'all' || c.role?.includes(filterRole);
+      const matchesRole = filterRoles.length === 0 || filterRoles.some(role => c.role?.includes(role));
       
       // Tab filtering
       if (activeTab === 'engagement') return matchesSearch && matchesRole && c.engagement_enabled;
@@ -641,36 +653,83 @@ export default function TikTokContacts() {
 
         {/* Search and Filter */}
         <Card>
-          <CardContent className="p-4">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <Input
-                  placeholder="Search contacts..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <Badge
-                  variant={filterRole === 'all' ? 'default' : 'outline'}
-                  className="cursor-pointer"
-                  onClick={() => setFilterRole('all')}
-                >
-                  All
-                </Badge>
-                {Object.entries(roleConfig).map(([key, config]) => (
+          <CardContent className="p-4 space-y-3">
+            {/* Large Search Box */}
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Input
+                placeholder="Search by username or display name..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-12 h-12 text-lg"
+              />
+            </div>
+            
+            {/* Filter Row */}
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Quick Filter Buttons */}
+              {quickFilterRoles.map(role => {
+                const config = roleConfig[role];
+                const Icon = config.icon;
+                const isActive = filterRoles.includes(role);
+                return (
                   <Badge
-                    key={key}
-                    variant={filterRole === key ? 'default' : 'outline'}
-                    className={`cursor-pointer ${filterRole === key ? '' : config.color}`}
-                    onClick={() => setFilterRole(key)}
+                    key={role}
+                    variant={isActive ? 'default' : 'outline'}
+                    className={`cursor-pointer px-3 py-1.5 ${isActive ? 'bg-purple-600' : config.color}`}
+                    onClick={() => toggleFilterRole(role)}
                   >
+                    <Icon className="w-3 h-3 mr-1" />
                     {config.label}
                   </Badge>
-                ))}
-              </div>
+                );
+              })}
+              
+              {/* More Filters Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Filter className="w-4 h-4" />
+                    More Filters
+                    {filterRoles.filter(r => dropdownRoles.includes(r)).length > 0 && (
+                      <Badge variant="secondary" className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                        {filterRoles.filter(r => dropdownRoles.includes(r)).length}
+                      </Badge>
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-56">
+                  <DropdownMenuLabel>Filter by Role</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {dropdownRoles.map(role => {
+                    const config = roleConfig[role];
+                    const Icon = config.icon;
+                    return (
+                      <DropdownMenuCheckboxItem
+                        key={role}
+                        checked={filterRoles.includes(role)}
+                        onCheckedChange={() => toggleFilterRole(role)}
+                      >
+                        <Icon className="w-4 h-4 mr-2" />
+                        {config.label}
+                      </DropdownMenuCheckboxItem>
+                    );
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* Clear Filters */}
+              {filterRoles.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setFilterRoles([])}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X className="w-4 h-4 mr-1" />
+                  Clear ({filterRoles.length})
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
