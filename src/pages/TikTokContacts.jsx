@@ -582,38 +582,30 @@ export default function TikTokContacts() {
               )}
             </div>
 
-            {/* Lead Source */}
-            {contact.lead_source && (
-              <div className="flex items-center gap-1 text-xs text-gray-500">
-                {(() => {
-                  const sourceConfig = leadSourceConfig[contact.lead_source] || { icon: Sparkles, label: contact.lead_source, color: 'text-gray-400' };
-                  const SourceIcon = sourceConfig.icon;
-                  return (
-                    <>
-                      <SourceIcon className={`w-3 h-3 ${sourceConfig.color}`} />
-                      {contact.lead_source === 'Referral' && contact.met_through_name && (
-                        <span className="text-purple-600">{contact.met_through_name}</span>
-                      )}
-                    </>
-                  );
-                })()}
-              </div>
-            )}
-
             {contact.notes && (
               <p className="text-sm text-gray-500 italic line-clamp-2">{contact.notes}</p>
             )}
 
-            {/* Role Icons - All shown, greyed out if not selected */}
-            <div className="flex flex-wrap gap-1">
+            {/* All Toggleable Icons */}
+            <div className="flex flex-wrap items-center gap-1 pt-2 border-t">
+              {/* Role toggles */}
               {Object.entries(roleConfig).map(([roleKey, config]) => {
                 const isActive = contact.role?.includes(roleKey);
                 const RoleIcon = config.icon;
                 return (
-                  <div
+                  <button
                     key={roleKey}
-                    className={`p-1.5 rounded-full transition-all ${
-                      isActive ? config.color : 'bg-gray-100 text-gray-300'
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const newRoles = isActive 
+                        ? (contact.role || []).filter(r => r !== roleKey)
+                        : [...(contact.role || []), roleKey];
+                      toggleFeatureMutation.mutate({ id: contact.id, field: 'role', currentValue: !isActive ? newRoles : newRoles });
+                      base44.entities.TikTokContact.update(contact.id, { role: newRoles });
+                      queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] });
+                    }}
+                    className={`p-1.5 rounded-full transition-all cursor-pointer hover:scale-110 ${
+                      isActive ? config.color : 'bg-gray-100 text-gray-300 hover:bg-gray-200'
                     }`}
                     title={config.label}
                   >
@@ -622,9 +614,10 @@ export default function TikTokContacts() {
                     ) : (
                       <span className="text-[10px] font-bold leading-none">{config.text}</span>
                     )}
-                  </div>
+                  </button>
                 );
               })}
+
               {/* Custom roles */}
               {contact.role?.filter(r => r.startsWith('custom:')).map(role => (
                 <div
@@ -635,54 +628,66 @@ export default function TikTokContacts() {
                   {role.replace('custom:', '')}
                 </div>
               ))}
-            </div>
 
-            {/* Feature Toggles */}
-            <div className="flex items-center gap-2 pt-2 border-t">
+              {/* Spacer */}
+              <div className="flex-1" />
+
+              {/* Lead Source icon */}
+              {contact.lead_source && (() => {
+                const sourceConfig = leadSourceConfig[contact.lead_source] || { icon: Sparkles, label: contact.lead_source, color: 'text-gray-400' };
+                const SourceIcon = sourceConfig.icon;
+                return (
+                  <div
+                    className={`p-1.5 rounded-full bg-gray-100 ${sourceConfig.color}`}
+                    title={`Lead: ${sourceConfig.label}${contact.lead_source === 'Referral' && contact.met_through_name ? ` (${contact.met_through_name})` : ''}`}
+                  >
+                    <SourceIcon className="w-3 h-3" />
+                  </div>
+                );
+              })()}
+
+              {/* Feature toggles */}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   toggleFeatureMutation.mutate({ id: contact.id, field: 'engagement_enabled', currentValue: contact.engagement_enabled });
                 }}
-                className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs transition-all ${
+                className={`p-1.5 rounded-full transition-all cursor-pointer hover:scale-110 ${
                   contact.engagement_enabled 
                     ? 'bg-purple-100 text-purple-700' 
-                    : 'bg-gray-100 text-gray-400 hover:bg-purple-50 hover:text-purple-500'
+                    : 'bg-gray-100 text-gray-300 hover:bg-gray-200'
                 }`}
-                title="Toggle Engagement Tracking"
+                title="Engagement Tracking"
               >
                 <Heart className={`w-3 h-3 ${contact.engagement_enabled ? 'fill-purple-500' : ''}`} />
-                <span className="hidden sm:inline">Engage</span>
               </button>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   toggleFeatureMutation.mutate({ id: contact.id, field: 'calendar_enabled', currentValue: contact.calendar_enabled });
                 }}
-                className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs transition-all ${
+                className={`p-1.5 rounded-full transition-all cursor-pointer hover:scale-110 ${
                   contact.calendar_enabled 
                     ? 'bg-blue-100 text-blue-700' 
-                    : 'bg-gray-100 text-gray-400 hover:bg-blue-50 hover:text-blue-500'
+                    : 'bg-gray-100 text-gray-300 hover:bg-gray-200'
                 }`}
-                title="Toggle Calendar"
+                title="Creator Calendar"
               >
                 <Calendar className={`w-3 h-3 ${contact.calendar_enabled ? 'fill-blue-500' : ''}`} />
-                <span className="hidden sm:inline">Calendar</span>
               </button>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   toggleFeatureMutation.mutate({ id: contact.id, field: 'is_gifter', currentValue: contact.is_gifter });
                 }}
-                className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs transition-all ${
+                className={`p-1.5 rounded-full transition-all cursor-pointer hover:scale-110 ${
                   contact.is_gifter 
                     ? 'bg-amber-100 text-amber-700' 
-                    : 'bg-gray-100 text-gray-400 hover:bg-amber-50 hover:text-amber-500'
+                    : 'bg-gray-100 text-gray-300 hover:bg-gray-200'
                 }`}
-                title="Toggle Gifter"
+                title="Gifter for Songs"
               >
                 <Gift className={`w-3 h-3 ${contact.is_gifter ? 'fill-amber-500' : ''}`} />
-                <span className="hidden sm:inline">Gifter</span>
               </button>
             </div>
           </div>
