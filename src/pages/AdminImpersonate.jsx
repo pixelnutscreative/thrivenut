@@ -10,8 +10,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { 
   Shield, UserPlus, Users, Search, Loader2, Eye, 
-  UserCog, Plus, ExternalLink, Gift, Music
+  UserCog, Plus, ExternalLink, Gift, Music, Trash2, 
+  PauseCircle, PlayCircle, AlertTriangle, MoreVertical
 } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
@@ -26,6 +28,8 @@ export default function AdminImpersonate() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newAccountUsername, setNewAccountUsername] = useState('');
   const [newAccountDisplayName, setNewAccountDisplayName] = useState('');
+  const [actionModal, setActionModal] = useState(null); // { type: 'delete' | 'toggle', account }
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -77,6 +81,68 @@ export default function AdminImpersonate() {
     },
   });
 
+  // Toggle account status mutation
+  const toggleStatusMutation = useMutation({
+    mutationFn: async ({ accountId, currentStatus }) => {
+      const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+      return base44.entities.ManagedAccount.update(accountId, { status: newStatus });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['managedAccounts'] });
+      setActionModal(null);
+    },
+  });
+
+  // Delete all account data
+  const deleteAccountData = async (account) => {
+    setDeleting(true);
+    const email = account.identifier;
+    
+    try {
+      // Delete all TikTokContacts
+      const contacts = await base44.entities.TikTokContact.filter({ created_by: email });
+      for (const c of contacts) {
+        await base44.entities.TikTokContact.delete(c.id);
+      }
+
+      // Delete all GiftingEntries
+      const entries = await base44.entities.GiftingEntry.filter({ created_by: email });
+      for (const e of entries) {
+        await base44.entities.GiftingEntry.delete(e.id);
+      }
+
+      // Delete all ContentGoals
+      const goals = await base44.entities.ContentGoal.filter({ created_by: email });
+      for (const g of goals) {
+        await base44.entities.ContentGoal.delete(g.id);
+      }
+
+      // Delete all LiveSchedules
+      const schedules = await base44.entities.LiveSchedule.filter({ created_by: email });
+      for (const s of schedules) {
+        await base44.entities.LiveSchedule.delete(s.id);
+      }
+
+      // Delete UserPreferences
+      const prefs = await base44.entities.UserPreferences.filter({ user_email: email });
+      for (const p of prefs) {
+        await base44.entities.UserPreferences.delete(p.id);
+      }
+
+      // Update managed account status to deleted
+      if (account.type === 'managed') {
+        await base44.entities.ManagedAccount.update(account.id, { status: 'deleted' });
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['managedAccounts'] });
+      queryClient.invalidateQueries({ queryKey: ['allUserPreferences'] });
+      setActionModal(null);
+    } catch (err) {
+      console.error('Error deleting account data:', err);
+    }
+    setDeleting(false);
+  };
+
   // Start impersonation
   const startImpersonation = (identifier) => {
     // Store in sessionStorage so it persists across page navigations
@@ -106,6 +172,7 @@ export default function AdminImpersonate() {
       const username = (acc.data?.tiktok_username || acc.tiktok_username || '').toLowerCase();
       const displayName = acc.data?.display_name || acc.display_name;
       const claimedBy = acc.data?.claimed_by_email || acc.claimed_by_email;
+      const status = acc.data?.status || acc.status || 'active';
       return {
         type: 'managed',
         id: acc.id,
@@ -114,9 +181,10 @@ export default function AdminImpersonate() {
         display_name: displayName,
         claimed: !!claimedBy,
         claimed_by: claimedBy,
+        status: status,
         created_date: acc.created_date
       };
-    }),
+    }).filter(acc => acc.status !== 'deleted'),
     ...allPreferences
       .filter(p => !p.user_email?.startsWith('managed_'))
       .map(pref => ({
@@ -245,6 +313,9 @@ export default function AdminImpersonate() {
                             {account.claimed && (
                               <Badge className="bg-amber-100 text-amber-700">Claimed</Badge>
                             )}
+                            {account.status === 'inactive' && (
+                              <Badge className="bg-gray-100 text-gray-600">Inactive</Badge>
+                            )}
                           </div>
                           <p className="text-sm text-gray-500">
                             {account.email || account.identifier}
@@ -272,6 +343,34 @@ export default function AdminImpersonate() {
                           <Eye className="w-4 h-4 mr-2" />
                           Impersonate
                         </Button>
+                        
+                        {account.type === 'managed' && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button size="sm" variant="ghost">
+                                <MoreVertical className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem 
+                                onClick={() => setActionModal({ type: 'toggle', account })}
+                              >
+                                {account.status === 'inactive' ? (
+                                  <><PlayCircle className="w-4 h-4 mr-2 text-green-600" /> Set Active</>
+                                ) : (
+                                  <><PauseCircle className="w-4 h-4 mr-2 text-amber-600" /> Set Inactive</>
+                                )}
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem 
+                                onClick={() => setActionModal({ type: 'delete', account })}
+                                className="text-red-600"
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" /> Delete All Data
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
                       </div>
                     </div>
                   </CardContent>
@@ -295,6 +394,78 @@ export default function AdminImpersonate() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Action Modal (Toggle Status / Delete) */}
+      <Dialog open={!!actionModal} onOpenChange={(open) => !open && setActionModal(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className={actionModal?.type === 'delete' ? 'text-red-600' : ''}>
+              {actionModal?.type === 'delete' ? (
+                <span className="flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5" />
+                  Delete All Account Data
+                </span>
+              ) : (
+                actionModal?.account?.status === 'inactive' ? 'Reactivate Account' : 'Deactivate Account'
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="py-4">
+            {actionModal?.type === 'delete' ? (
+              <div className="space-y-3">
+                <p className="text-gray-600">
+                  This will permanently delete <strong>ALL data</strong> for <strong>@{actionModal?.account?.tiktok_username}</strong>:
+                </p>
+                <ul className="text-sm text-gray-600 list-disc list-inside space-y-1">
+                  <li>All TikTok contacts</li>
+                  <li>All gifting entries</li>
+                  <li>All content goals</li>
+                  <li>All live schedules</li>
+                  <li>User preferences</li>
+                </ul>
+                <p className="text-red-600 font-medium text-sm">This action cannot be undone.</p>
+              </div>
+            ) : (
+              <p className="text-gray-600">
+                {actionModal?.account?.status === 'inactive' ? (
+                  <>Reactivate <strong>@{actionModal?.account?.tiktok_username}</strong>? They will appear in the normal list again.</>
+                ) : (
+                  <>Set <strong>@{actionModal?.account?.tiktok_username}</strong> as inactive? Their data will be preserved but they'll be marked as inactive (e.g., if subscription lapses).</>
+                )}
+              </p>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setActionModal(null)}>
+              Cancel
+            </Button>
+            {actionModal?.type === 'delete' ? (
+              <Button
+                onClick={() => deleteAccountData(actionModal.account)}
+                disabled={deleting}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                {deleting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Trash2 className="w-4 h-4 mr-2" />}
+                Delete All Data
+              </Button>
+            ) : (
+              <Button
+                onClick={() => toggleStatusMutation.mutate({ 
+                  accountId: actionModal?.account?.id, 
+                  currentStatus: actionModal?.account?.status 
+                })}
+                disabled={toggleStatusMutation.isPending}
+                className={actionModal?.account?.status === 'inactive' ? 'bg-green-600 hover:bg-green-700' : 'bg-amber-600 hover:bg-amber-700'}
+              >
+                {toggleStatusMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                {actionModal?.account?.status === 'inactive' ? 'Reactivate' : 'Set Inactive'}
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Create Account Modal */}
       <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
