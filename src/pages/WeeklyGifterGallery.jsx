@@ -95,29 +95,18 @@ export default function WeeklyGifterGallery() {
   const { data: entries = [], isLoading } = useQuery({
     queryKey: ['giftingEntries', selectedWeek, effectiveEmail],
     queryFn: async () => {
-      // Get ALL entries for this week, then filter by owner
+      // Get ALL entries, then filter by week and owner
       const allEntries = await base44.entities.GiftingEntry.list('-created_date', 200);
       
-      console.log('=== ENTRIES DEBUG ===');
-      console.log('Total entries fetched:', allEntries.length);
-      console.log('Selected week:', selectedWeek);
-      console.log('Effective email:', effectiveEmail);
-      console.log('Sample entry:', JSON.stringify(allEntries[0], null, 2));
-      
-      const filtered = allEntries.filter(e => {
-        // Check if week matches (could be nested or flat)
+      return allEntries.filter(e => {
+        // Week is stored in data.week
         const entryWeek = e.data?.week || e.week;
         if (entryWeek !== selectedWeek) return false;
         
-        // Check owner - nested data.created_by for moved records
+        // Owner is stored in data.created_by (for impersonation records)
         const owner = e.data?.created_by || e.created_by;
-        const matches = owner === effectiveEmail;
-        console.log('Entry check:', e.id, 'week:', entryWeek, 'owner:', owner, 'matches:', matches);
-        return matches;
+        return owner === effectiveEmail;
       });
-      
-      console.log('Filtered entries count:', filtered.length);
-      return filtered;
     },
     enabled: !!effectiveEmail,
   });
