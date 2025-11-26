@@ -101,16 +101,22 @@ export default function AdminImpersonate() {
 
   // Combine managed accounts and real users for display
   const allAccounts = [
-    ...managedAccounts.map(acc => ({
-      type: 'managed',
-      id: acc.id,
-      identifier: `managed_${acc.tiktok_username}@thrivenut.app`,
-      tiktok_username: acc.tiktok_username,
-      display_name: acc.display_name,
-      claimed: !!acc.claimed_by_email,
-      claimed_by: acc.claimed_by_email,
-      created_date: acc.created_date
-    })),
+    ...managedAccounts.map(acc => {
+      // Handle both nested data and flat structure
+      const username = acc.data?.tiktok_username || acc.tiktok_username;
+      const displayName = acc.data?.display_name || acc.display_name;
+      const claimedBy = acc.data?.claimed_by_email || acc.claimed_by_email;
+      return {
+        type: 'managed',
+        id: acc.id,
+        identifier: `managed_${username}@thrivenut.app`,
+        tiktok_username: username,
+        display_name: displayName,
+        claimed: !!claimedBy,
+        claimed_by: claimedBy,
+        created_date: acc.created_date
+      };
+    }),
     ...allPreferences
       .filter(p => !p.user_email?.startsWith('managed_'))
       .map(pref => ({
