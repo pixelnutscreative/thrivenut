@@ -79,7 +79,14 @@ export default function WeeklyGifterGallery() {
 
   const { data: contacts = [] } = useQuery({
     queryKey: ['tiktokContacts', effectiveEmail],
-    queryFn: () => base44.entities.TikTokContact.filter({ created_by: effectiveEmail }, 'display_name'),
+    queryFn: async () => {
+      // For impersonation: check data.created_by field which stores the actual owner
+      const allContacts = await base44.entities.TikTokContact.list('display_name');
+      return allContacts.filter(c => {
+        const dataOwner = c.data?.created_by || c.created_by;
+        return dataOwner === effectiveEmail;
+      });
+    },
     enabled: !!effectiveEmail,
   });
 
