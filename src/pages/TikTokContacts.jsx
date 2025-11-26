@@ -336,6 +336,79 @@ export default function TikTokContacts() {
     }));
   };
 
+  // CSV parsing function
+  const handleCsvUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    setImportError(null);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target.result;
+      const lines = text.split('\n');
+      if (lines.length < 2) {
+        setImportError('CSV file appears to be empty');
+        return;
+      }
+      
+      // Parse header row
+      const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g, ''));
+      
+      // Find column indices - TikTok Leads Manager format
+      const usernameIdx = headers.findIndex(h => h === 'username' || h.includes('username'));
+      const nameIdx = headers.findIndex(h => h === 'name' || h === 'display name');
+      const phoneIdx = headers.findIndex(h => h.includes('phone'));
+      const emailIdx = headers.findIndex(h => h === 'email' || h.includes('email'));
+      
+      if (usernameIdx === -1) {
+        setImportError('Could not find Username column in CSV');
+        return;
+      }
+      
+      // Parse data rows
+      const parsed = [];
+      for (let i = 1; i < lines.length; i++) {
+        if (!lines[i].trim()) continue;
+        
+        // Simple CSV parsing (handles basic cases)
+        const values = lines[i].split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+        
+        const username = values[usernameIdx]?.replace('@', '').trim();
+        if (!username) continue;
+        
+        parsed.push({
+          username,
+          display_name: nameIdx >= 0 ? values[nameIdx] : '',
+          phone: phoneIdx >= 0 ? values[phoneIdx] : '',
+          email: emailIdx >= 0 ? values[emailIdx] : '',
+          selected: true,
+        });
+      }
+      
+      if (parsed.length === 0) {
+        setImportError('No valid contacts found in CSV');
+        return;
+      }
+      
+      setCsvData(parsed);
+      setShowImportModal(true);
+    };
+    reader.readAsText(file);
+    e.target.value = ''; // Reset input
+  };
+
+  const toggleCsvSelection = (index) => {
+    setCsvData(prev => prev.map((item, i) => 
+      i === index ? { ...item, selected: !item.selected } : item
+    ));
+  };
+
+  const updateCsvItem = (index, field, value) => {
+    setCsvData(prev => prev.map((item, i) => 
+      i === index ? { ...item, [field]: value } : item
+    ));
+  };
+
   const filteredContacts = contacts
     .filter(c => {
       const matchesSearch = 
