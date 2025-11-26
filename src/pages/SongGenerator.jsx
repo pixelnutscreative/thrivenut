@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Music, Loader2, Copy, RefreshCw, Sparkles, Users, Send, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
 
 const styles = [
   { value: 'fun and upbeat', label: '🎉 Fun & Upbeat' },
@@ -38,19 +39,22 @@ export default function SongGenerator() {
     base44.auth.me().then(setUser).catch(() => {});
   }, []);
 
+  // Get effective email (real user or impersonated)
+  const effectiveEmail = user ? getEffectiveUserEmail(user.email) : null;
+
   const { data: preferences } = useQuery({
-    queryKey: ['preferences', user?.email],
+    queryKey: ['preferences', effectiveEmail],
     queryFn: async () => {
-      const prefs = await base44.entities.UserPreferences.filter({ user_email: user.email });
+      const prefs = await base44.entities.UserPreferences.filter({ user_email: effectiveEmail });
       return prefs[0] || null;
     },
-    enabled: !!user,
+    enabled: !!effectiveEmail,
   });
 
   const { data: contacts = [] } = useQuery({
-    queryKey: ['tiktokContacts', user?.email],
-    queryFn: () => base44.entities.TikTokContact.filter({ created_by: user.email }, 'display_name'),
-    enabled: !!user,
+    queryKey: ['tiktokContacts', effectiveEmail],
+    queryFn: () => base44.entities.TikTokContact.filter({ created_by: effectiveEmail }, 'display_name'),
+    enabled: !!effectiveEmail,
   });
 
   const gifters = contacts.filter(c => c.is_gifter);

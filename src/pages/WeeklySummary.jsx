@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Copy, Download, Loader2, Trophy, Medal, Award, Music, Send, Check, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
+import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
 
 const SUNNY_SONGBIRD_EMAIL = 'sunnysongbird@example.com'; // Replace with actual email
 
@@ -37,25 +38,28 @@ export default function WeeklySummary() {
     base44.auth.me().then(setUser).catch(() => {});
   }, []);
 
+  // Get effective email (real user or impersonated)
+  const effectiveEmail = user ? getEffectiveUserEmail(user.email) : null;
+
   const { data: preferences } = useQuery({
-    queryKey: ['preferences', user?.email],
+    queryKey: ['preferences', effectiveEmail],
     queryFn: async () => {
-      const prefs = await base44.entities.UserPreferences.filter({ user_email: user.email });
+      const prefs = await base44.entities.UserPreferences.filter({ user_email: effectiveEmail });
       return prefs[0] || null;
     },
-    enabled: !!user,
+    enabled: !!effectiveEmail,
   });
 
   const { data: entries = [], isLoading } = useQuery({
-    queryKey: ['giftingEntries', selectedWeek, user?.email],
-    queryFn: () => base44.entities.GiftingEntry.filter({ week: selectedWeek, created_by: user.email }),
-    enabled: !!user,
+    queryKey: ['giftingEntries', selectedWeek, effectiveEmail],
+    queryFn: () => base44.entities.GiftingEntry.filter({ week: selectedWeek, created_by: effectiveEmail }),
+    enabled: !!effectiveEmail,
   });
 
   const { data: contacts = [] } = useQuery({
-    queryKey: ['tiktokContacts', user?.email],
-    queryFn: () => base44.entities.TikTokContact.filter({ created_by: user.email }),
-    enabled: !!user,
+    queryKey: ['tiktokContacts', effectiveEmail],
+    queryFn: () => base44.entities.TikTokContact.filter({ created_by: effectiveEmail }),
+    enabled: !!effectiveEmail,
   });
 
   const updateEntryMutation = useMutation({
