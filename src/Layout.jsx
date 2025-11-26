@@ -27,7 +27,8 @@ import {
   Music,
   Star,
   Lock,
-  UserCog
+  UserCog,
+  SettingsIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import TikTokAccessGate from './components/access/TikTokAccessGate';
@@ -118,6 +119,7 @@ export default function Layout({ children, currentPageName }) {
   // Filter and order nav items based on enabled modules and feature order
   const getOrderedNavItems = () => {
     // First filter based on enabled modules - but SHOW TikTok items always (gated by popup)
+    // Also show disabled modules with a way to enable them
     let filtered = allNavItems.filter(item => {
       if (item.alwaysShow) return true;
       // Admin only items
@@ -126,6 +128,8 @@ export default function Layout({ children, currentPageName }) {
       if (item.showWhenNoTikTokAccess) return !hasTikTokAccess;
       // Show TikTok items for everyone (they'll be gated by popup)
       if (item.requiresTikTokAccess) return true;
+      // Show all module sections (even disabled ones) so users can enable them
+      if (item.isSection) return true;
       if (item.moduleId && !enabledModules.includes(item.moduleId)) return false;
       return true;
     }).map(item => {
@@ -393,30 +397,44 @@ export default function Layout({ children, currentPageName }) {
 
               if (item.isSection) {
                                     const isLocked = item.requiresTikTokAccess && !hasTikTokAccess;
+                                    const isModuleDisabled = item.moduleId && !enabledModules.includes(item.moduleId);
                                     return (
                                       <div key={item.name}>
-                                        <button
-                                          onClick={(e) => {
-                                            if (isLocked) {
-                                              setShowAccessGate(true);
-                                            } else {
-                                              toggleSection(item.name);
-                                            }
-                                          }}
-                                          className={`w-full flex items-center justify-between px-4 py-2 rounded-xl transition-all ${
-                                            hasActiveSubItem 
-                                              ? (isDark ? 'bg-gray-700 text-teal-400' : 'bg-teal-50 text-teal-700')
-                                              : (isDark ? 'text-gray-300 hover:bg-gray-700/50' : 'text-gray-700 hover:bg-teal-50')
-                                          }`}
-                                        >
-                                          <div className="flex items-center gap-3">
-                                            <Icon className="w-5 h-5" />
-                                            <span className="font-medium">{item.name}</span>
-                                            {isLocked && <Lock className="w-3 h-3 text-amber-500" />}
-                                          </div>
-                                          {!isLocked && (isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />)}
-                                        </button>
-                                        {isExpanded && !isLocked && (
+                                        <div className="flex items-center">
+                                          <button
+                                            onClick={(e) => {
+                                              if (isLocked) {
+                                                setShowAccessGate(true);
+                                              } else if (!isModuleDisabled) {
+                                                toggleSection(item.name);
+                                              }
+                                            }}
+                                            className={`flex-1 flex items-center justify-between px-4 py-2 rounded-xl transition-all ${
+                                              isModuleDisabled 
+                                                ? (isDark ? 'text-gray-500' : 'text-gray-400')
+                                                : hasActiveSubItem 
+                                                  ? (isDark ? 'bg-gray-700 text-teal-400' : 'bg-teal-50 text-teal-700')
+                                                  : (isDark ? 'text-gray-300 hover:bg-gray-700/50' : 'text-gray-700 hover:bg-teal-50')
+                                            }`}
+                                          >
+                                            <div className="flex items-center gap-3">
+                                              <Icon className={`w-5 h-5 ${isModuleDisabled ? 'opacity-50' : ''}`} />
+                                              <span className={`font-medium ${isModuleDisabled ? 'opacity-50' : ''}`}>{item.name}</span>
+                                              {isLocked && <Lock className="w-3 h-3 text-amber-500" />}
+                                            </div>
+                                            {!isLocked && !isModuleDisabled && (isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />)}
+                                          </button>
+                                          {isModuleDisabled && (
+                                            <Link
+                                              to={createPageUrl('Settings')}
+                                              className={`p-1 rounded hover:bg-gray-200 ${isDark ? 'hover:bg-gray-700' : ''}`}
+                                              title="Enable in Settings"
+                                            >
+                                              <Settings className="w-4 h-4 text-gray-400 hover:text-teal-500" />
+                                            </Link>
+                                          )}
+                                        </div>
+                                        {isExpanded && !isLocked && !isModuleDisabled && (
                                           <div className="ml-4 mt-1 space-y-1">
                                             {item.subItems.filter(sub => {
                                               if (sub.moduleId && !enabledModules.includes(sub.moduleId)) return false;
