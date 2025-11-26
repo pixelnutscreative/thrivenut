@@ -114,22 +114,18 @@ export default function WeeklyGifterGallery() {
     queryFn: async () => {
       const allEntries = await base44.entities.GiftingEntry.list('-created_date', 500);
       
-      console.log('GALLERY DEBUG: effectiveEmail =', effectiveEmail);
-      console.log('GALLERY DEBUG: selectedWeek =', selectedWeek);
-      console.log('GALLERY DEBUG: total entries =', allEntries.length);
-      
-      const filtered = allEntries.filter(e => {
+      // Filter: check data.created_by first (for impersonated records), then top-level created_by
+      return allEntries.filter(e => {
         const entryWeek = e.data?.week;
-        const owner = e.data?.created_by || e.created_by;
-        const match = entryWeek === selectedWeek && owner === effectiveEmail;
-        if (entryWeek === selectedWeek) {
-          console.log('GALLERY DEBUG: week match, owner =', owner, 'effectiveEmail =', effectiveEmail, 'match =', match);
+        if (entryWeek !== selectedWeek) return false;
+        
+        // data.created_by is set when impersonating - check it FIRST
+        if (e.data?.created_by) {
+          return e.data.created_by === effectiveEmail;
         }
-        return match;
+        // Otherwise use top-level created_by
+        return e.created_by === effectiveEmail;
       });
-      
-      console.log('GALLERY DEBUG: filtered count =', filtered.length);
-      return filtered;
     },
     enabled: !!effectiveEmail,
   });
