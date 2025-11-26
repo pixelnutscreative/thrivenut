@@ -177,12 +177,12 @@ export default function TikTokContacts() {
       const results = [];
       for (const contact of contactsToImport) {
         if (!contact.selected) continue;
-        
+
         // Check if username already exists in MY contacts
         const existing = contacts.find(c => 
           c.username?.toLowerCase() === contact.username?.toLowerCase()
         );
-        
+
         // Check master database for shared display_name/phonetic
         const masterMatch = allMasterContacts.find(c => {
           const cUsername = (c.data?.username || c.username || '').toLowerCase();
@@ -190,14 +190,16 @@ export default function TikTokContacts() {
         });
         const masterDisplayName = masterMatch?.data?.display_name || masterMatch?.display_name;
         const masterPhonetic = masterMatch?.data?.phonetic || masterMatch?.phonetic;
-        
+
         if (existing) {
-          // Update existing contact - use master DB display_name/phonetic if available, keep private data (phone/email)
+          // Update existing contact - use master DB display_name/phonetic if available, keep private data
           await base44.entities.TikTokContact.update(existing.id, {
             display_name: masterDisplayName || contact.display_name || existing.display_name,
             phonetic: masterPhonetic || existing.phonetic,
             phone: contact.phone || existing.phone,
             email: contact.email || existing.email,
+            lead_received_at: contact.lead_received_at || existing.lead_received_at,
+            lead_source: contact.lead_source || existing.lead_source,
           });
           results.push({ ...contact, action: 'updated' });
         } else {
@@ -209,6 +211,8 @@ export default function TikTokContacts() {
             phone: contact.phone,
             email: contact.email,
             role: ['custom:TikTok Lead'],
+            lead_received_at: contact.lead_received_at,
+            lead_source: contact.lead_source,
           });
           results.push({ ...contact, action: 'created' });
         }
@@ -355,11 +359,31 @@ export default function TikTokContacts() {
     }));
   };
 
-  // CSV parsing function
+  // CSV parsing function - handles quoted values with commas inside
+  const parseCSVLine = (line) => {
+    const values = [];
+    let current = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      if (char === '"') {
+        inQuotes = !inQuotes;
+      } else if (char === ',' && !inQuotes) {
+        values.push(current.trim().replace(/^"|"$/g, ''));
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    values.push(current.trim().replace(/^"|"$/g, ''));
+    return values;
+  };
+
   const handleCsvUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    
+
     setImportError(null);
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -369,46 +393,68 @@ export default function TikTokContacts() {
         setImportError('CSV file appears to be empty');
         return;
       }
-      
+
       // Parse header row
-      const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g, ''));
-      
+      const headers = parseCSVLine(lines[0]).map(h => h.toLowerCase());
+
       // Find column indices - TikTok Leads Manager format
-      const usernameIdx = headers.findIndex(h => h === 'username' || h.includes('username'));
-      const nameIdx = headers.findIndex(h => h === 'name' || h === 'display name');
+      const usernameIdx = headers.findIndex(h => h === 'user name' || h === 'username' || h.includes('user name'));
+      const displayNameIdx = headers.findIndex(h => h === 'display name' || h === 'displayname');
+      const nameIdx = headers.findIndex(h => h === 'name' && !h.includes('display') && !h.includes('user'));
       const phoneIdx = headers.findIndex(h => h.includes('phone'));
       const emailIdx = headers.findIndex(h => h === 'email' || h.includes('email'));
-      
+      const receivedDateIdx = headers.findIndex(h => h === 'received date' || h.includes('received date'));
+      const receivedTimeIdx = headers.findIndex(h => h === 'received time' || h.includes('received time'));
+      const sourceIdx = headers.findIndex(h => h === 'source scenario' || h.includes('source scenario') || h === 'source');
+
       if (usernameIdx === -1) {
-        setImportError('Could not find Username column in CSV');
+        setImportError('Could not find "User Name" column in CSV. Found columns: ' + headers.join(', '));
         return;
       }
-      
+
       // Parse data rows
       const parsed = [];
       for (let i = 1; i < lines.length; i++) {
         if (!lines[i].trim()) continue;
-        
-        // Simple CSV parsing (handles basic cases)
-        const values = lines[i].split(',').map(v => v.trim().replace(/^"|"$/g, ''));
-        
+
+        const values = parseCSVLine(lines[i]);
+
         const username = values[usernameIdx]?.replace('@', '').trim();
         if (!username) continue;
-        
+
+        // Combine date and time if both exist
+        let leadReceivedAt = '';
+        if (receivedDateIdx >= 0 && values[receivedDateIdx]) {
+          const datePart = values[receivedDateIdx];
+          const timePart = receivedTimeIdx >= 0 ? values[receivedTimeIdx] : '';
+          if (timePart) {
+            // Parse MM/DD/YYYY format and combine with time
+            const [month, day, year] = datePart.split('/');
+            if (month && day && year) {
+              leadReceivedAt = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${timePart}`;
+            }
+          } else {
+            leadReceivedAt = datePart;
+          }
+        }
+
         parsed.push({
           username,
-          display_name: nameIdx >= 0 ? values[nameIdx] : '',
+          display_name: displayNameIdx >= 0 ? values[displayNameIdx] : '',
+          name: nameIdx >= 0 ? values[nameIdx] : '',
           phone: phoneIdx >= 0 ? values[phoneIdx] : '',
           email: emailIdx >= 0 ? values[emailIdx] : '',
+          lead_received_at: leadReceivedAt,
+          lead_source: sourceIdx >= 0 ? values[sourceIdx] : '',
           selected: true,
         });
       }
-      
+
       if (parsed.length === 0) {
         setImportError('No valid contacts found in CSV');
         return;
       }
-      
+
       setCsvData(parsed);
       setShowImportModal(true);
     };
