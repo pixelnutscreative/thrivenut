@@ -915,7 +915,7 @@ export default function WeeklyGifterGallery() {
               </CardContent>
             </Card>
 
-            {analyzing && (
+            {analyzing && !extractedData?.gifters?.length && (
               <Card>
                 <CardContent className="p-8 text-center">
                   <Loader2 className="w-12 h-12 animate-spin text-purple-600 mx-auto mb-4" />
@@ -931,22 +931,29 @@ export default function WeeklyGifterGallery() {
               </Alert>
             )}
 
-            {extractedData && (
+            {extractedData && (extractedData.gifters?.length > 0 || analyzing) && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-purple-500" /> Review Extracted Data
+                    {analyzing && <Loader2 className="w-5 h-5 animate-spin text-purple-500" />}
+                    <Sparkles className="w-5 h-5 text-purple-500" /> 
+                    {analyzing ? 'Extracting Gifters...' : 'Review Extracted Data'}
+                    {extractedData.gifters?.length > 0 && (
+                      <Badge variant="secondary">{extractedData.gifters.length} found</Badge>
+                    )}
                   </CardTitle>
                   <CardDescription>{extractedData.notes}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {extractedData.gifters?.length === 0 ? (
+                  {extractedData.gifters?.length === 0 && !analyzing ? (
                     <p className="text-gray-500 text-center py-4">No gifters detected in the screenshot</p>
                   ) : (
                     <>
                       {extractedData.gifters?.map((gifter, index) => (
-                        <div
+                        <motion.div
                           key={index}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
                           className={`p-4 rounded-lg space-y-3 border-2 transition-all cursor-pointer ${
                             gifter.selected ? 'bg-teal-50 border-teal-400' : 'bg-white border-gray-200'
                           }`}
@@ -963,7 +970,7 @@ export default function WeeklyGifterGallery() {
                               <span className="font-semibold">{gifter.rank || 'Gifter'}</span>
                               {gifter.matched_contact && (
                                 <Badge className="bg-green-100 text-green-700 text-xs">
-                                  <UserCheck className="w-3 h-3 mr-1" /> Matched
+                                  <UserCheck className="w-3 h-3 mr-1" /> From Master DB
                                 </Badge>
                               )}
                             </div>
@@ -978,7 +985,7 @@ export default function WeeklyGifterGallery() {
                             <Input value={gifter.phonetic || ''} onChange={(e) => updateExtractedGifter(index, 'phonetic', e.target.value)} placeholder="Phonetic 🎵" />
                             <Input value={gifter.gift_name || ''} onChange={(e) => updateExtractedGifter(index, 'gift_name', e.target.value)} placeholder="Gift name" />
                           </div>
-                        </div>
+                        </motion.div>
                       ))}
 
                       {/* Add Special Shoutout */}
@@ -996,22 +1003,24 @@ export default function WeeklyGifterGallery() {
                         <Star className="w-4 h-4 mr-2" /> Add Special Shoutout
                       </Button>
 
-                      <div className="flex gap-3 pt-4">
-                        <Button variant="outline" onClick={() => { setExtractedData(null); setPreviewUrls([]); }} className="flex-1">
-                          Cancel
-                        </Button>
-                        <Button
-                          onClick={handleConfirmImport}
-                          disabled={createEntriesMutation.isPending || !extractedData.gifters?.filter(g => g.selected).length}
-                          className="flex-1 bg-purple-600 hover:bg-purple-700"
-                        >
-                          {createEntriesMutation.isPending ? (
-                            <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Importing...</>
-                          ) : (
-                            <><Check className="w-4 h-4 mr-2" /> Import {extractedData.gifters?.filter(g => g.selected).length} Selected</>
-                          )}
-                        </Button>
-                      </div>
+                      {!analyzing && (
+                        <div className="flex gap-3 pt-4">
+                          <Button variant="outline" onClick={() => { setExtractedData(null); setPreviewUrls([]); }} className="flex-1">
+                            Cancel
+                          </Button>
+                          <Button
+                            onClick={handleConfirmImport}
+                            disabled={createEntriesMutation.isPending || !extractedData.gifters?.filter(g => g.selected).length}
+                            className="flex-1 bg-purple-600 hover:bg-purple-700"
+                          >
+                            {createEntriesMutation.isPending ? (
+                              <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Importing...</>
+                            ) : (
+                              <><Check className="w-4 h-4 mr-2" /> Import {extractedData.gifters?.filter(g => g.selected).length} Selected</>
+                            )}
+                          </Button>
+                        </div>
+                      )}
                     </>
                   )}
                 </CardContent>
