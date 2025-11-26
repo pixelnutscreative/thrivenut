@@ -17,6 +17,7 @@ export default function SuperFanAccess() {
   const [checkingUsername, setCheckingUsername] = useState(false);
   const [usernameChecked, setUsernameChecked] = useState(false);
   const [isPreApproved, setIsPreApproved] = useState(false);
+  const [foundManagedAccount, setFoundManagedAccount] = useState(null);
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -45,6 +46,11 @@ export default function SuperFanAccess() {
     queryFn: () => base44.entities.PreApprovedSuperFan.list(),
   });
 
+  const { data: managedAccounts = [] } = useQuery({
+    queryKey: ['managedAccounts'],
+    queryFn: () => base44.entities.ManagedAccount.list(),
+  });
+
   const submitRequestMutation = useMutation({
     mutationFn: async (data) => {
       return await base44.entities.SuperFanRequest.create(data);
@@ -57,26 +63,74 @@ export default function SuperFanAccess() {
   });
 
   const autoApproveMutation = useMutation({
-    mutationFn: async () => {
-      // Update or create user preferences with TikTok access
+    mutationFn: async ({ fromManagedAccount } = {}) => {
       const cleanUsername = tiktokUsername.replace('@', '').trim().toLowerCase();
       
-      if (preferences) {
-        await base44.entities.UserPreferences.update(preferences.id, {
-          tiktok_access_approved: true,
-          tiktok_username: cleanUsername
+      if (fromManagedAccount) {
+        // Claiming a managed account - update the managed account record
+        await base44.entities.ManagedAccount.update(fromManagedAccount.id, {
+          claimed_by_email: user.email,
+          claimed_date: new Date().toISOString()
         });
+        
+        // Copy preferences from managed account to user's email
+        const managedEmail = `managed_${cleanUsername}@thrivenut.app`;
+        const managedPrefs = await base44.entities.UserPreferences.filter({ user_email: managedEmail });
+        
+        if (managedPrefs[0]) {
+          // Create new preferences for user with data from managed account
+          const { id, created_date, updated_date, created_by, user_email, ...prefData } = managedPrefs[0];
+          
+          if (preferences) {
+            await base44.entities.UserPreferences.update(preferences.id, {
+              ...prefData,
+              tiktok_access_approved: true,
+              tiktok_username: cleanUsername
+            });
+          } else {
+            await base44.entities.UserPreferences.create({
+              ...prefData,
+              user_email: user.email,
+              tiktok_access_approved: true,
+              tiktok_username: cleanUsername
+            });
+          }
+        } else {
+          // No managed prefs exist, just create basic access
+          if (preferences) {
+            await base44.entities.UserPreferences.update(preferences.id, {
+              tiktok_access_approved: true,
+              tiktok_username: cleanUsername
+            });
+          } else {
+            await base44.entities.UserPreferences.create({
+              user_email: user.email,
+              tiktok_access_approved: true,
+              tiktok_username: cleanUsername,
+              onboarding_completed: false
+            });
+          }
+        }
       } else {
-        await base44.entities.UserPreferences.create({
-          user_email: user.email,
-          tiktok_access_approved: true,
-          tiktok_username: cleanUsername,
-          onboarding_completed: false
-        });
+        // Regular pre-approved flow
+        if (preferences) {
+          await base44.entities.UserPreferences.update(preferences.id, {
+            tiktok_access_approved: true,
+            tiktok_username: cleanUsername
+          });
+        } else {
+          await base44.entities.UserPreferences.create({
+            user_email: user.email,
+            tiktok_access_approved: true,
+            tiktok_username: cleanUsername,
+            onboarding_completed: false
+          });
+        }
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['preferences'] });
+      queryClient.invalidateQueries({ queryKey: ['managedAccounts'] });
     },
   });
 
@@ -86,9 +140,25 @@ export default function SuperFanAccess() {
     setCheckingUsername(true);
     const cleanUsername = tiktokUsername.replace('@', '').trim().toLowerCase();
     
+    // First check if there's a managed account for this username (unclaimed)
+    const managedAccount = managedAccounts.find(
+      m => m.tiktok_username?.toLowerCase() === cleanUsername && !m.claimed_by_email
+    );
+    
+    if (managedAccount) {
+      setFoundManagedAccount(managedAccount);
+      setIsPreApproved(true);
+      setUsernameChecked(true);
+      setCheckingUsername(false);
+      // Auto-claim the managed account
+      autoApproveMutation.mutate({ fromManagedAccount: managedAccount });
+      return;
+    }
+    
     // Check if username is in pre-approved list
     const found = preApprovedList.some(p => p.tiktok_username?.toLowerCase() === cleanUsername);
     
+    setFoundManagedAccount(null);
     setIsPreApproved(found);
     setUsernameChecked(true);
     setCheckingUsername(false);
@@ -255,8 +325,14 @@ export default function SuperFanAccess() {
                   className="p-6 bg-gradient-to-r from-green-100 to-teal-100 rounded-xl border-2 border-green-300 text-center"
                 >
                   <Sparkles className="w-12 h-12 text-green-500 mx-auto mb-3" />
-                  <h3 className="text-xl font-bold text-green-700 mb-2">You're Pre-Approved! 🎉</h3>
-                  <p className="text-green-600">Your TikTok features are being unlocked now...</p>
+                  <h3 className="text-xl font-bold text-green-700 mb-2">
+                    {foundManagedAccount ? 'Welcome! Claiming Your Account 🎉' : "You're Pre-Approved! 🎉"}
+                  </h3>
+                  <p className="text-green-600">
+                    {foundManagedAccount 
+                      ? 'Your account was set up for you - linking it to your login now...'
+                      : 'Your TikTok features are being unlocked now...'}
+                  </p>
                   {autoApproveMutation.isPending && <Loader2 className="w-6 h-6 animate-spin mx-auto mt-3" />}
                   {autoApproveMutation.isSuccess && (
                     <p className="text-green-800 font-semibold mt-2">✓ Access granted! Refresh the page to see your features.</p>
