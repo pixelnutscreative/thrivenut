@@ -72,10 +72,11 @@ export default function WeeklyGifterGallery() {
       // For impersonation: data.created_by stores the actual owner
       const allContacts = await base44.entities.TikTokContact.list('display_name', 500);
       return allContacts.filter(c => {
-        // Check INSIDE data object first for the real owner (impersonation sets this)
-        if (c.data?.created_by && c.data.created_by === effectiveEmail) return true;
+        // Owner: check data.created_by for impersonation records
+        const dataOwner = c.data?.created_by;
+        if (dataOwner) return dataOwner === effectiveEmail;
         
-        // Otherwise fall back to top-level created_by
+        // Fall back to top-level for regular records
         return c.created_by === effectiveEmail;
       });
     },
@@ -101,15 +102,15 @@ export default function WeeklyGifterGallery() {
       const allEntries = await base44.entities.GiftingEntry.list('-created_date', 200);
       
       return allEntries.filter(e => {
-        // Week could be in data.week or at top level
-        const entryWeek = e.week || e.data?.week;
+        // Week is ALWAYS inside data object based on DB structure
+        const entryWeek = e.data?.week;
         if (entryWeek !== selectedWeek) return false;
         
-        // Check INSIDE data object first for the real owner (impersonation sets this)
-        // If data.created_by exists and equals effectiveEmail, it's a match
-        if (e.data?.created_by && e.data.created_by === effectiveEmail) return true;
+        // Owner: check data.created_by for impersonation records
+        const dataOwner = e.data?.created_by;
+        if (dataOwner) return dataOwner === effectiveEmail;
         
-        // Otherwise fall back to top-level created_by
+        // Fall back to top-level for regular records
         return e.created_by === effectiveEmail;
       });
     },
