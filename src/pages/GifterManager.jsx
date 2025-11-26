@@ -5,15 +5,19 @@ import { shareGifterData, formatGifterListForEmail } from '../components/gifter/
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, User, Loader2, Search, UserPlus, Gift } from 'lucide-react';
+import { Plus, User, Loader2, Search, UserPlus, Gift, Edit, Save, X, AlertTriangle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function GifterManager() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [user, setUser] = useState(null);
+  const [editingId, setEditingId] = useState(null);
+  const [editForm, setEditForm] = useState({ display_name: '', phonetic: '' });
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -36,6 +40,44 @@ export default function GifterManager() {
   });
 
   const gifters = contacts.filter(c => c.is_gifter);
+
+  // Find duplicates by username
+  const duplicates = gifters.reduce((acc, g) => {
+    const key = g.username?.toLowerCase();
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(g);
+    return acc;
+  }, {});
+  const duplicateUsernames = Object.entries(duplicates)
+    .filter(([_, arr]) => arr.length > 1)
+    .map(([username]) => username);
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.TikTokContact.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] });
+      setEditingId(null);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => base44.entities.TikTokContact.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] });
+    },
+  });
+
+  const startEditing = (gifter) => {
+    setEditingId(gifter.id);
+    setEditForm({
+      display_name: gifter.display_name || gifter.screen_name || '',
+      phonetic: gifter.phonetic || ''
+    });
+  };
+
+  const saveEdit = (id) => {
+    updateMutation.mutate({ id, data: editForm });
+  };
 
   const filteredGifters = gifters.filter(g =>
     g.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -72,6 +114,17 @@ export default function GifterManager() {
           </CardContent>
         </Card>
 
+        {/* Duplicate Warning */}
+        {duplicateUsernames.length > 0 && (
+          <Alert className="bg-amber-50 border-amber-300">
+            <AlertTriangle className="w-4 h-4 text-amber-600" />
+            <AlertDescription className="text-amber-800">
+              <strong>Duplicate gifters found:</strong> {duplicateUsernames.map(u => `@${u}`).join(', ')}
+              <span className="block text-sm mt-1">Consider removing duplicates to avoid confusion.</span>
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -103,35 +156,112 @@ export default function GifterManager() {
           </Card>
         ) : (
           <div className="grid gap-4">
-            {filteredGifters.map((gifter, index) => (
-              <motion.div
-                key={gifter.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-              >
-                <Card className="hover:shadow-lg transition-shadow">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <h3 className="font-bold text-lg">{gifter.screen_name || gifter.display_name || gifter.username}</h3>
-                        <p className="text-purple-600">@{gifter.username}</p>
-                        {gifter.phonetic && (
-                          <p className="text-sm text-gray-500 italic mt-1">
-                            🎵 "{gifter.phonetic}"
-                          </p>
-                        )}
-                      </div>
-                      <Link to={createPageUrl('TikTokContacts')}>
-                        <Button variant="outline" size="sm">
-                          Edit in Contacts
-                        </Button>
-                      </Link>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
+            {filteredGifters.map((gifter, index) => {
+              const isDuplicate = duplicateUsernames.includes(gifter.username?.toLowerCase());
+              const isEditing = editingId === gifter.id;
+              
+              return (
+                <motion.div
+                  key={gifter.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                >
+                  <Card className={`hover:shadow-lg transition-shadow ${isDuplicate ? 'border-amber-400 bg-amber-50/50' : ''}`}>
+                    <CardContent className="p-4">
+                      {isEditing ? (
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-purple-600 font-medium">@{gifter.username}</span>
+                            {isDuplicate && (
+                              <span className="text-xs bg-amber-200 text-amber-800 px-2 py-0.5 rounded">Duplicate</span>
+                            )}
+                          </div>
+                          <div className="grid md:grid-cols-2 gap-3">
+                            <div>
+                              <Label className="text-xs">Display Name</Label>
+                              <Input
+                                value={editForm.display_name}
+                                onChange={(e) => setEditForm({ ...editForm, display_name: e.target.value })}
+                                placeholder="Screen name for songs"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs">Phonetic 🎵</Label>
+                              <Input
+                                value={editForm.phonetic}
+                                onChange={(e) => setEditForm({ ...editForm, phonetic: e.target.value })}
+                                placeholder="How to pronounce"
+                              />
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              onClick={() => saveEdit(gifter.id)}
+                              disabled={updateMutation.isPending}
+                              className="bg-teal-600 hover:bg-teal-700"
+                            >
+                              {updateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
+                              Save
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setEditingId(null)}
+                            >
+                              <X className="w-4 h-4 mr-1" /> Cancel
+                            </Button>
+                            {isDuplicate && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-red-600 hover:bg-red-50 ml-auto"
+                                onClick={() => {
+                                  if (confirm('Delete this duplicate gifter?')) {
+                                    deleteMutation.mutate(gifter.id);
+                                  }
+                                }}
+                              >
+                                Delete Duplicate
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-bold text-lg">{gifter.display_name || gifter.screen_name || gifter.username}</h3>
+                              {isDuplicate && (
+                                <span className="text-xs bg-amber-200 text-amber-800 px-2 py-0.5 rounded">Duplicate</span>
+                              )}
+                            </div>
+                            <p className="text-purple-600">@{gifter.username}</p>
+                            {gifter.phonetic ? (
+                              <p className="text-sm text-gray-500 italic mt-1">
+                                🎵 "{gifter.phonetic}"
+                              </p>
+                            ) : (
+                              <p className="text-sm text-amber-600 mt-1">
+                                ⚠️ No phonetic set
+                              </p>
+                            )}
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => startEditing(gifter)}
+                          >
+                            <Edit className="w-4 h-4 mr-1" /> Edit
+                          </Button>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              );
+            })}
           </div>
         )}
       </div>
