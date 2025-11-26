@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Upload, Loader2, Sparkles, Check, X, Trophy, Medal, Award, ImageIcon, UserCheck, HelpCircle } from 'lucide-react';
+import { Upload, Loader2, Sparkles, Check, X, Trophy, Medal, Award, ImageIcon, UserCheck, HelpCircle, Star, Plus } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { format, startOfWeek } from 'date-fns';
 import { motion } from 'framer-motion';
@@ -102,7 +103,10 @@ Look for:
 ${files.length > 1 ? `There are ${files.length} images - combine the data from all of them, avoiding duplicates.` : ''}
 
 Return the data in the specified JSON format. If you can't find certain information, leave it as null.
-Extract up to 3 gifters (1st, 2nd, 3rd place).`,
+Extract up to 3 gifters (1st, 2nd, 3rd place).
+
+IMPORTANT: For each username, also generate a "suggested_phonetic" field with how you think it would be pronounced naturally in English for a song. 
+For example: "sheri_d_777" would be "Sheri D Seven Seven Seven", "craftymom_02" would be "Crafty Mom Oh Two", "123john" would be "One Two Three John".`,
         file_urls: uploadedUrls,
         response_json_schema: {
           type: "object",
@@ -112,11 +116,12 @@ Extract up to 3 gifters (1st, 2nd, 3rd place).`,
               items: {
                 type: "object",
                 properties: {
-                  rank: { type: "string", enum: ["1st", "2nd", "3rd"] },
-                  username: { type: "string", description: "TikTok username without @" },
-                  screen_name: { type: "string", description: "Display name shown" },
-                  gift_name: { type: "string", description: "Name of gift if visible" }
-                }
+                   rank: { type: "string", enum: ["1st", "2nd", "3rd"] },
+                   username: { type: "string", description: "TikTok username without @" },
+                   screen_name: { type: "string", description: "Display name shown" },
+                   suggested_phonetic: { type: "string", description: "How the username/name would be pronounced for a song" },
+                   gift_name: { type: "string", description: "Name of gift if visible" }
+                 }
               }
             },
             confidence: { type: "string", enum: ["high", "medium", "low"] },
@@ -157,10 +162,11 @@ Extract up to 3 gifters (1st, 2nd, 3rd place).`,
           ...gifter,
           matched_contact: exactMatch || null,
           suggested_contacts: exactMatch ? [] : partialMatches,
-          // Pre-fill from exact match
+          // Pre-fill from exact match, or use AI suggestion
           screen_name: exactMatch?.display_name || gifter.screen_name,
-          phonetic: exactMatch?.phonetic || '',
-          username: exactMatch?.username || gifter.username
+          phonetic: exactMatch?.phonetic || gifter.suggested_phonetic || '',
+          username: exactMatch?.username || gifter.username,
+          selected: true // Default to selected for import
         };
       }) || [];
 
@@ -239,8 +245,9 @@ Extract up to 3 gifters (1st, 2nd, 3rd place).`,
   });
 
   const handleConfirmImport = () => {
-    if (!extractedData?.gifters?.length) return;
-    createEntriesMutation.mutate(extractedData.gifters);
+    const selectedGifters = extractedData?.gifters?.filter(g => g.selected);
+    if (!selectedGifters?.length) return;
+    createEntriesMutation.mutate(selectedGifters);
   };
 
   const updateExtractedGifter = (index, field, value) => {
@@ -416,12 +423,29 @@ Extract up to 3 gifters (1st, 2nd, 3rd place).`,
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.1 }}
-                      className="p-4 bg-gray-50 rounded-lg space-y-3"
+                      className={`p-4 rounded-lg space-y-3 border-2 transition-all ${
+                        gifter.selected 
+                          ? 'bg-gray-50 border-purple-300' 
+                          : 'bg-gray-100/50 border-gray-200 opacity-60'
+                      }`}
                     >
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          {getRankIcon(gifter.rank)}
-                          <span className="font-semibold">{gifter.rank} Place</span>
+                        <div className="flex items-center gap-3">
+                          <Checkbox
+                            checked={gifter.selected}
+                            onCheckedChange={(checked) => updateExtractedGifter(index, 'selected', checked)}
+                          />
+                          {gifter.is_shoutout ? (
+                            <>
+                              <Star className="w-5 h-5 text-amber-500" />
+                              <span className="font-semibold text-amber-700">Special Shoutout</span>
+                            </>
+                          ) : (
+                            <>
+                              {getRankIcon(gifter.rank)}
+                              <span className="font-semibold">{gifter.rank} Place</span>
+                            </>
+                          )}
                         </div>
                         <Button
                           variant="ghost"
@@ -518,6 +542,39 @@ Extract up to 3 gifters (1st, 2nd, 3rd place).`,
                     </motion.div>
                   ))}
 
+                  {/* Honorable Mention / Special Shoutout */}
+                  <div className="border-t pt-4 mt-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Star className="w-5 h-5 text-amber-500" />
+                      <span className="font-semibold text-gray-700">Add Special Shoutout (Optional)</span>
+                    </div>
+                    <p className="text-sm text-gray-500 mb-3">
+                      Honorable mention for someone who did something amazing this week
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setExtractedData(prev => ({
+                          ...prev,
+                          gifters: [...prev.gifters, {
+                            rank: 'shoutout',
+                            username: '',
+                            screen_name: '',
+                            phonetic: '',
+                            gift_name: '',
+                            selected: true,
+                            is_shoutout: true
+                          }]
+                        }));
+                      }}
+                      className="border-amber-300 text-amber-700 hover:bg-amber-50"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Special Shoutout
+                    </Button>
+                  </div>
+
                   <div className="flex gap-3 pt-4">
                     <Button
                       variant="outline"
@@ -532,13 +589,13 @@ Extract up to 3 gifters (1st, 2nd, 3rd place).`,
                     </Button>
                     <Button
                       onClick={handleConfirmImport}
-                      disabled={createEntriesMutation.isPending || !extractedData.gifters?.length}
+                      disabled={createEntriesMutation.isPending || !extractedData.gifters?.filter(g => g.selected).length}
                       className="flex-1 bg-purple-600 hover:bg-purple-700"
                     >
                       {createEntriesMutation.isPending ? (
                         <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Importing...</>
                       ) : (
-                        <><Check className="w-4 h-4 mr-2" /> Import {extractedData.gifters?.length} Gifters</>
+                        <><Check className="w-4 h-4 mr-2" /> Import {extractedData.gifters?.filter(g => g.selected).length} Selected</>
                       )}
                     </Button>
                   </div>
