@@ -229,6 +229,9 @@ export default function WeeklyGifterGallery() {
     },
   });
 
+  // Check if we're impersonating (effectiveEmail differs from real user email)
+  const isImpersonating = effectiveEmail && user?.email && effectiveEmail !== user.email;
+
   const createEntriesMutation = useMutation({
     mutationFn: async (entriesToCreate) => {
       const promises = entriesToCreate.map(async (entry) => {
@@ -237,17 +240,14 @@ export default function WeeklyGifterGallery() {
         );
 
         if (!gifter && entry.username) {
-          // Create contact with the effective owner (supports impersonation)
+          // Create contact - always include created_by when impersonating
           const contactData = {
             username: entry.username,
             display_name: entry.screen_name || entry.username,
             phonetic: entry.phonetic || '',
-            is_gifter: true
+            is_gifter: true,
+            created_by: effectiveEmail  // Always set to effective email
           };
-          // If impersonating, set the created_by to the impersonated user
-          if (effectiveEmail && effectiveEmail !== user?.email) {
-            contactData.created_by = effectiveEmail;
-          }
           gifter = await base44.entities.TikTokContact.create(contactData);
         }
 
@@ -257,21 +257,18 @@ export default function WeeklyGifterGallery() {
           ? gifts.find(g => g.name?.toLowerCase().includes(entry.gift_name?.toLowerCase()))
           : null;
 
-        // Create entry with the effective owner (supports impersonation)
+        // Create entry - always include created_by when impersonating
         const entryData = {
           gifter_id: gifter.id,
-          gifter_username: gifter.username,
+          gifter_username: gifter.username || entry.username,
           gifter_screen_name: entry.screen_name || gifter.display_name,
           gifter_phonetic: entry.phonetic || gifter.phonetic,
           gift_id: gift?.id || '',
           gift_name: gift?.name || entry.gift_name || 'Unknown',
           rank: entry.rank,
-          week: selectedWeek
+          week: selectedWeek,
+          created_by: effectiveEmail  // Always set to effective email
         };
-        // If impersonating, set the created_by to the impersonated user
-        if (effectiveEmail && effectiveEmail !== user?.email) {
-          entryData.created_by = effectiveEmail;
-        }
         return base44.entities.GiftingEntry.create(entryData);
       });
 
