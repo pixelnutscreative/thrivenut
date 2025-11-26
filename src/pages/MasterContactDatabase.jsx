@@ -170,7 +170,7 @@ export default function MasterContactDatabase() {
             Master Contact Database
           </h1>
           <p className="text-gray-600 mt-1">
-            Shared display names and phonetics across all users. 
+            Only username, display name, and phonetic are shared across all users. Phone, email, and other data remain private to each user.
             {isAdmin ? (
               <Badge className="ml-2 bg-amber-100 text-amber-800">Admin - Full Access</Badge>
             ) : (
