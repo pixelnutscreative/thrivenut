@@ -438,7 +438,10 @@ For each username, generate a "suggested_phonetic" field with how it would be pr
               })
               .map(gifter => {
                 const username = gifter.username?.toLowerCase()?.replace('@', '');
-                const exactMatch = allContacts.find(c => c.username?.toLowerCase() === username);
+                // First check the current user's own contacts (which has their saved display_name/phonetic)
+                const ownContact = contacts.find(c => c.username?.toLowerCase() === username);
+                // Fall back to allContacts if not found in user's contacts
+                const exactMatch = ownContact || allContacts.find(c => c.username?.toLowerCase() === username);
                 
                 return {
                   ...gifter,
