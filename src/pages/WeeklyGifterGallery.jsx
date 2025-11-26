@@ -15,7 +15,7 @@ import {
   Copy, Download, Send, Check, CheckCircle, Music, Edit, X, 
   ChevronLeft, ChevronRight, ImageIcon, UserCheck, HelpCircle
 } from 'lucide-react';
-import { format, startOfWeek, subWeeks, addWeeks } from 'date-fns';
+import { format, startOfWeek, subWeeks, addWeeks, addDays } from 'date-fns';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
@@ -216,7 +216,7 @@ export default function WeeklyGifterGallery() {
   // Generate summary text
   const generateFormattedText = () => {
     if (sortedEntries.length === 0) return '';
-    let text = `Thank-you shoutout to our top gifters for the week ending ${format(new Date(selectedWeek), 'MMMM d, yyyy')}!\n\n`;
+    let text = `Thank-you shoutout to our top gifters for the week ending ${format(addDays(new Date(selectedWeek), 6), 'MMMM d, yyyy')}!\n\n`;
     sortedEntries.forEach(entry => {
       const rankLabel = entry.rank === '1st' ? '🥇 1st Place' : entry.rank === '2nd' ? '🥈 2nd Place' : entry.rank === '3rd' ? '🥉 3rd Place' : '⭐ Special Shoutout';
       text += `${entry.gift_name} - ${rankLabel}\n`;
@@ -448,7 +448,7 @@ For each username, generate a "suggested_phonetic" field with how it would be pr
               </Button>
               <div className="text-center">
                 <p className="text-sm text-gray-500">Week Ending</p>
-                <p className="font-bold text-lg">{format(new Date(selectedWeek), 'MMMM d, yyyy')}</p>
+                <p className="font-bold text-lg">{format(addDays(new Date(selectedWeek), 6), 'MMMM d, yyyy')}</p>
                 <Input
                   type="date"
                   value={selectedWeek}
