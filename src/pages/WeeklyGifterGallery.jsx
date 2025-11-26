@@ -25,19 +25,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 export default function WeeklyGifterGallery() {
   const queryClient = useQueryClient();
   
-  // Default to PREVIOUS week's Sunday (weeks end on Sundays)
-  // Today is Wed Nov 26, so last Sunday was Nov 23
-  const getLastSunday = () => {
-    const now = new Date();
-    const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
-    // If today is Sunday, use today. Otherwise go back to last Sunday.
-    const daysToSubtract = dayOfWeek === 0 ? 0 : dayOfWeek;
-    const lastSunday = new Date(now);
-    lastSunday.setDate(now.getDate() - daysToSubtract);
-    return format(lastSunday, 'yyyy-MM-dd');
-  };
-  
-  const [selectedWeek, setSelectedWeek] = useState(getLastSunday());
+  // Fixed to November 23, 2025 - the week ending date
+  const [selectedWeek, setSelectedWeek] = useState('2025-11-23');
   const [activeTab, setActiveTab] = useState('summary');
   const [user, setUser] = useState(null);
   
@@ -95,7 +84,7 @@ export default function WeeklyGifterGallery() {
     queryFn: () => base44.entities.TikTokContact.list('username'),
   });
 
-  const gifters = contacts.filter(c => c.is_gifter);
+  const gifters = contacts.filter(c => c.is_gifter || c.data?.is_gifter);
 
   const { data: gifts = [] } = useQuery({
     queryKey: ['gifts'],
@@ -210,16 +199,18 @@ export default function WeeklyGifterGallery() {
     },
   });
 
-  // Week navigation
+  // Week navigation - 7 days at a time
   const goToPreviousWeek = () => {
-    const current = new Date(selectedWeek);
-    setSelectedWeek(format(subWeeks(current, 1), 'yyyy-MM-dd'));
+    const current = new Date(selectedWeek + 'T12:00:00');
+    current.setDate(current.getDate() - 7);
+    setSelectedWeek(format(current, 'yyyy-MM-dd'));
     setAllGood(false);
   };
 
   const goToNextWeek = () => {
-    const current = new Date(selectedWeek);
-    setSelectedWeek(format(addWeeks(current, 1), 'yyyy-MM-dd'));
+    const current = new Date(selectedWeek + 'T12:00:00');
+    current.setDate(current.getDate() + 7);
+    setSelectedWeek(format(current, 'yyyy-MM-dd'));
     setAllGood(false);
   };
 
@@ -464,7 +455,7 @@ For each username, generate a "suggested_phonetic" field with how it would be pr
               </Button>
               <div className="text-center">
                 <p className="text-sm text-gray-500">Week Ending</p>
-                <p className="font-bold text-lg">{format(new Date(selectedWeek), 'MMMM d, yyyy')}</p>
+                <p className="font-bold text-lg">{format(new Date(selectedWeek + 'T12:00:00'), 'MMMM d, yyyy')}</p>
               </div>
               <Button variant="outline" size="sm" onClick={goToNextWeek}>
                 Next Week <ChevronRight className="w-4 h-4 ml-1" />
