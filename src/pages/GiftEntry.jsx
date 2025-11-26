@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, Loader2, Trophy, Medal, Award } from 'lucide-react';
 import { format, startOfWeek } from 'date-fns';
 import { motion } from 'framer-motion';
+import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
 
 export default function GiftEntry() {
   const queryClient = useQueryClient();
@@ -33,19 +34,22 @@ export default function GiftEntry() {
     base44.auth.me().then(setUser).catch(() => {});
   }, []);
 
+  // Get effective email (real user or impersonated)
+  const effectiveEmail = user ? getEffectiveUserEmail(user.email) : null;
+
   const { data: preferences } = useQuery({
-    queryKey: ['preferences', user?.email],
+    queryKey: ['preferences', effectiveEmail],
     queryFn: async () => {
-      const prefs = await base44.entities.UserPreferences.filter({ user_email: user.email });
+      const prefs = await base44.entities.UserPreferences.filter({ user_email: effectiveEmail });
       return prefs[0] || null;
     },
-    enabled: !!user,
+    enabled: !!effectiveEmail,
   });
 
   const { data: contacts = [] } = useQuery({
-    queryKey: ['tiktokContacts', user?.email],
-    queryFn: () => base44.entities.TikTokContact.filter({ created_by: user.email }, 'display_name'),
-    enabled: !!user,
+    queryKey: ['tiktokContacts', effectiveEmail],
+    queryFn: () => base44.entities.TikTokContact.filter({ created_by: effectiveEmail }, 'display_name'),
+    enabled: !!effectiveEmail,
   });
 
   const gifters = contacts.filter(c => c.is_gifter);
@@ -57,9 +61,9 @@ export default function GiftEntry() {
   });
 
   const { data: entries = [], isLoading } = useQuery({
-    queryKey: ['giftingEntries', selectedWeek, user?.email],
-    queryFn: () => base44.entities.GiftingEntry.filter({ week: selectedWeek, created_by: user.email }),
-    enabled: !!user,
+    queryKey: ['giftingEntries', selectedWeek, effectiveEmail],
+    queryFn: () => base44.entities.GiftingEntry.filter({ week: selectedWeek, created_by: effectiveEmail }),
+    enabled: !!effectiveEmail,
   });
 
   const createMutation = useMutation({
