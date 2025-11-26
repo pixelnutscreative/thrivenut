@@ -24,22 +24,30 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
 
-const roleConfig = {
-  battle_sniper: { label: 'Battle Sniper', icon: Swords, color: 'bg-red-100 text-red-700', activeColor: 'text-red-600' },
-  tapper: { label: 'Tapper', icon: Heart, color: 'bg-pink-100 text-pink-700', activeColor: 'text-pink-600' },
-  sharer: { label: 'Shares to Story', icon: BookOpen, color: 'bg-blue-100 text-blue-700', activeColor: 'text-blue-600' },
-  gifter: { label: 'Gifter', icon: Gift, color: 'bg-amber-100 text-amber-700', activeColor: 'text-amber-600' },
-  engaging_bestie: { label: 'Engaging Bestie', icon: Users, color: 'bg-purple-100 text-purple-700', activeColor: 'text-purple-600' },
-  authentic_commenter: { label: 'Authentic Commenter', icon: MessageCircle, color: 'bg-teal-100 text-teal-700', activeColor: 'text-teal-600' },
-  irl_friend: { label: 'Friend IRL', icon: null, text: 'IRL', color: 'bg-green-100 text-green-700', activeColor: 'text-green-600' },
-  tiktok_seller: { label: 'TikTok Seller', icon: DollarSign, color: 'bg-orange-100 text-orange-700', activeColor: 'text-orange-600' },
-  tiktok_shop_affiliate: { label: 'TikTok Shop Affiliate', icon: ShoppingBag, color: 'bg-lime-100 text-lime-700', activeColor: 'text-lime-600' },
-  creator_to_watch: { label: 'Creator to Watch', icon: Video, color: 'bg-indigo-100 text-indigo-700', activeColor: 'text-indigo-600' },
-  subscriber: { label: 'Subscriber', icon: null, text: 'SUB', color: 'bg-cyan-100 text-cyan-700', activeColor: 'text-cyan-600' },
-  superfan: { label: 'Superfan', icon: null, text: 'FAN', color: 'bg-rose-100 text-rose-700', activeColor: 'text-rose-600' },
-  discord: { label: 'Discord', icon: Drama, color: 'bg-violet-100 text-violet-700', activeColor: 'text-violet-600' },
-  sleep_lives: { label: 'Sleep Lives', icon: Moon, color: 'bg-slate-100 text-slate-700', activeColor: 'text-slate-600' }
+// Icon-based roles (top row)
+const iconRoles = {
+  battle_sniper: { label: 'Battle Sniper', icon: Swords, color: 'bg-red-100 text-red-700' },
+  tapper: { label: 'Tapper', icon: Heart, color: 'bg-pink-100 text-pink-700' },
+  sharer: { label: 'Shares to Story', icon: BookOpen, color: 'bg-blue-100 text-blue-700' },
+  gifter: { label: 'Gifter', icon: Gift, color: 'bg-amber-100 text-amber-700' },
+  engaging_bestie: { label: 'Engaging Bestie', icon: Users, color: 'bg-purple-100 text-purple-700' },
+  authentic_commenter: { label: 'Authentic Commenter', icon: MessageCircle, color: 'bg-teal-100 text-teal-700' },
+  tiktok_seller: { label: 'TikTok Seller', icon: DollarSign, color: 'bg-orange-100 text-orange-700' },
+  tiktok_shop_affiliate: { label: 'TikTok Shop Affiliate', icon: ShoppingBag, color: 'bg-lime-100 text-lime-700' },
+  creator_to_watch: { label: 'Creator to Watch', icon: Video, color: 'bg-indigo-100 text-indigo-700' },
+  sleep_lives: { label: 'Sleep Lives', icon: Moon, color: 'bg-slate-100 text-slate-700' }
 };
+
+// Text-based roles (bottom row with SUB, FAN, IRL, Discord)
+const textRoles = {
+  subscriber: { label: 'Subscriber', text: 'SUB', color: 'bg-cyan-100 text-cyan-700' },
+  superfan: { label: 'Superfan', text: 'FAN', color: 'bg-rose-100 text-rose-700' },
+  irl_friend: { label: 'Friend IRL', text: 'IRL', color: 'bg-green-100 text-green-700' },
+  discord: { label: 'Discord', icon: Drama, color: 'bg-violet-100 text-violet-700' }
+};
+
+// Combined for form usage
+const roleConfig = { ...iconRoles, ...textRoles };
 
 const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -571,25 +579,39 @@ export default function TikTokContacts() {
 
           <div className="space-y-3">
             <div>
-              <h3 
-                className="font-bold text-lg cursor-pointer hover:text-purple-600"
-                onClick={() => window.open(`https://tiktok.com/@${contact.username}`, '_blank')}
-              >
-                @{contact.username}
-              </h3>
-              {contact.display_name && (
-                <p className="text-gray-600 text-sm">{contact.display_name}</p>
-              )}
-            </div>
+                <div className="flex items-center gap-2">
+                  <h3 
+                    className="font-bold text-lg cursor-pointer hover:text-purple-600"
+                    onClick={() => window.open(`https://tiktok.com/@${contact.username}`, '_blank')}
+                  >
+                    @{contact.username}
+                  </h3>
+                  {/* Lead Source icon */}
+                  {contact.lead_source && (() => {
+                    const sourceConfig = leadSourceConfig[contact.lead_source] || { icon: Sparkles, label: contact.lead_source, color: 'text-gray-400' };
+                    const SourceIcon = sourceConfig.icon;
+                    return (
+                      <div
+                        className={`p-1 rounded-full bg-gray-100 ${sourceConfig.color}`}
+                        title={`Lead: ${sourceConfig.label}${contact.lead_source === 'Referral' && contact.met_through_name ? ` via ${contact.met_through_name}` : ''}`}
+                      >
+                        <SourceIcon className="w-3 h-3" />
+                      </div>
+                    );
+                  })()}
+                </div>
+                {contact.display_name && (
+                  <p className="text-gray-600 text-sm">{contact.display_name}</p>
+                )}
+              </div>
 
             {contact.notes && (
               <p className="text-sm text-gray-500 italic line-clamp-2">{contact.notes}</p>
             )}
 
-            {/* All Toggleable Icons */}
+            {/* Icon Role Toggles - Top Row */}
             <div className="flex flex-wrap items-center gap-1 pt-2 border-t">
-              {/* Role toggles */}
-              {Object.entries(roleConfig).map(([roleKey, config]) => {
+              {Object.entries(iconRoles).map(([roleKey, config]) => {
                 const isActive = contact.role?.includes(roleKey);
                 const RoleIcon = config.icon;
                 return (
@@ -600,7 +622,45 @@ export default function TikTokContacts() {
                       const newRoles = isActive 
                         ? (contact.role || []).filter(r => r !== roleKey)
                         : [...(contact.role || []), roleKey];
-                      toggleFeatureMutation.mutate({ id: contact.id, field: 'role', currentValue: !isActive ? newRoles : newRoles });
+                      base44.entities.TikTokContact.update(contact.id, { role: newRoles });
+                      queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] });
+                    }}
+                    className={`p-1.5 rounded-full transition-all cursor-pointer hover:scale-110 ${
+                      isActive ? config.color : 'bg-gray-100 text-gray-300 hover:bg-gray-200'
+                    }`}
+                    title={config.label}
+                  >
+                    <RoleIcon className="w-3 h-3" />
+                  </button>
+                );
+              })}
+
+              {/* Custom roles */}
+              {contact.role?.filter(r => r.startsWith('custom:')).map(role => (
+                <div
+                  key={role}
+                  className="px-2 py-0.5 rounded-full bg-teal-100 text-teal-700 text-xs font-medium"
+                  title={role.replace('custom:', '')}
+                >
+                  {role.replace('custom:', '')}
+                </div>
+              ))}
+            </div>
+
+            {/* Bottom Row - Text roles + Feature toggles */}
+            <div className="flex flex-wrap items-center gap-1">
+              {/* Text-based role toggles (SUB, FAN, IRL, Discord) */}
+              {Object.entries(textRoles).map(([roleKey, config]) => {
+                const isActive = contact.role?.includes(roleKey);
+                const RoleIcon = config.icon;
+                return (
+                  <button
+                    key={roleKey}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const newRoles = isActive 
+                        ? (contact.role || []).filter(r => r !== roleKey)
+                        : [...(contact.role || []), roleKey];
                       base44.entities.TikTokContact.update(contact.id, { role: newRoles });
                       queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] });
                     }}
@@ -618,76 +678,54 @@ export default function TikTokContacts() {
                 );
               })}
 
-              {/* Custom roles */}
-              {contact.role?.filter(r => r.startsWith('custom:')).map(role => (
-                <div
-                  key={role}
-                  className="px-2 py-0.5 rounded-full bg-teal-100 text-teal-700 text-xs font-medium"
-                  title={role.replace('custom:', '')}
-                >
-                  {role.replace('custom:', '')}
-                </div>
-              ))}
-
               {/* Spacer */}
               <div className="flex-1" />
 
-              {/* Lead Source icon */}
-              {contact.lead_source && (() => {
-                const sourceConfig = leadSourceConfig[contact.lead_source] || { icon: Sparkles, label: contact.lead_source, color: 'text-gray-400' };
-                const SourceIcon = sourceConfig.icon;
-                return (
-                  <div
-                    className={`p-1.5 rounded-full bg-gray-100 ${sourceConfig.color}`}
-                    title={`Lead: ${sourceConfig.label}${contact.lead_source === 'Referral' && contact.met_through_name ? ` (${contact.met_through_name})` : ''}`}
-                  >
-                    <SourceIcon className="w-3 h-3" />
-                  </div>
-                );
-              })()}
-
-              {/* Feature toggles */}
+              {/* Feature toggles with labels */}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   toggleFeatureMutation.mutate({ id: contact.id, field: 'engagement_enabled', currentValue: contact.engagement_enabled });
                 }}
-                className={`p-1.5 rounded-full transition-all cursor-pointer hover:scale-110 ${
+                className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs transition-all cursor-pointer hover:scale-105 ${
                   contact.engagement_enabled 
                     ? 'bg-purple-100 text-purple-700' 
-                    : 'bg-gray-100 text-gray-300 hover:bg-gray-200'
+                    : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
                 }`}
                 title="Engagement Tracking"
               >
                 <Heart className={`w-3 h-3 ${contact.engagement_enabled ? 'fill-purple-500' : ''}`} />
+                <span>Engage</span>
               </button>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   toggleFeatureMutation.mutate({ id: contact.id, field: 'calendar_enabled', currentValue: contact.calendar_enabled });
                 }}
-                className={`p-1.5 rounded-full transition-all cursor-pointer hover:scale-110 ${
+                className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs transition-all cursor-pointer hover:scale-105 ${
                   contact.calendar_enabled 
                     ? 'bg-blue-100 text-blue-700' 
-                    : 'bg-gray-100 text-gray-300 hover:bg-gray-200'
+                    : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
                 }`}
                 title="Creator Calendar"
               >
                 <Calendar className={`w-3 h-3 ${contact.calendar_enabled ? 'fill-blue-500' : ''}`} />
+                <span>Cal</span>
               </button>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   toggleFeatureMutation.mutate({ id: contact.id, field: 'is_gifter', currentValue: contact.is_gifter });
                 }}
-                className={`p-1.5 rounded-full transition-all cursor-pointer hover:scale-110 ${
+                className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs transition-all cursor-pointer hover:scale-105 ${
                   contact.is_gifter 
                     ? 'bg-amber-100 text-amber-700' 
-                    : 'bg-gray-100 text-gray-300 hover:bg-gray-200'
+                    : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
                 }`}
                 title="Gifter for Songs"
               >
                 <Gift className={`w-3 h-3 ${contact.is_gifter ? 'fill-amber-500' : ''}`} />
+                <span>Gifter</span>
               </button>
             </div>
           </div>
