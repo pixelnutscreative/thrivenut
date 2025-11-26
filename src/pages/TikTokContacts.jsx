@@ -95,7 +95,7 @@ export default function TikTokContacts() {
   const [importing, setImporting] = useState(false);
   const [importError, setImportError] = useState(null);
   const [importSuccess, setImportSuccess] = useState(null);
-  const [importAddTikTokLead, setImportAddTikTokLead] = useState(true);
+  const [importRoles, setImportRoles] = useState(['custom:TikTok Lead']);
 
   const [user, setUser] = useState(null);
 
@@ -206,14 +206,13 @@ export default function TikTokContacts() {
           results.push({ ...contact, action: 'updated' });
         } else {
           // Create new contact - use master DB display_name/phonetic if available
-          const roles = contact.addTikTokLead ? ['custom:TikTok Lead'] : [];
           await base44.entities.TikTokContact.create({
             username: contact.username,
             display_name: masterDisplayName || contact.display_name,
             phonetic: masterPhonetic || '',
             phone: contact.phone,
             email: contact.email,
-            role: roles,
+            role: contact.importRoles || [],
             lead_received_at: contact.lead_received_at,
             lead_source: contact.lead_source,
           });
@@ -450,7 +449,7 @@ export default function TikTokContacts() {
           lead_received_at: leadReceivedAt,
           lead_source: sourceIdx >= 0 ? values[sourceIdx] : '',
           selected: true,
-          addTikTokLead: true,
+          importRoles: ['custom:TikTok Lead'],
         });
       }
 
@@ -1419,19 +1418,55 @@ export default function TikTokContacts() {
               </Alert>
             )}
             
-            {/* Import Options */}
-            <div className="p-3 bg-teal-50 border border-teal-200 rounded-lg space-y-2">
-              <p className="text-sm font-medium text-teal-800">Import Options</p>
-              <div className="flex items-center gap-2">
-                <Checkbox 
-                  id="addTikTokLead"
-                  checked={csvData.length > 0 && csvData.every(c => c.addTikTokLead)}
-                  onCheckedChange={(checked) => setCsvData(prev => prev.map(c => ({ ...c, addTikTokLead: checked })))}
-                />
-                <label htmlFor="addTikTokLead" className="text-sm cursor-pointer">
-                  Tag all as <Badge className="bg-teal-600 ml-1">TikTok Lead</Badge>
-                </label>
+            {/* Import Options - Tag with roles */}
+            <div className="p-3 bg-teal-50 border border-teal-200 rounded-lg space-y-3">
+              <p className="text-sm font-medium text-teal-800">Tag imported contacts with:</p>
+              <div className="flex flex-wrap gap-2">
+                {/* Preset roles */}
+                {Object.entries(roleConfig).map(([key, config]) => {
+                  const Icon = config.icon;
+                  const isSelected = importRoles.includes(key);
+                  return (
+                    <Badge
+                      key={key}
+                      variant={isSelected ? 'default' : 'outline'}
+                      className={`cursor-pointer ${isSelected ? 'bg-purple-600' : config.color}`}
+                      onClick={() => {
+                        const newRoles = isSelected 
+                          ? importRoles.filter(r => r !== key)
+                          : [...importRoles, key];
+                        setImportRoles(newRoles);
+                        setCsvData(prev => prev.map(c => ({ ...c, importRoles: newRoles })));
+                      }}
+                    >
+                      <Icon className="w-3 h-3 mr-1" />
+                      {config.label}
+                    </Badge>
+                  );
+                })}
+                {/* TikTok Lead custom tag */}
+                <Badge
+                  variant={importRoles.includes('custom:TikTok Lead') ? 'default' : 'outline'}
+                  className={`cursor-pointer ${importRoles.includes('custom:TikTok Lead') ? 'bg-teal-600' : 'bg-teal-100 text-teal-700'}`}
+                  onClick={() => {
+                    const key = 'custom:TikTok Lead';
+                    const isSelected = importRoles.includes(key);
+                    const newRoles = isSelected 
+                      ? importRoles.filter(r => r !== key)
+                      : [...importRoles, key];
+                    setImportRoles(newRoles);
+                    setCsvData(prev => prev.map(c => ({ ...c, importRoles: newRoles })));
+                  }}
+                >
+                  <UserPlus className="w-3 h-3 mr-1" />
+                  TikTok Lead
+                </Badge>
               </div>
+              {importRoles.length > 0 && (
+                <p className="text-xs text-gray-600">
+                  {importRoles.length} tag{importRoles.length !== 1 ? 's' : ''} will be applied to all imported contacts
+                </p>
+              )}
             </div>
             
             {/* Select All */}
