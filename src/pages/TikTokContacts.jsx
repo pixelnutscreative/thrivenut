@@ -150,6 +150,15 @@ export default function TikTokContacts() {
     },
   });
 
+  const toggleFeatureMutation = useMutation({
+    mutationFn: ({ id, field, currentValue }) => base44.entities.TikTokContact.update(id, { 
+      [field]: !currentValue 
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] });
+    },
+  });
+
   const createCategoryMutation = useMutation({
     mutationFn: (data) => base44.entities.EngagementCategory.create(data),
     onSuccess: () => {
@@ -508,6 +517,15 @@ export default function TikTokContacts() {
       return 0;
     });
 
+  // Lead source icon mapping
+  const leadSourceConfig = {
+    'LIVE': { icon: Video, label: 'Live', color: 'text-red-500' },
+    'Profile': { icon: Users, label: 'Profile', color: 'text-blue-500' },
+    'Post': { icon: Share2, label: 'Post', color: 'text-green-500' },
+    'Battle': { icon: Swords, label: 'Battle', color: 'text-orange-500' },
+    'Referral': { icon: UserPlus, label: 'Referral', color: 'text-purple-500' },
+  };
+
   const ContactCard = ({ contact, index }) => (
     <motion.div
       key={contact.id}
@@ -562,46 +580,77 @@ export default function TikTokContacts() {
               )}
             </div>
 
-            {/* Feature badges only */}
-            <div className="flex flex-wrap gap-1">
-              {contact.engagement_enabled && (
-                <Badge variant="outline" className="text-xs bg-purple-50">
-                  <Heart className="w-3 h-3 mr-1" /> Engagement
-                </Badge>
-              )}
-              {contact.calendar_enabled && (
-                <Badge variant="outline" className="text-xs bg-blue-50">
-                  <Calendar className="w-3 h-3 mr-1" /> Calendar
-                </Badge>
-              )}
-              {contact.is_gifter && (
-                <Badge variant="outline" className="text-xs bg-amber-50">
-                  <Music className="w-3 h-3 mr-1" /> Gifter
-                </Badge>
-              )}
-            </div>
-
-            {/* Contact Info */}
-            {(contact.phone || contact.email) && (
-              <div className="space-y-1 text-sm">
-                {contact.phone && (
-                  <a href={`tel:${contact.phone}`} className="flex items-center gap-2 text-gray-600 hover:text-purple-600">
-                    <Phone className="w-4 h-4" />
-                    {contact.phone}
-                  </a>
-                )}
-                {contact.email && (
-                  <a href={`mailto:${contact.email}`} className="flex items-center gap-2 text-gray-600 hover:text-purple-600">
-                    <Mail className="w-4 h-4" />
-                    {contact.email}
-                  </a>
-                )}
+            {/* Lead Source */}
+            {contact.lead_source && (
+              <div className="flex items-center gap-1 text-xs text-gray-500">
+                {(() => {
+                  const sourceConfig = leadSourceConfig[contact.lead_source] || { icon: MessageCircle, label: contact.lead_source, color: 'text-gray-400' };
+                  const SourceIcon = sourceConfig.icon;
+                  return (
+                    <>
+                      <SourceIcon className={`w-3 h-3 ${sourceConfig.color}`} />
+                      <span>via {sourceConfig.label}</span>
+                      {contact.lead_source === 'Referral' && contact.met_through_name && (
+                        <span className="text-purple-600">({contact.met_through_name})</span>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
             )}
 
             {contact.notes && (
               <p className="text-sm text-gray-500 italic line-clamp-2">{contact.notes}</p>
             )}
+
+            {/* Feature Toggles */}
+            <div className="flex items-center gap-2 pt-2 border-t">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleFeatureMutation.mutate({ id: contact.id, field: 'engagement_enabled', currentValue: contact.engagement_enabled });
+                }}
+                className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs transition-all ${
+                  contact.engagement_enabled 
+                    ? 'bg-purple-100 text-purple-700' 
+                    : 'bg-gray-100 text-gray-400 hover:bg-purple-50 hover:text-purple-500'
+                }`}
+                title="Toggle Engagement Tracking"
+              >
+                <Heart className={`w-3 h-3 ${contact.engagement_enabled ? 'fill-purple-500' : ''}`} />
+                <span className="hidden sm:inline">Engage</span>
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleFeatureMutation.mutate({ id: contact.id, field: 'calendar_enabled', currentValue: contact.calendar_enabled });
+                }}
+                className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs transition-all ${
+                  contact.calendar_enabled 
+                    ? 'bg-blue-100 text-blue-700' 
+                    : 'bg-gray-100 text-gray-400 hover:bg-blue-50 hover:text-blue-500'
+                }`}
+                title="Toggle Calendar"
+              >
+                <Calendar className={`w-3 h-3 ${contact.calendar_enabled ? 'fill-blue-500' : ''}`} />
+                <span className="hidden sm:inline">Calendar</span>
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleFeatureMutation.mutate({ id: contact.id, field: 'is_gifter', currentValue: contact.is_gifter });
+                }}
+                className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs transition-all ${
+                  contact.is_gifter 
+                    ? 'bg-amber-100 text-amber-700' 
+                    : 'bg-gray-100 text-gray-400 hover:bg-amber-50 hover:text-amber-500'
+                }`}
+                title="Toggle Gifter"
+              >
+                <Gift className={`w-3 h-3 ${contact.is_gifter ? 'fill-amber-500' : ''}`} />
+                <span className="hidden sm:inline">Gifter</span>
+              </button>
+            </div>
           </div>
         </CardContent>
       </Card>
