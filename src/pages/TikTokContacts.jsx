@@ -15,13 +15,14 @@ import {
   Plus, Search, Trash2, Edit, Star, Phone, Mail, 
   ExternalLink, Users, Swords, Gift, Share2, Heart, UserPlus, Video, Calendar, Music, ShoppingBag,
   ChevronDown, ChevronRight, FolderPlus, Loader2, Upload, Check, X, FileSpreadsheet, Filter, MessageCircle,
-  BookOpen, DollarSign, Moon, Sparkles, Lightbulb
+  BookOpen, DollarSign, Moon, Sparkles, Lightbulb, Flag, Shield
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuSeparator, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
+import SearchableContactSelect from '../components/tiktok/SearchableContactSelect';
 
 // Icon-based roles (top row) - ordered in rainbow: red, orange, yellow/amber, green, teal, blue, indigo, purple, pink, gray
 const iconRoles = {
@@ -50,6 +51,16 @@ const roleConfig = { ...iconRoles, ...textRoles };
 
 const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
+const veteranBranches = [
+  { value: 'ARMY', label: 'Army' },
+  { value: 'NAVY', label: 'Navy' },
+  { value: 'AF', label: 'Air Force' },
+  { value: 'USMC', label: 'Marines' },
+  { value: 'USCG', label: 'Coast Guard' },
+  { value: 'NG', label: 'National Guard' },
+  { value: 'Other', label: 'Other/Unknown' }
+];
+
 const colorOptions = [
   '#8B5CF6', '#EC4899', '#EF4444', '#F59E0B', '#10B981', 
   '#3B82F6', '#6366F1', '#84CC16', '#14B8A6', '#F97316'
@@ -73,10 +84,12 @@ export default function TikTokContacts() {
     notes: '',
     is_favorite: false,
     engagement_enabled: false,
-    engagement_frequency: 'weekly',
+    engagement_frequency: 'multiple_per_week',
     engagement_days: [],
     engagement_day_of_month: 1,
     color: '#8B5CF6',
+    is_veteran: false,
+    veteran_branch: '',
     calendar_enabled: false,
     is_gifter: false,
     add_to_my_people: false,
@@ -98,6 +111,7 @@ export default function TikTokContacts() {
   const [customRoleInput, setCustomRoleInput] = useState('');
   const [newModForName, setNewModForName] = useState('');
   const [newTheirModName, setNewTheirModName] = useState('');
+  const [filterVeterans, setFilterVeterans] = useState(false);
   
   // CSV Import state
   const [showImportModal, setShowImportModal] = useState(false);
@@ -126,6 +140,33 @@ export default function TikTokContacts() {
     queryKey: ['engagementCategories', effectiveEmail],
     queryFn: () => base44.entities.EngagementCategory.filter({ created_by: effectiveEmail }, 'name'),
     enabled: !!effectiveEmail,
+  });
+
+  const { data: preferences } = useQuery({
+    queryKey: ['preferences', effectiveEmail],
+    queryFn: async () => {
+      const prefs = await base44.entities.UserPreferences.filter({ user_email: effectiveEmail }, '-updated_date');
+      return prefs[0] || null;
+    },
+    enabled: !!effectiveEmail,
+  });
+
+  const savedCustomRoles = preferences?.custom_tiktok_roles || [];
+
+  const saveCustomRoleMutation = useMutation({
+    mutationFn: async (newRole) => {
+      const currentRoles = preferences?.custom_tiktok_roles || [];
+      if (!currentRoles.includes(newRole)) {
+        if (preferences?.id) {
+          await base44.entities.UserPreferences.update(preferences.id, {
+            custom_tiktok_roles: [...currentRoles, newRole]
+          });
+        }
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['preferences'] });
+    },
   });
 
   const createMutation = useMutation({
@@ -290,10 +331,12 @@ export default function TikTokContacts() {
       notes: '',
       is_favorite: false,
       engagement_enabled: false,
-      engagement_frequency: 'weekly',
+      engagement_frequency: 'multiple_per_week',
       engagement_days: [],
       engagement_day_of_month: 1,
       color: '#8B5CF6',
+      is_veteran: false,
+      veteran_branch: '',
       calendar_enabled: false,
       is_gifter: false,
       add_to_my_people: false,
@@ -324,10 +367,12 @@ export default function TikTokContacts() {
       notes: contact.notes || '',
       is_favorite: contact.is_favorite || false,
       engagement_enabled: contact.engagement_enabled || false,
-      engagement_frequency: contact.engagement_frequency || 'weekly',
+      engagement_frequency: contact.engagement_frequency || 'multiple_per_week',
       engagement_days: contact.engagement_days || [],
       engagement_day_of_month: contact.engagement_day_of_month || 1,
       color: contact.color || '#8B5CF6',
+      is_veteran: contact.is_veteran || false,
+      veteran_branch: contact.veteran_branch || '',
       calendar_enabled: contact.calendar_enabled || false,
       is_gifter: contact.is_gifter || false,
       add_to_my_people: contact.add_to_my_people || false,
@@ -501,11 +546,12 @@ export default function TikTokContacts() {
         c.display_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         c.screen_name?.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesRole = filterRoles.length === 0 || filterRoles.some(role => c.role?.includes(role));
-      
-      if (activeTab === 'engagement') return matchesSearch && matchesRole && c.engagement_enabled;
-      if (activeTab === 'calendar') return matchesSearch && matchesRole && c.calendar_enabled;
-      if (activeTab === 'gifters') return matchesSearch && matchesRole && c.is_gifter;
-      return matchesSearch && matchesRole;
+      const matchesVeteran = !filterVeterans || c.is_veteran;
+
+      if (activeTab === 'engagement') return matchesSearch && matchesRole && matchesVeteran && c.engagement_enabled;
+      if (activeTab === 'calendar') return matchesSearch && matchesRole && matchesVeteran && c.calendar_enabled;
+      if (activeTab === 'gifters') return matchesSearch && matchesRole && matchesVeteran && c.is_gifter;
+      return matchesSearch && matchesRole && matchesVeteran;
     })
     .sort((a, b) => {
       if (a.is_favorite && !b.is_favorite) return -1;
@@ -696,6 +742,18 @@ export default function TikTokContacts() {
               <Lightbulb className="w-4 h-4" />
             </div>
           )}
+
+          {/* Veteran Flag - Bottom Left */}
+          {contact.is_veteran && (
+            <div 
+              className="absolute bottom-3 left-3 flex items-center gap-1 px-2 py-1 rounded-full bg-gradient-to-r from-red-100 via-white to-blue-100 border border-red-200 text-xs font-semibold"
+              title={contact.veteran_branch ? `Veteran - ${contact.veteran_branch}` : 'Veteran'}
+            >
+              <Flag className="w-3 h-3 text-red-600" />
+              <span className="text-blue-800">VET</span>
+              {contact.veteran_branch && <span className="text-gray-600">• {contact.veteran_branch}</span>}
+            </div>
+          )}
         </CardContent>
       </Card>
     </motion.div>
@@ -812,15 +870,25 @@ export default function TikTokContacts() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              {filterRoles.length > 0 && (
+              {/* Veteran Filter */}
+              <Badge
+                variant={filterVeterans ? 'default' : 'outline'}
+                className={`cursor-pointer px-3 py-1.5 ${filterVeterans ? 'bg-red-600' : 'bg-gradient-to-r from-red-50 via-white to-blue-50 text-blue-700 border-red-200'}`}
+                onClick={() => setFilterVeterans(!filterVeterans)}
+              >
+                <Flag className="w-3 h-3 mr-1" />
+                Veterans
+              </Badge>
+
+              {(filterRoles.length > 0 || filterVeterans) && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setFilterRoles([])}
+                  onClick={() => { setFilterRoles([]); setFilterVeterans(false); }}
                   className="text-gray-500 hover:text-gray-700"
                 >
                   <X className="w-4 h-4 mr-1" />
-                  Clear ({filterRoles.length})
+                  Clear Filters
                 </Button>
               )}
             </div>
@@ -975,10 +1043,39 @@ export default function TikTokContacts() {
                 })}
               </div>
               
-              {/* Custom roles */}
+              {/* Saved Custom Roles */}
+              {savedCustomRoles.length > 0 && (
+                <div className="space-y-1">
+                  <Label className="text-xs text-gray-500">Your Custom Roles</Label>
+                  <div className="flex flex-wrap gap-1">
+                    {savedCustomRoles.map(role => {
+                      const customRole = `custom:${role}`;
+                      const isSelected = formData.role.includes(customRole);
+                      return (
+                        <Badge
+                          key={role}
+                          variant={isSelected ? 'default' : 'outline'}
+                          className={`cursor-pointer text-xs ${isSelected ? 'bg-teal-600' : 'bg-teal-50 text-teal-700 border-teal-300'}`}
+                          onClick={() => {
+                            if (isSelected) {
+                              setFormData({ ...formData, role: formData.role.filter(r => r !== customRole) });
+                            } else {
+                              setFormData({ ...formData, role: [...formData.role, customRole] });
+                            }
+                          }}
+                        >
+                          {role}
+                        </Badge>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Add new custom role */}
               <div className="flex gap-2 items-center">
                 <Input
-                  placeholder="Add custom role..."
+                  placeholder="Add new custom role..."
                   value={customRoleInput}
                   onChange={(e) => setCustomRoleInput(e.target.value)}
                   className="flex-1 h-8 text-xs"
@@ -988,6 +1085,8 @@ export default function TikTokContacts() {
                       if (!formData.role.includes(customRole)) {
                         setFormData({ ...formData, role: [...formData.role, customRole] });
                       }
+                      // Save to preferences for future use
+                      saveCustomRoleMutation.mutate(customRoleInput.trim());
                       setCustomRoleInput('');
                     }
                   }}
@@ -1003,6 +1102,8 @@ export default function TikTokContacts() {
                       if (!formData.role.includes(customRole)) {
                         setFormData({ ...formData, role: [...formData.role, customRole] });
                       }
+                      // Save to preferences for future use
+                      saveCustomRoleMutation.mutate(customRoleInput.trim());
                       setCustomRoleInput('');
                     }
                   }}
@@ -1010,14 +1111,15 @@ export default function TikTokContacts() {
                   <Plus className="w-3 h-3" />
                 </Button>
               </div>
-              
+
               {formData.role.filter(r => r.startsWith('custom:')).length > 0 && (
                 <div className="flex flex-wrap gap-1">
+                  <Label className="text-xs text-gray-500 w-full">Selected Custom Roles:</Label>
                   {formData.role.filter(r => r.startsWith('custom:')).map(role => (
                     <Badge
                       key={role}
                       variant="secondary"
-                      className="cursor-pointer text-xs"
+                      className="cursor-pointer text-xs bg-teal-100 text-teal-700"
                       onClick={() => setFormData({ ...formData, role: formData.role.filter(r => r !== role) })}
                     >
                       {role.replace('custom:', '')} ✕
@@ -1070,7 +1172,6 @@ export default function TikTokContacts() {
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="daily">Daily</SelectItem>
-                      <SelectItem value="weekly">Weekly</SelectItem>
                       <SelectItem value="multiple_per_week">Specific Days</SelectItem>
                       <SelectItem value="monthly">Monthly</SelectItem>
                     </SelectContent>
@@ -1342,18 +1443,13 @@ export default function TikTokContacts() {
               <TabsContent value="connections" className="p-3 border rounded-b-lg bg-blue-50/50 space-y-3">
                 <div className="space-y-2">
                   <Label>Met Through</Label>
-                  <Select
+                  <SearchableContactSelect
+                    contacts={contacts}
                     value={formData.met_through_id}
-                    onValueChange={(v) => setFormData({ ...formData, met_through_id: v, met_through_name: '' })}
-                  >
-                    <SelectTrigger><SelectValue placeholder="Select or type below..." /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={null}>None</SelectItem>
-                      {contacts.filter(c => c.id !== editingContact?.id).map(c => (
-                        <SelectItem key={c.id} value={c.id}>@{c.username}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    onChange={(v) => setFormData({ ...formData, met_through_id: v, met_through_name: '' })}
+                    placeholder="Search contacts..."
+                    excludeId={editingContact?.id}
+                  />
                   {!formData.met_through_id && (
                     <div className="flex gap-2">
                       <Input
@@ -1381,6 +1477,35 @@ export default function TikTokContacts() {
               </TabsContent>
 
               <TabsContent value="details" className="p-3 border rounded-b-lg bg-amber-50/50 space-y-3">
+                {/* Veteran Section */}
+                <div className="p-3 rounded-lg bg-gradient-to-r from-red-50 via-white to-blue-50 border border-red-200 space-y-3">
+                  <div
+                    onClick={() => setFormData({ ...formData, is_veteran: !formData.is_veteran })}
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    <Checkbox checked={formData.is_veteran} />
+                    <Flag className="w-4 h-4 text-red-600" />
+                    <Label className="cursor-pointer font-semibold text-blue-800">Veteran</Label>
+                  </div>
+
+                  {formData.is_veteran && (
+                    <div className="space-y-2 pl-6">
+                      <Label className="text-sm text-gray-600">Branch of Service</Label>
+                      <Select 
+                        value={formData.veteran_branch} 
+                        onValueChange={(v) => setFormData({ ...formData, veteran_branch: v })}
+                      >
+                        <SelectTrigger><SelectValue placeholder="Select branch..." /></SelectTrigger>
+                        <SelectContent>
+                          {veteranBranches.map(branch => (
+                            <SelectItem key={branch.value} value={branch.value}>{branch.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
+
                 <div className="space-y-2">
                   <Label>Started Going Live</Label>
                   <Input
