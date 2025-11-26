@@ -637,53 +637,59 @@ export default function TikTokContacts() {
               <p className="text-sm text-gray-500 italic line-clamp-2">{contact.notes}</p>
             )}
 
-            {/* Roles container - single line */}
-            <div className="flex flex-nowrap overflow-x-auto items-center gap-0.5 pt-2 border-t scrollbar-hide">
-              {Object.entries(iconRoles).map(([roleKey, config]) => {
-                const isActive = contact.role?.includes(roleKey);
-                const RoleIcon = config.icon;
-                return (
-                  <button
-                    key={roleKey}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const newRoles = isActive 
-                        ? (contact.role || []).filter(r => r !== roleKey)
-                        : [...(contact.role || []), roleKey];
-                      base44.entities.TikTokContact.update(contact.id, { role: newRoles });
-                      queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] });
-                    }}
-                    className={`p-1.5 rounded-full border transition-all cursor-pointer hover:scale-110 flex-shrink-0 ${
-                      isActive ? config.color + ' border-transparent' : 'bg-white text-gray-300 ' + config.borderColor + ' hover:bg-gray-50'
-                    }`}
-                    title={config.label}
-                  >
-                    <RoleIcon className="w-3 h-3" />
-                  </button>
-                );
-              })}
-              {Object.entries(textRoles).map(([roleKey, config]) => {
-                const isActive = contact.role?.includes(roleKey);
-                return (
-                  <button
-                    key={roleKey}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const newRoles = isActive 
-                        ? (contact.role || []).filter(r => r !== roleKey)
-                        : [...(contact.role || []), roleKey];
-                      base44.entities.TikTokContact.update(contact.id, { role: newRoles });
-                      queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] });
-                    }}
-                    className={`px-2 py-1 rounded-full text-xs font-medium border transition-all cursor-pointer hover:scale-105 flex-shrink-0 ${
-                      isActive ? config.color + ' border-transparent' : 'bg-white text-gray-400 ' + config.borderColor + ' hover:bg-gray-50'
-                    }`}
-                    title={config.label}
-                  >
-                    <span>{config.text}</span>
-                  </button>
-                );
-              })}
+            {/* Roles container - two rows */}
+            <div className="space-y-1 pt-2 border-t">
+              {/* Icon roles row */}
+              <div className="flex flex-wrap items-center gap-0.5">
+                {Object.entries(iconRoles).map(([roleKey, config]) => {
+                  const isActive = contact.role?.includes(roleKey);
+                  const RoleIcon = config.icon;
+                  return (
+                    <button
+                      key={roleKey}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const newRoles = isActive 
+                          ? (contact.role || []).filter(r => r !== roleKey)
+                          : [...(contact.role || []), roleKey];
+                        base44.entities.TikTokContact.update(contact.id, { role: newRoles });
+                        queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] });
+                      }}
+                      className={`p-1.5 rounded-full border transition-all cursor-pointer hover:scale-110 ${
+                        isActive ? config.color + ' border-transparent' : 'bg-white text-gray-300 ' + config.borderColor + ' hover:bg-gray-50'
+                      }`}
+                      title={config.label}
+                    >
+                      <RoleIcon className="w-3 h-3" />
+                    </button>
+                  );
+                })}
+              </div>
+              {/* Text roles row */}
+              <div className="flex flex-wrap items-center gap-1">
+                {Object.entries(textRoles).map(([roleKey, config]) => {
+                  const isActive = contact.role?.includes(roleKey);
+                  return (
+                    <button
+                      key={roleKey}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const newRoles = isActive 
+                          ? (contact.role || []).filter(r => r !== roleKey)
+                          : [...(contact.role || []), roleKey];
+                        base44.entities.TikTokContact.update(contact.id, { role: newRoles });
+                        queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] });
+                      }}
+                      className={`px-2 py-1 rounded-full text-xs font-medium border transition-all cursor-pointer hover:scale-105 ${
+                        isActive ? config.color + ' border-transparent' : 'bg-white text-gray-400 ' + config.borderColor + ' hover:bg-gray-50'
+                      }`}
+                      title={config.label}
+                    >
+                      <span>{config.text}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Bottom Row - Feature toggles */}

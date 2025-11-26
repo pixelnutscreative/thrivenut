@@ -43,6 +43,7 @@ export default function MasterContactDatabase() {
       const phonetic = contact.data?.phonetic || contact.phonetic || '';
       const owner = contact.data?.created_by || contact.created_by;
       const isGifter = contact.data?.is_gifter || contact.is_gifter;
+      const giftedFor = contact.data?.gifted_for || contact.gifted_for || [];
       
       if (!byUsername[username]) {
         byUsername[username] = {
@@ -51,7 +52,8 @@ export default function MasterContactDatabase() {
           phonetic: phonetic,
           owners: owner ? [owner] : [],
           contactIds: [contact.id],
-          is_gifter: isGifter
+          is_gifter: isGifter,
+          gifted_for: [...giftedFor]
         };
       } else {
         // Already exists - merge data, prefer non-empty values
@@ -68,6 +70,12 @@ export default function MasterContactDatabase() {
         if (isGifter) {
           byUsername[username].is_gifter = true;
         }
+        // Merge gifted_for arrays (unique values only)
+        giftedFor.forEach(gf => {
+          if (!byUsername[username].gifted_for.includes(gf)) {
+            byUsername[username].gifted_for.push(gf);
+          }
+        });
       }
     });
     
@@ -316,7 +324,12 @@ export default function MasterContactDatabase() {
                         </div>
                         
                         {/* Badges - 2 cols */}
-                        <div className="col-span-2 flex items-center justify-end gap-1">
+                        <div className="col-span-2 flex items-center justify-end gap-1 flex-wrap">
+                          {contact.gifted_for?.length > 0 && (
+                            <Badge variant="secondary" className="text-xs bg-pink-100 text-pink-700" title={`Gifted for: ${contact.gifted_for.map(u => '@' + u).join(', ')}`}>
+                              🎁 {contact.gifted_for.length}
+                            </Badge>
+                          )}
                           {contact.is_gifter && (
                             <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-700">Gifter</Badge>
                           )}
