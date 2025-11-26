@@ -1260,6 +1260,123 @@ export default function TikTokContacts() {
         </DialogContent>
       </Dialog>
 
+      {/* CSV Import Modal */}
+      <Dialog open={showImportModal} onOpenChange={(open) => { setShowImportModal(open); if (!open) { setCsvData([]); setImportError(null); } }}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileSpreadsheet className="w-5 h-5 text-teal-600" />
+              Import TikTok Leads
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-gray-600">
+              Review the contacts from your TikTok Leads Manager CSV. Existing usernames will be updated with new info.
+            </p>
+            
+            {importError && (
+              <Alert className="bg-red-50 border-red-200">
+                <AlertDescription className="text-red-700">{importError}</AlertDescription>
+              </Alert>
+            )}
+            
+            {importSuccess && (
+              <Alert className="bg-green-50 border-green-200">
+                <AlertDescription className="text-green-700 flex items-center gap-2">
+                  <Check className="w-4 h-4" /> {importSuccess}
+                </AlertDescription>
+              </Alert>
+            )}
+            
+            {/* Select All */}
+            <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+              <div className="flex items-center gap-2">
+                <Checkbox 
+                  checked={csvData.length > 0 && csvData.every(c => c.selected)}
+                  onCheckedChange={(checked) => setCsvData(prev => prev.map(c => ({ ...c, selected: checked })))}
+                />
+                <span className="text-sm font-medium">Select All ({csvData.filter(c => c.selected).length}/{csvData.length})</span>
+              </div>
+            </div>
+            
+            {/* Contact List */}
+            <div className="space-y-2 max-h-96 overflow-y-auto">
+              {csvData.map((contact, index) => (
+                <div 
+                  key={index}
+                  className={`p-3 rounded-lg border-2 transition-all ${
+                    contact.selected ? 'bg-teal-50 border-teal-300' : 'bg-white border-gray-200'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => toggleCsvSelection(index)}
+                      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                        contact.selected ? 'bg-teal-500 border-teal-500' : 'border-gray-300 bg-white hover:border-teal-400'
+                      }`}
+                    >
+                      {contact.selected && <Check className="w-4 h-4 text-white" />}
+                    </button>
+                    
+                    <div className="grid grid-cols-4 gap-2 flex-1">
+                      <Input
+                        value={contact.username}
+                        onChange={(e) => updateCsvItem(index, 'username', e.target.value)}
+                        placeholder="@username"
+                        className="h-8 text-sm font-mono"
+                      />
+                      <Input
+                        value={contact.display_name}
+                        onChange={(e) => updateCsvItem(index, 'display_name', e.target.value)}
+                        placeholder="Display name"
+                        className="h-8 text-sm"
+                      />
+                      <Input
+                        value={contact.phone}
+                        onChange={(e) => updateCsvItem(index, 'phone', e.target.value)}
+                        placeholder="Phone"
+                        className="h-8 text-sm"
+                      />
+                      <Input
+                        value={contact.email}
+                        onChange={(e) => updateCsvItem(index, 'email', e.target.value)}
+                        placeholder="Email"
+                        className="h-8 text-sm"
+                      />
+                    </div>
+                    
+                    <button
+                      onClick={() => setCsvData(prev => prev.filter((_, i) => i !== index))}
+                      className="p-1 text-gray-400 hover:text-red-500"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setShowImportModal(false); setCsvData([]); }}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => bulkImportMutation.mutate(csvData)}
+              disabled={bulkImportMutation.isPending || csvData.filter(c => c.selected).length === 0}
+              className="bg-teal-600 hover:bg-teal-700"
+            >
+              {bulkImportMutation.isPending ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Importing...</>
+              ) : (
+                <><Check className="w-4 h-4 mr-2" /> Import {csvData.filter(c => c.selected).length} Contacts</>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Category Management Modal */}
       <Dialog open={showCategoryModal} onOpenChange={setShowCategoryModal}>
         <DialogContent className="max-w-md">
