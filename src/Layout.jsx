@@ -26,10 +26,12 @@ import {
   Share2,
   Music,
   Star,
-  Lock
+  Lock,
+  UserCog
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import TikTokAccessGate from './components/access/TikTokAccessGate';
+import ImpersonationBanner, { getEffectiveUserEmail, isImpersonating } from './components/admin/ImpersonationBanner';
 
 // Map module IDs to nav items
 const moduleNavMap = {
@@ -81,6 +83,7 @@ const allNavItems = [
   { name: 'Settings', icon: Settings, path: 'Settings', alwaysShow: true },
   { name: 'Mental Health', icon: Brain, path: 'NeurodivergentSettings', moduleId: 'mental_health' },
   { name: 'Admin', icon: Users, path: 'AdminSuperFanReview', adminOnly: true },
+    { name: 'User Management', icon: UserCog, path: 'AdminImpersonate', adminOnly: true },
 ];
 
 export default function Layout({ children, currentPageName }) {
@@ -94,14 +97,18 @@ export default function Layout({ children, currentPageName }) {
     base44.auth.me().then(setUser).catch(() => {});
   }, []);
 
-  const { data: preferences } = useQuery({
-    queryKey: ['preferences', user?.email],
-    queryFn: async () => {
-      const prefs = await base44.entities.UserPreferences.filter({ user_email: user.email }, '-updated_date');
-      return prefs[0] || null;
-    },
-    enabled: !!user,
-  });
+  // Get effective email (real user or impersonated)
+      const effectiveEmail = user ? getEffectiveUserEmail(user.email) : null;
+      const currentlyImpersonating = isImpersonating();
+
+      const { data: preferences } = useQuery({
+        queryKey: ['preferences', effectiveEmail],
+        queryFn: async () => {
+          const prefs = await base44.entities.UserPreferences.filter({ user_email: effectiveEmail }, '-updated_date');
+          return prefs[0] || null;
+        },
+        enabled: !!effectiveEmail,
+      });
 
   const enabledModules = preferences?.enabled_modules || ['tiktok', 'gifter', 'goals', 'wellness', 'supplements', 'medications', 'pets', 'care_reminders', 'people', 'journal', 'mental_health'];
   const featureOrder = preferences?.feature_order || [];
@@ -212,7 +219,8 @@ export default function Layout({ children, currentPageName }) {
   const hoverClass = isDark ? 'hover:bg-gray-700/50' : 'hover:bg-teal-50';
 
   return (
-    <div className={`min-h-screen ${bgClass}`} style={{ '--primary-color': primaryColor, '--accent-color': accentColor }}>
+        <div className={`min-h-screen ${bgClass} ${currentlyImpersonating ? 'pt-10' : ''}`} style={{ '--primary-color': primaryColor, '--accent-color': accentColor }}>
+          <ImpersonationBanner />
       {/* Mobile Header */}
       <div className={`lg:hidden fixed top-0 left-0 right-0 z-50 backdrop-blur-sm border-b px-4 py-3 ${sidebarClass}`}>
         <div className="flex items-center justify-between">
