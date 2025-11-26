@@ -1,5 +1,4 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -43,10 +42,7 @@ const benefits = [
 ];
 
 export default function Home() {
-  const navigate = useNavigate();
-
-  const handleGetStarted = async () => {
-    // This will trigger login if not authenticated, then redirect to Dashboard
+  const handleGetStarted = () => {
     window.location.href = createPageUrl('Dashboard');
   };
 
