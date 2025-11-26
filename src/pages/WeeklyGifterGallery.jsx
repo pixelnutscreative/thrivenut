@@ -25,17 +25,20 @@ import { Checkbox } from '@/components/ui/checkbox';
 export default function WeeklyGifterGallery() {
   const queryClient = useQueryClient();
   
-  // Default to PREVIOUS week's Sunday (the Sunday that just passed, or last Sunday if today is Sunday)
-  const getPreviousWeekSunday = () => {
+  // Default to PREVIOUS week's Saturday (the week that just ended)
+  const getPreviousWeekSaturday = () => {
     const now = new Date();
     const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
-    const lastSunday = new Date(now);
-    // Go back to the most recent Sunday (if today is Sunday, go back 7 days to LAST Sunday)
-    lastSunday.setDate(now.getDate() - (dayOfWeek === 0 ? 7 : dayOfWeek));
-    return format(lastSunday, 'yyyy-MM-dd');
+    // Calculate days since last Saturday (Saturday = 6)
+    // If today is Sunday (0), last Saturday was 1 day ago
+    // If today is Saturday (6), last Saturday was 7 days ago (previous week's Saturday)
+    const daysSinceLastSaturday = dayOfWeek === 6 ? 7 : dayOfWeek + 1;
+    const lastSaturday = new Date(now);
+    lastSaturday.setDate(now.getDate() - daysSinceLastSaturday);
+    return format(lastSaturday, 'yyyy-MM-dd');
   };
   
-  const [selectedWeek, setSelectedWeek] = useState(getPreviousWeekSunday());
+  const [selectedWeek, setSelectedWeek] = useState('2025-11-23');
   const [activeTab, setActiveTab] = useState('summary');
   const [user, setUser] = useState(null);
   
