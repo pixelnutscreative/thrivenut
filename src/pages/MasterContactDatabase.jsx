@@ -177,17 +177,34 @@ export default function MasterContactDatabase() {
           </p>
         </div>
 
-        {/* Search */}
-        <Card>
+        {/* Search + Save */}
+        <Card className="sticky top-0 z-10 shadow-md">
           <CardContent className="p-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <Input
-                placeholder="Search by username, display name, or phonetic..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
+            <div className="flex items-center gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                  placeholder="Search by username, display name, or phonetic..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              {editingUsername && (
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={() => handleSave(editingUsername)}
+                    disabled={updateMutation.isPending}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
+                  </Button>
+                  <Button variant="outline" onClick={handleCancel}>
+                    Cancel
+                  </Button>
+                </div>
+              )}
             </div>
             <p className="text-sm text-gray-500 mt-2">
               {filteredContacts.length} contacts in master database
@@ -226,26 +243,6 @@ export default function MasterContactDatabase() {
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        {/* Save/Done button */}
-                        {editable && (
-                          <button
-                            onClick={() => {
-                              if (localEdit) {
-                                handleSave(contact.username);
-                              } else {
-                                handleEdit(contact);
-                              }
-                            }}
-                            disabled={updateMutation.isPending}
-                            className={`w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all ${
-                              isSaved || localEdit
-                                ? 'bg-green-500 border-green-500 hover:bg-green-600' 
-                                : 'border-gray-300 bg-white hover:border-green-400'
-                            }`}
-                          >
-                            {(isSaved || localEdit) && <Check className="w-4 h-4 text-white" />}
-                          </button>
-                        )}
                         {!editable && (
                           <Lock className="w-5 h-5 text-gray-300" title="You don't have permission to edit" />
                         )}
