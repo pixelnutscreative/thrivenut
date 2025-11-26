@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+
 import { 
   Search, Edit, Save, X, Users, Lock, Unlock, UserCheck, Music
 } from 'lucide-react';
@@ -16,8 +16,8 @@ export default function MasterContactDatabase() {
   const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [editingContact, setEditingContact] = useState(null);
-  const [editForm, setEditForm] = useState({ display_name: '', phonetic: '' });
+  const [editingUsername, setEditingUsername] = useState(null);
+  const [editForm, setEditForm] = useState({ username: '', display_name: '', phonetic: '' });
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -88,11 +88,11 @@ export default function MasterContactDatabase() {
 
   // Update mutation - updates ALL matching contacts across all users
   const updateMutation = useMutation({
-    mutationFn: async ({ username, data }) => {
+    mutationFn: async ({ originalUsername, data }) => {
       // Find all contacts with this username and update them
       const contactsToUpdate = allContacts.filter(c => {
         const cUsername = (c.data?.username || c.username || '').toLowerCase().replace('@', '').trim();
-        return cUsername === username.toLowerCase();
+        return cUsername === originalUsername.toLowerCase();
       });
       
       const promises = contactsToUpdate.map(contact => 
@@ -105,25 +105,33 @@ export default function MasterContactDatabase() {
       queryClient.invalidateQueries({ queryKey: ['masterContacts'] });
       queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] });
       queryClient.invalidateQueries({ queryKey: ['allTiktokContacts'] });
-      setEditingContact(null);
+      setEditingUsername(null);
     },
   });
 
   const handleEdit = (contact) => {
     if (!canEdit(contact)) return;
-    setEditingContact(contact);
+    setEditingUsername(contact.username);
     setEditForm({
+      username: contact.username || '',
       display_name: contact.display_name || '',
       phonetic: contact.phonetic || ''
     });
   };
 
-  const handleSave = () => {
-    if (!editingContact) return;
+  const handleSave = (originalUsername) => {
     updateMutation.mutate({
-      username: editingContact.username,
-      data: editForm
+      originalUsername,
+      data: {
+        username: editForm.username.replace('@', '').trim(),
+        display_name: editForm.display_name,
+        phonetic: editForm.phonetic
+      }
     });
+  };
+
+  const handleCancel = () => {
+    setEditingUsername(null);
   };
 
   if (!user) {
@@ -188,55 +196,104 @@ export default function MasterContactDatabase() {
               <div className="space-y-2">
                 {filteredContacts.map((contact, index) => {
                   const editable = canEdit(contact);
+                  const isEditing = editingUsername === contact.username;
+                  
                   return (
                     <motion.div
                       key={contact.username}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: Math.min(index * 0.02, 0.5) }}
-                      className={`p-3 rounded-lg border flex items-center justify-between ${
-                        editable ? 'bg-white hover:bg-gray-50' : 'bg-gray-50'
+                      className={`p-3 rounded-lg border ${
+                        isEditing ? 'bg-indigo-50 border-indigo-300' : editable ? 'bg-white hover:bg-gray-50' : 'bg-gray-50'
                       }`}
                     >
-                      <div className="flex items-center gap-4 flex-1">
-                        <div className="w-32">
-                          <p className="font-mono text-sm font-semibold text-purple-700">@{contact.username}</p>
+                      {isEditing ? (
+                        <div className="flex items-center gap-3">
+                          <div className="w-36">
+                            <Input
+                              value={editForm.username}
+                              onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
+                              placeholder="@username"
+                              className="h-8 text-sm font-mono"
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <Input
+                              value={editForm.display_name}
+                              onChange={(e) => setEditForm({ ...editForm, display_name: e.target.value })}
+                              placeholder="Display name"
+                              className="h-8"
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <Input
+                              value={editForm.phonetic}
+                              onChange={(e) => setEditForm({ ...editForm, phonetic: e.target.value })}
+                              placeholder="Phonetic 🎵"
+                              className="h-8"
+                            />
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Button
+                              size="sm"
+                              onClick={() => handleSave(contact.username)}
+                              disabled={updateMutation.isPending}
+                              className="h-8 bg-green-600 hover:bg-green-700"
+                            >
+                              <Save className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={handleCancel}
+                              className="h-8"
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
-                        <div className="flex-1">
-                          <p className="font-medium">{contact.display_name || <span className="text-gray-400 italic">No display name</span>}</p>
+                      ) : (
+                        <div className="flex items-center gap-4">
+                          <div className="w-36">
+                            <p className="font-mono text-sm font-semibold text-purple-700">@{contact.username}</p>
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-medium">{contact.display_name || <span className="text-gray-400 italic">No display name</span>}</p>
+                          </div>
+                          <div className="flex-1">
+                            {contact.phonetic ? (
+                              <p className="text-sm text-gray-600 flex items-center gap-1">
+                                <Music className="w-3 h-3" /> {contact.phonetic}
+                              </p>
+                            ) : (
+                              <span className="text-gray-400 italic text-sm">No phonetic</span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {contact.is_gifter && (
+                              <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-700">Gifter</Badge>
+                            )}
+                            <Badge variant="outline" className="text-xs">
+                              {contact.owners.length} user{contact.owners.length !== 1 ? 's' : ''}
+                            </Badge>
+                          </div>
+                          <div className="ml-2">
+                            {editable ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEdit(contact)}
+                                className="h-8 text-indigo-600 hover:text-indigo-800"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                            ) : (
+                              <Lock className="w-4 h-4 text-gray-300" title="You don't have permission to edit" />
+                            )}
+                          </div>
                         </div>
-                        <div className="flex-1">
-                          {contact.phonetic ? (
-                            <p className="text-sm text-gray-600 flex items-center gap-1">
-                              <Music className="w-3 h-3" /> {contact.phonetic}
-                            </p>
-                          ) : (
-                            <span className="text-gray-400 italic text-sm">No phonetic</span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {contact.is_gifter && (
-                            <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-700">Gifter</Badge>
-                          )}
-                          <Badge variant="outline" className="text-xs">
-                            {contact.owners.length} user{contact.owners.length !== 1 ? 's' : ''}
-                          </Badge>
-                        </div>
-                      </div>
-                      <div className="ml-4">
-                        {editable ? (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEdit(contact)}
-                            className="text-indigo-600 hover:text-indigo-800"
-                          >
-                            <Edit className="w-4 h-4 mr-1" /> Edit
-                          </Button>
-                        ) : (
-                          <Lock className="w-4 h-4 text-gray-300" title="You don't have permission to edit" />
-                        )}
-                      </div>
+                      )}
                     </motion.div>
                   );
                 })}
@@ -246,53 +303,6 @@ export default function MasterContactDatabase() {
         </Card>
       </div>
 
-      {/* Edit Modal */}
-      <Dialog open={!!editingContact} onOpenChange={(open) => !open && setEditingContact(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit @{editingContact?.username}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Display Name</Label>
-              <Input
-                value={editForm.display_name}
-                onChange={(e) => setEditForm({ ...editForm, display_name: e.target.value })}
-                placeholder="How they appear (e.g., Sarah D)"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Phonetic Pronunciation 🎵</Label>
-              <Input
-                value={editForm.phonetic}
-                onChange={(e) => setEditForm({ ...editForm, phonetic: e.target.value })}
-                placeholder="How to say it for songs (e.g., Sarah Dee Seven Seven Seven)"
-              />
-            </div>
-            {isAdmin && editingContact?.owners?.length > 0 && (
-              <div className="p-3 bg-gray-50 rounded-lg">
-                <p className="text-xs text-gray-500 mb-1">Owned by:</p>
-                <div className="flex flex-wrap gap-1">
-                  {editingContact.owners.map(owner => (
-                    <Badge key={owner} variant="outline" className="text-xs">{owner}</Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingContact(null)}>Cancel</Button>
-            <Button
-              onClick={handleSave}
-              disabled={updateMutation.isPending}
-              className="bg-indigo-600 hover:bg-indigo-700"
-            >
-              <Save className="w-4 h-4 mr-2" />
-              {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
