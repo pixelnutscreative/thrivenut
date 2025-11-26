@@ -165,29 +165,47 @@ export default function TikTokContacts() {
     },
   });
 
+  // Master contacts for looking up shared display_name/phonetic
+  const { data: allMasterContacts = [] } = useQuery({
+    queryKey: ['allMasterContacts'],
+    queryFn: () => base44.entities.TikTokContact.list('username', 2000),
+  });
+
   // Bulk import mutation
   const bulkImportMutation = useMutation({
     mutationFn: async (contactsToImport) => {
       const results = [];
       for (const contact of contactsToImport) {
         if (!contact.selected) continue;
-        // Check if username already exists
+        
+        // Check if username already exists in MY contacts
         const existing = contacts.find(c => 
           c.username?.toLowerCase() === contact.username?.toLowerCase()
         );
+        
+        // Check master database for shared display_name/phonetic
+        const masterMatch = allMasterContacts.find(c => {
+          const cUsername = (c.data?.username || c.username || '').toLowerCase();
+          return cUsername === contact.username?.toLowerCase();
+        });
+        const masterDisplayName = masterMatch?.data?.display_name || masterMatch?.display_name;
+        const masterPhonetic = masterMatch?.data?.phonetic || masterMatch?.phonetic;
+        
         if (existing) {
-          // Update existing contact with new data
+          // Update existing contact - use master DB display_name/phonetic if available, keep private data (phone/email)
           await base44.entities.TikTokContact.update(existing.id, {
-            display_name: contact.display_name || existing.display_name,
+            display_name: masterDisplayName || contact.display_name || existing.display_name,
+            phonetic: masterPhonetic || existing.phonetic,
             phone: contact.phone || existing.phone,
             email: contact.email || existing.email,
           });
           results.push({ ...contact, action: 'updated' });
         } else {
-          // Create new contact
+          // Create new contact - use master DB display_name/phonetic if available
           await base44.entities.TikTokContact.create({
             username: contact.username,
-            display_name: contact.display_name,
+            display_name: masterDisplayName || contact.display_name,
+            phonetic: masterPhonetic || '',
             phone: contact.phone,
             email: contact.email,
             role: ['custom:TikTok Lead'],
@@ -199,6 +217,7 @@ export default function TikTokContacts() {
     },
     onSuccess: (results) => {
       queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] });
+      queryClient.invalidateQueries({ queryKey: ['allMasterContacts'] });
       const created = results.filter(r => r.action === 'created').length;
       const updated = results.filter(r => r.action === 'updated').length;
       setImportSuccess(`Imported ${created} new contacts, updated ${updated} existing.`);
