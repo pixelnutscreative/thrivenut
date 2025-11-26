@@ -21,6 +21,7 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 
 export default function WeeklyGifterGallery() {
   const queryClient = useQueryClient();
@@ -43,6 +44,11 @@ export default function WeeklyGifterGallery() {
   
   // AI Import state
   const [uploading, setUploading] = useState(false);
+  
+  // Copy to account state
+  const [showCopyModal, setShowCopyModal] = useState(false);
+  const [selectedEntryIds, setSelectedEntryIds] = useState([]);
+  const [copyTargetUsername, setCopyTargetUsername] = useState('');
   const [analyzing, setAnalyzing] = useState(false);
   const [extractedData, setExtractedData] = useState(null);
   const [previewUrls, setPreviewUrls] = useState([]);
@@ -87,6 +93,13 @@ export default function WeeklyGifterGallery() {
     queryKey: ['allTiktokContacts'],
     queryFn: () => base44.entities.TikTokContact.list('username'),
   });
+
+  const { data: managedAccounts = [] } = useQuery({
+    queryKey: ['managedAccounts'],
+    queryFn: () => base44.entities.ManagedAccount.list('tiktok_username'),
+  });
+
+  const isAdmin = user?.email?.toLowerCase() === 'pixelnutscreative@gmail.com';
 
   const gifters = contacts.filter(c => c.is_gifter || c.data?.is_gifter);
 
@@ -163,6 +176,56 @@ export default function WeeklyGifterGallery() {
       queryClient.invalidateQueries({ queryKey: ['giftingEntries'] });
       queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] });
       setEditingEntry(null);
+    },
+  });
+
+  // Copy entries to another account
+  const copyEntriesMutation = useMutation({
+    mutationFn: async ({ entryIds, targetUsername }) => {
+      const targetEmail = `managed_${targetUsername.toLowerCase().replace('@', '')}@thrivenut.app`;
+      
+      // Get selected entries
+      const entriesToCopy = entries.filter(e => entryIds.includes(e.id));
+      
+      // Create copies with new owner
+      const promises = entriesToCopy.map(entry => {
+        const entryData = entry.data || entry;
+        return base44.entities.GiftingEntry.create({
+          gifter_id: entryData.gifter_id || entry.gifter_id,
+          gifter_username: entryData.gifter_username || entry.gifter_username,
+          gifter_screen_name: entryData.gifter_screen_name || entry.gifter_screen_name,
+          gifter_phonetic: entryData.gifter_phonetic || entry.gifter_phonetic,
+          gift_id: entryData.gift_id || entry.gift_id,
+          gift_name: entryData.gift_name || entry.gift_name,
+          rank: entryData.rank || entry.rank,
+          week: entryData.week || entry.week,
+          created_by: targetEmail
+        });
+      });
+      
+      // Also copy the contacts
+      const contactIds = [...new Set(entriesToCopy.map(e => e.data?.gifter_id || e.gifter_id).filter(Boolean))];
+      const contactsToCopy = allContacts.filter(c => contactIds.includes(c.id));
+      
+      const contactPromises = contactsToCopy.map(contact => {
+        const contactData = contact.data || contact;
+        return base44.entities.TikTokContact.create({
+          username: contactData.username || contact.username,
+          display_name: contactData.display_name || contact.display_name,
+          phonetic: contactData.phonetic || contact.phonetic,
+          is_gifter: true,
+          created_by: targetEmail
+        });
+      });
+      
+      return Promise.all([...promises, ...contactPromises]);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['giftingEntries'] });
+      queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] });
+      setShowCopyModal(false);
+      setSelectedEntryIds([]);
+      setCopyTargetUsername('');
     },
   });
 
@@ -495,6 +558,35 @@ For each username, generate a "suggested_phonetic" field with how it would be pr
 
           {/* Summary Tab */}
           <TabsContent value="summary" className="space-y-4">
+            {/* Admin: Copy to Account */}
+            {isAdmin && sortedEntries.length > 0 && (
+              <Card className="bg-amber-50 border-amber-200">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Checkbox
+                        checked={selectedEntryIds.length === sortedEntries.length}
+                        onCheckedChange={(checked) => {
+                          setSelectedEntryIds(checked ? sortedEntries.map(e => e.id) : []);
+                        }}
+                      />
+                      <span className="text-sm font-medium">
+                        {selectedEntryIds.length} of {sortedEntries.length} selected
+                      </span>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => setShowCopyModal(true)}
+                      disabled={selectedEntryIds.length === 0}
+                      className="bg-amber-600 hover:bg-amber-700"
+                    >
+                      Copy to Account
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {isLoading ? (
               <div className="flex justify-center py-12">
                 <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
@@ -530,6 +622,18 @@ For each username, generate a "suggested_phonetic" field with how it would be pr
                         transition={{ delay: index * 0.05 }}
                         className="p-4 bg-gray-50 rounded-lg"
                       >
+                        {isAdmin && (
+                          <div className="float-left mr-3">
+                            <Checkbox
+                              checked={selectedEntryIds.includes(entry.id)}
+                              onCheckedChange={(checked) => {
+                                setSelectedEntryIds(prev => 
+                                  checked ? [...prev, entry.id] : prev.filter(id => id !== entry.id)
+                                );
+                              }}
+                            />
+                          </div>
+                        )}
                         {(() => {
                           // Normalize entry fields (handle nested data object)
                           const rank = entry.data?.rank || entry.rank;
@@ -891,6 +995,53 @@ For each username, generate a "suggested_phonetic" field with how it would be pr
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Copy to Account Modal */}
+      <Dialog open={showCopyModal} onOpenChange={setShowCopyModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Copy {selectedEntryIds.length} Entries to Account</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Target TikTok Username</Label>
+              <Input
+                placeholder="@foleyfarms"
+                value={copyTargetUsername}
+                onChange={(e) => setCopyTargetUsername(e.target.value)}
+              />
+            </div>
+            {managedAccounts.length > 0 && (
+              <div className="space-y-2">
+                <Label className="text-sm text-gray-500">Or select managed account:</Label>
+                <div className="flex flex-wrap gap-2">
+                  {managedAccounts.map(acc => (
+                    <Badge
+                      key={acc.id}
+                      variant={copyTargetUsername.toLowerCase().replace('@','') === acc.data?.tiktok_username?.toLowerCase() ? 'default' : 'outline'}
+                      className="cursor-pointer"
+                      onClick={() => setCopyTargetUsername(acc.data?.tiktok_username || '')}
+                    >
+                      @{acc.data?.tiktok_username}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCopyModal(false)}>Cancel</Button>
+            <Button
+              onClick={() => copyEntriesMutation.mutate({ entryIds: selectedEntryIds, targetUsername: copyTargetUsername })}
+              disabled={!copyTargetUsername.trim() || copyEntriesMutation.isPending}
+              className="bg-amber-600 hover:bg-amber-700"
+            >
+              {copyEntriesMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Copy Entries
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
