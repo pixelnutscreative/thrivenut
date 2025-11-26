@@ -103,7 +103,7 @@ export default function AdminImpersonate() {
   const allAccounts = [
     ...managedAccounts.map(acc => {
       // Handle both nested data and flat structure
-      const username = acc.data?.tiktok_username || acc.tiktok_username;
+      const username = (acc.data?.tiktok_username || acc.tiktok_username || '').toLowerCase();
       const displayName = acc.data?.display_name || acc.display_name;
       const claimedBy = acc.data?.claimed_by_email || acc.claimed_by_email;
       return {
