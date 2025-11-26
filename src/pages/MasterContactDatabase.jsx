@@ -8,8 +8,9 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 
 import { 
-  Search, Edit, Save, X, Users, Lock, Unlock, UserCheck, Music, Check
+  Search, Edit, Save, X, Users, Lock, Unlock, UserCheck, Music, Check, Trash2, Loader2
 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { motion } from 'framer-motion';
 
 export default function MasterContactDatabase() {
@@ -18,6 +19,7 @@ export default function MasterContactDatabase() {
   const [searchTerm, setSearchTerm] = useState('');
   const [editingUsername, setEditingUsername] = useState(null);
   const [editForm, setEditForm] = useState({ username: '', display_name: '', phonetic: '' });
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -166,6 +168,28 @@ export default function MasterContactDatabase() {
   const handleCancel = () => {
     setEditingUsername(null);
   };
+
+  // Delete mutation - deletes ALL contacts with this username across all users (admin only)
+  const deleteMutation = useMutation({
+    mutationFn: async (username) => {
+      const contactsToDelete = allContacts.filter(c => {
+        const cUsername = (c.data?.username || c.username || '').toLowerCase().replace('@', '').trim();
+        return cUsername === username.toLowerCase();
+      });
+      
+      const promises = contactsToDelete.map(contact => 
+        base44.entities.TikTokContact.delete(contact.id)
+      );
+      
+      return Promise.all(promises);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['masterContacts'] });
+      queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] });
+      queryClient.invalidateQueries({ queryKey: ['allTiktokContacts'] });
+      setDeleteConfirm(null);
+    },
+  });
 
   if (!user) {
     return (
@@ -323,7 +347,7 @@ export default function MasterContactDatabase() {
                           )}
                         </div>
                         
-                        {/* Badges - 2 cols */}
+                        {/* Badges + Delete - 2 cols */}
                         <div className="col-span-2 flex items-center justify-end gap-1 flex-wrap">
                           {contact.gifted_for?.length > 0 && (
                             <Badge variant="secondary" className="text-xs bg-pink-100 text-pink-700" title={`Gifted for: ${contact.gifted_for.map(u => '@' + u).join(', ')}`}>
@@ -336,6 +360,15 @@ export default function MasterContactDatabase() {
                           <Badge variant="outline" className="text-xs whitespace-nowrap">
                             {contact.owners.length} user{contact.owners.length !== 1 ? 's' : ''}
                           </Badge>
+                          {isAdmin && (
+                            <button
+                              onClick={() => setDeleteConfirm(contact)}
+                              className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                              title="Delete from all users"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
                       </div>
                     </motion.div>
@@ -347,6 +380,37 @@ export default function MasterContactDatabase() {
         </Card>
       </div>
 
+      {/* Delete Confirmation Modal */}
+      <Dialog open={!!deleteConfirm} onOpenChange={(open) => !open && setDeleteConfirm(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-red-600">Delete Contact from All Users?</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-gray-600 mb-4">
+              This will permanently delete <strong>@{deleteConfirm?.username}</strong> from the master database 
+              and remove it from <strong>{deleteConfirm?.owners?.length || 0} user(s)</strong>.
+            </p>
+            <p className="text-sm text-red-600 font-medium">This action cannot be undone.</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteConfirm(null)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => deleteMutation.mutate(deleteConfirm?.username)}
+              disabled={deleteMutation.isPending}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deleteMutation.isPending ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Deleting...</>
+              ) : (
+                <><Trash2 className="w-4 h-4 mr-2" /> Delete from All Users</>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
