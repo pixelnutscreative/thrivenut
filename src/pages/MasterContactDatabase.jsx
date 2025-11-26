@@ -88,17 +88,24 @@ export default function MasterContactDatabase() {
     return contact.owners.includes(user.email);
   };
 
-  // Update mutation - updates ALL matching contacts across all users
+  // Update mutation - updates ONLY the shared fields (username, display_name, phonetic) across all users
   const updateMutation = useMutation({
     mutationFn: async ({ originalUsername, data }) => {
-      // Find all contacts with this username and update them
+      // Find all contacts with this username and update ONLY the shared fields
       const contactsToUpdate = allContacts.filter(c => {
         const cUsername = (c.data?.username || c.username || '').toLowerCase().replace('@', '').trim();
         return cUsername === originalUsername.toLowerCase();
       });
       
+      // Only update the shared fields, leave private data (phone, email, notes, etc.) untouched
+      const sharedData = {
+        username: data.username,
+        display_name: data.display_name,
+        phonetic: data.phonetic
+      };
+      
       const promises = contactsToUpdate.map(contact => 
-        base44.entities.TikTokContact.update(contact.id, data)
+        base44.entities.TikTokContact.update(contact.id, sharedData)
       );
       
       return Promise.all(promises);
