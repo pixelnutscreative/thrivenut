@@ -13,7 +13,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   Plus, Loader2, Trophy, Medal, Award, Sparkles, Upload, Star, 
   Copy, Download, Send, Check, CheckCircle, Music, Edit, X, 
-  ChevronLeft, ChevronRight, ImageIcon, UserCheck, HelpCircle
+  ChevronLeft, ChevronRight, ImageIcon, UserCheck, HelpCircle, Users
 } from 'lucide-react';
 import { format, startOfWeek, subWeeks, addWeeks, addDays } from 'date-fns';
 import { motion } from 'framer-motion';
