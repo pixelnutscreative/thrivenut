@@ -797,7 +797,7 @@ export default function TikTokContacts() {
               {quickFilterRoles.map(role => {
                 const isCustom = role.startsWith('custom:');
                 const config = isCustom ? null : roleConfig[role];
-                const Icon = config?.icon || UserPlus;
+                const Icon = config?.icon;
                 const label = isCustom ? role.replace('custom:', '') : config?.label;
                 const colorClass = isCustom ? 'bg-teal-100 text-teal-700' : config?.color;
                 const isActive = filterRoles.includes(role);
@@ -808,7 +808,7 @@ export default function TikTokContacts() {
                     className={`cursor-pointer px-3 py-1.5 ${isActive ? 'bg-purple-600' : colorClass}`}
                     onClick={() => toggleFilterRole(role)}
                   >
-                    <Icon className="w-3 h-3 mr-1" />
+                    {Icon ? <Icon className="w-3 h-3 mr-1" /> : (isCustom ? <UserPlus className="w-3 h-3 mr-1" /> : null)}
                     {label}
                   </Badge>
                 );
@@ -839,7 +839,7 @@ export default function TikTokContacts() {
                         checked={filterRoles.includes(role)}
                         onCheckedChange={() => toggleFilterRole(role)}
                       >
-                        <Icon className="w-4 h-4 mr-2" />
+                        {Icon ? <Icon className="w-4 h-4 mr-2" /> : <span className="text-xs font-bold mr-2">{config.text}</span>}
                         {config.label}
                       </DropdownMenuCheckboxItem>
                     );
@@ -1003,7 +1003,7 @@ export default function TikTokContacts() {
                     >
                       <div className="flex items-center gap-1">
                         <Checkbox checked={formData.role.includes(key)} className="h-3 w-3" />
-                        <Icon className="w-3 h-3" />
+                        {Icon ? <Icon className="w-3 h-3" /> : <span className="text-[10px] font-bold">{config.text}</span>}
                         <span className="truncate">{config.label}</span>
                       </div>
                     </div>
@@ -1563,7 +1563,7 @@ export default function TikTokContacts() {
                         setCsvData(prev => prev.map(c => ({ ...c, importRoles: newRoles })));
                       }}
                     >
-                      <Icon className="w-3 h-3 mr-1" />
+                      {Icon ? <Icon className="w-3 h-3 mr-1" /> : <span className="text-xs font-bold mr-1">{config.text}</span>}
                       {config.label}
                     </Badge>
                   );
