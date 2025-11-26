@@ -538,6 +538,15 @@ export default function TikTokContacts() {
             <p className="text-gray-600 mt-1">Your central hub for all TikTok connections</p>
           </div>
           <div className="flex gap-2">
+                        <label className="cursor-pointer">
+                          <input type="file" accept=".csv" onChange={handleCsvUpload} className="hidden" />
+                          <Button asChild variant="outline">
+                            <span>
+                              <Upload className="w-4 h-4 mr-2" />
+                              Import CSV
+                            </span>
+                          </Button>
+                        </label>
                         <Button
                           variant="outline"
                           onClick={() => setShowCategoryModal(true)}
