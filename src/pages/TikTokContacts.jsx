@@ -95,6 +95,7 @@ export default function TikTokContacts() {
   const [importing, setImporting] = useState(false);
   const [importError, setImportError] = useState(null);
   const [importSuccess, setImportSuccess] = useState(null);
+  const [importAddTikTokLead, setImportAddTikTokLead] = useState(true);
 
   const [user, setUser] = useState(null);
 
@@ -205,13 +206,14 @@ export default function TikTokContacts() {
           results.push({ ...contact, action: 'updated' });
         } else {
           // Create new contact - use master DB display_name/phonetic if available
+          const roles = contact.addTikTokLead ? ['custom:TikTok Lead'] : [];
           await base44.entities.TikTokContact.create({
             username: contact.username,
             display_name: masterDisplayName || contact.display_name,
             phonetic: masterPhonetic || '',
             phone: contact.phone,
             email: contact.email,
-            role: ['custom:TikTok Lead'],
+            role: roles,
             lead_received_at: contact.lead_received_at,
             lead_source: contact.lead_source,
           });
@@ -448,6 +450,7 @@ export default function TikTokContacts() {
           lead_received_at: leadReceivedAt,
           lead_source: sourceIdx >= 0 ? values[sourceIdx] : '',
           selected: true,
+          addTikTokLead: true,
         });
       }
 
@@ -476,7 +479,7 @@ export default function TikTokContacts() {
   };
 
   // Quick filter roles (shown as separate buttons)
-  const quickFilterRoles = ['subscriber', 'superfan', 'irl_friend', 'discord'];
+  const quickFilterRoles = ['subscriber', 'superfan', 'irl_friend', 'discord', 'custom:TikTok Lead'];
   // All other roles go in the dropdown
   const dropdownRoles = Object.keys(roleConfig).filter(r => !quickFilterRoles.includes(r));
 
@@ -669,18 +672,21 @@ export default function TikTokContacts() {
             <div className="flex flex-wrap items-center gap-2">
               {/* Quick Filter Buttons */}
               {quickFilterRoles.map(role => {
-                const config = roleConfig[role];
-                const Icon = config.icon;
+                const isCustom = role.startsWith('custom:');
+                const config = isCustom ? null : roleConfig[role];
+                const Icon = config?.icon || UserPlus;
+                const label = isCustom ? role.replace('custom:', '') : config?.label;
+                const colorClass = isCustom ? 'bg-teal-100 text-teal-700' : config?.color;
                 const isActive = filterRoles.includes(role);
                 return (
                   <Badge
                     key={role}
                     variant={isActive ? 'default' : 'outline'}
-                    className={`cursor-pointer px-3 py-1.5 ${isActive ? 'bg-purple-600' : config.color}`}
+                    className={`cursor-pointer px-3 py-1.5 ${isActive ? 'bg-purple-600' : colorClass}`}
                     onClick={() => toggleFilterRole(role)}
                   >
                     <Icon className="w-3 h-3 mr-1" />
-                    {config.label}
+                    {label}
                   </Badge>
                 );
               })}
@@ -1412,6 +1418,21 @@ export default function TikTokContacts() {
                 </AlertDescription>
               </Alert>
             )}
+            
+            {/* Import Options */}
+            <div className="p-3 bg-teal-50 border border-teal-200 rounded-lg space-y-2">
+              <p className="text-sm font-medium text-teal-800">Import Options</p>
+              <div className="flex items-center gap-2">
+                <Checkbox 
+                  id="addTikTokLead"
+                  checked={csvData.length > 0 && csvData.every(c => c.addTikTokLead)}
+                  onCheckedChange={(checked) => setCsvData(prev => prev.map(c => ({ ...c, addTikTokLead: checked })))}
+                />
+                <label htmlFor="addTikTokLead" className="text-sm cursor-pointer">
+                  Tag all as <Badge className="bg-teal-600 ml-1">TikTok Lead</Badge>
+                </label>
+              </div>
+            </div>
             
             {/* Select All */}
             <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
