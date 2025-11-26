@@ -432,7 +432,7 @@ export default function TikTokContacts() {
             <TabsTrigger value="all">All ({contacts.length})</TabsTrigger>
             <TabsTrigger value="engagement">Engagement ({contacts.filter(c => c.engagement_enabled).length})</TabsTrigger>
             <TabsTrigger value="calendar">Calendar ({contacts.filter(c => c.calendar_enabled).length})</TabsTrigger>
-            <TabsTrigger value="gifters">Gifters ({contacts.filter(c => c.is_gifter).length})</TabsTrigger>
+            <TabsTrigger value="gifters">🎁 Gifters ({contacts.filter(c => c.is_gifter).length})</TabsTrigger>
           </TabsList>
         </Tabs>
 
