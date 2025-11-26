@@ -5,7 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Save, User, Palette, Eye, Layers, MessageSquare, Clock, Share2, Music } from 'lucide-react';
+import { Loader2, Save, User, Palette, Eye, Layers, MessageSquare, Clock, Share2, Music, Sparkles } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { motion } from 'framer-motion';
@@ -75,7 +77,12 @@ export default function Settings() {
     song_share_email: '',
     tiktok_username: '',
     allow_in_community_directory: false,
-    allow_search_by_tiktok_username: false
+    allow_search_by_tiktok_username: false,
+    tiktok_display_name: '',
+    room_vibe: '',
+    default_song_tone: 'upbeat',
+    include_levelup_verse: true,
+    league_level: ''
   });
 
   useEffect(() => {
@@ -97,7 +104,12 @@ export default function Settings() {
         song_share_email: preferences.song_share_email || '',
         tiktok_username: preferences.tiktok_username || '',
         allow_in_community_directory: preferences.allow_in_community_directory || false,
-        allow_search_by_tiktok_username: preferences.allow_search_by_tiktok_username || false
+        allow_search_by_tiktok_username: preferences.allow_search_by_tiktok_username || false,
+        tiktok_display_name: preferences.tiktok_display_name || '',
+        room_vibe: preferences.room_vibe || '',
+        default_song_tone: preferences.default_song_tone || 'upbeat',
+        include_levelup_verse: preferences.include_levelup_verse !== false,
+        league_level: preferences.league_level || ''
       });
     }
   }, [preferences]);
@@ -397,7 +409,88 @@ export default function Settings() {
 
                 {/* TikTok Sharing Tab */}
                 <TabsContent value="tiktok_sharing">
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+                
+                {/* Sunny Songbird Settings */}
+                <Card className="border-amber-200 bg-gradient-to-r from-amber-50 to-yellow-50">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-amber-500" />
+                    Sunny Songbird Settings
+                  </CardTitle>
+                  <CardDescription>Your default song settings - used every time you generate a song!</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Your Display Name (for songs)</Label>
+                      <Input
+                        placeholder="e.g., Pixel, Queen Sarah, DJ Mike"
+                        value={formData.tiktok_display_name}
+                        onChange={(e) => setFormData({ ...formData, tiktok_display_name: e.target.value })}
+                      />
+                      <p className="text-xs text-gray-500">How Sunny will call you in your songs</p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Your League Level</Label>
+                      <Select value={formData.league_level} onValueChange={(v) => setFormData({ ...formData, league_level: v })}>
+                        <SelectTrigger><SelectValue placeholder="Select league" /></SelectTrigger>
+                        <SelectContent>
+                          {['A1', 'A2', 'A3', 'A4', 'A5', 'B1', 'B2', 'B3', 'B4', 'B5', 'C1', 'C2', 'C3', 'C4', 'C5', 'D1', 'D2', 'D3', 'D4', 'D5'].map(l => (
+                            <SelectItem key={l} value={l}>{l}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Room Vibe / Theme</Label>
+                    <Textarea
+                      placeholder="e.g., Beach party vibes, chill zone with lo-fi beats, neon club energy, cozy coffee shop, gamer cave..."
+                      value={formData.room_vibe}
+                      onChange={(e) => setFormData({ ...formData, room_vibe: e.target.value })}
+                      rows={2}
+                    />
+                    <p className="text-xs text-gray-500">Sunny will weave this vibe into your songs</p>
+                  </div>
+                  
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Default Song Tone</Label>
+                      <Select value={formData.default_song_tone} onValueChange={(v) => setFormData({ ...formData, default_song_tone: v })}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="upbeat">🎉 Upbeat</SelectItem>
+                          <SelectItem value="chill">😌 Chill</SelectItem>
+                          <SelectItem value="hype">🔥 Hype</SelectItem>
+                          <SelectItem value="emotional">💜 Emotional</SelectItem>
+                          <SelectItem value="funny">😂 Funny</SelectItem>
+                          <SelectItem value="epic">⚡ Epic</SelectItem>
+                          <SelectItem value="cozy">☕ Cozy</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div 
+                      onClick={() => setFormData({ ...formData, include_levelup_verse: !formData.include_levelup_verse })}
+                      className={`p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                        formData.include_levelup_verse
+                          ? 'border-amber-400 bg-amber-50'
+                          : 'border-gray-200 hover:border-amber-300'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Checkbox checked={formData.include_levelup_verse} />
+                        <div>
+                          <h4 className="font-semibold text-sm">Include Level-Up Verse</h4>
+                          <p className="text-xs text-gray-600">Add encouragement to level up!</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+                </Card>
+
                 <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
