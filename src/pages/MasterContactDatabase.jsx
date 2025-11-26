@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 
 import { 
-  Search, Edit, Save, X, Users, Lock, Unlock, UserCheck, Music
+  Search, Edit, Save, X, Users, Lock, Unlock, UserCheck, Music, Check
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
