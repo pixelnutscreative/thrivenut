@@ -14,8 +14,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Plus, Search, Trash2, Edit, Star, Phone, Mail, 
   ExternalLink, Users, Swords, Gift, Share2, Heart, UserPlus, Video, Calendar, Music, ShoppingBag,
-  ChevronDown, ChevronRight, FolderPlus, Loader2
+  ChevronDown, ChevronRight, FolderPlus, Loader2, Upload, Check, X, FileSpreadsheet
 } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
