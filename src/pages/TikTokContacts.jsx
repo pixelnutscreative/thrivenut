@@ -71,6 +71,21 @@ const serviceTypes = [
   { value: 'other', label: 'Other Service' }
 ];
 
+const generations = ['Gen Z', 'Millennial', 'Gen X', 'Boomer', 'Silent', 'Other'];
+const genders = ['Female', 'Male', 'Non-binary', 'Other'];
+
+const defaultFamilyRoles = [
+  'Mom', 'Dad', 'Single Mom', 'Single Dad', 'SAHM', 'SAHD', 
+  'Grandma', 'Grandpa', 'Widow', 'Widower', 'Empty Nester', 
+  'Foster Parent', 'Step-Parent', 'Caregiver'
+];
+
+const defaultLiveStreamTypes = [
+  'Teaching', 'Engagement', 'Entertainment', 'Gaming', 'Music', 
+  'Cooking', 'DIY/Crafts', 'Storytime', 'Co-host', 'Battle', 
+  'Q&A', 'Unboxing', 'Fitness', 'ASMR', 'Talk Show', 'Religious'
+];
+
 const colorOptions = [
   '#8B5CF6', '#EC4899', '#EF4444', '#F59E0B', '#10B981', 
   '#3B82F6', '#6366F1', '#84CC16', '#14B8A6', '#F97316'
@@ -104,6 +119,10 @@ export default function TikTokContacts() {
     service_type: '',
     is_mlm: false,
     occupation: '',
+    generation: '',
+    gender: '',
+    family_roles: [],
+    live_stream_types: [],
     calendar_enabled: false,
     is_gifter: false,
     add_to_my_people: false,
@@ -391,6 +410,10 @@ export default function TikTokContacts() {
       service_type: contact.service_type || '',
       is_mlm: contact.is_mlm || false,
       occupation: contact.occupation || '',
+      generation: contact.generation || '',
+      gender: contact.gender || '',
+      family_roles: contact.family_roles || [],
+      live_stream_types: contact.live_stream_types || [],
       calendar_enabled: contact.calendar_enabled || false,
       is_gifter: contact.is_gifter || false,
       add_to_my_people: contact.add_to_my_people || false,
@@ -768,24 +791,28 @@ export default function TikTokContacts() {
           )}
 
           {/* Bottom Left Badges */}
-          <div className="absolute bottom-3 left-3 flex items-center gap-1">
-            {contact.is_veteran && (
-              <span 
-                className="text-lg"
-                title={contact.veteran_branch ? `Veteran - ${contact.veteran_branch}` : 'Veteran'}
-              >
-                🇺🇸
-              </span>
-            )}
-            {contact.is_service_professional && (
-              <span 
-                className="text-lg"
-                title={contact.service_type ? serviceTypes.find(s => s.value === contact.service_type)?.label : 'Service Professional'}
-              >
-                ❤️
-              </span>
-            )}
-          </div>
+              <div className="absolute bottom-3 left-3 flex items-center gap-1">
+                {contact.is_service_professional && (
+                  <span 
+                    className="text-lg"
+                    title={contact.service_type ? serviceTypes.find(s => s.value === contact.service_type)?.label : 'Service Professional'}
+                  >
+                    ❤️
+                  </span>
+                )}
+              </div>
+
+              {/* Bottom Right - Veteran Flag */}
+              {contact.is_veteran && (
+                <div className="absolute bottom-3 right-3">
+                  <span 
+                    className="text-lg"
+                    title={contact.veteran_branch ? `Veteran - ${contact.veteran_branch}` : 'Veteran'}
+                  >
+                    🇺🇸
+                  </span>
+                </div>
+              )}
         </CardContent>
       </Card>
     </motion.div>
@@ -1565,6 +1592,161 @@ export default function TikTokContacts() {
                       </Select>
                     </div>
                   )}
+                </div>
+
+                {/* Demographics Section */}
+                <div className="p-3 rounded-lg bg-blue-50 border border-blue-200 space-y-3">
+                  <h4 className="font-semibold text-blue-800 text-sm">Demographics</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label className="text-sm">Generation</Label>
+                      <Select 
+                        value={formData.generation} 
+                        onValueChange={(v) => setFormData({ ...formData, generation: v })}
+                      >
+                        <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+                        <SelectContent>
+                          {generations.map(gen => (
+                            <SelectItem key={gen} value={gen}>{gen}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm">Gender</Label>
+                      <Select 
+                        value={formData.gender} 
+                        onValueChange={(v) => setFormData({ ...formData, gender: v })}
+                      >
+                        <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+                        <SelectContent>
+                          {genders.map(g => (
+                            <SelectItem key={g} value={g}>{g}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Family Roles */}
+                <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 space-y-3">
+                  <h4 className="font-semibold text-rose-800 text-sm">Family Roles</h4>
+                  <div className="flex flex-wrap gap-1">
+                    {defaultFamilyRoles.map(role => (
+                      <Badge
+                        key={role}
+                        variant={formData.family_roles?.includes(role) ? 'default' : 'outline'}
+                        className={`cursor-pointer text-xs ${formData.family_roles?.includes(role) ? 'bg-rose-600' : 'bg-rose-50 text-rose-700 border-rose-300'}`}
+                        onClick={() => {
+                          const current = formData.family_roles || [];
+                          setFormData({
+                            ...formData,
+                            family_roles: current.includes(role) 
+                              ? current.filter(r => r !== role)
+                              : [...current, role]
+                          });
+                        }}
+                      >
+                        {role}
+                      </Badge>
+                    ))}
+                  </div>
+                  {/* Custom family roles display */}
+                  {formData.family_roles?.filter(r => !defaultFamilyRoles.includes(r)).length > 0 && (
+                    <div className="flex flex-wrap gap-1 pt-1 border-t border-rose-200">
+                      {formData.family_roles.filter(r => !defaultFamilyRoles.includes(r)).map(role => (
+                        <Badge
+                          key={role}
+                          className="cursor-pointer text-xs bg-rose-600"
+                          onClick={() => setFormData({
+                            ...formData,
+                            family_roles: formData.family_roles.filter(r => r !== role)
+                          })}
+                        >
+                          {role} ✕
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Add custom role..."
+                      className="h-8 text-xs flex-1"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && e.target.value.trim()) {
+                          const newRole = e.target.value.trim();
+                          if (!formData.family_roles?.includes(newRole)) {
+                            setFormData({
+                              ...formData,
+                              family_roles: [...(formData.family_roles || []), newRole]
+                            });
+                          }
+                          e.target.value = '';
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Live Stream Types */}
+                <div className="p-3 rounded-lg bg-violet-50 border border-violet-200 space-y-3">
+                  <h4 className="font-semibold text-violet-800 text-sm">Live Stream Types</h4>
+                  <div className="flex flex-wrap gap-1">
+                    {defaultLiveStreamTypes.map(type => (
+                      <Badge
+                        key={type}
+                        variant={formData.live_stream_types?.includes(type) ? 'default' : 'outline'}
+                        className={`cursor-pointer text-xs ${formData.live_stream_types?.includes(type) ? 'bg-violet-600' : 'bg-violet-50 text-violet-700 border-violet-300'}`}
+                        onClick={() => {
+                          const current = formData.live_stream_types || [];
+                          setFormData({
+                            ...formData,
+                            live_stream_types: current.includes(type) 
+                              ? current.filter(t => t !== type)
+                              : [...current, type]
+                          });
+                        }}
+                      >
+                        {type}
+                      </Badge>
+                    ))}
+                  </div>
+                  {/* Custom live stream types display */}
+                  {formData.live_stream_types?.filter(t => !defaultLiveStreamTypes.includes(t)).length > 0 && (
+                    <div className="flex flex-wrap gap-1 pt-1 border-t border-violet-200">
+                      {formData.live_stream_types.filter(t => !defaultLiveStreamTypes.includes(t)).map(type => (
+                        <Badge
+                          key={type}
+                          className="cursor-pointer text-xs bg-violet-600"
+                          onClick={() => setFormData({
+                            ...formData,
+                            live_stream_types: formData.live_stream_types.filter(t => t !== type)
+                          })}
+                        >
+                          {type} ✕
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Add custom type..."
+                      className="h-8 text-xs flex-1"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && e.target.value.trim()) {
+                          const newType = e.target.value.trim();
+                          if (!formData.live_stream_types?.includes(newType)) {
+                            setFormData({
+                              ...formData,
+                              live_stream_types: [...(formData.live_stream_types || []), newType]
+                            });
+                          }
+                          e.target.value = '';
+                        }
+                      }}
+                    />
+                  </div>
                 </div>
 
                 {/* Occupation & MLM */}
