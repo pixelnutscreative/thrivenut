@@ -574,11 +574,20 @@ export default function WeeklyGifterGallery() {
             </h1>
             <p className="text-gray-600 mt-1">Manage your weekly gift entries and generate songs</p>
           </div>
-          <Link to={createPageUrl('SongGenerator')}>
-            <Button className="bg-gradient-to-r from-amber-500 via-purple-500 to-pink-500 hover:from-amber-600 hover:via-purple-600 hover:to-pink-600">
-              <Sparkles className="w-4 h-4 mr-2" /> Generate Song
-            </Button>
-          </Link>
+          <div className="flex gap-2">
+            {isAdmin && (
+              <Link to={createPageUrl('MasterContactDatabase')}>
+                <Button variant="outline" className="text-indigo-600 border-indigo-300 hover:bg-indigo-50">
+                  <Users className="w-4 h-4 mr-2" /> Master DB
+                </Button>
+              </Link>
+            )}
+            <Link to={createPageUrl('SongGenerator')}>
+              <Button className="bg-gradient-to-r from-amber-500 via-purple-500 to-pink-500 hover:from-amber-600 hover:via-purple-600 hover:to-pink-600">
+                <Sparkles className="w-4 h-4 mr-2" /> Generate Song
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* Week Navigator */}
