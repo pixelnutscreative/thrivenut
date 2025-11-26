@@ -112,7 +112,7 @@ export default function TikTokContacts() {
     engagement_frequency: 'multiple_per_week',
     engagement_days: [],
     engagement_day_of_month: 1,
-    color: '#8B5CF6',
+    color: '#6B7280',
     is_veteran: false,
     veteran_branch: '',
     is_service_professional: false,
@@ -123,6 +123,9 @@ export default function TikTokContacts() {
     gender: '',
     family_roles: [],
     live_stream_types: [],
+    birthday: '',
+    is_in_recovery: false,
+    sobriety_date: '',
     calendar_enabled: false,
     is_gifter: false,
     add_to_my_people: false,
@@ -367,7 +370,7 @@ export default function TikTokContacts() {
       engagement_frequency: 'multiple_per_week',
       engagement_days: [],
       engagement_day_of_month: 1,
-      color: '#8B5CF6',
+      color: '#6B7280',
       is_veteran: false,
       veteran_branch: '',
       calendar_enabled: false,
@@ -414,6 +417,9 @@ export default function TikTokContacts() {
       gender: contact.gender || '',
       family_roles: contact.family_roles || [],
       live_stream_types: contact.live_stream_types || [],
+      birthday: contact.birthday || '',
+      is_in_recovery: contact.is_in_recovery || false,
+      sobriety_date: contact.sobriety_date || '',
       calendar_enabled: contact.calendar_enabled || false,
       is_gifter: contact.is_gifter || false,
       add_to_my_people: contact.add_to_my_people || false,
@@ -622,29 +628,39 @@ export default function TikTokContacts() {
         <div className="h-2" style={{ backgroundColor: contact.color || '#8B5CF6' }} />
         
         <CardContent className="p-4">
-          <div className="absolute top-4 right-3 flex items-center gap-1">
-            <button
-              onClick={() => handleEdit(contact)}
-              className="p-1 hover:bg-gray-100 rounded"
-            >
-              <Edit className="w-4 h-4 text-gray-400 hover:text-gray-600" />
-            </button>
-            <button
-              onClick={() => {
-                if (confirm('Delete this contact?')) {
-                  deleteMutation.mutate(contact.id);
-                }
-              }}
-              className="p-1 hover:bg-gray-100 rounded"
-            >
-              <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-500" />
-            </button>
-            <button
-              onClick={() => toggleFavoriteMutation.mutate({ id: contact.id, isFavorite: contact.is_favorite })}
-              className="p-1 hover:bg-gray-100 rounded"
-            >
-              <Star className={`w-4 h-4 ${contact.is_favorite ? 'fill-amber-400 text-amber-400' : 'text-gray-300'}`} />
-            </button>
+          <div className="absolute top-4 right-3 flex flex-col items-end gap-1">
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => handleEdit(contact)}
+                className="p-1 hover:bg-gray-100 rounded"
+              >
+                <Edit className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+              </button>
+              <button
+                onClick={() => {
+                  if (confirm('Delete this contact?')) {
+                    deleteMutation.mutate(contact.id);
+                  }
+                }}
+                className="p-1 hover:bg-gray-100 rounded"
+              >
+                <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-500" />
+              </button>
+              <button
+                onClick={() => toggleFavoriteMutation.mutate({ id: contact.id, isFavorite: contact.is_favorite })}
+                className="p-1 hover:bg-gray-100 rounded"
+              >
+                <Star className={`w-4 h-4 ${contact.is_favorite ? 'fill-amber-400 text-amber-400' : 'text-gray-300'}`} />
+              </button>
+            </div>
+            {contact.is_veteran && (
+              <span 
+                className="text-sm"
+                title={contact.veteran_branch ? `Veteran - ${contact.veteran_branch}` : 'Veteran'}
+              >
+                🇺🇸
+              </span>
+            )}
           </div>
 
           <div className="space-y-3">
@@ -802,17 +818,7 @@ export default function TikTokContacts() {
                 )}
               </div>
 
-              {/* Bottom Right - Veteran Flag */}
-              {contact.is_veteran && (
-                <div className="absolute bottom-3 right-3">
-                  <span 
-                    className="text-lg"
-                    title={contact.veteran_branch ? `Veteran - ${contact.veteran_branch}` : 'Veteran'}
-                  >
-                    🇺🇸
-                  </span>
-                </div>
-              )}
+    
         </CardContent>
       </Card>
     </motion.div>
@@ -1404,21 +1410,17 @@ export default function TikTokContacts() {
               <TabsContent value="mods" className="p-3 border rounded-b-lg bg-purple-50/50 space-y-3">
                 <div className="space-y-2">
                   <Label>Mods For (who they mod for)</Label>
-                  <Select
+                  <SearchableContactSelect
+                    contacts={contacts.filter(c => c.id !== editingContact?.id && !formData.mods_for.includes(c.id))}
                     value=""
-                    onValueChange={(v) => {
+                    onChange={(v) => {
                       if (v && !formData.mods_for.includes(v)) {
                         setFormData({ ...formData, mods_for: [...formData.mods_for, v] });
                       }
                     }}
-                  >
-                    <SelectTrigger><SelectValue placeholder="Select contact..." /></SelectTrigger>
-                    <SelectContent>
-                      {contacts.filter(c => c.id !== editingContact?.id && !formData.mods_for.includes(c.id)).map(c => (
-                        <SelectItem key={c.id} value={c.id}>@{c.username}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    placeholder="Search contacts..."
+                    excludeId={editingContact?.id}
+                  />
                   <div className="flex gap-2 mt-2">
                     <Input
                       placeholder="Or add new @username..."
@@ -1452,21 +1454,17 @@ export default function TikTokContacts() {
 
                 <div className="space-y-2">
                   <Label>Their Mods (who mods for them)</Label>
-                  <Select
+                  <SearchableContactSelect
+                    contacts={contacts.filter(c => c.id !== editingContact?.id && !formData.their_mods.includes(c.id))}
                     value=""
-                    onValueChange={(v) => {
+                    onChange={(v) => {
                       if (v && !formData.their_mods.includes(v)) {
                         setFormData({ ...formData, their_mods: [...formData.their_mods, v] });
                       }
                     }}
-                  >
-                    <SelectTrigger><SelectValue placeholder="Select contact..." /></SelectTrigger>
-                    <SelectContent>
-                      {contacts.filter(c => c.id !== editingContact?.id && !formData.their_mods.includes(c.id)).map(c => (
-                        <SelectItem key={c.id} value={c.id}>@{c.username}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    placeholder="Search contacts..."
+                    excludeId={editingContact?.id}
+                  />
                   <div className="flex gap-2 mt-2">
                     <Input
                       placeholder="Or add new @username..."
@@ -1592,6 +1590,38 @@ export default function TikTokContacts() {
                       </Select>
                     </div>
                   )}
+                </div>
+
+                {/* Birthday & Recovery */}
+                <div className="p-3 rounded-lg bg-green-50 border border-green-200 space-y-3">
+                  <h4 className="font-semibold text-green-800 text-sm">🎂 Important Dates</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label className="text-sm">Birthday</Label>
+                      <Input
+                        type="date"
+                        value={formData.birthday}
+                        onChange={(e) => setFormData({ ...formData, birthday: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <div
+                        onClick={() => setFormData({ ...formData, is_in_recovery: !formData.is_in_recovery })}
+                        className="flex items-center gap-2 cursor-pointer"
+                      >
+                        <Checkbox checked={formData.is_in_recovery} />
+                        <Label className="cursor-pointer text-sm">In Recovery</Label>
+                      </div>
+                      {formData.is_in_recovery && (
+                        <Input
+                          type="date"
+                          value={formData.sobriety_date}
+                          onChange={(e) => setFormData({ ...formData, sobriety_date: e.target.value })}
+                          placeholder="Sobriety date"
+                        />
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 {/* Demographics Section */}
