@@ -38,12 +38,12 @@ const iconRoles = {
   sleep_lives: { label: 'Sleep Lives', icon: Moon, color: 'bg-slate-100 text-slate-700' }
 };
 
-// Text-based roles (bottom row with SUB, FAN, IRL, Discord)
+// Text-based roles (second row)
 const textRoles = {
-  subscriber: { label: 'Subscriber', text: 'SUB', color: 'bg-cyan-100 text-cyan-700' },
-  superfan: { label: 'Superfan', text: 'FAN', color: 'bg-rose-100 text-rose-700' },
+  subscriber: { label: 'Subscriber', text: 'Sub', color: 'bg-cyan-100 text-cyan-700' },
+  superfan: { label: 'Superfan', text: 'Superfan', color: 'bg-rose-100 text-rose-700' },
   irl_friend: { label: 'Friend IRL', text: 'IRL', color: 'bg-green-100 text-green-700' },
-  discord: { label: 'Discord', icon: Drama, color: 'bg-violet-100 text-violet-700' }
+  discord: { label: 'Discord', icon: Sparkles, color: 'bg-violet-100 text-violet-700' }
 };
 
 // Combined for form usage
@@ -647,9 +647,8 @@ export default function TikTokContacts() {
               ))}
             </div>
 
-            {/* Bottom Row - Text roles + Feature toggles */}
+            {/* Second Row - Text roles (Sub, Superfan, IRL, Discord) */}
             <div className="flex flex-wrap items-center gap-1">
-              {/* Text-based role toggles (SUB, FAN, IRL, Discord) */}
               {Object.entries(textRoles).map(([roleKey, config]) => {
                 const isActive = contact.role?.includes(roleKey);
                 const RoleIcon = config.icon;
@@ -664,7 +663,7 @@ export default function TikTokContacts() {
                       base44.entities.TikTokContact.update(contact.id, { role: newRoles });
                       queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] });
                     }}
-                    className={`p-1.5 rounded-full transition-all cursor-pointer hover:scale-110 ${
+                    className={`px-2 py-1 rounded-full text-xs font-medium transition-all cursor-pointer hover:scale-105 ${
                       isActive ? config.color : 'bg-gray-100 text-gray-300 hover:bg-gray-200'
                     }`}
                     title={config.label}
@@ -672,16 +671,15 @@ export default function TikTokContacts() {
                     {RoleIcon ? (
                       <RoleIcon className="w-3 h-3" />
                     ) : (
-                      <span className="text-[10px] font-bold leading-none">{config.text}</span>
+                      <span>{config.text}</span>
                     )}
                   </button>
                 );
               })}
+            </div>
 
-              {/* Spacer */}
-              <div className="flex-1" />
-
-              {/* Feature toggles with labels */}
+            {/* Bottom Row - Feature toggles */}
+            <div className="flex items-center gap-2">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -710,7 +708,7 @@ export default function TikTokContacts() {
                 title="Creator Calendar"
               >
                 <Calendar className={`w-3 h-3 ${contact.calendar_enabled ? 'fill-blue-500' : ''}`} />
-                <span>Cal</span>
+                <span>Calendar</span>
               </button>
               <button
                 onClick={(e) => {
