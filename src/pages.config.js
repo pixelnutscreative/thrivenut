@@ -26,6 +26,7 @@ import SongGenerator from './pages/SongGenerator';
 import TikTokDashboard from './pages/TikTokDashboard';
 import SuperFanAccess from './pages/SuperFanAccess';
 import AdminSuperFanReview from './pages/AdminSuperFanReview';
+import AdminImpersonate from './pages/AdminImpersonate';
 import __Layout from './Layout.jsx';
 
 
@@ -58,6 +59,7 @@ export const PAGES = {
     "TikTokDashboard": TikTokDashboard,
     "SuperFanAccess": SuperFanAccess,
     "AdminSuperFanReview": AdminSuperFanReview,
+    "AdminImpersonate": AdminImpersonate,
 }
 
 export const pagesConfig = {
