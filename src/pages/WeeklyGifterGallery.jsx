@@ -431,12 +431,17 @@ export default function WeeklyGifterGallery() {
           });
           
           // Process and add new gifters immediately
+          // NOTE: We do NOT deduplicate - same person can be 1st place for multiple gifts!
           if (result.gifters) {
             const newGifters = result.gifters
               .filter(g => {
                 const key = g.username?.toLowerCase()?.replace('@', '')?.replace(/\s+/g, '');
-                if (!key || seenUsernames.has(key)) return false;
-                seenUsernames.add(key);
+                // Only filter out if completely empty username
+                if (!key) return false;
+                // Create a unique key including rank and gift to allow same person multiple times
+                const uniqueKey = `${key}-${g.rank}-${g.gift_name || 'unknown'}`;
+                if (seenUsernames.has(uniqueKey)) return false;
+                seenUsernames.add(uniqueKey);
                 return true;
               })
               .map(gifter => {
@@ -979,7 +984,25 @@ export default function WeeklyGifterGallery() {
                             </Button>
                           </div>
                           
-                          <div className="grid md:grid-cols-4 gap-3" onClick={(e) => e.stopPropagation()}>
+                          <div className="grid md:grid-cols-5 gap-3" onClick={(e) => e.stopPropagation()}>
+                            <Select value={gifter.rank || ''} onValueChange={(v) => updateExtractedGifter(index, 'rank', v)}>
+                              <SelectTrigger className="h-9">
+                                <SelectValue placeholder="Rank" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="1st">🥇 1st</SelectItem>
+                                <SelectItem value="2nd">🥈 2nd</SelectItem>
+                                <SelectItem value="3rd">🥉 3rd</SelectItem>
+                                <SelectItem value="4th">4th</SelectItem>
+                                <SelectItem value="5th">5th</SelectItem>
+                                <SelectItem value="6th">6th</SelectItem>
+                                <SelectItem value="7th">7th</SelectItem>
+                                <SelectItem value="8th">8th</SelectItem>
+                                <SelectItem value="9th">9th</SelectItem>
+                                <SelectItem value="10th">10th</SelectItem>
+                                <SelectItem value="shoutout">⭐ Shoutout</SelectItem>
+                              </SelectContent>
+                            </Select>
                             <Input value={gifter.username || ''} onChange={(e) => updateExtractedGifter(index, 'username', e.target.value)} placeholder="@username" />
                             <Input value={gifter.screen_name || ''} onChange={(e) => updateExtractedGifter(index, 'screen_name', e.target.value)} placeholder="Screen name" />
                             <Input value={gifter.phonetic || ''} onChange={(e) => updateExtractedGifter(index, 'phonetic', e.target.value)} placeholder="Phonetic 🎵" />
