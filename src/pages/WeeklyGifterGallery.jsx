@@ -25,12 +25,12 @@ import { Checkbox } from '@/components/ui/checkbox';
 export default function WeeklyGifterGallery() {
   const queryClient = useQueryClient();
   
-  // Default to PREVIOUS week (last Sunday)
+  // Default to PREVIOUS week's Sunday (the Sunday that just passed, or last Sunday if today is Sunday)
   const getPreviousWeekSunday = () => {
     const now = new Date();
-    const dayOfWeek = now.getDay();
-    // If today is Sunday, use today; otherwise go back to last Sunday
+    const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
     const lastSunday = new Date(now);
+    // Go back to the most recent Sunday (if today is Sunday, go back 7 days to LAST Sunday)
     lastSunday.setDate(now.getDate() - (dayOfWeek === 0 ? 7 : dayOfWeek));
     return format(lastSunday, 'yyyy-MM-dd');
   };
@@ -57,7 +57,8 @@ export default function WeeklyGifterGallery() {
   const [previewUrls, setPreviewUrls] = useState([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [importError, setImportError] = useState(null);
-  const [specialMentions, setSpecialMentions] = useState([]);
+  const [processedCount, setProcessedCount] = useState(0);
+  const [totalToProcess, setTotalToProcess] = useState(0);
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -247,48 +248,60 @@ export default function WeeklyGifterGallery() {
   };
 
   // AI Import handlers - processes images ONE AT A TIME so results appear progressively
+  // Each image costs ~1-2 AI credits depending on size
   const handleFileUpload = async (e) => {
     const files = Array.from(e.target.files);
     if (!files.length) return;
 
     setImportError(null);
-    setExtractedData({ gifters: [], confidence: 'high', notes: 'Processing...' });
     setUploading(true);
-    setPreviewUrls([]);
-    setCurrentImageIndex(0);
+    setTotalToProcess(files.length);
+    setProcessedCount(0);
+    
+    // Keep existing extracted data if any, just add to it
+    if (!extractedData) {
+      setExtractedData({ gifters: [], confidence: 'high', notes: 'Processing...' });
+    }
 
     try {
-      // First, generate all previews quickly
-      const previews = [];
+      // First, generate all previews quickly and add to existing previews
+      const newPreviews = [];
       for (const file of files) {
         const preview = await new Promise((resolve) => {
           const reader = new FileReader();
           reader.onload = (e) => resolve(e.target.result);
           reader.readAsDataURL(file);
         });
-        previews.push(preview);
+        newPreviews.push(preview);
       }
-      setPreviewUrls(previews);
+      setPreviewUrls(prev => [...prev, ...newPreviews]);
       setUploading(false);
       setAnalyzing(true);
 
-      // Process images ONE AT A TIME so results stream in
+      // Build set of already-seen usernames from existing extracted data
       const seenUsernames = new Set();
+      if (extractedData?.gifters) {
+        extractedData.gifters.forEach(g => {
+          const key = g.username?.toLowerCase()?.replace('@', '');
+          if (key) seenUsernames.add(key);
+        });
+      }
       
       for (let i = 0; i < files.length; i++) {
-        // Update status message
-        setExtractedData(prev => ({
-          ...prev,
-          notes: `Processing image ${i + 1} of ${files.length}...`
-        }));
+        try {
+          // Update status message
+          setExtractedData(prev => ({
+            ...prev,
+            notes: `Processing image ${i + 1} of ${files.length}... (~1 credit per image)`
+          }));
 
-        // Upload this single image
-        const { file_url } = await base44.integrations.Core.UploadFile({ file: files[i] });
-        
-        // Analyze this single image
-        const result = await base44.integrations.Core.InvokeLLM({
-          prompt: `Analyze this TikTok gifting leaderboard screenshot and extract ALL gifters visible.
+          // Upload this single image
+          const { file_url } = await base44.integrations.Core.UploadFile({ file: files[i] });
           
+          // Analyze this single image
+          const result = await base44.integrations.Core.InvokeLLM({
+            prompt: `Analyze this TikTok gifting leaderboard screenshot and extract ALL gifters visible.
+            
 Look for:
 - Usernames (usually start with @)
 - Display names / screen names  
@@ -297,65 +310,79 @@ Look for:
 
 IMPORTANT: Extract EVERY gifter you can see, not just top 3. Include 4th, 5th, etc if visible.
 For each username, generate a "suggested_phonetic" field with how it would be pronounced naturally in English for a song.`,
-          file_urls: [file_url],
-          response_json_schema: {
-            type: "object",
-            properties: {
-              gifters: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                     rank: { type: "string", description: "1st, 2nd, 3rd, 4th, etc" },
-                     username: { type: "string", description: "TikTok username without @" },
-                     screen_name: { type: "string", description: "Display name shown" },
-                     suggested_phonetic: { type: "string", description: "How the username/name would be pronounced for a song" },
-                     gift_name: { type: "string", description: "Name of gift if visible" }
-                   }
+            file_urls: [file_url],
+            response_json_schema: {
+              type: "object",
+              properties: {
+                gifters: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                       rank: { type: "string", description: "1st, 2nd, 3rd, 4th, etc" },
+                       username: { type: "string", description: "TikTok username without @" },
+                       screen_name: { type: "string", description: "Display name shown" },
+                       suggested_phonetic: { type: "string", description: "How the username/name would be pronounced for a song" },
+                       gift_name: { type: "string", description: "Name of gift if visible" }
+                     }
+                  }
                 }
               }
             }
-          }
-        });
-        
-        // Process and add new gifters immediately
-        if (result.gifters) {
-          const newGifters = result.gifters
-            .filter(g => {
-              const key = g.username?.toLowerCase()?.replace('@', '');
-              if (!key || seenUsernames.has(key)) return false;
-              seenUsernames.add(key);
-              return true;
-            })
-            .map(gifter => {
-              const username = gifter.username?.toLowerCase()?.replace('@', '');
-              const exactMatch = allContacts.find(c => c.username?.toLowerCase() === username);
-              
-              return {
-                ...gifter,
-                matched_contact: exactMatch || null,
-                screen_name: exactMatch?.display_name || gifter.screen_name,
-                phonetic: exactMatch?.phonetic || gifter.suggested_phonetic || '',
-                username: exactMatch?.username || gifter.username,
-                selected: true
-              };
-            });
+          });
+          
+          // Process and add new gifters immediately
+          if (result.gifters) {
+            const newGifters = result.gifters
+              .filter(g => {
+                const key = g.username?.toLowerCase()?.replace('@', '');
+                if (!key || seenUsernames.has(key)) return false;
+                seenUsernames.add(key);
+                return true;
+              })
+              .map(gifter => {
+                const username = gifter.username?.toLowerCase()?.replace('@', '');
+                const exactMatch = allContacts.find(c => c.username?.toLowerCase() === username);
+                
+                return {
+                  ...gifter,
+                  matched_contact: exactMatch || null,
+                  screen_name: exactMatch?.display_name || gifter.screen_name,
+                  phonetic: exactMatch?.phonetic || gifter.suggested_phonetic || '',
+                  username: exactMatch?.username || gifter.username,
+                  selected: true
+                };
+              });
 
-          // Update state immediately with new gifters
+            // Update state immediately with new gifters
+            setExtractedData(prev => ({
+              ...prev,
+              gifters: [...(prev?.gifters || []), ...newGifters],
+              notes: i === files.length - 1 
+                ? `✓ Done! ${(prev?.gifters?.length || 0) + newGifters.length} unique gifters from ${files.length} images` 
+                : `Processing image ${i + 2} of ${files.length}... (${(prev?.gifters?.length || 0) + newGifters.length} gifters found)`
+            }));
+          }
+          
+          setProcessedCount(i + 1);
+        } catch (imgErr) {
+          console.error(`Error processing image ${i + 1}:`, imgErr);
+          // Continue with next image, don't stop the whole process
           setExtractedData(prev => ({
             ...prev,
-            gifters: [...prev.gifters, ...newGifters],
-            notes: i === files.length - 1 
-              ? `Extracted ${prev.gifters.length + newGifters.length} unique gifters from ${files.length} images` 
-              : `Processing image ${i + 2} of ${files.length}... (${prev.gifters.length + newGifters.length} gifters found so far)`
+            notes: `⚠️ Error on image ${i + 1}, continuing... (${prev?.gifters?.length || 0} gifters found)`
           }));
         }
       }
       
       setAnalyzing(false);
+      setExtractedData(prev => ({
+        ...prev,
+        notes: `✓ Done! ${prev?.gifters?.length || 0} unique gifters extracted. You can add more images if needed.`
+      }));
     } catch (err) {
-      console.error('Error processing screenshot:', err);
-      setImportError('Failed to process screenshots. Please try again.');
+      console.error('Error processing screenshots:', err);
+      setImportError('Error occurred but your data is saved. You can add more images.');
       setUploading(false);
       setAnalyzing(false);
     }
@@ -703,9 +730,17 @@ For each username, generate a "suggested_phonetic" field with how it would be pr
                           <Button variant="outline" size="sm" onClick={() => setCurrentImageIndex(i => Math.min(previewUrls.length - 1, i + 1))} disabled={currentImageIndex === previewUrls.length - 1}>→</Button>
                         </div>
                       )}
-                      <Button variant="outline" onClick={() => { setPreviewUrls([]); setExtractedData(null); }}>
-                        Upload Different Images
-                      </Button>
+                      <div className="flex gap-2 justify-center">
+                        <label className="cursor-pointer">
+                          <Input type="file" accept="image/*" multiple onChange={handleFileUpload} className="hidden" disabled={analyzing} />
+                          <Button asChild variant="outline" disabled={analyzing}>
+                            <span><Plus className="w-4 h-4 mr-1" /> Add More Images</span>
+                          </Button>
+                        </label>
+                        <Button variant="outline" onClick={() => { setPreviewUrls([]); setExtractedData(null); setProcessedCount(0); }} className="text-red-600 hover:text-red-700">
+                          Start Over
+                        </Button>
+                      </div>
                     </div>
                   ) : (
                     <>
