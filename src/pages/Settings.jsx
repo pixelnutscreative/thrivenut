@@ -186,7 +186,7 @@ export default function Settings() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-7 mb-6">
+          <TabsList className="grid w-full grid-cols-6 mb-6">
             <TabsTrigger value="profile" className="flex items-center gap-2">
               <User className="w-4 h-4" />
               <span className="hidden sm:inline">Profile</span>
@@ -203,10 +203,12 @@ export default function Settings() {
               <MessageSquare className="w-4 h-4" />
               <span className="hidden sm:inline">Preferences</span>
             </TabsTrigger>
+            {/* Hidden for now - songs managed via impersonation
             <TabsTrigger value="sharing" className="flex items-center gap-2">
               <Share2 className="w-4 h-4" />
               <span className="hidden sm:inline">Songs</span>
             </TabsTrigger>
+            */}
             <TabsTrigger value="tiktok_sharing" className="flex items-center gap-2">
               <Share2 className="w-4 h-4" />
               <span className="hidden sm:inline">TikTok</span>

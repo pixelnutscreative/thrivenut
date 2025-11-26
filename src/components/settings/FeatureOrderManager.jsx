@@ -50,20 +50,17 @@ export default function FeatureOrderManager({ enabledModules, featureOrder, onCh
     items.splice(result.destination.index, 0, reorderedItem);
 
     onChange({
-      featureOrder: items.map(f => f.id)
+      feature_order: items.map(f => f.id)
     });
   };
 
-  const toggleFeature = (featureId, e) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    const newEnabled = enabledModules.includes(featureId)
-      ? enabledModules.filter(id => id !== featureId)
-      : [...enabledModules, featureId];
+  const toggleFeature = (featureId) => {
+    const currentEnabled = enabledModules || [];
+    const newEnabled = currentEnabled.includes(featureId)
+      ? currentEnabled.filter(id => id !== featureId)
+      : [...currentEnabled, featureId];
     
-    onChange({ enabledModules: newEnabled });
+    onChange({ enabled_modules: newEnabled });
   };
 
   return (

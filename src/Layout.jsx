@@ -63,7 +63,7 @@ const allNavItems = [
             { name: '── Gift Gallery Gratitude ──', icon: Gift, isDivider: true },
                               { name: 'Weekly Gallery', icon: Gift, path: 'WeeklyGifterGallery', moduleId: 'gifter' },
                               { name: 'Song Generator', icon: Music, path: 'SongGenerator', moduleId: 'gifter' },
-                              { name: 'Gift Library', icon: Gift, path: 'GiftLibrary', moduleId: 'gifter' },
+                              { name: 'Gift Library', icon: Gift, path: 'GiftLibrary', moduleId: 'gifter', adminOnly: true },
           ]},
   { name: 'SuperFan Access', icon: Star, path: 'SuperFanAccess', showWhenNoTikTokAccess: true },
   { name: 'Goals', icon: Target, path: 'Goals', moduleId: 'goals' },

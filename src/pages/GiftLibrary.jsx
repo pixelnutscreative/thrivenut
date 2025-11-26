@@ -20,7 +20,6 @@ export default function GiftLibrary() {
   const [formData, setFormData] = useState({
     name: '',
     image_url: '',
-    league_range: '',
     coin_value: ''
   });
 
@@ -30,8 +29,15 @@ export default function GiftLibrary() {
   useEffect(() => {
     base44.auth.me().then(userData => {
       setUser(userData);
-      setIsAdmin(userData?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase());
-    }).catch(() => {});
+      const isAdminUser = userData?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+      setIsAdmin(isAdminUser);
+      // Redirect non-admins away from this page
+      if (!isAdminUser) {
+        window.location.href = '/';
+      }
+    }).catch(() => {
+      window.location.href = '/';
+    });
   }, []);
 
   const { data: preferences } = useQuery({
@@ -82,7 +88,7 @@ export default function GiftLibrary() {
   });
 
   const resetForm = () => {
-    setFormData({ name: '', image_url: '', league_range: '', coin_value: '' });
+    setFormData({ name: '', image_url: '', coin_value: '' });
     setEditingGift(null);
     setShowModal(false);
   };
@@ -92,7 +98,6 @@ export default function GiftLibrary() {
     setFormData({
       name: gift.name,
       image_url: gift.image_url || '',
-      league_range: gift.league_range || '',
       coin_value: gift.coin_value || ''
     });
     setShowModal(true);
@@ -121,23 +126,9 @@ export default function GiftLibrary() {
     }
   };
 
-  const filteredGifts = gifts.filter(g =>
-    g.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (g.league_range || '').toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  // Group by league range and sort by coin value within each league
-  const giftsByLeague = filteredGifts.reduce((acc, gift) => {
-    const league = gift.league_range || 'No League';
-    if (!acc[league]) acc[league] = [];
-    acc[league].push(gift);
-    return acc;
-  }, {});
-
-  // Sort gifts within each league by coin value (smallest to biggest)
-  Object.keys(giftsByLeague).forEach(league => {
-    giftsByLeague[league].sort((a, b) => (a.coin_value || 0) - (b.coin_value || 0));
-  });
+  const filteredGifts = gifts
+    .filter(g => g.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    .sort((a, b) => (a.coin_value || 0) - (b.coin_value || 0));
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 p-4 md:p-8">
@@ -174,7 +165,7 @@ export default function GiftLibrary() {
           <div className="flex justify-center py-12">
             <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
           </div>
-        ) : Object.keys(giftsByLeague).length === 0 ? (
+        ) : filteredGifts.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
               <Gift className="w-12 h-12 mx-auto text-gray-400 mb-4" />
@@ -182,12 +173,8 @@ export default function GiftLibrary() {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-6">
-            {Object.entries(giftsByLeague).sort().map(([league, leagueGifts]) => (
-              <div key={league}>
-                <h2 className="text-xl font-bold text-gray-700 mb-3">{league}</h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                  {leagueGifts.map((gift, index) => (
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {filteredGifts.map((gift, index) => (
                     <motion.div
                       key={gift.id}
                       initial={{ opacity: 0, scale: 0.9 }}
@@ -241,9 +228,6 @@ export default function GiftLibrary() {
                       </Card>
                     </motion.div>
                   ))}
-                </div>
-              </div>
-            ))}
           </div>
         )}
       </div>
@@ -265,24 +249,14 @@ export default function GiftLibrary() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>League Range</Label>
-                <Input
-                  placeholder="e.g., A1-A3, B2-B5"
-                  value={formData.league_range}
-                  onChange={(e) => setFormData({ ...formData, league_range: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Coin Value</Label>
-                <Input
-                  type="number"
-                  placeholder="e.g., 1, 5, 100, 34999"
-                  value={formData.coin_value}
-                  onChange={(e) => setFormData({ ...formData, coin_value: e.target.value ? Number(e.target.value) : '' })}
-                />
-              </div>
+            <div className="space-y-2">
+              <Label>Coin Value</Label>
+              <Input
+                type="number"
+                placeholder="e.g., 1, 5, 100, 34999"
+                value={formData.coin_value}
+                onChange={(e) => setFormData({ ...formData, coin_value: e.target.value ? Number(e.target.value) : '' })}
+              />
             </div>
 
             <div className="space-y-2">
