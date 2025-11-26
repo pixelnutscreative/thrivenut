@@ -87,6 +87,13 @@ export default function TikTokContacts() {
   const [customRoleInput, setCustomRoleInput] = useState('');
   const [newModForName, setNewModForName] = useState('');
   const [newTheirModName, setNewTheirModName] = useState('');
+  
+  // CSV Import state
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [csvData, setCsvData] = useState([]);
+  const [importing, setImporting] = useState(false);
+  const [importError, setImportError] = useState(null);
+  const [importSuccess, setImportSuccess] = useState(null);
 
   const [user, setUser] = useState(null);
 
