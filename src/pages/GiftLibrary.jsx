@@ -20,7 +20,8 @@ export default function GiftLibrary() {
   const [formData, setFormData] = useState({
     name: '',
     image_url: '',
-    league_range: ''
+    league_range: '',
+    coin_value: ''
   });
 
   const ADMIN_EMAIL = 'pixelnutscreative@gmail.com';
@@ -81,7 +82,7 @@ export default function GiftLibrary() {
   });
 
   const resetForm = () => {
-    setFormData({ name: '', image_url: '', league_range: '' });
+    setFormData({ name: '', image_url: '', league_range: '', coin_value: '' });
     setEditingGift(null);
     setShowModal(false);
   };
@@ -91,7 +92,8 @@ export default function GiftLibrary() {
     setFormData({
       name: gift.name,
       image_url: gift.image_url || '',
-      league_range: gift.league_range || ''
+      league_range: gift.league_range || '',
+      coin_value: gift.coin_value || ''
     });
     setShowModal(true);
   };
@@ -124,13 +126,18 @@ export default function GiftLibrary() {
     (g.league_range || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Group by league range
+  // Group by league range and sort by coin value within each league
   const giftsByLeague = filteredGifts.reduce((acc, gift) => {
     const league = gift.league_range || 'No League';
     if (!acc[league]) acc[league] = [];
     acc[league].push(gift);
     return acc;
   }, {});
+
+  // Sort gifts within each league by coin value (smallest to biggest)
+  Object.keys(giftsByLeague).forEach(league => {
+    giftsByLeague[league].sort((a, b) => (a.coin_value || 0) - (b.coin_value || 0));
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 p-4 md:p-8">
@@ -201,6 +208,9 @@ export default function GiftLibrary() {
                             </div>
                           )}
                           <p className="font-semibold text-sm truncate">{gift.name}</p>
+                          {gift.coin_value && (
+                            <p className="text-xs text-purple-600 font-medium">{gift.coin_value.toLocaleString()} coins</p>
+                          )}
                           
                           {/* Hover actions - admin only */}
                           {isAdmin && (
@@ -255,13 +265,24 @@ export default function GiftLibrary() {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label>League Range</Label>
-              <Input
-                placeholder="e.g., A1-A3, B2-B5"
-                value={formData.league_range}
-                onChange={(e) => setFormData({ ...formData, league_range: e.target.value })}
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>League Range</Label>
+                <Input
+                  placeholder="e.g., A1-A3, B2-B5"
+                  value={formData.league_range}
+                  onChange={(e) => setFormData({ ...formData, league_range: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Coin Value</Label>
+                <Input
+                  type="number"
+                  placeholder="e.g., 1, 5, 100, 34999"
+                  value={formData.coin_value}
+                  onChange={(e) => setFormData({ ...formData, coin_value: e.target.value ? Number(e.target.value) : '' })}
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
