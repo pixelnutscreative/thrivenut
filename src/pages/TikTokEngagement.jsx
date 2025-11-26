@@ -119,7 +119,6 @@ export default function TikTokEngagement() {
 
   const getFrequencyLabel = (contact) => {
     if (contact.engagement_frequency === 'daily') return 'Daily';
-    if (contact.engagement_frequency === 'weekly') return 'Weekly';
     if (contact.engagement_frequency === 'monthly') {
       const day = contact.engagement_day_of_month || 1;
       const suffix = day === 1 ? 'st' : day === 2 ? 'nd' : day === 3 ? 'rd' : 'th';
@@ -175,13 +174,6 @@ export default function TikTokEngagement() {
     if (lastEngagedToday) return false;
 
     if (contact.engagement_frequency === 'daily') return true;
-
-    if (contact.engagement_frequency === 'weekly') {
-      if (!contact.last_engaged_date) return true;
-      const lastEngagedDate = parseISO(contact.last_engaged_date);
-      const oneWeekAgo = addDays(new Date(), -7);
-      return isPast(lastEngagedDate) && lastEngagedDate <= oneWeekAgo;
-    }
 
     if (contact.engagement_frequency === 'monthly') {
       const targetDay = contact.engagement_day_of_month || 1;
@@ -409,7 +401,6 @@ export default function TikTokEngagement() {
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="daily">Daily</SelectItem>
-                    <SelectItem value="weekly">Weekly</SelectItem>
                     <SelectItem value="multiple_per_week">Specific Days</SelectItem>
                     <SelectItem value="monthly">Monthly</SelectItem>
                   </SelectContent>
