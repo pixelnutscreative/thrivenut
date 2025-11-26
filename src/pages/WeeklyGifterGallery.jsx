@@ -112,20 +112,31 @@ export default function WeeklyGifterGallery() {
     queryKey: ['giftingEntries', selectedWeek, effectiveEmail],
     queryFn: async () => {
       // Get ALL entries, then filter by week and owner
-      const allEntries = await base44.entities.GiftingEntry.list('-created_date', 200);
+      const allEntries = await base44.entities.GiftingEntry.list('-created_date', 500);
       
-      return allEntries.filter(e => {
-        // Week is ALWAYS inside data object based on DB structure
+      console.log('DEBUG: effectiveEmail =', effectiveEmail);
+      console.log('DEBUG: selectedWeek =', selectedWeek);
+      console.log('DEBUG: allEntries count =', allEntries.length);
+      
+      const filtered = allEntries.filter(e => {
+        // Week is inside data object
         const entryWeek = e.data?.week;
-        if (entryWeek !== selectedWeek) return false;
         
-        // Owner: check data.created_by for impersonation records
-        const dataOwner = e.data?.created_by;
-        if (dataOwner) return dataOwner === effectiveEmail;
+        // Owner could be in data.created_by (for impersonation/copied records) OR top-level created_by
+        const owner = e.data?.created_by || e.created_by;
         
-        // Fall back to top-level for regular records
-        return e.created_by === effectiveEmail;
+        const weekMatch = entryWeek === selectedWeek;
+        const ownerMatch = owner === effectiveEmail;
+        
+        if (weekMatch && ownerMatch) {
+          console.log('DEBUG: MATCHED entry', e.id, 'week=', entryWeek, 'owner=', owner);
+        }
+        
+        return weekMatch && ownerMatch;
       });
+      
+      console.log('DEBUG: filtered count =', filtered.length);
+      return filtered;
     },
     enabled: !!effectiveEmail,
   });
