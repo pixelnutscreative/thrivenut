@@ -25,20 +25,19 @@ import { Checkbox } from '@/components/ui/checkbox';
 export default function WeeklyGifterGallery() {
   const queryClient = useQueryClient();
   
-  // Default to PREVIOUS week's Saturday (the week that just ended)
-  const getPreviousWeekSaturday = () => {
+  // Default to PREVIOUS week's Sunday (weeks end on Sundays)
+  // Today is Wed Nov 26, so last Sunday was Nov 23
+  const getLastSunday = () => {
     const now = new Date();
     const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
-    // Calculate days since last Saturday (Saturday = 6)
-    // If today is Sunday (0), last Saturday was 1 day ago
-    // If today is Saturday (6), last Saturday was 7 days ago (previous week's Saturday)
-    const daysSinceLastSaturday = dayOfWeek === 6 ? 7 : dayOfWeek + 1;
-    const lastSaturday = new Date(now);
-    lastSaturday.setDate(now.getDate() - daysSinceLastSaturday);
-    return format(lastSaturday, 'yyyy-MM-dd');
+    // If today is Sunday, use today. Otherwise go back to last Sunday.
+    const daysToSubtract = dayOfWeek === 0 ? 0 : dayOfWeek;
+    const lastSunday = new Date(now);
+    lastSunday.setDate(now.getDate() - daysToSubtract);
+    return format(lastSunday, 'yyyy-MM-dd');
   };
   
-  const [selectedWeek, setSelectedWeek] = useState('2025-11-23');
+  const [selectedWeek, setSelectedWeek] = useState(getLastSunday());
   const [activeTab, setActiveTab] = useState('summary');
   const [user, setUser] = useState(null);
   
@@ -99,12 +98,12 @@ export default function WeeklyGifterGallery() {
   const { data: entries = [], isLoading } = useQuery({
     queryKey: ['giftingEntries', selectedWeek, effectiveEmail],
     queryFn: async () => {
-      // Check both top-level created_by AND data.created_by for impersonation support
+      // For impersonation: check data.created_by field which stores the actual owner
       const allEntries = await base44.entities.GiftingEntry.filter({ week: selectedWeek });
-      return allEntries.filter(e => 
-        e.created_by === effectiveEmail || 
-        e.data?.created_by === effectiveEmail
-      );
+      return allEntries.filter(e => {
+        const dataOwner = e.data?.created_by || e.created_by;
+        return dataOwner === effectiveEmail;
+      });
     },
     enabled: !!effectiveEmail,
   });
