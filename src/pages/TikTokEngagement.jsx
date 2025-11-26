@@ -4,13 +4,16 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Plus, ExternalLink, Check, Calendar, BookOpen, History, FolderPlus, UserPlus } from 'lucide-react';
-import { format, getDay, addDays, parseISO, isPast } from 'date-fns';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Plus, ExternalLink, Check, Calendar, BookOpen, History, Settings, UserPlus } from 'lucide-react';
+import { format, getDay, addDays, parseISO, isPast, getDate } from 'date-fns';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
+import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
 
 const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -22,26 +25,31 @@ export default function TikTokEngagement() {
   const [viewMode, setViewMode] = useState('today');
   const [justEngaged, setJustEngaged] = useState({});
   const [user, setUser] = useState(null);
+  const [editingSchedule, setEditingSchedule] = useState(null);
+  const [scheduleForm, setScheduleForm] = useState({
+    engagement_frequency: 'weekly',
+    engagement_days: [],
+    engagement_day_of_month: 1
+  });
 
   React.useEffect(() => {
     base44.auth.me().then(setUser);
   }, []);
 
-  // Fetch contacts with engagement enabled
+  const effectiveEmail = user ? getEffectiveUserEmail(user.email) : null;
+
   const { data: contacts = [] } = useQuery({
-    queryKey: ['tiktokContacts', user?.email],
-    queryFn: () => base44.entities.TikTokContact.filter({ created_by: user.email }, '-created_date'),
-    enabled: !!user,
+    queryKey: ['tiktokContacts', effectiveEmail],
+    queryFn: () => base44.entities.TikTokContact.filter({ created_by: effectiveEmail }, '-created_date'),
+    enabled: !!effectiveEmail,
   });
 
-  // Also fetch legacy TikTokCreator records for backwards compatibility
   const { data: legacyCreators = [] } = useQuery({
-    queryKey: ['tiktokCreators', user?.email],
-    queryFn: () => base44.entities.TikTokCreator.filter({ created_by: user.email }, '-created_date'),
-    enabled: !!user,
+    queryKey: ['tiktokCreators', effectiveEmail],
+    queryFn: () => base44.entities.TikTokCreator.filter({ created_by: effectiveEmail }, '-created_date'),
+    enabled: !!effectiveEmail,
   });
 
-  // Combine: contacts with engagement_enabled + legacy creators
   const engagementContacts = [
     ...contacts.filter(c => c.engagement_enabled),
     ...legacyCreators.map(c => ({
@@ -57,9 +65,9 @@ export default function TikTokEngagement() {
   ];
 
   const { data: categories = [] } = useQuery({
-    queryKey: ['engagementCategories', user?.email],
-    queryFn: () => base44.entities.EngagementCategory.filter({ created_by: user.email }, 'name'),
-    enabled: !!user,
+    queryKey: ['engagementCategories', effectiveEmail],
+    queryFn: () => base44.entities.EngagementCategory.filter({ created_by: effectiveEmail }, 'name'),
+    enabled: !!effectiveEmail,
   });
 
   const markEngagedMutation = useMutation({
@@ -88,6 +96,23 @@ export default function TikTokEngagement() {
     },
   });
 
+  const updateScheduleMutation = useMutation({
+    mutationFn: async ({ id, data, isLegacy }) => {
+      if (isLegacy) {
+        return await base44.entities.TikTokCreator.update(id, {
+          engagement_frequency: data.engagement_frequency,
+          specific_days: data.engagement_days
+        });
+      }
+      return await base44.entities.TikTokContact.update(id, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] });
+      queryClient.invalidateQueries({ queryKey: ['tiktokCreators'] });
+      setEditingSchedule(null);
+    },
+  });
+
   const openTikTok = (username) => {
     window.open(`https://tiktok.com/@${username}`, '_blank');
   };
@@ -95,6 +120,11 @@ export default function TikTokEngagement() {
   const getFrequencyLabel = (contact) => {
     if (contact.engagement_frequency === 'daily') return 'Daily';
     if (contact.engagement_frequency === 'weekly') return 'Weekly';
+    if (contact.engagement_frequency === 'monthly') {
+      const day = contact.engagement_day_of_month || 1;
+      const suffix = day === 1 ? 'st' : day === 2 ? 'nd' : day === 3 ? 'rd' : 'th';
+      return `Monthly (${day}${suffix})`;
+    }
     if (contact.engagement_days?.length) {
       return contact.engagement_days.map(d => d.slice(0, 3)).join(', ');
     }
@@ -106,8 +136,36 @@ export default function TikTokEngagement() {
     return cat ? cat.name : null;
   };
 
+  const handleEditSchedule = (contact) => {
+    setScheduleForm({
+      engagement_frequency: contact.engagement_frequency || 'weekly',
+      engagement_days: contact.engagement_days || [],
+      engagement_day_of_month: contact.engagement_day_of_month || 1
+    });
+    setEditingSchedule(contact);
+  };
+
+  const handleSaveSchedule = () => {
+    if (!editingSchedule) return;
+    updateScheduleMutation.mutate({
+      id: editingSchedule.id,
+      data: scheduleForm,
+      isLegacy: editingSchedule._isLegacy
+    });
+  };
+
+  const toggleDay = (day) => {
+    setScheduleForm(prev => ({
+      ...prev,
+      engagement_days: prev.engagement_days.includes(day)
+        ? prev.engagement_days.filter(d => d !== day)
+        : [...prev.engagement_days, day]
+    }));
+  };
+
   const today = format(new Date(), 'yyyy-MM-dd');
   const currentDayName = getDayName(new Date());
+  const currentDayOfMonth = getDate(new Date());
 
   const contactsToShow = engagementContacts.filter(contact => {
     if (viewMode === 'all') return true;
@@ -125,6 +183,15 @@ export default function TikTokEngagement() {
       return isPast(lastEngagedDate) && lastEngagedDate <= oneWeekAgo;
     }
 
+    if (contact.engagement_frequency === 'monthly') {
+      const targetDay = contact.engagement_day_of_month || 1;
+      if (currentDayOfMonth !== targetDay) return false;
+      if (!contact.last_engaged_date) return true;
+      const lastEngagedDate = parseISO(contact.last_engaged_date);
+      const oneMonthAgo = addDays(new Date(), -28);
+      return lastEngagedDate <= oneMonthAgo;
+    }
+
     if (contact.engagement_frequency === 'multiple_per_week') {
       return contact.engagement_days?.includes(currentDayName);
     }
@@ -139,10 +206,11 @@ export default function TikTokEngagement() {
     return (
       <motion.div
         key={contact.id}
+        layout
         initial={{ opacity: 0, y: 20 }}
         animate={isEngaged ? { opacity: 0, scale: 0.8, y: -20 } : { opacity: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.8 }}
-        transition={{ delay: isEngaged ? 0 : index * 0.05, duration: isEngaged ? 0.5 : 0.3 }}
+        transition={{ type: "spring", stiffness: 300, damping: 25 }}
       >
         <Card 
           className="hover:shadow-lg transition-shadow overflow-hidden"
@@ -164,6 +232,15 @@ export default function TikTokEngagement() {
                   )}
                 </div>
               </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleEditSchedule(contact)}
+                className="text-gray-400 hover:text-purple-600"
+                title="Edit Schedule"
+              >
+                <Settings className="w-4 h-4" />
+              </Button>
             </div>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -279,8 +356,8 @@ export default function TikTokEngagement() {
             </TabsList>
 
             <TabsContent value="today" className="mt-4">
-              <AnimatePresence>
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <motion.div layout className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <AnimatePresence mode="popLayout">
                   {contactsToShow.length === 0 ? (
                     <Card className="col-span-full p-12 text-center">
                       <p className="text-gray-500 mb-4">🎉 No creators due today. Great job!</p>
@@ -289,18 +366,109 @@ export default function TikTokEngagement() {
                   ) : (
                     contactsToShow.map((contact, index) => <CreatorCard key={contact.id} contact={contact} index={index} />)
                   )}
-                </div>
-              </AnimatePresence>
+                </AnimatePresence>
+              </motion.div>
             </TabsContent>
 
             <TabsContent value="all" className="mt-4">
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {engagementContacts.map((contact, index) => <CreatorCard key={contact.id} contact={contact} index={index} />)}
-              </div>
+              <motion.div layout className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <AnimatePresence mode="popLayout">
+                  {engagementContacts.map((contact, index) => <CreatorCard key={contact.id} contact={contact} index={index} />)}
+                </AnimatePresence>
+              </motion.div>
             </TabsContent>
           </Tabs>
         )}
       </div>
+
+      {/* Edit Schedule Modal */}
+      <Dialog open={!!editingSchedule} onOpenChange={(open) => !open && setEditingSchedule(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Engagement Schedule</DialogTitle>
+          </DialogHeader>
+          
+          {editingSchedule && (
+            <div className="space-y-4 py-4">
+              <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg">
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: editingSchedule.color || '#8B5CF6' }} />
+                <div>
+                  <p className="font-semibold">@{editingSchedule.username}</p>
+                  {editingSchedule.display_name && (
+                    <p className="text-sm text-gray-600">{editingSchedule.display_name}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Frequency</Label>
+                <Select 
+                  value={scheduleForm.engagement_frequency} 
+                  onValueChange={(v) => setScheduleForm({ ...scheduleForm, engagement_frequency: v })}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="daily">Daily</SelectItem>
+                    <SelectItem value="weekly">Weekly</SelectItem>
+                    <SelectItem value="multiple_per_week">Specific Days</SelectItem>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {scheduleForm.engagement_frequency === 'multiple_per_week' && (
+                <div className="space-y-2">
+                  <Label>Days</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {daysOfWeek.map(day => (
+                      <Badge
+                        key={day}
+                        variant={scheduleForm.engagement_days.includes(day) ? 'default' : 'outline'}
+                        className="cursor-pointer"
+                        onClick={() => toggleDay(day)}
+                      >
+                        {day.slice(0, 3)}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {scheduleForm.engagement_frequency === 'monthly' && (
+                <div className="space-y-2">
+                  <Label>Day of Month</Label>
+                  <Select 
+                    value={String(scheduleForm.engagement_day_of_month || 1)} 
+                    onValueChange={(v) => setScheduleForm({ ...scheduleForm, engagement_day_of_month: parseInt(v) })}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                        <SelectItem key={day} value={String(day)}>
+                          {day === 1 ? '1st' : day === 2 ? '2nd' : day === 3 ? '3rd' : `${day}th`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingSchedule(null)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSaveSchedule}
+              disabled={updateScheduleMutation.isPending}
+              className="bg-purple-600 hover:bg-purple-700"
+            >
+              {updateScheduleMutation.isPending ? 'Saving...' : 'Save Schedule'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -15,11 +15,10 @@ import {
   Plus, Search, Trash2, Edit, Star, Phone, Mail, 
   ExternalLink, Users, Swords, Gift, Share2, Heart, UserPlus, Video, Calendar, Music, ShoppingBag,
   ChevronDown, ChevronRight, FolderPlus, Loader2, Upload, Check, X, FileSpreadsheet, Filter, MessageCircle,
-  BookOpen, DollarSign, Moon, Drama, Sparkles
+  BookOpen, DollarSign, Moon, Sparkles, Lightbulb
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuSeparator, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
@@ -76,6 +75,7 @@ export default function TikTokContacts() {
     engagement_enabled: false,
     engagement_frequency: 'weekly',
     engagement_days: [],
+    engagement_day_of_month: 1,
     color: '#8B5CF6',
     calendar_enabled: false,
     is_gifter: false,
@@ -199,12 +199,10 @@ export default function TikTokContacts() {
       for (const contact of contactsToImport) {
         if (!contact.selected) continue;
 
-        // Check if username already exists in MY contacts
         const existing = contacts.find(c => 
           c.username?.toLowerCase() === contact.username?.toLowerCase()
         );
 
-        // Check master database for shared display_name/phonetic
         const masterMatch = allMasterContacts.find(c => {
           const cUsername = (c.data?.username || c.username || '').toLowerCase();
           return cUsername === contact.username?.toLowerCase();
@@ -213,7 +211,6 @@ export default function TikTokContacts() {
         const masterPhonetic = masterMatch?.data?.phonetic || masterMatch?.phonetic;
 
         if (existing) {
-          // Update existing contact - use master DB display_name/phonetic if available, keep private data
           await base44.entities.TikTokContact.update(existing.id, {
             display_name: masterDisplayName || contact.display_name || existing.display_name,
             phonetic: masterPhonetic || existing.phonetic,
@@ -224,7 +221,6 @@ export default function TikTokContacts() {
           });
           results.push({ ...contact, action: 'updated' });
         } else {
-          // Create new contact - use master DB display_name/phonetic if available
           await base44.entities.TikTokContact.create({
             username: contact.username,
             display_name: masterDisplayName || contact.display_name,
@@ -257,7 +253,6 @@ export default function TikTokContacts() {
     },
   });
 
-  // Create a new contact and link it (for met_through, mods_for, their_mods)
   const createAndLinkMutation = useMutation({
     mutationFn: async ({ username, linkType }) => {
       const newContact = await base44.entities.TikTokContact.create({ 
@@ -297,6 +292,7 @@ export default function TikTokContacts() {
       engagement_enabled: false,
       engagement_frequency: 'weekly',
       engagement_days: [],
+      engagement_day_of_month: 1,
       color: '#8B5CF6',
       calendar_enabled: false,
       is_gifter: false,
@@ -330,6 +326,7 @@ export default function TikTokContacts() {
       engagement_enabled: contact.engagement_enabled || false,
       engagement_frequency: contact.engagement_frequency || 'weekly',
       engagement_days: contact.engagement_days || [],
+      engagement_day_of_month: contact.engagement_day_of_month || 1,
       color: contact.color || '#8B5CF6',
       calendar_enabled: contact.calendar_enabled || false,
       is_gifter: contact.is_gifter || false,
@@ -380,7 +377,6 @@ export default function TikTokContacts() {
     }));
   };
 
-  // CSV parsing function - handles quoted values with commas inside
   const parseCSVLine = (line) => {
     const values = [];
     let current = '';
@@ -415,10 +411,7 @@ export default function TikTokContacts() {
         return;
       }
 
-      // Parse header row
       const headers = parseCSVLine(lines[0]).map(h => h.toLowerCase());
-
-      // Find column indices - TikTok Leads Manager format
       const usernameIdx = headers.findIndex(h => h === 'user name' || h === 'username' || h.includes('user name'));
       const displayNameIdx = headers.findIndex(h => h === 'display name' || h === 'displayname');
       const nameIdx = headers.findIndex(h => h === 'name' && !h.includes('display') && !h.includes('user'));
@@ -433,23 +426,19 @@ export default function TikTokContacts() {
         return;
       }
 
-      // Parse data rows
       const parsed = [];
       for (let i = 1; i < lines.length; i++) {
         if (!lines[i].trim()) continue;
 
         const values = parseCSVLine(lines[i]);
-
         const username = values[usernameIdx]?.replace('@', '').trim();
         if (!username) continue;
 
-        // Combine date and time if both exist
         let leadReceivedAt = '';
         if (receivedDateIdx >= 0 && values[receivedDateIdx]) {
           const datePart = values[receivedDateIdx];
           const timePart = receivedTimeIdx >= 0 ? values[receivedTimeIdx] : '';
           if (timePart) {
-            // Parse MM/DD/YYYY format and combine with time
             const [month, day, year] = datePart.split('/');
             if (month && day && year) {
               leadReceivedAt = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${timePart}`;
@@ -481,7 +470,7 @@ export default function TikTokContacts() {
       setShowImportModal(true);
     };
     reader.readAsText(file);
-    e.target.value = ''; // Reset input
+    e.target.value = '';
   };
 
   const toggleCsvSelection = (index) => {
@@ -496,9 +485,7 @@ export default function TikTokContacts() {
     ));
   };
 
-  // Quick filter roles (shown as separate buttons)
   const quickFilterRoles = ['subscriber', 'superfan', 'irl_friend', 'discord', 'custom:TikTok Lead'];
-  // All other roles go in the dropdown
   const dropdownRoles = Object.keys(roleConfig).filter(r => !quickFilterRoles.includes(r));
 
   const toggleFilterRole = (role) => {
@@ -515,7 +502,6 @@ export default function TikTokContacts() {
         c.screen_name?.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesRole = filterRoles.length === 0 || filterRoles.some(role => c.role?.includes(role));
       
-      // Tab filtering
       if (activeTab === 'engagement') return matchesSearch && matchesRole && c.engagement_enabled;
       if (activeTab === 'calendar') return matchesSearch && matchesRole && c.calendar_enabled;
       if (activeTab === 'gifters') return matchesSearch && matchesRole && c.is_gifter;
@@ -527,7 +513,6 @@ export default function TikTokContacts() {
       return 0;
     });
 
-  // Lead source icon mapping
   const leadSourceConfig = {
     'LIVE': { icon: Video, label: 'Live', color: 'text-red-500' },
     'Profile': { icon: Users, label: 'Profile', color: 'text-blue-500' },
@@ -536,22 +521,20 @@ export default function TikTokContacts() {
     'Referral': { icon: UserPlus, label: 'Referral', color: 'text-purple-500' },
   };
 
-  const ContactCard = ({ contact, index }) => (
+  const ContactCard = ({ contact }) => (
     <motion.div
-      key={contact.id}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ delay: index * 0.05 }}
+      layout
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.9 }}
+      transition={{ type: "spring", stiffness: 300, damping: 25 }}
     >
       <Card 
         className={`relative overflow-hidden ${contact.is_favorite ? 'ring-2 ring-amber-400' : ''}`}
       >
-        {/* Thick colored header bar */}
         <div className="h-2" style={{ backgroundColor: contact.color || '#8B5CF6' }} />
         
         <CardContent className="p-4">
-          {/* Top actions row */}
           <div className="absolute top-4 right-3 flex items-center gap-1">
             <button
               onClick={() => handleEdit(contact)}
@@ -579,38 +562,37 @@ export default function TikTokContacts() {
 
           <div className="space-y-3">
             <div>
-                <div className="flex items-center gap-2">
-                  <h3 
-                    className="font-bold text-lg cursor-pointer hover:text-purple-600"
-                    onClick={() => window.open(`https://tiktok.com/@${contact.username}`, '_blank')}
-                  >
-                    @{contact.username}
-                  </h3>
-                  {/* Lead Source icon */}
-                  {contact.lead_source && (() => {
-                    const sourceConfig = leadSourceConfig[contact.lead_source] || { icon: Sparkles, label: contact.lead_source, color: 'text-gray-400' };
-                    const SourceIcon = sourceConfig.icon;
-                    return (
-                      <div
-                        className={`p-1 rounded-full bg-gray-100 ${sourceConfig.color}`}
-                        title={`Lead: ${sourceConfig.label}${contact.lead_source === 'Referral' && contact.met_through_name ? ` via ${contact.met_through_name}` : ''}`}
-                      >
-                        <SourceIcon className="w-3 h-3" />
-                      </div>
-                    );
-                  })()}
-                </div>
-                {contact.display_name && (
-                  <p className="text-gray-600 text-sm">{contact.display_name}</p>
-                )}
+              <div className="flex items-center gap-2">
+                <h3 
+                  className="font-bold text-lg cursor-pointer hover:text-purple-600"
+                  onClick={() => window.open(`https://tiktok.com/@${contact.username}`, '_blank')}
+                >
+                  @{contact.username}
+                </h3>
+                {contact.lead_source && (() => {
+                  const sourceConfig = leadSourceConfig[contact.lead_source] || { icon: Sparkles, label: contact.lead_source, color: 'text-gray-400' };
+                  const SourceIcon = sourceConfig.icon;
+                  return (
+                    <div
+                      className={`p-1 rounded-full bg-gray-100 ${sourceConfig.color}`}
+                      title={`Lead: ${sourceConfig.label}${contact.lead_source === 'Referral' && contact.met_through_name ? ` via ${contact.met_through_name}` : ''}`}
+                    >
+                      <SourceIcon className="w-3 h-3" />
+                    </div>
+                  );
+                })()}
               </div>
+              {contact.display_name && (
+                <p className="text-gray-600 text-sm">{contact.display_name}</p>
+              )}
+            </div>
 
             {contact.notes && (
               <p className="text-sm text-gray-500 italic line-clamp-2">{contact.notes}</p>
             )}
 
-            {/* Icon Role Toggles - Top Row */}
-            <div className="flex flex-wrap items-center gap-1 pt-2 border-t">
+            {/* Roles container - single line */}
+            <div className="flex flex-nowrap overflow-x-auto items-center gap-0.5 pt-2 border-t scrollbar-hide">
               {Object.entries(iconRoles).map(([roleKey, config]) => {
                 const isActive = contact.role?.includes(roleKey);
                 const RoleIcon = config.icon;
@@ -625,7 +607,7 @@ export default function TikTokContacts() {
                       base44.entities.TikTokContact.update(contact.id, { role: newRoles });
                       queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] });
                     }}
-                    className={`p-1.5 rounded-full border transition-all cursor-pointer hover:scale-110 ${
+                    className={`p-1.5 rounded-full border transition-all cursor-pointer hover:scale-110 flex-shrink-0 ${
                       isActive ? config.color + ' border-transparent' : 'bg-white text-gray-300 ' + config.borderColor + ' hover:bg-gray-50'
                     }`}
                     title={config.label}
@@ -634,21 +616,6 @@ export default function TikTokContacts() {
                   </button>
                 );
               })}
-
-              {/* Custom roles */}
-              {contact.role?.filter(r => r.startsWith('custom:')).map(role => (
-                <div
-                  key={role}
-                  className="px-2 py-0.5 rounded-full bg-teal-100 text-teal-700 text-xs font-medium"
-                  title={role.replace('custom:', '')}
-                >
-                  {role.replace('custom:', '')}
-                </div>
-              ))}
-            </div>
-
-            {/* Second Row - Text roles (Sub, Superfan, IRL, Discord) */}
-            <div className="flex flex-wrap items-center gap-1">
               {Object.entries(textRoles).map(([roleKey, config]) => {
                 const isActive = contact.role?.includes(roleKey);
                 return (
@@ -662,7 +629,7 @@ export default function TikTokContacts() {
                       base44.entities.TikTokContact.update(contact.id, { role: newRoles });
                       queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] });
                     }}
-                    className={`px-2 py-1 rounded-full text-xs font-medium border transition-all cursor-pointer hover:scale-105 ${
+                    className={`px-2 py-1 rounded-full text-xs font-medium border transition-all cursor-pointer hover:scale-105 flex-shrink-0 ${
                       isActive ? config.color + ' border-transparent' : 'bg-white text-gray-400 ' + config.borderColor + ' hover:bg-gray-50'
                     }`}
                     title={config.label}
@@ -722,6 +689,13 @@ export default function TikTokContacts() {
               </button>
             </div>
           </div>
+
+          {/* TT Lead Icon - Bottom Right */}
+          {contact.role?.includes('custom:TikTok Lead') && (
+            <div className="absolute bottom-3 right-3 p-1.5 rounded-full bg-teal-100 text-teal-700" title="TikTok Lead">
+              <Lightbulb className="w-4 h-4" />
+            </div>
+          )}
         </CardContent>
       </Card>
     </motion.div>
@@ -736,30 +710,30 @@ export default function TikTokContacts() {
             <p className="text-gray-600 mt-1">Your central hub for all TikTok connections</p>
           </div>
           <div className="flex gap-2">
-                        <label className="cursor-pointer">
-                          <input type="file" accept=".csv" onChange={handleCsvUpload} className="hidden" />
-                          <Button asChild variant="outline">
-                            <span>
-                              <Upload className="w-4 h-4 mr-2" />
-                              Import CSV
-                            </span>
-                          </Button>
-                        </label>
-                        <Button
-                          variant="outline"
-                          onClick={() => setShowCategoryModal(true)}
-                        >
-                          <FolderPlus className="w-4 h-4 mr-2" />
-                          Categories
-                        </Button>
-                        <Button
-                          onClick={() => setShowModal(true)}
-                          className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-                        >
-                          <Plus className="w-4 h-4 mr-2" />
-                          Add Contact
-                        </Button>
-                      </div>
+            <label className="cursor-pointer">
+              <input type="file" accept=".csv" onChange={handleCsvUpload} className="hidden" />
+              <Button asChild variant="outline">
+                <span>
+                  <Upload className="w-4 h-4 mr-2" />
+                  Import CSV
+                </span>
+              </Button>
+            </label>
+            <Button
+              variant="outline"
+              onClick={() => setShowCategoryModal(true)}
+            >
+              <FolderPlus className="w-4 h-4 mr-2" />
+              Categories
+            </Button>
+            <Button
+              onClick={() => setShowModal(true)}
+              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Contact
+            </Button>
+          </div>
         </div>
 
         {/* Tabs */}
@@ -775,7 +749,6 @@ export default function TikTokContacts() {
         {/* Search and Filter */}
         <Card>
           <CardContent className="p-4 space-y-3">
-            {/* Large Search Box */}
             <div className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <Input
@@ -786,9 +759,7 @@ export default function TikTokContacts() {
               />
             </div>
             
-            {/* Filter Row */}
             <div className="flex flex-wrap items-center gap-2">
-              {/* Quick Filter Buttons */}
               {quickFilterRoles.map(role => {
                 const isCustom = role.startsWith('custom:');
                 const config = isCustom ? null : roleConfig[role];
@@ -803,13 +774,12 @@ export default function TikTokContacts() {
                     className={`cursor-pointer px-3 py-1.5 ${isActive ? 'bg-purple-600' : colorClass}`}
                     onClick={() => toggleFilterRole(role)}
                   >
-                    {Icon ? <Icon className="w-3 h-3 mr-1" /> : (isCustom ? <UserPlus className="w-3 h-3 mr-1" /> : null)}
+                    {Icon ? <Icon className="w-3 h-3 mr-1" /> : (isCustom ? <Lightbulb className="w-3 h-3 mr-1" /> : null)}
                     {label}
                   </Badge>
                 );
               })}
               
-              {/* More Filters Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm" className="gap-2">
@@ -842,7 +812,6 @@ export default function TikTokContacts() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              {/* Clear Filters */}
               {filterRoles.length > 0 && (
                 <Button
                   variant="ghost"
@@ -859,13 +828,13 @@ export default function TikTokContacts() {
         </Card>
 
         {/* Contacts Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <AnimatePresence>
-            {filteredContacts.map((contact, index) => (
-              <ContactCard key={contact.id} contact={contact} index={index} />
+        <motion.div layout className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <AnimatePresence mode="popLayout">
+            {filteredContacts.map((contact) => (
+              <ContactCard key={contact.id} contact={contact} />
             ))}
           </AnimatePresence>
-        </div>
+        </motion.div>
 
         {filteredContacts.length === 0 && (
           <div className="text-center py-12">
@@ -981,7 +950,7 @@ export default function TikTokContacts() {
               </div>
             </div>
 
-            {/* Roles - directly under username */}
+            {/* Roles */}
             <div className="space-y-2">
               <div className="grid grid-cols-4 gap-2">
                 {Object.entries(roleConfig).map(([key, config]) => {
@@ -1042,7 +1011,6 @@ export default function TikTokContacts() {
                 </Button>
               </div>
               
-              {/* Display custom roles */}
               {formData.role.filter(r => r.startsWith('custom:')).length > 0 && (
                 <div className="flex flex-wrap gap-1">
                   {formData.role.filter(r => r.startsWith('custom:')).map(role => (
@@ -1104,6 +1072,7 @@ export default function TikTokContacts() {
                       <SelectItem value="daily">Daily</SelectItem>
                       <SelectItem value="weekly">Weekly</SelectItem>
                       <SelectItem value="multiple_per_week">Specific Days</SelectItem>
+                      <SelectItem value="monthly">Monthly</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -1125,10 +1094,29 @@ export default function TikTokContacts() {
                     </div>
                   </div>
                 )}
+
+                {formData.engagement_frequency === 'monthly' && (
+                  <div className="space-y-2">
+                    <Label>Day of Month</Label>
+                    <Select 
+                      value={String(formData.engagement_day_of_month || 1)} 
+                      onValueChange={(v) => setFormData({ ...formData, engagement_day_of_month: parseInt(v) })}
+                    >
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                          <SelectItem key={day} value={String(day)}>
+                            {day === 1 ? '1st' : day === 2 ? '2nd' : day === 3 ? '3rd' : `${day}th`}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
             )}
 
-            {/* Categories - multi-select */}
+            {/* Categories */}
             <div className="space-y-2">
               <Label className="text-gray-700 font-medium">Categories</Label>
               <div className="flex flex-wrap gap-2">
@@ -1184,7 +1172,6 @@ export default function TikTokContacts() {
               </TabsList>
               
               <TabsContent value="social" className="p-3 border rounded-b-lg bg-teal-50/50 space-y-4">
-                {/* Other TikTok Accounts */}
                 <div className="space-y-2">
                   <Label className="font-semibold">Other TikTok Accounts</Label>
                   <div className="flex gap-2">
@@ -1236,100 +1223,20 @@ export default function TikTokContacts() {
                   )}
                 </div>
 
-                {/* Other Social Media Links */}
                 <div className="space-y-3">
                   <Label className="font-semibold">Other Social Media</Label>
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <Label className="text-xs text-gray-500">Instagram</Label>
-                      <Input
-                        placeholder="@username"
-                        value={formData.social_links?.instagram || ''}
-                        onChange={(e) => setFormData({ ...formData, social_links: { ...formData.social_links, instagram: e.target.value } })}
-                        className="h-8"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs text-gray-500">Facebook</Label>
-                      <Input
-                        placeholder="username or URL"
-                        value={formData.social_links?.facebook || ''}
-                        onChange={(e) => setFormData({ ...formData, social_links: { ...formData.social_links, facebook: e.target.value } })}
-                        className="h-8"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs text-gray-500">YouTube</Label>
-                      <Input
-                        placeholder="channel name or URL"
-                        value={formData.social_links?.youtube || ''}
-                        onChange={(e) => setFormData({ ...formData, social_links: { ...formData.social_links, youtube: e.target.value } })}
-                        className="h-8"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs text-gray-500">X (Twitter)</Label>
-                      <Input
-                        placeholder="@handle"
-                        value={formData.social_links?.twitter || ''}
-                        onChange={(e) => setFormData({ ...formData, social_links: { ...formData.social_links, twitter: e.target.value } })}
-                        className="h-8"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs text-gray-500">LinkedIn</Label>
-                      <Input
-                        placeholder="profile URL"
-                        value={formData.social_links?.linkedin || ''}
-                        onChange={(e) => setFormData({ ...formData, social_links: { ...formData.social_links, linkedin: e.target.value } })}
-                        className="h-8"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs text-gray-500">Threads</Label>
-                      <Input
-                        placeholder="@username"
-                        value={formData.social_links?.threads || ''}
-                        onChange={(e) => setFormData({ ...formData, social_links: { ...formData.social_links, threads: e.target.value } })}
-                        className="h-8"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs text-gray-500">Twitch</Label>
-                      <Input
-                        placeholder="username"
-                        value={formData.social_links?.twitch || ''}
-                        onChange={(e) => setFormData({ ...formData, social_links: { ...formData.social_links, twitch: e.target.value } })}
-                        className="h-8"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs text-gray-500">Discord</Label>
-                      <Input
-                        placeholder="username#1234 or server"
-                        value={formData.social_links?.discord || ''}
-                        onChange={(e) => setFormData({ ...formData, social_links: { ...formData.social_links, discord: e.target.value } })}
-                        className="h-8"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs text-gray-500">Snapchat</Label>
-                      <Input
-                        placeholder="username"
-                        value={formData.social_links?.snapchat || ''}
-                        onChange={(e) => setFormData({ ...formData, social_links: { ...formData.social_links, snapchat: e.target.value } })}
-                        className="h-8"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs text-gray-500">Pinterest</Label>
-                      <Input
-                        placeholder="username"
-                        value={formData.social_links?.pinterest || ''}
-                        onChange={(e) => setFormData({ ...formData, social_links: { ...formData.social_links, pinterest: e.target.value } })}
-                        className="h-8"
-                      />
-                    </div>
+                    {['instagram', 'facebook', 'youtube', 'twitter', 'linkedin', 'threads', 'twitch', 'discord', 'snapchat', 'pinterest'].map(platform => (
+                      <div key={platform} className="space-y-1">
+                        <Label className="text-xs text-gray-500 capitalize">{platform === 'twitter' ? 'X (Twitter)' : platform}</Label>
+                        <Input
+                          placeholder={`@username`}
+                          value={formData.social_links?.[platform] || ''}
+                          onChange={(e) => setFormData({ ...formData, social_links: { ...formData.social_links, [platform]: e.target.value } })}
+                          className="h-8"
+                        />
+                      </div>
+                    ))}
                   </div>
                 </div>
               </TabsContent>
@@ -1537,11 +1444,9 @@ export default function TikTokContacts() {
               </Alert>
             )}
             
-            {/* Import Options - Tag with roles */}
             <div className="p-3 bg-teal-50 border border-teal-200 rounded-lg space-y-3">
               <p className="text-sm font-medium text-teal-800">Tag imported contacts with:</p>
               <div className="flex flex-wrap gap-2">
-                {/* Preset roles */}
                 {Object.entries(roleConfig).map(([key, config]) => {
                   const Icon = config.icon;
                   const isSelected = importRoles.includes(key);
@@ -1563,7 +1468,6 @@ export default function TikTokContacts() {
                     </Badge>
                   );
                 })}
-                {/* TikTok Lead custom tag */}
                 <Badge
                   variant={importRoles.includes('custom:TikTok Lead') ? 'default' : 'outline'}
                   className={`cursor-pointer ${importRoles.includes('custom:TikTok Lead') ? 'bg-teal-600' : 'bg-teal-100 text-teal-700'}`}
@@ -1577,18 +1481,12 @@ export default function TikTokContacts() {
                     setCsvData(prev => prev.map(c => ({ ...c, importRoles: newRoles })));
                   }}
                 >
-                  <UserPlus className="w-3 h-3 mr-1" />
+                  <Lightbulb className="w-3 h-3 mr-1" />
                   TikTok Lead
                 </Badge>
               </div>
-              {importRoles.length > 0 && (
-                <p className="text-xs text-gray-600">
-                  {importRoles.length} tag{importRoles.length !== 1 ? 's' : ''} will be applied to all imported contacts
-                </p>
-              )}
             </div>
             
-            {/* Select All */}
             <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
               <div className="flex items-center gap-2">
                 <Checkbox 
@@ -1599,7 +1497,6 @@ export default function TikTokContacts() {
               </div>
             </div>
             
-            {/* Contact List */}
             <div className="space-y-2 max-h-96 overflow-y-auto">
               {csvData.map((contact, index) => (
                 <div 
@@ -1684,7 +1581,6 @@ export default function TikTokContacts() {
           </DialogHeader>
           
           <div className="space-y-4 py-4">
-            {/* Add new category */}
             <div className="flex gap-2">
               <Input
                 placeholder="New category name..."
@@ -1707,7 +1603,6 @@ export default function TikTokContacts() {
               </Button>
             </div>
 
-            {/* Existing categories */}
             <div className="space-y-2">
               {categories.length === 0 ? (
                 <p className="text-sm text-gray-500 text-center py-4">No categories yet. Add one above!</p>
