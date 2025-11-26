@@ -246,21 +246,20 @@ export default function WeeklyGifterGallery() {
     URL.revokeObjectURL(url);
   };
 
-  // AI Import handlers
+  // AI Import handlers - processes images ONE AT A TIME so results appear progressively
   const handleFileUpload = async (e) => {
     const files = Array.from(e.target.files);
     if (!files.length) return;
 
     setImportError(null);
-    setExtractedData(null);
+    setExtractedData({ gifters: [], confidence: 'high', notes: 'Processing...' });
     setUploading(true);
     setPreviewUrls([]);
     setCurrentImageIndex(0);
 
     try {
+      // First, generate all previews quickly
       const previews = [];
-      const uploadedUrls = [];
-      
       for (const file of files) {
         const preview = await new Promise((resolve) => {
           const reader = new FileReader();
@@ -268,23 +267,27 @@ export default function WeeklyGifterGallery() {
           reader.readAsDataURL(file);
         });
         previews.push(preview);
-        
-        const { file_url } = await base44.integrations.Core.UploadFile({ file });
-        uploadedUrls.push(file_url);
       }
-      
       setPreviewUrls(previews);
       setUploading(false);
       setAnalyzing(true);
 
-      const BATCH_SIZE = 5;
-      let allGifters = [];
+      // Process images ONE AT A TIME so results stream in
+      const seenUsernames = new Set();
       
-      for (let i = 0; i < uploadedUrls.length; i += BATCH_SIZE) {
-        const batchUrls = uploadedUrls.slice(i, i + BATCH_SIZE);
+      for (let i = 0; i < files.length; i++) {
+        // Update status message
+        setExtractedData(prev => ({
+          ...prev,
+          notes: `Processing image ${i + 1} of ${files.length}...`
+        }));
+
+        // Upload this single image
+        const { file_url } = await base44.integrations.Core.UploadFile({ file: files[i] });
         
+        // Analyze this single image
         const result = await base44.integrations.Core.InvokeLLM({
-          prompt: `Analyze these TikTok gifting leaderboard screenshots and extract ALL gifters visible.
+          prompt: `Analyze this TikTok gifting leaderboard screenshot and extract ALL gifters visible.
           
 Look for:
 - Usernames (usually start with @)
@@ -292,11 +295,9 @@ Look for:
 - Their placement (1st, 2nd, 3rd place, or any ranking number visible)
 - Any gift names visible
 
-${batchUrls.length > 1 ? `There are ${batchUrls.length} images in this batch - extract data from ALL of them.` : ''}
-
 IMPORTANT: Extract EVERY gifter you can see, not just top 3. Include 4th, 5th, etc if visible.
 For each username, generate a "suggested_phonetic" field with how it would be pronounced naturally in English for a song.`,
-          file_urls: batchUrls,
+          file_urls: [file_url],
           response_json_schema: {
             type: "object",
             properties: {
@@ -312,47 +313,45 @@ For each username, generate a "suggested_phonetic" field with how it would be pr
                      gift_name: { type: "string", description: "Name of gift if visible" }
                    }
                 }
-              },
-              confidence: { type: "string", enum: ["high", "medium", "low"] },
-              notes: { type: "string" }
+              }
             }
           }
         });
         
+        // Process and add new gifters immediately
         if (result.gifters) {
-          allGifters = [...allGifters, ...result.gifters];
+          const newGifters = result.gifters
+            .filter(g => {
+              const key = g.username?.toLowerCase()?.replace('@', '');
+              if (!key || seenUsernames.has(key)) return false;
+              seenUsernames.add(key);
+              return true;
+            })
+            .map(gifter => {
+              const username = gifter.username?.toLowerCase()?.replace('@', '');
+              const exactMatch = allContacts.find(c => c.username?.toLowerCase() === username);
+              
+              return {
+                ...gifter,
+                matched_contact: exactMatch || null,
+                screen_name: exactMatch?.display_name || gifter.screen_name,
+                phonetic: exactMatch?.phonetic || gifter.suggested_phonetic || '',
+                username: exactMatch?.username || gifter.username,
+                selected: true
+              };
+            });
+
+          // Update state immediately with new gifters
+          setExtractedData(prev => ({
+            ...prev,
+            gifters: [...prev.gifters, ...newGifters],
+            notes: i === files.length - 1 
+              ? `Extracted ${prev.gifters.length + newGifters.length} unique gifters from ${files.length} images` 
+              : `Processing image ${i + 2} of ${files.length}... (${prev.gifters.length + newGifters.length} gifters found so far)`
+          }));
         }
       }
       
-      // Deduplicate
-      const seenUsernames = new Set();
-      const uniqueGifters = allGifters.filter(g => {
-        const key = g.username?.toLowerCase()?.replace('@', '');
-        if (!key || seenUsernames.has(key)) return false;
-        seenUsernames.add(key);
-        return true;
-      });
-
-      // Match to existing contacts
-      const enhancedGifters = uniqueGifters.map(gifter => {
-        const username = gifter.username?.toLowerCase()?.replace('@', '');
-        const exactMatch = allContacts.find(c => c.username?.toLowerCase() === username);
-        
-        return {
-          ...gifter,
-          matched_contact: exactMatch || null,
-          screen_name: exactMatch?.display_name || gifter.screen_name,
-          phonetic: exactMatch?.phonetic || gifter.suggested_phonetic || '',
-          username: exactMatch?.username || gifter.username,
-          selected: true
-        };
-      });
-
-      setExtractedData({ 
-        gifters: enhancedGifters, 
-        confidence: enhancedGifters.length > 0 ? 'high' : 'low',
-        notes: `Extracted ${enhancedGifters.length} unique gifters from ${uploadedUrls.length} images`
-      });
       setAnalyzing(false);
     } catch (err) {
       console.error('Error processing screenshot:', err);
