@@ -7,9 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Loader2, Trophy, Medal, Award } from 'lucide-react';
+import { Plus, Loader2, Trophy, Medal, Award, Sparkles, Upload, Star } from 'lucide-react';
 import { format, startOfWeek } from 'date-fns';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '../utils';
 import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
 
 export default function GiftEntry() {
@@ -131,6 +133,26 @@ export default function GiftEntry() {
           <h1 className="text-3xl font-bold text-gray-800">Gift Entry</h1>
           <p className="text-gray-600 mt-1">Record top gifters for each week</p>
         </div>
+
+        {/* AI Import Callout */}
+        <Card className="bg-gradient-to-r from-purple-100 to-pink-100 border-purple-300">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Sparkles className="w-8 h-8 text-purple-600" />
+                <div>
+                  <h3 className="font-semibold text-purple-800">✨ Use AI to Import from Screenshots!</h3>
+                  <p className="text-sm text-purple-600">Upload your leaderboard screenshots and let AI do the work</p>
+                </div>
+              </div>
+              <Link to={createPageUrl('GiftScreenshotImport')}>
+                <Button className="bg-purple-600 hover:bg-purple-700">
+                  <Upload className="w-4 h-4 mr-2" /> AI Import
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Week Selector */}
         <Card>
