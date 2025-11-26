@@ -247,9 +247,18 @@ export default function WeeklyGifterGallery() {
             display_name: entry.screen_name || entry.username,
             phonetic: entry.phonetic || '',
             is_gifter: true,
+            gifted_for: preferences?.tiktok_username ? [preferences.tiktok_username] : [],
             created_by: effectiveEmail  // Always set to effective email
           };
           gifter = await base44.entities.TikTokContact.create(contactData);
+        } else if (gifter && preferences?.tiktok_username) {
+          // Update existing gifter to add this receiver if not already there
+          const currentGiftedFor = gifter.gifted_for || gifter.data?.gifted_for || [];
+          if (!currentGiftedFor.includes(preferences.tiktok_username)) {
+            await base44.entities.TikTokContact.update(gifter.id, {
+              gifted_for: [...currentGiftedFor, preferences.tiktok_username]
+            });
+          }
         }
 
         if (!gifter) return null;
