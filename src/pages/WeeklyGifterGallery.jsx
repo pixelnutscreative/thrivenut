@@ -117,11 +117,32 @@ export default function WeeklyGifterGallery() {
   // Mutations
   const createMutation = useMutation({
     mutationFn: async (data) => {
-      const gifter = gifters.find(g => g.id === data.gifter_id);
+      let gifter;
+      
+      // Check if selecting from master list (prefixed with master_)
+      if (data.gifter_id.startsWith('master_')) {
+        const masterId = data.gifter_id.replace('master_', '');
+        const masterContact = allContacts.find(c => c.id === masterId);
+        if (masterContact) {
+          // Create a copy of the master contact for this user
+          gifter = await base44.entities.TikTokContact.create({
+            username: masterContact.username,
+            display_name: masterContact.display_name,
+            phonetic: masterContact.phonetic,
+            is_gifter: true
+          });
+          queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] });
+        }
+      } else {
+        gifter = gifters.find(g => g.id === data.gifter_id);
+      }
+      
       const gift = gifts.find(g => g.id === data.gift_id);
       
       return base44.entities.GiftingEntry.create({
-        ...data,
+        gifter_id: gifter?.id || data.gifter_id,
+        gift_id: data.gift_id,
+        rank: data.rank,
         week: selectedWeek,
         gifter_username: gifter?.username,
         gifter_screen_name: gifter?.display_name || gifter?.username,
@@ -133,6 +154,7 @@ export default function WeeklyGifterGallery() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['giftingEntries'] });
       setFormData({ gifter_id: '', gift_id: '', rank: '', shoutout_reason: '' });
+      setGifterSearch('');
     },
   });
 
@@ -716,12 +738,12 @@ export default function WeeklyGifterGallery() {
                           </div>
                         )}
                         {(() => {
-                          // Normalize entry fields (handle nested data object)
-                          const rank = entry.data?.rank || entry.rank;
-                          const gifterScreenName = entry.data?.gifter_screen_name || entry.gifter_screen_name;
-                          const gifterUsername = entry.data?.gifter_username || entry.gifter_username;
-                          const giftName = entry.data?.gift_name || entry.gift_name;
-                          const gifterPhonetic = entry.data?.gifter_phonetic || entry.gifter_phonetic;
+                          // Use flat fields directly
+                          const rank = entry.rank;
+                          const gifterScreenName = entry.gifter_screen_name;
+                          const gifterUsername = entry.gifter_username;
+                          const giftName = entry.gift_name;
+                          const gifterPhonetic = entry.gifter_phonetic;
                           
                           return editingEntry === entry.id ? (
                           <div className="space-y-3">
@@ -761,9 +783,9 @@ export default function WeeklyGifterGallery() {
                                   {gifterPhonetic && (
                                     <Badge variant="outline" className="text-xs">🎵 {gifterPhonetic}</Badge>
                                   )}
-                                  {(entry.data?.shoutout_reason || entry.shoutout_reason) && (
+                                  {entry.shoutout_reason && (
                                     <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700">
-                                      {entry.data?.shoutout_reason || entry.shoutout_reason}
+                                      {entry.shoutout_reason}
                                     </Badge>
                                   )}
                                 </div>
