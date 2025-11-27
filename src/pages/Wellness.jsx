@@ -12,6 +12,10 @@ import { format } from 'date-fns';
 import { motion } from 'framer-motion';
 import SelfCareChecklist from '../components/wellness/SelfCareChecklist';
 import EliminationTracker from '../components/wellness/EliminationTracker';
+import QuickMedicationCheck from '../components/wellness/QuickMedicationCheck';
+import QuickSupplementCheck from '../components/wellness/QuickSupplementCheck';
+import QuickPetCareCheck from '../components/wellness/QuickPetCareCheck';
+import QuickCareReminderCheck from '../components/wellness/QuickCareReminderCheck';
 
 const moodEmojis = {
   amazing: '🤩',
@@ -243,6 +247,27 @@ export default function Wellness() {
             supplementsCount={supplementsCount || 0}
             onUpdateOrder={(order) => updateSelfCareOrderMutation.mutate(order)}
           />
+        </motion.div>
+
+        {/* Quick Check Cards */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.06 }}
+          className="grid md:grid-cols-2 gap-4"
+        >
+          <QuickMedicationCheck userEmail={user?.email} />
+          <QuickSupplementCheck userEmail={user?.email} />
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.065 }}
+          className="grid md:grid-cols-2 gap-4"
+        >
+          <QuickPetCareCheck userEmail={user?.email} />
+          <QuickCareReminderCheck userEmail={user?.email} />
         </motion.div>
 
         {/* Elimination Tracker */}
