@@ -1039,11 +1039,79 @@ Creator display name: ${hostDisplayName}`,
                     }}
                     className="flex-1"
                   >
-                    Start Over with New Lyrics
+                    Start Over
                   </Button>
                   <Button
                     variant="outline"
-                    onClick={processFinalLyrics}
+                    onClick={async () => {
+                      setProcessingFinal(true);
+                      try {
+                        const gifterMapping = formData.gifters.map(g => ({
+                          phonetic: g.name,
+                          displayName: g.username ? `@${g.username}` : g.name
+                        }));
+                        const result = await base44.integrations.Core.InvokeLLM({
+                          prompt: `Replace phonetic spellings with display names in these lyrics.
+
+                GIFTER MAPPING (phonetic -> display):
+                ${gifterMapping.map(g => `"${g.phonetic}" -> "${g.displayName}"`).join('\n')}
+
+                LYRICS:
+                ${finalLyrics}
+
+                Return the lyrics with phonetic names replaced by display names.`,
+                          response_json_schema: {
+                            type: "object",
+                            properties: {
+                              caption_lyrics: { type: "string" }
+                            }
+                          }
+                        });
+                        setCaptionLyrics(result.caption_lyrics || finalLyrics);
+                      } catch (e) {
+                        console.error(e);
+                      }
+                      setProcessingFinal(false);
+                    }}
+                    disabled={processingFinal}
+                    className="flex-1 border-green-300 text-green-700"
+                  >
+                    {processingFinal ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}
+                    Generate Lyrics for Captions
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={async () => {
+                      setProcessingFinal(true);
+                      try {
+                        const hostDisplayName = preferences?.tiktok_display_name || preferences?.tiktok_username || 'the creator';
+                        const gifterTags = formData.gifters
+                          .filter(g => g.username)
+                          .map(g => `@${g.username}`)
+                          .join(' ');
+                        const result = await base44.integrations.Core.InvokeLLM({
+                          prompt: `Create a TikTok post caption for ${hostDisplayName}'s Gift Gallery Thank-You video.
+
+                The caption should:
+                1. Thank the top gifters of the week
+                2. Be fun, appreciative, and engaging
+                3. Include these gifter tags: ${gifterTags}
+                4. End with relevant hashtags like #TikTokLive #GiftGallery #ThankYou
+
+                Creator display name: ${hostDisplayName}`,
+                          response_json_schema: {
+                            type: "object",
+                            properties: {
+                              post_caption: { type: "string" }
+                            }
+                          }
+                        });
+                        setPostCaption(result.post_caption || '');
+                      } catch (e) {
+                        console.error(e);
+                      }
+                      setProcessingFinal(false);
+                    }}
                     disabled={processingFinal}
                     className="flex-1 border-pink-300 text-pink-700"
                   >
