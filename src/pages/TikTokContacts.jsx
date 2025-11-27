@@ -23,6 +23,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
 import SearchableContactSelect from '../components/tiktok/SearchableContactSelect';
+import MasterContactPicker from '../components/tiktok/MasterContactPicker';
 
 // Icon-based roles (top row) - ordered in rainbow: red, orange, yellow/amber, green, teal, blue, indigo, purple, pink, gray
 const iconRoles = {
@@ -1063,7 +1064,41 @@ export default function TikTokContacts() {
               </div>
             </div>
 
-            {/* Basic Info */}
+            {/* Basic Info - Use Master DB Picker for new contacts */}
+            {!editingContact && (
+              <div className="space-y-2">
+                <Label>Search Master Database or Add New</Label>
+                <MasterContactPicker
+                  masterContacts={allMasterContacts}
+                  onSelect={(contact) => {
+                    setFormData({
+                      ...formData,
+                      username: contact.username,
+                      display_name: contact.display_name || '',
+                      phonetic: contact.phonetic || ''
+                    });
+                  }}
+                  onCreateNew={(username) => {
+                    setFormData({
+                      ...formData,
+                      username: username,
+                      display_name: '',
+                      phonetic: ''
+                    });
+                  }}
+                  placeholder="Type to search existing contacts or add new..."
+                />
+                {formData.username && (
+                  <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
+                    <p className="text-sm text-purple-700">
+                      Selected: <strong>@{formData.username}</strong>
+                      {formData.display_name && <span className="text-gray-600"> ({formData.display_name})</span>}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>TikTok Username *</Label>
