@@ -26,8 +26,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 export default function WeeklyGifterGallery() {
   const queryClient = useQueryClient();
   
-  // Fixed to November 23, 2025 - the week ending date
-  const [selectedWeek, setSelectedWeek] = useState('2025-11-23');
+  // Default to most recent Sunday (week ending date)
+  const getMostRecentSunday = () => {
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // 0 = Sunday
+    const daysToSubtract = dayOfWeek === 0 ? 0 : dayOfWeek; // If today is Sunday, use today
+    const sunday = new Date(today);
+    sunday.setDate(today.getDate() - daysToSubtract);
+    return format(sunday, 'yyyy-MM-dd');
+  };
+  const [selectedWeek, setSelectedWeek] = useState(getMostRecentSunday());
   const [activeTab, setActiveTab] = useState('summary');
   const [user, setUser] = useState(null);
   

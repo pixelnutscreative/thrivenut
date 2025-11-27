@@ -59,7 +59,16 @@ export default function SongGenerator() {
   const [editingSong, setEditingSong] = useState(null);
   const [gifterFilter, setGifterFilter] = useState('first_and_shoutouts'); // 'first_and_shoutouts', 'all_top_3', 'custom'
   const [customSelectedIds, setCustomSelectedIds] = useState([]);
-  const [selectedWeek, setSelectedWeek] = useState(format(new Date(), 'yyyy-MM-dd')); // Week ending date
+  // Default to most recent Sunday (week ending date)
+  const getMostRecentSunday = () => {
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // 0 = Sunday
+    const daysToSubtract = dayOfWeek === 0 ? 0 : dayOfWeek;
+    const sunday = new Date(today);
+    sunday.setDate(today.getDate() - daysToSubtract);
+    return format(sunday, 'yyyy-MM-dd');
+  };
+  const [selectedWeek, setSelectedWeek] = useState(getMostRecentSunday());
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
