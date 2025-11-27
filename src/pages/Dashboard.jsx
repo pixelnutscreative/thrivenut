@@ -284,6 +284,9 @@ export default function Dashboard() {
           journalToday={todaysJournal}
         />
 
+        {/* Notion Task Picker */}
+        <NotionTaskPicker userEmail={user?.email} />
+
         {/* Weekly Content Schedule */}
         <WeeklyGoalCard
           goal={contentGoal}
