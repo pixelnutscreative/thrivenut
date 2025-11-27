@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Music, Loader2, Copy, RefreshCw, Sparkles, Users, Send, Check, Gift, Swords, Heart, Share2, Trophy, Star, Zap, Settings, ExternalLink, History, Edit, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { createPageUrl } from '../utils';
@@ -66,6 +67,10 @@ export default function SongGenerator() {
   const [processingFinal, setProcessingFinal] = useState(false);
   const [copiedCaption, setCopiedCaption] = useState(false);
   const [copiedFinalLyrics, setCopiedFinalLyrics] = useState(false);
+  const [displayNameLyrics, setDisplayNameLyrics] = useState('');
+  const [generatingDisplayVersion, setGeneratingDisplayVersion] = useState(false);
+  const [lyricsTab, setLyricsTab] = useState('phonetic');
+  const [copiedDisplayLyrics, setCopiedDisplayLyrics] = useState(false);
   const [user, setUser] = useState(null);
   const [showSunoModal, setShowSunoModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
@@ -289,6 +294,8 @@ ${includeLevelUp ? 'Include a verse encouraging the community to help level up!'
       setSongStyles(result.style_paragraph || '');
       setEditedLyrics(result.song || '');
       setIsEditingLyrics(false);
+      setDisplayNameLyrics(''); // Reset display version when new song generated
+      setLyricsTab('phonetic');
 
       // Save to history with owner_email for impersonation support
       saveSongMutation.mutate({
@@ -341,6 +348,42 @@ ${includeLevelUp ? 'Include a verse encouraging the community to help level up!'
   const saveLyricsEdit = () => {
     setGeneratedSong(editedLyrics);
     setIsEditingLyrics(false);
+  };
+
+  const generateDisplayNameVersion = async () => {
+    setGeneratingDisplayVersion(true);
+    try {
+      const gifterMapping = formData.gifters.map(g => ({
+        phonetic: g.name,
+        displayName: g.username ? `@${g.username}` : g.name,
+        username: g.username || ''
+      }));
+
+      const result = await base44.integrations.Core.InvokeLLM({
+        prompt: `You have song lyrics that use PHONETIC spellings for gifter names. Convert them to use display names for video captions.
+
+GIFTER MAPPING (phonetic -> display):
+${gifterMapping.map(g => `"${g.phonetic}" -> "${g.displayName}"`).join('\n')}
+
+ORIGINAL LYRICS:
+${generatedSong}
+
+Return the lyrics with phonetic names replaced by their display names (@username format where available). Keep everything else exactly the same.`,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            display_lyrics: { type: "string", description: "The lyrics with phonetic names replaced by display names" }
+          }
+        }
+      });
+
+      setDisplayNameLyrics(result.display_lyrics || generatedSong);
+      setLyricsTab('display');
+    } catch (error) {
+      console.error('Error generating display version:', error);
+      setDisplayNameLyrics(generatedSong);
+    }
+    setGeneratingDisplayVersion(false);
   };
 
   const processFinalLyrics = async () => {
@@ -805,44 +848,112 @@ Creator display name: ${hostDisplayName}`,
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-pink-600">🎵 Your Song Lyrics</CardTitle>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      if (isEditingLyrics) {
-                        saveLyricsEdit();
-                      } else {
-                        setEditedLyrics(generatedSong);
-                        setIsEditingLyrics(true);
-                      }
-                    }}
-                  >
-                    {isEditingLyrics ? <><Check className="w-4 h-4 mr-1" /> Save</> : <><Edit className="w-4 h-4 mr-1" /> Edit</>}
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    {lyricsTab === 'phonetic' && !isEditingLyrics && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={generateDisplayNameVersion}
+                        disabled={generatingDisplayVersion}
+                        className="border-green-300 text-green-700 hover:bg-green-50"
+                      >
+                        {generatingDisplayVersion ? (
+                          <><Loader2 className="w-4 h-4 mr-1 animate-spin" /> Converting...</>
+                        ) : (
+                          <><Users className="w-4 h-4 mr-1" /> Create Caption Version</>
+                        )}
+                      </Button>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        if (isEditingLyrics) {
+                          saveLyricsEdit();
+                        } else {
+                          setEditedLyrics(generatedSong);
+                          setIsEditingLyrics(true);
+                        }
+                      }}
+                    >
+                      {isEditingLyrics ? <><Check className="w-4 h-4 mr-1" /> Save</> : <><Edit className="w-4 h-4 mr-1" /> Edit</>}
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                {isEditingLyrics ? (
-                  <Textarea
-                    value={editedLyrics}
-                    onChange={(e) => setEditedLyrics(e.target.value)}
-                    className="min-h-[300px] font-sans text-sm text-purple-800"
-                  />
-                ) : (
-                  <div className="p-6 bg-white rounded-xl border-2 border-purple-200 shadow-inner max-h-96 overflow-y-auto">
-                    <pre className="whitespace-pre-wrap font-sans text-sm text-purple-800 leading-relaxed">
-                      {generatedSong}
-                    </pre>
-                  </div>
-                )}
-                <div className="flex gap-3">
-                  <Button variant="outline" onClick={copyToClipboard} className="flex-1 border-purple-300">
-                    {copied ? <><Check className="w-4 h-4 mr-2" /> Copied!</> : <><Copy className="w-4 h-4 mr-2" /> Copy Lyrics</>}
-                  </Button>
-                  <Button variant="outline" onClick={generateSong} disabled={loading} className="flex-1 border-pink-300">
-                    <RefreshCw className="w-4 h-4 mr-2" /> Regenerate
-                  </Button>
-                </div>
+                <Tabs value={lyricsTab} onValueChange={setLyricsTab}>
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="phonetic" className="text-sm">
+                      🎤 Phonetic (for Suno)
+                    </TabsTrigger>
+                    <TabsTrigger value="display" className="text-sm" disabled={!displayNameLyrics}>
+                      📝 Display Names (for Captions)
+                    </TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="phonetic" className="mt-4">
+                    {isEditingLyrics ? (
+                      <Textarea
+                        value={editedLyrics}
+                        onChange={(e) => setEditedLyrics(e.target.value)}
+                        className="min-h-[300px] font-sans text-sm text-purple-800"
+                      />
+                    ) : (
+                      <div className="p-6 bg-white rounded-xl border-2 border-purple-200 shadow-inner max-h-96 overflow-y-auto">
+                        <pre className="whitespace-pre-wrap font-sans text-sm text-purple-800 leading-relaxed">
+                          {generatedSong}
+                        </pre>
+                      </div>
+                    )}
+                    <div className="flex gap-3 mt-4">
+                      <Button variant="outline" onClick={copyToClipboard} className="flex-1 border-purple-300">
+                        {copied ? <><Check className="w-4 h-4 mr-2" /> Copied!</> : <><Copy className="w-4 h-4 mr-2" /> Copy Lyrics</>}
+                      </Button>
+                      <Button variant="outline" onClick={generateSong} disabled={loading} className="flex-1 border-pink-300">
+                        <RefreshCw className="w-4 h-4 mr-2" /> Regenerate
+                      </Button>
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="display" className="mt-4">
+                    {displayNameLyrics ? (
+                      <>
+                        <div className="p-6 bg-white rounded-xl border-2 border-green-200 shadow-inner max-h-96 overflow-y-auto">
+                          <pre className="whitespace-pre-wrap font-sans text-sm text-gray-800 leading-relaxed">
+                            {displayNameLyrics}
+                          </pre>
+                        </div>
+                        <div className="flex gap-3 mt-4">
+                          <Button 
+                            variant="outline" 
+                            onClick={() => {
+                              navigator.clipboard.writeText(displayNameLyrics);
+                              setCopiedDisplayLyrics(true);
+                              setTimeout(() => setCopiedDisplayLyrics(false), 2000);
+                            }} 
+                            className="flex-1 border-green-300"
+                          >
+                            {copiedDisplayLyrics ? <><Check className="w-4 h-4 mr-2" /> Copied!</> : <><Copy className="w-4 h-4 mr-2" /> Copy Caption Lyrics</>}
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            onClick={generateDisplayNameVersion} 
+                            disabled={generatingDisplayVersion} 
+                            className="flex-1 border-green-300"
+                          >
+                            <RefreshCw className="w-4 h-4 mr-2" /> Regenerate
+                          </Button>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="p-8 text-center text-gray-500">
+                        <Users className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                        <p>Click "Create Caption Version" to generate lyrics with display names</p>
+                      </div>
+                    )}
+                  </TabsContent>
+                </Tabs>
               </CardContent>
             </Card>
 
