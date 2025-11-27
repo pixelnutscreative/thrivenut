@@ -33,6 +33,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import TikTokAccessGate from './components/access/TikTokAccessGate';
 import ImpersonationBanner, { getEffectiveUserEmail, isImpersonating } from './components/admin/ImpersonationBanner';
+import NotificationBell from './components/notifications/NotificationBell';
 
 // Map module IDs to nav items
 const moduleNavMap = {
@@ -235,13 +236,16 @@ export default function Layout({ children, currentPageName }) {
               ThriveNut
             </h1>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </Button>
+          <div className="flex items-center gap-2">
+            {user && <NotificationBell userEmail={effectiveEmail} isDark={isDark} />}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -384,18 +388,21 @@ export default function Layout({ children, currentPageName }) {
       <div className="hidden lg:flex">
         <div className={`fixed left-0 top-0 bottom-0 w-72 backdrop-blur-sm border-r p-6 flex flex-col ${sidebarClass}`}>
           <div className="mb-8">
-            <div className="flex items-center gap-3 mb-2">
-              <img 
-                src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6924840d3628eabd1d7f8247/e225113d4_Untitleddesign.png" 
-                alt="ThriveNut" 
-                className="w-10 h-10"
-              />
-              <h1 
-                className="text-3xl font-bold bg-clip-text text-transparent"
-                style={{ backgroundImage: `linear-gradient(to right, ${primaryColor}, ${accentColor})` }}
-              >
-                ThriveNut
-              </h1>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-3">
+                <img 
+                  src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6924840d3628eabd1d7f8247/e225113d4_Untitleddesign.png" 
+                  alt="ThriveNut" 
+                  className="w-10 h-10"
+                />
+                <h1 
+                  className="text-3xl font-bold bg-clip-text text-transparent"
+                  style={{ backgroundImage: `linear-gradient(to right, ${primaryColor}, ${accentColor})` }}
+                >
+                  ThriveNut
+                </h1>
+              </div>
+              {user && <NotificationBell userEmail={effectiveEmail} isDark={isDark} />}
             </div>
             <p className={`text-sm ${subtextClass}`}>Crush your goals, thrive daily</p>
           </div>
