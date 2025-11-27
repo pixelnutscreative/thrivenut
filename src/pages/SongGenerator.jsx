@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,12 +8,14 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Music, Loader2, Copy, RefreshCw, Sparkles, Users, Send, Check, Gift, Swords, Heart, Share2, Trophy, Star, Zap, Settings, ExternalLink } from 'lucide-react';
+import { Music, Loader2, Copy, RefreshCw, Sparkles, Users, Send, Check, Gift, Swords, Heart, Share2, Trophy, Star, Zap, Settings, ExternalLink, History, Edit } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { createPageUrl } from '../utils';
 import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
 import { format, startOfWeek } from 'date-fns';
+import SunoInfoModal from '../components/song/SunoInfoModal';
+import SongHistoryModal from '../components/song/SongHistoryModal';
 
 const songTypes = [
   { id: 'gift_gallery', label: '🎁 Gift Gallery Thank-You', icon: Gift, description: 'Celebrate your top gifters from the week' },
@@ -38,6 +40,7 @@ const toneOptions = [
 ];
 
 export default function SongGenerator() {
+  const queryClient = useQueryClient();
   const [songType, setSongType] = useState('');
   const [formData, setFormData] = useState({
     gifters: [],
@@ -51,6 +54,9 @@ export default function SongGenerator() {
   const [copied, setCopied] = useState(false);
   const [shared, setShared] = useState(false);
   const [user, setUser] = useState(null);
+  const [showSunoModal, setShowSunoModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [editingSong, setEditingSong] = useState(null);
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -82,6 +88,34 @@ export default function SongGenerator() {
   });
 
   const gifters = contacts.filter(c => c.is_gifter);
+
+  // Song history
+  const { data: songHistory = [], isLoading: historyLoading } = useQuery({
+    queryKey: ['songHistory', effectiveEmail],
+    queryFn: () => base44.entities.GeneratedSong.filter({ created_by: effectiveEmail }, '-created_date', 50),
+    enabled: !!effectiveEmail,
+  });
+
+  const saveSongMutation = useMutation({
+    mutationFn: (data) => base44.entities.GeneratedSong.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['songHistory'] });
+    },
+  });
+
+  const deleteSongMutation = useMutation({
+    mutationFn: (id) => base44.entities.GeneratedSong.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['songHistory'] });
+    },
+  });
+
+  const toggleFavoriteMutation = useMutation({
+    mutationFn: ({ id, is_favorite }) => base44.entities.GeneratedSong.update(id, { is_favorite: !is_favorite }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['songHistory'] });
+    },
+  });
 
   // Auto-populate gift gallery from entries
   useEffect(() => {
@@ -175,9 +209,20 @@ ${includeLevelUp ? 'Include a verse encouraging the community to help level up!'
         }
       });
 
-      const songOutput = `${result.song}\n\n---\n📝 Title Ideas:\n${result.title_ideas?.map((t, i) => `${i + 1}. ${t}`).join('\n') || ''}\n\n🎵 Style Suggestions for Suno:\n${result.style_suggestions?.map((s, i) => `${i + 1}. ${s}`).join('\n') || ''}\n\n🎶 Lyrics are ready! Copy them, then head to https://suno.com to create your track!`;
+      const songOutput = `${result.song}\n\n---\n📝 Title Ideas:\n${result.title_ideas?.map((t, i) => `${i + 1}. ${t}`).join('\n') || ''}\n\n🎵 Style Suggestions for Suno:\n${result.style_suggestions?.map((s, i) => `${i + 1}. ${s}`).join('\n') || ''}`;
 
       setGeneratedSong(songOutput);
+
+      // Save to history
+      saveSongMutation.mutate({
+        song_type: songType,
+        song_type_label: songTypes.find(s => s.id === songType)?.label || songType,
+        lyrics: songOutput,
+        tone: formData.tone_override || preferences?.default_song_tone || 'upbeat',
+        gifters: formData.gifters,
+        milestone: formData.milestone,
+        custom_prompt: formData.custom_prompt
+      });
 
       // Auto-share
       const recipients = [];
@@ -248,6 +293,15 @@ ${includeLevelUp ? 'Include a verse encouraging the community to help level up!'
           </h1>
           <p className="text-gray-600 mt-2">Your TikTok Lyve Hypegirl! 🎵</p>
           <p className="text-sm text-gray-500">Let's turn your community moments into songs!</p>
+          
+          <Button 
+            variant="outline" 
+            onClick={() => setShowHistoryModal(true)}
+            className="mt-4"
+          >
+            <History className="w-4 h-4 mr-2" />
+            Song History ({songHistory.length})
+          </Button>
         </div>
 
         {/* Settings Preview */}
@@ -503,13 +557,12 @@ ${includeLevelUp ? 'Include a verse encouraging the community to help level up!'
                   </Button>
                 </div>
                 
-                <div className="flex gap-2">
-                  <a href="https://suno.com" target="_blank" rel="noopener noreferrer" className="flex-1">
-                    <Button variant="outline" className="w-full border-amber-300 hover:bg-amber-50">
-                      <ExternalLink className="w-4 h-4 mr-2" /> Open Suno.com
-                    </Button>
-                  </a>
-                </div>
+                <Button 
+                  onClick={() => setShowSunoModal(true)}
+                  className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+                >
+                  <ExternalLink className="w-4 h-4 mr-2" /> Create Your Track with Suno 🎵
+                </Button>
 
                 {shared && (
                   <div className="p-3 bg-teal-50 rounded-lg flex items-center gap-2">
@@ -522,6 +575,34 @@ ${includeLevelUp ? 'Include a verse encouraging the community to help level up!'
           </motion.div>
         )}
       </div>
+
+      {/* Suno Info Modal */}
+      <SunoInfoModal 
+        isOpen={showSunoModal} 
+        onClose={() => setShowSunoModal(false)} 
+      />
+
+      {/* Song History Modal */}
+      <SongHistoryModal
+        isOpen={showHistoryModal}
+        onClose={() => setShowHistoryModal(false)}
+        songs={songHistory}
+        isLoading={historyLoading}
+        onSelect={(song) => {
+          setGeneratedSong(song.lyrics);
+          setSongType(song.song_type);
+          setFormData({
+            ...formData,
+            gifters: song.gifters || [],
+            milestone: song.milestone || '',
+            custom_prompt: song.custom_prompt || '',
+            tone_override: song.tone || ''
+          });
+          setShowHistoryModal(false);
+        }}
+        onDelete={(id) => deleteSongMutation.mutate(id)}
+        onToggleFavorite={(song) => toggleFavoriteMutation.mutate({ id: song.id, is_favorite: song.is_favorite })}
+      />
     </div>
   );
 }
