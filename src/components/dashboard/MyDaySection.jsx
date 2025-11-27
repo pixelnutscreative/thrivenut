@@ -562,6 +562,30 @@ export default function MyDaySection({
       });
     });
 
+    // Active goals - add to anytime section or with specific time if set
+    goals.forEach(goal => {
+      // For habit goals with daily frequency, show them
+      const isDaily = goal.goal_type === 'habit' && goal.frequency === 'daily';
+      // For other goals, always show as a reminder
+      
+      if (isDaily || goal.goal_type !== 'habit') {
+        tasks.push({
+          id: `goal_${goal.id}`,
+          type: 'goal',
+          goalId: goal.id,
+          label: goal.title,
+          sublabel: `🎯 ${goal.category} goal${goal.target_value ? ` • ${goal.current_value || 0}/${goal.target_value}` : ''}`,
+          icon: Target,
+          color: 'text-purple-500',
+          timeOfDay: 'anytime',
+          order: 20,
+          isLink: true,
+          linkTo: 'Goals',
+          canSkip: true,
+        });
+      }
+    });
+
     // Sort by custom order first, then by timeOfDay, then default order
     const timeOrder = { morning: 1, midday: 2, afternoon: 3, evening: 4, night: 5, anytime: 6 };
     const customOrder = localTaskOrder.length > 0 ? localTaskOrder : (preferences?.my_day_task_order || []);
