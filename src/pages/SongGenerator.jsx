@@ -71,6 +71,8 @@ export default function SongGenerator() {
   const [generatingDisplayVersion, setGeneratingDisplayVersion] = useState(false);
   const [lyricsTab, setLyricsTab] = useState('phonetic');
   const [copiedDisplayLyrics, setCopiedDisplayLyrics] = useState(false);
+  const [isEditingDisplayLyrics, setIsEditingDisplayLyrics] = useState(false);
+  const [editedDisplayLyrics, setEditedDisplayLyrics] = useState('');
   const [user, setUser] = useState(null);
   const [showSunoModal, setShowSunoModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
@@ -880,20 +882,6 @@ Creator display name: ${hostDisplayName}`,
                         )}
                       </Button>
                     )}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        if (isEditingLyrics) {
-                          saveLyricsEdit();
-                        } else {
-                          setEditedLyrics(generatedSong);
-                          setIsEditingLyrics(true);
-                        }
-                      }}
-                    >
-                      {isEditingLyrics ? <><Check className="w-4 h-4 mr-1" /> Save</> : <><Edit className="w-4 h-4 mr-1" /> Edit</>}
-                    </Button>
                   </div>
                 </div>
               </CardHeader>
@@ -909,19 +897,36 @@ Creator display name: ${hostDisplayName}`,
                   </TabsList>
                   
                   <TabsContent value="phonetic" className="mt-4">
-                    {isEditingLyrics ? (
-                      <Textarea
-                        value={editedLyrics}
-                        onChange={(e) => setEditedLyrics(e.target.value)}
-                        className="min-h-[300px] font-sans text-sm text-purple-800"
-                      />
-                    ) : (
-                      <div className="p-6 bg-white rounded-xl border-2 border-purple-200 shadow-inner max-h-96 overflow-y-auto">
-                        <pre className="whitespace-pre-wrap font-sans text-sm text-purple-800 leading-relaxed">
-                          {generatedSong}
-                        </pre>
-                      </div>
-                    )}
+                    <div className="relative">
+                      {isEditingLyrics ? (
+                        <Textarea
+                          value={editedLyrics}
+                          onChange={(e) => setEditedLyrics(e.target.value)}
+                          className="min-h-[300px] font-sans text-sm text-purple-800"
+                        />
+                      ) : (
+                        <div className="p-6 bg-white rounded-xl border-2 border-purple-200 shadow-inner max-h-96 overflow-y-auto">
+                          <pre className="whitespace-pre-wrap font-sans text-sm text-purple-800 leading-relaxed">
+                            {generatedSong}
+                          </pre>
+                        </div>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute top-2 right-2 h-8 w-8 bg-white/80 hover:bg-white"
+                        onClick={() => {
+                          if (isEditingLyrics) {
+                            saveLyricsEdit();
+                          } else {
+                            setEditedLyrics(generatedSong);
+                            setIsEditingLyrics(true);
+                          }
+                        }}
+                      >
+                        {isEditingLyrics ? <Check className="w-4 h-4 text-green-600" /> : <Edit className="w-4 h-4 text-gray-500" />}
+                      </Button>
+                    </div>
                     <div className="flex gap-3 mt-4">
                       <Button variant="outline" onClick={copyToClipboard} className="flex-1 border-purple-300">
                         {copied ? <><Check className="w-4 h-4 mr-2" /> Copied!</> : <><Copy className="w-4 h-4 mr-2" /> Copy Lyrics</>}
@@ -935,10 +940,36 @@ Creator display name: ${hostDisplayName}`,
                   <TabsContent value="display" className="mt-4">
                     {displayNameLyrics ? (
                       <div className="space-y-4">
-                        <div className="p-6 bg-white rounded-xl border-2 border-green-200 shadow-inner max-h-64 overflow-y-auto">
-                          <pre className="whitespace-pre-wrap font-sans text-sm text-gray-800 leading-relaxed">
-                            {displayNameLyrics}
-                          </pre>
+                        <div className="relative">
+                          {isEditingDisplayLyrics ? (
+                            <Textarea
+                              value={editedDisplayLyrics}
+                              onChange={(e) => setEditedDisplayLyrics(e.target.value)}
+                              className="min-h-[200px] font-sans text-sm text-gray-800"
+                            />
+                          ) : (
+                            <div className="p-6 bg-white rounded-xl border-2 border-green-200 shadow-inner max-h-64 overflow-y-auto">
+                              <pre className="whitespace-pre-wrap font-sans text-sm text-gray-800 leading-relaxed">
+                                {displayNameLyrics}
+                              </pre>
+                            </div>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute top-2 right-2 h-8 w-8 bg-white/80 hover:bg-white"
+                            onClick={() => {
+                              if (isEditingDisplayLyrics) {
+                                setDisplayNameLyrics(editedDisplayLyrics);
+                                setIsEditingDisplayLyrics(false);
+                              } else {
+                                setEditedDisplayLyrics(displayNameLyrics);
+                                setIsEditingDisplayLyrics(true);
+                              }
+                            }}
+                          >
+                            {isEditingDisplayLyrics ? <Check className="w-4 h-4 text-green-600" /> : <Edit className="w-4 h-4 text-gray-500" />}
+                          </Button>
                         </div>
                         <div className="flex gap-3">
                           <Button 
