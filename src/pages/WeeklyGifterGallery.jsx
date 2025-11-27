@@ -553,18 +553,45 @@ export default function WeeklyGifterGallery() {
                 const screenName = (gifter.screen_name || '')?.toLowerCase()?.trim();
                 const extractedUsername = gifter.username?.toLowerCase()?.replace('@', '')?.replace(/\s+/g, '');
 
-                // Search ALL contacts app-wide - FIRST try matching by display_name (what shows on screenshots)
-                // Then fall back to username matching
-                let masterMatch = allContacts.find(c => {
-                  const cDisplayName = (c.data?.display_name || c.display_name || '')?.toLowerCase()?.trim();
-                  return cDisplayName && screenName && cDisplayName === screenName;
-                });
+                // Search ALL contacts app-wide using fuzzy matching
+                let masterMatch = null;
                 
-                // If no display_name match, try username match
-                if (!masterMatch && extractedUsername) {
+                // 1. Exact username match
+                if (extractedUsername) {
                   masterMatch = allContacts.find(c => {
                     const cUsername = (c.data?.username || c.username || '')?.toLowerCase()?.replace('@', '')?.replace(/\s+/g, '');
                     return cUsername === extractedUsername;
+                  });
+                }
+                
+                // 2. Exact display_name match
+                if (!masterMatch && screenName) {
+                  masterMatch = allContacts.find(c => {
+                    const cDisplayName = (c.data?.display_name || c.display_name || '')?.toLowerCase()?.trim();
+                    return cDisplayName && cDisplayName === screenName;
+                  });
+                }
+                
+                // 3. Partial username match (username contains or is contained by extracted)
+                if (!masterMatch && extractedUsername && extractedUsername.length >= 4) {
+                  masterMatch = allContacts.find(c => {
+                    const cUsername = (c.data?.username || c.username || '')?.toLowerCase()?.replace('@', '')?.replace(/\s+/g, '');
+                    if (!cUsername || cUsername.length < 4) return false;
+                    return cUsername.includes(extractedUsername) || extractedUsername.includes(cUsername);
+                  });
+                }
+                
+                // 4. Partial display name match (for cases like "Sunny Puffs" matching "sunnypuffs43")
+                if (!masterMatch && screenName && screenName.length >= 4) {
+                  // Try matching display name to username (removing spaces)
+                  const screenNameNoSpaces = screenName.replace(/\s+/g, '').toLowerCase();
+                  masterMatch = allContacts.find(c => {
+                    const cUsername = (c.data?.username || c.username || '')?.toLowerCase()?.replace('@', '')?.replace(/\s+/g, '');
+                    const cDisplayName = (c.data?.display_name || c.display_name || '')?.toLowerCase()?.replace(/\s+/g, '');
+                    if (!cUsername && !cDisplayName) return false;
+                    // Check if screen name is contained in username or vice versa
+                    return (cUsername && (cUsername.includes(screenNameNoSpaces) || screenNameNoSpaces.includes(cUsername.replace(/\d+$/, '')))) ||
+                           (cDisplayName && (cDisplayName.includes(screenNameNoSpaces) || screenNameNoSpaces.includes(cDisplayName)));
                   });
                 }
 
