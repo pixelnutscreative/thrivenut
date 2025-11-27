@@ -21,13 +21,15 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Missing required fields: entityName, data, targetEmail' }, { status: 400 });
     }
 
-    // Use service role to create with specific created_by
-    const result = await base44.asServiceRole.entities[entityName].create({
-      ...data,
+    // Create the entity first, then update created_by separately
+    const created = await base44.asServiceRole.entities[entityName].create(data);
+    
+    // Now update to set the created_by field
+    const result = await base44.asServiceRole.entities[entityName].update(created.id, {
       created_by: targetEmail
     });
 
-    return Response.json({ success: true, data: result });
+    return Response.json({ success: true, data: result, id: created.id });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
