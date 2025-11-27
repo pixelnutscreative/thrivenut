@@ -468,12 +468,22 @@ export default function MyDaySection({
 
     // Content goals for today
     if (contentGoal) {
+      // Helper to check if schedule applies to today
+      const isScheduledForToday = (schedule) => {
+        // Check new days array format first
+        if (schedule.days && schedule.days.length > 0) {
+          return schedule.days.includes(todayDayName);
+        }
+        // Fallback to old single day format
+        return schedule.day_of_week === todayDayName;
+      };
+
       // Scheduled posts
       (contentGoal.scheduled_posts || []).forEach((post, idx) => {
-        if (post.day_of_week === todayDayName) {
+        if (isScheduledForToday(post)) {
           const timeOfDay = getTimeOfDayFromTimeString(post.time);
           tasks.push({
-            id: `content_post_${idx}`,
+            id: `content_post_${idx}_${todayDayName}`,
             type: 'content',
             field: 'scheduled_posts',
             index: idx,
@@ -490,10 +500,10 @@ export default function MyDaySection({
 
       // Scheduled lives
       (contentGoal.scheduled_lives || []).forEach((live, idx) => {
-        if (live.day_of_week === todayDayName) {
+        if (isScheduledForToday(live)) {
           const timeOfDay = getTimeOfDayFromTimeString(live.time);
           tasks.push({
-            id: `content_live_${idx}`,
+            id: `content_live_${idx}_${todayDayName}`,
             type: 'content',
             field: 'scheduled_lives',
             index: idx,
@@ -510,14 +520,14 @@ export default function MyDaySection({
 
       // Scheduled engagement
       (contentGoal.scheduled_engagement || []).forEach((eng, idx) => {
-        if (eng.day_of_week === todayDayName) {
+        if (isScheduledForToday(eng)) {
           const timeOfDay = getTimeOfDayFromTimeString(eng.time);
           tasks.push({
-            id: `content_engagement_${idx}`,
+            id: `content_engagement_${idx}_${todayDayName}`,
             type: 'content',
             field: 'scheduled_engagement',
             index: idx,
-            label: 'Engagement time',
+            label: 'Engage on besties\' posts',
             sublabel: `💬 @ ${eng.time}`,
             icon: Users,
             color: 'text-teal-500',
