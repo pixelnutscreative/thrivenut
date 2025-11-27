@@ -61,9 +61,8 @@ const allNavItems = [
             { name: 'Live Reminders', icon: Bell, path: 'LiveReminders' },
             { name: 'Discover Creators', icon: Users, path: 'DiscoverCreators' },
             { name: '── Gift Gallery Gratitude ──', icon: Gift, isDivider: true },
-                              { name: 'Weekly Gallery', icon: Gift, path: 'WeeklyGifterGallery', moduleId: 'gifter' },
-                              { name: 'Song Generator', icon: Music, path: 'SongGenerator', moduleId: 'gifter' },
-                              { name: 'Gift Library', icon: Gift, path: 'GiftLibrary', moduleId: 'gifter', adminOnly: true },
+                                                { name: 'Weekly Gallery', icon: Gift, path: 'WeeklyGifterGallery', moduleId: 'gifter' },
+                                                { name: 'Song Generator', icon: Music, path: 'SongGenerator', moduleId: 'gifter' },
           ]},
   { name: 'SuperFan Access', icon: Star, path: 'SuperFanAccess', showWhenNoTikTokAccess: true },
   { name: 'Goals', icon: Target, path: 'Goals', moduleId: 'goals' },
@@ -80,8 +79,9 @@ const allNavItems = [
   { name: 'Settings', icon: Settings, path: 'Settings', alwaysShow: true },
   { name: 'Mental Health', icon: Brain, path: 'NeurodivergentSettings', moduleId: 'mental_health' },
   { name: 'Admin', icon: Users, path: 'AdminSuperFanReview', adminOnly: true },
-    { name: 'User Management', icon: UserCog, path: 'AdminImpersonate', adminOnly: true },
-    { name: 'Master Contacts', icon: Users, path: 'MasterContactDatabase', adminOnly: true },
+            { name: 'User Management', icon: UserCog, path: 'AdminImpersonate', adminOnly: true },
+            { name: 'Master Contacts', icon: Users, path: 'MasterContactDatabase', adminOnly: true },
+            { name: 'Gift Library', icon: Gift, path: 'GiftLibrary', adminOnly: true },
 ];
 
 export default function Layout({ children, currentPageName }) {
