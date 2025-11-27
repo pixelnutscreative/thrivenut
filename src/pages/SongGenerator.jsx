@@ -50,9 +50,14 @@ export default function SongGenerator() {
     tone_override: ''
   });
   const [generatedSong, setGeneratedSong] = useState('');
+  const [songTitles, setSongTitles] = useState([]);
+  const [songStyles, setSongStyles] = useState('');
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [copiedStyle, setCopiedStyle] = useState(false);
   const [shared, setShared] = useState(false);
+  const [isEditingLyrics, setIsEditingLyrics] = useState(false);
+  const [editedLyrics, setEditedLyrics] = useState('');
   const [user, setUser] = useState(null);
   const [showSunoModal, setShowSunoModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
@@ -263,24 +268,26 @@ ${includeLevelUp ? 'Include a verse encouraging the community to help level up!'
               items: { type: "string" },
               description: "7 creative title ideas for the song"
             },
-            style_suggestions: {
-              type: "array",
-              items: { type: "string" },
-              description: "7 music style suggestions for AI music tools"
+            style_paragraph: {
+              type: "string",
+              description: "A single paragraph describing the music style for Suno AI (genre, tempo, mood, instruments) - ready to paste directly"
             }
           }
         }
       });
 
-      const songOutput = `${result.song}\n\n---\n📝 Title Ideas:\n${result.title_ideas?.map((t, i) => `${i + 1}. ${t}`).join('\n') || ''}\n\n🎵 Style Suggestions for Suno:\n${result.style_suggestions?.map((s, i) => `${i + 1}. ${s}`).join('\n') || ''}`;
-
-      setGeneratedSong(songOutput);
+      setGeneratedSong(result.song || '');
+      setSongTitles(result.title_ideas || []);
+      setSongStyles(result.style_paragraph || '');
+      setEditedLyrics(result.song || '');
+      setIsEditingLyrics(false);
 
       // Save to history
       saveSongMutation.mutate({
         song_type: songType,
         song_type_label: songTypes.find(s => s.id === songType)?.label || songType,
-        lyrics: songOutput,
+        lyrics: result.song || '',
+        title: result.title_ideas?.[0] || '',
         tone: formData.tone_override || preferences?.default_song_tone || 'upbeat',
         gifters: formData.gifters,
         milestone: formData.milestone,
@@ -294,12 +301,12 @@ ${includeLevelUp ? 'Include a verse encouraging the community to help level up!'
 
       if (recipients.length > 0) {
         for (const email of recipients) {
-          await base44.integrations.Core.SendEmail({
-            to: email,
-            subject: `🎵 New Song from Sunny Songbird - ${songTypes.find(s => s.id === songType)?.label || 'Custom'}`,
-            body: `Here's a new song for ${hostName}:\n\n${songOutput}\n\n---\nGenerated with Sunny Songbird 🎤`
-          });
-        }
+            await base44.integrations.Core.SendEmail({
+              to: email,
+              subject: `🎵 New Song from Sunny Songbird - ${songTypes.find(s => s.id === songType)?.label || 'Custom'}`,
+              body: `Here's a new song for ${hostDisplayName}:\n\n${result.song}\n\n---\nStyle: ${result.style_paragraph}\n\nGenerated with Sunny Songbird 🎤`
+            });
+          }
         setShared(true);
         setTimeout(() => setShared(false), 3000);
       }
@@ -311,9 +318,20 @@ ${includeLevelUp ? 'Include a verse encouraging the community to help level up!'
   };
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(generatedSong);
+    navigator.clipboard.writeText(isEditingLyrics ? editedLyrics : generatedSong);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const copyStyleToClipboard = () => {
+    navigator.clipboard.writeText(songStyles);
+    setCopiedStyle(true);
+    setTimeout(() => setCopiedStyle(false), 2000);
+  };
+
+  const saveLyricsEdit = () => {
+    setGeneratedSong(editedLyrics);
+    setIsEditingLyrics(false);
   };
 
   const addGifter = () => {
@@ -722,41 +740,114 @@ ${includeLevelUp ? 'Include a verse encouraging the community to help level up!'
 
         {/* Generated Song */}
         {generatedSong && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+            {/* Lyrics Card */}
             <Card className="border-2 border-pink-200 bg-gradient-to-br from-pink-50 to-purple-50">
               <CardHeader>
-                <CardTitle className="text-center text-pink-600">🎵 Your Song is Ready! 🎵</CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-pink-600">🎵 Your Song Lyrics</CardTitle>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      if (isEditingLyrics) {
+                        saveLyricsEdit();
+                      } else {
+                        setEditedLyrics(generatedSong);
+                        setIsEditingLyrics(true);
+                      }
+                    }}
+                  >
+                    {isEditingLyrics ? <><Check className="w-4 h-4 mr-1" /> Save</> : <><Edit className="w-4 h-4 mr-1" /> Edit</>}
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="p-6 bg-white rounded-xl border-2 border-purple-200 shadow-inner max-h-96 overflow-y-auto">
-                  <pre className="whitespace-pre-wrap font-sans text-sm text-purple-800 leading-relaxed">
-                    {generatedSong}
-                  </pre>
-                </div>
+                {isEditingLyrics ? (
+                  <Textarea
+                    value={editedLyrics}
+                    onChange={(e) => setEditedLyrics(e.target.value)}
+                    className="min-h-[300px] font-sans text-sm text-purple-800"
+                  />
+                ) : (
+                  <div className="p-6 bg-white rounded-xl border-2 border-purple-200 shadow-inner max-h-96 overflow-y-auto">
+                    <pre className="whitespace-pre-wrap font-sans text-sm text-purple-800 leading-relaxed">
+                      {generatedSong}
+                    </pre>
+                  </div>
+                )}
                 <div className="flex gap-3">
                   <Button variant="outline" onClick={copyToClipboard} className="flex-1 border-purple-300">
-                    {copied ? <><Check className="w-4 h-4 mr-2" /> Copied!</> : <><Copy className="w-4 h-4 mr-2" /> Copy Song</>}
+                    {copied ? <><Check className="w-4 h-4 mr-2" /> Copied!</> : <><Copy className="w-4 h-4 mr-2" /> Copy Lyrics</>}
                   </Button>
                   <Button variant="outline" onClick={generateSong} disabled={loading} className="flex-1 border-pink-300">
                     <RefreshCw className="w-4 h-4 mr-2" /> Regenerate
                   </Button>
                 </div>
-                
-                <Button 
-                  onClick={() => setShowSunoModal(true)}
-                  className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
-                >
-                  <ExternalLink className="w-4 h-4 mr-2" /> Create Your Track with Suno 🎵
-                </Button>
-
-                {shared && (
-                  <div className="p-3 bg-teal-50 rounded-lg flex items-center gap-2">
-                    <Check className="w-4 h-4 text-teal-600" />
-                    <span className="text-sm text-teal-700">Song auto-shared based on your settings!</span>
-                  </div>
-                )}
               </CardContent>
             </Card>
+
+            {/* Suno Style Card */}
+            {songStyles && (
+              <Card className="border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-amber-700 text-lg">🎹 Suno Style Prompt</CardTitle>
+                    <Button variant="outline" size="sm" onClick={copyStyleToClipboard} className="border-amber-300">
+                      {copiedStyle ? <><Check className="w-4 h-4 mr-1" /> Copied!</> : <><Copy className="w-4 h-4 mr-1" /> Copy</>}
+                    </Button>
+                  </div>
+                  <CardDescription>Paste this into Suno's style field</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="p-4 bg-white rounded-lg border border-amber-200 text-sm text-gray-700">
+                    {songStyles}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Title Ideas Card */}
+            {songTitles.length > 0 && (
+              <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50">
+                <CardHeader>
+                  <CardTitle className="text-blue-700 text-lg">📝 Title Ideas</CardTitle>
+                  <CardDescription>Click any title to copy it</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {songTitles.map((title, idx) => (
+                      <Button
+                        key={idx}
+                        variant="outline"
+                        className="justify-start text-left h-auto py-2 px-3 border-blue-200 hover:bg-blue-100"
+                        onClick={() => {
+                          navigator.clipboard.writeText(title);
+                        }}
+                      >
+                        <span className="text-blue-600 font-medium mr-2">{idx + 1}.</span>
+                        <span className="text-gray-700">{title}</span>
+                      </Button>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Suno Button */}
+            <Button 
+              onClick={() => setShowSunoModal(true)}
+              className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+            >
+              <ExternalLink className="w-4 h-4 mr-2" /> Create Your Track with Suno 🎵
+            </Button>
+
+            {shared && (
+              <div className="p-3 bg-teal-50 rounded-lg flex items-center gap-2">
+                <Check className="w-4 h-4 text-teal-600" />
+                <span className="text-sm text-teal-700">Song auto-shared based on your settings!</span>
+              </div>
+            )}
           </motion.div>
         )}
       </div>
