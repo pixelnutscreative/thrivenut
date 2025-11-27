@@ -584,6 +584,20 @@ export default function GoalEditModal({ isOpen, onClose, currentGoal, onSave }) 
                     ))}
                   </div>
                 )}
+                
+                {/* Recurring option for engagement */}
+                <div className="flex items-center space-x-2 pt-2 border-t border-teal-200">
+                  <Checkbox
+                    id={`engagement-recurring-${index}`}
+                    checked={schedule.is_recurring || false}
+                    onCheckedChange={(checked) => {
+                      const newSchedules = [...formData.scheduled_engagement];
+                      newSchedules[index].is_recurring = checked;
+                      setFormData({ ...formData, scheduled_engagement: newSchedules });
+                    }}
+                  />
+                  <Label htmlFor={`engagement-recurring-${index}`} className="text-sm">🔄 Recurring Weekly</Label>
+                </div>
               </div>
             ))}
             <Button
@@ -591,7 +605,7 @@ export default function GoalEditModal({ isOpen, onClose, currentGoal, onSave }) 
               variant="outline"
               size="sm"
               onClick={() =>
-                setFormData({ ...formData, scheduled_engagement: [...formData.scheduled_engagement, { day_of_week: 'Monday', time: '10:00', completed: false, frequency: 'single', days: ['Monday'] }] })
+                setFormData({ ...formData, scheduled_engagement: [...formData.scheduled_engagement, { day_of_week: 'Monday', time: '10:00', completed: false, frequency: 'single', days: ['Monday'], is_recurring: false }] })
               }
             >
               <Plus className="h-4 w-4 mr-2" /> Add Engagement Schedule
