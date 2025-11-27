@@ -1029,16 +1029,28 @@ Creator display name: ${hostDisplayName}`,
                   </CardContent>
                 </Card>
 
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setCaptionLyrics('');
-                    setPostCaption('');
-                  }}
-                  className="w-full"
-                >
-                  Start Over with New Lyrics
-                </Button>
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setFinalLyrics('');
+                      setCaptionLyrics('');
+                      setPostCaption('');
+                    }}
+                    className="flex-1"
+                  >
+                    Start Over with New Lyrics
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={processFinalLyrics}
+                    disabled={processingFinal}
+                    className="flex-1 border-pink-300 text-pink-700"
+                  >
+                    {processingFinal ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+                    Regenerate Caption
+                  </Button>
+                </div>
               </>
             )}
           </div>
