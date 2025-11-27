@@ -10,9 +10,10 @@ import {
   Sun, Moon, Coffee, Utensils, Droplet, Pill, Heart, BookOpen, 
   Dumbbell, ShowerHead, Sparkles, Check, Pencil, X, List, Grid3X3,
   ChevronDown, ChevronUp, PawPrint, Bell, Clock, Video, Users, 
-  MessageSquare, SkipForward, ArrowRight, Loader2, ArrowUp, ArrowDown,
-  Bed, Smile, NotebookPen, GripVertical
+  MessageSquare, SkipForward, ArrowRight, Loader2,
+  Bed, Smile, NotebookPen, GripVertical, ExternalLink
 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
@@ -106,6 +107,8 @@ export default function MyDaySection({
   const [skippedTasks, setSkippedTasks] = useState([]);
   const [isReordering, setIsReordering] = useState(false);
   const [localTaskOrder, setLocalTaskOrder] = useState(preferences?.my_day_task_order || []);
+  const [sleepForm, setSleepForm] = useState({ hours: '', quality: '' });
+  const [showSleepForm, setShowSleepForm] = useState(false);
   
   const mealLabels = getMealLabels(preferences?.gender);
   const displayMode = preferences?.completed_tasks_display || 'show_checked';
@@ -175,6 +178,28 @@ export default function MyDaySection({
     queryKey: ['liveSchedules', userEmail],
     queryFn: () => base44.entities.LiveSchedule.filter({ created_by: userEmail }),
     enabled: !!userEmail,
+  });
+
+  // Fetch today's sleep log
+  const { data: todaysSleep } = useQuery({
+    queryKey: ['sleepToday', today, userEmail],
+    queryFn: async () => {
+      const logs = await base44.entities.SleepLog.filter({ date: today, created_by: userEmail });
+      return logs[0] || null;
+    },
+    enabled: !!userEmail,
+  });
+
+  // Sleep mutation
+  const sleepMutation = useMutation({
+    mutationFn: async (sleepData) => {
+      if (todaysSleep) {
+        return await base44.entities.SleepLog.update(todaysSleep.id, sleepData);
+      } else {
+        return await base44.entities.SleepLog.create({ date: today, ...sleepData });
+      }
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['sleepToday'] }),
   });
 
   // Mutations
@@ -269,7 +294,7 @@ export default function MyDaySection({
     
     // Core self-care tasks
     if (preferences?.is_bible_believer) {
-      tasks.push({ id: 'bible_reading_morning', type: 'selfcare', label: 'Morning Bible reading', icon: BookOpen, color: 'text-amber-600', timeOfDay: 'morning', order: 1 });
+      tasks.push({ id: 'bible_reading_morning', type: 'selfcare', label: 'Morning Bible reading', icon: BookOpen, color: 'text-amber-600', timeOfDay: 'morning', order: 1, externalLink: 'https://www.bible.com/reading-plans' });
     }
     tasks.push({ id: 'drank_water', type: 'selfcare', label: 'Drink water', sublabel: 'Start hydrated', icon: Droplet, color: 'text-sky-500', timeOfDay: 'morning', order: 2 });
     tasks.push({ id: 'shower_completed', type: 'selfcare', label: 'Take a shower', icon: ShowerHead, color: 'text-blue-500', timeOfDay: 'morning', order: 3 });
@@ -331,29 +356,27 @@ export default function MyDaySection({
     tasks.push({ id: 'lunch_completed', type: 'selfcare', label: 'Lunch', sublabel: mealLabels.lunch, icon: Utensils, color: 'text-green-500', timeOfDay: 'midday', order: 60, hasMealNote: true });
     
     // Physical activity
-    tasks.push({ id: 'physical_activity', type: 'selfcare', label: 'Physical activity', icon: Dumbbell, color: 'text-red-500', timeOfDay: 'afternoon', order: 70 });
+    tasks.push({ id: 'physical_activity', type: 'selfcare', label: 'Physical activity', icon: Dumbbell, color: 'text-red-500', timeOfDay: 'afternoon', order: 70, canSkip: true });
     
     // Dinner
-    tasks.push({ id: 'dinner_completed', type: 'selfcare', label: 'Dinner', sublabel: mealLabels.dinner, icon: Utensils, color: 'text-purple-500', timeOfDay: 'evening', order: 80, hasMealNote: true });
+    tasks.push({ id: 'dinner_completed', type: 'selfcare', label: 'Dinner', sublabel: mealLabels.dinner, icon: Utensils, color: 'text-purple-500', timeOfDay: 'evening', order: 80, hasMealNote: true, canSkip: true });
     
     // Night tasks
     tasks.push({ id: 'brushed_teeth_night', type: 'selfcare', label: 'Brush teeth (PM)', icon: Sparkles, color: 'text-indigo-500', timeOfDay: 'night', order: 90 });
     if (preferences?.is_bible_believer) {
-      tasks.push({ id: 'bible_reading_night', type: 'selfcare', label: 'Night Bible reading', icon: BookOpen, color: 'text-indigo-600', timeOfDay: 'night', order: 95 });
+      tasks.push({ id: 'bible_reading_night', type: 'selfcare', label: 'Night Bible reading', icon: BookOpen, color: 'text-indigo-600', timeOfDay: 'night', order: 95, externalLink: 'https://www.bible.com/reading-plans' });
     }
 
-    // Sleep log - first thing in morning
+    // Sleep log - first thing in morning (inline)
     tasks.push({ 
       id: 'sleep_log', 
-      type: 'selfcare', 
+      type: 'sleep', 
       label: 'Log last night\'s sleep', 
       sublabel: 'How did you sleep?',
       icon: Bed, 
       color: 'text-indigo-500', 
       timeOfDay: 'morning', 
-      order: 0,
-      isLink: true,
-      linkTo: 'Wellness'
+      order: 0
     });
 
     // Journal reminder - based on user preference
@@ -588,6 +611,7 @@ export default function MyDaySection({
 
   const isTaskComplete = (task) => {
     if (task.type === 'selfcare') return selfCareLog?.[task.id];
+    if (task.type === 'sleep') return !!todaysSleep;
     if (task.type === 'medication') {
       const log = medicationLogs.find(l => l.medication_id === task.medicationId);
       return log?.doses_taken?.includes(task.doseNumber);
@@ -612,7 +636,21 @@ export default function MyDaySection({
     return false;
   };
 
+  const handleSaveSleep = () => {
+    if (sleepForm.hours && sleepForm.quality) {
+      sleepMutation.mutate({ hours: parseFloat(sleepForm.hours), quality: sleepForm.quality });
+      setShowSleepForm(false);
+      setSleepForm({ hours: '', quality: '' });
+    }
+  };
+
   const handleToggleTask = (task) => {
+    if (task.type === 'sleep') {
+      if (!todaysSleep) {
+        setShowSleepForm(true);
+      }
+      return;
+    }
     if (task.type === 'selfcare' || task.type === 'visit_live') {
       const taskId = task.type === 'visit_live' ? `visited_${task.scheduleId}` : task.id;
       onToggleTask(taskId, !isTaskComplete(task));
@@ -860,23 +898,13 @@ export default function MyDaySection({
                               : 'bg-white border-2 border-gray-100 hover:border-teal-300'
                           }`}
                         >
-                          {/* Reorder buttons */}
+                          {/* Reorder handle */}
                           {isReordering && (
-                            <div className="flex flex-col gap-1">
-                              <button
-                                onClick={(e) => { e.stopPropagation(); moveTaskUp(task.id); }}
-                                className="p-1 hover:bg-gray-200 rounded disabled:opacity-30"
-                                disabled={taskIdx === 0}
-                              >
-                                <ArrowUp className="w-3 h-3 text-gray-500" />
-                              </button>
-                              <button
-                                onClick={(e) => { e.stopPropagation(); moveTaskDown(task.id); }}
-                                className="p-1 hover:bg-gray-200 rounded disabled:opacity-30"
-                                disabled={taskIdx === visibleTasks.length - 1}
-                              >
-                                <ArrowDown className="w-3 h-3 text-gray-500" />
-                              </button>
+                            <div 
+                              className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-200 rounded"
+                              title="Drag to reorder"
+                            >
+                              <GripVertical className="w-4 h-4 text-gray-400" />
                             </div>
                           )}
                           
@@ -904,6 +932,19 @@ export default function MyDaySection({
                           {/* Action buttons */}
                           {!isReordering && (
                             <div className="flex items-center gap-1">
+                              {task.externalLink && (
+                                <a
+                                  href={task.externalLink}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="p-2 hover:bg-gray-100 rounded-lg"
+                                  title="Open reading plan"
+                                >
+                                  <ExternalLink className="w-4 h-4 text-gray-400" />
+                                </a>
+                              )}
+                              
                               {task.hasMealNote && (
                                 <button
                                   onClick={(e) => { e.stopPropagation(); handleEditMeal(task.id); }}
@@ -914,7 +955,7 @@ export default function MyDaySection({
                                 </button>
                               )}
                               
-                              {!isComplete && task.type !== 'selfcare' && (
+                              {!isComplete && (task.canSkip || (task.type !== 'selfcare' && task.type !== 'sleep')) && (
                                 <button
                                   onClick={(e) => { e.stopPropagation(); handleSkipTask(task.id); }}
                                   className="p-2 hover:bg-gray-100 rounded-lg"
@@ -930,12 +971,58 @@ export default function MyDaySection({
                       
                       return (
                         <div key={task.id}>
-                          {task.isLink ? (
-                            <Link to={createPageUrl(task.linkTo)}>
-                              {TaskContent}
-                            </Link>
-                          ) : (
-                            TaskContent
+                          {TaskContent}
+                          
+                          {/* Inline sleep form */}
+                          {task.type === 'sleep' && showSleepForm && !todaysSleep && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: 'auto' }}
+                              className="mt-2 p-3 bg-white rounded-xl border-2 border-indigo-200"
+                            >
+                              <div className="flex flex-wrap gap-3 items-end">
+                                <div className="flex-1 min-w-[100px]">
+                                  <label className="text-xs text-gray-500 mb-1 block">Hours</label>
+                                  <Input
+                                    type="number"
+                                    step="0.5"
+                                    min="0"
+                                    max="24"
+                                    placeholder="7"
+                                    value={sleepForm.hours}
+                                    onChange={(e) => setSleepForm({...sleepForm, hours: e.target.value})}
+                                    className="h-9"
+                                  />
+                                </div>
+                                <div className="flex-1 min-w-[120px]">
+                                  <label className="text-xs text-gray-500 mb-1 block">Quality</label>
+                                  <Select value={sleepForm.quality} onValueChange={(v) => setSleepForm({...sleepForm, quality: v})}>
+                                    <SelectTrigger className="h-9">
+                                      <SelectValue placeholder="How was it?" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="excellent">😴 Excellent</SelectItem>
+                                      <SelectItem value="good">🙂 Good</SelectItem>
+                                      <SelectItem value="fair">😐 Fair</SelectItem>
+                                      <SelectItem value="poor">😫 Poor</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                <Button size="sm" onClick={handleSaveSleep} className="bg-indigo-500 hover:bg-indigo-600 h-9">
+                                  <Check className="w-4 h-4" />
+                                </Button>
+                                <Button size="sm" variant="outline" onClick={() => setShowSleepForm(false)} className="h-9">
+                                  <X className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </motion.div>
+                          )}
+                          
+                          {/* Show logged sleep info */}
+                          {task.type === 'sleep' && todaysSleep && (
+                            <div className="mt-1 ml-11 text-xs text-gray-500">
+                              ✓ {todaysSleep.hours}h • {todaysSleep.quality}
+                            </div>
                           )}
                           
                           {/* Meal note input */}
