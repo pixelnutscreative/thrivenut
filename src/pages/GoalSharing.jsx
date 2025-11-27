@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Users, UserPlus, Send, Check, X, Eye, Trash2, 
-  Target, Heart, TrendingUp, Clock, Loader2 
+  Target, Heart, TrendingUp, Clock, Loader2, Edit, Mail
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
@@ -28,12 +28,15 @@ const relationships = [
   { id: 'other', label: 'Other' }
 ];
 
-const goalTypes = [
-  { id: 'all', label: 'All Goals', icon: Target },
-  { id: 'tiktok', label: 'TikTok Goals', icon: TrendingUp },
-  { id: 'personal', label: 'Personal Goals', icon: Target },
-  { id: 'wellness', label: 'Wellness Goals', icon: Heart }
-];
+const categoryIcons = {
+  spiritual: '🙏',
+  health: '💪',
+  personal: '🎯',
+  financial: '💰',
+  relationship: '❤️',
+  learning: '📚',
+  other: '✨'
+};
 
 const statusColors = {
   pending: 'bg-yellow-100 text-yellow-700',
@@ -45,17 +48,24 @@ export default function GoalSharing() {
   const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
   const [showInviteModal, setShowInviteModal] = useState(false);
-  const [selectedShare, setSelectedShare] = useState(null);
+  const [editingShare, setEditingShare] = useState(null);
   const [formData, setFormData] = useState({
     viewer_email: '',
     relationship: 'friend',
-    shared_goal_types: ['all'],
+    shared_goal_ids: [],
     notes: ''
   });
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
   }, []);
+
+  // My goals (to select from when sharing)
+  const { data: myGoals = [] } = useQuery({
+    queryKey: ['myGoals', user?.email],
+    queryFn: () => base44.entities.Goal.filter({ created_by: user.email, status: 'active' }),
+    enabled: !!user,
+  });
 
   // Shares I've sent (people who can see my goals)
   const { data: sentShares = [] } = useQuery({
@@ -71,36 +81,62 @@ export default function GoalSharing() {
     enabled: !!user,
   });
 
-  // Get goals for accepted shares
-  const { data: sharedGoals = {} } = useQuery({
-    queryKey: ['sharedGoals', receivedShares],
+  // Get shared goals for viewing
+  const { data: viewableGoals = {} } = useQuery({
+    queryKey: ['viewableGoals', receivedShares],
     queryFn: async () => {
       const acceptedShares = receivedShares.filter(s => s.status === 'accepted');
-      const goals = {};
+      const goalsBySharer = {};
       
       for (const share of acceptedShares) {
-        const contentGoals = await base44.entities.ContentGoal.filter({ 
-          created_by: share.sharer_email 
-        }, '-week_starting', 1);
+        let goals = [];
         
-        goals[share.sharer_email] = {
+        if (share.shared_goal_ids && share.shared_goal_ids.length > 0) {
+          // Fetch specific goals by ID
+          const allSharerGoals = await base44.entities.Goal.filter({ 
+            created_by: share.sharer_email 
+          });
+          goals = allSharerGoals.filter(g => share.shared_goal_ids.includes(g.id));
+        } else {
+          // Legacy: fetch all goals
+          goals = await base44.entities.Goal.filter({ 
+            created_by: share.sharer_email,
+            status: 'active'
+          });
+        }
+        
+        goalsBySharer[share.sharer_email] = {
           share,
-          contentGoal: contentGoals[0] || null
+          goals
         };
       }
       
-      return goals;
+      return goalsBySharer;
     },
     enabled: receivedShares.length > 0,
   });
 
   const createShareMutation = useMutation({
-    mutationFn: (data) => base44.entities.GoalShare.create({
-      ...data,
-      sharer_email: user.email,
-      sharer_name: user.full_name,
-      status: 'pending'
-    }),
+    mutationFn: async (data) => {
+      const share = await base44.entities.GoalShare.create({
+        ...data,
+        sharer_email: user.email,
+        sharer_name: user.full_name,
+        status: 'pending'
+      });
+      
+      // Send email notification
+      const selectedGoals = myGoals.filter(g => data.shared_goal_ids.includes(g.id));
+      const goalList = selectedGoals.map(g => `• ${categoryIcons[g.category] || '🎯'} ${g.title}`).join('\n');
+      
+      await base44.integrations.Core.SendEmail({
+        to: data.viewer_email,
+        subject: `${user.full_name || user.email} wants to share goals with you!`,
+        body: `Hi there!\n\n${user.full_name || user.email} would like to share their goals with you on ThriveNut.\n\n${selectedGoals.length > 0 ? `They want to share ${selectedGoals.length} goal(s):\n${goalList}\n\n` : ''}Log in to ThriveNut to accept or decline this invitation.\n\n---\nThriveNut - Crush your goals, thrive daily`
+      });
+      
+      return share;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['goalSharesSent'] });
       setShowInviteModal(false);
@@ -113,6 +149,8 @@ export default function GoalSharing() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['goalSharesReceived'] });
       queryClient.invalidateQueries({ queryKey: ['goalSharesSent'] });
+      setEditingShare(null);
+      resetForm();
     },
   });
 
@@ -128,35 +166,61 @@ export default function GoalSharing() {
     setFormData({
       viewer_email: '',
       relationship: 'friend',
-      shared_goal_types: ['all'],
+      shared_goal_ids: [],
       notes: ''
     });
+    setEditingShare(null);
   };
 
-  const toggleGoalType = (typeId) => {
-    setFormData(prev => {
-      if (typeId === 'all') {
-        return { ...prev, shared_goal_types: ['all'] };
-      }
-      
-      let newTypes = prev.shared_goal_types.filter(t => t !== 'all');
-      if (newTypes.includes(typeId)) {
-        newTypes = newTypes.filter(t => t !== typeId);
-      } else {
-        newTypes.push(typeId);
-      }
-      
-      if (newTypes.length === 0) {
-        newTypes = ['all'];
-      }
-      
-      return { ...prev, shared_goal_types: newTypes };
-    });
+  const toggleGoalSelection = (goalId) => {
+    setFormData(prev => ({
+      ...prev,
+      shared_goal_ids: prev.shared_goal_ids.includes(goalId)
+        ? prev.shared_goal_ids.filter(id => id !== goalId)
+        : [...prev.shared_goal_ids, goalId]
+    }));
+  };
+
+  const selectAllGoals = () => {
+    setFormData(prev => ({
+      ...prev,
+      shared_goal_ids: myGoals.map(g => g.id)
+    }));
+  };
+
+  const deselectAllGoals = () => {
+    setFormData(prev => ({
+      ...prev,
+      shared_goal_ids: []
+    }));
   };
 
   const handleInvite = () => {
     if (!formData.viewer_email.trim()) return;
+    if (formData.shared_goal_ids.length === 0) {
+      alert('Please select at least one goal to share');
+      return;
+    }
     createShareMutation.mutate(formData);
+  };
+
+  const handleUpdateShare = () => {
+    if (!editingShare) return;
+    updateShareMutation.mutate({
+      id: editingShare.id,
+      data: { shared_goal_ids: formData.shared_goal_ids }
+    });
+  };
+
+  const handleEditShare = (share) => {
+    setEditingShare(share);
+    setFormData({
+      viewer_email: share.viewer_email,
+      relationship: share.relationship,
+      shared_goal_ids: share.shared_goal_ids || [],
+      notes: share.notes || ''
+    });
+    setShowInviteModal(true);
   };
 
   const handleAccept = (share) => {
@@ -182,14 +246,14 @@ export default function GoalSharing() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-800">Goal Sharing</h1>
-            <p className="text-gray-600 mt-1">Share your goals and view others' progress</p>
+            <p className="text-gray-600 mt-1">Share specific goals with people you trust</p>
           </div>
           <Button
-            onClick={() => setShowInviteModal(true)}
+            onClick={() => { resetForm(); setShowInviteModal(true); }}
             className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
           >
             <UserPlus className="w-4 h-4 mr-2" />
-            Invite Someone
+            Share Goals
           </Button>
         </div>
 
@@ -212,7 +276,7 @@ export default function GoalSharing() {
                     <div>
                       <p className="font-semibold">{invite.sharer_name || invite.sharer_email}</p>
                       <p className="text-sm text-gray-600">
-                        wants to share their {invite.shared_goal_types?.join(', ') || 'all'} goals with you
+                        wants to share {invite.shared_goal_ids?.length || 'their'} goal(s) with you
                       </p>
                       <Badge className="mt-1">{relationships.find(r => r.id === invite.relationship)?.label}</Badge>
                     </div>
@@ -244,11 +308,11 @@ export default function GoalSharing() {
 
         <Tabs defaultValue="viewing" className="space-y-6">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="viewing">Goals I'm Viewing</TabsTrigger>
-            <TabsTrigger value="sharing">My Sharing Settings</TabsTrigger>
+            <TabsTrigger value="viewing">Goals Shared With Me</TabsTrigger>
+            <TabsTrigger value="sharing">Goals I'm Sharing</TabsTrigger>
           </TabsList>
 
-          {/* Goals I'm Viewing */}
+          {/* Goals Shared With Me */}
           <TabsContent value="viewing" className="space-y-4">
             {acceptedReceived.length === 0 ? (
               <Card>
@@ -256,15 +320,15 @@ export default function GoalSharing() {
                   <Eye className="w-12 h-12 mx-auto text-gray-400 mb-4" />
                   <h3 className="text-lg font-semibold text-gray-800 mb-2">No Shared Goals Yet</h3>
                   <p className="text-gray-600">
-                    When someone shares their goals with you and you accept, you'll see their progress here.
+                    When someone shares their goals with you and you accept, you'll see them here.
                   </p>
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-4">
                 {acceptedReceived.map(share => {
-                  const goalData = sharedGoals[share.sharer_email];
-                  const contentGoal = goalData?.contentGoal;
+                  const data = viewableGoals[share.sharer_email];
+                  const goals = data?.goals || [];
                   
                   return (
                     <motion.div
@@ -275,48 +339,48 @@ export default function GoalSharing() {
                       <Card>
                         <CardHeader className="pb-3">
                           <div className="flex items-center justify-between">
-                            <CardTitle className="text-lg">
+                            <CardTitle className="text-lg flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
+                                <Users className="w-4 h-4 text-purple-600" />
+                              </div>
                               {share.sharer_name || share.sharer_email}
                             </CardTitle>
                             <Badge>{relationships.find(r => r.id === share.relationship)?.label}</Badge>
                           </div>
                         </CardHeader>
                         <CardContent>
-                          {contentGoal ? (
-                            <div className="space-y-3">
-                              <p className="text-sm text-gray-600">
-                                Week of {format(new Date(contentGoal.week_starting), 'MMM d, yyyy')}
-                              </p>
-                              
-                              <div className="grid grid-cols-2 gap-3">
-                                <div className="p-3 bg-purple-50 rounded-lg">
-                                  <p className="text-xs text-gray-600">Posts</p>
-                                  <p className="text-xl font-bold text-purple-600">
-                                    {contentGoal.posts_completed || 0}/{contentGoal.posts_goal || 0}
-                                  </p>
-                                </div>
-                                <div className="p-3 bg-pink-50 rounded-lg">
-                                  <p className="text-xs text-gray-600">Lives</p>
-                                  <p className="text-xl font-bold text-pink-600">
-                                    {contentGoal.lives_completed || 0}/{contentGoal.lives_goal || 0}
-                                  </p>
-                                </div>
-                                <div className="p-3 bg-green-50 rounded-lg">
-                                  <p className="text-xs text-gray-600">Shop Lives</p>
-                                  <p className="text-xl font-bold text-green-600">
-                                    {contentGoal.shop_lives_completed || 0}/{contentGoal.shop_lives_goal || 0}
-                                  </p>
-                                </div>
-                                <div className="p-3 bg-blue-50 rounded-lg">
-                                  <p className="text-xs text-gray-600">Engagement</p>
-                                  <p className="text-xl font-bold text-blue-600">
-                                    {contentGoal.engagement_completed || 0}/{contentGoal.engagement_goal || 0}
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
+                          {goals.length === 0 ? (
+                            <p className="text-gray-500 text-sm">No goals available</p>
                           ) : (
-                            <p className="text-gray-500 text-sm">No goals set for this week</p>
+                            <div className="grid md:grid-cols-2 gap-3">
+                              {goals.map(goal => (
+                                <div key={goal.id} className="p-3 bg-gray-50 rounded-lg">
+                                  <div className="flex items-start gap-2">
+                                    <span className="text-lg">{categoryIcons[goal.category] || '🎯'}</span>
+                                    <div className="flex-1">
+                                      <p className="font-medium text-gray-800">{goal.title}</p>
+                                      {goal.description && (
+                                        <p className="text-sm text-gray-500 mt-1 line-clamp-2">{goal.description}</p>
+                                      )}
+                                      {goal.target_value && (
+                                        <div className="mt-2">
+                                          <div className="flex justify-between text-xs text-gray-500 mb-1">
+                                            <span>Progress</span>
+                                            <span>{goal.current_value || 0} / {goal.target_value}</span>
+                                          </div>
+                                          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                                            <div 
+                                              className="h-full bg-purple-500 rounded-full transition-all"
+                                              style={{ width: `${Math.min(100, ((goal.current_value || 0) / goal.target_value) * 100)}%` }}
+                                            />
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
                           )}
                         </CardContent>
                       </Card>
@@ -327,13 +391,13 @@ export default function GoalSharing() {
             )}
           </TabsContent>
 
-          {/* My Sharing Settings */}
+          {/* Goals I'm Sharing */}
           <TabsContent value="sharing" className="space-y-4">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Send className="w-5 h-5" />
-                  People Who Can View My Goals
+                  People I'm Sharing With
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -342,40 +406,82 @@ export default function GoalSharing() {
                     <Users className="w-12 h-12 mx-auto text-gray-400 mb-4" />
                     <p className="text-gray-600">You haven't shared your goals with anyone yet.</p>
                     <Button
-                      onClick={() => setShowInviteModal(true)}
+                      onClick={() => { resetForm(); setShowInviteModal(true); }}
                       variant="outline"
                       className="mt-4"
                     >
                       <UserPlus className="w-4 h-4 mr-2" />
-                      Invite Someone
+                      Share Goals
                     </Button>
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {sentShares.map(share => (
-                      <div key={share.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                        <div>
-                          <p className="font-semibold">{share.viewer_name || share.viewer_email}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Badge className={statusColors[share.status]}>{share.status}</Badge>
-                            <Badge variant="outline">
-                              {relationships.find(r => r.id === share.relationship)?.label}
-                            </Badge>
+                    {sentShares.map(share => {
+                      const sharedGoalCount = share.shared_goal_ids?.length || 0;
+                      const sharedGoalNames = myGoals
+                        .filter(g => share.shared_goal_ids?.includes(g.id))
+                        .map(g => g.title);
+                      
+                      return (
+                        <div key={share.id} className="p-4 bg-gray-50 rounded-lg">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <p className="font-semibold">{share.viewer_name || share.viewer_email}</p>
+                                <Badge className={statusColors[share.status]}>{share.status}</Badge>
+                              </div>
+                              <div className="flex items-center gap-2 mt-1">
+                                <Badge variant="outline">
+                                  {relationships.find(r => r.id === share.relationship)?.label}
+                                </Badge>
+                                <span className="text-sm text-gray-500">
+                                  {sharedGoalCount} goal{sharedGoalCount !== 1 ? 's' : ''} shared
+                                </span>
+                              </div>
+                              {sharedGoalNames.length > 0 && (
+                                <div className="mt-2 flex flex-wrap gap-1">
+                                  {sharedGoalNames.slice(0, 3).map((name, idx) => (
+                                    <Badge key={idx} variant="secondary" className="text-xs">
+                                      {name}
+                                    </Badge>
+                                  ))}
+                                  {sharedGoalNames.length > 3 && (
+                                    <Badge variant="secondary" className="text-xs">
+                                      +{sharedGoalNames.length - 3} more
+                                    </Badge>
+                                  )}
+                                </div>
+                              )}
+                              {share.notes && (
+                                <p className="text-sm text-gray-500 mt-2">{share.notes}</p>
+                              )}
+                            </div>
+                            <div className="flex gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditShare(share)}
+                                className="text-purple-500 hover:text-purple-700 hover:bg-purple-50"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  if (confirm('Stop sharing with this person?')) {
+                                    deleteShareMutation.mutate(share.id);
+                                  }
+                                }}
+                                className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
                           </div>
-                          {share.notes && (
-                            <p className="text-sm text-gray-500 mt-1">{share.notes}</p>
-                          )}
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => deleteShareMutation.mutate(share.id)}
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </CardContent>
@@ -384,93 +490,133 @@ export default function GoalSharing() {
         </Tabs>
       </div>
 
-      {/* Invite Modal */}
-      <Dialog open={showInviteModal} onOpenChange={setShowInviteModal}>
-        <DialogContent>
+      {/* Invite/Edit Modal */}
+      <Dialog open={showInviteModal} onOpenChange={(open) => { if (!open) resetForm(); setShowInviteModal(open); }}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Invite Someone to View Your Goals</DialogTitle>
+            <DialogTitle>
+              {editingShare ? 'Edit Shared Goals' : 'Share Your Goals'}
+            </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Their Email Address</Label>
-              <Input
-                type="email"
-                placeholder="friend@example.com"
-                value={formData.viewer_email}
-                onChange={(e) => setFormData({ ...formData, viewer_email: e.target.value })}
-              />
-            </div>
+            {!editingShare && (
+              <>
+                <div className="space-y-2">
+                  <Label>Their Email Address</Label>
+                  <Input
+                    type="email"
+                    placeholder="friend@example.com"
+                    value={formData.viewer_email}
+                    onChange={(e) => setFormData({ ...formData, viewer_email: e.target.value })}
+                  />
+                  <p className="text-xs text-gray-500 flex items-center gap-1">
+                    <Mail className="w-3 h-3" />
+                    They'll receive an email notification
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Relationship</Label>
+                  <Select
+                    value={formData.relationship}
+                    onValueChange={(value) => setFormData({ ...formData, relationship: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {relationships.map(rel => (
+                        <SelectItem key={rel.id} value={rel.id}>{rel.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
 
             <div className="space-y-2">
-              <Label>Relationship</Label>
-              <Select
-                value={formData.relationship}
-                onValueChange={(value) => setFormData({ ...formData, relationship: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {relationships.map(rel => (
-                    <SelectItem key={rel.id} value={rel.id}>{rel.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>What to Share</Label>
-              <div className="grid grid-cols-2 gap-2">
-                {goalTypes.map(type => {
-                  const Icon = type.icon;
-                  return (
+              <div className="flex items-center justify-between">
+                <Label>Select Goals to Share</Label>
+                <div className="flex gap-2">
+                  <Button variant="ghost" size="sm" onClick={selectAllGoals} className="text-xs h-7">
+                    Select All
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={deselectAllGoals} className="text-xs h-7">
+                    Clear
+                  </Button>
+                </div>
+              </div>
+              
+              {myGoals.length === 0 ? (
+                <div className="p-4 text-center bg-gray-50 rounded-lg">
+                  <Target className="w-8 h-8 mx-auto text-gray-400 mb-2" />
+                  <p className="text-sm text-gray-500">No active goals to share</p>
+                  <p className="text-xs text-gray-400">Create some goals first!</p>
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-60 overflow-y-auto border rounded-lg p-2">
+                  {myGoals.map(goal => (
                     <div
-                      key={type.id}
-                      onClick={() => toggleGoalType(type.id)}
+                      key={goal.id}
+                      onClick={() => toggleGoalSelection(goal.id)}
                       className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                        formData.shared_goal_types.includes(type.id)
+                        formData.shared_goal_ids.includes(goal.id)
                           ? 'border-purple-500 bg-purple-50'
                           : 'border-gray-200 hover:border-purple-300'
                       }`}
                     >
-                      <div className="flex items-center gap-2">
-                        <Checkbox checked={formData.shared_goal_types.includes(type.id)} />
-                        <Icon className="w-4 h-4" />
-                        <span className="text-sm">{type.label}</span>
+                      <div className="flex items-center gap-3">
+                        <Checkbox checked={formData.shared_goal_ids.includes(goal.id)} />
+                        <span className="text-lg">{categoryIcons[goal.category] || '🎯'}</span>
+                        <div className="flex-1">
+                          <p className="font-medium text-sm">{goal.title}</p>
+                          <p className="text-xs text-gray-500 capitalize">{goal.category}</p>
+                        </div>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
+                  ))}
+                </div>
+              )}
+              
+              <p className="text-sm text-gray-600">
+                {formData.shared_goal_ids.length} goal{formData.shared_goal_ids.length !== 1 ? 's' : ''} selected
+              </p>
             </div>
 
-            <div className="space-y-2">
-              <Label>Note (Optional)</Label>
-              <Textarea
-                placeholder="Add a personal note..."
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                rows={2}
-              />
-            </div>
+            {!editingShare && (
+              <div className="space-y-2">
+                <Label>Note (Optional)</Label>
+                <Textarea
+                  placeholder="Add a personal note..."
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  rows={2}
+                />
+              </div>
+            )}
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowInviteModal(false)}>
+            <Button variant="outline" onClick={() => { resetForm(); setShowInviteModal(false); }}>
               Cancel
             </Button>
             <Button
-              onClick={handleInvite}
-              disabled={!formData.viewer_email.trim() || createShareMutation.isPending}
+              onClick={editingShare ? handleUpdateShare : handleInvite}
+              disabled={
+                (!editingShare && !formData.viewer_email.trim()) || 
+                formData.shared_goal_ids.length === 0 || 
+                createShareMutation.isPending ||
+                updateShareMutation.isPending
+              }
               className="bg-purple-600 hover:bg-purple-700"
             >
-              {createShareMutation.isPending ? (
+              {(createShareMutation.isPending || updateShareMutation.isPending) ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               ) : (
                 <Send className="w-4 h-4 mr-2" />
               )}
-              Send Invitation
+              {editingShare ? 'Update' : 'Send Invitation'}
             </Button>
           </DialogFooter>
         </DialogContent>
