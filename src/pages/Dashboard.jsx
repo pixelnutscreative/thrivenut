@@ -8,7 +8,7 @@ import { Loader2, LogOut } from 'lucide-react';
 import GreetingCard from '../components/dashboard/GreetingCard';
 import QuickStats from '../components/dashboard/QuickStats';
 import DailyAffirmation from '../components/dashboard/DailyAffirmation';
-import SelfCareChecklist from '../components/wellness/SelfCareChecklist';
+import MyDaySection from '../components/dashboard/MyDaySection';
 import WeeklyGoalCard from '../components/tiktok/WeeklyGoalCard';
 import GoalEditModal from '../components/tiktok/GoalEditModal';
 import OnboardingModal from '../components/onboarding/OnboardingModal';
@@ -143,7 +143,24 @@ export default function Dashboard() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['selfCareToday'] });
     },
-  });
+    });
+
+    const mealNotesMutation = useMutation({
+    mutationFn: async ({ noteKey, value }) => {
+      const today = format(new Date(), 'yyyy-MM-dd');
+      if (selfCareLog) {
+        return await base44.entities.DailySelfCareLog.update(selfCareLog.id, { [noteKey]: value });
+      } else {
+        return await base44.entities.DailySelfCareLog.create({ 
+          date: today, 
+          [noteKey]: value 
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['selfCareToday'] });
+    },
+    });
 
   const createOrUpdateGoalMutation = useMutation({
     mutationFn: async (goalData) => {
@@ -212,16 +229,14 @@ export default function Dashboard() {
         {/* Special Events - Birthdays & Sobriety Anniversaries */}
         <SpecialEventsCard contacts={tiktokContacts} />
 
-        {/* Self-Care Checklist (compact) */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <SelfCareChecklist
-            selfCareLog={selfCareLog}
-            onToggleTask={(taskId, value) => selfCareMutation.mutate({ taskId, value })}
-            requiredTasks={preferences?.required_self_care_tasks || []}
-            preferences={preferences}
-            compact={true}
-          />
-        </div>
+        {/* My Day Section */}
+        <MyDaySection
+          selfCareLog={selfCareLog}
+          onToggleTask={(taskId, value) => selfCareMutation.mutate({ taskId, value })}
+          onUpdateMealNotes={(noteKey, value) => mealNotesMutation.mutate({ noteKey, value })}
+          preferences={preferences}
+          viewMode={preferences?.dashboard_view_mode || 'detailed'}
+        />
 
         <QuickStats
           contentGoal={contentGoal}
