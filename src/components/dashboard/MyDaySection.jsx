@@ -902,35 +902,35 @@ export default function MyDaySection({
               </Badge>
             </div>
           </div>
-        
-        {/* Progress bar */}
-        <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-          <motion.div 
-            className="bg-gradient-to-r from-teal-500 to-green-500 h-2 rounded-full"
-            initial={{ width: 0 }}
-            animate={{ width: `${progressPercent}%` }}
-            transition={{ duration: 0.5 }}
-          />
-        </div>
+          
+          {/* Progress bar */}
+          <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+            <motion.div 
+              className="bg-gradient-to-r from-teal-500 to-green-500 h-2 rounded-full"
+              initial={{ width: 0 }}
+              animate={{ width: `${progressPercent}%` }}
+              transition={{ duration: 0.5 }}
+            />
+          </div>
 
-        {/* Auto-complete indicators */}
-        {medications.length > 0 && (
-          <div className="flex items-center gap-2 mt-2 text-sm">
-            <Pill className="w-4 h-4 text-pink-500" />
-            <span className={allMedsTaken ? 'text-green-600' : 'text-gray-500'}>
-              Medications: {allMedsTaken ? '✓ All taken' : `${medicationLogs.reduce((sum, l) => sum + (l.doses_taken?.length || 0), 0)} doses logged`}
-            </span>
-          </div>
-        )}
-        {supplements.length > 0 && (
-          <div className="flex items-center gap-2 text-sm">
-            <Pill className="w-4 h-4 text-amber-500" />
-            <span className={allSuppsTaken ? 'text-green-600' : 'text-gray-500'}>
-              Supplements: {allSuppsTaken ? '✓ All taken' : `${supplementLogs.reduce((sum, l) => sum + (l.doses_taken?.length || 0), 0)} doses logged`}
-            </span>
-          </div>
-        )}
-      </CardHeader>
+          {/* Auto-complete indicators */}
+          {medications.length > 0 && (
+            <div className="flex items-center gap-2 mt-2 text-sm">
+              <Pill className="w-4 h-4 text-pink-500" />
+              <span className={allMedsTaken ? 'text-green-600' : 'text-gray-500'}>
+                Medications: {allMedsTaken ? '✓ All taken' : `${medicationLogs.reduce((sum, l) => sum + (l.doses_taken?.length || 0), 0)} doses logged`}
+              </span>
+            </div>
+          )}
+          {supplements.length > 0 && (
+            <div className="flex items-center gap-2 text-sm">
+              <Pill className="w-4 h-4 text-amber-500" />
+              <span className={allSuppsTaken ? 'text-green-600' : 'text-gray-500'}>
+                Supplements: {allSuppsTaken ? '✓ All taken' : `${supplementLogs.reduce((sum, l) => sum + (l.doses_taken?.length || 0), 0)} doses logged`}
+              </span>
+            </div>
+          )}
+        </CardHeader>
       
       <CardContent>
         {layoutMode === 'two-column' ? (
