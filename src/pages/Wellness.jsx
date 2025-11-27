@@ -16,6 +16,8 @@ import QuickMedicationCheck from '../components/wellness/QuickMedicationCheck';
 import QuickSupplementCheck from '../components/wellness/QuickSupplementCheck';
 import QuickPetCareCheck from '../components/wellness/QuickPetCareCheck';
 import QuickCareReminderCheck from '../components/wellness/QuickCareReminderCheck';
+import WaterCheckIns from '../components/wellness/WaterCheckIns';
+import FastingTracker from '../components/wellness/FastingTracker';
 
 const moodEmojis = {
   amazing: '🤩',
@@ -265,6 +267,35 @@ export default function Wellness() {
             onUpdateOrder={(order) => updateSelfCareOrderMutation.mutate(order)}
           />
         </motion.div>
+
+        {/* Water Check-ins */}
+        {preferences?.enable_water_reminders !== false && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.055 }}
+          >
+            <WaterCheckIns
+              selfCareLog={selfCareLog}
+              onToggle={(taskId, value) => selfCareMutation.mutate({ taskId, value })}
+            />
+          </motion.div>
+        )}
+
+        {/* Fasting Tracker */}
+        {preferences?.intermittent_fasting && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.057 }}
+          >
+            <FastingTracker
+              preferences={preferences}
+              selfCareLog={selfCareLog}
+              onUpdate={(field, value) => selfCareMutation.mutate({ taskId: field, value })}
+            />
+          </motion.div>
+        )}
 
         {/* Quick Check Cards */}
         <motion.div
