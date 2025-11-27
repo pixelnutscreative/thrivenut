@@ -1,22 +1,28 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Edit, Check, ExternalLink, Video, MessageSquare, FileText } from 'lucide-react';
+import { Plus, Check, ExternalLink, Video, MessageSquare, FileText } from 'lucide-react';
 
 const ALL_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const FULL_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-export default function WeeklyGoalCard({ goal, onEdit, onToggleScheduleComplete, onToggleDayComplete }) {
+export default function WeeklyGoalCard({ goal, onEditPosts, onEditLives, onEditEngagement, onToggleDayComplete }) {
   if (!goal) {
     return (
       <Card className="shadow-md">
         <CardContent className="p-8 text-center">
           <p className="text-gray-600 mb-4">No schedule set for this week yet</p>
-          <Button onClick={onEdit} className="bg-purple-600 hover:bg-purple-700">
-            <Plus className="w-4 h-4 mr-2" />
-            Set This Week's Schedule
-          </Button>
+          <div className="flex flex-wrap justify-center gap-2">
+            <Button onClick={onEditPosts} variant="outline" className="border-purple-300 text-purple-700">
+              <FileText className="w-4 h-4 mr-2" /> Add Posts
+            </Button>
+            <Button onClick={onEditLives} variant="outline" className="border-pink-300 text-pink-700">
+              <Video className="w-4 h-4 mr-2" /> Add Lives
+            </Button>
+            <Button onClick={onEditEngagement} variant="outline" className="border-teal-300 text-teal-700">
+              <MessageSquare className="w-4 h-4 mr-2" /> Add Engagement
+            </Button>
+          </div>
         </CardContent>
       </Card>
     );
@@ -28,10 +34,17 @@ export default function WeeklyGoalCard({ goal, onEdit, onToggleScheduleComplete,
     <Card className="shadow-md">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-xl">This Week's Content Schedule</CardTitle>
-        <Button onClick={onEdit} variant="outline" size="sm">
-          <Edit className="w-4 h-4 mr-2" />
-          Edit
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={onEditPosts} variant="outline" size="sm" className="border-purple-300 text-purple-700 hover:bg-purple-50">
+            <FileText className="w-4 h-4 mr-1" /> Posts
+          </Button>
+          <Button onClick={onEditLives} variant="outline" size="sm" className="border-pink-300 text-pink-700 hover:bg-pink-50">
+            <Video className="w-4 h-4 mr-1" /> Lives
+          </Button>
+          <Button onClick={onEditEngagement} variant="outline" size="sm" className="border-teal-300 text-teal-700 hover:bg-teal-50">
+            <MessageSquare className="w-4 h-4 mr-1" /> Engage
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {hasScheduledItems ? (
