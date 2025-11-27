@@ -245,54 +245,51 @@ export default function Dashboard() {
           journalToday={todaysJournal}
         />
 
-        <div className="grid md:grid-cols-2 gap-8">
-          <WeeklyGoalCard
-            goal={contentGoal}
-            onEdit={() => setShowGoalModal(true)}
-            onIncrement={(field) => incrementGoalMutation.mutate(field)}
-          />
+        {/* Weekly Content Schedule */}
+        <WeeklyGoalCard
+          goal={contentGoal}
+          onEdit={() => setShowGoalModal(true)}
+          onIncrement={(field) => incrementGoalMutation.mutate(field)}
+        />
 
-          <div className="space-y-4">
-            {/* Quick action buttons */}
-            <div className="grid grid-cols-2 gap-4">
-              <Button 
-                className="h-24 bg-gradient-to-br from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white shadow-lg"
-                onClick={() => navigate(createPageUrl('Wellness'))}
-              >
-                <div className="text-center">
-                  <div className="text-2xl mb-1">💧</div>
-                  <div className="font-semibold">Log Water</div>
-                </div>
-              </Button>
-              <Button 
-                className="h-24 bg-gradient-to-br from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white shadow-lg"
-                onClick={() => navigate(createPageUrl('Wellness'))}
-              >
-                <div className="text-center">
-                  <div className="text-2xl mb-1">😊</div>
-                  <div className="font-semibold">Log Mood</div>
-                </div>
-              </Button>
-              <Button 
-                className="h-24 bg-gradient-to-br from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg"
-                onClick={() => navigate(createPageUrl('Journal'))}
-              >
-                <div className="text-center">
-                  <div className="text-2xl mb-1">📖</div>
-                  <div className="font-semibold">Journal</div>
-                </div>
-              </Button>
-              <Button 
-                className="h-24 bg-gradient-to-br from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-lg"
-                onClick={() => navigate(createPageUrl('Goals'))}
-              >
-                <div className="text-center">
-                  <div className="text-2xl mb-1">🎯</div>
-                  <div className="font-semibold">My Goals</div>
-                </div>
-              </Button>
+        {/* Quick action buttons */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Button 
+            className="h-20 bg-gradient-to-br from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white shadow-lg"
+            onClick={() => navigate(createPageUrl('Wellness'))}
+          >
+            <div className="text-center">
+              <div className="text-2xl mb-1">💧</div>
+              <div className="font-semibold">Log Water</div>
             </div>
-          </div>
+          </Button>
+          <Button 
+            className="h-20 bg-gradient-to-br from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white shadow-lg"
+            onClick={() => navigate(createPageUrl('Wellness'))}
+          >
+            <div className="text-center">
+              <div className="text-2xl mb-1">😊</div>
+              <div className="font-semibold">Log Mood</div>
+            </div>
+          </Button>
+          <Button 
+            className="h-20 bg-gradient-to-br from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg"
+            onClick={() => navigate(createPageUrl('Journal'))}
+          >
+            <div className="text-center">
+              <div className="text-2xl mb-1">📖</div>
+              <div className="font-semibold">Journal</div>
+            </div>
+          </Button>
+          <Button 
+            className="h-20 bg-gradient-to-br from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-lg"
+            onClick={() => navigate(createPageUrl('Goals'))}
+          >
+            <div className="text-center">
+              <div className="text-2xl mb-1">🎯</div>
+              <div className="font-semibold">My Goals</div>
+            </div>
+          </Button>
         </div>
       </div>
 
