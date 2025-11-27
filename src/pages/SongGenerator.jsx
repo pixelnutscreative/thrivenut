@@ -142,7 +142,7 @@ export default function SongGenerator() {
   // Song history - filter by effective email (impersonated user if applicable)
   const { data: songHistory = [], isLoading: historyLoading } = useQuery({
     queryKey: ['songHistory', effectiveEmail],
-    queryFn: () => base44.entities.GeneratedSong.list('-created_date', 50),
+    queryFn: () => base44.entities.GeneratedSong.filter({ owner_email: effectiveEmail }, '-created_date', 50),
     enabled: !!effectiveEmail,
   });
 
@@ -290,7 +290,7 @@ ${includeLevelUp ? 'Include a verse encouraging the community to help level up!'
       setEditedLyrics(result.song || '');
       setIsEditingLyrics(false);
 
-      // Save to history
+      // Save to history with owner_email for impersonation support
       saveSongMutation.mutate({
         song_type: songType,
         song_type_label: songTypes.find(s => s.id === songType)?.label || songType,
@@ -299,7 +299,8 @@ ${includeLevelUp ? 'Include a verse encouraging the community to help level up!'
         tone: formData.tone_override || preferences?.default_song_tone || 'upbeat',
         gifters: formData.gifters,
         milestone: formData.milestone,
-        custom_prompt: formData.custom_prompt
+        custom_prompt: formData.custom_prompt,
+        owner_email: effectiveEmail
       });
 
       // Auto-share
