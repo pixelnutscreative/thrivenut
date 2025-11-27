@@ -246,6 +246,28 @@ export default function Dashboard() {
     },
   });
 
+  // Toggle day completion for a schedule item
+  const toggleDayCompleteMutation = useMutation({
+    mutationFn: async ({ field, index, day }) => {
+      if (!contentGoal) return;
+      const schedules = [...(contentGoal[field] || [])];
+      const schedule = { ...schedules[index] };
+      const completedDays = schedule.completed_days || [];
+      
+      if (completedDays.includes(day)) {
+        schedule.completed_days = completedDays.filter(d => d !== day);
+      } else {
+        schedule.completed_days = [...completedDays, day];
+      }
+      
+      schedules[index] = schedule;
+      return await base44.entities.ContentGoal.update(contentGoal.id, { [field]: schedules });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contentGoal'] });
+    },
+  });
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -288,6 +310,7 @@ export default function Dashboard() {
           goal={contentGoal}
           onEdit={() => setShowGoalModal(true)}
           onIncrement={(field) => incrementGoalMutation.mutate(field)}
+          onToggleDayComplete={(field, index, day) => toggleDayCompleteMutation.mutate({ field, index, day })}
         />
 
         {/* Quick action buttons */}
