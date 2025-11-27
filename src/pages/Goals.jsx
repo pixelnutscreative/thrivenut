@@ -589,8 +589,11 @@ export default function Goals() {
                         </div>
                       </div>
                       <CardTitle className="text-xl">{goal.title}</CardTitle>
-                      {goal.description && (
-                        <p className="text-sm text-gray-600 mt-2">{goal.description}</p>
+                      {goal.shared_with && goal.shared_with.length > 0 && (
+                        <div className="flex items-center gap-1 mt-1">
+                          <Share2 className="w-3 h-3 text-purple-500" />
+                          <span className="text-xs text-purple-600">{goal.shared_with.length} {goal.shared_with.length === 1 ? 'person' : 'people'}</span>
+                        </div>
                       )}
                     </CardHeader>
                     <CardContent className="space-y-4">
