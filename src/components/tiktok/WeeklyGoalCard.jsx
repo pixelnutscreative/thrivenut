@@ -164,9 +164,9 @@ function ScheduledItem({
         {schedule.completed && <Check className="h-5 w-5 text-green-500" />}
       </div>
       
-      {type === 'Live' && (isRecurring || addedToTikTokEvents || postedInDiscord) && (
+      {(isRecurring || schedule.is_recurring || addedToTikTokEvents || postedInDiscord) && (
         <div className="flex flex-wrap gap-2 ml-8 text-xs">
-          {isRecurring && (
+          {(isRecurring || schedule.is_recurring) && (
             <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded">🔄 Recurring</span>
           )}
           {addedToTikTokEvents && (
