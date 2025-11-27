@@ -5,13 +5,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Sparkles, ShowerHead, Utensils, Pill, Droplet, Sun, Dumbbell, BookOpen, ExternalLink, GripVertical, ArrowUp, ArrowDown, Check } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Input } from '@/components/ui/input';
+import { Sparkles, ShowerHead, Utensils, Pill, Droplet, Sun, Dumbbell, BookOpen, ExternalLink, GripVertical, ArrowUp, ArrowDown, Check, Pencil, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-const mealTips = {
-  breakfast_completed: '👑 Eat like a king',
-  lunch_completed: '🤴 Eat like a prince', 
-  dinner_completed: '🥄 Eat like a pauper'
+const getMealLabels = (gender) => {
+  const isFemale = gender === 'female';
+  return {
+    breakfast_completed: isFemale ? '👑 Breakfast - Eat like a queen' : '👑 Breakfast - Eat like a king',
+    lunch_completed: isFemale ? '👸 Lunch - Eat like a princess' : '🤴 Lunch - Eat like a prince', 
+    dinner_completed: '🥄 Dinner - Eat like a pauper'
+  };
 };
 
 export default function SelfCareChecklist({ 
