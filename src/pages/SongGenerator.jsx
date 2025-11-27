@@ -8,12 +8,12 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Music, Loader2, Copy, RefreshCw, Sparkles, Users, Send, Check, Gift, Swords, Heart, Share2, Trophy, Star, Zap, Settings, ExternalLink, History, Edit } from 'lucide-react';
+import { Music, Loader2, Copy, RefreshCw, Sparkles, Users, Send, Check, Gift, Swords, Heart, Share2, Trophy, Star, Zap, Settings, ExternalLink, History, Edit, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { createPageUrl } from '../utils';
 import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
-import { format, startOfWeek } from 'date-fns';
+import { format, startOfWeek, subWeeks, addWeeks } from 'date-fns';
 import SunoInfoModal from '../components/song/SunoInfoModal';
 import SongHistoryModal from '../components/song/SongHistoryModal';
 
@@ -59,6 +59,7 @@ export default function SongGenerator() {
   const [editingSong, setEditingSong] = useState(null);
   const [gifterFilter, setGifterFilter] = useState('first_and_shoutouts'); // 'first_and_shoutouts', 'all_top_3', 'custom'
   const [customSelectedIds, setCustomSelectedIds] = useState([]);
+  const [selectedWeek, setSelectedWeek] = useState(format(new Date(), 'yyyy-MM-dd')); // Week ending date
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -81,13 +82,38 @@ export default function SongGenerator() {
     enabled: !!effectiveEmail,
   });
 
-  // Get current week's entries for auto-population
-  const currentWeek = format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd');
-  const { data: entries = [] } = useQuery({
-    queryKey: ['giftingEntries', currentWeek, effectiveEmail],
-    queryFn: () => base44.entities.GiftingEntry.filter({ week: currentWeek, created_by: effectiveEmail }),
-    enabled: !!effectiveEmail && songType === 'gift_gallery',
+  // Get selected week's entries for auto-population
+  const { data: rawEntries = [] } = useQuery({
+    queryKey: ['giftingEntries', selectedWeek, effectiveEmail],
+    queryFn: () => base44.entities.GiftingEntry.filter({ week: selectedWeek, owner_email: effectiveEmail }, '-created_date', 500),
+    enabled: !!effectiveEmail && (songType === 'gift_gallery' || songType === 'top_gifters'),
   });
+
+  // Normalize entries
+  const entries = rawEntries.map(e => ({
+    id: e.id,
+    gifter_id: e.data?.gifter_id || e.gifter_id,
+    gifter_username: e.data?.gifter_username || e.gifter_username,
+    gifter_screen_name: e.data?.gifter_screen_name || e.gifter_screen_name,
+    gifter_phonetic: e.data?.gifter_phonetic || e.gifter_phonetic,
+    gift_id: e.data?.gift_id || e.gift_id,
+    gift_name: e.data?.gift_name || e.gift_name,
+    rank: e.data?.rank || e.rank,
+    week: e.data?.week || e.week,
+  }));
+
+  // Week navigation
+  const goToPreviousWeek = () => {
+    const current = new Date(selectedWeek + 'T12:00:00');
+    current.setDate(current.getDate() - 7);
+    setSelectedWeek(format(current, 'yyyy-MM-dd'));
+  };
+
+  const goToNextWeek = () => {
+    const current = new Date(selectedWeek + 'T12:00:00');
+    current.setDate(current.getDate() + 7);
+    setSelectedWeek(format(current, 'yyyy-MM-dd'));
+  };
 
   const gifters = contacts.filter(c => c.is_gifter);
 
@@ -421,6 +447,24 @@ ${includeLevelUp ? 'Include a verse encouraging the community to help level up!'
                 {/* Gift Gallery / Top Gifters */}
                 {(songType === 'gift_gallery' || songType === 'top_gifters') && (
                   <div className="space-y-3">
+                    {/* Week Picker */}
+                    <div className="flex items-center justify-between p-3 bg-amber-50 rounded-lg border border-amber-200">
+                      <Button variant="ghost" size="sm" onClick={goToPreviousWeek}>
+                        <ChevronLeft className="w-4 h-4" />
+                      </Button>
+                      <div className="text-center">
+                        <div className="flex items-center gap-2 justify-center text-amber-700">
+                          <Calendar className="w-4 h-4" />
+                          <span className="text-sm font-medium">Week Ending</span>
+                        </div>
+                        <p className="font-bold">{format(new Date(selectedWeek + 'T12:00:00'), 'MMMM d, yyyy')}</p>
+                        <p className="text-xs text-amber-600">{entries.length} entries</p>
+                      </div>
+                      <Button variant="ghost" size="sm" onClick={goToNextWeek}>
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    </div>
+
                     {/* Gifter Filter Selection */}
                     {entries.length > 0 && (
                       <div className="space-y-2 p-3 bg-purple-50 rounded-lg border border-purple-200">
