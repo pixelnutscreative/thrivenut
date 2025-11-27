@@ -477,44 +477,93 @@ export default function GoalEditModal({ isOpen, onClose, currentGoal, onSave }) 
           {/* Scheduled Engagement */}
           <div className="space-y-3 mt-6 border-t pt-6">
             <h3 className="font-semibold text-lg">Scheduled Engagement</h3>
+            <p className="text-sm text-gray-500">Schedule time to engage on besties' profile posts</p>
             {formData.scheduled_engagement.map((schedule, index) => (
-              <div key={index} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
-                <Select
-                  value={schedule.day_of_week}
-                  onValueChange={(value) => {
-                    const newSchedules = [...formData.scheduled_engagement];
-                    newSchedules[index].day_of_week = value;
-                    setFormData({ ...formData, scheduled_engagement: newSchedules });
-                  }}
-                >
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue placeholder="Day" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {daysOfWeek.map(day => <SelectItem key={day} value={day}>{day}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                <Input
-                  type="time"
-                  value={schedule.time}
-                  onChange={(e) => {
-                    const newSchedules = [...formData.scheduled_engagement];
-                    newSchedules[index].time = e.target.value;
-                    setFormData({ ...formData, scheduled_engagement: newSchedules });
-                  }}
-                  className="w-[120px]"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => {
-                    const newSchedules = formData.scheduled_engagement.filter((_, i) => i !== index);
-                    setFormData({ ...formData, scheduled_engagement: newSchedules });
-                  }}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
+              <div key={index} className="space-y-3 p-4 bg-teal-50 rounded-lg border-2 border-teal-100">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Select
+                    value={schedule.frequency || 'single'}
+                    onValueChange={(value) => {
+                      const newSchedules = [...formData.scheduled_engagement];
+                      newSchedules[index].frequency = value;
+                      if (value === 'daily') newSchedules[index].days = daysOfWeek;
+                      else if (value === 'weekdays') newSchedules[index].days = weekdays;
+                      else if (value === 'weekends') newSchedules[index].days = weekends;
+                      else if (value === 'single') newSchedules[index].days = [schedule.day_of_week || 'Monday'];
+                      setFormData({ ...formData, scheduled_engagement: newSchedules });
+                    }}
+                  >
+                    <SelectTrigger className="w-[140px]">
+                      <SelectValue placeholder="Frequency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {frequencyOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  
+                  {(schedule.frequency === 'single' || !schedule.frequency) && (
+                    <Select
+                      value={schedule.day_of_week}
+                      onValueChange={(value) => {
+                        const newSchedules = [...formData.scheduled_engagement];
+                        newSchedules[index].day_of_week = value;
+                        newSchedules[index].days = [value];
+                        setFormData({ ...formData, scheduled_engagement: newSchedules });
+                      }}
+                    >
+                      <SelectTrigger className="w-[140px]">
+                        <SelectValue placeholder="Day" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {daysOfWeek.map(day => <SelectItem key={day} value={day}>{day}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  
+                  <Input
+                    type="time"
+                    value={schedule.time}
+                    onChange={(e) => {
+                      const newSchedules = [...formData.scheduled_engagement];
+                      newSchedules[index].time = e.target.value;
+                      setFormData({ ...formData, scheduled_engagement: newSchedules });
+                    }}
+                    className="w-[120px]"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      const newSchedules = formData.scheduled_engagement.filter((_, i) => i !== index);
+                      setFormData({ ...formData, scheduled_engagement: newSchedules });
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+                
+                {schedule.frequency === 'custom' && (
+                  <div className="flex flex-wrap gap-2">
+                    {daysOfWeek.map(day => (
+                      <div key={day} className="flex items-center space-x-1">
+                        <Checkbox
+                          id={`engagement-day-${index}-${day}`}
+                          checked={schedule.days?.includes(day)}
+                          onCheckedChange={(checked) => {
+                            const newSchedules = [...formData.scheduled_engagement];
+                            const currentDays = newSchedules[index].days || [];
+                            newSchedules[index].days = checked
+                              ? [...currentDays, day]
+                              : currentDays.filter(d => d !== day);
+                            setFormData({ ...formData, scheduled_engagement: newSchedules });
+                          }}
+                        />
+                        <Label htmlFor={`engagement-day-${index}-${day}`} className="text-xs">{day.slice(0,3)}</Label>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
             <Button
@@ -522,7 +571,7 @@ export default function GoalEditModal({ isOpen, onClose, currentGoal, onSave }) 
               variant="outline"
               size="sm"
               onClick={() =>
-                setFormData({ ...formData, scheduled_engagement: [...formData.scheduled_engagement, { day_of_week: 'Monday', time: '10:00', completed: false }] })
+                setFormData({ ...formData, scheduled_engagement: [...formData.scheduled_engagement, { day_of_week: 'Monday', time: '10:00', completed: false, frequency: 'single', days: ['Monday'] }] })
               }
             >
               <Plus className="h-4 w-4 mr-2" /> Add Engagement Schedule
