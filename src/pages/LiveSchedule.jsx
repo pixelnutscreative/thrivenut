@@ -15,6 +15,7 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { motion } from 'framer-motion';
 import TimezoneSelector from '../components/shared/TimezoneSelector';
+import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
 
 const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -61,7 +62,8 @@ export default function LiveSchedule() {
     const fetchUser = async () => {
       const userData = await base44.auth.me();
       setUser(userData);
-      const prefs = await base44.entities.UserPreferences.filter({ user_email: userData.email });
+      const effectiveEmail = getEffectiveUserEmail(userData.email);
+      const prefs = await base44.entities.UserPreferences.filter({ user_email: effectiveEmail });
       if (prefs[0]?.user_timezone) {
         setUserTimezone(prefs[0].user_timezone);
       }
@@ -69,18 +71,21 @@ export default function LiveSchedule() {
     fetchUser();
   }, []);
 
+  // Get effective email for data scoping
+  const effectiveEmail = user ? getEffectiveUserEmail(user.email) : null;
+
   const { data: schedules = [] } = useQuery({
-    queryKey: ['liveSchedules', user?.email],
-    queryFn: () => base44.entities.LiveSchedule.filter({ created_by: user.email }, '-created_date'),
-    enabled: !!user,
+    queryKey: ['liveSchedules', effectiveEmail],
+    queryFn: () => base44.entities.LiveSchedule.filter({ created_by: effectiveEmail }, '-created_date'),
+    enabled: !!effectiveEmail,
     initialData: [],
   });
 
   // Fetch contacts with calendar enabled
   const { data: contacts = [] } = useQuery({
-    queryKey: ['tiktokContacts', user?.email],
-    queryFn: () => base44.entities.TikTokContact.filter({ created_by: user.email }, '-created_date'),
-    enabled: !!user,
+    queryKey: ['tiktokContacts', effectiveEmail],
+    queryFn: () => base44.entities.TikTokContact.filter({ created_by: effectiveEmail }, '-created_date'),
+    enabled: !!effectiveEmail,
   });
 
   const calendarContacts = contacts.filter(c => c.calendar_enabled);

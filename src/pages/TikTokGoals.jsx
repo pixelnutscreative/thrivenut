@@ -7,6 +7,7 @@ import { format, startOfWeek, addWeeks } from 'date-fns';
 import { motion } from 'framer-motion';
 import WeeklyGoalCard from '../components/tiktok/WeeklyGoalCard';
 import GoalEditModal from '../components/tiktok/GoalEditModal';
+import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
 
 export default function TikTokGoals() {
   const queryClient = useQueryClient();
@@ -18,6 +19,9 @@ export default function TikTokGoals() {
     base44.auth.me().then(setUser);
   }, []);
 
+  // Get effective email for data scoping
+  const effectiveEmail = user ? getEffectiveUserEmail(user.email) : null;
+
   const getWeekStart = (offset = 0) => {
     const date = addWeeks(new Date(), offset);
     return format(startOfWeek(date, { weekStartsOn: 1 }), 'yyyy-MM-dd');
@@ -26,23 +30,23 @@ export default function TikTokGoals() {
   const currentWeekStart = getWeekStart(selectedWeekOffset);
 
   const { data: contentGoal } = useQuery({
-    queryKey: ['contentGoal', currentWeekStart],
+    queryKey: ['contentGoal', currentWeekStart, effectiveEmail],
     queryFn: async () => {
       const goals = await base44.entities.ContentGoal.filter({ 
         week_starting: currentWeekStart,
-        created_by: user.email 
+        created_by: effectiveEmail 
       });
       return goals[0] || null;
     },
-    enabled: !!user,
+    enabled: !!effectiveEmail,
   });
 
   const { data: allGoals } = useQuery({
-    queryKey: ['allContentGoals', user?.email],
+    queryKey: ['allContentGoals', effectiveEmail],
     queryFn: async () => {
-      return await base44.entities.ContentGoal.filter({ created_by: user.email }, '-week_starting', 12);
+      return await base44.entities.ContentGoal.filter({ created_by: effectiveEmail }, '-week_starting', 12);
     },
-    enabled: !!user,
+    enabled: !!effectiveEmail,
   });
 
   const createOrUpdateGoalMutation = useMutation({
