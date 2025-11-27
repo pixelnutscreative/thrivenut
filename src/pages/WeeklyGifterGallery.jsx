@@ -693,7 +693,7 @@ export default function WeeklyGifterGallery() {
             {/* Admin: Copy to Account */}
             {isAdmin && sortedEntries.length > 0 && (
               <Card className="bg-amber-50 border-amber-200">
-                <CardContent className="p-4">
+                <CardContent className="p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <Checkbox
@@ -715,6 +715,40 @@ export default function WeeklyGifterGallery() {
                       Copy to Account
                     </Button>
                   </div>
+                  {/* Import batch selection */}
+                  {(() => {
+                    // Group entries by import batch (within 2 minutes of each other)
+                    const batches = [];
+                    const sorted = [...sortedEntries].sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+                    sorted.forEach(entry => {
+                      const entryTime = new Date(entry.created_date).getTime();
+                      const existingBatch = batches.find(b => Math.abs(b.time - entryTime) < 2 * 60 * 1000);
+                      if (existingBatch) {
+                        existingBatch.ids.push(entry.id);
+                      } else {
+                        batches.push({ time: entryTime, ids: [entry.id], date: entry.created_date });
+                      }
+                    });
+                    
+                    if (batches.length <= 1) return null;
+                    
+                    return (
+                      <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-amber-200">
+                        <span className="text-xs text-amber-700">Select batch:</span>
+                        {batches.slice(0, 5).map((batch, idx) => (
+                          <Button
+                            key={idx}
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs border-amber-300"
+                            onClick={() => setSelectedEntryIds(batch.ids)}
+                          >
+                            {idx === 0 ? 'Latest' : format(new Date(batch.date), 'MMM d h:mm a')} ({batch.ids.length})
+                          </Button>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </CardContent>
               </Card>
             )}
