@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { format, startOfWeek, endOfWeek, isToday, parseISO } from 'date-fns';
 import { motion } from 'framer-motion';
+import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
 
 export default function TikTokDashboard() {
   const queryClient = useQueryClient();
@@ -21,6 +22,8 @@ export default function TikTokDashboard() {
   React.useEffect(() => {
     base44.auth.me().then(setUser);
   }, []);
+
+  const effectiveEmail = user ? getEffectiveUserEmail(user.email) : null;
 
   const today = format(new Date(), 'yyyy-MM-dd');
   const weekStart = format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd');
