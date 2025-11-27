@@ -4,7 +4,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { LayoutDashboard, Droplet, Heart, Clock, Eye, EyeOff, ArrowDown } from 'lucide-react';
+import { LayoutDashboard, Droplet, Heart, Clock, Eye, EyeOff, ArrowDown, NotebookPen } from 'lucide-react';
 
 const displayOptions = [
   { value: 'show_checked', label: 'Show with checkmark', icon: Eye, description: 'Completed items stay visible with a checkmark' },
