@@ -10,7 +10,8 @@ import {
   Sun, Moon, Coffee, Utensils, Droplet, Pill, Heart, BookOpen, 
   Dumbbell, ShowerHead, Sparkles, Check, Pencil, X, List, Grid3X3,
   ChevronDown, ChevronUp, PawPrint, Bell, Clock, Video, Users, 
-  MessageSquare, SkipForward, ArrowRight, Loader2
+  MessageSquare, SkipForward, ArrowRight, Loader2, ArrowUp, ArrowDown,
+  Bed, Smile, NotebookPen, GripVertical
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
