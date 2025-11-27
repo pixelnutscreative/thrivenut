@@ -33,6 +33,13 @@ const viewModeOptions = [
   { value: 'compact', label: 'Compact View', description: 'Quick icon-based view for experienced users' }
 ];
 
+const journalReminderOptions = [
+  { value: 'morning', label: 'Morning', description: 'Reflect on yesterday or set intentions for today' },
+  { value: 'lunch', label: 'Lunchtime', description: 'Midday check-in and reflection' },
+  { value: 'evening', label: 'Evening', description: 'Wind down with end of day journaling' },
+  { value: 'night', label: 'Night', description: 'Before bed reflection' }
+];
+
 export default function DashboardPreferences({ formData, setFormData }) {
   return (
     <div className="space-y-6">
