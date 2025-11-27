@@ -510,16 +510,6 @@ Creator display name: ${hostDisplayName}`,
               <History className="w-4 h-4 mr-2" />
               Song History ({songHistory.length})
             </Button>
-            <a 
-              href="https://livecenter.tiktok.com/rank_list?lang=en" 
-              target="_blank" 
-              rel="noopener noreferrer"
-            >
-              <Button variant="outline" className="border-pink-300 text-pink-700 hover:bg-pink-50">
-                <ExternalLink className="w-4 h-4 mr-2" />
-                Get Top Viewers & Gifters
-              </Button>
-            </a>
           </div>
         </div>
 
@@ -854,6 +844,25 @@ Creator display name: ${hostDisplayName}`,
                       onChange={(e) => setFormData({ ...formData, custom_prompt: e.target.value })}
                       rows={3}
                     />
+                  </div>
+                )}
+
+                {/* Top Viewers / Top Gifters Link */}
+                {(songType === 'top_viewers' || songType === 'top_gifters') && (
+                  <div className="p-4 bg-gradient-to-r from-pink-50 to-purple-50 rounded-xl border border-pink-200">
+                    <p className="text-sm text-gray-700 mb-3">
+                      Get your top {songType === 'top_viewers' ? 'viewers' : 'gifters'} from TikTok Live Center:
+                    </p>
+                    <a 
+                      href="https://livecenter.tiktok.com/rank_list?lang=en" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                    >
+                      <Button variant="outline" className="w-full border-pink-300 text-pink-700 hover:bg-pink-100">
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        Open TikTok Live Center Rankings
+                      </Button>
+                    </a>
                   </div>
                 )}
 
