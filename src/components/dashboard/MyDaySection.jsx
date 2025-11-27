@@ -342,6 +342,52 @@ export default function MyDaySection({
       tasks.push({ id: 'bible_reading_night', type: 'selfcare', label: 'Night Bible reading', icon: BookOpen, color: 'text-indigo-600', timeOfDay: 'night', order: 95 });
     }
 
+    // Sleep log - first thing in morning
+    tasks.push({ 
+      id: 'sleep_log', 
+      type: 'selfcare', 
+      label: 'Log last night\'s sleep', 
+      sublabel: 'How did you sleep?',
+      icon: Bed, 
+      color: 'text-indigo-500', 
+      timeOfDay: 'morning', 
+      order: 0,
+      isLink: true,
+      linkTo: 'Wellness'
+    });
+
+    // Journal reminder - based on user preference
+    const journalTime = preferences?.journal_reminder_time || 'night';
+    const journalOrder = { morning: 15, lunch: 65, evening: 88, night: 96 };
+    tasks.push({ 
+      id: 'journal_entry', 
+      type: 'selfcare', 
+      label: 'Write in journal', 
+      sublabel: 'Reflect on your day',
+      icon: NotebookPen, 
+      color: 'text-purple-500', 
+      timeOfDay: journalTime === 'lunch' ? 'midday' : journalTime,
+      order: journalOrder[journalTime] || 96,
+      isLink: true,
+      linkTo: 'Journal'
+    });
+
+    // Mood check-ins - in anytime section
+    if (preferences?.enable_mood_checkins !== false) {
+      tasks.push({ 
+        id: 'mood_checkin', 
+        type: 'selfcare', 
+        label: 'Log your mood', 
+        sublabel: 'How are you feeling?',
+        icon: Smile, 
+        color: 'text-pink-500', 
+        timeOfDay: 'anytime',
+        order: 10,
+        isLink: true,
+        linkTo: 'Wellness'
+      });
+    }
+
     // Pet care tasks
     pets.forEach(pet => {
       // Feeding
