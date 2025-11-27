@@ -21,6 +21,7 @@ const getMealLabels = (gender) => {
 export default function SelfCareChecklist({ 
   selfCareLog, 
   onToggleTask, 
+  onUpdateMealNotes,
   requiredTasks = [],
   showOnlyRequired = false,
   compact = false,
@@ -30,11 +31,16 @@ export default function SelfCareChecklist({
   onUpdateOrder = null
 }) {
   const [isReordering, setIsReordering] = useState(false);
+  const [editingMeal, setEditingMeal] = useState(null);
+  const [mealNoteInput, setMealNoteInput] = useState('');
+  
+  const mealLabels = getMealLabels(preferences?.gender);
+  
   const baseTasks = [
     { id: 'shower_completed', label: 'Take a shower', icon: ShowerHead, color: 'text-blue-500' },
-    { id: 'breakfast_completed', label: mealTips.breakfast_completed, icon: Utensils, color: 'text-orange-500' },
-    { id: 'lunch_completed', label: mealTips.lunch_completed, icon: Utensils, color: 'text-green-500' },
-    { id: 'dinner_completed', label: mealTips.dinner_completed, icon: Utensils, color: 'text-purple-500' },
+    { id: 'breakfast_completed', label: mealLabels.breakfast_completed, icon: Utensils, color: 'text-orange-500', hasMealNote: true },
+    { id: 'lunch_completed', label: mealLabels.lunch_completed, icon: Utensils, color: 'text-green-500', hasMealNote: true },
+    { id: 'dinner_completed', label: mealLabels.dinner_completed, icon: Utensils, color: 'text-purple-500', hasMealNote: true },
     { id: 'brushed_teeth_morning', label: 'Brush teeth (AM)', icon: Sparkles, color: 'text-cyan-500' },
     { id: 'brushed_teeth_night', label: 'Brush teeth (PM)', icon: Sparkles, color: 'text-indigo-500' },
     { id: 'took_medications', label: 'Take medications', icon: Pill, color: 'text-pink-500', link: 'Medications', count: medicationsCount },
@@ -42,6 +48,23 @@ export default function SelfCareChecklist({
     { id: 'drank_water', label: 'Drink water', icon: Droplet, color: 'text-sky-500' },
     { id: 'physical_activity', label: 'Physical activity', icon: Dumbbell, color: 'text-red-500' },
   ];
+  
+  const getMealNoteKey = (taskId) => taskId.replace('_completed', '_notes');
+  
+  const handleEditMeal = (taskId) => {
+    const noteKey = getMealNoteKey(taskId);
+    setMealNoteInput(selfCareLog?.[noteKey] || '');
+    setEditingMeal(taskId);
+  };
+  
+  const handleSaveMealNote = () => {
+    if (editingMeal && onUpdateMealNotes) {
+      const noteKey = getMealNoteKey(editingMeal);
+      onUpdateMealNotes(noteKey, mealNoteInput);
+    }
+    setEditingMeal(null);
+    setMealNoteInput('');
+  };
 
   // Add Bible reading tasks if user is a believer
   const bibleTasks = preferences?.is_bible_believer ? [
@@ -236,6 +259,20 @@ export default function SelfCareChecklist({
                   </div>
                 </div>
                 
+                {/* Meal note edit button */}
+                {task.hasMealNote && !isReordering && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEditMeal(task.id);
+                    }}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    title="Log what you ate"
+                  >
+                    <Pencil className="w-4 h-4 text-gray-400" />
+                  </button>
+                )}
+              
                 {task.link && !isReordering && (
                   <Link 
                     to={createPageUrl(task.link)}
@@ -246,8 +283,54 @@ export default function SelfCareChecklist({
                   </Link>
                 )}
                 
-                {isComplete && !task.link && !isReordering && <span className="text-green-500">✓</span>}
+                {isComplete && !task.link && !task.hasMealNote && !isReordering && <span className="text-green-500">✓</span>}
               </motion.div>
+              
+              {/* Meal note input */}
+              <AnimatePresence>
+                {editingMeal === task.id && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="ml-4 overflow-hidden"
+                  >
+                    <div className="flex gap-2 p-3 bg-white rounded-xl border-2 border-gray-200">
+                      <Input
+                        placeholder="What did you eat?"
+                        value={mealNoteInput}
+                        onChange={(e) => setMealNoteInput(e.target.value)}
+                        className="flex-1"
+                        autoFocus
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleSaveMealNote();
+                          if (e.key === 'Escape') setEditingMeal(null);
+                        }}
+                      />
+                      <Button size="sm" onClick={handleSaveMealNote} className="bg-green-500 hover:bg-green-600">
+                        <Check className="w-4 h-4" />
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setEditingMeal(null)}>
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    {selfCareLog?.[getMealNoteKey(task.id)] && editingMeal !== task.id && (
+                      <p className="text-sm text-gray-500 mt-1 italic">
+                        {selfCareLog[getMealNoteKey(task.id)]}
+                      </p>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              
+              {/* Show saved meal note */}
+              {task.hasMealNote && selfCareLog?.[getMealNoteKey(task.id)] && editingMeal !== task.id && (
+                <div className="ml-16 -mt-2 mb-2">
+                  <p className="text-sm text-gray-500 italic px-4">
+                    📝 {selfCareLog[getMealNoteKey(task.id)]}
+                  </p>
+                </div>
+              )}
             );
           })}
         </div>
