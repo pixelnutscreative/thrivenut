@@ -191,6 +191,17 @@ export default function Wellness() {
     },
   });
 
+  const updateSelfCareOrderMutation = useMutation({
+    mutationFn: async (order) => {
+      if (preferences) {
+        return await base44.entities.UserPreferences.update(preferences.id, { self_care_order: order });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['preferences'] });
+    },
+  });
+
   const [moodForm, setMoodForm] = useState({ mood: 'good', notes: '' });
   const [sleepForm, setSleepForm] = useState({
     hours: todaysSleep?.hours || 7,
