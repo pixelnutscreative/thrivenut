@@ -13,8 +13,9 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Users, UserPlus, Send, Check, X, Eye, Trash2, 
-  Target, Heart, TrendingUp, Clock, Loader2, Edit, Mail
+  Target, Heart, TrendingUp, Clock, Loader2, Edit, Mail, AlertCircle, CheckCircle
 } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
 
@@ -55,6 +56,7 @@ export default function GoalSharing() {
     shared_goal_ids: [],
     notes: ''
   });
+  const [inviteStatus, setInviteStatus] = useState(null); // null, 'existing', 'invited'
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -113,8 +115,13 @@ export default function GoalSharing() {
 
   const createShareMutation = useMutation({
     mutationFn: async (data) => {
+      // Check if user exists in the platform
+      const existingUsers = await base44.entities.User.filter({ email: data.viewer_email.toLowerCase() });
+      const userExists = existingUsers.length > 0;
+      
       const share = await base44.entities.GoalShare.create({
         ...data,
+        viewer_email: data.viewer_email.toLowerCase(),
         sharer_email: user.email,
         sharer_name: user.full_name,
         status: 'pending'
@@ -124,18 +131,33 @@ export default function GoalSharing() {
       const selectedGoals = myGoals.filter(g => data.shared_goal_ids.includes(g.id));
       const goalList = selectedGoals.map(g => `• ${categoryIcons[g.category] || '🎯'} ${g.title}`).join('\n');
       
-      await base44.integrations.Core.SendEmail({
-        to: data.viewer_email,
-        subject: `${user.full_name || user.email} wants to share goals with you!`,
-        body: `Hi there!\n\n${user.full_name || user.email} would like to share their goals with you on ThriveNut.\n\n${selectedGoals.length > 0 ? `They want to share ${selectedGoals.length} goal(s):\n${goalList}\n\n` : ''}Log in to ThriveNut to accept or decline this invitation.\n\n---\nThriveNut - Crush your goals, thrive daily`
-      });
+      if (userExists) {
+        // User exists - send regular notification
+        await base44.integrations.Core.SendEmail({
+          to: data.viewer_email,
+          subject: `${user.full_name || user.email} wants to share goals with you!`,
+          body: `Hi there!\n\n${user.full_name || user.email} would like to share their goals with you on ThriveNut.\n\n${selectedGoals.length > 0 ? `They want to share ${selectedGoals.length} goal(s):\n${goalList}\n\n` : ''}Log in to ThriveNut to accept or decline this invitation.\n\n---\nThriveNut - Crush your goals, thrive daily`
+        });
+      } else {
+        // User doesn't exist - send invitation to join
+        await base44.integrations.Core.SendEmail({
+          to: data.viewer_email,
+          subject: `${user.full_name || user.email} invited you to ThriveNut!`,
+          body: `Hi there!\n\n${user.full_name || user.email} would like to share their goals with you on ThriveNut - a goal tracking and personal growth platform.\n\n${selectedGoals.length > 0 ? `They want to share ${selectedGoals.length} goal(s) with you:\n${goalList}\n\n` : ''}To view their goals and start tracking your own, join ThriveNut today!\n\nVisit ThriveNut to create your free account and accept this invitation.\n\n---\nThriveNut - Crush your goals, thrive daily 🌰`
+        });
+      }
       
-      return share;
+      return { share, userExists };
     },
-    onSuccess: () => {
+    onSuccess: ({ userExists }) => {
       queryClient.invalidateQueries({ queryKey: ['goalSharesSent'] });
-      setShowInviteModal(false);
-      resetForm();
+      setInviteStatus(userExists ? 'existing' : 'invited');
+      // Auto-close after showing status
+      setTimeout(() => {
+        setShowInviteModal(false);
+        resetForm();
+        setInviteStatus(null);
+      }, 3000);
     },
   });
 
@@ -495,7 +517,26 @@ export default function GoalSharing() {
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            {!editingShare && (
+            {/* Success Status Messages */}
+            {inviteStatus === 'existing' && (
+              <Alert className="bg-green-50 border-green-200">
+                <CheckCircle className="w-4 h-4 text-green-600" />
+                <AlertDescription className="text-green-700">
+                  Invitation sent! They already have a ThriveNut account and will see your request when they log in.
+                </AlertDescription>
+              </Alert>
+            )}
+            
+            {inviteStatus === 'invited' && (
+              <Alert className="bg-blue-50 border-blue-200">
+                <Mail className="w-4 h-4 text-blue-600" />
+                <AlertDescription className="text-blue-700">
+                  This person isn't on ThriveNut yet. We've sent them an invitation to join! Once they create an account, they'll see your shared goals.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {!editingShare && !inviteStatus && (
               <>
                 <div className="space-y-2">
                   <Label>Their Email Address</Label>
@@ -503,11 +544,11 @@ export default function GoalSharing() {
                     type="email"
                     placeholder="friend@example.com"
                     value={formData.viewer_email}
-                    onChange={(e) => setFormData({ ...formData, viewer_email: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, viewer_email: e.target.value.toLowerCase() })}
                   />
                   <p className="text-xs text-gray-500 flex items-center gap-1">
                     <Mail className="w-3 h-3" />
-                    They'll receive an email notification
+                    If they're not on ThriveNut, we'll send them an invitation to join
                   </p>
                 </div>
 
@@ -579,7 +620,7 @@ export default function GoalSharing() {
               </p>
             </div>
 
-            {!editingShare && (
+            {!editingShare && !inviteStatus && (
               <div className="space-y-2">
                 <Label>Note (Optional)</Label>
                 <Textarea
@@ -593,26 +634,34 @@ export default function GoalSharing() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => { resetForm(); setShowInviteModal(false); }}>
-              Cancel
-            </Button>
-            <Button
-              onClick={editingShare ? handleUpdateShare : handleInvite}
-              disabled={
-                (!editingShare && !formData.viewer_email.trim()) || 
-                formData.shared_goal_ids.length === 0 || 
-                createShareMutation.isPending ||
-                updateShareMutation.isPending
-              }
-              className="bg-purple-600 hover:bg-purple-700"
-            >
-              {(createShareMutation.isPending || updateShareMutation.isPending) ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <Send className="w-4 h-4 mr-2" />
-              )}
-              {editingShare ? 'Update' : 'Send Invitation'}
-            </Button>
+            {inviteStatus ? (
+              <Button onClick={() => { resetForm(); setShowInviteModal(false); setInviteStatus(null); }}>
+                Done
+              </Button>
+            ) : (
+              <>
+                <Button variant="outline" onClick={() => { resetForm(); setShowInviteModal(false); }}>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={editingShare ? handleUpdateShare : handleInvite}
+                  disabled={
+                    (!editingShare && !formData.viewer_email.trim()) || 
+                    formData.shared_goal_ids.length === 0 || 
+                    createShareMutation.isPending ||
+                    updateShareMutation.isPending
+                  }
+                  className="bg-purple-600 hover:bg-purple-700"
+                >
+                  {(createShareMutation.isPending || updateShareMutation.isPending) ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Send className="w-4 h-4 mr-2" />
+                  )}
+                  {editingShare ? 'Update' : 'Send Invitation'}
+                </Button>
+              </>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
