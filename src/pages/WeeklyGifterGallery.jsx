@@ -815,82 +815,69 @@ export default function WeeklyGifterGallery() {
                           </div>
                         )}
                         {(() => {
-                          // Use flat fields directly
-                          const rank = entry.rank;
-                          const gifterScreenName = entry.gifter_screen_name;
-                          const gifterUsername = entry.gifter_username;
-                          const giftName = entry.gift_name;
-                          const gifterPhonetic = entry.gifter_phonetic;
-                          
-                          return editingEntry === entry.id ? (
-                          <div className="space-y-3">
-                            <div className="grid grid-cols-2 gap-3">
-                              <div>
-                                <Label className="text-xs">Screen Name</Label>
-                                <Input
-                                  value={editForm.gifter_screen_name}
-                                  onChange={(e) => setEditForm({ ...editForm, gifter_screen_name: e.target.value })}
-                                />
-                              </div>
-                              <div>
-                                <Label className="text-xs">Phonetic 🎵</Label>
-                                <Input
-                                  value={editForm.gifter_phonetic}
-                                  onChange={(e) => setEditForm({ ...editForm, gifter_phonetic: e.target.value })}
-                                  placeholder="How to pronounce"
-                                />
-                              </div>
-                            </div>
-                            <div className="flex gap-2">
-                              <Button size="sm" onClick={() => updateEntryMutation.mutate({ entryId: entry.id, data: editForm })} disabled={updateEntryMutation.isPending}>
-                                Save
-                              </Button>
-                              <Button size="sm" variant="ghost" onClick={() => setEditingEntry(null)}>Cancel</Button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              {getRankIcon(rank)}
-                              <div>
-                                <p className="font-semibold">{gifterScreenName}</p>
-                                <p className="text-sm text-purple-600">@{gifterUsername}</p>
-                                <div className="flex flex-wrap gap-2 mt-1">
-                                  <Badge variant="secondary" className="text-xs">{giftName}</Badge>
-                                  {gifterPhonetic && (
-                                    <Badge variant="outline" className="text-xs">🎵 {gifterPhonetic}</Badge>
-                                  )}
-                                  {entry.shoutout_reason && (
-                                    <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700">
-                                      {entry.shoutout_reason}
-                                    </Badge>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                            <div className="flex gap-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  setEditingEntry(entry.id);
-                                  setEditForm({ gifter_screen_name: gifterScreenName || '', gifter_phonetic: gifterPhonetic || '' });
-                                }}
-                              >
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => deleteMutation.mutate(entry.id)}
-                                className="text-red-500 hover:text-red-700"
-                              >
-                                <X className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        );
-                        })()}
+                                  // Use flat fields directly
+                                  const rank = entry.rank;
+                                  const gifterScreenName = entry.gifter_screen_name;
+                                  const gifterUsername = entry.gifter_username;
+                                  const giftName = entry.gift_name;
+                                  const gifterPhonetic = entry.gifter_phonetic;
+
+                                  return (
+                                  <div className="space-y-2">
+                                    {/* Header row with checkbox, rank, and delete */}
+                                    <div className="flex items-center gap-3">
+                                      {getRankIcon(rank)}
+                                      <span className="font-bold text-sm">{rank || 'Gifter'}</span>
+                                      <Badge variant="secondary" className="text-xs">{giftName}</Badge>
+                                      <div className="flex-1" />
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => deleteMutation.mutate(entry.id)}
+                                        className="text-red-400 hover:text-red-600 h-7 w-7 p-0"
+                                      >
+                                        <X className="w-4 h-4" />
+                                      </Button>
+                                    </div>
+
+                                    {/* Always-editable inline fields */}
+                                    <div className="grid grid-cols-4 gap-2">
+                                      <Select 
+                                        value={rank} 
+                                        onValueChange={(v) => updateEntryMutation.mutate({ entryId: entry.id, data: { rank: v } })}
+                                      >
+                                        <SelectTrigger className="h-9 text-sm">
+                                          <SelectValue placeholder="Rank" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="1st">🥇 1st</SelectItem>
+                                          <SelectItem value="2nd">🥈 2nd</SelectItem>
+                                          <SelectItem value="3rd">🥉 3rd</SelectItem>
+                                          <SelectItem value="shoutout">⭐ Shoutout</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                      <Input 
+                                        value={gifterUsername || ''} 
+                                        onChange={(e) => updateEntryMutation.mutate({ entryId: entry.id, data: { gifter_username: e.target.value } })}
+                                        placeholder="@username" 
+                                        className="h-9"
+                                      />
+                                      <Input 
+                                        value={gifterScreenName || ''} 
+                                        onChange={(e) => updateEntryMutation.mutate({ entryId: entry.id, data: { gifter_screen_name: e.target.value } })}
+                                        placeholder="Display name" 
+                                        className="h-9"
+                                      />
+                                      <Input 
+                                        value={gifterPhonetic || ''} 
+                                        onChange={(e) => updateEntryMutation.mutate({ entryId: entry.id, data: { gifter_phonetic: e.target.value } })}
+                                        placeholder="Phonetic 🎵" 
+                                        className="h-9"
+                                      />
+                                    </div>
+                                  </div>
+                                );
+                                })()}
                       </motion.div>
                     ))}
                   </CardContent>
