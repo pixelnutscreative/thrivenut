@@ -847,42 +847,62 @@ export default function MyDaySection({
                     exit={{ height: 0, opacity: 0 }}
                     className="px-3 pb-3 space-y-2"
                   >
-                    {visibleTasks.map((task) => {
+                    {visibleTasks.map((task, taskIdx) => {
                       const Icon = task.icon;
                       const isComplete = isTaskComplete(task);
                       const mealNoteKey = task.hasMealNote ? getMealNoteKey(task.id) : null;
                       
-                      return (
-                        <div key={task.id}>
-                          <div
-                            className={`flex items-center gap-3 p-3 rounded-xl transition-all ${
-                              isComplete 
-                                ? 'bg-green-100 border-2 border-green-300' 
-                                : 'bg-white border-2 border-gray-100 hover:border-teal-300'
-                            }`}
-                          >
-                            <div 
-                              className="flex items-center gap-3 flex-1 cursor-pointer"
-                              onClick={() => handleToggleTask(task)}
-                            >
-                              <Checkbox checked={isComplete} className="pointer-events-none" />
-                              <Icon className={`w-5 h-5 ${isComplete ? 'text-green-500' : task.color}`} />
-                              <div className="flex-1">
-                                <span className={`font-medium ${isComplete ? 'text-green-700 line-through' : 'text-gray-700'}`}>
-                                  {task.label}
-                                </span>
-                                {task.sublabel && (
-                                  <p className="text-xs text-gray-500">{task.sublabel}</p>
-                                )}
-                                {mealNoteKey && selfCareLog?.[mealNoteKey] && editingMeal !== task.id && (
-                                  <p className="text-sm text-gray-500 italic mt-1">
-                                    📝 {selfCareLog[mealNoteKey]}
-                                  </p>
-                                )}
-                              </div>
+                      const TaskContent = (
+                        <div
+                          className={`flex items-center gap-3 p-3 rounded-xl transition-all ${
+                            isComplete 
+                              ? 'bg-green-100 border-2 border-green-300' 
+                              : 'bg-white border-2 border-gray-100 hover:border-teal-300'
+                          }`}
+                        >
+                          {/* Reorder buttons */}
+                          {isReordering && (
+                            <div className="flex flex-col gap-1">
+                              <button
+                                onClick={(e) => { e.stopPropagation(); moveTaskUp(task.id); }}
+                                className="p-1 hover:bg-gray-200 rounded disabled:opacity-30"
+                                disabled={taskIdx === 0}
+                              >
+                                <ArrowUp className="w-3 h-3 text-gray-500" />
+                              </button>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); moveTaskDown(task.id); }}
+                                className="p-1 hover:bg-gray-200 rounded disabled:opacity-30"
+                                disabled={taskIdx === visibleTasks.length - 1}
+                              >
+                                <ArrowDown className="w-3 h-3 text-gray-500" />
+                              </button>
                             </div>
-                            
-                            {/* Action buttons */}
+                          )}
+                          
+                          <div 
+                            className="flex items-center gap-3 flex-1 cursor-pointer"
+                            onClick={() => !isReordering && (task.isLink ? null : handleToggleTask(task))}
+                          >
+                            <Checkbox checked={isComplete} className="pointer-events-none" />
+                            <Icon className={`w-5 h-5 ${isComplete ? 'text-green-500' : task.color}`} />
+                            <div className="flex-1">
+                              <span className={`font-medium ${isComplete ? 'text-green-700 line-through' : 'text-gray-700'}`}>
+                                {task.label}
+                              </span>
+                              {task.sublabel && (
+                                <p className="text-xs text-gray-500">{task.sublabel}</p>
+                              )}
+                              {mealNoteKey && selfCareLog?.[mealNoteKey] && editingMeal !== task.id && (
+                                <p className="text-sm text-gray-500 italic mt-1">
+                                  📝 {selfCareLog[mealNoteKey]}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          
+                          {/* Action buttons */}
+                          {!isReordering && (
                             <div className="flex items-center gap-1">
                               {task.hasMealNote && (
                                 <button
@@ -904,7 +924,19 @@ export default function MyDaySection({
                                 </button>
                               )}
                             </div>
-                          </div>
+                          )}
+                        </div>
+                      );
+                      
+                      return (
+                        <div key={task.id}>
+                          {task.isLink ? (
+                            <Link to={createPageUrl(task.linkTo)}>
+                              {TaskContent}
+                            </Link>
+                          ) : (
+                            TaskContent
+                          )}
                           
                           {/* Meal note input */}
                           <AnimatePresence>
