@@ -74,19 +74,7 @@ export default function WeeklyGifterGallery() {
 
   const { data: contacts = [] } = useQuery({
     queryKey: ['tiktokContacts', effectiveEmail],
-    queryFn: async () => {
-      const allContacts = await base44.entities.TikTokContact.list('display_name', 500);
-      
-      // Filter: check data.created_by first (for impersonated records), then top-level created_by
-      return allContacts.filter(c => {
-        // data.created_by is set when impersonating - check it FIRST
-        if (c.data?.created_by) {
-          return c.data.created_by === effectiveEmail;
-        }
-        // Otherwise use top-level created_by
-        return c.created_by === effectiveEmail;
-      });
-    },
+    queryFn: () => base44.entities.TikTokContact.filter({ created_by: effectiveEmail }, 'display_name', 500),
     enabled: !!effectiveEmail,
   });
 
@@ -105,10 +93,10 @@ export default function WeeklyGifterGallery() {
 
   // Get gifters from current user's contacts only (not the master list)
   const gifters = contacts
-    .filter(c => c.is_gifter || c.data?.is_gifter)
+    .filter(c => c.is_gifter)
     .sort((a, b) => {
-      const aName = (a.display_name || a.data?.display_name || a.username || a.data?.username || '').toLowerCase();
-      const bName = (b.display_name || b.data?.display_name || b.username || b.data?.username || '').toLowerCase();
+      const aName = (a.display_name || a.username || '').toLowerCase();
+      const bName = (b.display_name || b.username || '').toLowerCase();
       return aName.localeCompare(bName);
     });
 
@@ -119,22 +107,7 @@ export default function WeeklyGifterGallery() {
 
   const { data: entries = [], isLoading } = useQuery({
     queryKey: ['giftingEntries', selectedWeek, effectiveEmail],
-    queryFn: async () => {
-      const allEntries = await base44.entities.GiftingEntry.list('-created_date', 500);
-      
-      // Filter: check data.created_by first (for impersonated records), then top-level created_by
-      return allEntries.filter(e => {
-        const entryWeek = e.data?.week;
-        if (entryWeek !== selectedWeek) return false;
-        
-        // data.created_by is set when impersonating - check it FIRST
-        if (e.data?.created_by) {
-          return e.data.created_by === effectiveEmail;
-        }
-        // Otherwise use top-level created_by
-        return e.created_by === effectiveEmail;
-      });
-    },
+    queryFn: () => base44.entities.GiftingEntry.filter({ week: selectedWeek, created_by: effectiveEmail }, '-created_date', 500),
     enabled: !!effectiveEmail,
   });
 
@@ -317,12 +290,10 @@ export default function WeeklyGifterGallery() {
     setAllGood(false);
   };
 
-  // Sorting - entries may have flat or nested fields
+  // Sorting entries by rank
   const sortedEntries = [...entries].sort((a, b) => {
     const rankOrder = { '1st': 1, '2nd': 2, '3rd': 3, 'shoutout': 4 };
-    const aRank = a.data?.rank || a.rank;
-    const bRank = b.data?.rank || b.rank;
-    return (rankOrder[aRank] || 5) - (rankOrder[bRank] || 5);
+    return (rankOrder[a.rank] || 5) - (rankOrder[b.rank] || 5);
   });
 
   // Generate summary text
