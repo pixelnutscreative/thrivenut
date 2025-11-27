@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, Plus, Copy, Check } from 'lucide-react';
+import { Search, Plus, Copy, Check, Video, RefreshCw } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
@@ -196,44 +196,46 @@ Would love to see you there! 🎉`;
                     </CardHeader>
                     <CardContent className="space-y-3">
                       <p className="text-sm text-gray-600">
-                        {creator.items.length} shared item{creator.items.length !== 1 ? 's' : ''}
+                        {creator.items.length} live{creator.items.length !== 1 ? 's' : ''} shared
                       </p>
                       
-                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                      <div className="space-y-2 max-h-64 overflow-y-auto">
                         {creator.items.map((item) => (
-                          <div key={item.id} className={`p-3 rounded-lg space-y-2 ${
-                            item.type === 'live' ? 'bg-pink-50' : 
-                            item.type === 'post' ? 'bg-purple-50' : 'bg-teal-50'
-                          }`}>
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2">
-                                  <Badge variant="outline" className="text-xs">
-                                    {item.type === 'live' ? '🔴 Live' : item.type === 'post' ? '📱 Post' : '💬 Engage'}
+                          <div key={item.id} className="p-3 rounded-lg bg-pink-50 border border-pink-200">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <Badge variant="outline" className="text-xs bg-pink-100 border-pink-300">
+                                    <Video className="w-3 h-3 mr-1" />
+                                    Live
                                   </Badge>
+                                  {item.is_recurring && (
+                                    <Badge variant="outline" className="text-xs bg-blue-50 border-blue-200">
+                                      <RefreshCw className="w-3 h-3 mr-1" />
+                                      Weekly
+                                    </Badge>
+                                  )}
                                   {item.audience === '18+' && (
                                     <Badge className="text-xs bg-red-100 text-red-700">18+</Badge>
                                   )}
                                 </div>
                                 {item.title && (
-                                  <p className="font-semibold text-sm mt-1">{item.title}</p>
+                                  <p className="font-semibold text-sm mt-1 truncate">{item.title}</p>
                                 )}
-                                <p className="text-xs text-gray-600">
-                                  {item.day_of_week} at {item.time}
+                                <p className="text-xs text-gray-600 mt-1">
+                                  📅 {item.day_of_week}s at {item.time}
                                 </p>
                               </div>
-                            </div>
-                            {item.type === 'live' && (
                               <Button
                                 size="sm"
+                                variant="outline"
                                 onClick={() => addToCalendarMutation.mutate({ creator, item })}
                                 disabled={addToCalendarMutation.isPending}
-                                className="w-full bg-purple-600 hover:bg-purple-700"
+                                className="shrink-0 border-purple-300 text-purple-700 hover:bg-purple-50"
                               >
-                                <Plus className="w-3 h-3 mr-1" />
-                                Add to My Calendar
+                                <Plus className="w-3 h-3" />
                               </Button>
-                            )}
+                            </div>
                           </div>
                         ))}
                       </div>
