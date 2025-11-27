@@ -186,6 +186,8 @@ export default function Dashboard() {
 
   const createOrUpdateGoalMutation = useMutation({
     mutationFn: async (goalData) => {
+      console.log('Saving goal data:', goalData);
+      
       // Also save as template for future weeks
       const templates = await base44.entities.ContentScheduleTemplate.filter({ 
         created_by: user.email 
@@ -198,6 +200,8 @@ export default function Dashboard() {
         notes: goalData.notes || ''
       };
       
+      console.log('Saving template:', templateData);
+      
       if (templates[0]) {
         await base44.entities.ContentScheduleTemplate.update(templates[0].id, templateData);
       } else {
@@ -206,8 +210,10 @@ export default function Dashboard() {
       
       // Now save the current week's goal
       if (contentGoal) {
+        console.log('Updating existing goal:', contentGoal.id);
         return await base44.entities.ContentGoal.update(contentGoal.id, goalData);
       } else {
+        console.log('Creating new goal for week:', getCurrentWeekStart());
         return await base44.entities.ContentGoal.create({
           week_starting: getCurrentWeekStart(),
           ...goalData,
@@ -218,8 +224,13 @@ export default function Dashboard() {
       }
     },
     onSuccess: () => {
+      console.log('Goal saved successfully!');
       queryClient.invalidateQueries({ queryKey: ['contentGoal'] });
       setShowGoalModal(false);
+    },
+    onError: (error) => {
+      console.error('Error saving goal:', error);
+      alert('Error saving schedule: ' + error.message);
     },
   });
 
