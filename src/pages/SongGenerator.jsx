@@ -57,6 +57,8 @@ export default function SongGenerator() {
   const [showSunoModal, setShowSunoModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [editingSong, setEditingSong] = useState(null);
+  const [gifterFilter, setGifterFilter] = useState('first_and_shoutouts'); // 'first_and_shoutouts', 'all_top_3', 'custom'
+  const [customSelectedIds, setCustomSelectedIds] = useState([]);
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -117,16 +119,35 @@ export default function SongGenerator() {
     },
   });
 
-  // Auto-populate gift gallery from entries
+  // Auto-populate gift gallery from entries based on filter
   useEffect(() => {
     if (songType === 'gift_gallery' && entries.length > 0) {
-      const sortedEntries = [...entries].sort((a, b) => {
-        const order = { '1st': 1, '2nd': 2, '3rd': 3 };
+      let filteredEntries = [...entries];
+      
+      // Count unique gifts to determine if we should auto-limit
+      const uniqueGifts = new Set(entries.map(e => e.gift_name)).size;
+      const shouldAutoLimit = uniqueGifts >= 20;
+      
+      if (gifterFilter === 'first_and_shoutouts' || (gifterFilter === 'all_top_3' && shouldAutoLimit)) {
+        // Only 1st place and shoutouts
+        filteredEntries = entries.filter(e => e.rank === '1st' || e.rank === 'shoutout');
+      } else if (gifterFilter === 'all_top_3') {
+        // All top 3 (1st, 2nd, 3rd) - only when not auto-limited
+        filteredEntries = entries.filter(e => e.rank === '1st' || e.rank === '2nd' || e.rank === '3rd' || e.rank === 'shoutout');
+      } else if (gifterFilter === 'custom') {
+        // Only custom selected
+        filteredEntries = entries.filter(e => customSelectedIds.includes(e.id));
+      }
+      
+      const sortedEntries = filteredEntries.sort((a, b) => {
+        const order = { '1st': 1, '2nd': 2, '3rd': 3, 'shoutout': 4 };
         return (order[a.rank] || 99) - (order[b.rank] || 99);
       });
+      
       setFormData(prev => ({
         ...prev,
         gifters: sortedEntries.map(e => ({
+          id: e.id,
           name: e.gifter_phonetic || e.gifter_screen_name || e.gifter_username,
           username: e.gifter_username,
           rank: e.rank,
@@ -134,7 +155,14 @@ export default function SongGenerator() {
         }))
       }));
     }
-  }, [songType, entries]);
+  }, [songType, entries, gifterFilter, customSelectedIds]);
+
+  // Helper to count entries
+  const uniqueGiftCount = new Set(entries.map(e => e.gift_name)).size;
+  const shouldAutoLimit = uniqueGiftCount >= 20;
+  const firstPlaceCount = entries.filter(e => e.rank === '1st').length;
+  const shoutoutCount = entries.filter(e => e.rank === 'shoutout').length;
+  const allTop3Count = entries.filter(e => ['1st', '2nd', '3rd'].includes(e.rank)).length;
 
   const generateSong = async () => {
     setLoading(true);
@@ -393,8 +421,112 @@ ${includeLevelUp ? 'Include a verse encouraging the community to help level up!'
                 {/* Gift Gallery / Top Gifters */}
                 {(songType === 'gift_gallery' || songType === 'top_gifters') && (
                   <div className="space-y-3">
+                    {/* Gifter Filter Selection */}
+                    {entries.length > 0 && (
+                      <div className="space-y-2 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                        <Label className="text-purple-700">Which gifters to include?</Label>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                          <Button
+                            type="button"
+                            variant={gifterFilter === 'first_and_shoutouts' ? 'default' : 'outline'}
+                            className={`h-auto py-2 px-3 text-left ${gifterFilter === 'first_and_shoutouts' ? 'bg-purple-600' : ''}`}
+                            onClick={() => setGifterFilter('first_and_shoutouts')}
+                          >
+                            <div>
+                              <div className="font-medium">🥇 1st Place + Shoutouts</div>
+                              <div className="text-xs opacity-80">{firstPlaceCount + shoutoutCount} gifters</div>
+                            </div>
+                          </Button>
+                          <Button
+                            type="button"
+                            variant={gifterFilter === 'all_top_3' ? 'default' : 'outline'}
+                            className={`h-auto py-2 px-3 text-left ${gifterFilter === 'all_top_3' ? 'bg-purple-600' : ''}`}
+                            onClick={() => setGifterFilter('all_top_3')}
+                          >
+                            <div>
+                              <div className="font-medium">🏆 All Top 3</div>
+                              <div className="text-xs opacity-80">
+                                {shouldAutoLimit ? (
+                                  <span className="text-amber-300">Auto-limits to 1st (20+ gifts)</span>
+                                ) : (
+                                  `${allTop3Count} gifters`
+                                )}
+                              </div>
+                            </div>
+                          </Button>
+                          <Button
+                            type="button"
+                            variant={gifterFilter === 'custom' ? 'default' : 'outline'}
+                            className={`h-auto py-2 px-3 text-left ${gifterFilter === 'custom' ? 'bg-purple-600' : ''}`}
+                            onClick={() => setGifterFilter('custom')}
+                          >
+                            <div>
+                              <div className="font-medium">✨ Custom Select</div>
+                              <div className="text-xs opacity-80">{customSelectedIds.length} selected</div>
+                            </div>
+                          </Button>
+                        </div>
+                        
+                        {/* Custom Selection UI */}
+                        {gifterFilter === 'custom' && (
+                          <div className="mt-3 p-3 bg-white rounded-lg border max-h-48 overflow-y-auto">
+                            <div className="flex justify-between mb-2">
+                              <span className="text-sm font-medium text-gray-700">Select entries to include:</span>
+                              <div className="flex gap-2">
+                                <button 
+                                  type="button"
+                                  onClick={() => setCustomSelectedIds(entries.map(e => e.id))}
+                                  className="text-xs text-purple-600 hover:underline"
+                                >
+                                  All
+                                </button>
+                                <button 
+                                  type="button"
+                                  onClick={() => setCustomSelectedIds([])}
+                                  className="text-xs text-gray-500 hover:underline"
+                                >
+                                  Clear
+                                </button>
+                              </div>
+                            </div>
+                            <div className="space-y-1">
+                              {entries.map(entry => (
+                                <label 
+                                  key={entry.id}
+                                  className={`flex items-center gap-2 p-2 rounded cursor-pointer hover:bg-gray-50 ${
+                                    customSelectedIds.includes(entry.id) ? 'bg-purple-50' : ''
+                                  }`}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={customSelectedIds.includes(entry.id)}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setCustomSelectedIds(prev => [...prev, entry.id]);
+                                      } else {
+                                        setCustomSelectedIds(prev => prev.filter(id => id !== entry.id));
+                                      }
+                                    }}
+                                    className="rounded text-purple-600"
+                                  />
+                                  <span className="text-sm">
+                                    {entry.rank === '1st' && '🥇'}
+                                    {entry.rank === '2nd' && '🥈'}
+                                    {entry.rank === '3rd' && '🥉'}
+                                    {entry.rank === 'shoutout' && '⭐'}
+                                    {' '}{entry.gifter_screen_name || entry.gifter_username}
+                                    {entry.gift_name && <span className="text-gray-500"> - {entry.gift_name}</span>}
+                                  </span>
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
                     <div className="flex items-center justify-between">
-                      <Label>Gifters to Celebrate</Label>
+                      <Label>Gifters to Celebrate ({formData.gifters.length})</Label>
                       <Button variant="outline" size="sm" onClick={addGifter}>
                         + Add Gifter
                       </Button>
