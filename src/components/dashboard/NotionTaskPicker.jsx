@@ -40,14 +40,19 @@ export default function NotionTaskPicker({ userEmail, onAddToDay }) {
     enabled: !!userEmail,
   });
 
+  const [syncError, setSyncError] = useState(null);
+
   // Sync from Notion
   const syncMutation = useMutation({
     mutationFn: async () => {
       setIsSyncing(true);
+      setSyncError(null);
       const response = await base44.functions.invoke('fetchNotionTasks', {});
       
+      console.log('Notion sync response:', response.data);
+      
       if (response.data.error) {
-        throw new Error(response.data.error);
+        throw new Error(response.data.details || response.data.error);
       }
       
       const notionTasks = response.data.tasks || [];
@@ -64,12 +69,14 @@ export default function NotionTaskPicker({ userEmail, onAddToDay }) {
       
       return notionTasks;
     },
-    onSuccess: () => {
+    onSuccess: (tasks) => {
       queryClient.invalidateQueries({ queryKey: ['notionTasks'] });
       setIsSyncing(false);
+      console.log(`Synced ${tasks.length} tasks from Notion`);
     },
     onError: (error) => {
       console.error('Sync error:', error);
+      setSyncError(error.message);
       setIsSyncing(false);
     }
   });
@@ -167,6 +174,14 @@ export default function NotionTaskPicker({ userEmail, onAddToDay }) {
       </CardHeader>
 
       <CardContent>
+        {/* Sync error display */}
+        {syncError && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+            <p className="font-medium">Sync failed:</p>
+            <p className="mt-1">{syncError}</p>
+          </div>
+        )}
+
         {/* Today's scheduled tasks */}
         {todaysTasks.length > 0 && (
           <div className="mb-4">
