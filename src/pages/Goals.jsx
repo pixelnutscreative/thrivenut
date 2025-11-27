@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import AIStepsGenerator from '../components/goals/AIStepsGenerator';
 import GoalStepsList from '../components/goals/GoalStepsList';
 import GoalShareSelector from '../components/goals/GoalShareSelector';
+import SharedGoalCard from '../components/goals/SharedGoalCard';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 
@@ -752,28 +753,13 @@ export default function Goals() {
                         ) : (
                           <div className="grid md:grid-cols-2 gap-3">
                             {sharedGoals.map(goal => (
-                              <div key={goal.id} className="p-3 bg-gray-50 rounded-lg">
-                                <div className="flex items-start gap-2">
-                                  <span className="text-lg">{categoryIcons[goal.category] || '🎯'}</span>
-                                  <div className="flex-1">
-                                    <p className="font-medium text-gray-800">{goal.title}</p>
-                                    {goal.steps && goal.steps.length > 0 && (
-                                      <div className="mt-2">
-                                        <div className="flex justify-between text-xs text-gray-500 mb-1">
-                                          <span>Steps</span>
-                                          <span>{goal.steps.filter(s => s.completed).length}/{goal.steps.length}</span>
-                                        </div>
-                                        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                                          <div 
-                                            className="h-full bg-purple-500 rounded-full"
-                                            style={{ width: `${(goal.steps.filter(s => s.completed).length / goal.steps.length) * 100}%` }}
-                                          />
-                                        </div>
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
+                              <SharedGoalCard
+                                key={goal.id}
+                                goal={goal}
+                                sharerEmail={share.sharer_email}
+                                sharerName={share.sharer_name}
+                                currentUser={user}
+                              />
                             ))}
                           </div>
                         )}
