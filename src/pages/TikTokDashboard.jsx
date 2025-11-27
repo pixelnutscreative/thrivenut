@@ -30,27 +30,27 @@ export default function TikTokDashboard() {
   const todayDayName = format(new Date(), 'EEEE');
 
   const { data: contentGoal } = useQuery({
-    queryKey: ['contentGoal', weekStart],
+    queryKey: ['contentGoal', weekStart, effectiveEmail],
     queryFn: async () => {
       const goals = await base44.entities.ContentGoal.filter({ 
         week_starting: weekStart,
-        created_by: user.email 
+        created_by: effectiveEmail 
       });
       return goals[0] || null;
     },
-    enabled: !!user,
+    enabled: !!effectiveEmail,
   });
 
   const { data: liveSchedules = [] } = useQuery({
-    queryKey: ['liveSchedules', user?.email],
-    queryFn: () => base44.entities.LiveSchedule.filter({ created_by: user.email }, '-created_date'),
-    enabled: !!user,
+    queryKey: ['liveSchedules', effectiveEmail],
+    queryFn: () => base44.entities.LiveSchedule.filter({ created_by: effectiveEmail }, '-created_date'),
+    enabled: !!effectiveEmail,
   });
 
   const { data: contacts = [] } = useQuery({
-    queryKey: ['tiktokContacts', user?.email],
-    queryFn: () => base44.entities.TikTokContact.filter({ created_by: user.email }, '-created_date'),
-    enabled: !!user,
+    queryKey: ['tiktokContacts', effectiveEmail],
+    queryFn: () => base44.entities.TikTokContact.filter({ created_by: effectiveEmail }, '-created_date'),
+    enabled: !!effectiveEmail,
   });
 
   const updateGoalMutation = useMutation({
