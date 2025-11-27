@@ -16,9 +16,10 @@ import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 const typeConfig = {
-  post: { label: 'Post', icon: FileText, color: 'bg-purple-100 text-purple-700 border-purple-300' },
-  live: { label: 'Live', icon: Video, color: 'bg-pink-100 text-pink-700 border-pink-300' },
-  engagement: { label: 'Engagement', icon: MessageSquare, color: 'bg-teal-100 text-teal-700 border-teal-300' }
+  post: { label: 'Content Creation', icon: FileText, color: 'bg-purple-100 text-purple-700 border-purple-300', canShare: false },
+  schedule: { label: 'Schedule Posts', icon: Clock, color: 'bg-amber-100 text-amber-700 border-amber-300', canShare: false },
+  live: { label: 'Live', icon: Video, color: 'bg-pink-100 text-pink-700 border-pink-300', canShare: true },
+  engagement: { label: 'Engagement', icon: MessageSquare, color: 'bg-teal-100 text-teal-700 border-teal-300', canShare: false }
 };
 
 export default function ContentCalendar() {
@@ -157,15 +158,18 @@ export default function ContentCalendar() {
             <h1 className="text-3xl font-bold text-gray-800">Content Calendar</h1>
             <p className="text-gray-600">Schedule your posts, lives, and engagement</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button onClick={() => openAddModal('post')} variant="outline" className="border-purple-300 text-purple-700">
-              <FileText className="w-4 h-4 mr-2" /> Add Post
+              <FileText className="w-4 h-4 mr-2" /> Content Creation
+            </Button>
+            <Button onClick={() => openAddModal('schedule')} variant="outline" className="border-amber-300 text-amber-700">
+              <Clock className="w-4 h-4 mr-2" /> Schedule Posts
             </Button>
             <Button onClick={() => openAddModal('live')} variant="outline" className="border-pink-300 text-pink-700">
               <Video className="w-4 h-4 mr-2" /> Add Live
             </Button>
             <Button onClick={() => openAddModal('engagement')} variant="outline" className="border-teal-300 text-teal-700">
-              <MessageSquare className="w-4 h-4 mr-2" /> Add Engagement
+              <MessageSquare className="w-4 h-4 mr-2" /> Engagement
             </Button>
           </div>
         </div>
@@ -249,7 +253,11 @@ export default function ContentCalendar() {
             <div className="flex flex-wrap gap-4 text-sm">
               <div className="flex items-center gap-2">
                 <FileText className="w-4 h-4 text-purple-600" />
-                <span>{items.filter(i => i.type === 'post').length} Posts</span>
+                <span>{items.filter(i => i.type === 'post').length} Content</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-amber-600" />
+                <span>{items.filter(i => i.type === 'schedule').length} Schedule</span>
               </div>
               <div className="flex items-center gap-2">
                 <Video className="w-4 h-4 text-pink-600" />
@@ -278,12 +286,13 @@ export default function ContentCalendar() {
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label>Type</Label>
-              <Select value={formData.type} onValueChange={(v) => setFormData({ ...formData, type: v })}>
+              <Select value={formData.type} onValueChange={(v) => setFormData({ ...formData, type: v, share_to_directory: v === 'live' ? formData.share_to_directory : false })}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="post">📱 Post</SelectItem>
+                  <SelectItem value="post">📱 Content Creation</SelectItem>
+                  <SelectItem value="schedule">📅 Schedule Posts</SelectItem>
                   <SelectItem value="live">🔴 Live</SelectItem>
                   <SelectItem value="engagement">💬 Engagement</SelectItem>
                 </SelectContent>
@@ -348,16 +357,18 @@ export default function ContentCalendar() {
                 <span className="text-sm">🔄 Recurring weekly</span>
               </label>
 
-              <label className="flex items-center gap-3 cursor-pointer">
-                <Checkbox
-                  checked={formData.share_to_directory}
-                  onCheckedChange={(checked) => setFormData({ ...formData, share_to_directory: checked })}
-                />
-                <div>
-                  <span className="text-sm font-medium">📢 Share to Discover Creators</span>
-                  <p className="text-xs text-gray-500">Others can see this in the creator directory</p>
-                </div>
-              </label>
+              {formData.type === 'live' && (
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <Checkbox
+                    checked={formData.share_to_directory}
+                    onCheckedChange={(checked) => setFormData({ ...formData, share_to_directory: checked })}
+                  />
+                  <div>
+                    <span className="text-sm font-medium">📢 Share to Discover Creators</span>
+                    <p className="text-xs text-gray-500">Others can see this in the creator directory</p>
+                  </div>
+                </label>
+              )}
             </div>
           </div>
 
