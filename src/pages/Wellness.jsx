@@ -168,6 +168,22 @@ export default function Wellness() {
     },
   });
 
+  const mealNotesMutation = useMutation({
+    mutationFn: async ({ noteKey, value }) => {
+      if (selfCareLog) {
+        return await base44.entities.DailySelfCareLog.update(selfCareLog.id, { [noteKey]: value });
+      } else {
+        return await base44.entities.DailySelfCareLog.create({ 
+          date: today, 
+          [noteKey]: value 
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['selfCareToday'] });
+    },
+  });
+
   const eliminationMutation = useMutation({
     mutationFn: async (grades) => {
       if (selfCareLog) {
@@ -241,6 +257,7 @@ export default function Wellness() {
           <SelfCareChecklist
             selfCareLog={selfCareLog}
             onToggleTask={(taskId, value) => selfCareMutation.mutate({ taskId, value })}
+            onUpdateMealNotes={(noteKey, value) => mealNotesMutation.mutate({ noteKey, value })}
             requiredTasks={preferences?.required_self_care_tasks || []}
             preferences={preferences}
             medicationsCount={medicationsCount || 0}
