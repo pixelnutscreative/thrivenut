@@ -202,7 +202,7 @@ export default function SongGenerator() {
   const generateSong = async () => {
     setLoading(true);
     try {
-      const hostName = preferences?.tiktok_display_name || preferences?.tiktok_username || 'Host';
+      const hostDisplayName = preferences?.tiktok_display_name || preferences?.tiktok_username || 'the host';
       const roomVibe = preferences?.room_vibe || '';
       const tone = formData.tone_override || preferences?.default_song_tone || 'upbeat';
       const includeLevelUp = preferences?.include_levelup_verse !== false;
@@ -211,7 +211,7 @@ export default function SongGenerator() {
       let prompt = `You are Sunny Songbird, a fun, bubbly songwriter who helps TikTok lyve-stream hosts turn their community moments into songs!
 
 Voice: High-energy, supportive, and always hype. Think "best friend who hypes you up AND writes your bars."
-Always spell out usernames with numbers (e.g., SheriD777 = Sheri Dee Seven Seven Seven).
+CRITICAL: Use the PHONETIC spelling provided for each gifter's name - this is how it should be pronounced/sung!
 Always write "lyve" (not LIVE) so it's pronounced correctly.
 
 Song Format:
@@ -222,7 +222,7 @@ Song Format:
 [FINAL CHORUS]
 [OUTRO/TAG]
 
-Host Name: ${hostName}
+Creator/Host Display Name: ${hostDisplayName} (use this name in the song, NOT "host")
 ${roomVibe ? `Room Vibe/Theme: ${roomVibe}` : ''}
 Tone: ${tone}
 ${league ? `League Level: ${league}` : ''}
@@ -232,24 +232,24 @@ ${includeLevelUp ? 'Include a verse encouraging the community to help level up!'
 
       if (songType === 'gift_gallery' || songType === 'top_gifters') {
         const gifterList = formData.gifters.map(g => 
-          `${g.rank || 'Gifter'}: ${g.name}${g.username ? ` (@${g.username})` : ''}${g.gift ? ` sent ${g.gift}` : ''}`
+          `${g.rank || 'Gifter'}: "${g.name}" (this is the PHONETIC pronunciation to use in the song)${g.gift ? ` - sent ${g.gift}` : ''}`
         ).join('\n');
-        prompt += `Create a Thank-You Song celebrating these gifters:\n${gifterList}\n\nMake each gifter feel special and appreciated. Weave in the room vibe if provided.`;
+        prompt += `Create a Thank-You Song celebrating these gifters for ${hostDisplayName}'s stream:\n${gifterList}\n\nCRITICAL: Use the PHONETIC name provided in quotes for each gifter - that's exactly how it should appear in the lyrics!\nMake each gifter feel special and appreciated. Use "${hostDisplayName}" when referring to the creator. Weave in the room vibe if provided.`;
       } else if (songType === 'battle_hype') {
-        prompt += `Create a high-energy Battle Hype Song to pump up the crowd! Focus on energy, tapping, sharing, and supporting ${hostName}. Make it chant-worthy!`;
+        prompt += `Create a high-energy Battle Hype Song to pump up the crowd! Focus on energy, tapping, sharing, and supporting ${hostDisplayName}. Make it chant-worthy!`;
       } else if (songType === 'engagement') {
         const action = formData.engagement_action;
         prompt += `Create an Engagement Hype Song focused on "${action}". This should be chant-style with NO usernames. Focus on: "Tap tap tap the screen," "Share the lyve," "Drop stickers," "Push the energy," "Keep the chat flowing." Make it catchy and repeatable!`;
       } else if (songType === 'milestone') {
-        prompt += `Create a Milestone Celebration Song for: "${formData.milestone}". Make it epic and celebratory!`;
+        prompt += `Create a Milestone Celebration Song for ${hostDisplayName}: "${formData.milestone}". Make it epic and celebratory!`;
       } else if (songType === 'custom') {
-        prompt += `Create a custom celebration song based on: "${formData.custom_prompt}"`;
+        prompt += `Create a custom celebration song for ${hostDisplayName} based on: "${formData.custom_prompt}"`;
       } else if (songType === 'most_taps') {
-        prompt += `Create a song celebrating the biggest tappers! Focus on heart taps, screen tapping, and keeping the energy flowing for ${hostName}.`;
+        prompt += `Create a song celebrating the biggest tappers! Focus on heart taps, screen tapping, and keeping the energy flowing for ${hostDisplayName}.`;
       } else if (songType === 'most_shares') {
-        prompt += `Create a song thanking those who share the lyve! Celebrate people who spread the word and bring new viewers to ${hostName}'s stream.`;
+        prompt += `Create a song thanking those who share the lyve! Celebrate people who spread the word and bring new viewers to ${hostDisplayName}'s stream.`;
       } else if (songType === 'top_viewers') {
-        prompt += `Create a song celebrating loyal viewers who watch the longest! Thank them for their time and dedication to ${hostName}'s content.`;
+        prompt += `Create a song celebrating loyal viewers who watch the longest! Thank them for their time and dedication to ${hostDisplayName}'s content.`;
       }
 
       const result = await base44.integrations.Core.InvokeLLM({
