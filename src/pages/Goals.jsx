@@ -39,7 +39,7 @@ const goalTypes = [
 export default function Goals() {
   const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
-  const [showModal, setShowModal] = useState(false);
+  const [showForm, setShowForm] = useState(false);
   const [editingGoal, setEditingGoal] = useState(null);
   const [formData, setFormData] = useState({
     title: '',
@@ -134,7 +134,7 @@ export default function Goals() {
       start_date: format(new Date(), 'yyyy-MM-dd')
     });
     setEditingGoal(null);
-    setShowModal(false);
+    setShowForm(false);
   };
 
   const toggleGoalExpand = (goalId) => {
@@ -165,7 +165,7 @@ export default function Goals() {
       shared_with: goal.shared_with || [],
       start_date: goal.start_date || format(new Date(), 'yyyy-MM-dd')
     });
-    setShowModal(true);
+    setShowForm(true);
   };
 
   const handleSubmit = () => {
