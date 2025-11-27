@@ -104,6 +104,26 @@ function ScheduledItem({
     Engagement: 'border-l-blue-500'
   };
 
+  // Determine display text for days
+  const getDaysDisplay = () => {
+    const frequency = schedule.frequency;
+    const days = schedule.days || [];
+    
+    if (frequency === 'daily' || (days.length === 7)) {
+      return 'Daily';
+    } else if (frequency === 'weekdays' || (days.length === 5 && !days.includes('Saturday') && !days.includes('Sunday'))) {
+      return 'Weekdays';
+    } else if (frequency === 'weekends' || (days.length === 2 && days.includes('Saturday') && days.includes('Sunday'))) {
+      return 'Weekends';
+    } else if (days.length > 1) {
+      return days.map(d => d.slice(0, 3)).join(', ');
+    } else if (days.length === 1) {
+      return days[0];
+    } else {
+      return schedule.day_of_week || 'Not set';
+    }
+  };
+
   return (
     <div className={`flex flex-col gap-2 p-3 border rounded-lg bg-white border-l-4 ${typeColors[type]}`}>
       <div className="flex items-center justify-between">
@@ -111,7 +131,7 @@ function ScheduledItem({
           <Checkbox checked={schedule.completed} onCheckedChange={onToggleComplete} />
           <div>
             <p className={`font-medium text-gray-800 ${schedule.completed ? 'line-through text-gray-400' : ''}`}>
-              {type} on {schedule.day_of_week} at {schedule.time}
+              {type} - {getDaysDisplay()} at {schedule.time}
             </p>
             {title && <p className="text-sm text-gray-700 font-semibold mt-1">{title}</p>}
             {description && <p className="text-xs text-gray-600 mt-1">{description}</p>}
