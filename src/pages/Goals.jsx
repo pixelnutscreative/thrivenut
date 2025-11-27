@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Target, Plus, Edit, Trash2, CheckCircle2, ChevronDown, ChevronRight, Share2, Users } from 'lucide-react';
@@ -189,13 +189,183 @@ export default function Goals() {
             <p className="text-gray-600">Track your personal goals and progress</p>
           </div>
           <Button 
-            onClick={() => setShowModal(true)}
+            onClick={() => { resetForm(); setShowForm(!showForm); }}
             className="bg-purple-600 hover:bg-purple-700 h-12"
           >
             <Plus className="w-5 h-5 mr-2" />
-            New Goal
+            {showForm ? 'Cancel' : 'New Goal'}
           </Button>
         </motion.div>
+
+        {/* Inline Goal Form */}
+        <AnimatePresence>
+          {showForm && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden"
+            >
+              <Card className="border-2 border-purple-200">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg">{editingGoal ? 'Edit Goal' : 'Create New Goal'}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Goal Title *</label>
+                      <Input
+                        placeholder="What do you want to achieve?"
+                        value={formData.title}
+                        onChange={(e) => setFormData({...formData, title: e.target.value})}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Category</label>
+                      <Select value={formData.category} onValueChange={(val) => setFormData({...formData, category: val})}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="spiritual">🙏 Spiritual</SelectItem>
+                          <SelectItem value="health">💪 Health</SelectItem>
+                          <SelectItem value="personal">🎯 Personal</SelectItem>
+                          <SelectItem value="financial">💰 Financial</SelectItem>
+                          <SelectItem value="relationship">❤️ Relationship</SelectItem>
+                          <SelectItem value="learning">📚 Learning</SelectItem>
+                          <SelectItem value="career">💼 Career</SelectItem>
+                          <SelectItem value="creative">🎨 Creative</SelectItem>
+                          <SelectItem value="other">✨ Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Description (Optional)</label>
+                    <Textarea
+                      placeholder="Add more details about your goal..."
+                      value={formData.description}
+                      onChange={(e) => setFormData({...formData, description: e.target.value})}
+                      rows={2}
+                    />
+                  </div>
+
+                  {/* Goal Type Selection - Horizontal */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Goal Type</label>
+                    <div className="flex flex-wrap gap-2">
+                      {goalTypes.map(type => (
+                        <button
+                          key={type.id}
+                          type="button"
+                          onClick={() => setFormData({
+                            ...formData, 
+                            goal_type: type.id,
+                            frequency: type.id === 'habit' ? 'daily' : 'one-time',
+                            target_value: type.id === 'habit' ? 1 : 0
+                          })}
+                          className={`px-3 py-2 rounded-lg border-2 text-sm transition-all ${
+                            formData.goal_type === type.id
+                              ? 'border-purple-500 bg-purple-50 font-medium'
+                              : 'border-gray-200 hover:border-purple-300'
+                          }`}
+                        >
+                          {type.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Target Date</label>
+                      <Input
+                        type="date"
+                        value={formData.target_date}
+                        onChange={(e) => setFormData({...formData, target_date: e.target.value})}
+                      />
+                    </div>
+                    
+                    {formData.goal_type === 'habit' && (
+                      <>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Frequency</label>
+                          <Select value={formData.frequency} onValueChange={(val) => setFormData({...formData, frequency: val})}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="daily">Daily</SelectItem>
+                              <SelectItem value="weekly">Weekly</SelectItem>
+                              <SelectItem value="monthly">Monthly</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Target Value</label>
+                          <Input
+                            type="number"
+                            min="1"
+                            value={formData.target_value}
+                            onChange={(e) => setFormData({...formData, target_value: parseInt(e.target.value) || 1})}
+                          />
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Steps Section */}
+                  <div className="space-y-3 pt-4 border-t">
+                    <label className="text-sm font-medium">Steps / Mini-Goals</label>
+                    
+                    <AIStepsGenerator
+                      goalTitle={formData.title}
+                      goalDescription={formData.description}
+                      goalType={formData.goal_type}
+                      existingSteps={formData.steps}
+                      onStepsGenerated={(steps) => setFormData({...formData, steps})}
+                    />
+                    
+                    {formData.steps.length > 0 && (
+                      <GoalStepsList
+                        steps={formData.steps}
+                        onChange={(steps) => setFormData({...formData, steps})}
+                        editable={true}
+                      />
+                    )}
+                  </div>
+
+                  {/* Share with specific people */}
+                  {sharingConnections.length > 0 && (
+                    <div className="space-y-3 pt-4 border-t">
+                      <label className="text-sm font-medium flex items-center gap-2">
+                        <Share2 className="w-4 h-4" />
+                        Share this goal with
+                      </label>
+                      <GoalShareSelector
+                        connections={sharingConnections}
+                        selectedEmails={formData.shared_with}
+                        onChange={(emails) => setFormData({...formData, shared_with: emails})}
+                      />
+                    </div>
+                  )}
+
+                  <div className="flex justify-end gap-3 pt-4 border-t">
+                    <Button variant="outline" onClick={resetForm}>Cancel</Button>
+                    <Button 
+                      onClick={handleSubmit}
+                      disabled={!formData.title.trim()}
+                      className="bg-purple-600 hover:bg-purple-700"
+                    >
+                      {editingGoal ? 'Update Goal' : 'Create Goal'}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Goals Grid */}
         {goals && goals.length > 0 ? (
@@ -354,7 +524,7 @@ export default function Goals() {
               <p className="text-gray-500 text-lg mb-2">No goals yet</p>
               <p className="text-gray-400 mb-6">Start by creating your first goal</p>
               <Button 
-                onClick={() => setShowModal(true)}
+                onClick={() => setShowForm(true)}
                 className="bg-purple-600 hover:bg-purple-700"
               >
                 <Plus className="w-5 h-5 mr-2" />
@@ -365,170 +535,6 @@ export default function Goals() {
         )}
       </div>
 
-      {/* Goal Modal */}
-      <Dialog open={showModal} onOpenChange={(open) => !open && resetForm()}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{editingGoal ? 'Edit Goal' : 'Create New Goal'}</DialogTitle>
-          </DialogHeader>
-          
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Goal Title</label>
-              <Input
-                placeholder="e.g., Drink 8 glasses of water daily"
-                value={formData.title}
-                onChange={(e) => setFormData({...formData, title: e.target.value})}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Description (Optional)</label>
-              <Textarea
-                placeholder="Add more details about your goal..."
-                value={formData.description}
-                onChange={(e) => setFormData({...formData, description: e.target.value})}
-                rows={2}
-              />
-            </div>
-
-            {/* Goal Type Selection */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">What type of goal is this?</label>
-              <div className="grid grid-cols-2 gap-2">
-                {goalTypes.map(type => (
-                  <div
-                    key={type.id}
-                    onClick={() => setFormData({
-                      ...formData, 
-                      goal_type: type.id,
-                      frequency: type.id === 'habit' ? 'daily' : 'one-time',
-                      target_value: type.id === 'habit' ? 1 : 0
-                    })}
-                    className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                      formData.goal_type === type.id
-                        ? 'border-purple-500 bg-purple-50'
-                        : 'border-gray-200 hover:border-purple-300'
-                    }`}
-                  >
-                    <p className="font-medium text-sm">{type.label}</p>
-                    <p className="text-xs text-gray-500">{type.description}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Category</label>
-                <Select value={formData.category} onValueChange={(val) => setFormData({...formData, category: val})}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="spiritual">🙏 Spiritual</SelectItem>
-                    <SelectItem value="health">💪 Health</SelectItem>
-                    <SelectItem value="personal">🎯 Personal</SelectItem>
-                    <SelectItem value="financial">💰 Financial</SelectItem>
-                    <SelectItem value="relationship">❤️ Relationship</SelectItem>
-                    <SelectItem value="learning">📚 Learning</SelectItem>
-                    <SelectItem value="career">💼 Career</SelectItem>
-                    <SelectItem value="creative">🎨 Creative</SelectItem>
-                    <SelectItem value="other">✨ Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Target Date (Optional)</label>
-                <Input
-                  type="date"
-                  value={formData.target_date}
-                  onChange={(e) => setFormData({...formData, target_date: e.target.value})}
-                />
-              </div>
-            </div>
-
-            {/* Frequency - only show for habit type */}
-            {formData.goal_type === 'habit' && (
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Frequency</label>
-                  <Select value={formData.frequency} onValueChange={(val) => setFormData({...formData, frequency: val})}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="daily">Daily</SelectItem>
-                      <SelectItem value="weekly">Weekly</SelectItem>
-                      <SelectItem value="monthly">Monthly</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Target Value</label>
-                  <Input
-                    type="number"
-                    min="1"
-                    value={formData.target_value}
-                    onChange={(e) => setFormData({...formData, target_value: parseInt(e.target.value) || 1})}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Steps Section */}
-            <div className="space-y-3 pt-4 border-t">
-              <label className="text-sm font-medium">Steps / Mini-Goals</label>
-              <p className="text-xs text-gray-500">Break your goal into smaller, actionable steps</p>
-              
-              <AIStepsGenerator
-                goalTitle={formData.title}
-                goalDescription={formData.description}
-                goalType={formData.goal_type}
-                existingSteps={formData.steps}
-                onStepsGenerated={(steps) => setFormData({...formData, steps})}
-              />
-              
-              {formData.steps.length > 0 && (
-                <GoalStepsList
-                  steps={formData.steps}
-                  onChange={(steps) => setFormData({...formData, steps})}
-                  editable={true}
-                />
-              )}
-            </div>
-
-            {/* Share with specific people */}
-            {sharingConnections.length > 0 && (
-              <div className="space-y-3 pt-4 border-t">
-                <label className="text-sm font-medium flex items-center gap-2">
-                  <Share2 className="w-4 h-4" />
-                  Share this goal with
-                </label>
-                <GoalShareSelector
-                  connections={sharingConnections}
-                  selectedEmails={formData.shared_with}
-                  onChange={(emails) => setFormData({...formData, shared_with: emails})}
-                />
-              </div>
-            )}
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={resetForm}>
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleSubmit}
-              disabled={!formData.title.trim()}
-              className="bg-purple-600 hover:bg-purple-700"
-            >
-              {editingGoal ? 'Update Goal' : 'Create Goal'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
