@@ -661,7 +661,7 @@ export default function WeeklyGifterGallery() {
             <p className="text-gray-600 mt-1">Manage your weekly gift entries and generate songs</p>
           </div>
           <div className="flex gap-2">
-            {isAdmin && (
+            {isAdmin && !isImpersonating && (
               <Link to={createPageUrl('MasterContactDatabase')}>
                 <Button variant="outline" className="text-indigo-600 border-indigo-300 hover:bg-indigo-50">
                   <Users className="w-4 h-4 mr-2" /> Master DB
