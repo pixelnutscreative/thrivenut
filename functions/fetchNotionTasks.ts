@@ -77,12 +77,24 @@ Deno.serve(async (req) => {
         }
       }
       
+      // Handle category - could be string or array
+      let category = simplifiedProps['Category'] || simplifiedProps['category'] || null;
+      if (Array.isArray(category)) {
+        category = category.join(', ');
+      }
+      
+      // Handle priority - could be string or array
+      let priority = simplifiedProps['Priority'] || simplifiedProps['priority'] || null;
+      if (Array.isArray(priority)) {
+        priority = priority[0] || null;
+      }
+
       return {
         notion_id: page.id,
         title: title,
         status: simplifiedProps['Status'] || simplifiedProps['status'] || null,
-        priority: simplifiedProps['Priority'] || simplifiedProps['priority'] || null,
-        category: simplifiedProps['Category'] || simplifiedProps['category'] || null,
+        priority: priority,
+        category: category,
         due_date: simplifiedProps['Due'] || simplifiedProps['Due Date'] || simplifiedProps['due_date'] || null,
         notion_url: page.url,
         properties: simplifiedProps,
