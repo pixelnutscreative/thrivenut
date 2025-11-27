@@ -26,6 +26,7 @@ import AdminImpersonate from './pages/AdminImpersonate';
 import WeeklyGifterGallery from './pages/WeeklyGifterGallery';
 import MasterContactDatabase from './pages/MasterContactDatabase';
 import Admin from './pages/Admin';
+import ContentCalendar from './pages/ContentCalendar';
 import __Layout from './Layout.jsx';
 
 
@@ -58,6 +59,7 @@ export const PAGES = {
     "WeeklyGifterGallery": WeeklyGifterGallery,
     "MasterContactDatabase": MasterContactDatabase,
     "Admin": Admin,
+    "ContentCalendar": ContentCalendar,
 }
 
 export const pagesConfig = {
