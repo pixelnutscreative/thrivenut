@@ -295,6 +295,22 @@ export default function WeeklyGifterGallery() {
   // Check if we're impersonating (effectiveEmail differs from real user email)
   const isImpersonating = effectiveEmail && user?.email && effectiveEmail !== user.email;
 
+  // Helper to create entities as the impersonated user
+  const createAsTargetUser = async (entityName, data) => {
+    if (isImpersonating) {
+      // Use backend function to create with correct created_by
+      const result = await base44.functions.invoke('createAsUser', {
+        entityName,
+        data,
+        targetEmail: effectiveEmail
+      });
+      return result.data?.data;
+    } else {
+      // Normal creation
+      return base44.entities[entityName].create(data);
+    }
+  };
+
   const createEntriesMutation = useMutation({
     mutationFn: async (entriesToCreate) => {
       const promises = entriesToCreate.map(async (entry) => {
@@ -303,16 +319,15 @@ export default function WeeklyGifterGallery() {
         );
 
         if (!gifter && entry.username) {
-          // Create contact - always include created_by when impersonating
+          // Create contact using helper
           const contactData = {
             username: entry.username,
             display_name: entry.screen_name || entry.username,
             phonetic: entry.phonetic || '',
             is_gifter: true,
-            gifted_for: preferences?.tiktok_username ? [preferences.tiktok_username] : [],
-            created_by: effectiveEmail  // Always set to effective email
+            gifted_for: preferences?.tiktok_username ? [preferences.tiktok_username] : []
           };
-          gifter = await base44.entities.TikTokContact.create(contactData);
+          gifter = await createAsTargetUser('TikTokContact', contactData);
         } else if (gifter && preferences?.tiktok_username) {
           // Update existing gifter to add this receiver if not already there
           const currentGiftedFor = gifter.gifted_for || gifter.data?.gifted_for || [];
@@ -329,7 +344,7 @@ export default function WeeklyGifterGallery() {
           ? gifts.find(g => g.name?.toLowerCase().includes(entry.gift_name?.toLowerCase()))
           : null;
 
-        // Create entry - always include created_by when impersonating
+        // Create entry using helper
         const entryData = {
           gifter_id: gifter.id,
           gifter_username: gifter.username || entry.username,
@@ -338,10 +353,9 @@ export default function WeeklyGifterGallery() {
           gift_id: gift?.id || '',
           gift_name: gift?.name || entry.gift_name || 'Unknown',
           rank: entry.rank,
-          week: selectedWeek,
-          created_by: effectiveEmail  // Always set to effective email
+          week: selectedWeek
         };
-        return base44.entities.GiftingEntry.create(entryData);
+        return createAsTargetUser('GiftingEntry', entryData);
       });
 
       return Promise.all(promises.filter(Boolean));
