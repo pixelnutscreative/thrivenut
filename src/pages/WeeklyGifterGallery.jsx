@@ -515,16 +515,20 @@ export default function WeeklyGifterGallery() {
           
           // Analyze this single image
           const result = await base44.integrations.Core.InvokeLLM({
-            prompt: `Analyze this TikTok gifting leaderboard screenshot and extract ALL gifters visible.
+            prompt: `Analyze this TikTok gifting leaderboard screenshot and extract the TOP 3 gifters for EACH gift visible.
 
           Look for:
+          - The gift name/type shown
+          - 1st, 2nd, 3rd place gifters for that gift
           - Usernames (usually start with @)
-          - Display names / screen names  
-          - Their placement (1st, 2nd, 3rd place, or any ranking number visible)
-          - Any gift names visible
+          - Display names / screen names
 
-          CRITICAL: Extract EVERY SINGLE gifter you can see in the image, not just top 3. Include ALL visible entries - 4th, 5th, 6th, 7th, 8th, 9th, 10th, etc. Count them all.
-          For each username, generate a "suggested_phonetic" field with how it would be pronounced naturally in English for a song.`,
+          CRITICAL RULES:
+          - For EACH gift visible, extract exactly 3 entries (1st, 2nd, 3rd place)
+          - If a gifter name just says "Gifter" or is generic, use "N/A" for both username and screen_name
+          - If you can only see 1 or 2 gifters for a gift, still create 3 entries with "N/A" for missing ones
+          - For each real username, generate a "suggested_phonetic" field with how it would be pronounced naturally in English for a song
+          - Make sure to identify the gift name for each set of gifters`,
             file_urls: [file_url],
             response_json_schema: {
               type: "object",
@@ -534,17 +538,17 @@ export default function WeeklyGifterGallery() {
                   items: {
                     type: "object",
                     properties: {
-                       rank: { type: "string", description: "1st, 2nd, 3rd, 4th, 5th, 6th, 7th, 8th, 9th, 10th, etc" },
-                       username: { type: "string", description: "TikTok username without @" },
-                       screen_name: { type: "string", description: "Display name shown" },
+                       rank: { type: "string", description: "1st, 2nd, or 3rd" },
+                       username: { type: "string", description: "TikTok username without @, or N/A if not visible/generic" },
+                       screen_name: { type: "string", description: "Display name shown, or N/A if just says Gifter or not visible" },
                        suggested_phonetic: { type: "string", description: "How the username/name would be pronounced for a song" },
-                       gift_name: { type: "string", description: "Name of gift if visible" }
+                       gift_name: { type: "string", description: "Name of gift this gifter sent" }
                      }
                   }
                 },
-                total_count: {
+                gifts_found: {
                   type: "number",
-                  description: "Total number of gifters extracted from this image"
+                  description: "Total number of different gifts found in image"
                 }
               }
             }
