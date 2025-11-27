@@ -679,7 +679,13 @@ export default function WeeklyGifterGallery() {
               </Button>
               <div className="text-center">
                 <p className="text-sm text-gray-500">Week Ending</p>
-                <p className="font-bold text-lg">{format(new Date(selectedWeek + 'T12:00:00'), 'MMMM d, yyyy')}</p>
+                <input
+                  type="date"
+                  value={selectedWeek}
+                  onChange={(e) => setSelectedWeek(e.target.value)}
+                  className="font-bold text-lg text-center bg-transparent border-none cursor-pointer hover:text-purple-600"
+                />
+                <p className="text-xs text-purple-600">{format(new Date(selectedWeek + 'T12:00:00'), 'MMMM d, yyyy')}</p>
               </div>
               <Button variant="outline" size="sm" onClick={goToNextWeek}>
                 Next Week <ChevronRight className="w-4 h-4 ml-1" />
