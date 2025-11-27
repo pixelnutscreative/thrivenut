@@ -22,8 +22,10 @@ export default function SelfCareChecklist({
   compact = false,
   preferences = {},
   medicationsCount = 0,
-  supplementsCount = 0
+  supplementsCount = 0,
+  onUpdateOrder = null
 }) {
+  const [isReordering, setIsReordering] = useState(false);
   const baseTasks = [
     { id: 'shower_completed', label: 'Take a shower', icon: ShowerHead, color: 'text-blue-500' },
     { id: 'breakfast_completed', label: mealTips.breakfast_completed, icon: Utensils, color: 'text-orange-500' },
