@@ -502,14 +502,25 @@ Creator display name: ${hostDisplayName}`,
           <p className="text-gray-600 mt-2">Your TikTok Lyve Hypegirl! 🎵</p>
           <p className="text-sm text-gray-500">Let's turn your community moments into songs!</p>
           
-          <Button 
-            variant="outline" 
-            onClick={() => setShowHistoryModal(true)}
-            className="mt-4"
-          >
-            <History className="w-4 h-4 mr-2" />
-            Song History ({songHistory.length})
-          </Button>
+          <div className="flex justify-center gap-3 mt-4 flex-wrap">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowHistoryModal(true)}
+            >
+              <History className="w-4 h-4 mr-2" />
+              Song History ({songHistory.length})
+            </Button>
+            <a 
+              href="https://livecenter.tiktok.com/rank_list?lang=en" 
+              target="_blank" 
+              rel="noopener noreferrer"
+            >
+              <Button variant="outline" className="border-pink-300 text-pink-700 hover:bg-pink-50">
+                <ExternalLink className="w-4 h-4 mr-2" />
+                Get Top Viewers & Gifters
+              </Button>
+            </a>
+          </div>
         </div>
 
         {/* Settings Preview */}

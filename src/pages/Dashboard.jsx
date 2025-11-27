@@ -8,7 +8,9 @@ import { Loader2, LogOut } from 'lucide-react';
 import QuickStats from '../components/dashboard/QuickStats';
 import MyDaySection from '../components/dashboard/MyDaySection';
 import WeeklyGoalCard from '../components/tiktok/WeeklyGoalCard';
-import GoalEditModal from '../components/tiktok/GoalEditModal';
+import PostScheduleModal from '../components/tiktok/PostScheduleModal';
+import LiveScheduleModal from '../components/tiktok/LiveScheduleModal';
+import EngagementScheduleModal from '../components/tiktok/EngagementScheduleModal';
 import OnboardingModal from '../components/onboarding/OnboardingModal';
 import SpecialEventsCard from '../components/dashboard/SpecialEventsCard';
 import NotionTaskPicker from '../components/dashboard/NotionTaskPicker';
@@ -19,7 +21,9 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
-  const [showGoalModal, setShowGoalModal] = useState(false);
+  const [showPostsModal, setShowPostsModal] = useState(false);
+  const [showLivesModal, setShowLivesModal] = useState(false);
+  const [showEngagementModal, setShowEngagementModal] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -184,53 +188,34 @@ export default function Dashboard() {
     },
     });
 
-  const createOrUpdateGoalMutation = useMutation({
-    mutationFn: async (goalData) => {
-      console.log('Saving goal data:', goalData);
-      
-      // Also save as template for future weeks
-      const templates = await base44.entities.ContentScheduleTemplate.filter({ 
-        created_by: user.email 
-      });
-      
-      const templateData = {
-        scheduled_posts: goalData.scheduled_posts || [],
-        scheduled_lives: goalData.scheduled_lives || [],
-        scheduled_engagement: goalData.scheduled_engagement || [],
-        notes: goalData.notes || ''
-      };
-      
-      console.log('Saving template:', templateData);
+  // Save schedule by type
+  const saveScheduleMutation = useMutation({
+    mutationFn: async ({ field, data }) => {
+      // Also update template
+      const templates = await base44.entities.ContentScheduleTemplate.filter({ created_by: user.email });
+      const templateUpdate = { [field]: data };
       
       if (templates[0]) {
-        await base44.entities.ContentScheduleTemplate.update(templates[0].id, templateData);
+        await base44.entities.ContentScheduleTemplate.update(templates[0].id, templateUpdate);
       } else {
-        await base44.entities.ContentScheduleTemplate.create(templateData);
+        await base44.entities.ContentScheduleTemplate.create(templateUpdate);
       }
       
-      // Now save the current week's goal
+      // Update current week's goal
       if (contentGoal) {
-        console.log('Updating existing goal:', contentGoal.id);
-        return await base44.entities.ContentGoal.update(contentGoal.id, goalData);
+        return await base44.entities.ContentGoal.update(contentGoal.id, { [field]: data });
       } else {
-        console.log('Creating new goal for week:', getCurrentWeekStart());
         return await base44.entities.ContentGoal.create({
           week_starting: getCurrentWeekStart(),
-          ...goalData,
-          scheduled_posts: goalData.scheduled_posts || [],
-          scheduled_lives: goalData.scheduled_lives || [],
-          scheduled_engagement: goalData.scheduled_engagement || []
+          [field]: data
         });
       }
     },
     onSuccess: () => {
-      console.log('Goal saved successfully!');
       queryClient.invalidateQueries({ queryKey: ['contentGoal'] });
-      setShowGoalModal(false);
-    },
-    onError: (error) => {
-      console.error('Error saving goal:', error);
-      alert('Error saving schedule: ' + error.message);
+      setShowPostsModal(false);
+      setShowLivesModal(false);
+      setShowEngagementModal(false);
     },
   });
 
@@ -308,8 +293,9 @@ export default function Dashboard() {
         {/* Weekly Content Schedule */}
         <WeeklyGoalCard
           goal={contentGoal}
-          onEdit={() => setShowGoalModal(true)}
-          onIncrement={(field) => incrementGoalMutation.mutate(field)}
+          onEditPosts={() => setShowPostsModal(true)}
+          onEditLives={() => setShowLivesModal(true)}
+          onEditEngagement={() => setShowEngagementModal(true)}
           onToggleDayComplete={(field, index, day) => toggleDayCompleteMutation.mutate({ field, index, day })}
         />
 
@@ -354,11 +340,25 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <GoalEditModal
-        isOpen={showGoalModal}
-        onClose={() => setShowGoalModal(false)}
-        currentGoal={contentGoal}
-        onSave={(data) => createOrUpdateGoalMutation.mutate(data)}
+      <PostScheduleModal
+        isOpen={showPostsModal}
+        onClose={() => setShowPostsModal(false)}
+        posts={contentGoal?.scheduled_posts || []}
+        onSave={(data) => saveScheduleMutation.mutate({ field: 'scheduled_posts', data })}
+      />
+      
+      <LiveScheduleModal
+        isOpen={showLivesModal}
+        onClose={() => setShowLivesModal(false)}
+        lives={contentGoal?.scheduled_lives || []}
+        onSave={(data) => saveScheduleMutation.mutate({ field: 'scheduled_lives', data })}
+      />
+      
+      <EngagementScheduleModal
+        isOpen={showEngagementModal}
+        onClose={() => setShowEngagementModal(false)}
+        engagements={contentGoal?.scheduled_engagement || []}
+        onSave={(data) => saveScheduleMutation.mutate({ field: 'scheduled_engagement', data })}
       />
 
       <OnboardingModal
