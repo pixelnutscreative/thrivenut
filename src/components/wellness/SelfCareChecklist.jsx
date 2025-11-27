@@ -47,30 +47,40 @@ export default function SelfCareChecklist({
 
   const allTasks = [...baseTasks, ...bibleTasks];
   
+  // Default order for self-care tasks
+  const defaultOrder = [
+    'drank_water',
+    'bible_reading_morning',
+    'physical_activity',
+    'shower_completed',
+    'breakfast_completed',
+    'brushed_teeth_morning',
+    'took_medications',
+    'took_supplements',
+    'lunch_completed',
+    'dinner_completed',
+    'brushed_teeth_night',
+    'bible_reading_night'
+  ];
+
   // Get saved order from preferences or use default
   const savedOrder = preferences?.self_care_order || [];
   
-  // Sort tasks by saved order, keeping unsaved ones at the end
-  const selfCareTasks = savedOrder.length > 0
-    ? [...allTasks].sort((a, b) => {
-        const aIndex = savedOrder.indexOf(a.id);
-        const bIndex = savedOrder.indexOf(b.id);
-        if (aIndex === -1 && bIndex === -1) return 0;
-        if (aIndex === -1) return 1;
-        if (bIndex === -1) return -1;
-        return aIndex - bIndex;
-      })
-    : allTasks;
+  // Get the order to use (saved or default), filtering to only include available tasks
+  const getOrderedTaskIds = () => {
+    const orderToUse = savedOrder.length > 0 ? savedOrder : defaultOrder;
+    const availableIds = allTasks.map(t => t.id);
+    // First add tasks in order, then any remaining tasks not in the order
+    const orderedIds = orderToUse.filter(id => availableIds.includes(id));
+    const remainingIds = availableIds.filter(id => !orderedIds.includes(id));
+    return [...orderedIds, ...remainingIds];
+  };
 
-  const [localOrder, setLocalOrder] = useState(selfCareTasks.map(t => t.id));
+  const [localOrder, setLocalOrder] = useState(getOrderedTaskIds());
   
   useEffect(() => {
-    if (savedOrder.length > 0) {
-      setLocalOrder(savedOrder.filter(id => allTasks.some(t => t.id === id)));
-    } else {
-      setLocalOrder(allTasks.map(t => t.id));
-    }
-  }, [preferences?.self_care_order]);
+    setLocalOrder(getOrderedTaskIds());
+  }, [preferences?.self_care_order, preferences?.is_bible_believer]);
 
   const orderedTasks = localOrder
     .map(id => allTasks.find(t => t.id === id))
