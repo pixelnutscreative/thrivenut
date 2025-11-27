@@ -28,6 +28,11 @@ const genderOptions = [
   { value: 'prefer_not_to_say', label: 'Prefer not to say' }
 ];
 
+const viewModeOptions = [
+  { value: 'detailed', label: 'Detailed View', description: 'See all tasks organized by time of day with full details' },
+  { value: 'compact', label: 'Compact View', description: 'Quick icon-based view for experienced users' }
+];
+
 export default function DashboardPreferences({ formData, setFormData }) {
   return (
     <div className="space-y-6">
@@ -57,6 +62,26 @@ export default function DashboardPreferences({ formData, setFormData }) {
               </SelectContent>
             </Select>
             <p className="text-xs text-gray-500">Used for personalized language (Queen vs King, etc.)</p>
+          </div>
+          
+          <div className="space-y-2">
+            <Label>Dashboard View Mode</Label>
+            <div className="grid grid-cols-2 gap-3">
+              {viewModeOptions.map(opt => (
+                <div
+                  key={opt.value}
+                  onClick={() => setFormData({ ...formData, dashboard_view_mode: opt.value })}
+                  className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                    (formData.dashboard_view_mode || 'detailed') === opt.value
+                      ? 'border-teal-500 bg-teal-50'
+                      : 'border-gray-200 hover:border-teal-300'
+                  }`}
+                >
+                  <h4 className="font-semibold">{opt.label}</h4>
+                  <p className="text-xs text-gray-500 mt-1">{opt.description}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </CardContent>
       </Card>
