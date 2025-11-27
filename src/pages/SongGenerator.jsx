@@ -358,21 +358,15 @@ ${includeLevelUp ? 'Include a verse encouraging the community to help level up!'
       const hostDisplayName = preferences?.tiktok_display_name || preferences?.tiktok_username || 'the creator';
       
       // Build mapping: phonetic -> display name, and collect usernames for mentions
-      // g.name in formData is the PHONETIC spelling used in original lyrics
-      // We need to find the contact's display_name field for the caption version
-      const gifterMapping = formData.gifters.map(g => {
-        // Find the contact by username to get their display_name
-        const contact = contacts.find(c => c.username?.toLowerCase() === g.username?.toLowerCase());
-        // display_name is what should appear in captions (e.g., "VTS X")
-        // g.name is the phonetic (e.g., "V T S X")
-        const displayName = contact?.display_name || g.username || g.name;
-        console.log('Gifter mapping:', { phonetic: g.name, displayName, username: g.username, contactFound: !!contact, contactDisplayName: contact?.display_name });
-        return {
-          phonetic: g.name, // This is what appears in the original lyrics (phonetic spelling like "V T S X")
-          displayName: displayName, // This is what should appear in captions (display name like "VTS X")
-          username: g.username || '' // This is for @mentions in the post
-        };
-      });
+      // Now we have all three fields directly in formData.gifters:
+      // - g.username: for @mentions in posts
+      // - g.display_name: for captions (e.g., "VTS X")
+      // - g.name: phonetic spelling used in lyrics (e.g., "V T S X")
+      const gifterMapping = formData.gifters.map(g => ({
+        phonetic: g.name, // This is what appears in the original lyrics (phonetic spelling like "V T S X")
+        displayName: g.display_name || g.username || g.name, // This is what should appear in captions (display name like "VTS X")
+        username: g.username || '' // This is for @mentions in the post
+      }));
 
       const result = await base44.integrations.Core.InvokeLLM({
         prompt: `You have song lyrics that use PHONETIC spellings for gifter names. Convert them to use DISPLAY NAMES for video captions.
@@ -462,7 +456,7 @@ Creator display name: ${hostDisplayName}`,
   const addGifter = () => {
     setFormData(prev => ({
       ...prev,
-      gifters: [...prev.gifters, { name: '', username: '', rank: '', gift: '' }]
+      gifters: [...prev.gifters, { name: '', username: '', display_name: '', rank: '', gift: '' }]
     }));
   };
 
@@ -483,8 +477,15 @@ Creator display name: ${hostDisplayName}`,
   const selectGifterFromContacts = (index, gifterId) => {
     const gifter = gifters.find(g => g.id === gifterId);
     if (gifter) {
-      updateGifter(index, 'name', gifter.phonetic || gifter.display_name || gifter.username);
-      updateGifter(index, 'username', gifter.username);
+      setFormData(prev => ({
+        ...prev,
+        gifters: prev.gifters.map((g, i) => i === index ? {
+          ...g,
+          username: gifter.username || '',
+          display_name: gifter.display_name || '',
+          name: gifter.phonetic || gifter.display_name || gifter.username
+        } : g)
+      }));
     }
   };
 
@@ -727,28 +728,41 @@ Creator display name: ${hostDisplayName}`,
                         + Add Gifter
                       </Button>
                     </div>
+
+                    {/* Column Headers */}
+                    <div className="grid grid-cols-12 gap-2 px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide border-b">
+                      <div className="col-span-2">@Username</div>
+                      <div className="col-span-2">Display Name</div>
+                      <div className="col-span-2">Phonetic</div>
+                      <div className="col-span-2">Rank</div>
+                      <div className="col-span-3">Gift</div>
+                      <div className="col-span-1"></div>
+                    </div>
+
                     {formData.gifters.map((gifter, idx) => (
                       <div key={idx} className="grid grid-cols-12 gap-2 p-3 bg-gray-50 rounded-lg">
-                        <div className="col-span-3">
-                          <Select onValueChange={(v) => selectGifterFromContacts(idx, v)}>
-                            <SelectTrigger className="h-8 text-xs">
-                              <SelectValue placeholder="Quick pick..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {gifters.map(g => (
-                                <SelectItem key={g.id} value={g.id}>
-                                  {g.display_name || g.username}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="col-span-3">
+                        <div className="col-span-2">
                           <Input
-                            placeholder="Name/Phonetic"
+                            placeholder="@username"
+                            value={gifter.username || ''}
+                            onChange={(e) => updateGifter(idx, 'username', e.target.value.replace('@', ''))}
+                            className="h-8 text-xs font-mono"
+                          />
+                        </div>
+                        <div className="col-span-2">
+                          <Input
+                            placeholder="Display name"
+                            value={gifter.display_name || ''}
+                            onChange={(e) => updateGifter(idx, 'display_name', e.target.value)}
+                            className="h-8 text-xs"
+                          />
+                        </div>
+                        <div className="col-span-2">
+                          <Input
+                            placeholder="Phonetic"
                             value={gifter.name}
                             onChange={(e) => updateGifter(idx, 'name', e.target.value)}
-                            className="h-8 text-sm"
+                            className="h-8 text-xs"
                           />
                         </div>
                         <div className="col-span-2">
@@ -769,7 +783,7 @@ Creator display name: ${hostDisplayName}`,
                             placeholder="Gift name"
                             value={gifter.gift}
                             onChange={(e) => updateGifter(idx, 'gift', e.target.value)}
-                            className="h-8 text-sm"
+                            className="h-8 text-xs"
                           />
                         </div>
                         <div className="col-span-1">
