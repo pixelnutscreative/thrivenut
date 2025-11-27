@@ -1302,7 +1302,7 @@ export default function WeeklyGifterGallery() {
                           </div>
                           
                           {/* Always-editable fields */}
-                          <div className="grid grid-cols-5 gap-2">
+                          <div className="grid grid-cols-6 gap-2">
                             <Select value={gifter.rank || ''} onValueChange={(v) => updateExtractedGifter(index, 'rank', v)}>
                               <SelectTrigger className="h-9 text-sm">
                                 <SelectValue placeholder="Rank" />
@@ -1319,6 +1319,30 @@ export default function WeeklyGifterGallery() {
                                 <SelectItem value="9th">9th</SelectItem>
                                 <SelectItem value="10th">10th</SelectItem>
                                 <SelectItem value="shoutout">⭐ Shoutout</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <Select 
+                              value={gifter.matched_contact?.id ? `master_${gifter.matched_contact.id}` : ''} 
+                              onValueChange={(v) => {
+                                const masterId = v.replace('master_', '');
+                                const match = allGifters.find(g => g.id === masterId);
+                                if (match) {
+                                  updateExtractedGifter(index, 'username', match.username);
+                                  updateExtractedGifter(index, 'screen_name', match.display_name);
+                                  updateExtractedGifter(index, 'phonetic', match.phonetic);
+                                  updateExtractedGifter(index, 'matched_contact', { id: masterId });
+                                }
+                              }}
+                            >
+                              <SelectTrigger className="h-9 text-sm">
+                                <SelectValue placeholder="Pick from DB" />
+                              </SelectTrigger>
+                              <SelectContent className="max-h-60">
+                                {allGifters.map(g => (
+                                  <SelectItem key={`master_${g.id}`} value={`master_${g.id}`}>
+                                    {g.display_name || g.username}
+                                  </SelectItem>
+                                ))}
                               </SelectContent>
                             </Select>
                             <Input 
