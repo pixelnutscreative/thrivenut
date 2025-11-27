@@ -291,6 +291,7 @@ export default function TikTokContacts() {
         if (existing) {
           await base44.entities.TikTokContact.update(existing.id, {
             display_name: masterDisplayName || contact.display_name || existing.display_name,
+            real_name: contact.real_name || existing.real_name,
             phonetic: masterPhonetic || existing.phonetic,
             phone: contact.phone || existing.phone,
             email: contact.email || existing.email,
@@ -302,6 +303,7 @@ export default function TikTokContacts() {
           await base44.entities.TikTokContact.create({
             username: contact.username,
             display_name: masterDisplayName || contact.display_name,
+            real_name: contact.real_name,
             phonetic: masterPhonetic || '',
             phone: contact.phone,
             email: contact.email,
@@ -504,10 +506,11 @@ export default function TikTokContacts() {
         return;
       }
 
-      const headers = parseCSVLine(lines[0]).map(h => h.toLowerCase());
+      const headers = parseCSVLine(lines[0]).map(h => h.toLowerCase().trim());
       const usernameIdx = headers.findIndex(h => h === 'user name' || h === 'username' || h.includes('user name'));
-      const displayNameIdx = headers.findIndex(h => h === 'display name' || h === 'displayname');
-      const nameIdx = headers.findIndex(h => h === 'name' && !h.includes('display') && !h.includes('user'));
+      const displayNameIdx = headers.findIndex(h => h === 'display name' || h === 'displayname' || h === 'display_name');
+      // "Name" column = real name from lead form (not display name, not username)
+      const realNameIdx = headers.findIndex(h => h === 'name' && !h.includes('display') && !h.includes('user'));
       const phoneIdx = headers.findIndex(h => h.includes('phone'));
       const emailIdx = headers.findIndex(h => h === 'email' || h.includes('email'));
       const receivedDateIdx = headers.findIndex(h => h === 'received date' || h.includes('received date'));
@@ -544,7 +547,7 @@ export default function TikTokContacts() {
         parsed.push({
           username,
           display_name: displayNameIdx >= 0 ? values[displayNameIdx] : '',
-          name: nameIdx >= 0 ? values[nameIdx] : '',
+          real_name: realNameIdx >= 0 ? values[realNameIdx] : '',
           phone: phoneIdx >= 0 ? values[phoneIdx] : '',
           email: emailIdx >= 0 ? values[emailIdx] : '',
           lead_received_at: leadReceivedAt,
@@ -2043,12 +2046,18 @@ export default function TikTokContacts() {
                       {contact.selected && <Check className="w-4 h-4 text-white" />}
                     </button>
                     
-                    <div className="grid grid-cols-4 gap-2 flex-1">
+                    <div className="grid grid-cols-6 gap-2 flex-1">
                       <Input
                         value={contact.username}
                         onChange={(e) => updateCsvItem(index, 'username', e.target.value)}
                         placeholder="@username"
                         className="h-8 text-sm font-mono"
+                      />
+                      <Input
+                        value={contact.real_name}
+                        onChange={(e) => updateCsvItem(index, 'real_name', e.target.value)}
+                        placeholder="Real name"
+                        className="h-8 text-sm"
                       />
                       <Input
                         value={contact.display_name}
@@ -2066,6 +2075,12 @@ export default function TikTokContacts() {
                         value={contact.email}
                         onChange={(e) => updateCsvItem(index, 'email', e.target.value)}
                         placeholder="Email"
+                        className="h-8 text-sm"
+                      />
+                      <Input
+                        value={contact.lead_source}
+                        onChange={(e) => updateCsvItem(index, 'lead_source', e.target.value)}
+                        placeholder="Source"
                         className="h-8 text-sm"
                       />
                     </div>
