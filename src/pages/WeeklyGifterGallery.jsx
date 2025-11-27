@@ -237,30 +237,28 @@ export default function WeeklyGifterGallery() {
       
       // Create copies with new owner
       const promises = entriesToCopy.map(entry => {
-        const entryData = entry.data || entry;
         return base44.entities.GiftingEntry.create({
-          gifter_id: entryData.gifter_id || entry.gifter_id,
-          gifter_username: entryData.gifter_username || entry.gifter_username,
-          gifter_screen_name: entryData.gifter_screen_name || entry.gifter_screen_name,
-          gifter_phonetic: entryData.gifter_phonetic || entry.gifter_phonetic,
-          gift_id: entryData.gift_id || entry.gift_id,
-          gift_name: entryData.gift_name || entry.gift_name,
-          rank: entryData.rank || entry.rank,
-          week: entryData.week || entry.week,
+          gifter_id: entry.gifter_id,
+          gifter_username: entry.gifter_username,
+          gifter_screen_name: entry.gifter_screen_name,
+          gifter_phonetic: entry.gifter_phonetic,
+          gift_id: entry.gift_id,
+          gift_name: entry.gift_name,
+          rank: entry.rank,
+          week: entry.week,
           created_by: targetEmail
         });
       });
       
       // Also copy the contacts
-      const contactIds = [...new Set(entriesToCopy.map(e => e.data?.gifter_id || e.gifter_id).filter(Boolean))];
+      const contactIds = [...new Set(entriesToCopy.map(e => e.gifter_id).filter(Boolean))];
       const contactsToCopy = allContacts.filter(c => contactIds.includes(c.id));
       
       const contactPromises = contactsToCopy.map(contact => {
-        const contactData = contact.data || contact;
         return base44.entities.TikTokContact.create({
-          username: contactData.username || contact.username,
-          display_name: contactData.display_name || contact.display_name,
-          phonetic: contactData.phonetic || contact.phonetic,
+          username: contact.username,
+          display_name: contact.display_name,
+          phonetic: contact.phonetic,
           is_gifter: true,
           created_by: targetEmail
         });
@@ -1273,11 +1271,11 @@ export default function WeeklyGifterGallery() {
                   {managedAccounts.map(acc => (
                     <Badge
                       key={acc.id}
-                      variant={copyTargetUsername.toLowerCase().replace('@','') === acc.data?.tiktok_username?.toLowerCase() ? 'default' : 'outline'}
+                      variant={copyTargetUsername.toLowerCase().replace('@','') === acc.tiktok_username?.toLowerCase() ? 'default' : 'outline'}
                       className="cursor-pointer"
-                      onClick={() => setCopyTargetUsername(acc.data?.tiktok_username || '')}
+                      onClick={() => setCopyTargetUsername(acc.tiktok_username || '')}
                     >
-                      @{acc.data?.tiktok_username}
+                      @{acc.tiktok_username}
                     </Badge>
                   ))}
                 </div>
