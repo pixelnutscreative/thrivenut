@@ -18,6 +18,7 @@ import ImageUploader from '../components/settings/ImageUploader';
 import TimezoneSelector from '../components/shared/TimezoneSelector';
 import SpeakButton, { speak } from '../components/accessibility/SpeakButton';
 import FeatureOrderManager from '../components/settings/FeatureOrderManager';
+import DashboardPreferences from '../components/settings/DashboardPreferences';
 import { getEffectiveUserEmail, isImpersonating } from '../components/admin/ImpersonationBanner';
 
 
@@ -88,8 +89,16 @@ export default function Settings() {
     room_vibe: '',
     default_song_tone: 'upbeat',
     include_levelup_verse: true,
-    league_level: ''
-  });
+    league_level: '',
+    gender: '',
+    completed_tasks_display: 'show_checked',
+    enable_water_reminders: true,
+    enable_mood_checkins: true,
+    intermittent_fasting: false,
+    fasting_schedule: '16_8',
+    eating_window_start: '12:00',
+    eating_window_end: '20:00'
+    });
 
   useEffect(() => {
     if (preferences) {
@@ -115,8 +124,16 @@ export default function Settings() {
         room_vibe: preferences.room_vibe || '',
         default_song_tone: preferences.default_song_tone || 'upbeat',
         include_levelup_verse: preferences.include_levelup_verse !== false,
-        league_level: preferences.league_level || ''
-      });
+        league_level: preferences.league_level || '',
+        gender: preferences.gender || '',
+        completed_tasks_display: preferences.completed_tasks_display || 'show_checked',
+        enable_water_reminders: preferences.enable_water_reminders !== false,
+        enable_mood_checkins: preferences.enable_mood_checkins !== false,
+        intermittent_fasting: preferences.intermittent_fasting || false,
+        fasting_schedule: preferences.fasting_schedule || '16_8',
+        eating_window_start: preferences.eating_window_start || '12:00',
+        eating_window_end: preferences.eating_window_end || '20:00'
+        });
     }
   }, [preferences]);
 
@@ -187,7 +204,7 @@ export default function Settings() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-6">
+          <TabsList className="grid w-full grid-cols-5 mb-6">
             <TabsTrigger value="profile" className="flex items-center gap-2">
               <User className="w-4 h-4" />
               <span className="hidden sm:inline">Profile</span>
@@ -201,10 +218,14 @@ export default function Settings() {
                 <span className="hidden sm:inline">Features</span>
               </TabsTrigger>
             <TabsTrigger value="preferences" className="flex items-center gap-2">
-              <MessageSquare className="w-4 h-4" />
-              <span className="hidden sm:inline">Preferences</span>
-            </TabsTrigger>
-          </TabsList>
+                  <MessageSquare className="w-4 h-4" />
+                  <span className="hidden sm:inline">Preferences</span>
+                </TabsTrigger>
+                <TabsTrigger value="dashboard" className="flex items-center gap-2">
+                  <Eye className="w-4 h-4" />
+                  <span className="hidden sm:inline">Dashboard</span>
+                </TabsTrigger>
+              </TabsList>
 
           {/* Profile Tab - now includes TikTok info */}
           <TabsContent value="profile">
