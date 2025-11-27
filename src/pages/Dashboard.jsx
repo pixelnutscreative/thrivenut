@@ -229,12 +229,12 @@ export default function Dashboard() {
         {/* Special Events - Birthdays & Sobriety Anniversaries */}
         <SpecialEventsCard contacts={tiktokContacts} />
 
-        {/* My Day Section */}
+        {/* My Day Section - All daily tasks unified */}
         <MyDaySection
           selfCareLog={selfCareLog}
           onToggleTask={(taskId, value) => selfCareMutation.mutate({ taskId, value })}
           onUpdateMealNotes={(noteKey, value) => mealNotesMutation.mutate({ noteKey, value })}
-          preferences={preferences}
+          preferences={{ ...preferences, user_email: user?.email }}
           viewMode={preferences?.dashboard_view_mode || 'detailed'}
         />
 
