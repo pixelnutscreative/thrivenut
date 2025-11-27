@@ -33,6 +33,9 @@ export default function WeeklyGifterGallery() {
   
   // Manual entry form
   const [formData, setFormData] = useState({ gifter_id: '', gift_id: '', rank: '', shoutout_reason: '' });
+  const [showAddGifter, setShowAddGifter] = useState(false);
+  const [newGifterData, setNewGifterData] = useState({ username: '', display_name: '', phonetic: '' });
+  const [gifterSearch, setGifterSearch] = useState('');
   
   // Edit form
   const [editingEntry, setEditingEntry] = useState(null);
@@ -158,6 +161,47 @@ export default function WeeklyGifterGallery() {
       queryClient.invalidateQueries({ queryKey: ['giftingEntries'] });
       queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] });
       setEditingEntry(null);
+    },
+  });
+
+  // Create a new gifter contact directly
+  const createGifterMutation = useMutation({
+    mutationFn: async (data) => {
+      // Check if already exists in master list
+      const existing = allContacts.find(c => 
+        c.username?.toLowerCase() === data.username?.toLowerCase()
+      );
+      
+      if (existing) {
+        // If exists but not in user's contacts, create a copy for this user
+        const userHas = contacts.find(c => c.username?.toLowerCase() === data.username?.toLowerCase());
+        if (!userHas) {
+          return base44.entities.TikTokContact.create({
+            username: existing.username,
+            display_name: data.display_name || existing.display_name,
+            phonetic: data.phonetic || existing.phonetic,
+            is_gifter: true
+          });
+        }
+        // Already in user's contacts, just mark as gifter
+        await base44.entities.TikTokContact.update(userHas.id, { is_gifter: true });
+        return userHas;
+      }
+      
+      // Create new
+      return base44.entities.TikTokContact.create({
+        username: data.username.replace('@', '').trim(),
+        display_name: data.display_name || data.username,
+        phonetic: data.phonetic || '',
+        is_gifter: true
+      });
+    },
+    onSuccess: (newGifter) => {
+      queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] });
+      queryClient.invalidateQueries({ queryKey: ['allTiktokContacts'] });
+      setFormData(prev => ({ ...prev, gifter_id: newGifter.id }));
+      setShowAddGifter(false);
+      setNewGifterData({ username: '', display_name: '', phonetic: '' });
     },
   });
 
@@ -804,28 +848,103 @@ export default function WeeklyGifterGallery() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Add Gift Entry Manually</CardTitle>
-                <CardDescription>Select from your saved gifters or add entries one by one</CardDescription>
+                <CardDescription>Select from your saved gifters, search the master list, or add new</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Gifter *</Label>
-                    <Select value={formData.gifter_id} onValueChange={(value) => setFormData({ ...formData, gifter_id: value })}>
-                      <SelectTrigger><SelectValue placeholder="Select gifter" /></SelectTrigger>
-                      <SelectContent>
-                        {gifters.map(gifter => (
-                          <SelectItem key={gifter.id} value={gifter.id}>
-                            {gifter.display_name || gifter.username} (@{gifter.username})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="flex items-center justify-between">
+                      <Label>Gifter *</Label>
+                      <Button 
+                        type="button" 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => setShowAddGifter(!showAddGifter)}
+                        className="h-6 text-xs text-purple-600"
+                      >
+                        <Plus className="w-3 h-3 mr-1" /> Add New
+                      </Button>
+                    </div>
+                    
+                    {showAddGifter ? (
+                      <div className="p-3 bg-purple-50 rounded-lg border border-purple-200 space-y-3">
+                        <Input
+                          placeholder="@username"
+                          value={newGifterData.username}
+                          onChange={(e) => setNewGifterData(prev => ({ ...prev, username: e.target.value }))}
+                        />
+                        <Input
+                          placeholder="Display name (how you know them)"
+                          value={newGifterData.display_name}
+                          onChange={(e) => setNewGifterData(prev => ({ ...prev, display_name: e.target.value }))}
+                        />
+                        <Input
+                          placeholder="Phonetic pronunciation 🎵"
+                          value={newGifterData.phonetic}
+                          onChange={(e) => setNewGifterData(prev => ({ ...prev, phonetic: e.target.value }))}
+                        />
+                        <div className="flex gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={() => createGifterMutation.mutate(newGifterData)}
+                            disabled={!newGifterData.username.trim() || createGifterMutation.isPending}
+                            className="bg-purple-600 hover:bg-purple-700"
+                          >
+                            {createGifterMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4 mr-1" />}
+                            Add Gifter
+                          </Button>
+                          <Button type="button" size="sm" variant="ghost" onClick={() => setShowAddGifter(false)}>
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        {/* Search input for filtering */}
+                        <Input
+                          placeholder="Search gifters..."
+                          value={gifterSearch}
+                          onChange={(e) => setGifterSearch(e.target.value)}
+                          className="mb-2"
+                        />
+                        <Select value={formData.gifter_id} onValueChange={(value) => setFormData({ ...formData, gifter_id: value })}>
+                          <SelectTrigger><SelectValue placeholder="Select gifter" /></SelectTrigger>
+                          <SelectContent className="max-h-60">
+                            {/* User's gifters first */}
+                            {gifters.filter(g => 
+                              !gifterSearch || 
+                              g.display_name?.toLowerCase().includes(gifterSearch.toLowerCase()) ||
+                              g.username?.toLowerCase().includes(gifterSearch.toLowerCase())
+                            ).map(gifter => (
+                              <SelectItem key={gifter.id} value={gifter.id}>
+                                {gifter.display_name || gifter.username} (@{gifter.username})
+                              </SelectItem>
+                            ))}
+                            {/* Master list gifters not in user's list */}
+                            {gifterSearch && allContacts
+                              .filter(c => c.is_gifter && !contacts.find(uc => uc.username === c.username))
+                              .filter(c => 
+                                c.display_name?.toLowerCase().includes(gifterSearch.toLowerCase()) ||
+                                c.username?.toLowerCase().includes(gifterSearch.toLowerCase())
+                              )
+                              .slice(0, 10)
+                              .map(c => (
+                                <SelectItem key={`master_${c.id}`} value={`master_${c.id}`}>
+                                  {c.display_name || c.username} (@{c.username}) 🌐
+                                </SelectItem>
+                              ))
+                            }
+                          </SelectContent>
+                        </Select>
+                      </>
+                    )}
                     {selectedGifter?.phonetic && (
                       <p className="text-xs text-purple-600 italic">🎵 Phonetic: "{selectedGifter.phonetic}"</p>
                     )}
-                    {gifters.length === 0 && (
+                    {gifters.length === 0 && !showAddGifter && (
                       <p className="text-xs text-amber-600">
-                        No gifters yet. <Link to={createPageUrl('TikTokContacts')} className="underline">Add contacts</Link> and mark them as gifters.
+                        No gifters yet. Click "Add New" above or search the master list.
                       </p>
                     )}
                   </div>
