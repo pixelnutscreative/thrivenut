@@ -858,36 +858,50 @@ export default function MyDaySection({
     );
   }
 
+  // Separate tasks into variable/anytime vs scheduled/timed
+  const variableTasks = allTasks.filter(t => t.timeOfDay === 'anytime');
+  const scheduledTasks = allTasks.filter(t => t.timeOfDay !== 'anytime');
+
   return (
-    <Card className="shadow-lg border-0 bg-gradient-to-br from-teal-50 to-cyan-50">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Sun className="w-6 h-6 text-amber-500" />
-            My Day
-          </CardTitle>
-          <div className="flex items-center gap-3">
-            {isReordering ? (
-              <Button size="sm" onClick={saveTaskOrder} className="bg-green-500 hover:bg-green-600 h-8">
-                <Check className="w-4 h-4 mr-1" /> Done
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+      {/* Main task card - takes 3 columns on large screens */}
+      <Card className="shadow-lg border-0 bg-gradient-to-br from-teal-50 to-cyan-50 lg:col-span-3">
+        <CardHeader>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <CardTitle className="flex items-center gap-2">
+              <Sun className="w-6 h-6 text-amber-500" />
+              My Day
+            </CardTitle>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Button 
+                variant={layoutMode === 'two-column' ? 'default' : 'outline'} 
+                size="sm" 
+                onClick={() => setLayoutMode(layoutMode === 'two-column' ? 'single' : 'two-column')} 
+                className="h-7 text-xs"
+              >
+                <Columns className="w-3 h-3 mr-1" /> {layoutMode === 'two-column' ? '2-Col' : '1-Col'}
               </Button>
-            ) : (
-              <Button variant="ghost" size="sm" onClick={() => {
-                setLocalTaskOrder(allTasks.map(t => t.id));
-                setIsReordering(true);
-              }} className="h-8">
-                <GripVertical className="w-4 h-4 mr-1" /> Reorder
+              {isReordering ? (
+                <Button size="sm" onClick={saveTaskOrder} className="bg-green-500 hover:bg-green-600 h-7 text-xs">
+                  <Check className="w-3 h-3 mr-1" /> Done
+                </Button>
+              ) : (
+                <Button variant="ghost" size="sm" onClick={() => {
+                  setLocalTaskOrder(allTasks.map(t => t.id));
+                  setIsReordering(true);
+                }} className="h-7 text-xs">
+                  <GripVertical className="w-3 h-3 mr-1" /> Reorder
+                </Button>
+              )}
+              <Button variant="ghost" size="sm" onClick={() => setLocalViewMode('compact')} className="h-7 text-xs">
+                <Grid3X3 className="w-3 h-3 mr-1" /> Compact
               </Button>
-            )}
-            <Button variant="ghost" size="sm" onClick={() => setLocalViewMode('compact')} className="h-8">
-              <Grid3X3 className="w-4 h-4 mr-1" /> Compact
-            </Button>
-            <Badge variant={completedCount === totalCount ? "default" : "secondary"} 
-                   className={completedCount === totalCount ? "bg-green-500" : ""}>
-              {completedCount}/{totalCount} • {progressPercent}%
-            </Badge>
+              <Badge variant={completedCount === totalCount ? "default" : "secondary"} 
+                     className={completedCount === totalCount ? "bg-green-500" : ""}>
+                {completedCount}/{totalCount} • {progressPercent}%
+              </Badge>
+            </div>
           </div>
-        </div>
         
         {/* Progress bar */}
         <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
