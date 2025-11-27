@@ -13,6 +13,7 @@ import WeeklyGoalCard from '../components/tiktok/WeeklyGoalCard';
 import GoalEditModal from '../components/tiktok/GoalEditModal';
 import OnboardingModal from '../components/onboarding/OnboardingModal';
 import SpecialEventsCard from '../components/dashboard/SpecialEventsCard';
+import NotionTaskPicker from '../components/dashboard/NotionTaskPicker';
 import { format, startOfWeek } from 'date-fns';
 import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
 
