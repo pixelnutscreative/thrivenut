@@ -34,11 +34,31 @@ const getDaysFromFrequency = (frequency, selectedDays = []) => {
 export default function GoalEditModal({ isOpen, onClose, currentGoal, onSave }) {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    scheduled_posts: currentGoal?.scheduled_posts || [],
-    scheduled_lives: currentGoal?.scheduled_lives || [],
-    scheduled_engagement: currentGoal?.scheduled_engagement || [],
-    notes: currentGoal?.notes || ''
+    scheduled_posts: [],
+    scheduled_lives: [],
+    scheduled_engagement: [],
+    notes: ''
   });
+
+  // Update form data when currentGoal changes or modal opens
+  React.useEffect(() => {
+    if (isOpen && currentGoal) {
+      setFormData({
+        scheduled_posts: currentGoal.scheduled_posts || [],
+        scheduled_lives: currentGoal.scheduled_lives || [],
+        scheduled_engagement: currentGoal.scheduled_engagement || [],
+        notes: currentGoal.notes || ''
+      });
+    } else if (isOpen && !currentGoal) {
+      // Reset form when opening with no goal
+      setFormData({
+        scheduled_posts: [],
+        scheduled_lives: [],
+        scheduled_engagement: [],
+        notes: ''
+      });
+    }
+  }, [isOpen, currentGoal]);
 
   const handleSave = async () => {
     setLoading(true);
