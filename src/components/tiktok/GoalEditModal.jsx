@@ -258,6 +258,16 @@ export default function GoalEditModal({ isOpen, onClose, currentGoal, onSave }) 
                     ))}
                   </div>
                 </div>
+
+                <div className="pt-2 border-t">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <Checkbox
+                      checked={schedule.is_recurring || false}
+                      onCheckedChange={(checked) => updateSchedule('scheduled_posts', index, 'is_recurring', checked)}
+                    />
+                    <span className="text-sm">🔄 Recurring Weekly</span>
+                  </label>
+                </div>
               </div>
             ))}
             <Button
@@ -268,7 +278,8 @@ export default function GoalEditModal({ isOpen, onClose, currentGoal, onSave }) 
                 days: ['Monday'], 
                 time: '09:00', 
                 completed: false, 
-                content_formats: [] 
+                content_formats: [],
+                is_recurring: false
               })}
             >
               <Plus className="h-4 w-4 mr-2" /> Add Post Schedule
