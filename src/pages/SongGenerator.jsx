@@ -353,31 +353,47 @@ ${includeLevelUp ? 'Include a verse encouraging the community to help level up!'
   const generateDisplayNameVersion = async () => {
     setGeneratingDisplayVersion(true);
     try {
-      const gifterMapping = formData.gifters.map(g => ({
-        phonetic: g.name,
-        displayName: g.username ? `@${g.username}` : g.name,
-        username: g.username || ''
-      }));
+      const hostDisplayName = preferences?.tiktok_display_name || preferences?.tiktok_username || 'the creator';
+      
+      // Build mapping: phonetic -> display name (screen name), and collect usernames for mentions
+      const gifterMapping = formData.gifters.map(g => {
+        // Find the contact to get their screen_name/display_name
+        const contact = contacts.find(c => c.username === g.username);
+        const displayName = contact?.display_name || contact?.screen_name || g.name;
+        return {
+          phonetic: g.name,
+          displayName: displayName,
+          username: g.username || ''
+        };
+      });
 
       const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `You have song lyrics that use PHONETIC spellings for gifter names. Convert them to use display names for video captions.
+        prompt: `You have song lyrics that use PHONETIC spellings for gifter names. Convert them to use DISPLAY NAMES for video captions.
 
-GIFTER MAPPING (phonetic -> display):
+GIFTER MAPPING (phonetic spelling -> display name to use in lyrics):
 ${gifterMapping.map(g => `"${g.phonetic}" -> "${g.displayName}"`).join('\n')}
 
 ORIGINAL LYRICS:
 ${generatedSong}
 
-Return the lyrics with phonetic names replaced by their display names (@username format where available). Keep everything else exactly the same.`,
+Also create a TikTok post caption that:
+1. Thanks the top gifters of the week for ${hostDisplayName}'s Gift Gallery
+2. Tags each gifter with their @username: ${gifterMapping.filter(g => g.username).map(g => `@${g.username}`).join(', ')}
+3. Is fun and appreciative
+4. Ends with relevant hashtags like #TikTokLive #GiftGallery #ThankYou
+
+Return the lyrics with phonetic names replaced by their DISPLAY NAMES (not usernames). Keep everything else exactly the same.`,
         response_json_schema: {
           type: "object",
           properties: {
-            display_lyrics: { type: "string", description: "The lyrics with phonetic names replaced by display names" }
+            display_lyrics: { type: "string", description: "The lyrics with phonetic names replaced by display names" },
+            post_caption: { type: "string", description: "TikTok post caption thanking gifters with @mentions and hashtags" }
           }
         }
       });
 
       setDisplayNameLyrics(result.display_lyrics || generatedSong);
+      setPostCaption(result.post_caption || '');
       setLyricsTab('display');
     } catch (error) {
       console.error('Error generating display version:', error);
@@ -918,13 +934,13 @@ Creator display name: ${hostDisplayName}`,
                   
                   <TabsContent value="display" className="mt-4">
                     {displayNameLyrics ? (
-                      <>
-                        <div className="p-6 bg-white rounded-xl border-2 border-green-200 shadow-inner max-h-96 overflow-y-auto">
+                      <div className="space-y-4">
+                        <div className="p-6 bg-white rounded-xl border-2 border-green-200 shadow-inner max-h-64 overflow-y-auto">
                           <pre className="whitespace-pre-wrap font-sans text-sm text-gray-800 leading-relaxed">
                             {displayNameLyrics}
                           </pre>
                         </div>
-                        <div className="flex gap-3 mt-4">
+                        <div className="flex gap-3">
                           <Button 
                             variant="outline" 
                             onClick={() => {
@@ -945,7 +961,33 @@ Creator display name: ${hostDisplayName}`,
                             <RefreshCw className="w-4 h-4 mr-2" /> Regenerate
                           </Button>
                         </div>
-                      </>
+                        
+                        {/* TikTok Post Caption */}
+                        {postCaption && (
+                          <div className="p-4 bg-gradient-to-r from-pink-50 to-purple-50 rounded-xl border-2 border-pink-200">
+                            <div className="flex items-center justify-between mb-2">
+                              <h4 className="font-semibold text-pink-700 flex items-center gap-2">
+                                📱 TikTok Post Caption
+                              </h4>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(postCaption);
+                                  setCopiedCaption(true);
+                                  setTimeout(() => setCopiedCaption(false), 2000);
+                                }}
+                                className="border-pink-300"
+                              >
+                                {copiedCaption ? <><Check className="w-4 h-4 mr-1" /> Copied!</> : <><Copy className="w-4 h-4 mr-1" /> Copy</>}
+                              </Button>
+                            </div>
+                            <div className="p-3 bg-white rounded-lg text-sm text-gray-700 whitespace-pre-wrap">
+                              {postCaption}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     ) : (
                       <div className="p-8 text-center text-gray-500">
                         <Users className="w-12 h-12 mx-auto mb-3 text-gray-300" />
