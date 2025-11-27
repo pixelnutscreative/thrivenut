@@ -1105,18 +1105,7 @@ Creator display name: ${hostDisplayName}`,
               >
                 <ExternalLink className="w-4 h-4 mr-2" /> Create Your Track with Suno 🎵
               </Button>
-              <Button 
-                onClick={() => {
-                  setFinalLyrics('');
-                  setCaptionLyrics('');
-                  setPostCaption('');
-                  setShowFinalizeModal(true);
-                }}
-                variant="outline"
-                className="flex-1 border-purple-300 text-purple-700 hover:bg-purple-50"
-              >
-                <Music className="w-4 h-4 mr-2" /> Finalize for Video Captions
-              </Button>
+
             </div>
 
             {shared && (
