@@ -210,22 +210,46 @@ export default function GoalEditModal({ isOpen, onClose, currentGoal, onSave }) 
             <h3 className="font-semibold text-lg">Scheduled Lives</h3>
             {formData.scheduled_lives.map((schedule, index) => (
               <div key={index} className="space-y-3 border-2 p-4 rounded-lg bg-purple-50">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <Select
-                    value={schedule.day_of_week}
+                    value={schedule.frequency || 'single'}
                     onValueChange={(value) => {
                       const newSchedules = [...formData.scheduled_lives];
-                      newSchedules[index].day_of_week = value;
+                      newSchedules[index].frequency = value;
+                      if (value === 'daily') newSchedules[index].days = daysOfWeek;
+                      else if (value === 'weekdays') newSchedules[index].days = weekdays;
+                      else if (value === 'weekends') newSchedules[index].days = weekends;
+                      else if (value === 'single') newSchedules[index].days = [schedule.day_of_week || 'Monday'];
                       setFormData({ ...formData, scheduled_lives: newSchedules });
                     }}
                   >
                     <SelectTrigger className="w-[140px]">
-                      <SelectValue placeholder="Day" />
+                      <SelectValue placeholder="Frequency" />
                     </SelectTrigger>
                     <SelectContent>
-                      {daysOfWeek.map(day => <SelectItem key={day} value={day}>{day}</SelectItem>)}
+                      {frequencyOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
                     </SelectContent>
                   </Select>
+                  
+                  {(schedule.frequency === 'single' || !schedule.frequency) && (
+                    <Select
+                      value={schedule.day_of_week}
+                      onValueChange={(value) => {
+                        const newSchedules = [...formData.scheduled_lives];
+                        newSchedules[index].day_of_week = value;
+                        newSchedules[index].days = [value];
+                        setFormData({ ...formData, scheduled_lives: newSchedules });
+                      }}
+                    >
+                      <SelectTrigger className="w-[140px]">
+                        <SelectValue placeholder="Day" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {daysOfWeek.map(day => <SelectItem key={day} value={day}>{day}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  
                   <Input
                     type="time"
                     value={schedule.time}
@@ -248,6 +272,28 @@ export default function GoalEditModal({ isOpen, onClose, currentGoal, onSave }) 
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
+                
+                {schedule.frequency === 'custom' && (
+                  <div className="flex flex-wrap gap-2">
+                    {daysOfWeek.map(day => (
+                      <div key={day} className="flex items-center space-x-1">
+                        <Checkbox
+                          id={`live-day-${index}-${day}`}
+                          checked={schedule.days?.includes(day)}
+                          onCheckedChange={(checked) => {
+                            const newSchedules = [...formData.scheduled_lives];
+                            const currentDays = newSchedules[index].days || [];
+                            newSchedules[index].days = checked
+                              ? [...currentDays, day]
+                              : currentDays.filter(d => d !== day);
+                            setFormData({ ...formData, scheduled_lives: newSchedules });
+                          }}
+                        />
+                        <Label htmlFor={`live-day-${index}-${day}`} className="text-xs">{day.slice(0,3)}</Label>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
