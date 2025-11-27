@@ -67,7 +67,6 @@ const allNavItems = [
           ]},
   { name: 'SuperFan Access', icon: Star, path: 'SuperFanAccess', showWhenNoTikTokAccess: true },
   { name: 'Goals', icon: Target, path: 'Goals', moduleId: 'goals' },
-  { name: 'Goal Sharing', icon: Share2, path: 'GoalSharing', moduleId: 'goals' },
   { name: 'Wellness', icon: Heart, isSection: true, moduleId: 'wellness', subItems: [
     { name: 'Daily Wellness', icon: Heart, path: 'Wellness' },
     { name: 'Supplements', icon: Pill, path: 'Supplements', moduleId: 'supplements' },

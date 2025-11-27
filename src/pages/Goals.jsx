@@ -6,15 +6,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Target, Plus, Edit, Trash2, CheckCircle2, ChevronDown, ChevronRight, Share2, Users } from 'lucide-react';
+import { Target, Plus, Edit, Trash2, CheckCircle2, ChevronDown, ChevronRight, Share2, Users, UserPlus, Eye, Clock, Check, X, Send, Loader2, Mail } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import AIStepsGenerator from '../components/goals/AIStepsGenerator';
 import GoalStepsList from '../components/goals/GoalStepsList';
 import GoalShareSelector from '../components/goals/GoalShareSelector';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 
 const categoryColors = {
   spiritual: 'bg-purple-100 text-purple-800',
@@ -36,11 +38,42 @@ const goalTypes = [
   { id: 'preparation', label: '🧘 Preparation', description: 'Getting ready for something (relationship, interview)' }
 ];
 
+const relationships = [
+  { id: 'mentor', label: 'Mentor' },
+  { id: 'mentee', label: 'Mentee' },
+  { id: 'family', label: 'Family Member' },
+  { id: 'friend', label: 'Friend' },
+  { id: 'coworker', label: 'Coworker' },
+  { id: 'tiktok_creator', label: 'TikTok Creator Friend' },
+  { id: 'other', label: 'Other' }
+];
+
+const categoryIcons = {
+  spiritual: '🙏',
+  health: '💪',
+  personal: '🎯',
+  financial: '💰',
+  relationship: '❤️',
+  learning: '📚',
+  career: '💼',
+  creative: '🎨',
+  other: '✨'
+};
+
 export default function Goals() {
   const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
+  const [activeTab, setActiveTab] = useState('my-goals');
   const [showForm, setShowForm] = useState(false);
   const [editingGoal, setEditingGoal] = useState(null);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [inviteStatus, setInviteStatus] = useState(null);
+  const [shareFormData, setShareFormData] = useState({
+    viewer_email: '',
+    relationship: 'friend',
+    shared_goal_ids: [],
+    notes: ''
+  });
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -56,11 +89,46 @@ export default function Goals() {
   });
   const [expandedGoals, setExpandedGoals] = useState({});
 
-  // Fetch accepted goal sharing connections
+  // Fetch accepted goal sharing connections (for selecting who to share with on individual goals)
   const { data: sharingConnections = [] } = useQuery({
     queryKey: ['goalSharesSent', user?.email],
     queryFn: () => base44.entities.GoalShare.filter({ sharer_email: user.email, status: 'accepted' }),
     enabled: !!user,
+  });
+
+  // Shares I've sent
+  const { data: sentShares = [] } = useQuery({
+    queryKey: ['allSentShares', user?.email],
+    queryFn: () => base44.entities.GoalShare.filter({ sharer_email: user.email }),
+    enabled: !!user,
+  });
+
+  // Shares I've received
+  const { data: receivedShares = [] } = useQuery({
+    queryKey: ['goalSharesReceived', user?.email],
+    queryFn: () => base44.entities.GoalShare.filter({ viewer_email: user.email }),
+    enabled: !!user,
+  });
+
+  // Get shared goals for viewing
+  const { data: viewableGoals = {} } = useQuery({
+    queryKey: ['viewableGoals', receivedShares, user?.email],
+    queryFn: async () => {
+      const acceptedShares = receivedShares.filter(s => s.status === 'accepted');
+      const goalsBySharer = {};
+      for (const share of acceptedShares) {
+        const allSharerGoals = await base44.entities.Goal.filter({ 
+          created_by: share.sharer_email,
+          status: 'active'
+        });
+        const goals = allSharerGoals.filter(g => 
+          g.shared_with && g.shared_with.includes(user.email)
+        );
+        goalsBySharer[share.sharer_email] = { share, goals };
+      }
+      return goalsBySharer;
+    },
+    enabled: receivedShares.length > 0 && !!user,
   });
 
   React.useEffect(() => {
@@ -150,6 +218,69 @@ export default function Goals() {
     },
   });
 
+  // Sharing mutations
+  const createShareMutation = useMutation({
+    mutationFn: async (data) => {
+      const existingUsers = await base44.entities.User.filter({ email: data.viewer_email.toLowerCase() });
+      const userExists = existingUsers.length > 0;
+      
+      const share = await base44.entities.GoalShare.create({
+        ...data,
+        viewer_email: data.viewer_email.toLowerCase(),
+        sharer_email: user.email,
+        sharer_name: user.full_name,
+        status: 'pending'
+      });
+      
+      const selectedGoals = goals.filter(g => data.shared_goal_ids.includes(g.id));
+      const goalList = selectedGoals.map(g => `• ${categoryIcons[g.category] || '🎯'} ${g.title}`).join('\n');
+      
+      if (userExists) {
+        await base44.integrations.Core.SendEmail({
+          to: data.viewer_email,
+          subject: `${user.full_name || user.email} wants to share goals with you!`,
+          body: `Hi there!\n\n${user.full_name || user.email} would like to share their goals with you on ThriveNut.\n\n${selectedGoals.length > 0 ? `They want to share ${selectedGoals.length} goal(s):\n${goalList}\n\n` : ''}Log in to ThriveNut to accept or decline this invitation.\n\n---\nThriveNut - Crush your goals, thrive daily`
+        });
+      } else {
+        await base44.integrations.Core.SendEmail({
+          to: data.viewer_email,
+          subject: `${user.full_name || user.email} invited you to ThriveNut!`,
+          body: `Hi there!\n\n${user.full_name || user.email} would like to share their goals with you on ThriveNut.\n\n${selectedGoals.length > 0 ? `They want to share ${selectedGoals.length} goal(s):\n${goalList}\n\n` : ''}Join ThriveNut to view their goals and start tracking your own!\n\n---\nThriveNut - Crush your goals, thrive daily 🌰`
+        });
+      }
+      return { share, userExists };
+    },
+    onSuccess: ({ userExists }) => {
+      queryClient.invalidateQueries({ queryKey: ['allSentShares'] });
+      queryClient.invalidateQueries({ queryKey: ['goalSharesSent'] });
+      setInviteStatus(userExists ? 'existing' : 'invited');
+      setTimeout(() => {
+        setShowShareModal(false);
+        setShareFormData({ viewer_email: '', relationship: 'friend', shared_goal_ids: [], notes: '' });
+        setInviteStatus(null);
+      }, 3000);
+    },
+  });
+
+  const updateShareMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.GoalShare.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['goalSharesReceived'] });
+      queryClient.invalidateQueries({ queryKey: ['allSentShares'] });
+    },
+  });
+
+  const deleteShareMutation = useMutation({
+    mutationFn: (id) => base44.entities.GoalShare.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['allSentShares'] });
+      queryClient.invalidateQueries({ queryKey: ['goalSharesReceived'] });
+    },
+  });
+
+  const pendingInvites = receivedShares.filter(s => s.status === 'pending');
+  const acceptedReceived = receivedShares.filter(s => s.status === 'accepted');
+
   const handleEdit = (goal) => {
     setEditingGoal(goal);
     setFormData({
@@ -188,17 +319,65 @@ export default function Goals() {
             </h1>
             <p className="text-gray-600">Track your personal goals and progress</p>
           </div>
-          <Button 
-            onClick={() => { resetForm(); setShowForm(!showForm); }}
-            className="bg-purple-600 hover:bg-purple-700 h-12"
-          >
-            <Plus className="w-5 h-5 mr-2" />
-            {showForm ? 'Cancel' : 'New Goal'}
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline"
+              onClick={() => setShowShareModal(true)}
+            >
+              <UserPlus className="w-4 h-4 mr-2" />
+              Invite Someone
+            </Button>
+            <Button 
+              onClick={() => { resetForm(); setShowForm(!showForm); }}
+              className="bg-purple-600 hover:bg-purple-700"
+            >
+              <Plus className="w-5 h-5 mr-2" />
+              {showForm ? 'Cancel' : 'New Goal'}
+            </Button>
+          </div>
         </motion.div>
 
-        {/* Inline Goal Form */}
-        <AnimatePresence>
+        {/* Pending Invitations Banner */}
+        {pendingInvites.length > 0 && (
+          <Card className="border-yellow-200 bg-yellow-50">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Clock className="w-5 h-5 text-yellow-600" />
+                <span className="font-semibold text-yellow-700">Pending Invitations ({pendingInvites.length})</span>
+              </div>
+              <div className="space-y-2">
+                {pendingInvites.map(invite => (
+                  <div key={invite.id} className="flex items-center justify-between p-3 bg-white rounded-lg">
+                    <div>
+                      <p className="font-medium">{invite.sharer_name || invite.sharer_email}</p>
+                      <p className="text-sm text-gray-600">wants to share goals with you</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={() => updateShareMutation.mutate({ id: invite.id, data: { status: 'accepted', viewer_name: user.full_name } })} className="bg-green-600 hover:bg-green-700">
+                        <Check className="w-4 h-4" />
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => updateShareMutation.mutate({ id: invite.id, data: { status: 'declined' } })} className="text-red-600">
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-2 mb-6">
+            <TabsTrigger value="my-goals">My Goals</TabsTrigger>
+            <TabsTrigger value="shared-with-me">
+              Shared With Me {acceptedReceived.length > 0 && `(${acceptedReceived.length})`}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="my-goals" className="space-y-6">
+            {/* Inline Goal Form */}
+            <AnimatePresence>
           {showForm && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
