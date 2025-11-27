@@ -110,7 +110,7 @@ export default function WeeklyGifterGallery() {
 
   const { data: rawEntries = [], isLoading } = useQuery({
     queryKey: ['giftingEntries', selectedWeek, effectiveEmail],
-    queryFn: () => base44.entities.GiftingEntry.filter({ week: selectedWeek, created_by: effectiveEmail }, '-created_date', 500),
+    queryFn: () => base44.entities.GiftingEntry.filter({ week: selectedWeek, owner_email: effectiveEmail }, '-created_date', 500),
     enabled: !!effectiveEmail,
   });
 
@@ -315,20 +315,13 @@ export default function WeeklyGifterGallery() {
   // Check if we're impersonating (effectiveEmail differs from real user email)
   const isImpersonating = effectiveEmail && user?.email && effectiveEmail !== user.email;
 
-  // Helper to create entities as the impersonated user
+  // Helper to create entities with owner_email set correctly
   const createAsTargetUser = async (entityName, data) => {
-    if (isImpersonating) {
-      // Use backend function to create with correct created_by
-      const result = await base44.functions.invoke('createAsUser', {
-        entityName,
-        data,
-        targetEmail: effectiveEmail
-      });
-      return result.data?.data;
-    } else {
-      // Normal creation
-      return base44.entities[entityName].create(data);
+    // Always add owner_email for GiftingEntry
+    if (entityName === 'GiftingEntry') {
+      data.owner_email = effectiveEmail;
     }
+    return base44.entities[entityName].create(data);
   };
 
   const createEntriesMutation = useMutation({
