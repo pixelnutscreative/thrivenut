@@ -1036,7 +1036,7 @@ export default function WeeklyGifterGallery() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
+                  <div className="md:col-span-2 space-y-3">
                     <div className="flex items-center justify-between">
                       <Label>Gifter *</Label>
                       <Button 
@@ -1046,27 +1046,34 @@ export default function WeeklyGifterGallery() {
                         onClick={() => setShowAddGifter(!showAddGifter)}
                         className="h-6 text-xs text-purple-600"
                       >
-                        <Plus className="w-3 h-3 mr-1" /> Add New
+                        <Plus className="w-3 h-3 mr-1" /> {showAddGifter ? 'Search Existing' : 'Add New'}
                       </Button>
                     </div>
                     
                     {showAddGifter ? (
                       <div className="p-3 bg-purple-50 rounded-lg border border-purple-200 space-y-3">
-                        <Input
-                          placeholder="@username"
-                          value={newGifterData.username}
-                          onChange={(e) => setNewGifterData(prev => ({ ...prev, username: e.target.value }))}
-                        />
-                        <Input
-                          placeholder="Display name (how you know them)"
-                          value={newGifterData.display_name}
-                          onChange={(e) => setNewGifterData(prev => ({ ...prev, display_name: e.target.value }))}
-                        />
-                        <Input
-                          placeholder="Phonetic pronunciation 🎵"
-                          value={newGifterData.phonetic}
-                          onChange={(e) => setNewGifterData(prev => ({ ...prev, phonetic: e.target.value }))}
-                        />
+                        <div className="grid grid-cols-3 gap-2 text-xs font-semibold text-gray-500 uppercase tracking-wide px-1">
+                          <span>@Username</span>
+                          <span>Display Name</span>
+                          <span>Phonetic Name</span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                          <Input
+                            placeholder="@username"
+                            value={newGifterData.username}
+                            onChange={(e) => setNewGifterData(prev => ({ ...prev, username: e.target.value }))}
+                          />
+                          <Input
+                            placeholder="Display name"
+                            value={newGifterData.display_name}
+                            onChange={(e) => setNewGifterData(prev => ({ ...prev, display_name: e.target.value }))}
+                          />
+                          <Input
+                            placeholder="Phonetic 🎵"
+                            value={newGifterData.phonetic}
+                            onChange={(e) => setNewGifterData(prev => ({ ...prev, phonetic: e.target.value }))}
+                          />
+                        </div>
                         <div className="flex gap-2">
                           <Button
                             type="button"
@@ -1084,45 +1091,74 @@ export default function WeeklyGifterGallery() {
                         </div>
                       </div>
                     ) : (
-                      <>
+                      <div className="space-y-2">
                         {/* Search input for filtering */}
                         <Input
-                          placeholder="Search gifters..."
+                          placeholder="Search by username, display name, or phonetic..."
                           value={gifterSearch}
                           onChange={(e) => setGifterSearch(e.target.value)}
-                          className="mb-2"
                         />
-                        <Select value={formData.gifter_id} onValueChange={(value) => setFormData({ ...formData, gifter_id: value })}>
-                          <SelectTrigger><SelectValue placeholder="Select gifter from master list" /></SelectTrigger>
-                          <SelectContent className="max-h-60">
-                            {/* All gifters from master list */}
-                            {allGifters
-                              .filter(g => 
-                                !gifterSearch || 
-                                g.display_name?.toLowerCase().includes(gifterSearch.toLowerCase()) ||
-                                g.username?.toLowerCase().includes(gifterSearch.toLowerCase())
-                              )
-                              .map(gifter => (
-                                <SelectItem key={`master_${gifter.id}`} value={`master_${gifter.id}`}>
-                                  {gifter.display_name || gifter.username} (@{gifter.username})
-                                </SelectItem>
-                              ))
-                            }
-                            {allGifters.length === 0 && (
-                              <div className="p-2 text-sm text-gray-500 text-center">No gifters in master database yet</div>
-                            )}
-                          </SelectContent>
-                        </Select>
-                      </>
+                        
+                        {/* Column headers */}
+                        <div className="grid grid-cols-12 gap-2 text-xs font-semibold text-gray-500 uppercase tracking-wide px-2 border-b pb-1">
+                          <div className="col-span-3">@Username</div>
+                          <div className="col-span-4">Display Name</div>
+                          <div className="col-span-4">Phonetic Name</div>
+                          <div className="col-span-1"></div>
+                        </div>
+                        
+                        {/* Scrollable list of gifters */}
+                        <div className="max-h-48 overflow-y-auto border rounded-lg bg-white">
+                          {allGifters
+                            .filter(g => 
+                              !gifterSearch || 
+                              g.display_name?.toLowerCase().includes(gifterSearch.toLowerCase()) ||
+                              g.username?.toLowerCase().includes(gifterSearch.toLowerCase()) ||
+                              g.phonetic?.toLowerCase().includes(gifterSearch.toLowerCase())
+                            )
+                            .map(gifter => (
+                              <div 
+                                key={gifter.id}
+                                onClick={() => setFormData({ ...formData, gifter_id: `master_${gifter.id}` })}
+                                className={`grid grid-cols-12 gap-2 p-2 cursor-pointer hover:bg-purple-50 transition-colors border-b last:border-b-0 ${
+                                  formData.gifter_id === `master_${gifter.id}` ? 'bg-purple-100 border-purple-300' : ''
+                                }`}
+                              >
+                                <div className="col-span-3 text-sm font-mono text-purple-700 truncate">@{gifter.username}</div>
+                                <div className="col-span-4 text-sm truncate">{gifter.display_name || <span className="text-gray-400 italic">-</span>}</div>
+                                <div className="col-span-4 text-sm text-gray-600 truncate">{gifter.phonetic || <span className="text-gray-400 italic">-</span>}</div>
+                                <div className="col-span-1 flex justify-end">
+                                  {formData.gifter_id === `master_${gifter.id}` && <Check className="w-4 h-4 text-purple-600" />}
+                                </div>
+                              </div>
+                            ))
+                          }
+                          {allGifters.filter(g => 
+                            !gifterSearch || 
+                            g.display_name?.toLowerCase().includes(gifterSearch.toLowerCase()) ||
+                            g.username?.toLowerCase().includes(gifterSearch.toLowerCase()) ||
+                            g.phonetic?.toLowerCase().includes(gifterSearch.toLowerCase())
+                          ).length === 0 && (
+                            <div className="p-4 text-sm text-gray-500 text-center">
+                              {gifterSearch ? 'No matching gifters found' : 'No gifters in database yet'}
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     )}
-                    {selectedGifter?.phonetic && (
-                      <p className="text-xs text-purple-600 italic">🎵 Phonetic: "{selectedGifter.phonetic}"</p>
-                    )}
-                    {gifters.length === 0 && !showAddGifter && (
-                      <p className="text-xs text-amber-600">
-                        No gifters yet. Click "Add New" above or search the master list.
-                      </p>
-                    )}
+                    
+                    {/* Show selected gifter info */}
+                    {formData.gifter_id && !showAddGifter && (() => {
+                      const masterId = formData.gifter_id.replace('master_', '');
+                      const selected = allGifters.find(g => g.id === masterId);
+                      if (!selected) return null;
+                      return (
+                        <div className="p-2 bg-purple-50 rounded-lg border border-purple-200 text-sm">
+                          <span className="font-medium text-purple-700">Selected:</span> {selected.display_name || selected.username}
+                          {selected.phonetic && <span className="text-purple-600 ml-2">🎵 "{selected.phonetic}"</span>}
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   <div className="space-y-2">
