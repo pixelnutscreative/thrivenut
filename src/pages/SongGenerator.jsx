@@ -139,11 +139,11 @@ export default function SongGenerator() {
 
   const gifters = contacts.filter(c => c.is_gifter);
 
-  // Song history - filter by the actual logged-in user, not impersonated
+  // Song history - filter by effective email (impersonated user if applicable)
   const { data: songHistory = [], isLoading: historyLoading } = useQuery({
-    queryKey: ['songHistory', user?.email],
-    queryFn: () => base44.entities.GeneratedSong.filter({ created_by: user?.email }, '-created_date', 50),
-    enabled: !!user?.email,
+    queryKey: ['songHistory', effectiveEmail],
+    queryFn: () => base44.entities.GeneratedSong.list('-created_date', 50),
+    enabled: !!effectiveEmail,
   });
 
   const saveSongMutation = useMutation({
