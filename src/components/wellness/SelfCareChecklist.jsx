@@ -211,126 +211,120 @@ export default function SelfCareChecklist({
             const Icon = task.icon;
             const isComplete = selfCareLog?.[task.id];
             const taskIndex = localOrder.indexOf(task.id);
+            const mealNoteKey = getMealNoteKey(task.id);
             
             return (
-              <motion.div
-                key={task.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.05 }}
-                layout={isReordering}
-                className={`flex items-center gap-4 p-4 rounded-xl transition-all ${
-                  isComplete 
-                    ? 'bg-green-100 border-2 border-green-300' 
-                    : 'bg-white border-2 border-gray-100 hover:border-amber-300'
-                }`}
-              >
-                {isReordering && (
-                  <div className="flex flex-col gap-1">
-                    <button
-                      onClick={() => moveTask(taskIndex, 'up')}
-                      disabled={taskIndex === 0}
-                      className="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed"
-                    >
-                      <ArrowUp className="w-4 h-4 text-gray-500" />
-                    </button>
-                    <button
-                      onClick={() => moveTask(taskIndex, 'down')}
-                      disabled={taskIndex === localOrder.length - 1}
-                      className="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed"
-                    >
-                      <ArrowDown className="w-4 h-4 text-gray-500" />
-                    </button>
-                  </div>
-                )}
-                <div 
-                  className="flex items-center gap-4 flex-1 cursor-pointer"
-                  onClick={() => !isReordering && onToggleTask(task.id, !isComplete)}
+              <React.Fragment key={task.id}>
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  layout={isReordering}
+                  className={`flex items-center gap-4 p-4 rounded-xl transition-all ${
+                    isComplete 
+                      ? 'bg-green-100 border-2 border-green-300' 
+                      : 'bg-white border-2 border-gray-100 hover:border-amber-300'
+                  }`}
                 >
-                  <Checkbox checked={isComplete} className="pointer-events-none" />
-                  <Icon className={`w-6 h-6 ${isComplete ? 'text-green-500' : task.color}`} />
-                  <div className="flex-1">
-                    <span className={`font-medium ${isComplete ? 'text-green-700 line-through' : 'text-gray-700'}`}>
-                      {task.label}
-                    </span>
-                    {task.count > 0 && (
-                      <span className="ml-2 text-xs text-gray-500">({task.count} items)</span>
-                    )}
-                  </div>
-                </div>
-                
-                {/* Meal note edit button */}
-                {task.hasMealNote && !isReordering && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleEditMeal(task.id);
-                    }}
-                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                    title="Log what you ate"
-                  >
-                    <Pencil className="w-4 h-4 text-gray-400" />
-                  </button>
-                )}
-              
-                {task.link && !isReordering && (
-                  <Link 
-                    to={createPageUrl(task.link)}
-                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                    title={`Go to ${task.link}`}
-                  >
-                    <ExternalLink className="w-4 h-4 text-gray-400" />
-                  </Link>
-                )}
-                
-                {isComplete && !task.link && !task.hasMealNote && !isReordering && <span className="text-green-500">✓</span>}
-              </motion.div>
-              
-              {/* Meal note input */}
-              <AnimatePresence>
-                {editingMeal === task.id && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="ml-4 overflow-hidden"
-                  >
-                    <div className="flex gap-2 p-3 bg-white rounded-xl border-2 border-gray-200">
-                      <Input
-                        placeholder="What did you eat?"
-                        value={mealNoteInput}
-                        onChange={(e) => setMealNoteInput(e.target.value)}
-                        className="flex-1"
-                        autoFocus
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') handleSaveMealNote();
-                          if (e.key === 'Escape') setEditingMeal(null);
-                        }}
-                      />
-                      <Button size="sm" onClick={handleSaveMealNote} className="bg-green-500 hover:bg-green-600">
-                        <Check className="w-4 h-4" />
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => setEditingMeal(null)}>
-                        <X className="w-4 h-4" />
-                      </Button>
+                  {isReordering && (
+                    <div className="flex flex-col gap-1">
+                      <button
+                        onClick={() => moveTask(taskIndex, 'up')}
+                        disabled={taskIndex === 0}
+                        className="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed"
+                      >
+                        <ArrowUp className="w-4 h-4 text-gray-500" />
+                      </button>
+                      <button
+                        onClick={() => moveTask(taskIndex, 'down')}
+                        disabled={taskIndex === localOrder.length - 1}
+                        className="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed"
+                      >
+                        <ArrowDown className="w-4 h-4 text-gray-500" />
+                      </button>
                     </div>
-                    {selfCareLog?.[getMealNoteKey(task.id)] && editingMeal !== task.id && (
-                      <p className="text-sm text-gray-500 mt-1 italic">
-                        {selfCareLog[getMealNoteKey(task.id)]}
-                      </p>
-                    )}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-              
-              {/* Show saved meal note */}
-              {task.hasMealNote && selfCareLog?.[getMealNoteKey(task.id)] && editingMeal !== task.id && (
-                <div className="ml-16 -mt-2 mb-2">
-                  <p className="text-sm text-gray-500 italic px-4">
-                    📝 {selfCareLog[getMealNoteKey(task.id)]}
-                  </p>
-                </div>
-              )}
+                  )}
+                  <div 
+                    className="flex items-center gap-4 flex-1 cursor-pointer"
+                    onClick={() => !isReordering && onToggleTask(task.id, !isComplete)}
+                  >
+                    <Checkbox checked={isComplete} className="pointer-events-none" />
+                    <Icon className={`w-6 h-6 ${isComplete ? 'text-green-500' : task.color}`} />
+                    <div className="flex-1">
+                      <span className={`font-medium ${isComplete ? 'text-green-700 line-through' : 'text-gray-700'}`}>
+                        {task.label}
+                      </span>
+                      {task.count > 0 && (
+                        <span className="ml-2 text-xs text-gray-500">({task.count} items)</span>
+                      )}
+                      {/* Show saved meal note inline */}
+                      {task.hasMealNote && selfCareLog?.[mealNoteKey] && editingMeal !== task.id && (
+                        <p className="text-sm text-gray-500 italic mt-1">
+                          📝 {selfCareLog[mealNoteKey]}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Meal note edit button */}
+                  {task.hasMealNote && !isReordering && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditMeal(task.id);
+                      }}
+                      className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                      title="Log what you ate"
+                    >
+                      <Pencil className="w-4 h-4 text-gray-400" />
+                    </button>
+                  )}
+                
+                  {task.link && !isReordering && (
+                    <Link 
+                      to={createPageUrl(task.link)}
+                      className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                      title={`Go to ${task.link}`}
+                    >
+                      <ExternalLink className="w-4 h-4 text-gray-400" />
+                    </Link>
+                  )}
+                  
+                  {isComplete && !task.link && !task.hasMealNote && !isReordering && <span className="text-green-500">✓</span>}
+                </motion.div>
+                
+                {/* Meal note input */}
+                <AnimatePresence>
+                  {editingMeal === task.id && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="ml-4 overflow-hidden"
+                    >
+                      <div className="flex gap-2 p-3 bg-white rounded-xl border-2 border-gray-200">
+                        <Input
+                          placeholder="What did you eat?"
+                          value={mealNoteInput}
+                          onChange={(e) => setMealNoteInput(e.target.value)}
+                          className="flex-1"
+                          autoFocus
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleSaveMealNote();
+                            if (e.key === 'Escape') setEditingMeal(null);
+                          }}
+                        />
+                        <Button size="sm" onClick={handleSaveMealNote} className="bg-green-500 hover:bg-green-600">
+                          <Check className="w-4 h-4" />
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => setEditingMeal(null)}>
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </React.Fragment>
             );
           })}
         </div>
