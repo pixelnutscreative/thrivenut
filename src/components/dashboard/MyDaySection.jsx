@@ -637,6 +637,33 @@ export default function MyDaySection({
     setSkippedTasks(prev => [...prev, taskId]);
   };
 
+  // Reorder tasks
+  const moveTaskUp = (taskId) => {
+    const currentOrder = localTaskOrder.length > 0 ? [...localTaskOrder] : allTasks.map(t => t.id);
+    const idx = currentOrder.indexOf(taskId);
+    if (idx > 0) {
+      [currentOrder[idx - 1], currentOrder[idx]] = [currentOrder[idx], currentOrder[idx - 1]];
+      setLocalTaskOrder(currentOrder);
+    }
+  };
+
+  const moveTaskDown = (taskId) => {
+    const currentOrder = localTaskOrder.length > 0 ? [...localTaskOrder] : allTasks.map(t => t.id);
+    const idx = currentOrder.indexOf(taskId);
+    if (idx < currentOrder.length - 1) {
+      [currentOrder[idx], currentOrder[idx + 1]] = [currentOrder[idx + 1], currentOrder[idx]];
+      setLocalTaskOrder(currentOrder);
+    }
+  };
+
+  const saveTaskOrder = async () => {
+    if (preferences?.id) {
+      await base44.entities.UserPreferences.update(preferences.id, { my_day_task_order: localTaskOrder });
+      queryClient.invalidateQueries({ queryKey: ['preferences'] });
+    }
+    setIsReordering(false);
+  };
+
   const getVisibleTasks = (sectionTasks) => {
     let filtered = sectionTasks.filter(t => !skippedTasks.includes(t.id));
     if (displayMode === 'hide') {
