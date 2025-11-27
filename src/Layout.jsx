@@ -198,7 +198,7 @@ export default function Layout({ children, currentPageName }) {
   const accentColor = preferences?.accent_color || '#bd84f5';
   const isDark = preferences?.theme_type === 'dark';
 
-  // Don't show layout on onboarding or home page
+  // Don't show layout on onboarding or home page (home is public landing page)
   if (currentPageName === 'Onboarding' || currentPageName === 'Home') {
     return children;
   }
