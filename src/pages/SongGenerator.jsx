@@ -58,6 +58,13 @@ export default function SongGenerator() {
   const [shared, setShared] = useState(false);
   const [isEditingLyrics, setIsEditingLyrics] = useState(false);
   const [editedLyrics, setEditedLyrics] = useState('');
+  const [showFinalizeModal, setShowFinalizeModal] = useState(false);
+  const [finalLyrics, setFinalLyrics] = useState('');
+  const [captionLyrics, setCaptionLyrics] = useState('');
+  const [postCaption, setPostCaption] = useState('');
+  const [processingFinal, setProcessingFinal] = useState(false);
+  const [copiedCaption, setCopiedCaption] = useState(false);
+  const [copiedFinalLyrics, setCopiedFinalLyrics] = useState(false);
   const [user, setUser] = useState(null);
   const [showSunoModal, setShowSunoModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
@@ -332,6 +339,56 @@ ${includeLevelUp ? 'Include a verse encouraging the community to help level up!'
   const saveLyricsEdit = () => {
     setGeneratedSong(editedLyrics);
     setIsEditingLyrics(false);
+  };
+
+  const processFinalLyrics = async () => {
+    if (!finalLyrics.trim()) return;
+    setProcessingFinal(true);
+    
+    try {
+      const hostDisplayName = preferences?.tiktok_display_name || preferences?.tiktok_username || 'the creator';
+      
+      // Build gifter mapping for replacement
+      const gifterMapping = formData.gifters.map(g => ({
+        phonetic: g.name,
+        displayName: g.username ? `@${g.username}` : g.name,
+        username: g.username || ''
+      }));
+
+      const result = await base44.integrations.Core.InvokeLLM({
+        prompt: `You have song lyrics that use PHONETIC spellings for gifter names. Convert them to use display names for video captions.
+
+GIFTER MAPPING (phonetic -> display):
+${gifterMapping.map(g => `"${g.phonetic}" -> "${g.displayName}"`).join('\n')}
+
+ORIGINAL LYRICS:
+${finalLyrics}
+
+Return the lyrics with phonetic names replaced by their display names (@username format where available).
+Also create a TikTok post caption that:
+1. Thanks the top gifters of the week for ${hostDisplayName}'s Gift Gallery
+2. Tags each gifter with their @username
+3. Is fun and appreciative
+4. Ends with relevant hashtags
+
+Creator display name: ${hostDisplayName}`,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            caption_lyrics: { type: "string", description: "The lyrics with phonetic names replaced by display names" },
+            post_caption: { type: "string", description: "TikTok post caption thanking gifters with @mentions and hashtags" }
+          }
+        }
+      });
+
+      setCaptionLyrics(result.caption_lyrics || finalLyrics);
+      setPostCaption(result.post_caption || '');
+    } catch (error) {
+      console.error('Error processing final lyrics:', error);
+      setCaptionLyrics(finalLyrics);
+      setPostCaption('');
+    }
+    setProcessingFinal(false);
   };
 
   const addGifter = () => {
@@ -835,12 +892,26 @@ ${includeLevelUp ? 'Include a verse encouraging the community to help level up!'
             )}
 
             {/* Suno Button */}
-            <Button 
-              onClick={() => setShowSunoModal(true)}
-              className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
-            >
-              <ExternalLink className="w-4 h-4 mr-2" /> Create Your Track with Suno 🎵
-            </Button>
+            <div className="flex gap-3">
+              <Button 
+                onClick={() => setShowSunoModal(true)}
+                className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+              >
+                <ExternalLink className="w-4 h-4 mr-2" /> Create Your Track with Suno 🎵
+              </Button>
+              <Button 
+                onClick={() => {
+                  setFinalLyrics('');
+                  setCaptionLyrics('');
+                  setPostCaption('');
+                  setShowFinalizeModal(true);
+                }}
+                variant="outline"
+                className="flex-1 border-purple-300 text-purple-700 hover:bg-purple-50"
+              >
+                <Music className="w-4 h-4 mr-2" /> Finalize for Video Captions
+              </Button>
+            </div>
 
             {shared && (
               <div className="p-3 bg-teal-50 rounded-lg flex items-center gap-2">
@@ -857,6 +928,121 @@ ${includeLevelUp ? 'Include a verse encouraging the community to help level up!'
         isOpen={showSunoModal} 
         onClose={() => setShowSunoModal(false)} 
       />
+
+      {/* Finalize Lyrics Modal */}
+      <Dialog open={showFinalizeModal} onOpenChange={setShowFinalizeModal}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Music className="w-5 h-5 text-purple-600" />
+              Finalize Lyrics for Video Captions
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {!captionLyrics ? (
+              <>
+                <p className="text-sm text-gray-600">
+                  Paste your final lyrics from Suno below. We'll replace the phonetic spellings with display names for your video captions.
+                </p>
+
+                <div className="space-y-2">
+                  <Label>Paste Final Lyrics from Suno</Label>
+                  <Textarea
+                    value={finalLyrics}
+                    onChange={(e) => setFinalLyrics(e.target.value)}
+                    placeholder="Paste your final song lyrics here..."
+                    className="min-h-[200px]"
+                  />
+                </div>
+
+                <Button
+                  onClick={processFinalLyrics}
+                  disabled={processingFinal || !finalLyrics.trim()}
+                  className="w-full bg-purple-600 hover:bg-purple-700"
+                >
+                  {processingFinal ? (
+                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Processing...</>
+                  ) : (
+                    <><Sparkles className="w-4 h-4 mr-2" /> Convert for Captions</>
+                  )}
+                </Button>
+              </>
+            ) : (
+              <>
+                {/* Caption-Ready Lyrics */}
+                <Card className="border-2 border-green-200 bg-green-50">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-green-700 text-lg">📝 Caption-Ready Lyrics</CardTitle>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => {
+                          navigator.clipboard.writeText(captionLyrics);
+                          setCopiedFinalLyrics(true);
+                          setTimeout(() => setCopiedFinalLyrics(false), 2000);
+                        }}
+                        className="border-green-300"
+                      >
+                        {copiedFinalLyrics ? <><Check className="w-4 h-4 mr-1" /> Copied!</> : <><Copy className="w-4 h-4 mr-1" /> Copy</>}
+                      </Button>
+                    </div>
+                    <CardDescription>Phonetic names replaced with display names</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="p-4 bg-white rounded-lg border border-green-200 max-h-48 overflow-y-auto">
+                      <pre className="whitespace-pre-wrap font-sans text-sm text-gray-700">
+                        {captionLyrics}
+                      </pre>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Post Caption */}
+                <Card className="border-2 border-pink-200 bg-pink-50">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-pink-700 text-lg">📱 TikTok Post Caption</CardTitle>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => {
+                          navigator.clipboard.writeText(postCaption);
+                          setCopiedCaption(true);
+                          setTimeout(() => setCopiedCaption(false), 2000);
+                        }}
+                        className="border-pink-300"
+                      >
+                        {copiedCaption ? <><Check className="w-4 h-4 mr-1" /> Copied!</> : <><Copy className="w-4 h-4 mr-1" /> Copy</>}
+                      </Button>
+                    </div>
+                    <CardDescription>Ready to paste into your TikTok post</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Textarea
+                      value={postCaption}
+                      onChange={(e) => setPostCaption(e.target.value)}
+                      className="min-h-[120px] bg-white"
+                    />
+                  </CardContent>
+                </Card>
+
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setCaptionLyrics('');
+                    setPostCaption('');
+                  }}
+                  className="w-full"
+                >
+                  Start Over with New Lyrics
+                </Button>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Song History Modal */}
       <SongHistoryModal
