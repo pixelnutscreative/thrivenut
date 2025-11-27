@@ -11,7 +11,7 @@ import {
   Dumbbell, ShowerHead, Sparkles, Check, Pencil, X, List, Grid3X3,
   ChevronDown, ChevronUp, PawPrint, Bell, Clock, Video, Users, 
   MessageSquare, SkipForward, ArrowRight, Loader2,
-  Bed, Smile, NotebookPen, GripVertical, ExternalLink
+  Bed, Smile, NotebookPen, GripVertical, ExternalLink, Target
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { motion, AnimatePresence } from 'framer-motion';
