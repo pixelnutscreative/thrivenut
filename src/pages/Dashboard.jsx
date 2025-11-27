@@ -59,14 +59,37 @@ export default function Dashboard() {
     enabled: !!user,
   });
 
+  // Fetch or create content goal for current week (auto-generate from template)
   const { data: contentGoal } = useQuery({
     queryKey: ['contentGoal', getCurrentWeekStart()],
     queryFn: async () => {
+      const weekStart = getCurrentWeekStart();
       const goals = await base44.entities.ContentGoal.filter({ 
-        week_starting: getCurrentWeekStart(),
+        week_starting: weekStart,
         created_by: user.email 
       });
-      return goals[0] || null;
+      
+      if (goals[0]) return goals[0];
+      
+      // No goal for this week - check for a template
+      const templates = await base44.entities.ContentScheduleTemplate.filter({ 
+        created_by: user.email 
+      });
+      
+      if (templates[0]) {
+        // Create new week's goal from template (reset completed status)
+        const template = templates[0];
+        const newGoal = await base44.entities.ContentGoal.create({
+          week_starting: weekStart,
+          scheduled_posts: (template.scheduled_posts || []).map(p => ({ ...p, completed: false })),
+          scheduled_lives: (template.scheduled_lives || []).map(l => ({ ...l, completed: false })),
+          scheduled_engagement: (template.scheduled_engagement || []).map(e => ({ ...e, completed: false })),
+          notes: template.notes || ''
+        });
+        return newGoal;
+      }
+      
+      return null;
     },
     enabled: !!user,
   });
