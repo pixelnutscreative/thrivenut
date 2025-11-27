@@ -9,11 +9,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Target, Plus, Edit, Trash2, CheckCircle2, ChevronDown, ChevronRight } from 'lucide-react';
+import { Target, Plus, Edit, Trash2, CheckCircle2, ChevronDown, ChevronRight, Share2, Users } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import AIStepsGenerator from '../components/goals/AIStepsGenerator';
 import GoalStepsList from '../components/goals/GoalStepsList';
+import GoalShareSelector from '../components/goals/GoalShareSelector';
 
 const categoryColors = {
   spiritual: 'bg-purple-100 text-purple-800',
@@ -22,8 +23,18 @@ const categoryColors = {
   financial: 'bg-yellow-100 text-yellow-800',
   relationship: 'bg-pink-100 text-pink-800',
   learning: 'bg-orange-100 text-orange-800',
+  career: 'bg-indigo-100 text-indigo-800',
+  creative: 'bg-teal-100 text-teal-800',
   other: 'bg-gray-100 text-gray-800'
 };
+
+const goalTypes = [
+  { id: 'habit', label: '🔄 Habit', description: 'Recurring goal (daily water, weekly exercise)' },
+  { id: 'project', label: '📋 Project', description: 'One-time goal with steps (buy a car, move)' },
+  { id: 'milestone', label: '🎯 Milestone', description: 'Single achievement (get promoted, graduate)' },
+  { id: 'learning', label: '📚 Learning', description: 'Skill or knowledge acquisition' },
+  { id: 'preparation', label: '🧘 Preparation', description: 'Getting ready for something (relationship, interview)' }
+];
 
 export default function Goals() {
   const queryClient = useQueryClient();
@@ -34,13 +45,23 @@ export default function Goals() {
     title: '',
     description: '',
     category: 'personal',
-    frequency: 'daily',
-    target_value: 1,
+    goal_type: 'project',
+    frequency: 'one-time',
+    target_value: 0,
     current_value: 0,
     steps: [],
+    target_date: '',
+    shared_with: [],
     start_date: format(new Date(), 'yyyy-MM-dd')
   });
   const [expandedGoals, setExpandedGoals] = useState({});
+
+  // Fetch accepted goal sharing connections
+  const { data: sharingConnections = [] } = useQuery({
+    queryKey: ['goalSharesSent', user?.email],
+    queryFn: () => base44.entities.GoalShare.filter({ sharer_email: user.email, status: 'accepted' }),
+    enabled: !!user,
+  });
 
   React.useEffect(() => {
     base44.auth.me().then(setUser);
@@ -103,10 +124,13 @@ export default function Goals() {
       title: '',
       description: '',
       category: 'personal',
-      frequency: 'daily',
-      target_value: 1,
+      goal_type: 'project',
+      frequency: 'one-time',
+      target_value: 0,
       current_value: 0,
       steps: [],
+      target_date: '',
+      shared_with: [],
       start_date: format(new Date(), 'yyyy-MM-dd')
     });
     setEditingGoal(null);
@@ -132,10 +156,13 @@ export default function Goals() {
       title: goal.title,
       description: goal.description || '',
       category: goal.category,
-      frequency: goal.frequency,
-      target_value: goal.target_value || 1,
+      goal_type: goal.goal_type || 'project',
+      frequency: goal.frequency || 'one-time',
+      target_value: goal.target_value || 0,
       current_value: goal.current_value || 0,
       steps: goal.steps || [],
+      target_date: goal.target_date || '',
+      shared_with: goal.shared_with || [],
       start_date: goal.start_date || format(new Date(), 'yyyy-MM-dd')
     });
     setShowModal(true);
@@ -365,6 +392,32 @@ export default function Goals() {
               />
             </div>
 
+            {/* Goal Type Selection */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">What type of goal is this?</label>
+              <div className="grid grid-cols-2 gap-2">
+                {goalTypes.map(type => (
+                  <div
+                    key={type.id}
+                    onClick={() => setFormData({
+                      ...formData, 
+                      goal_type: type.id,
+                      frequency: type.id === 'habit' ? 'daily' : 'one-time',
+                      target_value: type.id === 'habit' ? 1 : 0
+                    })}
+                    className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                      formData.goal_type === type.id
+                        ? 'border-purple-500 bg-purple-50'
+                        : 'border-gray-200 hover:border-purple-300'
+                    }`}
+                  >
+                    <p className="font-medium text-sm">{type.label}</p>
+                    <p className="text-xs text-gray-500">{type.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Category</label>
@@ -373,53 +426,56 @@ export default function Goals() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="spiritual">Spiritual</SelectItem>
-                    <SelectItem value="health">Health</SelectItem>
-                    <SelectItem value="personal">Personal</SelectItem>
-                    <SelectItem value="financial">Financial</SelectItem>
-                    <SelectItem value="relationship">Relationship</SelectItem>
-                    <SelectItem value="learning">Learning</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
+                    <SelectItem value="spiritual">🙏 Spiritual</SelectItem>
+                    <SelectItem value="health">💪 Health</SelectItem>
+                    <SelectItem value="personal">🎯 Personal</SelectItem>
+                    <SelectItem value="financial">💰 Financial</SelectItem>
+                    <SelectItem value="relationship">❤️ Relationship</SelectItem>
+                    <SelectItem value="learning">📚 Learning</SelectItem>
+                    <SelectItem value="career">💼 Career</SelectItem>
+                    <SelectItem value="creative">🎨 Creative</SelectItem>
+                    <SelectItem value="other">✨ Other</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Frequency</label>
-                <Select value={formData.frequency} onValueChange={(val) => setFormData({...formData, frequency: val})}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="daily">Daily</SelectItem>
-                    <SelectItem value="weekly">Weekly</SelectItem>
-                    <SelectItem value="monthly">Monthly</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Target Value</label>
-                <Input
-                  type="number"
-                  min="0"
-                  value={formData.target_value}
-                  onChange={(e) => setFormData({...formData, target_value: parseInt(e.target.value) || 0})}
-                />
-                <p className="text-xs text-gray-500">Set to 0 if using steps only</p>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Start Date</label>
+                <label className="text-sm font-medium">Target Date (Optional)</label>
                 <Input
                   type="date"
-                  value={formData.start_date}
-                  onChange={(e) => setFormData({...formData, start_date: e.target.value})}
+                  value={formData.target_date}
+                  onChange={(e) => setFormData({...formData, target_date: e.target.value})}
                 />
               </div>
             </div>
+
+            {/* Frequency - only show for habit type */}
+            {formData.goal_type === 'habit' && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Frequency</label>
+                  <Select value={formData.frequency} onValueChange={(val) => setFormData({...formData, frequency: val})}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="daily">Daily</SelectItem>
+                      <SelectItem value="weekly">Weekly</SelectItem>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Target Value</label>
+                  <Input
+                    type="number"
+                    min="1"
+                    value={formData.target_value}
+                    onChange={(e) => setFormData({...formData, target_value: parseInt(e.target.value) || 1})}
+                  />
+                </div>
+              </div>
+            )}
 
             {/* Steps Section */}
             <div className="space-y-3 pt-4 border-t">
@@ -429,6 +485,7 @@ export default function Goals() {
               <AIStepsGenerator
                 goalTitle={formData.title}
                 goalDescription={formData.description}
+                goalType={formData.goal_type}
                 existingSteps={formData.steps}
                 onStepsGenerated={(steps) => setFormData({...formData, steps})}
               />
@@ -441,6 +498,21 @@ export default function Goals() {
                 />
               )}
             </div>
+
+            {/* Share with specific people */}
+            {sharingConnections.length > 0 && (
+              <div className="space-y-3 pt-4 border-t">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Share2 className="w-4 h-4" />
+                  Share this goal with
+                </label>
+                <GoalShareSelector
+                  connections={sharingConnections}
+                  selectedEmails={formData.shared_with}
+                  onChange={(emails) => setFormData({...formData, shared_with: emails})}
+                />
+              </div>
+            )}
           </div>
 
           <DialogFooter>

@@ -4,7 +4,15 @@ import { Button } from '@/components/ui/button';
 import { Sparkles, Loader2, Check, Plus, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function AIStepsGenerator({ goalTitle, goalDescription, onStepsGenerated, existingSteps = [] }) {
+const goalTypePrompts = {
+  habit: 'This is a recurring habit goal. Focus on building consistency and tracking daily/weekly actions.',
+  project: 'This is a one-time project goal. Break it down into sequential steps that lead to completion.',
+  milestone: 'This is a milestone goal (single achievement). Focus on prerequisites and actions needed to reach this milestone.',
+  learning: 'This is a learning goal. Include research, practice, skill-building, and mastery steps.',
+  preparation: 'This is a preparation goal (getting ready for something). Focus on mental, emotional, and practical preparation steps.'
+};
+
+export default function AIStepsGenerator({ goalTitle, goalDescription, goalType = 'project', onStepsGenerated, existingSteps = [] }) {
   const [loading, setLoading] = useState(false);
   const [suggestedSteps, setSuggestedSteps] = useState([]);
   const [selectedSteps, setSelectedSteps] = useState([]);
@@ -22,6 +30,7 @@ export default function AIStepsGenerator({ goalTitle, goalDescription, onStepsGe
 
 Goal: "${goalTitle}"
 ${goalDescription ? `Description: "${goalDescription}"` : ''}
+Goal Type: ${goalType} - ${goalTypePrompts[goalType] || goalTypePrompts.project}
 
 Break this goal down into 5-8 specific, actionable steps or mini-goals that someone would need to complete to achieve this goal. 
 
@@ -31,6 +40,8 @@ Rules:
 - Focus on practical actions, not abstract concepts
 - Keep each step concise (under 50 characters if possible)
 - Consider any prerequisites or dependencies
+- For preparation goals, include mental/emotional readiness steps
+- For learning goals, include practice and skill-building steps
 
 Return the steps as a JSON array.`,
         response_json_schema: {

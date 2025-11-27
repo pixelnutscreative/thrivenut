@@ -81,29 +81,24 @@ export default function GoalSharing() {
     enabled: !!user,
   });
 
-  // Get shared goals for viewing
+  // Get shared goals for viewing (now uses shared_with field on Goal entity)
   const { data: viewableGoals = {} } = useQuery({
-    queryKey: ['viewableGoals', receivedShares],
+    queryKey: ['viewableGoals', receivedShares, user?.email],
     queryFn: async () => {
       const acceptedShares = receivedShares.filter(s => s.status === 'accepted');
       const goalsBySharer = {};
       
       for (const share of acceptedShares) {
-        let goals = [];
+        // Fetch goals where the viewer's email is in the shared_with array
+        const allSharerGoals = await base44.entities.Goal.filter({ 
+          created_by: share.sharer_email,
+          status: 'active'
+        });
         
-        if (share.shared_goal_ids && share.shared_goal_ids.length > 0) {
-          // Fetch specific goals by ID
-          const allSharerGoals = await base44.entities.Goal.filter({ 
-            created_by: share.sharer_email 
-          });
-          goals = allSharerGoals.filter(g => share.shared_goal_ids.includes(g.id));
-        } else {
-          // Legacy: fetch all goals
-          goals = await base44.entities.Goal.filter({ 
-            created_by: share.sharer_email,
-            status: 'active'
-          });
-        }
+        // Filter to only goals shared with this viewer
+        const goals = allSharerGoals.filter(g => 
+          g.shared_with && g.shared_with.includes(user.email)
+        );
         
         goalsBySharer[share.sharer_email] = {
           share,
@@ -113,7 +108,7 @@ export default function GoalSharing() {
       
       return goalsBySharer;
     },
-    enabled: receivedShares.length > 0,
+    enabled: receivedShares.length > 0 && !!user,
   });
 
   const createShareMutation = useMutation({
