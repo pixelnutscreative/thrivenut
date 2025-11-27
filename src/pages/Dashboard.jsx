@@ -187,16 +187,31 @@ export default function Dashboard() {
 
   const createOrUpdateGoalMutation = useMutation({
     mutationFn: async (goalData) => {
+      // Also save as template for future weeks
+      const templates = await base44.entities.ContentScheduleTemplate.filter({ 
+        created_by: user.email 
+      });
+      
+      const templateData = {
+        scheduled_posts: goalData.scheduled_posts || [],
+        scheduled_lives: goalData.scheduled_lives || [],
+        scheduled_engagement: goalData.scheduled_engagement || [],
+        notes: goalData.notes || ''
+      };
+      
+      if (templates[0]) {
+        await base44.entities.ContentScheduleTemplate.update(templates[0].id, templateData);
+      } else {
+        await base44.entities.ContentScheduleTemplate.create(templateData);
+      }
+      
+      // Now save the current week's goal
       if (contentGoal) {
         return await base44.entities.ContentGoal.update(contentGoal.id, goalData);
       } else {
         return await base44.entities.ContentGoal.create({
           week_starting: getCurrentWeekStart(),
           ...goalData,
-          posts_completed: 0,
-          lives_completed: 0,
-          shop_lives_completed: 0,
-          engagement_completed: 0,
           scheduled_posts: goalData.scheduled_posts || [],
           scheduled_lives: goalData.scheduled_lives || [],
           scheduled_engagement: goalData.scheduled_engagement || []
