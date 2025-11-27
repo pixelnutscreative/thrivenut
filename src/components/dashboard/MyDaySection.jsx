@@ -932,7 +932,91 @@ export default function MyDaySection({
         )}
       </CardHeader>
       
-      <CardContent className="space-y-4">
+      <CardContent>
+        {layoutMode === 'two-column' ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Left column: Variable/As-Needed tasks */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 mb-2 pb-2 border-b">
+                <Clock className="w-4 h-4 text-gray-500" />
+                <span className="text-sm font-semibold text-gray-600">Flexible / As Needed</span>
+              </div>
+              {variableTasks.length === 0 ? (
+                <p className="text-sm text-gray-400 italic">No flexible tasks</p>
+              ) : (
+                getVisibleTasks(variableTasks).map(task => {
+                  const Icon = task.icon;
+                  const isComplete = isTaskComplete(task);
+                  return (
+                    <div
+                      key={task.id}
+                      onClick={() => !isReordering && (task.isLink ? null : handleToggleTask(task))}
+                      className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all ${
+                        isComplete 
+                          ? 'bg-green-100 border border-green-300' 
+                          : 'bg-white border border-gray-100 hover:border-teal-300'
+                      }`}
+                    >
+                      <Checkbox checked={isComplete} className="pointer-events-none" />
+                      <Icon className={`w-4 h-4 ${isComplete ? 'text-green-500' : task.color}`} />
+                      <span className={`text-sm flex-1 ${isComplete ? 'line-through text-gray-400' : ''}`}>{task.label}</span>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+            
+            {/* Right column: Scheduled/Timed tasks */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 mb-2 pb-2 border-b">
+                <Sun className="w-4 h-4 text-amber-500" />
+                <span className="text-sm font-semibold text-gray-600">Scheduled</span>
+              </div>
+              {['morning', 'midday', 'afternoon', 'evening', 'night'].map((time) => {
+                const sectionTasks = tasksByTime[time] || [];
+                if (sectionTasks.length === 0) return null;
+                const visibleTasks = getVisibleTasks(sectionTasks);
+                if (visibleTasks.length === 0) return null;
+                const timeInfo = timeLabels[time];
+                
+                return (
+                  <div key={time} className="mb-3">
+                    <div className="flex items-center gap-1 mb-1">
+                      <timeInfo.icon className={`w-3 h-3 ${timeInfo.color}`} />
+                      <span className="text-xs font-medium text-gray-500">{timeInfo.label}</span>
+                    </div>
+                    <div className="space-y-1">
+                      {visibleTasks.map(task => {
+                        const Icon = task.icon;
+                        const isComplete = isTaskComplete(task);
+                        return (
+                          <div
+                            key={task.id}
+                            onClick={() => !isReordering && (task.isLink ? null : handleToggleTask(task))}
+                            className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all ${
+                              isComplete 
+                                ? 'bg-green-100 border border-green-300' 
+                                : 'bg-white border border-gray-100 hover:border-teal-300'
+                            }`}
+                          >
+                            <Checkbox checked={isComplete} className="pointer-events-none" />
+                            <Icon className={`w-4 h-4 ${isComplete ? 'text-green-500' : task.color}`} />
+                            <div className="flex-1 min-w-0">
+                              <span className={`text-sm ${isComplete ? 'line-through text-gray-400' : ''}`}>{task.label}</span>
+                              {task.sublabel && <p className="text-xs text-gray-400 truncate">{task.sublabel}</p>}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          /* Single column layout */
+          <div className="space-y-4">
         {['morning', 'midday', 'afternoon', 'evening', 'night', 'anytime'].map((time) => {
           const sectionTasks = tasksByTime[time] || [];
           if (sectionTasks.length === 0) return null;
