@@ -522,14 +522,25 @@ export default function MyDaySection({
       });
     });
 
-    // Sort by timeOfDay then order
+    // Sort by custom order first, then by timeOfDay, then default order
     const timeOrder = { morning: 1, midday: 2, afternoon: 3, evening: 4, night: 5, anytime: 6 };
+    const customOrder = localTaskOrder.length > 0 ? localTaskOrder : (preferences?.my_day_task_order || []);
+    
     return tasks.sort((a, b) => {
+      // If custom order exists, use it first
+      if (customOrder.length > 0) {
+        const aCustomIdx = customOrder.indexOf(a.id);
+        const bCustomIdx = customOrder.indexOf(b.id);
+        if (aCustomIdx !== -1 && bCustomIdx !== -1) return aCustomIdx - bCustomIdx;
+        if (aCustomIdx !== -1) return -1;
+        if (bCustomIdx !== -1) return 1;
+      }
+      
       const timeCompare = (timeOrder[a.timeOfDay] || 6) - (timeOrder[b.timeOfDay] || 6);
       if (timeCompare !== 0) return timeCompare;
       return (a.order || 50) - (b.order || 50);
     });
-  }, [medications, supplements, pets, careReminders, contentGoal, liveSchedules, preferences, todayDayName, mealLabels]);
+  }, [medications, supplements, pets, careReminders, contentGoal, liveSchedules, preferences, todayDayName, mealLabels, localTaskOrder]);
 
   // Helper functions
   function getTimeOfDayFromTimeString(timeStr) {
