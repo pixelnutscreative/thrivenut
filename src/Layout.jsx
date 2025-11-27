@@ -51,21 +51,7 @@ const moduleNavMap = {
 };
 
 const allNavItems = [
-  { name: 'Home', icon: Home, path: 'Home', alwaysShow: true },
   { name: 'Dashboard', icon: LayoutDashboard, path: 'Dashboard', alwaysShow: true },
-  { name: 'TikTok', icon: TrendingUp, isSection: true, moduleId: 'tiktok', requiresTikTokAccess: true, subItems: [
-            { name: 'TikTok Dashboard', icon: TrendingUp, path: 'TikTokDashboard' },
-            { name: 'TikTok Contacts', icon: Users, path: 'TikTokContacts' },
-            { name: 'Content Goals', icon: TrendingUp, path: 'TikTokGoals' },
-            { name: 'TikTok Engagement', icon: Users, path: 'TikTokEngagement' },
-            { name: 'Creator Calendar', icon: Video, path: 'LiveSchedule' },
-            { name: 'Live Reminders', icon: Bell, path: 'LiveReminders' },
-            { name: 'Discover Creators', icon: Users, path: 'DiscoverCreators' },
-            { name: '── Gift Gallery Gratitude ──', icon: Gift, isDivider: true },
-                                                { name: 'Weekly Gallery', icon: Gift, path: 'WeeklyGifterGallery', moduleId: 'gifter' },
-                                                { name: 'Song Generator', icon: Music, path: 'SongGenerator', moduleId: 'gifter' },
-          ]},
-  { name: 'SuperFan Access', icon: Star, path: 'SuperFanAccess', showWhenNoTikTokAccess: true },
   { name: 'Goals', icon: Target, path: 'Goals', moduleId: 'goals' },
   { name: 'Wellness', icon: Heart, isSection: true, moduleId: 'wellness', subItems: [
     { name: 'Daily Wellness', icon: Heart, path: 'Wellness' },
@@ -76,12 +62,22 @@ const allNavItems = [
   ]},
   { name: 'My People', icon: Users, path: 'People', moduleId: 'people' },
   { name: 'Journal', icon: BookOpen, path: 'Journal', moduleId: 'journal' },
-  { name: 'Settings', icon: Settings, path: 'Settings', alwaysShow: true },
   { name: 'Mental Health', icon: Brain, path: 'NeurodivergentSettings', moduleId: 'mental_health' },
-  { name: 'Admin', icon: Users, path: 'AdminSuperFanReview', adminOnly: true },
-            { name: 'User Management', icon: UserCog, path: 'AdminImpersonate', adminOnly: true },
-            { name: 'Master Contacts', icon: Users, path: 'MasterContactDatabase', adminOnly: true },
-            { name: 'Gift Library', icon: Gift, path: 'GiftLibrary', adminOnly: true },
+  { name: 'TikTok', icon: TrendingUp, isSection: true, moduleId: 'tiktok', requiresTikTokAccess: true, subItems: [
+            { name: 'TikTok Dashboard', icon: TrendingUp, path: 'TikTokDashboard' },
+            { name: 'TikTok Contacts', icon: Users, path: 'TikTokContacts' },
+            { name: 'Content Goals', icon: TrendingUp, path: 'TikTokGoals' },
+            { name: 'TikTok Engagement', icon: Users, path: 'TikTokEngagement' },
+            { name: 'Creator Calendar', icon: Video, path: 'LiveSchedule' },
+            { name: 'Live Reminders', icon: Bell, path: 'LiveReminders' },
+            { name: 'Discover Creators', icon: Users, path: 'DiscoverCreators' },
+            { name: '── Gift Gallery Gratitude ──', icon: Gift, isDivider: true },
+            { name: 'Weekly Gallery', icon: Gift, path: 'WeeklyGifterGallery', moduleId: 'gifter' },
+            { name: 'Song Generator', icon: Music, path: 'SongGenerator', moduleId: 'gifter' },
+  ]},
+  { name: 'SuperFan Access', icon: Star, path: 'SuperFanAccess', showWhenNoTikTokAccess: true },
+  { name: 'Settings', icon: Settings, path: 'Settings', alwaysShow: true },
+  { name: 'Admin Panel', icon: UserCog, path: 'Admin', adminOnly: true },
 ];
 
 export default function Layout({ children, currentPageName }) {
