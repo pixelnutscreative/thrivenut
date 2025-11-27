@@ -9,9 +9,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Target, Plus, Edit, Trash2, CheckCircle2 } from 'lucide-react';
+import { Target, Plus, Edit, Trash2, CheckCircle2, ChevronDown, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import AIStepsGenerator from '../components/goals/AIStepsGenerator';
+import GoalStepsList from '../components/goals/GoalStepsList';
 
 const categoryColors = {
   spiritual: 'bg-purple-100 text-purple-800',
@@ -35,8 +37,10 @@ export default function Goals() {
     frequency: 'daily',
     target_value: 1,
     current_value: 0,
+    steps: [],
     start_date: format(new Date(), 'yyyy-MM-dd')
   });
+  const [expandedGoals, setExpandedGoals] = useState({});
 
   React.useEffect(() => {
     base44.auth.me().then(setUser);
@@ -102,11 +106,25 @@ export default function Goals() {
       frequency: 'daily',
       target_value: 1,
       current_value: 0,
+      steps: [],
       start_date: format(new Date(), 'yyyy-MM-dd')
     });
     setEditingGoal(null);
     setShowModal(false);
   };
+
+  const toggleGoalExpand = (goalId) => {
+    setExpandedGoals(prev => ({ ...prev, [goalId]: !prev[goalId] }));
+  };
+
+  const updateStepsMutation = useMutation({
+    mutationFn: async ({ goalId, steps }) => {
+      return await base44.entities.Goal.update(goalId, { steps });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['goals'] });
+    },
+  });
 
   const handleEdit = (goal) => {
     setEditingGoal(goal);
@@ -117,6 +135,7 @@ export default function Goals() {
       frequency: goal.frequency,
       target_value: goal.target_value || 1,
       current_value: goal.current_value || 0,
+      steps: goal.steps || [],
       start_date: goal.start_date || format(new Date(), 'yyyy-MM-dd')
     });
     setShowModal(true);
@@ -156,6 +175,11 @@ export default function Goals() {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {goals.map((goal, index) => {
               const percentage = goal.target_value > 0 ? (goal.current_value / goal.target_value) * 100 : 0;
+              const hasSteps = goal.steps && goal.steps.length > 0;
+              const stepsCompleted = hasSteps ? goal.steps.filter(s => s.completed).length : 0;
+              const stepsPercent = hasSteps ? (stepsCompleted / goal.steps.length) * 100 : 0;
+              const isExpanded = expandedGoals[goal.id];
+              
               return (
                 <motion.div
                   key={goal.id}
@@ -194,43 +218,86 @@ export default function Goals() {
                       )}
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <div>
-                        <div className="flex justify-between text-sm mb-2">
-                          <span className="text-gray-600">Progress</span>
-                          <span className="font-semibold">
-                            {goal.current_value} / {goal.target_value}
-                          </span>
+                      {/* Steps Section */}
+                      {hasSteps && (
+                        <div className="space-y-2">
+                          <button
+                            onClick={() => toggleGoalExpand(goal.id)}
+                            className="flex items-center justify-between w-full text-sm text-gray-600 hover:text-gray-800"
+                          >
+                            <span className="flex items-center gap-2">
+                              {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                              {stepsCompleted}/{goal.steps.length} steps
+                            </span>
+                            <span className="text-xs">{Math.round(stepsPercent)}%</span>
+                          </button>
+                          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all"
+                              style={{ width: `${stepsPercent}%` }}
+                            />
+                          </div>
+                          <AnimatePresence>
+                            {isExpanded && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                className="overflow-hidden"
+                              >
+                                <GoalStepsList
+                                  steps={goal.steps}
+                                  onChange={(newSteps) => updateStepsMutation.mutate({ goalId: goal.id, steps: newSteps })}
+                                  editable={false}
+                                />
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
                         </div>
-                        <Progress value={percentage} className="h-3" />
-                      </div>
+                      )}
 
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => updateProgressMutation.mutate({ 
-                            goalId: goal.id, 
-                            newValue: Math.max(0, goal.current_value - 1) 
-                          })}
-                          disabled={goal.current_value === 0}
-                          className="flex-1"
-                        >
-                          -1
-                        </Button>
-                        <Button
-                          size="sm"
-                          onClick={() => updateProgressMutation.mutate({ 
-                            goalId: goal.id, 
-                            newValue: Math.min(goal.target_value, goal.current_value + 1) 
-                          })}
-                          disabled={goal.current_value >= goal.target_value}
-                          className="flex-1 bg-purple-600 hover:bg-purple-700"
-                        >
-                          +1
-                        </Button>
-                      </div>
+                      {/* Progress for target-based goals */}
+                      {goal.target_value > 0 && (
+                        <>
+                          <div>
+                            <div className="flex justify-between text-sm mb-2">
+                              <span className="text-gray-600">Progress</span>
+                              <span className="font-semibold">
+                                {goal.current_value} / {goal.target_value}
+                              </span>
+                            </div>
+                            <Progress value={percentage} className="h-3" />
+                          </div>
 
-                      {percentage >= 100 && (
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => updateProgressMutation.mutate({ 
+                                goalId: goal.id, 
+                                newValue: Math.max(0, goal.current_value - 1) 
+                              })}
+                              disabled={goal.current_value === 0}
+                              className="flex-1"
+                            >
+                              -1
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => updateProgressMutation.mutate({ 
+                                goalId: goal.id, 
+                                newValue: Math.min(goal.target_value, goal.current_value + 1) 
+                              })}
+                              disabled={goal.current_value >= goal.target_value}
+                              className="flex-1 bg-purple-600 hover:bg-purple-700"
+                            >
+                              +1
+                            </Button>
+                          </div>
+                        </>
+                      )}
+
+                      {(percentage >= 100 || (hasSteps && stepsPercent >= 100)) && (
                         <Button
                           size="sm"
                           onClick={() => completeGoalMutation.mutate(goal.id)}
@@ -337,10 +404,11 @@ export default function Goals() {
                 <label className="text-sm font-medium">Target Value</label>
                 <Input
                   type="number"
-                  min="1"
+                  min="0"
                   value={formData.target_value}
-                  onChange={(e) => setFormData({...formData, target_value: parseInt(e.target.value) || 1})}
+                  onChange={(e) => setFormData({...formData, target_value: parseInt(e.target.value) || 0})}
                 />
+                <p className="text-xs text-gray-500">Set to 0 if using steps only</p>
               </div>
 
               <div className="space-y-2">
@@ -351,6 +419,27 @@ export default function Goals() {
                   onChange={(e) => setFormData({...formData, start_date: e.target.value})}
                 />
               </div>
+            </div>
+
+            {/* Steps Section */}
+            <div className="space-y-3 pt-4 border-t">
+              <label className="text-sm font-medium">Steps / Mini-Goals</label>
+              <p className="text-xs text-gray-500">Break your goal into smaller, actionable steps</p>
+              
+              <AIStepsGenerator
+                goalTitle={formData.title}
+                goalDescription={formData.description}
+                existingSteps={formData.steps}
+                onStepsGenerated={(steps) => setFormData({...formData, steps})}
+              />
+              
+              {formData.steps.length > 0 && (
+                <GoalStepsList
+                  steps={formData.steps}
+                  onChange={(steps) => setFormData({...formData, steps})}
+                  editable={true}
+                />
+              )}
             </div>
           </div>
 
