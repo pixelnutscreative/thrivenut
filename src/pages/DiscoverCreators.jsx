@@ -22,44 +22,64 @@ export default function DiscoverCreators() {
     base44.auth.me().then(setUser).catch(() => {});
   }, []);
 
-  const { data: directoryCreators = [] } = useQuery({
-    queryKey: ['directoryCreators'],
+  // Fetch all shared calendar items grouped by creator
+  const { data: sharedItems = [] } = useQuery({
+    queryKey: ['sharedCalendarItems'],
     queryFn: async () => {
-      const goals = await base44.entities.ContentGoal.filter({ allow_in_directory: true });
-      return goals.filter(g => g.scheduled_lives && g.scheduled_lives.length > 0);
+      const items = await base44.entities.ContentCalendarItem.filter({ share_to_directory: true });
+      return items;
     },
     initialData: [],
   });
 
-  const { data: searchResults = [] } = useQuery({
-    queryKey: ['searchCreators', searchQuery],
+  // Fetch preferences to get tiktok usernames
+  const { data: allPreferences = [] } = useQuery({
+    queryKey: ['allUserPreferences'],
     queryFn: async () => {
-      if (!searchQuery.trim()) return [];
-      const cleanQuery = searchQuery.replace('@', '').trim().toLowerCase();
-      const goals = await base44.entities.ContentGoal.list();
-      return goals.filter(g => 
-        g.allow_search_by_username && 
-        g.tiktok_username && 
-        g.tiktok_username.toLowerCase().includes(cleanQuery) &&
-        g.scheduled_lives && 
-        g.scheduled_lives.length > 0
-      );
+      const prefs = await base44.entities.UserPreferences.list();
+      return prefs.filter(p => p.tiktok_username && p.allow_in_community_directory);
     },
-    enabled: searchAttempted && searchQuery.trim().length > 0,
     initialData: [],
   });
+
+  // Group shared items by creator email
+  const directoryCreators = React.useMemo(() => {
+    const grouped = {};
+    sharedItems.forEach(item => {
+      const email = item.created_by;
+      if (!grouped[email]) {
+        const pref = allPreferences.find(p => p.user_email === email);
+        grouped[email] = {
+          email,
+          tiktok_username: pref?.tiktok_username || email.split('@')[0],
+          items: []
+        };
+      }
+      grouped[email].items.push(item);
+    });
+    return Object.values(grouped);
+  }, [sharedItems, allPreferences]);
+
+  // Search results
+  const searchResults = React.useMemo(() => {
+    if (!searchQuery.trim() || !searchAttempted) return [];
+    const cleanQuery = searchQuery.replace('@', '').trim().toLowerCase();
+    return directoryCreators.filter(c => 
+      c.tiktok_username.toLowerCase().includes(cleanQuery)
+    );
+  }, [directoryCreators, searchQuery, searchAttempted]);
 
   const addToCalendarMutation = useMutation({
-    mutationFn: async ({ creatorGoal, liveSchedule }) => {
+    mutationFn: async ({ creator, item }) => {
       return await base44.entities.LiveSchedule.create({
-        host_username: creatorGoal.tiktok_username,
-        recurring_days: [liveSchedule.day_of_week],
-        time: liveSchedule.time,
-        live_types: ['regular'],
+        host_username: creator.tiktok_username,
+        recurring_days: [item.day_of_week],
+        time: item.time,
+        live_types: [item.type === 'live' ? 'regular' : item.type],
         priority: 5,
-        is_recurring: liveSchedule.is_recurring || true,
-        notes: liveSchedule.title || liveSchedule.description || 'Added from ThriveNut',
-        audience_restriction: liveSchedule.audience_restriction || 'all_ages',
+        is_recurring: item.is_recurring !== false,
+        notes: item.title || 'Added from ThriveNut',
+        audience_restriction: item.audience || 'all_ages',
         creator_timezone: 'America/New_York'
       });
     },
@@ -161,9 +181,9 @@ Would love to see you there! 🎉`;
               {searchAttempted && searchQuery.trim() ? 'Search Results' : 'Community Directory'}
             </h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {displayResults.map((creatorGoal, index) => (
+              {displayResults.map((creator, index) => (
                 <motion.div
-                  key={creatorGoal.id}
+                  key={creator.email}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
@@ -171,48 +191,51 @@ Would love to see you there! 🎉`;
                   <Card className="h-full hover:shadow-lg transition-shadow">
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
-                        <span className="text-purple-600">@{creatorGoal.tiktok_username}</span>
+                        <span className="text-purple-600">@{creator.tiktok_username}</span>
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
                       <p className="text-sm text-gray-600">
-                        {creatorGoal.scheduled_lives.filter(l => l.is_shareable).length} shareable live{creatorGoal.scheduled_lives.filter(l => l.is_shareable).length !== 1 ? 's' : ''} scheduled
+                        {creator.items.length} shared item{creator.items.length !== 1 ? 's' : ''}
                       </p>
                       
                       <div className="space-y-2 max-h-48 overflow-y-auto">
-                        {creatorGoal.scheduled_lives
-                          .filter(live => live.is_shareable)
-                          .map((live, liveIndex) => (
-                            <div key={liveIndex} className="p-3 bg-purple-50 rounded-lg space-y-2">
-                              <div className="flex items-start justify-between">
-                                <div className="flex-1">
-                                  {live.title && (
-                                    <p className="font-semibold text-sm">{live.title}</p>
-                                  )}
-                                  <p className="text-xs text-gray-600">
-                                    {live.day_of_week} at {live.time}
-                                  </p>
-                                  {live.description && (
-                                    <p className="text-xs text-gray-500 mt-1">{live.description}</p>
-                                  )}
-                                  {live.audience_restriction && (
-                                    <Badge className="mt-1 text-xs">
-                                      {live.audience_restriction === '18+' ? '18+' : 'All Ages'}
-                                    </Badge>
+                        {creator.items.map((item) => (
+                          <div key={item.id} className={`p-3 rounded-lg space-y-2 ${
+                            item.type === 'live' ? 'bg-pink-50' : 
+                            item.type === 'post' ? 'bg-purple-50' : 'bg-teal-50'
+                          }`}>
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="outline" className="text-xs">
+                                    {item.type === 'live' ? '🔴 Live' : item.type === 'post' ? '📱 Post' : '💬 Engage'}
+                                  </Badge>
+                                  {item.audience === '18+' && (
+                                    <Badge className="text-xs bg-red-100 text-red-700">18+</Badge>
                                   )}
                                 </div>
+                                {item.title && (
+                                  <p className="font-semibold text-sm mt-1">{item.title}</p>
+                                )}
+                                <p className="text-xs text-gray-600">
+                                  {item.day_of_week} at {item.time}
+                                </p>
                               </div>
+                            </div>
+                            {item.type === 'live' && (
                               <Button
                                 size="sm"
-                                onClick={() => addToCalendarMutation.mutate({ creatorGoal, liveSchedule: live })}
+                                onClick={() => addToCalendarMutation.mutate({ creator, item })}
                                 disabled={addToCalendarMutation.isPending}
                                 className="w-full bg-purple-600 hover:bg-purple-700"
                               >
                                 <Plus className="w-3 h-3 mr-1" />
-                                Add to Calendar
+                                Add to My Calendar
                               </Button>
-                            </div>
-                          ))}
+                            )}
+                          </div>
+                        ))}
                       </div>
                     </CardContent>
                   </Card>
