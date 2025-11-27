@@ -173,6 +173,7 @@ export default function SelfCareChecklist({
           {tasksToShow.map((task, index) => {
             const Icon = task.icon;
             const isComplete = selfCareLog?.[task.id];
+            const taskIndex = localOrder.indexOf(task.id);
             
             return (
               <motion.div
@@ -180,15 +181,34 @@ export default function SelfCareChecklist({
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.05 }}
+                layout={isReordering}
                 className={`flex items-center gap-4 p-4 rounded-xl transition-all ${
                   isComplete 
                     ? 'bg-green-100 border-2 border-green-300' 
                     : 'bg-white border-2 border-gray-100 hover:border-amber-300'
                 }`}
               >
+                {isReordering && (
+                  <div className="flex flex-col gap-1">
+                    <button
+                      onClick={() => moveTask(taskIndex, 'up')}
+                      disabled={taskIndex === 0}
+                      className="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      <ArrowUp className="w-4 h-4 text-gray-500" />
+                    </button>
+                    <button
+                      onClick={() => moveTask(taskIndex, 'down')}
+                      disabled={taskIndex === localOrder.length - 1}
+                      className="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      <ArrowDown className="w-4 h-4 text-gray-500" />
+                    </button>
+                  </div>
+                )}
                 <div 
                   className="flex items-center gap-4 flex-1 cursor-pointer"
-                  onClick={() => onToggleTask(task.id, !isComplete)}
+                  onClick={() => !isReordering && onToggleTask(task.id, !isComplete)}
                 >
                   <Checkbox checked={isComplete} className="pointer-events-none" />
                   <Icon className={`w-6 h-6 ${isComplete ? 'text-green-500' : task.color}`} />
@@ -202,7 +222,7 @@ export default function SelfCareChecklist({
                   </div>
                 </div>
                 
-                {task.link && (
+                {task.link && !isReordering && (
                   <Link 
                     to={createPageUrl(task.link)}
                     className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -212,7 +232,7 @@ export default function SelfCareChecklist({
                   </Link>
                 )}
                 
-                {isComplete && !task.link && <span className="text-green-500">✓</span>}
+                {isComplete && !task.link && !isReordering && <span className="text-green-500">✓</span>}
               </motion.div>
             );
           })}
