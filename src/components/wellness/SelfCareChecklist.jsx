@@ -140,9 +140,20 @@ export default function SelfCareChecklist({
             <Sun className="w-6 h-6 text-amber-500" />
             Daily Self-Care
           </div>
-          <Badge variant={allComplete ? "default" : "secondary"} className={allComplete ? "bg-green-500" : ""}>
-            {completedCount}/{totalCount} Complete
-          </Badge>
+          <div className="flex items-center gap-2">
+            {isReordering ? (
+              <Button size="sm" onClick={saveOrder} className="bg-green-500 hover:bg-green-600">
+                <Check className="w-4 h-4 mr-1" /> Done
+              </Button>
+            ) : (
+              <Button size="sm" variant="outline" onClick={() => setIsReordering(true)}>
+                <GripVertical className="w-4 h-4 mr-1" /> Reorder
+              </Button>
+            )}
+            <Badge variant={allComplete ? "default" : "secondary"} className={allComplete ? "bg-green-500" : ""}>
+              {completedCount}/{totalCount} Complete
+            </Badge>
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent>
