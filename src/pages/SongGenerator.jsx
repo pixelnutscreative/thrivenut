@@ -358,16 +358,18 @@ ${includeLevelUp ? 'Include a verse encouraging the community to help level up!'
       const hostDisplayName = preferences?.tiktok_display_name || preferences?.tiktok_username || 'the creator';
       
       // Build mapping: phonetic -> display name, and collect usernames for mentions
-      // The phonetic name (g.name) in formData is what appears in the generated lyrics
-      // We need to map that to the display_name field from contacts for captions
+      // g.name in formData is the PHONETIC spelling used in original lyrics
+      // We need to find the contact's display_name field for the caption version
       const gifterMapping = formData.gifters.map(g => {
-        // Find the contact to get their display_name
+        // Find the contact by username to get their display_name
         const contact = contacts.find(c => c.username?.toLowerCase() === g.username?.toLowerCase());
-        // Use display_name from contact, fallback to the phonetic name if not found
-        const displayName = contact?.display_name || g.name;
+        // display_name is what should appear in captions (e.g., "VTS X")
+        // g.name is the phonetic (e.g., "V T S X")
+        const displayName = contact?.display_name || g.username || g.name;
+        console.log('Gifter mapping:', { phonetic: g.name, displayName, username: g.username, contactFound: !!contact, contactDisplayName: contact?.display_name });
         return {
-          phonetic: g.name, // This is what appears in the original lyrics (phonetic spelling)
-          displayName: displayName, // This is what should appear in captions (display name)
+          phonetic: g.name, // This is what appears in the original lyrics (phonetic spelling like "V T S X")
+          displayName: displayName, // This is what should appear in captions (display name like "VTS X")
           username: g.username || '' // This is for @mentions in the post
         };
       });
