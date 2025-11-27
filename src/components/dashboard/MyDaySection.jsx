@@ -76,7 +76,7 @@ const timeLabels = {
   afternoon: { label: 'Afternoon', icon: Sun, color: 'text-orange-500', bg: 'bg-orange-50' },
   evening: { label: 'Evening', icon: Moon, color: 'text-purple-500', bg: 'bg-purple-50' },
   night: { label: 'Night', icon: Moon, color: 'text-indigo-500', bg: 'bg-indigo-50' },
-  anytime: { label: 'Anytime', icon: Clock, color: 'text-gray-500', bg: 'bg-gray-50' }
+  anytime: { label: 'As Needed', icon: Clock, color: 'text-gray-500', bg: 'bg-gray-50' }
 };
 
 const frequencyDoses = {
