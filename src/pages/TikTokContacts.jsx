@@ -15,7 +15,7 @@ import {
   Plus, Search, Trash2, Edit, Star, Phone, Mail, 
   ExternalLink, Users, Swords, Gift, Share2, Heart, UserPlus, Video, Calendar, Music, ShoppingBag,
   ChevronDown, ChevronRight, FolderPlus, Loader2, Upload, Check, X, FileSpreadsheet, Filter, MessageCircle,
-  BookOpen, DollarSign, Moon, Sparkles, Lightbulb
+  BookOpen, DollarSign, Moon, Sparkles, Lightbulb, Download
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuSeparator, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -834,6 +834,80 @@ export default function TikTokContacts() {
             <p className="text-gray-600 mt-1">Your central hub for all TikTok connections</p>
           </div>
           <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                // Generate CSV export
+                const headers = [
+                  'Username', 'Display Name', 'Phonetic', 'Phone', 'Email', 'Notes',
+                  'Roles', 'Is Favorite', 'Is Veteran', 'Veteran Branch',
+                  'Is Service Professional', 'Service Type', 'Occupation',
+                  'Generation', 'Gender', 'Birthday', 'Is In Recovery', 'Sobriety Date',
+                  'Family Roles', 'Live Stream Types', 'Other TikTok Accounts',
+                  'Instagram', 'Facebook', 'YouTube', 'Twitter', 'LinkedIn',
+                  'Engagement Enabled', 'Engagement Frequency', 'Engagement Days',
+                  'Calendar Enabled', 'Is Gifter', 'Live Agency', 'Shop Agency',
+                  'Started Going Live', 'Lead Source', 'Lead Received At'
+                ];
+
+                const rows = contacts.map(c => [
+                  c.username || '',
+                  c.display_name || '',
+                  c.phonetic || '',
+                  c.phone || '',
+                  c.email || '',
+                  (c.notes || '').replace(/"/g, '""'),
+                  (c.role || []).join('; '),
+                  c.is_favorite ? 'Yes' : 'No',
+                  c.is_veteran ? 'Yes' : 'No',
+                  c.veteran_branch || '',
+                  c.is_service_professional ? 'Yes' : 'No',
+                  c.service_type || '',
+                  c.occupation || '',
+                  c.generation || '',
+                  c.gender || '',
+                  c.birthday || '',
+                  c.is_in_recovery ? 'Yes' : 'No',
+                  c.sobriety_date || '',
+                  (c.family_roles || []).join('; '),
+                  (c.live_stream_types || []).join('; '),
+                  (c.other_tiktok_accounts || []).join('; '),
+                  c.social_links?.instagram || '',
+                  c.social_links?.facebook || '',
+                  c.social_links?.youtube || '',
+                  c.social_links?.twitter || '',
+                  c.social_links?.linkedin || '',
+                  c.engagement_enabled ? 'Yes' : 'No',
+                  c.engagement_frequency || '',
+                  (c.engagement_days || []).join('; '),
+                  c.calendar_enabled ? 'Yes' : 'No',
+                  c.is_gifter ? 'Yes' : 'No',
+                  c.live_agency || '',
+                  c.shop_agency || '',
+                  c.started_going_live || '',
+                  c.lead_source || '',
+                  c.lead_received_at || ''
+                ]);
+
+                const csvContent = [
+                  headers.join(','),
+                  ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+                ].join('\n');
+
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `tiktok-contacts-backup-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+              }}
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Backup CSV
+            </Button>
             <label className="cursor-pointer">
               <input type="file" accept=".csv" onChange={handleCsvUpload} className="hidden" />
               <Button asChild variant="outline">
