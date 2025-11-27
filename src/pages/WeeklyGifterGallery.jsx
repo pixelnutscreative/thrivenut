@@ -718,8 +718,8 @@ export default function WeeklyGifterGallery() {
 
           {/* Summary Tab */}
           <TabsContent value="summary" className="space-y-4">
-            {/* Admin: Copy to Account */}
-            {isAdmin && sortedEntries.length > 0 && (
+            {/* Selection Controls */}
+            {sortedEntries.length > 0 && (
               <Card className="bg-amber-50 border-amber-200">
                 <CardContent className="p-4 space-y-3">
                   <div className="flex items-center justify-between">
@@ -734,14 +734,33 @@ export default function WeeklyGifterGallery() {
                         {selectedEntryIds.length} of {sortedEntries.length} selected
                       </span>
                     </div>
-                    <Button
-                      size="sm"
-                      onClick={() => setShowCopyModal(true)}
-                      disabled={selectedEntryIds.length === 0}
-                      className="bg-amber-600 hover:bg-amber-700"
-                    >
-                      Copy to Account
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={async () => {
+                          if (confirm(`Delete ${selectedEntryIds.length} selected entries?`)) {
+                            for (const id of selectedEntryIds) {
+                              await deleteMutation.mutateAsync(id);
+                            }
+                            setSelectedEntryIds([]);
+                          }
+                        }}
+                        disabled={selectedEntryIds.length === 0}
+                      >
+                        Delete Selected
+                      </Button>
+                      {isAdmin && (
+                        <Button
+                          size="sm"
+                          onClick={() => setShowCopyModal(true)}
+                          disabled={selectedEntryIds.length === 0}
+                          className="bg-amber-600 hover:bg-amber-700"
+                        >
+                          Copy to Account
+                        </Button>
+                      )}
+                    </div>
                   </div>
                   {/* Import batch selection */}
                   {(() => {
@@ -855,7 +874,7 @@ export default function WeeklyGifterGallery() {
                                     </div>
 
                                     {/* Always-editable inline fields */}
-                                    <div className="grid grid-cols-4 gap-2">
+                                    <div className="grid grid-cols-5 gap-2">
                                       <Select 
                                         value={rank} 
                                         onValueChange={(v) => updateEntryMutation.mutate({ entryId: entry.id, data: { rank: v } })}
@@ -868,6 +887,25 @@ export default function WeeklyGifterGallery() {
                                           <SelectItem value="2nd">🥈 2nd</SelectItem>
                                           <SelectItem value="3rd">🥉 3rd</SelectItem>
                                           <SelectItem value="shoutout">⭐ Shoutout</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                      <Select 
+                                        value={giftName || ''} 
+                                        onValueChange={(v) => {
+                                          const gift = gifts.find(g => g.name === v);
+                                          updateEntryMutation.mutate({ entryId: entry.id, data: { gift_name: v, gift_id: gift?.id || '' } });
+                                        }}
+                                      >
+                                        <SelectTrigger className="h-9 text-sm">
+                                          <SelectValue placeholder="Gift" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          {gifts.map(gift => (
+                                            <SelectItem key={gift.id} value={gift.name}>{gift.name}</SelectItem>
+                                          ))}
+                                          {giftName && !gifts.find(g => g.name === giftName) && (
+                                            <SelectItem value={giftName}>{giftName} (custom)</SelectItem>
+                                          )}
                                         </SelectContent>
                                       </Select>
                                       <Input 
