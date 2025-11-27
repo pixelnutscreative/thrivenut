@@ -252,19 +252,6 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-50 via-purple-50 to-blue-50 p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-8">
-        <GreetingCard 
-          greetingType={preferences?.greeting_type || 'positive_quote'}
-          userName={user?.full_name?.split(' ')[0] || 'Friend'}
-        />
-
-        {preferences?.show_daily_affirmations && (
-          <DailyAffirmation 
-            userName={user?.full_name?.split(' ')[0] || 'Friend'} 
-            struggles={preferences?.mental_health_struggles || []}
-            improvements={preferences?.improvement_goals || []}
-          />
-        )}
-
         {/* Special Events - Birthdays & Sobriety Anniversaries */}
         <SpecialEventsCard contacts={tiktokContacts} />
 
