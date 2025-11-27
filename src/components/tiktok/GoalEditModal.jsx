@@ -62,7 +62,13 @@ export default function GoalEditModal({ isOpen, onClose, currentGoal, onSave }) 
 
   const handleSave = async () => {
     setLoading(true);
-    await onSave(formData);
+    console.log('Form data being saved:', JSON.stringify(formData, null, 2));
+    try {
+      await onSave(formData);
+    } catch (error) {
+      console.error('Save error:', error);
+      alert('Error saving: ' + error.message);
+    }
     setLoading(false);
   };
 
