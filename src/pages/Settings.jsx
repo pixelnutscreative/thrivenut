@@ -561,8 +561,13 @@ export default function Settings() {
             </motion.div>
           </TabsContent>
 
-          {/* Hidden tabs kept for potential future use */}
-        </Tabs>
+          {/* Dashboard Tab */}
+          <TabsContent value="dashboard">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              <DashboardPreferences formData={formData} setFormData={setFormData} />
+            </motion.div>
+          </TabsContent>
+          </Tabs>
       </div>
     </div>
   );
