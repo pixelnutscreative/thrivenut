@@ -366,7 +366,8 @@ export default function WeeklyGifterGallery() {
           gift_id: gift?.id || '',
           gift_name: gift?.name || entry.gift_name || 'Unknown',
           rank: entry.rank,
-          week: selectedWeek
+          week: selectedWeek,
+          owner_email: effectiveEmail
         };
         return createAsTargetUser('GiftingEntry', entryData);
       });
