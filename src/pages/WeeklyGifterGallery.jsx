@@ -1089,32 +1089,24 @@ export default function WeeklyGifterGallery() {
                           className="mb-2"
                         />
                         <Select value={formData.gifter_id} onValueChange={(value) => setFormData({ ...formData, gifter_id: value })}>
-                          <SelectTrigger><SelectValue placeholder="Select gifter" /></SelectTrigger>
+                          <SelectTrigger><SelectValue placeholder="Select gifter from master list" /></SelectTrigger>
                           <SelectContent className="max-h-60">
-                            {/* User's gifters first */}
-                            {gifters.filter(g => 
-                              !gifterSearch || 
-                              g.display_name?.toLowerCase().includes(gifterSearch.toLowerCase()) ||
-                              g.username?.toLowerCase().includes(gifterSearch.toLowerCase())
-                            ).map(gifter => (
-                              <SelectItem key={gifter.id} value={gifter.id}>
-                                {gifter.display_name || gifter.username} (@{gifter.username})
-                              </SelectItem>
-                            ))}
-                            {/* Master list gifters not in user's list */}
-                            {gifterSearch && allContacts
-                              .filter(c => c.is_gifter && !contacts.find(uc => uc.username === c.username))
-                              .filter(c => 
-                                c.display_name?.toLowerCase().includes(gifterSearch.toLowerCase()) ||
-                                c.username?.toLowerCase().includes(gifterSearch.toLowerCase())
+                            {/* All gifters from master list */}
+                            {allGifters
+                              .filter(g => 
+                                !gifterSearch || 
+                                g.display_name?.toLowerCase().includes(gifterSearch.toLowerCase()) ||
+                                g.username?.toLowerCase().includes(gifterSearch.toLowerCase())
                               )
-                              .slice(0, 10)
-                              .map(c => (
-                                <SelectItem key={`master_${c.id}`} value={`master_${c.id}`}>
-                                  {c.display_name || c.username} (@{c.username}) 🌐
+                              .map(gifter => (
+                                <SelectItem key={`master_${gifter.id}`} value={`master_${gifter.id}`}>
+                                  {gifter.display_name || gifter.username} (@{gifter.username})
                                 </SelectItem>
                               ))
                             }
+                            {allGifters.length === 0 && (
+                              <div className="p-2 text-sm text-gray-500 text-center">No gifters in master database yet</div>
+                            )}
                           </SelectContent>
                         </Select>
                       </>
