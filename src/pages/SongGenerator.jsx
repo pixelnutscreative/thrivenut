@@ -357,15 +357,18 @@ ${includeLevelUp ? 'Include a verse encouraging the community to help level up!'
     try {
       const hostDisplayName = preferences?.tiktok_display_name || preferences?.tiktok_username || 'the creator';
       
-      // Build mapping: phonetic -> display name (screen name), and collect usernames for mentions
+      // Build mapping: phonetic -> display name, and collect usernames for mentions
+      // The phonetic name (g.name) in formData is what appears in the generated lyrics
+      // We need to map that to the display_name field from contacts for captions
       const gifterMapping = formData.gifters.map(g => {
-        // Find the contact to get their screen_name/display_name
-        const contact = contacts.find(c => c.username === g.username);
-        const displayName = contact?.display_name || contact?.screen_name || g.name;
+        // Find the contact to get their display_name
+        const contact = contacts.find(c => c.username?.toLowerCase() === g.username?.toLowerCase());
+        // Use display_name from contact, fallback to the phonetic name if not found
+        const displayName = contact?.display_name || g.name;
         return {
-          phonetic: g.name,
-          displayName: displayName,
-          username: g.username || ''
+          phonetic: g.name, // This is what appears in the original lyrics (phonetic spelling)
+          displayName: displayName, // This is what should appear in captions (display name)
+          username: g.username || '' // This is for @mentions in the post
         };
       });
 
