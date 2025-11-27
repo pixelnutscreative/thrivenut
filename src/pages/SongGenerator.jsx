@@ -1105,16 +1105,7 @@ Creator display name: ${hostDisplayName}`,
               </Card>
             )}
 
-            {/* Suno Button */}
-            <div className="flex gap-3">
-              <Button 
-                onClick={() => setShowSunoModal(true)}
-                className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
-              >
-                <ExternalLink className="w-4 h-4 mr-2" /> Create Your Track with Suno 🎵
-              </Button>
 
-            </div>
 
             {shared && (
               <div className="p-3 bg-teal-50 rounded-lg flex items-center gap-2">
