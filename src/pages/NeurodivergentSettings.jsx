@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Save, Brain, Heart, Sparkles, Eye, Shield, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
+import CrisisResourcesCard from '../components/mental-health/CrisisResourcesCard';
 
 const selfCareTasks = [
   { id: 'shower', label: 'Shower/Bath', description: 'Daily hygiene' },
@@ -197,6 +198,9 @@ export default function NeurodivergentSettings() {
             Save Changes
           </Button>
         </div>
+
+        {/* Crisis Resources - Always at the top */}
+        <CrisisResourcesCard />
 
         {/* Self-Care Gating */}
         <motion.div
