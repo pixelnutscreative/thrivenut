@@ -45,11 +45,55 @@ export default function SelfCareChecklist({
     { id: 'bible_reading_night', label: 'Night Bible reading', icon: BookOpen, color: 'text-indigo-600' },
   ] : [];
 
-  const selfCareTasks = [...baseTasks, ...bibleTasks];
+  const allTasks = [...baseTasks, ...bibleTasks];
+  
+  // Get saved order from preferences or use default
+  const savedOrder = preferences?.self_care_order || [];
+  
+  // Sort tasks by saved order, keeping unsaved ones at the end
+  const selfCareTasks = savedOrder.length > 0
+    ? [...allTasks].sort((a, b) => {
+        const aIndex = savedOrder.indexOf(a.id);
+        const bIndex = savedOrder.indexOf(b.id);
+        if (aIndex === -1 && bIndex === -1) return 0;
+        if (aIndex === -1) return 1;
+        if (bIndex === -1) return -1;
+        return aIndex - bIndex;
+      })
+    : allTasks;
+
+  const [localOrder, setLocalOrder] = useState(selfCareTasks.map(t => t.id));
+  
+  useEffect(() => {
+    if (savedOrder.length > 0) {
+      setLocalOrder(savedOrder.filter(id => allTasks.some(t => t.id === id)));
+    } else {
+      setLocalOrder(allTasks.map(t => t.id));
+    }
+  }, [preferences?.self_care_order]);
+
+  const orderedTasks = localOrder
+    .map(id => allTasks.find(t => t.id === id))
+    .filter(Boolean);
 
   const tasksToShow = showOnlyRequired 
-    ? selfCareTasks.filter(t => requiredTasks.includes(t.id.replace('_completed', '').replace('brushed_teeth_morning', 'brush_teeth').replace('brushed_teeth_night', 'brush_teeth')))
-    : selfCareTasks;
+    ? orderedTasks.filter(t => requiredTasks.includes(t.id.replace('_completed', '').replace('brushed_teeth_morning', 'brush_teeth').replace('brushed_teeth_night', 'brush_teeth')))
+    : orderedTasks;
+
+  const moveTask = (index, direction) => {
+    const newOrder = [...localOrder];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= newOrder.length) return;
+    [newOrder[index], newOrder[targetIndex]] = [newOrder[targetIndex], newOrder[index]];
+    setLocalOrder(newOrder);
+  };
+
+  const saveOrder = () => {
+    if (onUpdateOrder) {
+      onUpdateOrder(localOrder);
+    }
+    setIsReordering(false);
+  };
 
   const completedCount = tasksToShow.filter(t => selfCareLog?.[t.id]).length;
   const totalCount = tasksToShow.length;
