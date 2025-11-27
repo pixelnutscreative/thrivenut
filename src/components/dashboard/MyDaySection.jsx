@@ -576,9 +576,37 @@ export default function MyDaySection({
   }, [medications, supplements, pets, careReminders, contentGoal, liveSchedules, preferences, todayDayName, mealLabels, localTaskOrder]);
 
   // Helper functions
+  function parseTimeString(timeStr) {
+    if (!timeStr) return null;
+    
+    // Handle HH:MM format (24-hour)
+    if (timeStr.includes(':')) {
+      const parts = timeStr.split(':');
+      let hour = parseInt(parts[0]) || 0;
+      const min = parseInt(parts[1]) || 0;
+      return { hour, min };
+    }
+    
+    // Handle formats like "10pm", "10 PM", "10:00 PM"
+    const pmMatch = timeStr.toLowerCase().includes('pm');
+    const amMatch = timeStr.toLowerCase().includes('am');
+    const numMatch = timeStr.match(/(\d+)/);
+    
+    if (numMatch) {
+      let hour = parseInt(numMatch[1]) || 12;
+      if (pmMatch && hour < 12) hour += 12;
+      if (amMatch && hour === 12) hour = 0;
+      return { hour, min: 0 };
+    }
+    
+    return null;
+  }
+
   function getTimeOfDayFromTimeString(timeStr) {
-    if (!timeStr) return 'anytime';
-    const hour = parseInt(timeStr.split(':')[0]) || parseInt(timeStr) || 12;
+    const parsed = parseTimeString(timeStr);
+    if (!parsed) return 'anytime';
+    
+    const { hour } = parsed;
     if (hour < 10) return 'morning';
     if (hour < 12) return 'midday';
     if (hour < 17) return 'afternoon';
@@ -587,11 +615,9 @@ export default function MyDaySection({
   }
 
   function getOrderFromTimeString(timeStr) {
-    if (!timeStr) return 50;
-    const parts = timeStr.split(':');
-    const hour = parseInt(parts[0]) || 12;
-    const min = parseInt(parts[1]) || 0;
-    return hour * 10 + min / 6;
+    const parsed = parseTimeString(timeStr);
+    if (!parsed) return 50;
+    return parsed.hour * 10 + parsed.min / 6;
   }
 
   const getMealNoteKey = (taskId) => taskId.replace('_completed', '_notes');
