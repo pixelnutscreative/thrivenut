@@ -180,6 +180,13 @@ export default function MyDaySection({
     enabled: !!userEmail,
   });
 
+  // Fetch active goals
+  const { data: goals = [] } = useQuery({
+    queryKey: ['activeGoals', userEmail],
+    queryFn: () => base44.entities.Goal.filter({ status: 'active', created_by: userEmail }),
+    enabled: !!userEmail,
+  });
+
   // Fetch today's sleep log
   const { data: todaysSleep } = useQuery({
     queryKey: ['sleepToday', today, userEmail],
