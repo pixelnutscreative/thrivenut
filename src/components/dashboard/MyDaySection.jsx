@@ -1250,7 +1250,21 @@ export default function MyDaySection({
             </div>
           </div>
         )}
+          </div>
+        )}
       </CardContent>
     </Card>
+      
+      {/* Motivation sidebar - takes 1 column on large screens */}
+      <div className="lg:col-span-1">
+        <DailyMotivationSidebar
+          greetingType={preferences?.greeting_type}
+          userName={preferences?.user_email?.split('@')[0] || 'Friend'}
+          struggles={preferences?.mental_health_struggles || []}
+          improvements={preferences?.improvement_goals || []}
+          isBibleBeliever={preferences?.is_bible_believer}
+        />
+      </div>
+    </div>
   );
 }
