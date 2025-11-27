@@ -712,8 +712,171 @@ export default function Goals() {
             </CardContent>
           </Card>
         )}
+          </TabsContent>
+
+          {/* Shared With Me Tab */}
+          <TabsContent value="shared-with-me" className="space-y-4">
+            {acceptedReceived.length === 0 ? (
+              <Card>
+                <CardContent className="p-12 text-center">
+                  <Eye className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-800 mb-2">No Shared Goals Yet</h3>
+                  <p className="text-gray-600">When someone shares their goals with you, you'll see them here.</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {acceptedReceived.map(share => {
+                  const data = viewableGoals[share.sharer_email];
+                  const sharedGoals = data?.goals || [];
+                  
+                  return (
+                    <Card key={share.id}>
+                      <CardHeader className="pb-3">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-lg flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
+                              <Users className="w-4 h-4 text-purple-600" />
+                            </div>
+                            {share.sharer_name || share.sharer_email}
+                          </CardTitle>
+                          <Badge variant="outline">{relationships.find(r => r.id === share.relationship)?.label}</Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        {sharedGoals.length === 0 ? (
+                          <p className="text-gray-500 text-sm">No goals shared yet</p>
+                        ) : (
+                          <div className="grid md:grid-cols-2 gap-3">
+                            {sharedGoals.map(goal => (
+                              <div key={goal.id} className="p-3 bg-gray-50 rounded-lg">
+                                <div className="flex items-start gap-2">
+                                  <span className="text-lg">{categoryIcons[goal.category] || '🎯'}</span>
+                                  <div className="flex-1">
+                                    <p className="font-medium text-gray-800">{goal.title}</p>
+                                    {goal.steps && goal.steps.length > 0 && (
+                                      <div className="mt-2">
+                                        <div className="flex justify-between text-xs text-gray-500 mb-1">
+                                          <span>Steps</span>
+                                          <span>{goal.steps.filter(s => s.completed).length}/{goal.steps.length}</span>
+                                        </div>
+                                        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                                          <div 
+                                            className="h-full bg-purple-500 rounded-full"
+                                            style={{ width: `${(goal.steps.filter(s => s.completed).length / goal.steps.length) * 100}%` }}
+                                          />
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
 
+      {/* Share Modal */}
+      <Dialog open={showShareModal} onOpenChange={(open) => { if (!open) { setShareFormData({ viewer_email: '', relationship: 'friend', shared_goal_ids: [], notes: '' }); setInviteStatus(null); } setShowShareModal(open); }}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Share Your Goals</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            {inviteStatus === 'existing' && (
+              <Alert className="bg-green-50 border-green-200">
+                <AlertDescription className="text-green-700">Invitation sent! They'll see your request when they log in.</AlertDescription>
+              </Alert>
+            )}
+            {inviteStatus === 'invited' && (
+              <Alert className="bg-blue-50 border-blue-200">
+                <AlertDescription className="text-blue-700">This person isn't on ThriveNut yet. We've sent them an invitation to join!</AlertDescription>
+              </Alert>
+            )}
+            {!inviteStatus && (
+              <>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Their Email Address</label>
+                  <Input
+                    type="email"
+                    placeholder="friend@example.com"
+                    value={shareFormData.viewer_email}
+                    onChange={(e) => setShareFormData({ ...shareFormData, viewer_email: e.target.value.toLowerCase() })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Relationship</label>
+                  <Select value={shareFormData.relationship} onValueChange={(v) => setShareFormData({ ...shareFormData, relationship: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {relationships.map(rel => (
+                        <SelectItem key={rel.id} value={rel.id}>{rel.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium">Select Goals to Share</label>
+                    <div className="flex gap-2">
+                      <button type="button" onClick={() => setShareFormData({ ...shareFormData, shared_goal_ids: goals?.map(g => g.id) || [] })} className="text-xs text-purple-600 hover:underline">All</button>
+                      <button type="button" onClick={() => setShareFormData({ ...shareFormData, shared_goal_ids: [] })} className="text-xs text-gray-500 hover:underline">Clear</button>
+                    </div>
+                  </div>
+                  <div className="space-y-2 max-h-48 overflow-y-auto border rounded-lg p-2">
+                    {goals?.map(goal => (
+                      <div
+                        key={goal.id}
+                        onClick={() => setShareFormData(prev => ({
+                          ...prev,
+                          shared_goal_ids: prev.shared_goal_ids.includes(goal.id)
+                            ? prev.shared_goal_ids.filter(id => id !== goal.id)
+                            : [...prev.shared_goal_ids, goal.id]
+                        }))}
+                        className={`p-2 rounded-lg border cursor-pointer transition-all ${
+                          shareFormData.shared_goal_ids.includes(goal.id) ? 'border-purple-500 bg-purple-50' : 'border-gray-200'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <input type="checkbox" checked={shareFormData.shared_goal_ids.includes(goal.id)} readOnly className="rounded" />
+                          <span>{categoryIcons[goal.category]}</span>
+                          <span className="text-sm font-medium">{goal.title}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-500">{shareFormData.shared_goal_ids.length} goal(s) selected</p>
+                </div>
+              </>
+            )}
+          </div>
+          <DialogFooter>
+            {inviteStatus ? (
+              <Button onClick={() => { setShowShareModal(false); setInviteStatus(null); }}>Done</Button>
+            ) : (
+              <>
+                <Button variant="outline" onClick={() => setShowShareModal(false)}>Cancel</Button>
+                <Button
+                  onClick={() => createShareMutation.mutate(shareFormData)}
+                  disabled={!shareFormData.viewer_email.trim() || shareFormData.shared_goal_ids.length === 0 || createShareMutation.isPending}
+                  className="bg-purple-600 hover:bg-purple-700"
+                >
+                  {createShareMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Send className="w-4 h-4 mr-2" />}
+                  Send Invitation
+                </Button>
+              </>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
