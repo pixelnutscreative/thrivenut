@@ -1050,6 +1050,14 @@ Creator display name: ${hostDisplayName}`,
               </CardContent>
             </Card>
 
+            {/* Suno Button */}
+            <Button 
+              onClick={() => setShowSunoModal(true)}
+              className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+            >
+              <ExternalLink className="w-4 h-4 mr-2" /> Create Your Track with Suno 🎵
+            </Button>
+
             {/* Suno Style Card */}
             {songStyles && (
               <Card className="border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50">
