@@ -241,6 +241,7 @@ export default function Wellness() {
             preferences={preferences}
             medicationsCount={medicationsCount || 0}
             supplementsCount={supplementsCount || 0}
+            onUpdateOrder={(order) => updateSelfCareOrderMutation.mutate(order)}
           />
         </motion.div>
 
