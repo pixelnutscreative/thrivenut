@@ -102,6 +102,21 @@ export default function WeeklyGifterGallery() {
 
   const isAdmin = user?.email?.toLowerCase() === 'pixelnutscreative@gmail.com';
 
+  // Get all gifters from master list for dropdown
+  const allGifters = allContacts
+    .filter(c => c.is_gifter || c.data?.is_gifter)
+    .map(c => ({
+      id: c.id,
+      username: c.data?.username || c.username || '',
+      display_name: c.data?.display_name || c.display_name || '',
+      phonetic: c.data?.phonetic || c.phonetic || '',
+    }))
+    .sort((a, b) => {
+      const aName = (a.display_name || a.username || '').toLowerCase();
+      const bName = (b.display_name || b.username || '').toLowerCase();
+      return aName.localeCompare(bName);
+    });
+
   // Get gifters from current user's contacts only (not the master list)
   const gifters = contacts
     .filter(c => c.is_gifter)
