@@ -180,6 +180,35 @@ export default function DashboardPreferences({ formData, setFormData }) {
         </CardContent>
       </Card>
 
+      {/* Journal Reminder Time */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <NotebookPen className="w-5 h-5 text-purple-500" />
+            Journal Reminder
+          </CardTitle>
+          <CardDescription>When would you like to be reminded to journal?</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-3">
+            {journalReminderOptions.map(opt => (
+              <div
+                key={opt.value}
+                onClick={() => setFormData({ ...formData, journal_reminder_time: opt.value })}
+                className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                  (formData.journal_reminder_time || 'night') === opt.value
+                    ? 'border-purple-500 bg-purple-50'
+                    : 'border-gray-200 hover:border-purple-300'
+                }`}
+              >
+                <h4 className="font-semibold">{opt.label}</h4>
+                <p className="text-xs text-gray-500 mt-1">{opt.description}</p>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Intermittent Fasting */}
       <Card>
         <CardHeader>
