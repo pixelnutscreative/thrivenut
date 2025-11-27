@@ -204,6 +204,7 @@ export default function SongGenerator() {
         gifters: sortedEntries.map(e => ({
           id: e.id,
           name: e.gifter_phonetic || e.gifter_screen_name || e.gifter_username,
+          display_name: e.gifter_screen_name || e.gifter_username,
           username: e.gifter_username,
           rank: e.rank,
           gift: e.gift_name
