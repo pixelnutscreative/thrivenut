@@ -9,7 +9,27 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Loader2, Plus, X } from 'lucide-react';
 
 const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+const weekends = ['Saturday', 'Sunday'];
 const contentFormats = ["duet", "sync", "training", "series", "Q&A", "tutorial", "unboxing", "haul"];
+
+const frequencyOptions = [
+  { value: 'single', label: 'Single Day' },
+  { value: 'daily', label: 'Daily' },
+  { value: 'weekdays', label: 'Weekdays (Mon-Fri)' },
+  { value: 'weekends', label: 'Weekends (Sat-Sun)' },
+  { value: 'custom', label: 'Custom Days' }
+];
+
+const getDaysFromFrequency = (frequency, selectedDays = []) => {
+  switch (frequency) {
+    case 'daily': return daysOfWeek;
+    case 'weekdays': return weekdays;
+    case 'weekends': return weekends;
+    case 'custom': return selectedDays;
+    default: return selectedDays;
+  }
+};
 
 export default function GoalEditModal({ isOpen, onClose, currentGoal, onSave }) {
   const [loading, setLoading] = useState(false);
