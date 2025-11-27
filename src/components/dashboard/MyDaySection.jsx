@@ -760,6 +760,18 @@ export default function MyDaySection({
             My Day
           </CardTitle>
           <div className="flex items-center gap-3">
+            {isReordering ? (
+              <Button size="sm" onClick={saveTaskOrder} className="bg-green-500 hover:bg-green-600 h-8">
+                <Check className="w-4 h-4 mr-1" /> Done
+              </Button>
+            ) : (
+              <Button variant="ghost" size="sm" onClick={() => {
+                setLocalTaskOrder(allTasks.map(t => t.id));
+                setIsReordering(true);
+              }} className="h-8">
+                <GripVertical className="w-4 h-4 mr-1" /> Reorder
+              </Button>
+            )}
             <Button variant="ghost" size="sm" onClick={() => setLocalViewMode('compact')} className="h-8">
               <Grid3X3 className="w-4 h-4 mr-1" /> Compact
             </Button>
