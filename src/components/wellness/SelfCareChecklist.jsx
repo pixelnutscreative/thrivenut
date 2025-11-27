@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles, ShowerHead, Utensils, Pill, Droplet, Sun, Dumbbell, BookOpen, ExternalLink } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Sparkles, ShowerHead, Utensils, Pill, Droplet, Sun, Dumbbell, BookOpen, ExternalLink, GripVertical, ArrowUp, ArrowDown, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const mealTips = {
