@@ -104,6 +104,8 @@ export default function MyDaySection({
   const [expandedSections, setExpandedSections] = useState(['morning', 'midday', 'afternoon', 'evening', 'night', 'anytime']);
   const [localViewMode, setLocalViewMode] = useState(viewMode);
   const [skippedTasks, setSkippedTasks] = useState([]);
+  const [isReordering, setIsReordering] = useState(false);
+  const [localTaskOrder, setLocalTaskOrder] = useState(preferences?.my_day_task_order || []);
   
   const mealLabels = getMealLabels(preferences?.gender);
   const displayMode = preferences?.completed_tasks_display || 'show_checked';
