@@ -108,11 +108,28 @@ export default function WeeklyGifterGallery() {
     queryFn: () => base44.entities.Gift.list('name'),
   });
 
-  const { data: entries = [], isLoading } = useQuery({
+  const { data: rawEntries = [], isLoading } = useQuery({
     queryKey: ['giftingEntries', selectedWeek, effectiveEmail],
     queryFn: () => base44.entities.GiftingEntry.filter({ week: selectedWeek, created_by: effectiveEmail }, '-created_date', 500),
     enabled: !!effectiveEmail,
   });
+
+  // Normalize entries to flat structure (SDK returns nested data object)
+  const entries = rawEntries.map(e => ({
+    id: e.id,
+    created_date: e.created_date,
+    created_by: e.created_by,
+    // Flatten data fields
+    gifter_id: e.data?.gifter_id || e.gifter_id,
+    gifter_username: e.data?.gifter_username || e.gifter_username,
+    gifter_screen_name: e.data?.gifter_screen_name || e.gifter_screen_name,
+    gifter_phonetic: e.data?.gifter_phonetic || e.gifter_phonetic,
+    gift_id: e.data?.gift_id || e.gift_id,
+    gift_name: e.data?.gift_name || e.gift_name,
+    rank: e.data?.rank || e.rank,
+    week: e.data?.week || e.week,
+    shoutout_reason: e.data?.shoutout_reason || e.shoutout_reason,
+  }));
 
   // Mutations
   const createMutation = useMutation({
