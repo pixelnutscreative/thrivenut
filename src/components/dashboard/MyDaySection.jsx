@@ -11,13 +11,14 @@ import {
   Dumbbell, ShowerHead, Sparkles, Check, Pencil, X, List, Grid3X3,
   ChevronDown, ChevronUp, PawPrint, Bell, Clock, Video, Users, 
   MessageSquare, SkipForward, ArrowRight, Loader2,
-  Bed, Smile, NotebookPen, GripVertical, ExternalLink, Target
+  Bed, Smile, NotebookPen, GripVertical, ExternalLink, Target, Columns
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
 import { format } from 'date-fns';
+import DailyMotivationSidebar from './DailyMotivationSidebar';
 
 // Time category mapping to time slots
 const timeSlotOrder = {
@@ -95,6 +96,7 @@ export default function MyDaySection({
   preferences,
   viewMode = 'detailed'
 }) {
+  const [layoutMode, setLayoutMode] = useState('two-column'); // 'single' or 'two-column'
   const queryClient = useQueryClient();
   const today = format(new Date(), 'yyyy-MM-dd');
   const todayDayName = format(new Date(), 'EEEE');
