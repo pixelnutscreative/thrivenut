@@ -249,46 +249,66 @@ export default function WeeklyGifterGallery() {
     mutationFn: async ({ entryIds, targetUsername }) => {
       const targetEmail = `managed_${targetUsername.toLowerCase().replace('@', '')}@thrivenut.app`;
       
+      console.log('Copying to targetEmail:', targetEmail);
+      
       // Get selected entries
       const entriesToCopy = entries.filter(e => entryIds.includes(e.id));
+      console.log('Entries to copy:', entriesToCopy.length);
       
-      // Create copies with new owner
-      const promises = entriesToCopy.map(entry => {
-        return base44.entities.GiftingEntry.create({
-          gifter_id: entry.gifter_id,
-          gifter_username: entry.gifter_username,
-          gifter_screen_name: entry.gifter_screen_name,
-          gifter_phonetic: entry.gifter_phonetic,
-          gift_id: entry.gift_id,
-          gift_name: entry.gift_name,
-          rank: entry.rank,
-          week: entry.week,
-          created_by: targetEmail
+      // Use backend function to create with correct created_by
+      const results = [];
+      for (const entry of entriesToCopy) {
+        const result = await base44.functions.invoke('createAsUser', {
+          entityName: 'GiftingEntry',
+          data: {
+            gifter_id: entry.gifter_id,
+            gifter_username: entry.gifter_username,
+            gifter_screen_name: entry.gifter_screen_name,
+            gifter_phonetic: entry.gifter_phonetic,
+            gift_id: entry.gift_id,
+            gift_name: entry.gift_name,
+            rank: entry.rank,
+            week: entry.week
+          },
+          targetEmail
         });
-      });
+        console.log('Created entry result:', result);
+        results.push(result);
+      }
       
       // Also copy the contacts
       const contactIds = [...new Set(entriesToCopy.map(e => e.gifter_id).filter(Boolean))];
       const contactsToCopy = allContacts.filter(c => contactIds.includes(c.id));
       
-      const contactPromises = contactsToCopy.map(contact => {
-        return base44.entities.TikTokContact.create({
-          username: contact.username,
-          display_name: contact.display_name,
-          phonetic: contact.phonetic,
-          is_gifter: true,
-          created_by: targetEmail
+      for (const contact of contactsToCopy) {
+        const result = await base44.functions.invoke('createAsUser', {
+          entityName: 'TikTokContact',
+          data: {
+            username: contact.username || contact.data?.username,
+            display_name: contact.display_name || contact.data?.display_name,
+            phonetic: contact.phonetic || contact.data?.phonetic,
+            is_gifter: true
+          },
+          targetEmail
         });
-      });
+        console.log('Created contact result:', result);
+        results.push(result);
+      }
       
-      return Promise.all([...promises, ...contactPromises]);
+      return results;
     },
-    onSuccess: () => {
+    onSuccess: (results) => {
+      console.log('Copy complete, results:', results);
       queryClient.invalidateQueries({ queryKey: ['giftingEntries'] });
       queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] });
       setShowCopyModal(false);
       setSelectedEntryIds([]);
       setCopyTargetUsername('');
+      alert(`Successfully copied ${results.length} items to the target account!`);
+    },
+    onError: (error) => {
+      console.error('Copy failed:', error);
+      alert('Copy failed: ' + error.message);
     },
   });
 
