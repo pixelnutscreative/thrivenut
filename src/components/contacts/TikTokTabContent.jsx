@@ -7,12 +7,13 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { 
   Plus, Gift, Users, Heart, Video, Moon, ShoppingBag, 
   MessageCircle, BookOpen, DollarSign, Calendar, Sparkles, 
-  Pencil, Flame, Zap, Award, X, Search
+  Pencil, Flame, Zap, Award, X, ChevronDown, ChevronRight, Sticker
 } from 'lucide-react';
-import SearchableContactSelect from '../tiktok/SearchableContactSelect';
+import QuickAddContactSelect from './QuickAddContactSelect';
 
 // Battle inventory icons
 const battleInventoryItems = [
@@ -32,7 +33,9 @@ const battleRoles = {
 const engagementRoles = {
   gifter: { label: 'Gifts', icon: Gift, color: 'bg-amber-100 text-amber-700' },
   tapper: { label: 'Taps', icon: Heart, color: 'bg-pink-100 text-pink-700' },
-  authentic_commenter: { label: 'Comments', icon: MessageCircle, color: 'bg-teal-100 text-teal-700' },
+  live_commenter: { label: 'Comments (LIVE)', icon: MessageCircle, color: 'bg-teal-100 text-teal-700' },
+  post_commenter: { label: 'Comments (Posts)', icon: MessageCircle, color: 'bg-cyan-100 text-cyan-700' },
+  fan_stickers: { label: 'Fan Stickers', icon: Sticker, color: 'bg-fuchsia-100 text-fuchsia-700' },
   sharer: { label: 'Shares to Story', icon: BookOpen, color: 'bg-blue-100 text-blue-700' },
   hype_person: { label: 'Hype Person', icon: Zap, color: 'bg-yellow-100 text-yellow-700' },
 };
@@ -54,10 +57,28 @@ const relationshipRoles = {
 
 const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-const defaultLiveStreamTypes = [
-  'Teaching', 'Engagement', 'Entertainment', 'Gaming', 'Music', 
-  'Cooking', 'DIY/Crafts', 'Storytime', 'Co-host', 'Battle', 
-  'Q&A', 'Unboxing', 'Fitness', 'ASMR', 'Talk Show', 'Religious'
+// Organized live stream types
+const liveStreamCategories = [
+  {
+    label: 'Collaboration',
+    color: 'bg-purple-50 border-purple-200',
+    types: ['Co-host', 'Multi-Guest', 'Battle']
+  },
+  {
+    label: 'Interactive',
+    color: 'bg-blue-50 border-blue-200',
+    types: ['Engagement', 'Q&A', 'Talk Show']
+  },
+  {
+    label: 'Content',
+    color: 'bg-green-50 border-green-200',
+    types: ['Teaching', 'Gaming', 'Music', 'Cooking', 'DIY/Crafts', 'Fitness']
+  },
+  {
+    label: 'Other',
+    color: 'bg-gray-50 border-gray-200',
+    types: ['Entertainment', 'Storytime', 'Unboxing', 'ASMR', 'Religious']
+  }
 ];
 
 export default function TikTokTabContent({ 
@@ -67,13 +88,15 @@ export default function TikTokTabContent({
   categories, 
   savedCustomRoles,
   onSaveCustomRole,
-  editingContactId
+  editingContactId,
+  onQuickAddContact
 }) {
   const [customRoleInput, setCustomRoleInput] = useState('');
   const [showEngagementSettings, setShowEngagementSettings] = useState(false);
   const [newAccountUsername, setNewAccountUsername] = useState('');
   const [newAccountDisplay, setNewAccountDisplay] = useState('');
   const [newAccountPhonetic, setNewAccountPhonetic] = useState('');
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   const toggleRole = (role) => {
     setFormData(prev => ({
@@ -126,6 +149,16 @@ export default function TikTokTabContent({
     setFormData({ ...formData, other_tiktok_accounts: updated });
   };
 
+  const toggleLiveStreamType = (type) => {
+    const current = formData.live_stream_types || [];
+    setFormData({
+      ...formData,
+      live_stream_types: current.includes(type) 
+        ? current.filter(t => t !== type)
+        : [...current, type]
+    });
+  };
+
   // Render a role button
   const RoleButton = ({ roleKey, config, small = false }) => {
     const Icon = config.icon;
@@ -148,13 +181,13 @@ export default function TikTokTabContent({
 
   return (
     <div className="space-y-4">
-      {/* Feature Toggles */}
-      <div className="p-3 bg-gray-50 rounded-lg">
-        <h4 className="font-semibold text-sm mb-2">Enable Features</h4>
+      {/* Feature Toggles - Purple themed */}
+      <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
+        <h4 className="font-semibold text-sm mb-2 text-purple-800">Enable Features</h4>
         <div className="grid grid-cols-3 gap-2">
           {/* Engage with inline edit */}
           <div
-            className={`flex items-center justify-between p-2 border rounded-lg cursor-pointer hover:bg-white text-xs ${formData.engagement_enabled ? 'border-purple-300 bg-purple-50' : ''}`}
+            className={`flex items-center justify-between p-2 border rounded-lg cursor-pointer hover:bg-white text-xs ${formData.engagement_enabled ? 'border-purple-400 bg-purple-100' : 'border-purple-200 bg-white'}`}
           >
             <div 
               className="flex items-center gap-1 flex-1"
@@ -162,12 +195,12 @@ export default function TikTokTabContent({
             >
               <Checkbox checked={formData.engagement_enabled} />
               <Sparkles className="w-3 h-3 text-purple-500" />
-              <span className="text-gray-700 font-medium">Engage</span>
+              <span className="text-purple-700 font-medium">Engage</span>
             </div>
             {formData.engagement_enabled && (
               <Popover open={showEngagementSettings} onOpenChange={setShowEngagementSettings}>
                 <PopoverTrigger asChild>
-                  <button className="p-1 hover:bg-purple-100 rounded" onClick={(e) => e.stopPropagation()}>
+                  <button className="p-1 hover:bg-purple-200 rounded" onClick={(e) => e.stopPropagation()}>
                     <Pencil className="w-3 h-3 text-purple-500" />
                   </button>
                 </PopoverTrigger>
@@ -224,174 +257,175 @@ export default function TikTokTabContent({
           
           <div
             onClick={() => setFormData({ ...formData, calendar_enabled: !formData.calendar_enabled })}
-            className={`flex items-center gap-1 p-2 border rounded-lg cursor-pointer hover:bg-white text-xs ${formData.calendar_enabled ? 'border-blue-300 bg-blue-50' : ''}`}
+            className={`flex items-center gap-1 p-2 border rounded-lg cursor-pointer hover:bg-white text-xs ${formData.calendar_enabled ? 'border-blue-400 bg-blue-100' : 'border-purple-200 bg-white'}`}
           >
             <Checkbox checked={formData.calendar_enabled} />
             <Calendar className="w-3 h-3 text-blue-500" />
-            <span className="text-gray-700 font-medium text-[10px]">+ Creator Cal</span>
+            <span className="text-purple-700 font-medium text-[10px]">+ Creator Cal</span>
           </div>
           
           <div
             onClick={() => setFormData({ ...formData, is_gifter: !formData.is_gifter })}
-            className={`flex items-center gap-1 p-2 border rounded-lg cursor-pointer hover:bg-white text-xs ${formData.is_gifter ? 'border-amber-300 bg-amber-50' : ''}`}
+            className={`flex items-center gap-1 p-2 border rounded-lg cursor-pointer hover:bg-white text-xs ${formData.is_gifter ? 'border-amber-400 bg-amber-100' : 'border-purple-200 bg-white'}`}
           >
             <Checkbox checked={formData.is_gifter} />
             <Gift className="w-3 h-3 text-amber-500" />
-            <span className="text-gray-700 font-medium text-[10px]">Top Gifter</span>
+            <span className="text-purple-700 font-medium text-[10px]">Top Gifter</span>
           </div>
         </div>
       </div>
 
-      {/* Primary TikTok Account */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="space-y-1">
-          <Label className="text-xs">Username</Label>
-          <div className="relative">
-            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-sm">@</span>
-            <Input
-              placeholder="username"
-              value={(formData.username || '')}
-              onChange={(e) => setFormData({ ...formData, username: e.target.value.replace('@', '').trim() })}
-              className="pl-5"
-            />
-          </div>
-        </div>
-        <div className="space-y-1">
-          <Label className="text-xs">Display Name</Label>
-          <Input
-            placeholder="TikTok display name"
-            value={formData.display_name || ''}
-            onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
-          />
-        </div>
-        <div className="space-y-1">
-          <Label className="text-xs">Phonetic</Label>
-          <Input
-            placeholder="For songs"
-            value={formData.phonetic || ''}
-            onChange={(e) => setFormData({ ...formData, phonetic: e.target.value })}
-          />
-        </div>
-      </div>
-
-      {/* Other TikTok Accounts */}
-      <div className="space-y-2">
-        <Label className="text-xs text-gray-500">Other TikTok Accounts</Label>
-        
-        {/* Existing other accounts */}
-        {formData.other_tiktok_accounts?.map((acc, idx) => {
-          // Handle both old string format and new object format
-          const account = typeof acc === 'string' ? { username: acc, display_name: '', phonetic: '' } : acc;
-          return (
-            <div key={idx} className="grid grid-cols-3 gap-2 items-end">
-              <div className="relative">
-                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-sm">@</span>
-                <Input
-                  value={account.username}
-                  onChange={(e) => {
-                    const updated = [...(formData.other_tiktok_accounts || [])];
-                    updated[idx] = { ...account, username: e.target.value.replace('@', '') };
-                    setFormData({ ...formData, other_tiktok_accounts: updated });
-                  }}
-                  className="pl-5 h-8 text-xs"
-                />
-              </div>
+      {/* Primary TikTok Account - Blue themed */}
+      <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+        <h4 className="font-semibold text-sm mb-2 text-blue-800">TikTok Account</h4>
+        <div className="grid grid-cols-3 gap-3">
+          <div className="space-y-1">
+            <Label className="text-xs text-blue-700">Username</Label>
+            <div className="relative">
+              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-sm">@</span>
               <Input
-                placeholder="Display name"
-                value={account.display_name || ''}
-                onChange={(e) => {
-                  const updated = [...(formData.other_tiktok_accounts || [])];
-                  updated[idx] = { ...account, display_name: e.target.value };
-                  setFormData({ ...formData, other_tiktok_accounts: updated });
-                }}
-                className="h-8 text-xs"
+                placeholder="username"
+                value={(formData.username || '')}
+                onChange={(e) => setFormData({ ...formData, username: e.target.value.replace('@', '').trim() })}
+                className="pl-6"
               />
-              <div className="flex gap-1">
-                <Input
-                  placeholder="Phonetic"
-                  value={account.phonetic || ''}
-                  onChange={(e) => {
-                    const updated = [...(formData.other_tiktok_accounts || [])];
-                    updated[idx] = { ...account, phonetic: e.target.value };
-                    setFormData({ ...formData, other_tiktok_accounts: updated });
-                  }}
-                  className="h-8 text-xs flex-1"
-                />
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => removeOtherAccount(idx)}>
-                  <X className="w-3 h-3 text-gray-400" />
-                </Button>
-              </div>
             </div>
-          );
-        })}
-        
-        {/* Add new account row */}
-        <div className="grid grid-cols-3 gap-2 items-end">
-          <div className="relative">
-            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-sm">@</span>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-blue-700">Display Name</Label>
             <Input
-              placeholder="username"
-              value={newAccountUsername}
-              onChange={(e) => setNewAccountUsername(e.target.value.replace('@', ''))}
-              className="pl-5 h-8 text-xs"
+              placeholder="TikTok display name"
+              value={formData.display_name || ''}
+              onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
             />
           </div>
-          <Input
-            placeholder="Display name"
-            value={newAccountDisplay}
-            onChange={(e) => setNewAccountDisplay(e.target.value)}
-            className="h-8 text-xs"
-          />
-          <div className="flex gap-1">
+          <div className="space-y-1">
+            <Label className="text-xs text-blue-700">Phonetic</Label>
             <Input
-              placeholder="Phonetic"
-              value={newAccountPhonetic}
-              onChange={(e) => setNewAccountPhonetic(e.target.value)}
-              className="h-8 text-xs flex-1"
+              placeholder="For songs"
+              value={formData.phonetic || ''}
+              onChange={(e) => setFormData({ ...formData, phonetic: e.target.value })}
             />
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="h-8 w-8 p-0" 
-              onClick={addOtherAccount}
-              disabled={!newAccountUsername.trim()}
-            >
-              <Plus className="w-3 h-3" />
-            </Button>
+          </div>
+        </div>
+
+        {/* Other TikTok Accounts */}
+        <div className="mt-3 space-y-2">
+          <Label className="text-xs text-blue-600">Other TikTok Accounts</Label>
+          
+          {formData.other_tiktok_accounts?.map((acc, idx) => {
+            const account = typeof acc === 'string' ? { username: acc, display_name: '', phonetic: '' } : acc;
+            return (
+              <div key={idx} className="grid grid-cols-3 gap-2 items-end">
+                <div className="relative">
+                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-sm">@</span>
+                  <Input
+                    value={account.username}
+                    onChange={(e) => {
+                      const updated = [...(formData.other_tiktok_accounts || [])];
+                      updated[idx] = { ...account, username: e.target.value.replace('@', '') };
+                      setFormData({ ...formData, other_tiktok_accounts: updated });
+                    }}
+                    className="pl-6 h-8 text-xs"
+                  />
+                </div>
+                <Input
+                  placeholder="Display name"
+                  value={account.display_name || ''}
+                  onChange={(e) => {
+                    const updated = [...(formData.other_tiktok_accounts || [])];
+                    updated[idx] = { ...account, display_name: e.target.value };
+                    setFormData({ ...formData, other_tiktok_accounts: updated });
+                  }}
+                  className="h-8 text-xs"
+                />
+                <div className="flex gap-1">
+                  <Input
+                    placeholder="Phonetic"
+                    value={account.phonetic || ''}
+                    onChange={(e) => {
+                      const updated = [...(formData.other_tiktok_accounts || [])];
+                      updated[idx] = { ...account, phonetic: e.target.value };
+                      setFormData({ ...formData, other_tiktok_accounts: updated });
+                    }}
+                    className="h-8 text-xs flex-1"
+                  />
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => removeOtherAccount(idx)}>
+                    <X className="w-3 h-3 text-gray-400" />
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
+          
+          <div className="grid grid-cols-3 gap-2 items-end">
+            <div className="relative">
+              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-sm">@</span>
+              <Input
+                placeholder="username"
+                value={newAccountUsername}
+                onChange={(e) => setNewAccountUsername(e.target.value.replace('@', ''))}
+                className="pl-6 h-8 text-xs"
+              />
+            </div>
+            <Input
+              placeholder="Display name"
+              value={newAccountDisplay}
+              onChange={(e) => setNewAccountDisplay(e.target.value)}
+              className="h-8 text-xs"
+            />
+            <div className="flex gap-1">
+              <Input
+                placeholder="Phonetic"
+                value={newAccountPhonetic}
+                onChange={(e) => setNewAccountPhonetic(e.target.value)}
+                className="h-8 text-xs flex-1"
+              />
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-8 w-8 p-0" 
+                onClick={addOtherAccount}
+                disabled={!newAccountUsername.trim()}
+              >
+                <Plus className="w-3 h-3" />
+              </Button>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* How did you find them? */}
-      <div className="p-3 bg-blue-50 rounded-lg border border-blue-200 space-y-2">
-        <Label className="text-xs font-semibold text-blue-800">How did you find them?</Label>
+      {/* How did you find them? - Green themed */}
+      <div className="p-3 bg-green-50 rounded-lg border border-green-200 space-y-2">
+        <Label className="text-xs font-semibold text-green-800">How did you find them?</Label>
         <div className="flex gap-2 items-center">
           <div
             onClick={() => setFormData({ ...formData, found_on_fyp: !formData.found_on_fyp, met_through_id: formData.found_on_fyp ? formData.met_through_id : null })}
-            className={`flex items-center gap-1 px-3 py-1.5 border rounded-lg cursor-pointer text-xs ${formData.found_on_fyp ? 'border-blue-500 bg-blue-100 text-blue-700' : 'border-gray-200 bg-white'}`}
+            className={`flex items-center gap-1 px-3 py-1.5 border rounded-lg cursor-pointer text-xs ${formData.found_on_fyp ? 'border-green-500 bg-green-100 text-green-700' : 'border-gray-200 bg-white'}`}
           >
             <Checkbox checked={formData.found_on_fyp} className="h-3 w-3" />
             <span>Found on FYP</span>
           </div>
           <span className="text-gray-400 text-xs">or</span>
           <div className="flex-1">
-            <SearchableContactSelect
+            <QuickAddContactSelect
               contacts={contacts?.filter(c => c.id !== editingContactId) || []}
               value={formData.met_through_id || ''}
               onChange={(v) => setFormData({ ...formData, met_through_id: v, found_on_fyp: false })}
+              onQuickAdd={onQuickAddContact}
               placeholder="Through a contact..."
               disabled={formData.found_on_fyp}
             />
           </div>
         </div>
         {formData.met_through_id && (
-          <p className="text-xs text-blue-600">
+          <p className="text-xs text-green-600">
             Found through: @{contacts?.find(c => c.id === formData.met_through_id)?.username || 'Unknown'}
           </p>
         )}
       </div>
 
-      {/* TikTok Notes - Simple single field */}
+      {/* TikTok Notes */}
       <div className="space-y-1">
         <Label className="text-xs">TikTok Notes</Label>
         <Textarea
@@ -403,15 +437,15 @@ export default function TikTokTabContent({
         />
       </div>
 
-      {/* Relationship Roles */}
-      <div className="space-y-2">
-        <Label className="text-xs text-gray-500 font-medium">Relationship</Label>
+      {/* Relationship Roles - Rose themed */}
+      <div className="p-3 bg-rose-50 rounded-lg border border-rose-200 space-y-2">
+        <Label className="text-xs text-rose-800 font-medium">Relationship</Label>
         <div className="flex flex-wrap gap-1">
           {Object.entries(relationshipRoles).map(([key, config]) => (
             <Badge
               key={key}
               variant={formData.role?.includes(key) ? 'default' : 'outline'}
-              className={`cursor-pointer text-xs ${formData.role?.includes(key) ? 'bg-purple-600' : config.color}`}
+              className={`cursor-pointer text-xs ${formData.role?.includes(key) ? 'bg-rose-600' : config.color}`}
               onClick={() => toggleRole(key)}
             >
               {config.label}
@@ -422,18 +456,17 @@ export default function TikTokTabContent({
 
       {/* Three Column Roles: Battle | Engagement | Creator */}
       <div className="grid grid-cols-3 gap-3">
-        {/* Battle Column */}
-        <div className="space-y-2">
-          <Label className="text-xs text-gray-500 font-medium">Battle</Label>
+        {/* Battle Column - Red themed */}
+        <div className="p-2 bg-red-50 rounded-lg border border-red-200 space-y-2">
+          <Label className="text-xs text-red-800 font-medium">Battle</Label>
           <div className="space-y-1">
             {Object.entries(battleRoles).map(([key, config]) => (
               <RoleButton key={key} roleKey={key} config={config} small />
             ))}
           </div>
           
-          {/* Battle Inventory */}
           {(formData.role?.includes('loves_to_battle') || formData.role?.includes('battle_sniper')) && (
-            <div className="p-2 bg-red-50 rounded border border-red-200 space-y-1">
+            <div className="p-2 bg-red-100 rounded border border-red-300 space-y-1">
               <span className="text-[10px] font-semibold text-red-700">Inventory</span>
               <div className="grid grid-cols-5 gap-1">
                 {battleInventoryItems.map(item => (
@@ -453,9 +486,9 @@ export default function TikTokTabContent({
           )}
         </div>
 
-        {/* Engagement Column */}
-        <div className="space-y-2">
-          <Label className="text-xs text-gray-500 font-medium">Engagement</Label>
+        {/* Engagement Column - Teal themed */}
+        <div className="p-2 bg-teal-50 rounded-lg border border-teal-200 space-y-2">
+          <Label className="text-xs text-teal-800 font-medium">Engagement</Label>
           <div className="space-y-1">
             {Object.entries(engagementRoles).map(([key, config]) => (
               <RoleButton key={key} roleKey={key} config={config} small />
@@ -463,9 +496,9 @@ export default function TikTokTabContent({
           </div>
         </div>
 
-        {/* Creator Column */}
-        <div className="space-y-2">
-          <Label className="text-xs text-gray-500 font-medium">Creator</Label>
+        {/* Creator Column - Indigo themed */}
+        <div className="p-2 bg-indigo-50 rounded-lg border border-indigo-200 space-y-2">
+          <Label className="text-xs text-indigo-800 font-medium">Creator</Label>
           <div className="space-y-1">
             {Object.entries(creatorRoles).map(([key, config]) => (
               <RoleButton key={key} roleKey={key} config={config} small />
@@ -474,9 +507,9 @@ export default function TikTokTabContent({
         </div>
       </div>
 
-      {/* Custom Roles */}
-      <div className="space-y-2">
-        <Label className="text-xs text-gray-500 font-medium">Custom Roles</Label>
+      {/* Custom Fields */}
+      <div className="p-3 bg-teal-50 rounded-lg border border-teal-200 space-y-2">
+        <Label className="text-xs text-teal-800 font-medium">Custom Fields</Label>
         <div className="flex flex-wrap gap-1">
           {savedCustomRoles?.map(role => {
             const customRole = `custom:${role}`;
@@ -484,7 +517,7 @@ export default function TikTokTabContent({
               <Badge
                 key={role}
                 variant={formData.role?.includes(customRole) ? 'default' : 'outline'}
-                className={`cursor-pointer text-xs ${formData.role?.includes(customRole) ? 'bg-teal-600' : 'bg-teal-50 text-teal-700'}`}
+                className={`cursor-pointer text-xs ${formData.role?.includes(customRole) ? 'bg-teal-600' : 'bg-white text-teal-700 border-teal-300'}`}
                 onClick={() => toggleRole(customRole)}
               >
                 {role}
@@ -494,7 +527,7 @@ export default function TikTokTabContent({
         </div>
         <div className="flex gap-2">
           <Input
-            placeholder="Add custom role..."
+            placeholder="Add custom field..."
             value={customRoleInput}
             onChange={(e) => setCustomRoleInput(e.target.value)}
             className="h-8 text-xs"
@@ -530,112 +563,125 @@ export default function TikTokTabContent({
         </div>
       </div>
 
-      {/* Mods Section - Clearer labels */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-2 p-3 bg-indigo-50 rounded-lg border border-indigo-200">
-          <Label className="text-xs font-semibold text-indigo-800">They mod for...</Label>
-          <p className="text-[10px] text-indigo-600">Who does this person moderate for?</p>
-          <SearchableContactSelect
-            contacts={contacts?.filter(c => c.id !== editingContactId && !formData.mods_for?.includes(c.id)) || []}
-            value=""
-            onChange={(v) => {
-              if (v && !formData.mods_for?.includes(v)) {
-                setFormData({ ...formData, mods_for: [...(formData.mods_for || []), v] });
-              }
-            }}
-            placeholder="Search contacts..."
-          />
-          <div className="flex flex-wrap gap-1">
-            {formData.mods_for?.map(id => {
-              const contact = contacts?.find(c => c.id === id);
-              return contact ? (
-                <Badge key={id} variant="secondary" className="cursor-pointer text-xs" onClick={() => setFormData({ ...formData, mods_for: formData.mods_for.filter(m => m !== id) })}>
-                  @{contact.username} ✕
-                </Badge>
-              ) : null;
-            })}
-          </div>
-        </div>
-
-        <div className="space-y-2 p-3 bg-pink-50 rounded-lg border border-pink-200">
-          <Label className="text-xs font-semibold text-pink-800">Their mods are...</Label>
-          <p className="text-[10px] text-pink-600">Who moderates for this person?</p>
-          <SearchableContactSelect
-            contacts={contacts?.filter(c => c.id !== editingContactId && !formData.their_mods?.includes(c.id)) || []}
-            value=""
-            onChange={(v) => {
-              if (v && !formData.their_mods?.includes(v)) {
-                setFormData({ ...formData, their_mods: [...(formData.their_mods || []), v] });
-              }
-            }}
-            placeholder="Search contacts..."
-          />
-          <div className="flex flex-wrap gap-1">
-            {formData.their_mods?.map(id => {
-              const contact = contacts?.find(c => c.id === id);
-              return contact ? (
-                <Badge key={id} variant="secondary" className="cursor-pointer text-xs" onClick={() => setFormData({ ...formData, their_mods: formData.their_mods.filter(m => m !== id) })}>
-                  @{contact.username} ✕
-                </Badge>
-              ) : null;
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* Live Stream Types */}
-      <div className="space-y-2">
-        <Label className="text-xs">Live Stream Types</Label>
-        <div className="flex flex-wrap gap-1">
-          {defaultLiveStreamTypes.map(type => (
-            <Badge
-              key={type}
-              variant={formData.live_stream_types?.includes(type) ? 'default' : 'outline'}
-              className={`cursor-pointer text-xs ${formData.live_stream_types?.includes(type) ? 'bg-violet-600' : 'bg-violet-50 text-violet-700'}`}
-              onClick={() => {
-                const current = formData.live_stream_types || [];
-                setFormData({
-                  ...formData,
-                  live_stream_types: current.includes(type) 
-                    ? current.filter(t => t !== type)
-                    : [...current, type]
-                });
-              }}
-            >
-              {type}
-            </Badge>
+      {/* Live Stream Types - Organized by category */}
+      <div className="p-3 bg-violet-50 rounded-lg border border-violet-200 space-y-2">
+        <Label className="text-xs text-violet-800 font-medium">Live Stream Types</Label>
+        <div className="space-y-2">
+          {liveStreamCategories.map(category => (
+            <div key={category.label} className={`p-2 rounded border ${category.color}`}>
+              <span className="text-[10px] font-semibold text-gray-600 mb-1 block">{category.label}</span>
+              <div className="flex flex-wrap gap-1">
+                {category.types.map(type => (
+                  <Badge
+                    key={type}
+                    variant={formData.live_stream_types?.includes(type) ? 'default' : 'outline'}
+                    className={`cursor-pointer text-xs ${formData.live_stream_types?.includes(type) ? 'bg-violet-600' : 'bg-white text-violet-700'}`}
+                    onClick={() => toggleLiveStreamType(type)}
+                  >
+                    {type}
+                  </Badge>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       </div>
 
-      {/* Agencies */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1">
-          <Label className="text-xs">Live Agency</Label>
-          <Input
-            placeholder="Agency name"
-            value={formData.live_agency || ''}
-            onChange={(e) => setFormData({ ...formData, live_agency: e.target.value })}
-          />
-        </div>
-        <div className="space-y-1">
-          <Label className="text-xs">Shop Agency</Label>
-          <Input
-            placeholder="Shop agency"
-            value={formData.shop_agency || ''}
-            onChange={(e) => setFormData({ ...formData, shop_agency: e.target.value })}
-          />
-        </div>
-      </div>
+      {/* Collapsible Details Section */}
+      <Collapsible open={detailsOpen} onOpenChange={setDetailsOpen}>
+        <CollapsibleTrigger className="flex items-center gap-2 w-full p-3 bg-gray-100 rounded-lg border hover:bg-gray-200 transition-colors">
+          {detailsOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+          <span className="font-medium text-sm text-gray-700">More Details</span>
+          <span className="text-xs text-gray-500">(Mods, Agencies, etc.)</span>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="mt-2 space-y-3">
+          {/* Mods Section - Pink/Indigo themed */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2 p-3 bg-indigo-50 rounded-lg border border-indigo-200">
+              <Label className="text-xs font-semibold text-indigo-800">They mod for...</Label>
+              <p className="text-[10px] text-indigo-600">Who does this person moderate for?</p>
+              <QuickAddContactSelect
+                contacts={contacts?.filter(c => c.id !== editingContactId && !formData.mods_for?.includes(c.id)) || []}
+                value=""
+                onChange={(v) => {
+                  if (v && !formData.mods_for?.includes(v)) {
+                    setFormData({ ...formData, mods_for: [...(formData.mods_for || []), v] });
+                  }
+                }}
+                onQuickAdd={onQuickAddContact}
+                placeholder="Search contacts..."
+              />
+              <div className="flex flex-wrap gap-1">
+                {formData.mods_for?.map(id => {
+                  const contact = contacts?.find(c => c.id === id);
+                  return contact ? (
+                    <Badge key={id} variant="secondary" className="cursor-pointer text-xs" onClick={() => setFormData({ ...formData, mods_for: formData.mods_for.filter(m => m !== id) })}>
+                      @{contact.username} ✕
+                    </Badge>
+                  ) : null;
+                })}
+              </div>
+            </div>
 
-      <div className="space-y-1">
-        <Label className="text-xs">Started Going Live</Label>
-        <Input
-          placeholder="e.g., Summer 2023"
-          value={formData.started_going_live || ''}
-          onChange={(e) => setFormData({ ...formData, started_going_live: e.target.value })}
-        />
-      </div>
+            <div className="space-y-2 p-3 bg-pink-50 rounded-lg border border-pink-200">
+              <Label className="text-xs font-semibold text-pink-800">Their mods are...</Label>
+              <p className="text-[10px] text-pink-600">Who moderates for this person?</p>
+              <QuickAddContactSelect
+                contacts={contacts?.filter(c => c.id !== editingContactId && !formData.their_mods?.includes(c.id)) || []}
+                value=""
+                onChange={(v) => {
+                  if (v && !formData.their_mods?.includes(v)) {
+                    setFormData({ ...formData, their_mods: [...(formData.their_mods || []), v] });
+                  }
+                }}
+                onQuickAdd={onQuickAddContact}
+                placeholder="Search contacts..."
+              />
+              <div className="flex flex-wrap gap-1">
+                {formData.their_mods?.map(id => {
+                  const contact = contacts?.find(c => c.id === id);
+                  return contact ? (
+                    <Badge key={id} variant="secondary" className="cursor-pointer text-xs" onClick={() => setFormData({ ...formData, their_mods: formData.their_mods.filter(m => m !== id) })}>
+                      @{contact.username} ✕
+                    </Badge>
+                  ) : null;
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Agencies - Amber themed */}
+          <div className="p-3 bg-amber-50 rounded-lg border border-amber-200 space-y-3">
+            <Label className="text-xs font-semibold text-amber-800">Agencies</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs text-amber-700">Live Agency</Label>
+                <Input
+                  placeholder="Agency name"
+                  value={formData.live_agency || ''}
+                  onChange={(e) => setFormData({ ...formData, live_agency: e.target.value })}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-amber-700">Shop Agency</Label>
+                <Input
+                  placeholder="Shop agency"
+                  value={formData.shop_agency || ''}
+                  onChange={(e) => setFormData({ ...formData, shop_agency: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs text-amber-700">Started Going Live</Label>
+              <Input
+                placeholder="e.g., Summer 2023"
+                value={formData.started_going_live || ''}
+                onChange={(e) => setFormData({ ...formData, started_going_live: e.target.value })}
+              />
+            </div>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
     </div>
   );
 }
