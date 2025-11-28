@@ -6,7 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
-import { Star, Upload, X, Plus, Users, Globe, Lock, Pencil, Eye, EyeOff, ChevronDown } from 'lucide-react';
+import { Star, Upload, X, Plus, Users, Globe, Lock, Pencil, Eye, EyeOff, ChevronDown, PlusCircle } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { base44 } from '@/api/base44Client';
 
 const colorOptions = [
@@ -32,11 +33,14 @@ const defaultClubs = [
   { id: 'we_do_not_have', label: 'We Do Not Have Club', display: 'We Do Not Have Club' },
 ];
 
-export default function ContactFormHeader({ formData, setFormData, onSave, isSaving, isEditing, sharedClubs = [], onAddSharedClub, hiddenClubs = [], onToggleClubVisibility }) {
+export default function ContactFormHeader({ formData, setFormData, onSave, isSaving, isEditing, sharedClubs = [], onAddSharedClub, hiddenClubs = [], onToggleClubVisibility, primaryColor }) {
   const [newClub, setNewClub] = useState('');
   const [showClubsModal, setShowClubsModal] = useState(false);
   const [shareNewClub, setShareNewClub] = useState(false);
   const [showHiddenClubs, setShowHiddenClubs] = useState(false);
+  const [showColorPicker, setShowColorPicker] = useState(false);
+  
+  const buttonColor = primaryColor || '#8B5CF6';
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
@@ -48,9 +52,9 @@ export default function ContactFormHeader({ formData, setFormData, onSave, isSav
 
   return (
     <div className="space-y-4 pb-4 border-b">
-      {/* Top row with save button */}
+      {/* Top row with favorite, friend IRL, color, and save */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={() => setFormData({ ...formData, is_favorite: !formData.is_favorite })}
@@ -58,28 +62,79 @@ export default function ContactFormHeader({ formData, setFormData, onSave, isSav
           >
             <Star className={`w-5 h-5 ${formData.is_favorite ? 'fill-amber-400 text-amber-400' : 'text-gray-300'}`} />
           </button>
+          
+          {/* Friend IRL toggle */}
+          <div
+            onClick={() => {
+              const current = formData.role || [];
+              setFormData({
+                ...formData,
+                role: current.includes('irl_friend')
+                  ? current.filter(r => r !== 'irl_friend')
+                  : [...current, 'irl_friend']
+              });
+            }}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border cursor-pointer transition-colors text-xs ${
+              formData.role?.includes('irl_friend')
+                ? 'bg-green-100 border-green-400 text-green-700'
+                : 'bg-gray-50 border-gray-200 text-gray-500 hover:border-green-300'
+            }`}
+          >
+            <Checkbox checked={formData.role?.includes('irl_friend')} className="h-3 w-3" />
+            <span className="font-medium">Friend IRL</span>
+          </div>
+          
+          {/* Favorite Color with popover */}
           <div className="flex items-center gap-1">
-            {colorOptions.slice(0, 5).map(color => (
+            <span className="text-xs text-gray-400">Color</span>
+            {formData.color && (
               <div
-                key={color}
-                onClick={() => setFormData({ ...formData, color })}
-                className={`w-5 h-5 rounded-full cursor-pointer ${formData.color === color ? 'ring-2 ring-offset-1 ring-gray-400' : ''}`}
-                style={{ backgroundColor: color }}
+                className="w-5 h-5 rounded-full ring-2 ring-offset-1 ring-gray-300"
+                style={{ backgroundColor: formData.color }}
               />
-            ))}
-            <Input
-              type="color"
-              value={formData.color || '#6B7280'}
-              onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-              className="w-6 h-6 p-0 cursor-pointer border-0"
-            />
+            )}
+            <Popover open={showColorPicker} onOpenChange={setShowColorPicker}>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="p-0.5 hover:bg-gray-100 rounded-full"
+                >
+                  <PlusCircle className="w-5 h-5 text-gray-400 hover:text-purple-500" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-3" align="start">
+                <div className="grid grid-cols-6 gap-1.5">
+                  {colorOptions.map(color => (
+                    <div
+                      key={color}
+                      onClick={() => {
+                        setFormData({ ...formData, color });
+                        setShowColorPicker(false);
+                      }}
+                      className={`w-6 h-6 rounded-full cursor-pointer hover:scale-110 transition-transform ${formData.color === color ? 'ring-2 ring-offset-1 ring-gray-400' : ''}`}
+                      style={{ backgroundColor: color }}
+                    />
+                  ))}
+                </div>
+                <div className="mt-2 pt-2 border-t flex items-center gap-2">
+                  <span className="text-xs text-gray-500">Custom:</span>
+                  <Input
+                    type="color"
+                    value={formData.color || '#6B7280'}
+                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                    className="w-8 h-6 p-0 cursor-pointer border-0"
+                  />
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
         <Button
           onClick={onSave}
           disabled={isSaving}
           size="sm"
-          className="bg-purple-600 hover:bg-purple-700"
+          style={{ backgroundColor: buttonColor }}
+          className="hover:opacity-90"
         >
           {isEditing ? 'Update' : 'Add'}
         </Button>
@@ -129,29 +184,6 @@ export default function ContactFormHeader({ formData, setFormData, onSave, isSav
               onChange={(e) => setFormData({ ...formData, nickname: e.target.value })}
             />
           </div>
-        </div>
-      </div>
-
-      {/* Friend IRL Toggle */}
-      <div className="pt-2">
-        <div
-          onClick={() => {
-            const current = formData.role || [];
-            setFormData({
-              ...formData,
-              role: current.includes('irl_friend')
-                ? current.filter(r => r !== 'irl_friend')
-                : [...current, 'irl_friend']
-            });
-          }}
-          className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border cursor-pointer transition-colors ${
-            formData.role?.includes('irl_friend')
-              ? 'bg-green-100 border-green-400 text-green-700'
-              : 'bg-gray-50 border-gray-200 text-gray-500 hover:border-green-300'
-          }`}
-        >
-          <Checkbox checked={formData.role?.includes('irl_friend')} className="h-3.5 w-3.5" />
-          <span className="text-sm font-medium">Friend IRL</span>
         </div>
       </div>
 
