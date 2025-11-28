@@ -15,6 +15,7 @@ export default function MeetThePixelNuts() {
   const [isUploading, setIsUploading] = useState(false);
   const [filterCategory, setFilterCategory] = useState('all');
   const [user, setUser] = useState(null);
+  const [uploadStatus, setUploadStatus] = useState('');
 
   React.useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
