@@ -100,6 +100,22 @@ export default function TikTokContacts() {
   const [filterRoles, setFilterRoles] = useState([]);
   const [activeTab, setActiveTab] = useState('all');
   const [formTab, setFormTab] = useState('tiktok');
+  
+  // Quick add contact function for dropdowns
+  const handleQuickAddContact = async (username) => {
+    try {
+      const newContact = await base44.entities.TikTokContact.create({
+        username: username,
+        role: [],
+        is_favorite: false
+      });
+      queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] });
+      return newContact.id;
+    } catch (error) {
+      console.error('Failed to quick add contact:', error);
+      return null;
+    }
+  };
   const [formData, setFormData] = useState(defaultFormData);
   const [filterVeterans, setFilterVeterans] = useState(false);
   
@@ -638,6 +654,7 @@ export default function TikTokContacts() {
                   savedCustomRoles={savedCustomRoles}
                   onSaveCustomRole={(role) => saveCustomRoleMutation.mutate(role)}
                   editingContactId={editingContact?.id}
+                  onQuickAddContact={handleQuickAddContact}
                 />
               </TabsContent>
 
