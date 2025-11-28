@@ -145,6 +145,7 @@ export default function TikTokContacts() {
   const [filterLiveType, setFilterLiveType] = useState('');
   const [filterClub, setFilterClub] = useState('');
   const [hiddenClubs, setHiddenClubs] = useState([]);
+  const [showCustomRolesModal, setShowCustomRolesModal] = useState(false);
   
   // CSV Import state
   const [showImportModal, setShowImportModal] = useState(false);
@@ -718,6 +719,52 @@ export default function TikTokContacts() {
         )}
       </div>
 
+      {/* Custom Roles Modal */}
+      <Dialog open={showCustomRolesModal} onOpenChange={setShowCustomRolesModal}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Manage Custom Fields</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <p className="text-xs text-gray-500">These custom fields are saved across all your contacts.</p>
+            {savedCustomRoles.length === 0 ? (
+              <p className="text-sm text-gray-400 italic">No custom fields yet. Add one when editing a contact.</p>
+            ) : (
+              <div className="space-y-1">
+                {savedCustomRoles.map((role, idx) => (
+                  <div key={role} className="flex items-center justify-between p-2 bg-purple-50 rounded-lg border border-purple-200">
+                    <span className="text-sm text-purple-700">{role}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0 text-gray-400 hover:text-red-500"
+                      onClick={async () => {
+                        const newRoles = savedCustomRoles.filter((_, i) => i !== idx);
+                        if (preferences?.id) {
+                          await base44.entities.UserPreferences.update(preferences.id, {
+                            custom_tiktok_roles: newRoles
+                          });
+                          queryClient.invalidateQueries({ queryKey: ['preferences'] });
+                        }
+                      }}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <Button
+            className="w-full"
+            style={{ backgroundColor: preferences?.primary_color || '#8B5CF6' }}
+            onClick={() => setShowCustomRolesModal(false)}
+          >
+            Done
+          </Button>
+        </DialogContent>
+      </Dialog>
+
       {/* Add/Edit Modal */}
       <Dialog open={showModal} onOpenChange={closeModal}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -738,6 +785,7 @@ export default function TikTokContacts() {
               onToggleClubVisibility={(clubId) => setHiddenClubs(prev => 
                 prev.includes(clubId) ? prev.filter(id => id !== clubId) : [...prev, clubId]
               )}
+              primaryColor={preferences?.primary_color}
             />
 
             <Tabs value={formTab} onValueChange={setFormTab}>
@@ -761,6 +809,7 @@ export default function TikTokContacts() {
                   categories={categories}
                   savedCustomRoles={savedCustomRoles}
                   onSaveCustomRole={(role) => saveCustomRoleMutation.mutate(role)}
+                  onEditCustomRoles={() => setShowCustomRolesModal(true)}
                   editingContactId={editingContact?.id}
                   onQuickAddContact={handleQuickAddContact}
                 />
