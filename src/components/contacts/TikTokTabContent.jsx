@@ -96,6 +96,7 @@ export default function TikTokTabContent({
   categories, 
   savedCustomRoles,
   onSaveCustomRole,
+  onEditCustomRoles,
   editingContactId,
   onQuickAddContact
 }) {
@@ -477,7 +478,7 @@ export default function TikTokTabContent({
             <span>FYF</span>
           </div>
           <span className="text-gray-400 text-xs">or</span>
-          <div className="flex-1">
+          <div className="flex-1 flex gap-1">
             <QuickAddContactSelect
               contacts={contacts?.filter(c => c.id !== editingContactId) || []}
               value={formData.met_through_id || ''}
@@ -486,6 +487,17 @@ export default function TikTokTabContent({
               placeholder="Through a contact..."
               disabled={formData.found_on_fyf}
             />
+            {formData.met_through_id && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-9 w-9 p-0 text-gray-400 hover:text-red-500"
+                onClick={() => setFormData({ ...formData, met_through_id: null })}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            )}
           </div>
         </div>
         {formData.met_through_id && (
@@ -509,32 +521,45 @@ export default function TikTokTabContent({
 
       {/* Relationship & Custom Fields - Combined Rose themed */}
       <div className="p-3 bg-rose-50 rounded-lg border border-rose-200 space-y-2">
-        <div className="flex flex-wrap gap-1">
-          {/* Relationship roles */}
-          {Object.entries(relationshipRoles).map(([key, config]) => (
-            <Badge
-              key={key}
-              variant={formData.role?.includes(key) ? 'default' : 'outline'}
-              className={`cursor-pointer text-xs ${formData.role?.includes(key) ? 'bg-rose-600' : config.color}`}
-              onClick={() => toggleRole(key)}
-            >
-              {config.label}
-            </Badge>
-          ))}
-          {/* Custom fields inline */}
-          {savedCustomRoles?.map(role => {
-            const customRole = `custom:${role}`;
-            return (
+        <div className="flex items-center justify-between">
+          <div className="flex flex-wrap gap-1 flex-1">
+            {/* Relationship roles */}
+            {Object.entries(relationshipRoles).map(([key, config]) => (
               <Badge
-                key={role}
-                variant={formData.role?.includes(customRole) ? 'default' : 'outline'}
-                className={`cursor-pointer text-xs ${formData.role?.includes(customRole) ? 'bg-purple-600' : 'bg-white text-purple-700 border-purple-300'}`}
-                onClick={() => toggleRole(customRole)}
+                key={key}
+                variant={formData.role?.includes(key) ? 'default' : 'outline'}
+                className={`cursor-pointer text-xs ${formData.role?.includes(key) ? 'bg-rose-600' : config.color}`}
+                onClick={() => toggleRole(key)}
               >
-                {role}
+                {config.label}
               </Badge>
-            );
-          })}
+            ))}
+            {/* Custom fields inline */}
+            {savedCustomRoles?.map(role => {
+              const customRole = `custom:${role}`;
+              return (
+                <Badge
+                  key={role}
+                  variant={formData.role?.includes(customRole) ? 'default' : 'outline'}
+                  className={`cursor-pointer text-xs ${formData.role?.includes(customRole) ? 'bg-purple-600' : 'bg-white text-purple-700 border-purple-300'}`}
+                  onClick={() => toggleRole(customRole)}
+                >
+                  {role}
+                </Badge>
+              );
+            })}
+          </div>
+          {onEditCustomRoles && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0 text-rose-600 hover:text-rose-700"
+              onClick={onEditCustomRoles}
+            >
+              <Pencil className="w-3 h-3" />
+            </Button>
+          )}
         </div>
         <div className="flex gap-2">
           <Input

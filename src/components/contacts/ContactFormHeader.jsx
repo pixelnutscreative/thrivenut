@@ -11,7 +11,10 @@ import { base44 } from '@/api/base44Client';
 
 const colorOptions = [
   '#8B5CF6', '#EC4899', '#EF4444', '#F59E0B', '#10B981', 
-  '#3B82F6', '#6366F1', '#84CC16', '#14B8A6', '#F97316'
+  '#3B82F6', '#6366F1', '#84CC16', '#14B8A6', '#F97316',
+  '#A855F7', '#F472B6', '#FB7185', '#FBBF24', '#34D399',
+  '#60A5FA', '#818CF8', '#A3E635', '#2DD4BF', '#FB923C',
+  '#C084FC', '#E879F9'
 ];
 
 // Default clubs/groups with special formatting (alphabetical)
