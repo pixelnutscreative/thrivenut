@@ -12,7 +12,6 @@ import Supplements from './pages/Supplements';
 import Medications from './pages/Medications';
 import GiftLibrary from './pages/GiftLibrary';
 import LiveReminders from './pages/LiveReminders';
-import TikTokContacts from './pages/TikTokContacts';
 import PetCare from './pages/PetCare';
 import CareReminders from './pages/CareReminders';
 import People from './pages/People';
@@ -47,7 +46,6 @@ export const PAGES = {
     "Medications": Medications,
     "GiftLibrary": GiftLibrary,
     "LiveReminders": LiveReminders,
-    "TikTokContacts": TikTokContacts,
     "PetCare": PetCare,
     "CareReminders": CareReminders,
     "People": People,
