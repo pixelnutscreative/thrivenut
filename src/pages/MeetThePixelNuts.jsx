@@ -91,6 +91,8 @@ export default function MeetThePixelNuts() {
           else if (header.includes('tiktok') || header.includes('username')) record.tiktok_username = value;
           else if (header.includes('superpower') || header.includes('skill')) record.superpower = value;
           else if (header.includes('fun') || header.includes('fact')) record.fun_fact = value;
+          else if (header.includes('contribution') || header.includes('does') || header.includes('help')) record.contribution = value;
+          else if (header.includes('specialty') || header.includes('expert')) record.specialty = value;
           else if (header.includes('emoji')) record.favorite_emoji = value;
           else if (header.includes('color')) record.card_color = value;
           else if (header.includes('order') || header.includes('sort')) record.sort_order = parseInt(value) || 100;
