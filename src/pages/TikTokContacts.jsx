@@ -121,8 +121,8 @@ export default function TikTokContacts() {
   const [editingContact, setEditingContact] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRoles, setFilterRoles] = useState([]);
-  const [activeTab, setActiveTab] = useState('all');
   const [formTab, setFormTab] = useState('tiktok');
+  const [filterGifters, setFilterGifters] = useState(false);
   const defaultFormTab = 'tiktok'; // TikTok Contacts opens to TikTok tab
   
   // Quick add contact function for dropdowns
@@ -303,11 +303,9 @@ export default function TikTokContacts() {
       const matchesVeteran = !filterVeterans || c.is_veteran;
       const matchesLiveType = !filterLiveType || c.live_stream_types?.includes(filterLiveType);
       const matchesClub = !filterClub || c.clubs?.includes(filterClub) || c.custom_clubs?.includes(filterClub);
+      const matchesGifter = !filterGifters || c.is_gifter;
 
-      if (activeTab === 'engagement') return matchesSearch && matchesRole && matchesVeteran && matchesLiveType && matchesClub && c.engagement_enabled;
-      if (activeTab === 'calendar') return matchesSearch && matchesRole && matchesVeteran && matchesLiveType && matchesClub && c.calendar_enabled;
-      if (activeTab === 'gifters') return matchesSearch && matchesRole && matchesVeteran && matchesLiveType && matchesClub && c.is_gifter;
-      return matchesSearch && matchesRole && matchesVeteran && matchesLiveType && matchesClub;
+      return matchesSearch && matchesRole && matchesVeteran && matchesLiveType && matchesClub && matchesGifter;
     })
     .sort((a, b) => {
       if (a.is_favorite && !b.is_favorite) return -1;
@@ -485,8 +483,8 @@ export default function TikTokContacts() {
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800">Contacts</h1>
-            <p className="text-gray-600 mt-1">Your central hub for all connections</p>
+            <h1 className="text-3xl font-bold text-gray-800">TikTok Contacts</h1>
+            <p className="text-gray-600 mt-1">{contacts.length} contacts</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button
@@ -526,24 +524,7 @@ export default function TikTokContacts() {
           </div>
         </div>
 
-        {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-4 h-auto">
-            <TabsTrigger value="all" className="text-xs md:text-sm py-2">All ({contacts.length})</TabsTrigger>
-            <TabsTrigger value="engagement" className="text-xs md:text-sm py-2">
-              <Sparkles className="w-3 h-3 mr-1" />
-              ({contacts.filter(c => c.engagement_enabled).length})
-            </TabsTrigger>
-            <TabsTrigger value="calendar" className="text-xs md:text-sm py-2">
-              <Calendar className="w-3 h-3 mr-1" />
-              ({contacts.filter(c => c.calendar_enabled).length})
-            </TabsTrigger>
-            <TabsTrigger value="gifters" className="text-xs md:text-sm py-2">
-              <Gift className="w-3 h-3 mr-1" />
-              ({contacts.filter(c => c.is_gifter).length})
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+
 
         {/* Search and Filter */}
         <Card>
@@ -554,56 +535,75 @@ export default function TikTokContacts() {
                 placeholder="Search by name, nickname, or username..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-12 h-12 text-lg"
+                className="pl-12 h-11"
               />
             </div>
             
-            <div className="flex flex-wrap items-center gap-2">
+            {/* Filter row - organized into groups */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              {/* Relationship badges */}
               {quickFilterRoles.map(role => {
                 const isCustom = role.startsWith('custom:');
                 const config = isCustom ? null : roleConfig[role];
-                const Icon = config?.icon;
                 const label = isCustom ? role.replace('custom:', '') : config?.label;
-                const colorClass = isCustom ? 'bg-teal-100 text-teal-700' : config?.color;
                 const isActive = filterRoles.includes(role);
                 return (
                   <Badge
                     key={role}
                     variant={isActive ? 'default' : 'outline'}
-                    className={`cursor-pointer px-3 py-1.5 ${isActive ? 'bg-purple-600' : colorClass}`}
+                    className={`cursor-pointer text-xs h-7 ${isActive ? 'bg-purple-600' : 'hover:bg-gray-100'}`}
                     onClick={() => toggleFilterRole(role)}
                   >
-                    {Icon ? <Icon className="w-3 h-3 mr-1" /> : (isCustom ? <Lightbulb className="w-3 h-3 mr-1" /> : null)}
                     {label}
                   </Badge>
                 );
               })}
               
+              <div className="w-px h-5 bg-gray-300 mx-1" />
+              
+              {/* Special filters */}
+              <Badge
+                variant={filterGifters ? 'default' : 'outline'}
+                className={`cursor-pointer text-xs h-7 ${filterGifters ? 'bg-amber-500' : 'hover:bg-amber-50'}`}
+                onClick={() => setFilterGifters(!filterGifters)}
+              >
+                <Gift className="w-3 h-3 mr-1" />
+                Top 3
+              </Badge>
+
+              <Badge
+                variant={filterVeterans ? 'default' : 'outline'}
+                className={`cursor-pointer text-xs h-7 ${filterVeterans ? 'bg-blue-600' : 'hover:bg-blue-50'}`}
+                onClick={() => setFilterVeterans(!filterVeterans)}
+              >
+                🇺🇸
+              </Badge>
+
+              <div className="w-px h-5 bg-gray-300 mx-1" />
+
+              {/* Dropdown filters */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <Filter className="w-4 h-4" />
-                    More
+                  <Button variant="outline" size="sm" className="h-7 text-xs gap-1 px-2">
+                    <Filter className="w-3 h-3" />
+                    Roles
                     {filterRoles.filter(r => dropdownRoles.includes(r)).length > 0 && (
-                      <Badge variant="secondary" className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                      <span className="ml-1 bg-purple-100 text-purple-700 rounded-full px-1.5 text-[10px]">
                         {filterRoles.filter(r => dropdownRoles.includes(r)).length}
-                      </Badge>
+                      </span>
                     )}
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-56">
-                  <DropdownMenuLabel>Filter by Role</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
+                <DropdownMenuContent align="start" className="w-48">
                   {dropdownRoles.map(role => {
                     const config = roleConfig[role];
-                    const Icon = config.icon;
                     return (
                       <DropdownMenuCheckboxItem
                         key={role}
                         checked={filterRoles.includes(role)}
                         onCheckedChange={() => toggleFilterRole(role)}
+                        className="text-xs"
                       >
-                        {Icon ? <Icon className="w-4 h-4 mr-2" /> : <span className="text-xs font-bold mr-2">{config.text}</span>}
                         {config.label}
                       </DropdownMenuCheckboxItem>
                     );
@@ -611,40 +611,23 @@ export default function TikTokContacts() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <Badge
-                variant={filterVeterans ? 'default' : 'outline'}
-                className={`cursor-pointer px-3 py-1.5 ${filterVeterans ? 'bg-red-600' : 'bg-gradient-to-r from-red-50 via-white to-blue-50 text-blue-700 border-red-200'}`}
-                onClick={() => setFilterVeterans(!filterVeterans)}
-              >
-                <span className="mr-1">🇺🇸</span>
-                Veterans
-              </Badge>
-
-              {/* Live Type Filter Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <Video className="w-4 h-4" />
-                    {filterLiveType || 'LIVE Type'}
-                    {filterLiveType && (
-                      <X 
-                        className="w-3 h-3 ml-1 hover:text-red-500" 
-                        onClick={(e) => { e.stopPropagation(); setFilterLiveType(''); }}
-                      />
-                    )}
+                  <Button variant="outline" size="sm" className={`h-7 text-xs gap-1 px-2 ${filterLiveType ? 'bg-pink-50 border-pink-300' : ''}`}>
+                    <Video className="w-3 h-3" />
+                    {filterLiveType || 'LIVE'}
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-56">
-                  <DropdownMenuLabel>Filter by LIVE Type</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
+                <DropdownMenuContent align="start" className="w-48 max-h-64 overflow-y-auto">
                   {liveTypeCategories.map(category => (
                     <React.Fragment key={category.label}>
-                      <DropdownMenuLabel className="text-xs text-gray-500 font-normal">{category.label}</DropdownMenuLabel>
+                      <DropdownMenuLabel className="text-[10px] text-gray-400 py-1">{category.label}</DropdownMenuLabel>
                       {category.types.map(type => (
                         <DropdownMenuCheckboxItem
                           key={type}
                           checked={filterLiveType === type}
                           onCheckedChange={() => setFilterLiveType(filterLiveType === type ? '' : type)}
+                          className="text-xs"
                         >
                           {type}
                         </DropdownMenuCheckboxItem>
@@ -654,28 +637,20 @@ export default function TikTokContacts() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              {/* Club Filter Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <Users className="w-4 h-4" />
-                    {filterClub ? (defaultClubs.find(c => c.id === filterClub)?.label || filterClub) : 'Club'}
-                    {filterClub && (
-                      <X 
-                        className="w-3 h-3 ml-1 hover:text-red-500" 
-                        onClick={(e) => { e.stopPropagation(); setFilterClub(''); }}
-                      />
-                    )}
+                  <Button variant="outline" size="sm" className={`h-7 text-xs gap-1 px-2 ${filterClub ? 'bg-purple-50 border-purple-300' : ''}`}>
+                    <Users className="w-3 h-3" />
+                    {filterClub ? (defaultClubs.find(c => c.id === filterClub)?.label || 'Club') : 'Club'}
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-56 max-h-80 overflow-y-auto">
-                  <DropdownMenuLabel>Filter by Club</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
+                <DropdownMenuContent align="start" className="w-48 max-h-64 overflow-y-auto">
                   {defaultClubs.map(club => (
                     <DropdownMenuCheckboxItem
                       key={club.id}
                       checked={filterClub === club.id}
                       onCheckedChange={() => setFilterClub(filterClub === club.id ? '' : club.id)}
+                      className="text-xs"
                     >
                       {club.label}
                     </DropdownMenuCheckboxItem>
@@ -683,12 +658,13 @@ export default function TikTokContacts() {
                   {sharedClubs.filter(c => c.is_approved).length > 0 && (
                     <>
                       <DropdownMenuSeparator />
-                      <DropdownMenuLabel className="text-xs text-green-600">Community Clubs</DropdownMenuLabel>
+                      <DropdownMenuLabel className="text-[10px] text-green-600">Community</DropdownMenuLabel>
                       {sharedClubs.filter(c => c.is_approved).map(club => (
                         <DropdownMenuCheckboxItem
                           key={club.id}
                           checked={filterClub === `shared:${club.id}`}
                           onCheckedChange={() => setFilterClub(filterClub === `shared:${club.id}` ? '' : `shared:${club.id}`)}
+                          className="text-xs"
                         >
                           {club.name}
                         </DropdownMenuCheckboxItem>
@@ -698,18 +674,25 @@ export default function TikTokContacts() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              {(filterRoles.length > 0 || filterVeterans || filterLiveType || filterClub) && (
+              {/* Clear button */}
+              {(filterRoles.length > 0 || filterVeterans || filterLiveType || filterClub || filterGifters) && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => { setFilterRoles([]); setFilterVeterans(false); setFilterLiveType(''); setFilterClub(''); }}
-                  className="text-gray-500 hover:text-gray-700"
+                  onClick={() => { setFilterRoles([]); setFilterVeterans(false); setFilterLiveType(''); setFilterClub(''); setFilterGifters(false); }}
+                  className="h-7 text-xs text-gray-400 hover:text-red-500 px-2"
                 >
-                  <X className="w-4 h-4 mr-1" />
-                  Clear
+                  <X className="w-3 h-3" />
                 </Button>
               )}
             </div>
+
+            {/* Active filter count */}
+            {filteredContacts.length !== contacts.length && (
+              <p className="text-xs text-gray-500">
+                Showing {filteredContacts.length} of {contacts.length} contacts
+              </p>
+            )}
           </CardContent>
         </Card>
 
