@@ -840,7 +840,7 @@ export default function TikTokContacts() {
             <Button
               variant="outline"
               size="sm"
-              className="text-xs md:text-sm"
+              className="text-xs md:text-sm text-gray-700"
               onClick={() => {
                 // Generate CSV export
                 const headers = [
@@ -915,7 +915,7 @@ export default function TikTokContacts() {
             </Button>
             <label className="cursor-pointer">
               <input type="file" accept=".csv" onChange={handleCsvUpload} className="hidden" />
-              <Button asChild variant="outline" size="sm" className="text-xs md:text-sm">
+              <Button asChild variant="outline" size="sm" className="text-xs md:text-sm text-gray-700">
                 <span>
                   <Upload className="w-4 h-4 md:mr-2" />
                   <span className="hidden md:inline">Import CSV</span>
@@ -925,7 +925,7 @@ export default function TikTokContacts() {
             <Button
               variant="outline"
               size="sm"
-              className="text-xs md:text-sm"
+              className="text-xs md:text-sm text-gray-700"
               onClick={() => setShowCategoryModal(true)}
             >
               <FolderPlus className="w-4 h-4 md:mr-2" />
