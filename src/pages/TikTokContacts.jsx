@@ -99,7 +99,7 @@ export default function TikTokContacts() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRoles, setFilterRoles] = useState([]);
   const [activeTab, setActiveTab] = useState('all');
-  const [formTab, setFormTab] = useState('personal');
+  const [formTab, setFormTab] = useState('tiktok');
   const [formData, setFormData] = useState(defaultFormData);
   const [filterVeterans, setFilterVeterans] = useState(false);
   
@@ -617,17 +617,17 @@ export default function TikTokContacts() {
             />
 
             <Tabs value={formTab} onValueChange={setFormTab}>
-              <TabsList className="w-full grid grid-cols-3">
-                <TabsTrigger value="personal" className="data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700">
-                  Personal
-                </TabsTrigger>
-                <TabsTrigger value="business" className="data-[state=active]:bg-amber-100 data-[state=active]:text-amber-700">
-                  Business
-                </TabsTrigger>
-                <TabsTrigger value="tiktok" className="data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700">
-                  TikTok
-                </TabsTrigger>
-              </TabsList>
+                <TabsList className="w-full grid grid-cols-3">
+                  <TabsTrigger value="tiktok" className="data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700">
+                    TikTok
+                  </TabsTrigger>
+                  <TabsTrigger value="personal" className="data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700">
+                    Personal
+                  </TabsTrigger>
+                  <TabsTrigger value="business" className="data-[state=active]:bg-amber-100 data-[state=active]:text-amber-700">
+                    Business
+                  </TabsTrigger>
+                </TabsList>
 
               <TabsContent value="tiktok" className="mt-4">
                 <TikTokTabContent
