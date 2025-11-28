@@ -270,7 +270,7 @@ export default function Layout({ children, currentPageName }) {
 
                 if (item.isSection) {
                                         const isLocked = item.requiresTikTokAccess && !hasTikTokAccess;
-                                        const isModuleDisabled = item.moduleId && !enabledModules.includes(item.moduleId);
+                                        const isModuleDisabled = item.moduleId && !item.alwaysShow && !enabledModules.includes(item.moduleId);
                                         return (
                                           <div key={item.name}>
                                             <div className="flex items-center">
@@ -418,7 +418,7 @@ export default function Layout({ children, currentPageName }) {
 
               if (item.isSection) {
                                     const isLocked = item.requiresTikTokAccess && !hasTikTokAccess;
-                                    const isModuleDisabled = item.moduleId && !enabledModules.includes(item.moduleId);
+                                    const isModuleDisabled = item.moduleId && !item.alwaysShow && !enabledModules.includes(item.moduleId);
                                     return (
                                       <div key={item.name}>
                                         <div className="flex items-center">
