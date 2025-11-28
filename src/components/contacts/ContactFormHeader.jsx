@@ -3,7 +3,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Star, Upload, X, Plus } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Star, Upload, X, Plus, Users } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 
 const colorOptions = [
@@ -11,18 +13,24 @@ const colorOptions = [
   '#3B82F6', '#6366F1', '#84CC16', '#14B8A6', '#F97316'
 ];
 
-// Default clubs/groups with special formatting
+// Default clubs/groups with special formatting (alphabetical)
 const defaultClubs = [
+  { id: 'authentically_me', label: 'AuthenticallyMe', display: 'AuthenticallyMe' },
+  { id: 'boss_metri', label: 'Boss Metri', display: 'Boss Metri' },
   { id: 'gen_x', label: 'Gen ❌', display: 'Gen X' },
-  { id: 'group_god', label: 'Group God', display: 'Group God' },
   { id: 'group_7', label: 'Group 7', display: 'Group 7' },
-  { id: 'we_do_not_care', label: 'We Do Not Care Club', display: 'We Do Not Care Club' },
+  { id: 'group_god', label: 'Group God', display: 'Group God' },
+  { id: 'mathy_mob', label: 'Mathy Mob', display: 'Mathy Mob' },
+  { id: 'pixel_nuts', label: 'Pixel Nuts', display: 'Pixel Nuts' },
+  { id: 'team_foley', label: 'Team Foley', display: 'Team Foley' },
   { id: 'washed_up_moms', label: "Washed Up Mom's Club", display: "Washed Up Mom's Club" },
+  { id: 'we_do_not_care', label: 'We Do Not Care Club', display: 'We Do Not Care Club' },
   { id: 'we_do_not_have', label: 'We Do Not Have Club', display: 'We Do Not Have Club' },
 ];
 
 export default function ContactFormHeader({ formData, setFormData, onSave, isSaving, isEditing }) {
   const [newClub, setNewClub] = useState('');
+  const [showClubsModal, setShowClubsModal] = useState(false);
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
@@ -120,82 +128,172 @@ export default function ContactFormHeader({ formData, setFormData, onSave, isSav
 
       {/* Clubs/Groups Section */}
       <div className="space-y-2 pt-2">
-        <Label className="text-xs text-gray-500">Clubs & Groups</Label>
+        <div className="flex items-center justify-between">
+          <Label className="text-xs text-gray-500">Clubs & Groups</Label>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-6 px-2 text-purple-600 hover:text-purple-700"
+            onClick={() => setShowClubsModal(true)}
+          >
+            <Plus className="w-3 h-3 mr-1" />
+            <span className="text-xs">Edit</span>
+          </Button>
+        </div>
+        
+        {/* Show selected clubs only */}
         <div className="flex flex-wrap gap-1">
-          {defaultClubs.map(club => {
-            const isActive = formData.clubs?.includes(club.id);
-            return (
+          {/* Default clubs that are selected - sorted alphabetically */}
+          {defaultClubs
+            .filter(club => formData.clubs?.includes(club.id))
+            .map(club => (
               <Badge
                 key={club.id}
-                variant={isActive ? 'default' : 'outline'}
-                className={`cursor-pointer text-xs ${isActive ? 'bg-purple-600' : 'bg-white hover:bg-purple-50'}`}
-                onClick={() => {
-                  const current = formData.clubs || [];
-                  setFormData({
-                    ...formData,
-                    clubs: isActive 
-                      ? current.filter(c => c !== club.id)
-                      : [...current, club.id]
-                  });
-                }}
+                variant="default"
+                className="text-xs bg-purple-600"
               >
                 {club.label}
               </Badge>
-            );
-          })}
-          {/* Custom clubs */}
-          {(formData.custom_clubs || []).map((club, idx) => (
-            <Badge
-              key={`custom-${idx}`}
-              variant="default"
-              className="cursor-pointer text-xs bg-teal-600 hover:bg-teal-700"
-              onClick={() => {
-                setFormData({
-                  ...formData,
-                  custom_clubs: formData.custom_clubs.filter((_, i) => i !== idx)
-                });
-              }}
-            >
-              {club} ✕
-            </Badge>
-          ))}
-        </div>
-        <div className="flex gap-2">
-          <Input
-            placeholder="Add custom club/group..."
-            value={newClub}
-            onChange={(e) => setNewClub(e.target.value)}
-            className="h-8 text-xs"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && newClub.trim()) {
-                e.preventDefault();
-                setFormData({
-                  ...formData,
-                  custom_clubs: [...(formData.custom_clubs || []), newClub.trim()]
-                });
-                setNewClub('');
-              }
-            }}
-          />
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className="h-8"
-            onClick={() => {
-              if (newClub.trim()) {
-                setFormData({
-                  ...formData,
-                  custom_clubs: [...(formData.custom_clubs || []), newClub.trim()]
-                });
-                setNewClub('');
-              }
-            }}
-          >
-            <Plus className="w-3 h-3" />
-          </Button>
+            ))}
+          {/* Custom clubs - sorted alphabetically */}
+          {[...(formData.custom_clubs || [])]
+            .sort((a, b) => a.localeCompare(b))
+            .map((club, idx) => (
+              <Badge
+                key={`custom-${idx}`}
+                variant="default"
+                className="text-xs bg-teal-600"
+              >
+                {club}
+              </Badge>
+            ))}
+          {(!formData.clubs?.length && !formData.custom_clubs?.length) && (
+            <span className="text-xs text-gray-400 italic">No clubs selected</span>
+          )}
         </div>
       </div>
+
+      {/* Clubs Modal */}
+      <Dialog open={showClubsModal} onOpenChange={setShowClubsModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Users className="w-5 h-5" />
+              Clubs & Groups
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-2">
+            {/* Default clubs list */}
+            <div className="space-y-2 max-h-60 overflow-y-auto">
+              {defaultClubs.map(club => {
+                const isActive = formData.clubs?.includes(club.id);
+                return (
+                  <div
+                    key={club.id}
+                    onClick={() => {
+                      const current = formData.clubs || [];
+                      setFormData({
+                        ...formData,
+                        clubs: isActive 
+                          ? current.filter(c => c !== club.id)
+                          : [...current, club.id]
+                      });
+                    }}
+                    className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${
+                      isActive ? 'bg-purple-100' : 'hover:bg-gray-50'
+                    }`}
+                  >
+                    <Checkbox checked={isActive} />
+                    <span className={`text-sm ${isActive ? 'font-medium text-purple-700' : ''}`}>
+                      {club.label}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Custom clubs */}
+            {formData.custom_clubs?.length > 0 && (
+              <div className="pt-2 border-t space-y-2">
+                <Label className="text-xs text-gray-500">Custom Clubs</Label>
+                {[...(formData.custom_clubs || [])]
+                  .sort((a, b) => a.localeCompare(b))
+                  .map((club, idx) => (
+                    <div
+                      key={`custom-${idx}`}
+                      className="flex items-center justify-between p-2 bg-teal-50 rounded-lg"
+                    >
+                      <span className="text-sm text-teal-700">{club}</span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0"
+                        onClick={() => {
+                          setFormData({
+                            ...formData,
+                            custom_clubs: formData.custom_clubs.filter((_, i) => i !== idx)
+                          });
+                        }}
+                      >
+                        <X className="w-3 h-3 text-gray-400" />
+                      </Button>
+                    </div>
+                  ))}
+              </div>
+            )}
+
+            {/* Add custom club */}
+            <div className="pt-2 border-t">
+              <Label className="text-xs text-gray-500 mb-2 block">Add Custom Club</Label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Club name..."
+                  value={newClub}
+                  onChange={(e) => setNewClub(e.target.value)}
+                  className="h-9"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && newClub.trim()) {
+                      e.preventDefault();
+                      setFormData({
+                        ...formData,
+                        custom_clubs: [...(formData.custom_clubs || []), newClub.trim()]
+                      });
+                      setNewClub('');
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  className="h-9 bg-teal-600 hover:bg-teal-700"
+                  onClick={() => {
+                    if (newClub.trim()) {
+                      setFormData({
+                        ...formData,
+                        custom_clubs: [...(formData.custom_clubs || []), newClub.trim()]
+                      });
+                      setNewClub('');
+                    }
+                  }}
+                  disabled={!newClub.trim()}
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <Button
+            className="w-full bg-purple-600 hover:bg-purple-700"
+            onClick={() => setShowClubsModal(false)}
+          >
+            Done
+          </Button>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
