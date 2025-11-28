@@ -144,6 +144,7 @@ export default function TikTokContacts() {
   const [filterVeterans, setFilterVeterans] = useState(false);
   const [filterLiveType, setFilterLiveType] = useState('');
   const [filterClub, setFilterClub] = useState('');
+  const [hiddenClubs, setHiddenClubs] = useState([]);
   
   // CSV Import state
   const [showImportModal, setShowImportModal] = useState(false);
@@ -645,7 +646,7 @@ export default function TikTokContacts() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-48 max-h-64 overflow-y-auto">
-                  {defaultClubs.map(club => (
+                  {defaultClubs.filter(club => !hiddenClubs.includes(club.id)).map(club => (
                     <DropdownMenuCheckboxItem
                       key={club.id}
                       checked={filterClub === club.id}
@@ -733,6 +734,10 @@ export default function TikTokContacts() {
               isEditing={!!editingContact}
               sharedClubs={sharedClubs}
               onAddSharedClub={(name) => addSharedClubMutation.mutate(name)}
+              hiddenClubs={hiddenClubs}
+              onToggleClubVisibility={(clubId) => setHiddenClubs(prev => 
+                prev.includes(clubId) ? prev.filter(id => id !== clubId) : [...prev, clubId]
+              )}
             />
 
             <Tabs value={formTab} onValueChange={setFormTab}>

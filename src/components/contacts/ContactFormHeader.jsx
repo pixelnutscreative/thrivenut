@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
-import { Star, Upload, X, Plus, Users, Globe, Lock, Pencil, Eye, EyeOff } from 'lucide-react';
+import { Star, Upload, X, Plus, Users, Globe, Lock, Pencil, Eye, EyeOff, ChevronDown } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 
 const colorOptions = [
@@ -29,17 +29,11 @@ const defaultClubs = [
   { id: 'we_do_not_have', label: 'We Do Not Have Club', display: 'We Do Not Have Club' },
 ];
 
-export default function ContactFormHeader({ formData, setFormData, onSave, isSaving, isEditing, sharedClubs = [], onAddSharedClub }) {
+export default function ContactFormHeader({ formData, setFormData, onSave, isSaving, isEditing, sharedClubs = [], onAddSharedClub, hiddenClubs = [], onToggleClubVisibility }) {
   const [newClub, setNewClub] = useState('');
   const [showClubsModal, setShowClubsModal] = useState(false);
   const [shareNewClub, setShareNewClub] = useState(false);
-  const [hiddenClubs, setHiddenClubs] = useState([]);
-
-  const toggleClubVisibility = (clubId) => {
-    setHiddenClubs(prev => 
-      prev.includes(clubId) ? prev.filter(id => id !== clubId) : [...prev, clubId]
-    );
-  };
+  const [showHiddenClubs, setShowHiddenClubs] = useState(false);
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
@@ -257,12 +251,12 @@ export default function ContactFormHeader({ formData, setFormData, onSave, isSav
                       {club.label}
                     </span>
                     <button
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); toggleClubVisibility(club.id); }}
-                      className="p-0.5 hover:bg-gray-200 rounded"
-                    >
-                      <EyeOff className="w-3 h-3 text-gray-400" />
-                    </button>
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); onToggleClubVisibility?.(club.id); }}
+                        className="p-0.5 hover:bg-gray-200 rounded"
+                      >
+                        <EyeOff className="w-3 h-3 text-gray-400" />
+                      </button>
                   </div>
                 );
               })}
@@ -340,25 +334,33 @@ export default function ContactFormHeader({ formData, setFormData, onSave, isSav
               </div>
             )}
 
-            {/* Hidden clubs */}
+            {/* Hidden clubs - collapsible */}
             {hiddenClubs.length > 0 && (
               <div className="pt-2 border-t">
-                <Label className="text-xs text-gray-400 flex items-center gap-1 mb-1.5">
-                  <EyeOff className="w-3 h-3" /> Hidden
-                </Label>
-                <div className="flex flex-wrap gap-1">
-                  {defaultClubs.filter(club => hiddenClubs.includes(club.id)).map(club => (
-                    <button
-                      key={club.id}
-                      type="button"
-                      onClick={() => toggleClubVisibility(club.id)}
-                      className="flex items-center gap-1 px-2 py-1 text-xs text-gray-400 bg-gray-100 rounded hover:bg-gray-200"
-                    >
-                      <Eye className="w-3 h-3" />
-                      {club.label}
-                    </button>
-                  ))}
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowHiddenClubs(!showHiddenClubs)}
+                  className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600"
+                >
+                  <EyeOff className="w-3 h-3" />
+                  <span>{hiddenClubs.length} hidden</span>
+                  <ChevronDown className={`w-3 h-3 transition-transform ${showHiddenClubs ? 'rotate-180' : ''}`} />
+                </button>
+                {showHiddenClubs && (
+                  <div className="flex flex-wrap gap-1 mt-1.5">
+                    {defaultClubs.filter(club => hiddenClubs.includes(club.id)).map(club => (
+                      <button
+                        key={club.id}
+                        type="button"
+                        onClick={() => onToggleClubVisibility?.(club.id)}
+                        className="flex items-center gap-1 px-2 py-1 text-xs text-gray-400 bg-gray-100 rounded hover:bg-gray-200"
+                      >
+                        <Eye className="w-3 h-3" />
+                        {club.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
