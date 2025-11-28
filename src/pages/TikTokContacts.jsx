@@ -56,6 +56,21 @@ const liveTypeCategories = [
 ];
 const allLiveTypes = liveTypeCategories.flatMap(cat => cat.types);
 
+// Default clubs/groups (alphabetical)
+const defaultClubs = [
+  { id: 'authentically_me', label: 'AuthenticallyMe' },
+  { id: 'boss_metri', label: 'Boss Metri' },
+  { id: 'gen_x', label: 'Gen ❌' },
+  { id: 'group_7', label: 'Group 7' },
+  { id: 'group_god', label: 'Group God' },
+  { id: 'mathy_mob', label: 'Mathy Mob' },
+  { id: 'pixel_nuts', label: 'Pixel Nuts' },
+  { id: 'team_foley', label: 'Team Foley' },
+  { id: 'washed_up_moms', label: "Washed Up Mom's Club" },
+  { id: 'we_do_not_care', label: 'We Do Not Care Club' },
+  { id: 'we_do_not_have', label: 'We Do Not Have Club' },
+];
+
 const defaultFormData = {
   real_name: '',
   nickname: '',
