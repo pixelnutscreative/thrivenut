@@ -287,8 +287,10 @@ export default function Dashboard() {
           journalToday={todaysJournal}
         />
 
-        {/* Notion Task Picker */}
-        <NotionTaskPicker userEmail={user?.email} />
+        {/* Notion Task Picker - Only for admin account */}
+        {user?.email?.toLowerCase() === 'pixelnutscreative@gmail.com' && (
+          <NotionTaskPicker userEmail={user?.email} />
+        )}
 
         {/* Weekly Content Schedule */}
         <WeeklyGoalCard
