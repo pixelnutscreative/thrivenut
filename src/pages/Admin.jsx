@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
-import { Shield, Star, UserCog, Users, Gift, Settings } from 'lucide-react';
+import { Shield, Star, UserCog, Users, Gift, Settings, Palette } from 'lucide-react';
 
 // Import the individual admin components/pages as content
 import AdminSuperFanContent from '../components/admin/AdminSuperFanContent';
@@ -11,6 +11,7 @@ import AdminImpersonateContent from '../components/admin/AdminImpersonateContent
 import AdminMasterContactsContent from '../components/admin/AdminMasterContactsContent';
 import AdminGiftLibraryContent from '../components/admin/AdminGiftLibraryContent';
 import AdminSettingsContent from '../components/admin/AdminSettingsContent';
+import AdminResourcesContent from '../components/admin/AdminResourcesContent';
 
 const ADMIN_EMAIL = 'pixelnutscreative@gmail.com';
 
@@ -50,7 +51,7 @@ export default function Admin() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="superfan" className="flex items-center gap-2">
               <Star className="w-4 h-4" />
               <span className="hidden sm:inline">SuperFan</span>
@@ -66,6 +67,10 @@ export default function Admin() {
             <TabsTrigger value="gifts" className="flex items-center gap-2">
               <Gift className="w-4 h-4" />
               <span className="hidden sm:inline">Gifts</span>
+            </TabsTrigger>
+            <TabsTrigger value="resources" className="flex items-center gap-2">
+              <Palette className="w-4 h-4" />
+              <span className="hidden sm:inline">Resources</span>
             </TabsTrigger>
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <Settings className="w-4 h-4" />
@@ -87,6 +92,10 @@ export default function Admin() {
 
           <TabsContent value="gifts" className="mt-6">
             <AdminGiftLibraryContent />
+          </TabsContent>
+
+          <TabsContent value="resources" className="mt-6">
+            <AdminResourcesContent />
           </TabsContent>
 
           <TabsContent value="settings" className="mt-6">
