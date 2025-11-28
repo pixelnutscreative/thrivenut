@@ -23,7 +23,7 @@ export default function TikTokEngagement() {
   const queryClient = useQueryClient();
   const [expandedHistory, setExpandedHistory] = useState({});
   const [viewMode, setViewMode] = useState('today');
-  const [justEngaged, setJustEngaged] = useState({});
+  const [justEngaged, setJustEngaged] = useState({}); // { contactId: { primary: true, 0: true, 1: true } }
   const [user, setUser] = useState(null);
   const [editingSchedule, setEditingSchedule] = useState(null);
   const [scheduleForm, setScheduleForm] = useState({
@@ -166,9 +166,28 @@ export default function TikTokEngagement() {
   const currentDayName = getDayName(new Date());
   const currentDayOfMonth = getDate(new Date());
 
+  // Check if all accounts for a contact are engaged
+  const isFullyEngaged = (contact) => {
+    const engaged = justEngaged[contact.id];
+    if (!engaged) return false;
+    
+    // Must have primary checked
+    if (!engaged.primary) return false;
+    
+    // Must have all other accounts checked
+    const otherAccounts = contact.other_tiktok_accounts || [];
+    for (let i = 0; i < otherAccounts.length; i++) {
+      if (!engaged[i]) return false;
+    }
+    
+    return true;
+  };
+
   const contactsToShow = engagementContacts.filter(contact => {
     if (viewMode === 'all') return true;
-    if (justEngaged[contact.id]) return false;
+    
+    // Only hide if ALL accounts are engaged
+    if (isFullyEngaged(contact)) return false;
 
     const lastEngagedToday = contact.last_engaged_date === today;
     if (lastEngagedToday) return false;
@@ -189,18 +208,35 @@ export default function TikTokEngagement() {
     }
 
     return true;
+  }).sort((a, b) => {
+    // Sort by last engaged date - oldest first (null/never engaged at top)
+    if (!a.last_engaged_date && !b.last_engaged_date) return 0;
+    if (!a.last_engaged_date) return -1;
+    if (!b.last_engaged_date) return 1;
+    return new Date(a.last_engaged_date) - new Date(b.last_engaged_date);
   });
 
   const CreatorCard = ({ contact, index }) => {
-    const isEngaged = justEngaged[contact.id];
+    const engaged = justEngaged[contact.id] || {};
+    const fullyEngaged = isFullyEngaged(contact);
     const categoryName = getCategoryName(contact.engagement_category_id);
+
+    const toggleAccountEngaged = (accountKey) => {
+      setJustEngaged(prev => ({
+        ...prev,
+        [contact.id]: {
+          ...(prev[contact.id] || {}),
+          [accountKey]: !(prev[contact.id]?.[accountKey])
+        }
+      }));
+    };
 
     return (
       <motion.div
         key={contact.id}
         layout
         initial={{ opacity: 0, y: 20 }}
-        animate={isEngaged ? { opacity: 0, scale: 0.8, y: -20 } : { opacity: 1, y: 0 }}
+        animate={fullyEngaged ? { opacity: 0, scale: 0.8, y: -20 } : { opacity: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.8 }}
         transition={{ type: "spring", stiffness: 300, damping: 25 }}
       >
@@ -290,17 +326,24 @@ export default function TikTokEngagement() {
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => markEngagedMutation.mutate({ id: contact.id, currentHistory: contact.engagement_history, isLegacy: contact._isLegacy })}
-                  className={`h-9 w-9 transition-all duration-300 ${isEngaged ? 'bg-green-500 border-green-500' : 'border-green-300 hover:bg-green-50'}`}
+                  onClick={() => {
+                    toggleAccountEngaged('primary');
+                    // Also update the database when primary is checked
+                    if (!engaged.primary) {
+                      markEngagedMutation.mutate({ id: contact.id, currentHistory: contact.engagement_history, isLegacy: contact._isLegacy });
+                    }
+                  }}
+                  className={`h-9 w-9 transition-all duration-300 ${engaged.primary ? 'bg-green-500 border-green-500' : 'border-green-300 hover:bg-green-50'}`}
                   title="Mark as engaged"
                 >
-                  <Check className={`w-4 h-4 ${isEngaged ? 'text-white' : 'text-green-600'}`} />
+                  <Check className={`w-4 h-4 ${engaged.primary ? 'text-white' : 'text-green-600'}`} />
                 </Button>
               </div>
               
               {/* Other accounts */}
               {contact.other_tiktok_accounts?.map((acc, idx) => {
                 const account = typeof acc === 'string' ? { username: acc } : acc;
+                const isAccountEngaged = engaged[idx];
                 return (
                   <div key={idx} className="flex items-center gap-2">
                     <Button 
@@ -311,9 +354,15 @@ export default function TikTokEngagement() {
                       <ExternalLink className="w-3 h-3 mr-1" />
                       @{account.username}
                     </Button>
-                    <div className="h-9 w-9 flex items-center justify-center border border-gray-200 rounded-md text-gray-300">
-                      <Check className="w-4 h-4" />
-                    </div>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => toggleAccountEngaged(idx)}
+                      className={`h-9 w-9 transition-all duration-300 ${isAccountEngaged ? 'bg-green-500 border-green-500' : 'border-gray-200 hover:bg-green-50'}`}
+                      title="Mark as engaged"
+                    >
+                      <Check className={`w-4 h-4 ${isAccountEngaged ? 'text-white' : 'text-gray-300'}`} />
+                    </Button>
                   </div>
                 );
               })}
