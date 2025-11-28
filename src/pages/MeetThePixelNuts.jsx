@@ -159,7 +159,12 @@ export default function MeetThePixelNuts() {
                 <span className="text-sm text-gray-500">
                   CSV columns: name, nickname, role, category, bio, tiktok_username, superpower, fun_fact, emoji, color
                 </span>
-                {isUploading && <span className="text-purple-600">Processing...</span>}
+              </div>
+              {uploadStatus && (
+                <div className={`mt-2 p-2 rounded text-sm ${uploadStatus.includes('✅') ? 'bg-green-100 text-green-800' : uploadStatus.includes('❌') ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'}`}>
+                  {uploadStatus}
+                </div>
+              )}
               </div>
             </CardContent>
           </Card>
