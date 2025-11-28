@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Plus, X, Instagram, Facebook, Youtube, Twitter, Linkedin, Twitch } from 'lucide-react';
 import NotesWithHistory from './NotesWithHistory';
 
 const veteranBranches = [
@@ -16,18 +18,7 @@ const veteranBranches = [
   { value: 'Other', label: 'Other/Unknown' }
 ];
 
-const serviceTypes = [
-  { value: 'first_responder', label: 'First Responder' },
-  { value: 'healthcare', label: 'Healthcare' },
-  { value: 'nonprofit', label: 'Nonprofit' },
-  { value: 'ministry', label: 'Ministry' },
-  { value: 'military_family', label: 'Military Family' },
-  { value: 'education', label: 'Education' },
-  { value: 'other', label: 'Other' }
-];
-
 const generations = ['Gen Z', 'Millennial', 'Gen X', 'Boomer', 'Silent', 'Other'];
-const genders = ['Female', 'Male', 'Non-binary', 'Other'];
 
 const defaultFamilyRoles = [
   'Mom', 'Dad', 'Single Mom', 'Single Dad', 'SAHM', 'SAHD', 
@@ -35,13 +26,62 @@ const defaultFamilyRoles = [
   'Foster Parent', 'Step-Parent', 'Caregiver'
 ];
 
+const defaultSocialPlatforms = [
+  { key: 'instagram', label: 'Instagram', icon: Instagram },
+  { key: 'facebook', label: 'Facebook', icon: Facebook },
+  { key: 'youtube', label: 'YouTube', icon: Youtube },
+  { key: 'twitter', label: 'X / Twitter', icon: Twitter },
+  { key: 'linkedin', label: 'LinkedIn', icon: Linkedin },
+  { key: 'threads', label: 'Threads', icon: null },
+  { key: 'twitch', label: 'Twitch', icon: Twitch },
+  { key: 'discord', label: 'Discord', icon: null },
+  { key: 'snapchat', label: 'Snapchat', icon: null },
+  { key: 'pinterest', label: 'Pinterest', icon: null },
+];
+
 export default function PersonalTabContent({ formData, setFormData }) {
+  const [showSocialPicker, setShowSocialPicker] = useState(false);
+  const [customSocialName, setCustomSocialName] = useState('');
+  const [customSocialValue, setCustomSocialValue] = useState('');
+
   const handleAddNote = (note) => {
     setFormData(prev => ({
       ...prev,
       personal_notes: [...(prev.personal_notes || []), note]
     }));
   };
+
+  const socialLinks = formData.social_links || {};
+  const activeSocials = Object.entries(socialLinks).filter(([_, v]) => v);
+
+  const handleAddSocial = (platform) => {
+    setFormData({ 
+      ...formData, 
+      social_links: { ...socialLinks, [platform]: '' } 
+    });
+    setShowSocialPicker(false);
+  };
+
+  const handleRemoveSocial = (platform) => {
+    const updated = { ...socialLinks };
+    delete updated[platform];
+    setFormData({ ...formData, social_links: updated });
+  };
+
+  const handleAddCustomSocial = () => {
+    if (customSocialName.trim()) {
+      const key = `custom_${customSocialName.toLowerCase().replace(/\s+/g, '_')}`;
+      setFormData({ 
+        ...formData, 
+        social_links: { ...socialLinks, [key]: customSocialValue } 
+      });
+      setCustomSocialName('');
+      setCustomSocialValue('');
+      setShowSocialPicker(false);
+    }
+  };
+
+  const availablePlatforms = defaultSocialPlatforms.filter(p => !socialLinks.hasOwnProperty(p.key));
 
   return (
     <div className="space-y-4">
@@ -67,96 +107,86 @@ export default function PersonalTabContent({ formData, setFormData }) {
         </div>
       </div>
 
-      {/* Birthday & Demographics */}
-      <div className="p-3 bg-blue-50 rounded-lg space-y-3">
-        <h4 className="font-semibold text-sm text-blue-800">Demographics</h4>
-        <div className="grid grid-cols-3 gap-3">
-          <div className="space-y-1">
-            <Label className="text-xs">Birthday</Label>
+      {/* Personal Notes - moved up */}
+      <NotesWithHistory
+        notes={formData.personal_notes || []}
+        onAddNote={handleAddNote}
+        label="Personal Notes"
+      />
+
+      {/* Key Statuses - Veteran & Recovery */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="p-3 rounded-lg bg-gradient-to-r from-red-50 via-white to-blue-50 border border-red-200 space-y-2">
+          <div
+            onClick={() => setFormData({ ...formData, is_veteran: !formData.is_veteran })}
+            className="flex items-center gap-2 cursor-pointer"
+          >
+            <Checkbox checked={formData.is_veteran} />
+            <span className="text-lg">🇺🇸</span>
+            <Label className="cursor-pointer font-semibold text-blue-800 text-sm">Veteran</Label>
+          </div>
+
+          {formData.is_veteran && (
+            <Select 
+              value={formData.veteran_branch || ''} 
+              onValueChange={(v) => setFormData({ ...formData, veteran_branch: v })}
+            >
+              <SelectTrigger className="h-8"><SelectValue placeholder="Branch..." /></SelectTrigger>
+              <SelectContent>
+                {veteranBranches.map(branch => (
+                  <SelectItem key={branch.value} value={branch.value}>{branch.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
+
+        <div className="p-3 rounded-lg bg-green-50 border border-green-200 space-y-2">
+          <div
+            onClick={() => setFormData({ ...formData, is_in_recovery: !formData.is_in_recovery })}
+            className="flex items-center gap-2 cursor-pointer"
+          >
+            <Checkbox checked={formData.is_in_recovery} />
+            <span className="text-lg">💚</span>
+            <Label className="cursor-pointer font-semibold text-green-800 text-sm">In Recovery</Label>
+          </div>
+
+          {formData.is_in_recovery && (
             <Input
               type="date"
-              value={formData.birthday || ''}
-              onChange={(e) => setFormData({ ...formData, birthday: e.target.value })}
+              placeholder="Sobriety date"
+              value={formData.sobriety_date || ''}
+              onChange={(e) => setFormData({ ...formData, sobriety_date: e.target.value })}
+              className="h-8"
             />
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs">Generation</Label>
-            <Select 
-              value={formData.generation || ''} 
-              onValueChange={(v) => setFormData({ ...formData, generation: v })}
-            >
-              <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
-              <SelectContent>
-                {generations.map(gen => (
-                  <SelectItem key={gen} value={gen}>{gen}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs">Gender</Label>
-            <Select 
-              value={formData.gender || ''} 
-              onValueChange={(v) => setFormData({ ...formData, gender: v })}
-            >
-              <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
-              <SelectContent>
-                {genders.map(g => (
-                  <SelectItem key={g} value={g}>{g}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          )}
         </div>
       </div>
 
-      {/* Veteran Section */}
-      <div className="p-3 rounded-lg bg-gradient-to-r from-red-50 via-white to-blue-50 border border-red-200 space-y-3">
-        <div
-          onClick={() => setFormData({ ...formData, is_veteran: !formData.is_veteran })}
-          className="flex items-center gap-2 cursor-pointer"
-        >
-          <Checkbox checked={formData.is_veteran} />
-          <span className="text-lg">🇺🇸</span>
-          <Label className="cursor-pointer font-semibold text-blue-800">Veteran</Label>
+      {/* Birthday & Generation */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1">
+          <Label className="text-xs">Birthday</Label>
+          <Input
+            type="date"
+            value={formData.birthday || ''}
+            onChange={(e) => setFormData({ ...formData, birthday: e.target.value })}
+          />
         </div>
-
-        {formData.is_veteran && (
+        <div className="space-y-1">
+          <Label className="text-xs">Generation</Label>
           <Select 
-            value={formData.veteran_branch || ''} 
-            onValueChange={(v) => setFormData({ ...formData, veteran_branch: v })}
+            value={formData.generation || ''} 
+            onValueChange={(v) => setFormData({ ...formData, generation: v })}
           >
-            <SelectTrigger><SelectValue placeholder="Select branch..." /></SelectTrigger>
+            <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
             <SelectContent>
-              {veteranBranches.map(branch => (
-                <SelectItem key={branch.value} value={branch.value}>{branch.label}</SelectItem>
+              {generations.map(gen => (
+                <SelectItem key={gen} value={gen}>{gen}</SelectItem>
               ))}
             </SelectContent>
           </Select>
-        )}
-      </div>
-
-      {/* Recovery Section */}
-      <div className="p-3 rounded-lg bg-green-50 border border-green-200 space-y-3">
-        <div
-          onClick={() => setFormData({ ...formData, is_in_recovery: !formData.is_in_recovery })}
-          className="flex items-center gap-2 cursor-pointer"
-        >
-          <Checkbox checked={formData.is_in_recovery} />
-          <span className="text-lg">💚</span>
-          <Label className="cursor-pointer font-semibold text-green-800">In Recovery</Label>
         </div>
-
-        {formData.is_in_recovery && (
-          <div className="space-y-1">
-            <Label className="text-xs">Sobriety Date</Label>
-            <Input
-              type="date"
-              value={formData.sobriety_date || ''}
-              onChange={(e) => setFormData({ ...formData, sobriety_date: e.target.value })}
-            />
-          </div>
-        )}
       </div>
 
       {/* Family Roles */}
@@ -184,71 +214,99 @@ export default function PersonalTabContent({ formData, setFormData }) {
         </div>
       </div>
 
-      {/* Occupation & Service */}
-      <div className="p-3 rounded-lg bg-pink-50 border border-pink-200 space-y-3">
-        <div className="space-y-1">
-          <Label className="text-xs">Occupation / Job Title</Label>
-          <Input
-            placeholder="e.g., Nurse, Teacher, Engineer"
-            value={formData.occupation || ''}
-            onChange={(e) => setFormData({ ...formData, occupation: e.target.value })}
-          />
-        </div>
-
-        <div
-          onClick={() => setFormData({ ...formData, is_service_professional: !formData.is_service_professional })}
-          className="flex items-center gap-2 cursor-pointer"
-        >
-          <Checkbox checked={formData.is_service_professional} />
-          <span className="text-lg">❤️</span>
-          <Label className="cursor-pointer font-semibold text-pink-800">Service Professional</Label>
-        </div>
-
-        {formData.is_service_professional && (
-          <Select 
-            value={formData.service_type || ''} 
-            onValueChange={(v) => setFormData({ ...formData, service_type: v })}
-          >
-            <SelectTrigger><SelectValue placeholder="Select type..." /></SelectTrigger>
-            <SelectContent>
-              {serviceTypes.map(type => (
-                <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
-
-        <div
-          onClick={() => setFormData({ ...formData, is_mlm: !formData.is_mlm })}
-          className="flex items-center gap-2 cursor-pointer"
-        >
-          <Checkbox checked={formData.is_mlm} />
-          <Label className="cursor-pointer text-sm">MLM / Network Marketing</Label>
-        </div>
-      </div>
-
-      {/* Social Links */}
+      {/* Social Links - Flexible Add */}
       <div className="space-y-2">
         <Label className="text-sm font-medium">Social Media</Label>
-        <div className="grid grid-cols-2 gap-2">
-          {['instagram', 'facebook', 'youtube', 'twitter', 'linkedin', 'threads', 'twitch', 'discord', 'snapchat', 'pinterest'].map(platform => (
-            <Input
-              key={platform}
-              placeholder={platform.charAt(0).toUpperCase() + platform.slice(1)}
-              value={formData.social_links?.[platform] || ''}
-              onChange={(e) => setFormData({ ...formData, social_links: { ...formData.social_links, [platform]: e.target.value } })}
-              className="h-8 text-xs"
-            />
-          ))}
+        
+        {/* Active social links */}
+        <div className="space-y-2">
+          {Object.entries(socialLinks).map(([key, value]) => {
+            const isCustom = key.startsWith('custom_');
+            const platform = defaultSocialPlatforms.find(p => p.key === key);
+            const label = isCustom ? key.replace('custom_', '').replace(/_/g, ' ') : platform?.label || key;
+            const Icon = platform?.icon;
+            
+            return (
+              <div key={key} className="flex items-center gap-2">
+                <div className="w-24 flex items-center gap-1 text-xs text-gray-600">
+                  {Icon && <Icon className="w-4 h-4" />}
+                  <span className="capitalize">{label}</span>
+                </div>
+                <Input
+                  placeholder={`@username or URL`}
+                  value={value || ''}
+                  onChange={(e) => setFormData({ ...formData, social_links: { ...socialLinks, [key]: e.target.value } })}
+                  className="h-8 text-xs flex-1"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 text-gray-400 hover:text-red-500"
+                  onClick={() => handleRemoveSocial(key)}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            );
+          })}
         </div>
-      </div>
 
-      {/* Personal Notes */}
-      <NotesWithHistory
-        notes={formData.personal_notes || []}
-        onAddNote={handleAddNote}
-        label="Personal Notes"
-      />
+        {/* Add social button */}
+        {!showSocialPicker ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 text-xs"
+            onClick={() => setShowSocialPicker(true)}
+          >
+            <Plus className="w-3 h-3 mr-1" />
+            Add Social
+          </Button>
+        ) : (
+          <div className="p-3 border rounded-lg bg-gray-50 space-y-2">
+            <div className="flex flex-wrap gap-1">
+              {availablePlatforms.map(platform => (
+                <Badge
+                  key={platform.key}
+                  variant="outline"
+                  className="cursor-pointer text-xs hover:bg-purple-50"
+                  onClick={() => handleAddSocial(platform.key)}
+                >
+                  {platform.label}
+                </Badge>
+              ))}
+            </div>
+            <div className="flex gap-2 pt-2 border-t">
+              <Input
+                placeholder="Custom platform name"
+                value={customSocialName}
+                onChange={(e) => setCustomSocialName(e.target.value)}
+                className="h-8 text-xs"
+              />
+              <Button
+                type="button"
+                size="sm"
+                className="h-8"
+                onClick={handleAddCustomSocial}
+                disabled={!customSocialName.trim()}
+              >
+                Add
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-8"
+                onClick={() => setShowSocialPicker(false)}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
