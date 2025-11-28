@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
+import { base44 } from '@/api/base44Client';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { ExternalLink, Sparkles, Search } from 'lucide-react';
+import { ExternalLink, Sparkles, Search, Loader2 } from 'lucide-react';
 
-const resources = [
+const fallbackResources = [
   { 
     name: 'Magai', 
     description: 'Browser-based AI assistant with custom personalities', 
@@ -136,6 +138,14 @@ export default function PixelsParadise() {
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
 
+  const { data: dbResources = [], isLoading } = useQuery({
+    queryKey: ['designResources'],
+    queryFn: () => base44.entities.DesignResource.filter({ is_active: true }, 'sort_order'),
+  });
+
+  // Use database resources if available, otherwise fallback
+  const resources = dbResources.length > 0 ? dbResources : fallbackResources;
+
   const filteredResources = resources.filter(resource => {
     const matchesCategory = selectedCategory === 'All' || resource.category === selectedCategory;
     const searchLower = search.toLowerCase();
@@ -149,6 +159,11 @@ export default function PixelsParadise() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-50 to-cyan-100 p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-6">
+        {isLoading && (
+          <div className="flex justify-center py-4">
+            <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
+          </div>
+        )}
         {/* Header */}
         <div className="text-center space-y-4">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 via-pink-500 to-cyan-500 bg-clip-text text-transparent flex items-center justify-center gap-3">
