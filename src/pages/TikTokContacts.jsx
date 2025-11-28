@@ -836,9 +836,11 @@ export default function TikTokContacts() {
             <h1 className="text-3xl font-bold text-gray-800">TikTok Contacts</h1>
             <p className="text-gray-600 mt-1">Your central hub for all TikTok connections</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button
               variant="outline"
+              size="sm"
+              className="text-xs md:text-sm"
               onClick={() => {
                 // Generate CSV export
                 const headers = [
@@ -908,42 +910,45 @@ export default function TikTokContacts() {
                 URL.revokeObjectURL(url);
               }}
             >
-              <Download className="w-4 h-4 mr-2" />
-              Backup CSV
+              <Download className="w-4 h-4 md:mr-2" />
+              <span className="hidden md:inline">Backup CSV</span>
             </Button>
             <label className="cursor-pointer">
               <input type="file" accept=".csv" onChange={handleCsvUpload} className="hidden" />
-              <Button asChild variant="outline">
+              <Button asChild variant="outline" size="sm" className="text-xs md:text-sm">
                 <span>
-                  <Upload className="w-4 h-4 mr-2" />
-                  Import CSV
+                  <Upload className="w-4 h-4 md:mr-2" />
+                  <span className="hidden md:inline">Import CSV</span>
                 </span>
               </Button>
             </label>
             <Button
               variant="outline"
+              size="sm"
+              className="text-xs md:text-sm"
               onClick={() => setShowCategoryModal(true)}
             >
-              <FolderPlus className="w-4 h-4 mr-2" />
-              Categories
+              <FolderPlus className="w-4 h-4 md:mr-2" />
+              <span className="hidden md:inline">Categories</span>
             </Button>
             <Button
               onClick={() => setShowModal(true)}
-              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+              size="sm"
+              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-xs md:text-sm"
             >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Contact
+              <Plus className="w-4 h-4 md:mr-2" />
+              <span className="hidden sm:inline">Add Contact</span>
             </Button>
           </div>
         </div>
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="all">All ({contacts.length})</TabsTrigger>
-            <TabsTrigger value="engagement">Engagement ({contacts.filter(c => c.engagement_enabled).length})</TabsTrigger>
-            <TabsTrigger value="calendar">Calendar ({contacts.filter(c => c.calendar_enabled).length})</TabsTrigger>
-            <TabsTrigger value="gifters">🎁 Gifters ({contacts.filter(c => c.is_gifter).length})</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-4 h-auto">
+            <TabsTrigger value="all" className="text-xs md:text-sm py-2 px-1 md:px-3">All ({contacts.length})</TabsTrigger>
+            <TabsTrigger value="engagement" className="text-xs md:text-sm py-2 px-1 md:px-3"><span className="hidden sm:inline">Engagement</span><span className="sm:hidden">Engage</span> ({contacts.filter(c => c.engagement_enabled).length})</TabsTrigger>
+            <TabsTrigger value="calendar" className="text-xs md:text-sm py-2 px-1 md:px-3"><span className="hidden sm:inline">Calendar</span><span className="sm:hidden">Cal</span> ({contacts.filter(c => c.calendar_enabled).length})</TabsTrigger>
+            <TabsTrigger value="gifters" className="text-xs md:text-sm py-2 px-1 md:px-3">🎁 <span className="hidden sm:inline">Gifters</span> ({contacts.filter(c => c.is_gifter).length})</TabsTrigger>
           </TabsList>
         </Tabs>
 
