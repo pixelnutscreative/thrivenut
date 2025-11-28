@@ -63,24 +63,32 @@ const liveStreamCategories = [
   {
     label: 'Collaboration',
     color: 'bg-purple-50 border-purple-200',
-    types: ['Co-host', 'Multi-Guest', 'Battle']
+    types: ['Co-Host', 'Multi-Guest', 'Battle']
   },
   {
     label: 'Interactive',
     color: 'bg-blue-50 border-blue-200',
-    types: ['Engagement', 'Q&A', 'Talk Show']
+    types: ['Engagement', 'Q&A', 'Talk Show', 'Storytime']
   },
   {
-    label: 'Content',
+    label: 'Educational',
     color: 'bg-green-50 border-green-200',
-    types: ['Teaching', 'Gaming', 'Music', 'Cooking', 'DIY/Crafts', 'Fitness']
+    types: ['Teaching', 'Cooking', 'DIY/Crafts', 'Fitness']
   },
   {
-    label: 'Other',
+    label: 'Entertainment',
+    color: 'bg-amber-50 border-amber-200',
+    types: ['Gaming', 'Music', 'ASMR', 'Unboxing']
+  },
+  {
+    label: 'Lifestyle',
     color: 'bg-gray-50 border-gray-200',
-    types: ['Entertainment', 'Storytime', 'Unboxing', 'ASMR', 'Religious']
+    types: ['Religious', 'Sleep', 'Chat']
   }
 ];
+
+// Flat list of all live types for filtering
+const allLiveTypes = liveStreamCategories.flatMap(cat => cat.types);
 
 export default function TikTokTabContent({ 
   formData, 
@@ -98,6 +106,7 @@ export default function TikTokTabContent({
   const [newAccountDisplay, setNewAccountDisplay] = useState('');
   const [newAccountPhonetic, setNewAccountPhonetic] = useState('');
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [showAddAccount, setShowAddAccount] = useState(false);
 
   const toggleRole = (role) => {
     setFormData(prev => ({
@@ -312,99 +321,111 @@ export default function TikTokTabContent({
 
         {/* Other TikTok Accounts */}
         <div className="mt-3 space-y-2">
-          <Label className="text-xs text-blue-600">Other TikTok Accounts</Label>
+          <div className="flex items-center justify-between">
+            <Label className="text-xs text-blue-600">Other TikTok Accounts</Label>
+            {!showAddAccount && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-6 px-2 text-blue-600 hover:text-blue-700"
+                onClick={() => setShowAddAccount(true)}
+              >
+                <Plus className="w-3 h-3 mr-1" />
+                <span className="text-xs">Add</span>
+              </Button>
+            )}
+          </div>
           
+          {/* Existing accounts */}
           {formData.other_tiktok_accounts?.map((acc, idx) => {
             const account = typeof acc === 'string' ? { username: acc, display_name: '', phonetic: '' } : acc;
             return (
-              <div key={idx} className="grid grid-cols-3 gap-2 items-end">
-                <div className="relative">
-                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-sm">@</span>
-                  <Input
-                    value={account.username}
-                    onChange={(e) => {
-                      const updated = [...(formData.other_tiktok_accounts || [])];
-                      updated[idx] = { ...account, username: e.target.value.replace('@', '') };
-                      setFormData({ ...formData, other_tiktok_accounts: updated });
-                    }}
-                    className="pl-6 h-8 text-xs"
-                  />
-                </div>
-                <Input
-                  placeholder="Display name"
-                  value={account.display_name || ''}
-                  onChange={(e) => {
-                    const updated = [...(formData.other_tiktok_accounts || [])];
-                    updated[idx] = { ...account, display_name: e.target.value };
-                    setFormData({ ...formData, other_tiktok_accounts: updated });
-                  }}
-                  className="h-8 text-xs"
-                />
-                <div className="flex gap-1">
-                  <Input
-                    placeholder="Phonetic"
-                    value={account.phonetic || ''}
-                    onChange={(e) => {
-                      const updated = [...(formData.other_tiktok_accounts || [])];
-                      updated[idx] = { ...account, phonetic: e.target.value };
-                      setFormData({ ...formData, other_tiktok_accounts: updated });
-                    }}
-                    className="h-8 text-xs flex-1"
-                  />
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => removeOtherAccount(idx)}>
-                    <X className="w-3 h-3 text-gray-400" />
-                  </Button>
-                </div>
+              <div key={idx} className="flex items-center gap-2 p-2 bg-blue-100 rounded text-xs">
+                <span className="font-medium">@{account.username}</span>
+                {account.display_name && <span className="text-blue-600">({account.display_name})</span>}
+                {account.phonetic && <span className="text-blue-500 italic">"{account.phonetic}"</span>}
+                <Button variant="ghost" size="sm" className="h-5 w-5 p-0 ml-auto" onClick={() => removeOtherAccount(idx)}>
+                  <X className="w-3 h-3 text-gray-400" />
+                </Button>
               </div>
             );
           })}
           
-          <div className="grid grid-cols-3 gap-2 items-end">
-            <div className="relative">
-              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-sm">@</span>
+          {/* Add new account form */}
+          {showAddAccount && (
+            <div className="grid grid-cols-3 gap-2 items-end p-2 bg-blue-50 rounded border border-blue-200">
+              <div className="relative">
+                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-sm">@</span>
+                <Input
+                  placeholder="username"
+                  value={newAccountUsername}
+                  onChange={(e) => setNewAccountUsername(e.target.value.replace('@', ''))}
+                  className="pl-6 h-8 text-xs"
+                />
+              </div>
               <Input
-                placeholder="username"
-                value={newAccountUsername}
-                onChange={(e) => setNewAccountUsername(e.target.value.replace('@', ''))}
-                className="pl-6 h-8 text-xs"
+                placeholder="Display name"
+                value={newAccountDisplay}
+                onChange={(e) => setNewAccountDisplay(e.target.value)}
+                className="h-8 text-xs"
               />
+              <div className="flex gap-1">
+                <Input
+                  placeholder="Phonetic"
+                  value={newAccountPhonetic}
+                  onChange={(e) => setNewAccountPhonetic(e.target.value)}
+                  className="h-8 text-xs flex-1"
+                />
+                <Button 
+                  size="sm" 
+                  className="h-8 px-2 bg-blue-600 hover:bg-blue-700" 
+                  onClick={() => {
+                    addOtherAccount();
+                    setShowAddAccount(false);
+                  }}
+                  disabled={!newAccountUsername.trim()}
+                >
+                  Add
+                </Button>
+              </div>
             </div>
-            <Input
-              placeholder="Display name"
-              value={newAccountDisplay}
-              onChange={(e) => setNewAccountDisplay(e.target.value)}
-              className="h-8 text-xs"
-            />
-            <div className="flex gap-1">
-              <Input
-                placeholder="Phonetic"
-                value={newAccountPhonetic}
-                onChange={(e) => setNewAccountPhonetic(e.target.value)}
-                className="h-8 text-xs flex-1"
-              />
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="h-8 w-8 p-0" 
-                onClick={addOtherAccount}
-                disabled={!newAccountUsername.trim()}
-              >
-                <Plus className="w-3 h-3" />
-              </Button>
-            </div>
-          </div>
+          )}
         </div>
 
-        {/* Creator Info inside blue box */}
+        {/* Creator & Battle Info inside blue box */}
         <div className="mt-3 grid grid-cols-2 gap-3">
-          {/* Creator Column - Indigo themed */}
+          {/* Creator + Battle Column - Indigo themed */}
           <div className="p-2 bg-indigo-50 rounded-lg border border-indigo-200 space-y-2">
-            <Label className="text-xs text-indigo-800 font-medium">Creator</Label>
             <div className="space-y-1">
               {Object.entries(creatorRoles).map(([key, config]) => (
                 <RoleButton key={key} roleKey={key} config={config} small />
               ))}
             </div>
+            <div className="pt-2 border-t border-indigo-200 space-y-1">
+              {Object.entries(battleRoles).map(([key, config]) => (
+                <RoleButton key={key} roleKey={key} config={config} small />
+              ))}
+            </div>
+            
+            {(formData.role?.includes('loves_to_battle') || formData.role?.includes('battle_sniper')) && (
+              <div className="p-2 bg-red-100 rounded border border-red-300 space-y-1">
+                <span className="text-[10px] font-semibold text-red-700">Inventory</span>
+                <div className="grid grid-cols-5 gap-1">
+                  {battleInventoryItems.map(item => (
+                    <div key={item.key} className="text-center">
+                      <span className="text-sm">{item.icon}</span>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={formData.battle_inventory?.[item.key] || 0}
+                        onChange={(e) => updateBattleInventory(item.key, e.target.value)}
+                        className="h-6 text-[10px] text-center p-0"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Engagement Column - Teal themed */}
@@ -461,50 +482,19 @@ export default function TikTokTabContent({
         />
       </div>
 
-      {/* Relationship & Battle Section - Red themed */}
-      <div className="p-3 bg-red-50 rounded-lg border border-red-200 space-y-3">
-        {/* Relationship roles stacked */}
-        <div className="space-y-1">
+      {/* Relationship Section - Rose themed */}
+      <div className="p-3 bg-rose-50 rounded-lg border border-rose-200 space-y-2">
+        <div className="flex flex-wrap gap-1">
           {Object.entries(relationshipRoles).map(([key, config]) => (
             <Badge
               key={key}
               variant={formData.role?.includes(key) ? 'default' : 'outline'}
-              className={`cursor-pointer text-xs mr-1 ${formData.role?.includes(key) ? 'bg-red-600' : config.color}`}
+              className={`cursor-pointer text-xs ${formData.role?.includes(key) ? 'bg-rose-600' : config.color}`}
               onClick={() => toggleRole(key)}
             >
               {config.label}
             </Badge>
           ))}
-        </div>
-
-        {/* Battle roles */}
-        <div className="pt-2 border-t border-red-200 space-y-1">
-          <Label className="text-xs text-red-800 font-medium">Battle</Label>
-          <div className="space-y-1">
-            {Object.entries(battleRoles).map(([key, config]) => (
-              <RoleButton key={key} roleKey={key} config={config} small />
-            ))}
-          </div>
-
-          {(formData.role?.includes('loves_to_battle') || formData.role?.includes('battle_sniper')) && (
-            <div className="p-2 bg-red-100 rounded border border-red-300 space-y-1">
-              <span className="text-[10px] font-semibold text-red-700">Inventory</span>
-              <div className="grid grid-cols-5 gap-1">
-                {battleInventoryItems.map(item => (
-                  <div key={item.key} className="text-center">
-                    <span className="text-sm">{item.icon}</span>
-                    <Input
-                      type="number"
-                      min="0"
-                      value={formData.battle_inventory?.[item.key] || 0}
-                      onChange={(e) => updateBattleInventory(item.key, e.target.value)}
-                      className="h-6 text-[10px] text-center p-0"
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
