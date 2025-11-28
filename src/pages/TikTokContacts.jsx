@@ -128,6 +128,7 @@ export default function TikTokContacts() {
   const [formData, setFormData] = useState(defaultFormData);
   const [filterVeterans, setFilterVeterans] = useState(false);
   const [filterLiveType, setFilterLiveType] = useState('');
+  const [filterClub, setFilterClub] = useState('');
   
   // CSV Import state
   const [showImportModal, setShowImportModal] = useState(false);
@@ -167,6 +168,27 @@ export default function TikTokContacts() {
   });
 
   const savedCustomRoles = preferences?.custom_tiktok_roles || [];
+
+  // Fetch shared clubs
+  const { data: sharedClubs = [] } = useQuery({
+    queryKey: ['sharedClubs'],
+    queryFn: () => base44.entities.SharedClub.list('name'),
+  });
+
+  const addSharedClubMutation = useMutation({
+    mutationFn: async (clubName) => {
+      // Check if it already exists
+      const existing = sharedClubs.find(c => c.name.toLowerCase() === clubName.toLowerCase());
+      if (!existing) {
+        await base44.entities.SharedClub.create({
+          name: clubName,
+          is_approved: false,
+          submitted_by: effectiveEmail
+        });
+      }
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['sharedClubs'] }),
+  });
 
   const saveCustomRoleMutation = useMutation({
     mutationFn: async (newRole) => {
@@ -265,11 +287,12 @@ export default function TikTokContacts() {
       const matchesRole = filterRoles.length === 0 || filterRoles.some(role => c.role?.includes(role));
       const matchesVeteran = !filterVeterans || c.is_veteran;
       const matchesLiveType = !filterLiveType || c.live_stream_types?.includes(filterLiveType);
+      const matchesClub = !filterClub || c.clubs?.includes(filterClub) || c.custom_clubs?.includes(filterClub);
 
-      if (activeTab === 'engagement') return matchesSearch && matchesRole && matchesVeteran && matchesLiveType && c.engagement_enabled;
-      if (activeTab === 'calendar') return matchesSearch && matchesRole && matchesVeteran && matchesLiveType && c.calendar_enabled;
-      if (activeTab === 'gifters') return matchesSearch && matchesRole && matchesVeteran && matchesLiveType && c.is_gifter;
-      return matchesSearch && matchesRole && matchesVeteran && matchesLiveType;
+      if (activeTab === 'engagement') return matchesSearch && matchesRole && matchesVeteran && matchesLiveType && matchesClub && c.engagement_enabled;
+      if (activeTab === 'calendar') return matchesSearch && matchesRole && matchesVeteran && matchesLiveType && matchesClub && c.calendar_enabled;
+      if (activeTab === 'gifters') return matchesSearch && matchesRole && matchesVeteran && matchesLiveType && matchesClub && c.is_gifter;
+      return matchesSearch && matchesRole && matchesVeteran && matchesLiveType && matchesClub;
     })
     .sort((a, b) => {
       if (a.is_favorite && !b.is_favorite) return -1;
@@ -625,11 +648,55 @@ export default function TikTokContacts() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              {(filterRoles.length > 0 || filterVeterans || filterLiveType) && (
+              {/* Club Filter Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Users className="w-4 h-4" />
+                    {filterClub ? (defaultClubs.find(c => c.id === filterClub)?.label || filterClub) : 'Club'}
+                    {filterClub && (
+                      <X 
+                        className="w-3 h-3 ml-1 hover:text-red-500" 
+                        onClick={(e) => { e.stopPropagation(); setFilterClub(''); }}
+                      />
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-56 max-h-80 overflow-y-auto">
+                  <DropdownMenuLabel>Filter by Club</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {defaultClubs.map(club => (
+                    <DropdownMenuCheckboxItem
+                      key={club.id}
+                      checked={filterClub === club.id}
+                      onCheckedChange={() => setFilterClub(filterClub === club.id ? '' : club.id)}
+                    >
+                      {club.label}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                  {sharedClubs.filter(c => c.is_approved).length > 0 && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuLabel className="text-xs text-green-600">Community Clubs</DropdownMenuLabel>
+                      {sharedClubs.filter(c => c.is_approved).map(club => (
+                        <DropdownMenuCheckboxItem
+                          key={club.id}
+                          checked={filterClub === `shared:${club.id}`}
+                          onCheckedChange={() => setFilterClub(filterClub === `shared:${club.id}` ? '' : `shared:${club.id}`)}
+                        >
+                          {club.name}
+                        </DropdownMenuCheckboxItem>
+                      ))}
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {(filterRoles.length > 0 || filterVeterans || filterLiveType || filterClub) && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => { setFilterRoles([]); setFilterVeterans(false); setFilterLiveType(''); }}
+                  onClick={() => { setFilterRoles([]); setFilterVeterans(false); setFilterLiveType(''); setFilterClub(''); }}
                   className="text-gray-500 hover:text-gray-700"
                 >
                   <X className="w-4 h-4 mr-1" />
@@ -675,6 +742,8 @@ export default function TikTokContacts() {
               onSave={handleSubmit}
               isSaving={createMutation.isPending || updateMutation.isPending}
               isEditing={!!editingContact}
+              sharedClubs={sharedClubs}
+              onAddSharedClub={(name) => addSharedClubMutation.mutate(name)}
             />
 
             <Tabs value={formTab} onValueChange={setFormTab}>

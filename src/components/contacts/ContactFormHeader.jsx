@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Star, Upload, X, Plus, Users } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Star, Upload, X, Plus, Users, Globe, Lock } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 
 const colorOptions = [
@@ -28,9 +29,10 @@ const defaultClubs = [
   { id: 'we_do_not_have', label: 'We Do Not Have Club', display: 'We Do Not Have Club' },
 ];
 
-export default function ContactFormHeader({ formData, setFormData, onSave, isSaving, isEditing }) {
+export default function ContactFormHeader({ formData, setFormData, onSave, isSaving, isEditing, sharedClubs = [], onAddSharedClub }) {
   const [newClub, setNewClub] = useState('');
   const [showClubsModal, setShowClubsModal] = useState(false);
+  const [shareNewClub, setShareNewClub] = useState(false);
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
@@ -156,6 +158,19 @@ export default function ContactFormHeader({ formData, setFormData, onSave, isSav
                 {club.label}
               </Badge>
             ))}
+          {/* Shared community clubs that are selected */}
+          {sharedClubs
+            .filter(club => formData.clubs?.includes(`shared:${club.id}`))
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .map(club => (
+              <Badge
+                key={`shared-${club.id}`}
+                variant="default"
+                className="text-xs bg-green-600"
+              >
+                {club.name}
+              </Badge>
+            ))}
           {/* Custom clubs - sorted alphabetically */}
           {[...(formData.custom_clubs || [])]
             .sort((a, b) => a.localeCompare(b))
@@ -245,43 +260,106 @@ export default function ContactFormHeader({ formData, setFormData, onSave, isSav
               </div>
             )}
 
+            {/* Community shared clubs */}
+            {sharedClubs.filter(c => c.is_approved).length > 0 && (
+              <div className="pt-2 border-t space-y-2">
+                <Label className="text-xs text-gray-500 flex items-center gap-1">
+                  <Globe className="w-3 h-3" /> Community Clubs
+                </Label>
+                {sharedClubs
+                  .filter(c => c.is_approved)
+                  .sort((a, b) => a.name.localeCompare(b.name))
+                  .map(club => {
+                    const clubKey = `shared:${club.id}`;
+                    const isActive = formData.clubs?.includes(clubKey);
+                    return (
+                      <div
+                        key={club.id}
+                        onClick={() => {
+                          const current = formData.clubs || [];
+                          setFormData({
+                            ...formData,
+                            clubs: isActive 
+                              ? current.filter(c => c !== clubKey)
+                              : [...current, clubKey]
+                          });
+                        }}
+                        className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${
+                          isActive ? 'bg-green-100' : 'hover:bg-gray-50'
+                        }`}
+                      >
+                        <Checkbox checked={isActive} />
+                        <Globe className="w-3 h-3 text-green-600" />
+                        <span className={`text-sm ${isActive ? 'font-medium text-green-700' : ''}`}>
+                          {club.name}
+                        </span>
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
+
             {/* Add custom club */}
             <div className="pt-2 border-t">
               <Label className="text-xs text-gray-500 mb-2 block">Add Custom Club</Label>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Club name..."
-                  value={newClub}
-                  onChange={(e) => setNewClub(e.target.value)}
-                  className="h-9"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && newClub.trim()) {
-                      e.preventDefault();
-                      setFormData({
-                        ...formData,
-                        custom_clubs: [...(formData.custom_clubs || []), newClub.trim()]
-                      });
-                      setNewClub('');
-                    }
-                  }}
-                />
-                <Button
-                  type="button"
-                  size="sm"
-                  className="h-9 bg-teal-600 hover:bg-teal-700"
-                  onClick={() => {
-                    if (newClub.trim()) {
-                      setFormData({
-                        ...formData,
-                        custom_clubs: [...(formData.custom_clubs || []), newClub.trim()]
-                      });
-                      setNewClub('');
-                    }
-                  }}
-                  disabled={!newClub.trim()}
-                >
-                  <Plus className="w-4 h-4" />
-                </Button>
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Club name..."
+                    value={newClub}
+                    onChange={(e) => setNewClub(e.target.value)}
+                    className="h-9"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && newClub.trim()) {
+                        e.preventDefault();
+                        if (shareNewClub && onAddSharedClub) {
+                          onAddSharedClub(newClub.trim());
+                        }
+                        setFormData({
+                          ...formData,
+                          custom_clubs: [...(formData.custom_clubs || []), newClub.trim()]
+                        });
+                        setNewClub('');
+                        setShareNewClub(false);
+                      }
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="h-9 bg-teal-600 hover:bg-teal-700"
+                    onClick={() => {
+                      if (newClub.trim()) {
+                        if (shareNewClub && onAddSharedClub) {
+                          onAddSharedClub(newClub.trim());
+                        }
+                        setFormData({
+                          ...formData,
+                          custom_clubs: [...(formData.custom_clubs || []), newClub.trim()]
+                        });
+                        setNewClub('');
+                        setShareNewClub(false);
+                      }
+                    }}
+                    disabled={!newClub.trim()}
+                  >
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+                <div className="flex items-center gap-2 text-xs">
+                  <Switch
+                    checked={shareNewClub}
+                    onCheckedChange={setShareNewClub}
+                    className="scale-75"
+                  />
+                  <span className={shareNewClub ? 'text-green-700' : 'text-gray-500'}>
+                    {shareNewClub ? (
+                      <span className="flex items-center gap-1"><Globe className="w-3 h-3" /> Share with community</span>
+                    ) : (
+                      <span className="flex items-center gap-1"><Lock className="w-3 h-3" /> Keep private</span>
+                    )}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
