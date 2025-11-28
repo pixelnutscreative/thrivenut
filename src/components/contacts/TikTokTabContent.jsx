@@ -12,21 +12,36 @@ import {
 import NotesWithHistory from './NotesWithHistory';
 import SearchableContactSelect from '../tiktok/SearchableContactSelect';
 
-// Icon-based roles
-const iconRoles = {
-  battle_sniper: { label: 'Battle Sniper', icon: Swords, color: 'bg-red-100 text-red-700', borderColor: 'border-red-300' },
-  tiktok_seller: { label: 'TikTok Seller', icon: DollarSign, color: 'bg-orange-100 text-orange-700', borderColor: 'border-orange-300' },
-  gifter: { label: 'Gifter', icon: Gift, color: 'bg-amber-100 text-amber-700', borderColor: 'border-amber-300' },
-  tiktok_shop_affiliate: { label: 'TikTok Shop Affiliate', icon: ShoppingBag, color: 'bg-lime-100 text-lime-700', borderColor: 'border-lime-300' },
-  authentic_commenter: { label: 'Authentic Commenter', icon: MessageCircle, color: 'bg-teal-100 text-teal-700', borderColor: 'border-teal-300' },
-  sharer: { label: 'Shares to Story', icon: BookOpen, color: 'bg-blue-100 text-blue-700', borderColor: 'border-blue-300' },
-  creator_to_watch: { label: 'Creator to Watch', icon: Video, color: 'bg-indigo-100 text-indigo-700', borderColor: 'border-indigo-300' },
-  engaging_bestie: { label: 'Engaging Bestie', icon: Users, color: 'bg-purple-100 text-purple-700', borderColor: 'border-purple-300' },
-  tapper: { label: 'Tapper', icon: Heart, color: 'bg-pink-100 text-pink-700', borderColor: 'border-pink-300' },
-  sleep_lives: { label: 'Sleep Lives', icon: Moon, color: 'bg-slate-100 text-slate-700', borderColor: 'border-slate-300' }
+// Organized roles by category
+const roleCategories = {
+  battle: {
+    title: 'Battle & Competition',
+    roles: {
+      battle_sniper: { label: 'Battle Sniper', icon: Swords, color: 'bg-red-100 text-red-700', borderColor: 'border-red-300' },
+    }
+  },
+  engagement: {
+    title: 'Engagement Style',
+    roles: {
+      gifter: { label: 'Gifter', icon: Gift, color: 'bg-amber-100 text-amber-700', borderColor: 'border-amber-300' },
+      tapper: { label: 'Tapper', icon: Heart, color: 'bg-pink-100 text-pink-700', borderColor: 'border-pink-300' },
+      authentic_commenter: { label: 'Commenter', icon: MessageCircle, color: 'bg-teal-100 text-teal-700', borderColor: 'border-teal-300' },
+      sharer: { label: 'Story Sharer', icon: BookOpen, color: 'bg-blue-100 text-blue-700', borderColor: 'border-blue-300' },
+      engaging_bestie: { label: 'Engaging Bestie', icon: Users, color: 'bg-purple-100 text-purple-700', borderColor: 'border-purple-300' },
+    }
+  },
+  creator: {
+    title: 'Creator & Business',
+    roles: {
+      creator_to_watch: { label: 'Creator to Watch', icon: Video, color: 'bg-indigo-100 text-indigo-700', borderColor: 'border-indigo-300' },
+      tiktok_shop_affiliate: { label: 'Shop Affiliate', icon: ShoppingBag, color: 'bg-lime-100 text-lime-700', borderColor: 'border-lime-300' },
+      tiktok_seller: { label: 'TikTok Seller', icon: DollarSign, color: 'bg-orange-100 text-orange-700', borderColor: 'border-orange-300' },
+      sleep_lives: { label: 'Sleep Lives', icon: Moon, color: 'bg-slate-100 text-slate-700', borderColor: 'border-slate-300' },
+    }
+  }
 };
 
-// Text-based roles
+// Text-based roles (relationship)
 const textRoles = {
   subscriber: { label: 'Subscriber', text: 'Sub', color: 'bg-cyan-100 text-cyan-700', borderColor: 'border-cyan-300' },
   superfan: { label: 'Superfan', text: 'Superfan', color: 'bg-rose-100 text-rose-700', borderColor: 'border-rose-300' },
@@ -34,7 +49,9 @@ const textRoles = {
   discord: { label: 'Discord', text: 'Discord', color: 'bg-violet-100 text-violet-700', borderColor: 'border-violet-300' }
 };
 
-const roleConfig = { ...iconRoles, ...textRoles };
+// Flatten all roles for backwards compatibility
+const allIconRoles = Object.values(roleCategories).reduce((acc, cat) => ({ ...acc, ...cat.roles }), {});
+const roleConfig = { ...allIconRoles, ...textRoles };
 
 const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -146,46 +163,59 @@ export default function TikTokTabContent({
       </div>
 
       {/* Roles */}
-      <div className="space-y-2">
+      <div className="space-y-3">
         <Label className="text-sm font-medium">Roles</Label>
-        <div className="grid grid-cols-5 gap-1">
-          {Object.entries(iconRoles).map(([key, config]) => {
-            const Icon = config.icon;
-            return (
-              <div
+        
+        {/* Categorized Icon Roles */}
+        {Object.entries(roleCategories).map(([catKey, category]) => (
+          <div key={catKey} className="space-y-1.5">
+            <span className="text-xs text-gray-500 font-medium">{category.title}</span>
+            <div className="flex flex-wrap gap-1.5">
+              {Object.entries(category.roles).map(([key, config]) => {
+                const Icon = config.icon;
+                const isActive = formData.role?.includes(key);
+                return (
+                  <div
+                    key={key}
+                    onClick={() => toggleRole(key)}
+                    className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg border-2 cursor-pointer text-xs transition-all ${
+                      isActive
+                        ? 'border-purple-500 bg-purple-50'
+                        : 'border-gray-200 hover:border-purple-300 bg-white'
+                    }`}
+                  >
+                    <Checkbox checked={isActive} className="h-3 w-3" />
+                    <Icon className="w-3.5 h-3.5" />
+                    <span className={isActive ? 'text-purple-700 font-medium' : 'text-gray-600'}>{config.label}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+
+        {/* Relationship Roles */}
+        <div className="space-y-1.5">
+          <span className="text-xs text-gray-500 font-medium">Relationship</span>
+          <div className="flex flex-wrap gap-1">
+            {Object.entries(textRoles).map(([key, config]) => (
+              <Badge
                 key={key}
+                variant={formData.role?.includes(key) ? 'default' : 'outline'}
+                className={`cursor-pointer text-xs ${formData.role?.includes(key) ? 'bg-purple-600' : config.color}`}
                 onClick={() => toggleRole(key)}
-                className={`p-1.5 rounded-lg border-2 cursor-pointer text-xs ${
-                  formData.role?.includes(key)
-                    ? 'border-purple-500 bg-purple-50'
-                    : 'border-gray-200 hover:border-purple-300'
-                }`}
               >
-                <div className="flex items-center gap-1">
-                  <Checkbox checked={formData.role?.includes(key)} className="h-3 w-3" />
-                  <Icon className="w-3 h-3" />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-        <div className="flex flex-wrap gap-1">
-          {Object.entries(textRoles).map(([key, config]) => (
-            <Badge
-              key={key}
-              variant={formData.role?.includes(key) ? 'default' : 'outline'}
-              className={`cursor-pointer text-xs ${formData.role?.includes(key) ? 'bg-purple-600' : config.color}`}
-              onClick={() => toggleRole(key)}
-            >
-              {config.text}
-            </Badge>
-          ))}
+                {config.label}
+              </Badge>
+            ))}
+          </div>
         </div>
 
         {/* Custom Roles */}
-        {savedCustomRoles?.length > 0 && (
+        <div className="space-y-1.5">
+          <span className="text-xs text-gray-500 font-medium">Custom Roles</span>
           <div className="flex flex-wrap gap-1">
-            {savedCustomRoles.map(role => {
+            {savedCustomRoles?.map(role => {
               const customRole = `custom:${role}`;
               return (
                 <Badge
@@ -199,43 +229,42 @@ export default function TikTokTabContent({
               );
             })}
           </div>
-        )}
-
-        <div className="flex gap-2">
-          <Input
-            placeholder="Add custom role..."
-            value={customRoleInput}
-            onChange={(e) => setCustomRoleInput(e.target.value)}
-            className="h-8 text-xs"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && customRoleInput.trim()) {
-                const customRole = `custom:${customRoleInput.trim()}`;
-                if (!formData.role?.includes(customRole)) {
-                  setFormData({ ...formData, role: [...(formData.role || []), customRole] });
+          <div className="flex gap-2">
+            <Input
+              placeholder="Add custom role..."
+              value={customRoleInput}
+              onChange={(e) => setCustomRoleInput(e.target.value)}
+              className="h-8 text-xs"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && customRoleInput.trim()) {
+                  const customRole = `custom:${customRoleInput.trim()}`;
+                  if (!formData.role?.includes(customRole)) {
+                    setFormData({ ...formData, role: [...(formData.role || []), customRole] });
+                  }
+                  onSaveCustomRole?.(customRoleInput.trim());
+                  setCustomRoleInput('');
                 }
-                onSaveCustomRole?.(customRoleInput.trim());
-                setCustomRoleInput('');
-              }
-            }}
-          />
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className="h-8"
-            onClick={() => {
-              if (customRoleInput.trim()) {
-                const customRole = `custom:${customRoleInput.trim()}`;
-                if (!formData.role?.includes(customRole)) {
-                  setFormData({ ...formData, role: [...(formData.role || []), customRole] });
+              }}
+            />
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-8"
+              onClick={() => {
+                if (customRoleInput.trim()) {
+                  const customRole = `custom:${customRoleInput.trim()}`;
+                  if (!formData.role?.includes(customRole)) {
+                    setFormData({ ...formData, role: [...(formData.role || []), customRole] });
+                  }
+                  onSaveCustomRole?.(customRoleInput.trim());
+                  setCustomRoleInput('');
                 }
-                onSaveCustomRole?.(customRoleInput.trim());
-                setCustomRoleInput('');
-              }
-            }}
-          >
-            <Plus className="w-3 h-3" />
-          </Button>
+              }}
+            >
+              <Plus className="w-3 h-3" />
+            </Button>
+          </div>
         </div>
       </div>
 
