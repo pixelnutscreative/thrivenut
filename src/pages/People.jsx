@@ -104,6 +104,26 @@ export default function People() {
 
   const savedCustomRoles = preferences?.custom_tiktok_roles || [];
 
+  // Fetch shared clubs
+  const { data: sharedClubs = [] } = useQuery({
+    queryKey: ['sharedClubs'],
+    queryFn: () => base44.entities.SharedClub.list('name'),
+  });
+
+  const addSharedClubMutation = useMutation({
+    mutationFn: async (clubName) => {
+      const existing = sharedClubs.find(c => c.name.toLowerCase() === clubName.toLowerCase());
+      if (!existing) {
+        await base44.entities.SharedClub.create({
+          name: clubName,
+          is_approved: false,
+          submitted_by: effectiveEmail
+        });
+      }
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['sharedClubs'] }),
+  });
+
   const saveCustomRoleMutation = useMutation({
     mutationFn: async (newRole) => {
       const currentRoles = preferences?.custom_tiktok_roles || [];
@@ -396,6 +416,8 @@ export default function People() {
               onSave={handleSubmit}
               isSaving={createMutation.isPending || updateMutation.isPending}
               isEditing={!!editingContact}
+              sharedClubs={sharedClubs}
+              onAddSharedClub={(name) => addSharedClubMutation.mutate(name)}
             />
 
             <Tabs value={formTab} onValueChange={setFormTab}>
