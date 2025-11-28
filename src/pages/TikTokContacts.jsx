@@ -24,18 +24,16 @@ import TikTokTabContent from '../components/contacts/TikTokTabContent';
 import PersonalTabContent from '../components/contacts/PersonalTabContent';
 import BusinessTabContent from '../components/contacts/BusinessTabContent';
 
-// Icon-based roles
+// Icon-based roles for contact cards
 const iconRoles = {
   battle_sniper: { label: 'Battle Sniper', icon: Swords, color: 'bg-red-100 text-red-700', borderColor: 'border-red-300' },
-  tiktok_seller: { label: 'TikTok Seller', icon: DollarSign, color: 'bg-orange-100 text-orange-700', borderColor: 'border-orange-300' },
   gifter: { label: 'Gifter', icon: Gift, color: 'bg-amber-100 text-amber-700', borderColor: 'border-amber-300' },
-  tiktok_shop_affiliate: { label: 'TikTok Shop Affiliate', icon: ShoppingBag, color: 'bg-lime-100 text-lime-700', borderColor: 'border-lime-300' },
-  authentic_commenter: { label: 'Authentic Commenter', icon: MessageCircle, color: 'bg-teal-100 text-teal-700', borderColor: 'border-teal-300' },
-  sharer: { label: 'Shares to Story', icon: BookOpen, color: 'bg-blue-100 text-blue-700', borderColor: 'border-blue-300' },
-  creator_to_watch: { label: 'Creator to Watch', icon: Video, color: 'bg-indigo-100 text-indigo-700', borderColor: 'border-indigo-300' },
-  engaging_bestie: { label: 'Engaging Bestie', icon: Users, color: 'bg-purple-100 text-purple-700', borderColor: 'border-purple-300' },
   tapper: { label: 'Tapper', icon: Heart, color: 'bg-pink-100 text-pink-700', borderColor: 'border-pink-300' },
-  sleep_lives: { label: 'Sleep Lives', icon: Moon, color: 'bg-slate-100 text-slate-700', borderColor: 'border-slate-300' }
+  live_commenter: { label: 'Comments (LIVE)', icon: MessageCircle, color: 'bg-teal-100 text-teal-700', borderColor: 'border-teal-300' },
+  fan_stickers: { label: 'Fan Stickers', icon: Gift, color: 'bg-fuchsia-100 text-fuchsia-700', borderColor: 'border-fuchsia-300' },
+  sharer: { label: 'Shares to Story', icon: BookOpen, color: 'bg-blue-100 text-blue-700', borderColor: 'border-blue-300' },
+  hype_person: { label: 'Hype Person', icon: Sparkles, color: 'bg-yellow-100 text-yellow-700', borderColor: 'border-yellow-300' },
+  tiktok_shop_affiliate: { label: 'TT Shop Affiliate', icon: ShoppingBag, color: 'bg-lime-100 text-lime-700', borderColor: 'border-lime-300' },
 };
 
 // Text-based roles

@@ -24,12 +24,7 @@ const battleInventoryItems = [
   { key: 'timers', label: 'Timers', icon: '⏱️' },
 ];
 
-// All roles organized in three columns
-const battleRoles = {
-  loves_to_battle: { label: 'Loves to Battle', icon: Award, color: 'bg-red-100 text-red-700' },
-  battle_sniper: { label: 'Battle Sniper', icon: Flame, color: 'bg-orange-100 text-orange-700' },
-};
-
+// Engagement roles
 const engagementRoles = {
   gifter: { label: 'Gifts', icon: Gift, color: 'bg-amber-100 text-amber-700' },
   tapper: { label: 'Taps', icon: Heart, color: 'bg-pink-100 text-pink-700' },
@@ -42,17 +37,23 @@ const engagementRoles = {
 
 const creatorRoles = {
   creator_to_watch: { label: 'Creator to Watch', icon: Video, color: 'bg-indigo-100 text-indigo-700' },
-  tiktok_shop_affiliate: { label: 'Shop Affiliate', icon: ShoppingBag, color: 'bg-lime-100 text-lime-700' },
+  tiktok_shop_affiliate: { label: 'TT Shop Affiliate', icon: ShoppingBag, color: 'bg-lime-100 text-lime-700' },
   tiktok_seller: { label: 'TikTok Seller', icon: DollarSign, color: 'bg-orange-100 text-orange-700' },
   sleep_lives: { label: 'Sleep Lives', icon: Moon, color: 'bg-slate-100 text-slate-700' },
 };
 
-// Relationship roles
+// Battle roles
+const battleRoles = {
+  loves_to_battle: { label: 'Loves to Battle', icon: Award, color: 'bg-red-100 text-red-700' },
+  battle_sniper: { label: 'Battle Sniper', icon: Flame, color: 'bg-orange-100 text-orange-700' },
+};
+
+// Relationship roles (stacked in battle section)
 const relationshipRoles = {
   subscriber: { label: 'Subscriber', color: 'bg-cyan-100 text-cyan-700' },
   superfan: { label: 'Superfan', color: 'bg-rose-100 text-rose-700' },
-  irl_friend: { label: 'Friend IRL', color: 'bg-green-100 text-green-700' },
-  discord: { label: 'Discord', color: 'bg-violet-100 text-violet-700' }
+  discord: { label: 'Discord', color: 'bg-violet-100 text-violet-700' },
+  irl_friend: { label: 'Friend IRL', color: 'bg-green-100 text-green-700' }
 };
 
 const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -393,6 +394,29 @@ export default function TikTokTabContent({
             </div>
           </div>
         </div>
+
+        {/* Creator Info inside blue box */}
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          {/* Creator Column - Indigo themed */}
+          <div className="p-2 bg-indigo-50 rounded-lg border border-indigo-200 space-y-2">
+            <Label className="text-xs text-indigo-800 font-medium">Creator</Label>
+            <div className="space-y-1">
+              {Object.entries(creatorRoles).map(([key, config]) => (
+                <RoleButton key={key} roleKey={key} config={config} small />
+              ))}
+            </div>
+          </div>
+
+          {/* Engagement Column - Teal themed */}
+          <div className="p-2 bg-teal-50 rounded-lg border border-teal-200 space-y-2">
+            <Label className="text-xs text-teal-800 font-medium">Engagement</Label>
+            <div className="space-y-1">
+              {Object.entries(engagementRoles).map(([key, config]) => (
+                <RoleButton key={key} roleKey={key} config={config} small />
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* How did you find them? - Green themed */}
@@ -437,34 +461,31 @@ export default function TikTokTabContent({
         />
       </div>
 
-      {/* Relationship Roles - Rose themed */}
-      <div className="p-3 bg-rose-50 rounded-lg border border-rose-200 space-y-2">
-        <Label className="text-xs text-rose-800 font-medium">Relationship</Label>
-        <div className="flex flex-wrap gap-1">
+      {/* Relationship & Battle Section - Red themed */}
+      <div className="p-3 bg-red-50 rounded-lg border border-red-200 space-y-3">
+        {/* Relationship roles stacked */}
+        <div className="space-y-1">
           {Object.entries(relationshipRoles).map(([key, config]) => (
             <Badge
               key={key}
               variant={formData.role?.includes(key) ? 'default' : 'outline'}
-              className={`cursor-pointer text-xs ${formData.role?.includes(key) ? 'bg-rose-600' : config.color}`}
+              className={`cursor-pointer text-xs mr-1 ${formData.role?.includes(key) ? 'bg-red-600' : config.color}`}
               onClick={() => toggleRole(key)}
             >
               {config.label}
             </Badge>
           ))}
         </div>
-      </div>
 
-      {/* Three Column Roles: Battle | Engagement | Creator */}
-      <div className="grid grid-cols-3 gap-3">
-        {/* Battle Column - Red themed */}
-        <div className="p-2 bg-red-50 rounded-lg border border-red-200 space-y-2">
+        {/* Battle roles */}
+        <div className="pt-2 border-t border-red-200 space-y-1">
           <Label className="text-xs text-red-800 font-medium">Battle</Label>
           <div className="space-y-1">
             {Object.entries(battleRoles).map(([key, config]) => (
               <RoleButton key={key} roleKey={key} config={config} small />
             ))}
           </div>
-          
+
           {(formData.role?.includes('loves_to_battle') || formData.role?.includes('battle_sniper')) && (
             <div className="p-2 bg-red-100 rounded border border-red-300 space-y-1">
               <span className="text-[10px] font-semibold text-red-700">Inventory</span>
@@ -485,31 +506,11 @@ export default function TikTokTabContent({
             </div>
           )}
         </div>
-
-        {/* Engagement Column - Teal themed */}
-        <div className="p-2 bg-teal-50 rounded-lg border border-teal-200 space-y-2">
-          <Label className="text-xs text-teal-800 font-medium">Engagement</Label>
-          <div className="space-y-1">
-            {Object.entries(engagementRoles).map(([key, config]) => (
-              <RoleButton key={key} roleKey={key} config={config} small />
-            ))}
-          </div>
-        </div>
-
-        {/* Creator Column - Indigo themed */}
-        <div className="p-2 bg-indigo-50 rounded-lg border border-indigo-200 space-y-2">
-          <Label className="text-xs text-indigo-800 font-medium">Creator</Label>
-          <div className="space-y-1">
-            {Object.entries(creatorRoles).map(([key, config]) => (
-              <RoleButton key={key} roleKey={key} config={config} small />
-            ))}
-          </div>
-        </div>
       </div>
 
-      {/* Custom Fields */}
-      <div className="p-3 bg-teal-50 rounded-lg border border-teal-200 space-y-2">
-        <Label className="text-xs text-teal-800 font-medium">Custom Fields</Label>
+      {/* Custom Fields - Red themed (moved here) */}
+      <div className="p-3 bg-red-50 rounded-lg border border-red-200 space-y-2">
+        <Label className="text-xs text-red-800 font-medium">Custom Fields</Label>
         <div className="flex flex-wrap gap-1">
           {savedCustomRoles?.map(role => {
             const customRole = `custom:${role}`;
@@ -517,7 +518,7 @@ export default function TikTokTabContent({
               <Badge
                 key={role}
                 variant={formData.role?.includes(customRole) ? 'default' : 'outline'}
-                className={`cursor-pointer text-xs ${formData.role?.includes(customRole) ? 'bg-teal-600' : 'bg-white text-teal-700 border-teal-300'}`}
+                className={`cursor-pointer text-xs ${formData.role?.includes(customRole) ? 'bg-red-600' : 'bg-white text-red-700 border-red-300'}`}
                 onClick={() => toggleRole(customRole)}
               >
                 {role}
