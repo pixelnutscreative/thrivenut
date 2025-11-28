@@ -171,13 +171,22 @@ export default function TikTokEngagement() {
     const engaged = justEngaged[contact.id];
     if (!engaged) return false;
     
-    // Must have primary checked
-    if (!engaged.primary) return false;
+    // Must have primary checked (if they have a TikTok username)
+    if (contact.username && !engaged.primary) return false;
     
-    // Must have all other accounts checked
+    // Must have all other TikTok accounts checked
     const otherAccounts = contact.other_tiktok_accounts || [];
     for (let i = 0; i < otherAccounts.length; i++) {
-      if (!engaged[i]) return false;
+      if (!engaged[`tiktok_${i}`]) return false;
+    }
+    
+    // Must have all social engagement accounts checked
+    if (contact.social_engagement) {
+      for (const [platform, enabled] of Object.entries(contact.social_engagement)) {
+        if (enabled && contact.social_links?.[platform] && !engaged[`social_${platform}`]) {
+          return false;
+        }
+      }
     }
     
     return true;
@@ -314,38 +323,40 @@ export default function TikTokEngagement() {
 
             {/* All TikTok accounts with checkmarks */}
             <div className="space-y-2 pt-2">
-              {/* Primary account */}
-              <div className="flex items-center gap-2">
-                <Button 
-                  onClick={() => openTikTok(contact.username)} 
-                  className="flex-1 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 h-9 text-sm"
-                >
-                  <ExternalLink className="w-3 h-3 mr-1" />
-                  @{contact.username}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => {
-                    toggleAccountEngaged('primary');
-                    // Also update the database when primary is checked
-                    if (!engaged.primary) {
-                      markEngagedMutation.mutate({ id: contact.id, currentHistory: contact.engagement_history, isLegacy: contact._isLegacy });
-                    }
-                  }}
-                  className={`h-9 w-9 transition-all duration-300 ${engaged.primary ? 'bg-green-500 border-green-500' : 'border-green-300 hover:bg-green-50'}`}
-                  title="Mark as engaged"
-                >
-                  <Check className={`w-4 h-4 ${engaged.primary ? 'text-white' : 'text-green-600'}`} />
-                </Button>
-              </div>
+              {/* Primary TikTok account */}
+              {contact.username && (
+                <div className="flex items-center gap-2">
+                  <Button 
+                    onClick={() => openTikTok(contact.username)} 
+                    className="flex-1 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 h-9 text-sm"
+                  >
+                    <ExternalLink className="w-3 h-3 mr-1" />
+                    @{contact.username}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => {
+                      toggleAccountEngaged('primary');
+                      // Also update the database when primary is checked
+                      if (!engaged.primary) {
+                        markEngagedMutation.mutate({ id: contact.id, currentHistory: contact.engagement_history, isLegacy: contact._isLegacy });
+                      }
+                    }}
+                    className={`h-9 w-9 transition-all duration-300 ${engaged.primary ? 'bg-green-500 border-green-500' : 'border-green-300 hover:bg-green-50'}`}
+                    title="Mark as engaged"
+                  >
+                    <Check className={`w-4 h-4 ${engaged.primary ? 'text-white' : 'text-green-600'}`} />
+                  </Button>
+                </div>
+              )}
               
-              {/* Other accounts */}
+              {/* Other TikTok accounts */}
               {contact.other_tiktok_accounts?.map((acc, idx) => {
                 const account = typeof acc === 'string' ? { username: acc } : acc;
-                const isAccountEngaged = engaged[idx];
+                const isAccountEngaged = engaged[`tiktok_${idx}`];
                 return (
-                  <div key={idx} className="flex items-center gap-2">
+                  <div key={`tiktok-${idx}`} className="flex items-center gap-2">
                     <Button 
                       onClick={() => openTikTok(account.username)} 
                       variant="outline"
@@ -357,7 +368,7 @@ export default function TikTokEngagement() {
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => toggleAccountEngaged(idx)}
+                      onClick={() => toggleAccountEngaged(`tiktok_${idx}`)}
                       className={`h-9 w-9 transition-all duration-300 ${isAccountEngaged ? 'bg-green-500 border-green-500' : 'border-gray-200 hover:bg-green-50'}`}
                       title="Mark as engaged"
                     >
@@ -366,6 +377,51 @@ export default function TikTokEngagement() {
                   </div>
                 );
               })}
+
+              {/* Social media links with engagement enabled */}
+              {contact.social_engagement && Object.entries(contact.social_engagement)
+                .filter(([_, enabled]) => enabled)
+                .map(([platform]) => {
+                  const link = contact.social_links?.[platform];
+                  if (!link) return null;
+                  const isAccountEngaged = engaged[`social_${platform}`];
+                  const platformLabel = platform.startsWith('custom_') 
+                    ? platform.replace('custom_', '').replace(/_/g, ' ')
+                    : platform.charAt(0).toUpperCase() + platform.slice(1);
+                  
+                  // Determine the URL to open
+                  const getUrl = () => {
+                    if (link.startsWith('http')) return link;
+                    if (platform === 'instagram') return `https://instagram.com/${link.replace('@', '')}`;
+                    if (platform === 'facebook') return `https://facebook.com/${link}`;
+                    if (platform === 'youtube') return `https://youtube.com/@${link.replace('@', '')}`;
+                    if (platform === 'twitter') return `https://twitter.com/${link.replace('@', '')}`;
+                    if (platform === 'twitch') return `https://twitch.tv/${link}`;
+                    return link;
+                  };
+
+                  return (
+                    <div key={`social-${platform}`} className="flex items-center gap-2">
+                      <Button 
+                        onClick={() => window.open(getUrl(), '_blank')} 
+                        variant="outline"
+                        className="flex-1 h-9 text-sm text-purple-600 border-purple-200 hover:bg-purple-50"
+                      >
+                        <ExternalLink className="w-3 h-3 mr-1" />
+                        {platformLabel}: {link}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => toggleAccountEngaged(`social_${platform}`)}
+                        className={`h-9 w-9 transition-all duration-300 ${isAccountEngaged ? 'bg-green-500 border-green-500' : 'border-gray-200 hover:bg-green-50'}`}
+                        title="Mark as engaged"
+                      >
+                        <Check className={`w-4 h-4 ${isAccountEngaged ? 'text-white' : 'text-gray-300'}`} />
+                      </Button>
+                    </div>
+                  );
+                })}
             </div>
           </CardContent>
         </Card>

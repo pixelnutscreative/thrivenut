@@ -216,7 +216,10 @@ export default function PersonalTabContent({ formData, setFormData }) {
 
       {/* Social Links - Flexible Add */}
       <div className="space-y-2">
-        <Label className="text-sm font-medium">Social Media</Label>
+        <div className="flex items-center gap-2">
+          <Label className="text-sm font-medium">Social Media</Label>
+          <span className="text-xs text-gray-400">( ✨ = track engagement )</span>
+        </div>
         
         {/* Active social links */}
         <div className="space-y-2">
@@ -225,12 +228,31 @@ export default function PersonalTabContent({ formData, setFormData }) {
             const platform = defaultSocialPlatforms.find(p => p.key === key);
             const label = isCustom ? key.replace('custom_', '').replace(/_/g, ' ') : platform?.label || key;
             const Icon = platform?.icon;
+            const engageKey = `engage_${key}`;
+            const isEngageEnabled = formData.social_engagement?.[key];
             
             return (
               <div key={key} className="flex items-center gap-2">
-                <div className="w-24 flex items-center gap-1 text-xs text-gray-600">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const current = formData.social_engagement || {};
+                    setFormData({ 
+                      ...formData, 
+                      social_engagement: { 
+                        ...current, 
+                        [key]: !current[key] 
+                      } 
+                    });
+                  }}
+                  className={`p-1 rounded hover:bg-purple-100 transition-colors ${isEngageEnabled ? 'text-purple-600' : 'text-gray-300'}`}
+                  title={isEngageEnabled ? 'Tracking engagement' : 'Click to track engagement'}
+                >
+                  <span className="text-sm">✨</span>
+                </button>
+                <div className="w-20 flex items-center gap-1 text-xs text-gray-600">
                   {Icon && <Icon className="w-4 h-4" />}
-                  <span className="capitalize">{label}</span>
+                  <span className="capitalize truncate">{label}</span>
                 </div>
                 <Input
                   placeholder={`@username or URL`}
