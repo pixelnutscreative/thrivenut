@@ -128,28 +128,27 @@ export default function MeetThePixelNuts() {
           <Card className="bg-white/80 backdrop-blur">
             <CardContent className="p-4">
               <div className="flex items-center gap-4 flex-wrap">
-                <label className="flex items-center gap-2 cursor-pointer">
+                <div className="relative">
                   <input
                     type="file"
                     accept=".csv"
                     onChange={handleCSVUpload}
-                    className="hidden"
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                     disabled={isUploading}
                   />
-                  <Button variant="outline" disabled={isUploading} asChild>
-                    <span>
-                      {isUploading ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        <Upload className="w-4 h-4 mr-2" />
-                      )}
-                      Upload CSV
-                    </span>
+                  <Button variant="outline" disabled={isUploading}>
+                    {isUploading ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Upload className="w-4 h-4 mr-2" />
+                    )}
+                    Upload CSV
                   </Button>
-                </label>
+                </div>
                 <span className="text-sm text-gray-500">
                   CSV columns: name, nickname, role, category, bio, tiktok_username, superpower, fun_fact, emoji, color
                 </span>
+                {isUploading && <span className="text-purple-600">Processing...</span>}
               </div>
             </CardContent>
           </Card>
