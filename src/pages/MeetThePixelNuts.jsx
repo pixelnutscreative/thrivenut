@@ -44,14 +44,26 @@ export default function MeetThePixelNuts() {
   };
 
   const handleCSVUpload = async (e) => {
+    console.log('CSV upload triggered', e.target.files);
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      console.log('No file selected');
+      return;
+    }
 
+    console.log('File selected:', file.name, file.size);
     setIsUploading(true);
+    
     try {
       const text = await file.text();
+      console.log('CSV text length:', text.length);
+      console.log('First 500 chars:', text.substring(0, 500));
+      
       const lines = text.split('\n').filter(line => line.trim());
+      console.log('Number of lines:', lines.length);
+      
       const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/['"]/g, ''));
+      console.log('Headers:', headers);
       
       const records = [];
       for (let i = 1; i < lines.length; i++) {
@@ -81,16 +93,18 @@ export default function MeetThePixelNuts() {
         }
       }
 
+      console.log('Records to create:', records.length, records);
+
       if (records.length > 0) {
         await base44.entities.PixelNut.bulkCreate(records);
         queryClient.invalidateQueries({ queryKey: ['pixelNuts'] });
         alert(`Successfully imported ${records.length} Pixel Nuts!`);
       } else {
-        alert('No valid records found in CSV. Make sure you have a "name" column.');
+        alert('No valid records found in CSV. Make sure you have a "name" column. Headers found: ' + headers.join(', '));
       }
     } catch (error) {
       console.error('CSV upload error:', error);
-      alert('Error uploading CSV. Please check the format.');
+      alert('Error uploading CSV: ' + error.message);
     }
     setIsUploading(false);
     e.target.value = '';
