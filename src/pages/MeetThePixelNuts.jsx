@@ -61,10 +61,20 @@ export default function MeetThePixelNuts() {
       const lines = text.split('\n').filter(line => line.trim());
       setUploadStatus(`Found ${lines.length} lines. Processing...`);
       
-      const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/['"]/g, ''));
+      // Check if there are two header rows (skip the first if the second also looks like headers)
+      let headerRowIndex = 0;
+      const firstRow = lines[0].toLowerCase();
+      const secondRow = lines[1]?.toLowerCase() || '';
+      
+      // If second row contains common header words, use it as the header instead
+      if (secondRow.includes('name') || secondRow.includes('role') || secondRow.includes('category')) {
+        headerRowIndex = 1;
+      }
+      
+      const headers = lines[headerRowIndex].split(',').map(h => h.trim().toLowerCase().replace(/['"]/g, ''));
       
       const records = [];
-      for (let i = 1; i < lines.length; i++) {
+      for (let i = headerRowIndex + 1; i < lines.length; i++) {
         const values = lines[i].match(/("([^"]*)"|[^,]+)/g)?.map(v => v.replace(/^"|"$/g, '').trim()) || [];
         if (values.length === 0) continue;
 
