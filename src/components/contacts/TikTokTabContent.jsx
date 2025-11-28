@@ -456,7 +456,6 @@ export default function TikTokTabContent({
 
           {/* Engagement Column - Teal themed */}
           <div className="p-2 bg-teal-50 rounded-lg border border-teal-200 space-y-2">
-            <Label className="text-xs text-teal-800 font-medium">Engagement</Label>
             <div className="space-y-1">
               {Object.entries(engagementRoles).map(([key, config]) => (
                 <RoleButton key={key} roleKey={key} config={config} small />

@@ -87,19 +87,17 @@ export default function ContactFormHeader({ formData, setFormData, onSave, isSav
           {/* Favorite Color with popover */}
           <div className="flex items-center gap-1">
             <span className="text-xs text-gray-400">Color</span>
-            {formData.color && (
-              <div
-                className="w-5 h-5 rounded-full ring-2 ring-offset-1 ring-gray-300"
-                style={{ backgroundColor: formData.color }}
-              />
-            )}
+            <div
+              className="w-5 h-5 rounded-full ring-2 ring-offset-1 ring-gray-300"
+              style={{ backgroundColor: formData.color || '#000000' }}
+            />
             <Popover open={showColorPicker} onOpenChange={setShowColorPicker}>
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  className="p-0.5 hover:bg-gray-100 rounded-full"
+                  className="relative w-5 h-5 rounded-full border-2 border-dashed border-gray-300 hover:border-purple-400 flex items-center justify-center"
                 >
-                  <PlusCircle className="w-5 h-5 text-gray-400 hover:text-purple-500" />
+                  <Plus className="w-3 h-3 text-gray-400" />
                 </button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-3" align="start">
@@ -118,12 +116,15 @@ export default function ContactFormHeader({ formData, setFormData, onSave, isSav
                 </div>
                 <div className="mt-2 pt-2 border-t flex items-center gap-2">
                   <span className="text-xs text-gray-500">Custom:</span>
-                  <Input
-                    type="color"
-                    value={formData.color || '#6B7280'}
-                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                    className="w-8 h-6 p-0 cursor-pointer border-0"
-                  />
+                  <label className="relative w-6 h-6 rounded-full border-2 border-dashed border-gray-300 hover:border-purple-400 cursor-pointer flex items-center justify-center overflow-hidden">
+                    <Plus className="w-3 h-3 text-gray-400" />
+                    <Input
+                      type="color"
+                      value={formData.color || '#000000'}
+                      onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    />
+                  </label>
                 </div>
               </PopoverContent>
             </Popover>
