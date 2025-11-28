@@ -287,7 +287,19 @@ export default function TikTokTabContent({
 
       {/* Primary TikTok Account - Blue themed */}
       <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-        <h4 className="font-semibold text-sm mb-2 text-blue-800">TikTok Account</h4>
+        <div className="flex items-center justify-between mb-2">
+          <h4 className="font-semibold text-sm text-blue-800">TikTok Accounts</h4>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-6 w-6 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-100"
+            onClick={() => setShowAddAccount(true)}
+          >
+            <Plus className="w-4 h-4" />
+          </Button>
+        </div>
+
+        {/* Primary account row */}
         <div className="grid grid-cols-3 gap-3">
           <div className="space-y-1">
             <Label className="text-xs text-blue-700">Username</Label>
@@ -319,78 +331,92 @@ export default function TikTokTabContent({
           </div>
         </div>
 
-        {/* Other TikTok Accounts */}
-        <div className="mt-3 space-y-2">
-          <div className="flex items-center justify-between">
-            <Label className="text-xs text-blue-600">Other TikTok Accounts</Label>
-            {!showAddAccount && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="h-6 px-2 text-blue-600 hover:text-blue-700"
-                onClick={() => setShowAddAccount(true)}
-              >
-                <Plus className="w-3 h-3 mr-1" />
-                <span className="text-xs">Add</span>
-              </Button>
-            )}
-          </div>
-          
-          {/* Existing accounts */}
-          {formData.other_tiktok_accounts?.map((acc, idx) => {
-            const account = typeof acc === 'string' ? { username: acc, display_name: '', phonetic: '' } : acc;
-            return (
-              <div key={idx} className="flex items-center gap-2 p-2 bg-blue-100 rounded text-xs">
-                <span className="font-medium">@{account.username}</span>
-                {account.display_name && <span className="text-blue-600">({account.display_name})</span>}
-                {account.phonetic && <span className="text-blue-500 italic">"{account.phonetic}"</span>}
-                <Button variant="ghost" size="sm" className="h-5 w-5 p-0 ml-auto" onClick={() => removeOtherAccount(idx)}>
-                  <X className="w-3 h-3 text-gray-400" />
-                </Button>
-              </div>
-            );
-          })}
-          
-          {/* Add new account form */}
-          {showAddAccount && (
-            <div className="grid grid-cols-3 gap-2 items-end p-2 bg-blue-50 rounded border border-blue-200">
-              <div className="relative">
-                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-sm">@</span>
-                <Input
-                  placeholder="username"
-                  value={newAccountUsername}
-                  onChange={(e) => setNewAccountUsername(e.target.value.replace('@', ''))}
-                  className="pl-6 h-8 text-xs"
-                />
+        {/* Additional TikTok Accounts */}
+        {formData.other_tiktok_accounts?.map((acc, idx) => {
+          const account = typeof acc === 'string' ? { username: acc, display_name: '', phonetic: '' } : acc;
+          return (
+            <div key={idx} className="grid grid-cols-3 gap-3 mt-2 pt-2 border-t border-blue-200">
+              <div className="space-y-1">
+                <div className="relative">
+                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-sm">@</span>
+                  <Input
+                    value={account.username}
+                    onChange={(e) => {
+                      const updated = [...(formData.other_tiktok_accounts || [])];
+                      updated[idx] = { ...account, username: e.target.value.replace('@', '') };
+                      setFormData({ ...formData, other_tiktok_accounts: updated });
+                    }}
+                    className="pl-6"
+                  />
+                </div>
               </div>
               <Input
                 placeholder="Display name"
-                value={newAccountDisplay}
-                onChange={(e) => setNewAccountDisplay(e.target.value)}
-                className="h-8 text-xs"
+                value={account.display_name || ''}
+                onChange={(e) => {
+                  const updated = [...(formData.other_tiktok_accounts || [])];
+                  updated[idx] = { ...account, display_name: e.target.value };
+                  setFormData({ ...formData, other_tiktok_accounts: updated });
+                }}
               />
               <div className="flex gap-1">
                 <Input
                   placeholder="Phonetic"
-                  value={newAccountPhonetic}
-                  onChange={(e) => setNewAccountPhonetic(e.target.value)}
-                  className="h-8 text-xs flex-1"
-                />
-                <Button 
-                  size="sm" 
-                  className="h-8 px-2 bg-blue-600 hover:bg-blue-700" 
-                  onClick={() => {
-                    addOtherAccount();
-                    setShowAddAccount(false);
+                  value={account.phonetic || ''}
+                  onChange={(e) => {
+                    const updated = [...(formData.other_tiktok_accounts || [])];
+                    updated[idx] = { ...account, phonetic: e.target.value };
+                    setFormData({ ...formData, other_tiktok_accounts: updated });
                   }}
-                  disabled={!newAccountUsername.trim()}
-                >
-                  Add
+                  className="flex-1"
+                />
+                <Button variant="ghost" size="sm" className="h-9 w-9 p-0" onClick={() => removeOtherAccount(idx)}>
+                  <X className="w-4 h-4 text-gray-400 hover:text-red-500" />
                 </Button>
               </div>
             </div>
-          )}
-        </div>
+          );
+        })}
+
+        {/* Add new account form */}
+        {showAddAccount && (
+          <div className="grid grid-cols-3 gap-3 mt-2 pt-2 border-t border-blue-200 bg-blue-100/50 -mx-3 px-3 pb-2 rounded-b">
+            <div className="relative">
+              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-sm">@</span>
+              <Input
+                placeholder="username"
+                value={newAccountUsername}
+                onChange={(e) => setNewAccountUsername(e.target.value.replace('@', ''))}
+                className="pl-6"
+                autoFocus
+              />
+            </div>
+            <Input
+              placeholder="Display name"
+              value={newAccountDisplay}
+              onChange={(e) => setNewAccountDisplay(e.target.value)}
+            />
+            <div className="flex gap-1">
+              <Input
+                placeholder="Phonetic"
+                value={newAccountPhonetic}
+                onChange={(e) => setNewAccountPhonetic(e.target.value)}
+                className="flex-1"
+              />
+              <Button 
+                size="sm" 
+                className="h-9 px-3 bg-blue-600 hover:bg-blue-700" 
+                onClick={() => {
+                  addOtherAccount();
+                  setShowAddAccount(false);
+                }}
+                disabled={!newAccountUsername.trim()}
+              >
+                Add
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* Creator & Battle Info inside blue box */}
         <div className="mt-3 grid grid-cols-2 gap-3">

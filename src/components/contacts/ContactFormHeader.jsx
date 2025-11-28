@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
-import { Star, Upload, X, Plus, Users, Globe, Lock } from 'lucide-react';
+import { Star, Upload, X, Plus, Users, Globe, Lock, Pencil } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 
 const colorOptions = [
@@ -130,17 +130,16 @@ export default function ContactFormHeader({ formData, setFormData, onSave, isSav
 
       {/* Clubs/Groups Section */}
       <div className="space-y-2 pt-2">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
           <Label className="text-xs text-gray-500">Clubs & Groups</Label>
           <Button
             type="button"
             variant="ghost"
             size="sm"
-            className="h-6 px-2 text-purple-600 hover:text-purple-700"
+            className="h-5 w-5 p-0 text-purple-600 hover:text-purple-700"
             onClick={() => setShowClubsModal(true)}
           >
-            <Plus className="w-3 h-3 mr-1" />
-            <span className="text-xs">Edit</span>
+            <Pencil className="w-3 h-3" />
           </Button>
         </div>
         
