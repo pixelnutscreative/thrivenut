@@ -69,7 +69,7 @@ const allNavItems = [
             { name: 'TikTok Dashboard', icon: TrendingUp, path: 'TikTokDashboard' },
             { name: 'TikTok Contacts', icon: Users, path: 'TikTokContacts' },
             { name: 'Content Goals', icon: TrendingUp, path: 'TikTokGoals' },
-            { name: 'TikTok Engagement', icon: Users, path: 'TikTokEngagement' },
+            { name: 'Social Engagement', icon: Users, path: 'TikTokEngagement' },
                       { name: 'Content Calendar', icon: Video, path: 'ContentCalendar' },
                       { name: 'Creator Calendar', icon: Video, path: 'LiveSchedule' },
             { name: 'Live Reminders', icon: Bell, path: 'LiveReminders' },

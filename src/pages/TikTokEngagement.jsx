@@ -378,7 +378,7 @@ export default function TikTokEngagement() {
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800">TikTok Engagement Tracker</h1>
+            <h1 className="text-3xl font-bold text-gray-800">Social Engagement Tracker</h1>
             <p className="text-gray-600 mt-1">Engage with creators you've added to your contacts</p>
           </div>
           <Link to={createPageUrl('TikTokContacts')}>
@@ -439,6 +439,18 @@ export default function TikTokEngagement() {
             </TabsContent>
 
             <TabsContent value="all" className="mt-4">
+              {Object.keys(justEngaged).length > 0 && (
+                <div className="mb-4 flex justify-end">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setJustEngaged({})}
+                    className="text-gray-600 hover:text-gray-800"
+                  >
+                    Reset All Checkmarks
+                  </Button>
+                </div>
+              )}
               <motion.div layout className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <AnimatePresence mode="popLayout">
                   {engagementContacts.map((contact, index) => <CreatorCard key={contact.id} contact={contact} index={index} />)}
