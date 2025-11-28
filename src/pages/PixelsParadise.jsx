@@ -124,13 +124,14 @@ const fallbackResources = [
   },
 ];
 
-const categories = ['All', 'AI', 'Creative', 'Business', 'Learning', 'Community'];
+const categories = ['All', 'AI', 'Creative', 'Business', 'Learning', 'Workshops', 'Community'];
 
 const categoryColors = {
   AI: 'from-purple-500 to-pink-500',
   Creative: 'from-teal-500 to-cyan-500',
   Business: 'from-orange-500 to-amber-500',
   Learning: 'from-blue-500 to-indigo-500',
+  Workshops: 'from-rose-500 to-pink-500',
   Community: 'from-green-500 to-emerald-500',
 };
 
@@ -145,6 +146,9 @@ export default function PixelsParadise() {
 
   // Use database resources if available, otherwise fallback
   const resources = dbResources.length > 0 ? dbResources : fallbackResources;
+
+  // Separate featured/recurring items
+  const featuredResources = resources.filter(r => r.is_featured || r.is_recurring);
 
   const filteredResources = resources.filter(resource => {
     const matchesCategory = selectedCategory === 'All' || resource.category === selectedCategory;
@@ -200,6 +204,48 @@ export default function PixelsParadise() {
             </Button>
           ))}
         </div>
+
+        {/* Featured / Recurring Classes */}
+        {featuredResources.length > 0 && selectedCategory === 'All' && !search && (
+          <div className="space-y-3">
+            <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-purple-500" />
+              Featured & Recurring Classes
+            </h2>
+            <div className="grid sm:grid-cols-2 gap-4">
+              {featuredResources.map((resource) => (
+                <Card 
+                  key={resource.id || resource.name} 
+                  className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group"
+                  onClick={() => window.open(resource.link, '_blank')}
+                >
+                  <CardContent className="p-4 space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="font-bold text-lg text-gray-800 group-hover:text-purple-600 transition-colors">
+                        {resource.name}
+                      </h3>
+                      <ExternalLink className="w-4 h-4 text-gray-400 group-hover:text-purple-500 flex-shrink-0 mt-1" />
+                    </div>
+                    <p className="text-sm text-gray-600">{resource.description}</p>
+                    {resource.schedule && (
+                      <p className="text-xs font-medium text-purple-600 bg-purple-100 px-2 py-1 rounded-full w-fit">
+                        🗓️ {resource.schedule}
+                      </p>
+                    )}
+                    <div className="flex items-center gap-2 pt-1">
+                      {resource.is_recurring && (
+                        <Badge className="text-xs bg-green-100 text-green-700 border-0">🔄 Recurring</Badge>
+                      )}
+                      {resource.badge && (
+                        <Badge className="text-xs bg-purple-100 text-purple-700 border-0">{resource.badge}</Badge>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Resource Cards Grid */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">

@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Plus, Pencil, Trash2, ExternalLink, Loader2, GripVertical } from 'lucide-react';
 
-const categories = ['AI', 'Creative', 'Business', 'Learning', 'Community'];
+const categories = ['AI', 'Creative', 'Business', 'Learning', 'Workshops', 'Community'];
 
 const defaultResource = {
   name: '',
@@ -22,7 +22,10 @@ const defaultResource = {
   category: 'AI',
   keywords: [],
   sort_order: 100,
-  is_active: true
+  is_active: true,
+  is_featured: false,
+  is_recurring: false,
+  schedule: ''
 };
 
 export default function AdminResourcesContent() {
@@ -75,7 +78,10 @@ export default function AdminResourcesContent() {
       category: resource.category || 'AI',
       keywords: resource.keywords || [],
       sort_order: resource.sort_order || 100,
-      is_active: resource.is_active !== false
+      is_active: resource.is_active !== false,
+      is_featured: resource.is_featured || false,
+      is_recurring: resource.is_recurring || false,
+      schedule: resource.schedule || ''
     });
     setKeywordsInput((resource.keywords || []).join(', '));
     setShowForm(true);
@@ -121,6 +127,8 @@ export default function AdminResourcesContent() {
                     <span className="font-semibold">{resource.name}</span>
                     <Badge variant="outline" className="text-xs">{resource.category}</Badge>
                     {resource.badge && <Badge className="text-xs bg-purple-100 text-purple-700">{resource.badge}</Badge>}
+                    {resource.is_featured && <Badge className="text-xs bg-yellow-100 text-yellow-700">⭐ Featured</Badge>}
+                    {resource.is_recurring && <Badge className="text-xs bg-green-100 text-green-700">🔄 Recurring</Badge>}
                     {!resource.is_active && <Badge variant="destructive" className="text-xs">Hidden</Badge>}
                   </div>
                   <p className="text-sm text-gray-500 truncate">{resource.description}</p>
@@ -242,6 +250,14 @@ export default function AdminResourcesContent() {
               />
               <p className="text-xs text-gray-500 mt-1">Used for search matching</p>
             </div>
+            <div>
+              <Label>Schedule (for recurring classes)</Label>
+              <Input
+                value={formData.schedule}
+                onChange={(e) => setFormData({ ...formData, schedule: e.target.value })}
+                placeholder="e.g., Weekdays 3pm PST"
+              />
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Sort Order</Label>
@@ -251,12 +267,28 @@ export default function AdminResourcesContent() {
                   onChange={(e) => setFormData({ ...formData, sort_order: parseInt(e.target.value) || 100 })}
                 />
               </div>
-              <div className="flex items-center gap-2 pt-6">
-                <Switch
-                  checked={formData.is_active}
-                  onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
-                />
-                <Label>Active (visible on page)</Label>
+              <div className="space-y-2 pt-2">
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={formData.is_active}
+                    onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
+                  />
+                  <Label>Active</Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={formData.is_featured}
+                    onCheckedChange={(checked) => setFormData({ ...formData, is_featured: checked })}
+                  />
+                  <Label>⭐ Featured</Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={formData.is_recurring}
+                    onCheckedChange={(checked) => setFormData({ ...formData, is_recurring: checked })}
+                  />
+                  <Label>🔄 Recurring</Label>
+                </div>
               </div>
             </div>
             <div className="flex justify-end gap-2 pt-4">
