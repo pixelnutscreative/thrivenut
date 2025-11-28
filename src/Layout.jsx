@@ -230,11 +230,11 @@ export default function Layout({ children, currentPageName }) {
           <div className="flex items-center gap-2">
             <img 
               src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6924840d3628eabd1d7f8247/e225113d4_Untitleddesign.png" 
-              alt="ThriveNut" 
+              alt="Thrive Nut" 
               className="w-8 h-8"
             />
             <h1 className="text-2xl font-bold bg-gradient-to-r from-teal-600 to-purple-400 bg-clip-text text-transparent">
-              ThriveNut
+              Thrive Nut
             </h1>
           </div>
           <div className="flex items-center gap-2">
@@ -393,14 +393,14 @@ export default function Layout({ children, currentPageName }) {
               <div className="flex items-center gap-3">
                 <img 
                   src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6924840d3628eabd1d7f8247/e225113d4_Untitleddesign.png" 
-                  alt="ThriveNut" 
+                  alt="Thrive Nut" 
                   className="w-10 h-10"
                 />
                 <h1 
                   className="text-3xl font-bold bg-clip-text text-transparent"
                   style={{ backgroundImage: `linear-gradient(to right, ${primaryColor}, ${accentColor})` }}
                 >
-                  ThriveNut
+                  Thrive Nut
                 </h1>
               </div>
               {user && <NotificationBell userEmail={effectiveEmail} isDark={isDark} />}
