@@ -28,7 +28,9 @@ import {
   Star,
   Lock,
   UserCog,
-  SettingsIcon
+  SettingsIcon,
+  Sparkles,
+  Palette
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import TikTokAccessGate from './components/access/TikTokAccessGate';
@@ -77,6 +79,10 @@ const allNavItems = [
             { name: 'Song Generator', icon: Music, path: 'SongGenerator', moduleId: 'gifter' },
   ]},
   { name: 'SuperFan Access', icon: Star, path: 'SuperFanAccess', showWhenNoTikTokAccess: true },
+  { name: "Pixel's Paradise", icon: Sparkles, isSection: true, moduleId: 'pixels_paradise', alwaysShow: true, subItems: [
+    { name: 'Design Resources', icon: Palette, path: 'PixelsParadise' },
+    { name: 'Meet the Pixel Nuts', icon: Users, path: 'MeetThePixelNuts' },
+  ]},
   { name: 'Settings', icon: Settings, path: 'Settings', alwaysShow: true },
   { name: 'Admin Panel', icon: UserCog, path: 'Admin', adminOnly: true },
 ];

@@ -27,6 +27,8 @@ import WeeklyGifterGallery from './pages/WeeklyGifterGallery';
 import MasterContactDatabase from './pages/MasterContactDatabase';
 import Admin from './pages/Admin';
 import ContentCalendar from './pages/ContentCalendar';
+import MeetThePixelNuts from './pages/MeetThePixelNuts';
+import PixelsParadise from './pages/PixelsParadise';
 import __Layout from './Layout.jsx';
 
 
@@ -60,6 +62,8 @@ export const PAGES = {
     "MasterContactDatabase": MasterContactDatabase,
     "Admin": Admin,
     "ContentCalendar": ContentCalendar,
+    "MeetThePixelNuts": MeetThePixelNuts,
+    "PixelsParadise": PixelsParadise,
 }
 
 export const pagesConfig = {
