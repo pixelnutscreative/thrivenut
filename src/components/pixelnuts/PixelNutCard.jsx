@@ -115,6 +115,18 @@ export default function PixelNutCard({ pixelNut, isActive }) {
                 <p className="font-semibold text-gray-700">💡 {pixelNut.fun_fact}</p>
               </div>
             )}
+            {pixelNut.contribution && (
+              <div className="bg-white/60 rounded-xl p-3 text-center">
+                <p className="text-xs text-gray-500 uppercase tracking-wide">What They Do for Pixel Nuts</p>
+                <p className="font-semibold text-gray-700">🎨 {pixelNut.contribution}</p>
+              </div>
+            )}
+            {pixelNut.specialty && (
+              <div className="bg-white/60 rounded-xl p-3 text-center">
+                <p className="text-xs text-gray-500 uppercase tracking-wide">Specialty</p>
+                <p className="font-semibold text-gray-700">✨ {pixelNut.specialty}</p>
+              </div>
+            )}
           </div>
 
           {/* TikTok Link */}
