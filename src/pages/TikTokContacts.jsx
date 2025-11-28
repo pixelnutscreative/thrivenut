@@ -100,6 +100,7 @@ export default function TikTokContacts() {
   const [filterRoles, setFilterRoles] = useState([]);
   const [activeTab, setActiveTab] = useState('all');
   const [formTab, setFormTab] = useState('tiktok');
+  const defaultFormTab = 'tiktok'; // TikTok Contacts opens to TikTok tab
   
   // Quick add contact function for dropdowns
   const handleQuickAddContact = async (username) => {
@@ -212,7 +213,7 @@ export default function TikTokContacts() {
     setShowModal(false);
     setEditingContact(null);
     setFormData(defaultFormData);
-    setFormTab('tiktok');
+    setFormTab(defaultFormTab);
   };
 
   const handleEdit = (contact) => {
@@ -221,7 +222,7 @@ export default function TikTokContacts() {
       ...defaultFormData,
       ...contact
     });
-    setFormTab('personal');
+    setFormTab(defaultFormTab);
     setShowModal(true);
   };
 
