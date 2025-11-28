@@ -10,25 +10,35 @@ const resourceCategories = [
     icon: Wand2,
     color: 'from-purple-500 to-pink-500',
     items: [
-      { name: 'Coming Soon', description: 'AI-powered design tools', link: '#', badge: 'Soon' }
+      { name: 'Magai', description: 'Browser-based AI assistant with custom personalities', link: 'https://magai.co/?via=blue', badge: '🔥 Recommended' },
+      { name: 'Suno', description: 'Create amazing songs with AI ($10/mo for rights)', link: 'https://suno.com/invite/@iamnikolewithak' },
+      { name: 'Kling AI', description: 'Images to video and so much more!', link: 'https://klingai.com/h5-app/invitation?code=7BRNCEDRHUZE' },
+      { name: 'ElevenLabs', description: 'Create audio, sound effects, voice clones, music', link: 'https://try.elevenlabs.io/vit4ewk7bgyi' },
+      { name: 'Glam', description: 'Animate your logo with AI + pretty pics', link: 'https://glam.onelink.me/OCYu/qi44plg8', badge: '📱 App' },
     ]
   },
   {
-    title: 'Design Tools',
+    title: 'Creative Tools',
     icon: Palette,
     color: 'from-teal-500 to-cyan-500',
     items: [
-      { name: 'Canva', description: 'Easy graphic design', link: 'https://canva.com', badge: 'Free tier' },
-      { name: 'Figma', description: 'Collaborative design', link: 'https://figma.com', badge: 'Free tier' }
+      { name: 'Base44', description: 'Create no-code apps + sites', link: 'https://base44.pxf.io/c/5371887/2049275/25619?subId1=blue&trafcat=base' },
+      { name: 'Video Express', description: 'Turn images to videos - $179 one time, unlimited!', link: 'https://paykstrt.com/50942/156400', badge: '💎 One-Time' },
+      { name: 'Talking Photos', description: 'Make cartoon pics talk - $97 one time!', link: 'https://paykstrt.com/52357/156400', badge: '💎 One-Time' },
+      { name: 'Artistly', description: 'AI graphics + tools - $149 one time, unlimited!', link: 'https://paykstrt.com/52357/156400', badge: '💎 One-Time' },
     ]
   },
   {
-    title: 'Image Resources',
+    title: 'Business & Learning',
     icon: Image,
     color: 'from-orange-500 to-amber-500',
     items: [
-      { name: 'Unsplash', description: 'Free stock photos', link: 'https://unsplash.com', badge: 'Free' },
-      { name: 'Pexels', description: 'Free stock photos & videos', link: 'https://pexels.com', badge: 'Free' }
+      { name: 'The Nuts + Bots', description: 'White label High Level for your business + AI tools', link: 'https://thenutsandbots.com/pricing', badge: '⚡ All-in-One' },
+      { name: "Let's Go Nuts", description: 'Community app (Apple & Play Store)', link: 'https://keenkard.com/letsgonuts', badge: '📱 App' },
+      { name: 'AI Filmmaking', description: 'Join the Skool community - $5/month', link: 'https://keenkard.com/aifilmmaking' },
+      { name: 'MailChimp', description: 'Email marketing - FREE account', link: 'https://login.mailchimp.com/signup/?plan=free_monthly_plan_v0&locale=en', badge: '🆓 Free' },
+      { name: 'Bellator Life', description: 'Digital vending machines for passive income', link: 'https://bellatorlife.com/register?reference=iamnikolewithak' },
+      { name: 'Dreams Resources', description: 'Business resources & tools', link: 'https://dreamsresources.com/join/?refid=AA5551', badge: '🆓 Free' },
     ]
   }
 ];
