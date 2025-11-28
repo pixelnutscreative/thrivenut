@@ -276,20 +276,47 @@ export default function TikTokEngagement() {
               </div>
             )}
 
-            <div className="flex gap-2 pt-2">
-              <Button onClick={() => openTikTok(contact.username)} className="flex-1 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600">
-                <ExternalLink className="w-4 h-4 mr-2" />
-                Visit Profile
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => markEngagedMutation.mutate({ id: contact.id, currentHistory: contact.engagement_history, isLegacy: contact._isLegacy })}
-                className={`transition-all duration-300 ${isEngaged ? 'bg-green-500 border-green-500' : 'border-green-300 hover:bg-green-50'}`}
-                title="Mark as engaged"
-              >
-                <Check className={`w-4 h-4 ${isEngaged ? 'text-white' : 'text-green-600'}`} />
-              </Button>
+            {/* All TikTok accounts with checkmarks */}
+            <div className="space-y-2 pt-2">
+              {/* Primary account */}
+              <div className="flex items-center gap-2">
+                <Button 
+                  onClick={() => openTikTok(contact.username)} 
+                  className="flex-1 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 h-9 text-sm"
+                >
+                  <ExternalLink className="w-3 h-3 mr-1" />
+                  @{contact.username}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => markEngagedMutation.mutate({ id: contact.id, currentHistory: contact.engagement_history, isLegacy: contact._isLegacy })}
+                  className={`h-9 w-9 transition-all duration-300 ${isEngaged ? 'bg-green-500 border-green-500' : 'border-green-300 hover:bg-green-50'}`}
+                  title="Mark as engaged"
+                >
+                  <Check className={`w-4 h-4 ${isEngaged ? 'text-white' : 'text-green-600'}`} />
+                </Button>
+              </div>
+              
+              {/* Other accounts */}
+              {contact.other_tiktok_accounts?.map((acc, idx) => {
+                const account = typeof acc === 'string' ? { username: acc } : acc;
+                return (
+                  <div key={idx} className="flex items-center gap-2">
+                    <Button 
+                      onClick={() => openTikTok(account.username)} 
+                      variant="outline"
+                      className="flex-1 h-9 text-sm text-pink-600 border-pink-200 hover:bg-pink-50"
+                    >
+                      <ExternalLink className="w-3 h-3 mr-1" />
+                      @{account.username}
+                    </Button>
+                    <div className="h-9 w-9 flex items-center justify-center border border-gray-200 rounded-md text-gray-300">
+                      <Check className="w-4 h-4" />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </CardContent>
         </Card>

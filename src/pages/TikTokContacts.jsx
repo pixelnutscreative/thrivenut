@@ -343,31 +343,22 @@ export default function TikTokContacts() {
           </div>
 
           <div className="space-y-3">
-            {/* Photo + Names */}
-            <div className="flex items-start gap-3">
-              {contact.image_url ? (
-                <img src={contact.image_url} alt="" className="w-12 h-12 rounded-full object-cover" />
-              ) : (
-                <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
-                  <Users className="w-6 h-6 text-gray-300" />
-                </div>
+            {/* Names - no image */}
+            <div className="flex-1 min-w-0 pr-16">
+              <h3 className="font-bold text-lg truncate">
+                {contact.real_name || contact.nickname || contact.display_name || `@${contact.username}`}
+              </h3>
+              {contact.nickname && contact.real_name && (
+                <p className="text-sm text-gray-500">"{contact.nickname}"</p>
               )}
-              <div className="flex-1 min-w-0">
-                <h3 className="font-bold text-lg truncate">
-                  {contact.real_name || contact.nickname || contact.display_name || `@${contact.username}`}
-                </h3>
-                {contact.nickname && contact.real_name && (
-                  <p className="text-sm text-gray-500">"{contact.nickname}"</p>
-                )}
-                {contact.username && (
-                  <p 
-                    className="text-sm text-purple-600 cursor-pointer hover:underline"
-                    onClick={() => window.open(`https://tiktok.com/@${contact.username}`, '_blank')}
-                  >
-                    @{contact.username}
-                  </p>
-                )}
-              </div>
+              {contact.username && (
+                <p 
+                  className="text-sm text-purple-600 cursor-pointer hover:underline"
+                  onClick={() => window.open(`https://tiktok.com/@${contact.username}`, '_blank')}
+                >
+                  @{contact.username}
+                </p>
+              )}
             </div>
 
             {/* Roles */}
@@ -457,10 +448,10 @@ export default function TikTokContacts() {
                 className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs transition-all cursor-pointer hover:scale-105 ${
                   contact.is_gifter ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
                 }`}
-                title="Gifter for Songs"
+                title="Top 3 Gift Gallery"
               >
                 <Gift className={`w-3 h-3 ${contact.is_gifter ? 'fill-amber-500' : ''}`} />
-                <span className="font-medium">GG</span>
+                <span className="font-medium">Top 3</span>
               </button>
             </div>
 
