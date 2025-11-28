@@ -46,6 +46,16 @@ const textRoles = {
 
 const roleConfig = { ...iconRoles, ...textRoles };
 
+// Live stream type categories for filtering
+const liveTypeCategories = [
+  { label: 'Collaboration', types: ['Co-Host', 'Multi-Guest', 'Battle'] },
+  { label: 'Interactive', types: ['Engagement', 'Q&A', 'Talk Show', 'Storytime'] },
+  { label: 'Educational', types: ['Teaching', 'Cooking', 'DIY/Crafts', 'Fitness'] },
+  { label: 'Entertainment', types: ['Gaming', 'Music', 'ASMR', 'Unboxing'] },
+  { label: 'Lifestyle', types: ['Religious', 'Sleep', 'Chat'] },
+];
+const allLiveTypes = liveTypeCategories.flatMap(cat => cat.types);
+
 const defaultFormData = {
   real_name: '',
   nickname: '',
@@ -117,6 +127,7 @@ export default function TikTokContacts() {
   };
   const [formData, setFormData] = useState(defaultFormData);
   const [filterVeterans, setFilterVeterans] = useState(false);
+  const [filterLiveType, setFilterLiveType] = useState('');
   
   // CSV Import state
   const [showImportModal, setShowImportModal] = useState(false);
@@ -253,11 +264,12 @@ export default function TikTokContacts() {
         c.nickname?.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesRole = filterRoles.length === 0 || filterRoles.some(role => c.role?.includes(role));
       const matchesVeteran = !filterVeterans || c.is_veteran;
+      const matchesLiveType = !filterLiveType || c.live_stream_types?.includes(filterLiveType);
 
-      if (activeTab === 'engagement') return matchesSearch && matchesRole && matchesVeteran && c.engagement_enabled;
-      if (activeTab === 'calendar') return matchesSearch && matchesRole && matchesVeteran && c.calendar_enabled;
-      if (activeTab === 'gifters') return matchesSearch && matchesRole && matchesVeteran && c.is_gifter;
-      return matchesSearch && matchesRole && matchesVeteran;
+      if (activeTab === 'engagement') return matchesSearch && matchesRole && matchesVeteran && matchesLiveType && c.engagement_enabled;
+      if (activeTab === 'calendar') return matchesSearch && matchesRole && matchesVeteran && matchesLiveType && c.calendar_enabled;
+      if (activeTab === 'gifters') return matchesSearch && matchesRole && matchesVeteran && matchesLiveType && c.is_gifter;
+      return matchesSearch && matchesRole && matchesVeteran && matchesLiveType;
     })
     .sort((a, b) => {
       if (a.is_favorite && !b.is_favorite) return -1;
@@ -579,11 +591,45 @@ export default function TikTokContacts() {
                 Veterans
               </Badge>
 
-              {(filterRoles.length > 0 || filterVeterans) && (
+              {/* Live Type Filter Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Video className="w-4 h-4" />
+                    {filterLiveType || 'LIVE Type'}
+                    {filterLiveType && (
+                      <X 
+                        className="w-3 h-3 ml-1 hover:text-red-500" 
+                        onClick={(e) => { e.stopPropagation(); setFilterLiveType(''); }}
+                      />
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-56">
+                  <DropdownMenuLabel>Filter by LIVE Type</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {liveTypeCategories.map(category => (
+                    <React.Fragment key={category.label}>
+                      <DropdownMenuLabel className="text-xs text-gray-500 font-normal">{category.label}</DropdownMenuLabel>
+                      {category.types.map(type => (
+                        <DropdownMenuCheckboxItem
+                          key={type}
+                          checked={filterLiveType === type}
+                          onCheckedChange={() => setFilterLiveType(filterLiveType === type ? '' : type)}
+                        >
+                          {type}
+                        </DropdownMenuCheckboxItem>
+                      ))}
+                    </React.Fragment>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {(filterRoles.length > 0 || filterVeterans || filterLiveType) && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => { setFilterRoles([]); setFilterVeterans(false); }}
+                  onClick={() => { setFilterRoles([]); setFilterVeterans(false); setFilterLiveType(''); }}
                   className="text-gray-500 hover:text-gray-700"
                 >
                   <X className="w-4 h-4 mr-1" />
