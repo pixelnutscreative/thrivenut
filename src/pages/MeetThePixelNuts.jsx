@@ -165,7 +165,6 @@ export default function MeetThePixelNuts() {
                   {uploadStatus}
                 </div>
               )}
-              </div>
             </CardContent>
           </Card>
         )}
