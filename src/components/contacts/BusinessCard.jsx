@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Trash2, Building2, Phone, Mail, Globe, Pencil, Check, X } from 'lucide-react';
+import { Trash2, Building2, Phone, Mail, Globe, Pencil, Check, X, Instagram, Facebook, Linkedin, Twitter, Youtube } from 'lucide-react';
 import NotesWithHistory from './NotesWithHistory';
 
 export default function BusinessCard({ business, onUpdate, onDelete }) {
@@ -88,6 +88,21 @@ export default function BusinessCard({ business, onUpdate, onDelete }) {
             />
           </div>
 
+          <div className="space-y-1">
+            <Label className="text-xs">Business Social Media</Label>
+            <div className="grid grid-cols-2 gap-2">
+              {['instagram', 'facebook', 'linkedin', 'twitter', 'youtube', 'tiktok'].map(platform => (
+                <Input
+                  key={platform}
+                  placeholder={platform.charAt(0).toUpperCase() + platform.slice(1)}
+                  value={editData.social_links?.[platform] || ''}
+                  onChange={(e) => setEditData({ ...editData, social_links: { ...editData.social_links, [platform]: e.target.value } })}
+                  className="h-7 text-xs"
+                />
+              ))}
+            </div>
+          </div>
+
           <NotesWithHistory
             notes={editData.business_notes || []}
             onAddNote={handleAddNote}
@@ -131,6 +146,16 @@ export default function BusinessCard({ business, onUpdate, onDelete }) {
                   <a href={business.business_website} target="_blank" rel="noopener noreferrer" className="hover:text-purple-600">
                     {business.business_website.replace(/^https?:\/\//, '')}
                   </a>
+                </div>
+              )}
+              {business.social_links && Object.entries(business.social_links).filter(([_, v]) => v).length > 0 && (
+                <div className="flex items-center gap-2 pt-1">
+                  {business.social_links.instagram && <a href={`https://instagram.com/${business.social_links.instagram}`} target="_blank" rel="noopener noreferrer" className="text-pink-500 hover:text-pink-600"><Instagram className="w-4 h-4" /></a>}
+                  {business.social_links.facebook && <a href={`https://facebook.com/${business.social_links.facebook}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-700"><Facebook className="w-4 h-4" /></a>}
+                  {business.social_links.linkedin && <a href={`https://linkedin.com/in/${business.social_links.linkedin}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600"><Linkedin className="w-4 h-4" /></a>}
+                  {business.social_links.twitter && <a href={`https://twitter.com/${business.social_links.twitter}`} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-700"><Twitter className="w-4 h-4" /></a>}
+                  {business.social_links.youtube && <a href={`https://youtube.com/@${business.social_links.youtube}`} target="_blank" rel="noopener noreferrer" className="text-red-500 hover:text-red-600"><Youtube className="w-4 h-4" /></a>}
+                  {business.social_links.tiktok && <a href={`https://tiktok.com/@${business.social_links.tiktok}`} target="_blank" rel="noopener noreferrer" className="text-gray-800 hover:text-black">TT</a>}
                 </div>
               )}
             </div>

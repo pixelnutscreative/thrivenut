@@ -444,22 +444,6 @@ export default function TikTokTabContent({
         />
       </div>
 
-      {/* Social Links */}
-      <div className="space-y-2">
-        <Label className="text-sm font-medium">Other Social Media</Label>
-        <div className="grid grid-cols-2 gap-2">
-          {['instagram', 'facebook', 'youtube', 'twitter', 'linkedin', 'threads', 'twitch', 'discord'].map(platform => (
-            <Input
-              key={platform}
-              placeholder={platform.charAt(0).toUpperCase() + platform.slice(1)}
-              value={formData.social_links?.[platform] || ''}
-              onChange={(e) => setFormData({ ...formData, social_links: { ...formData.social_links, [platform]: e.target.value } })}
-              className="h-8 text-xs"
-            />
-          ))}
-        </div>
-      </div>
-
       {/* TikTok Notes */}
       <NotesWithHistory
         notes={formData.tiktok_notes || []}
