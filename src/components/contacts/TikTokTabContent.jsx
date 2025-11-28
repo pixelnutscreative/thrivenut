@@ -5,29 +5,41 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { 
-  Plus, Swords, Gift, Users, Heart, Video, Moon, ShoppingBag, 
-  MessageCircle, BookOpen, DollarSign, Calendar, Sparkles, Loader2
+  Plus, Gift, Users, Heart, Video, Moon, ShoppingBag, 
+  MessageCircle, BookOpen, DollarSign, Calendar, Sparkles, 
+  Pencil, Flame, Zap, CloudFog, Hammer, Timer, Award
 } from 'lucide-react';
 import NotesWithHistory from './NotesWithHistory';
 import SearchableContactSelect from '../tiktok/SearchableContactSelect';
+
+// Battle inventory icons
+const battleInventoryItems = [
+  { key: 'boxing_gloves', label: 'Boxing Gloves', icon: '🥊' },
+  { key: 'lightning_bolts', label: 'Lightning Bolts', icon: '⚡' },
+  { key: 'mist_clouds', label: 'Mist Clouds', icon: '🌫️' },
+  { key: 'hammers', label: 'Hammers', icon: '🔨' },
+  { key: 'timers', label: '10s Timers', icon: '⏱️' },
+];
 
 // Organized roles by category
 const roleCategories = {
   battle: {
     title: 'Battle & Competition',
     roles: {
-      battle_sniper: { label: 'Battle Sniper', icon: Swords, color: 'bg-red-100 text-red-700', borderColor: 'border-red-300' },
+      loves_to_battle: { label: 'Loves to Battle', icon: Award, color: 'bg-red-100 text-red-700', borderColor: 'border-red-300' },
+      battle_sniper: { label: 'Battle Sniper', icon: Flame, color: 'bg-orange-100 text-orange-700', borderColor: 'border-orange-300' },
     }
   },
   engagement: {
     title: 'Engagement Style',
     roles: {
-      gifter: { label: 'Gifter', icon: Gift, color: 'bg-amber-100 text-amber-700', borderColor: 'border-amber-300' },
-      tapper: { label: 'Tapper', icon: Heart, color: 'bg-pink-100 text-pink-700', borderColor: 'border-pink-300' },
-      authentic_commenter: { label: 'Commenter', icon: MessageCircle, color: 'bg-teal-100 text-teal-700', borderColor: 'border-teal-300' },
-      sharer: { label: 'Story Sharer', icon: BookOpen, color: 'bg-blue-100 text-blue-700', borderColor: 'border-blue-300' },
-      engaging_bestie: { label: 'Engaging Bestie', icon: Users, color: 'bg-purple-100 text-purple-700', borderColor: 'border-purple-300' },
+      gifter: { label: 'Gifts', icon: Gift, color: 'bg-amber-100 text-amber-700', borderColor: 'border-amber-300' },
+      tapper: { label: 'Taps', icon: Heart, color: 'bg-pink-100 text-pink-700', borderColor: 'border-pink-300' },
+      authentic_commenter: { label: 'Comments', icon: MessageCircle, color: 'bg-teal-100 text-teal-700', borderColor: 'border-teal-300' },
+      sharer: { label: 'Shares to Story', icon: BookOpen, color: 'bg-blue-100 text-blue-700', borderColor: 'border-blue-300' },
+      hype_person: { label: 'Hype Person', icon: Zap, color: 'bg-yellow-100 text-yellow-700', borderColor: 'border-yellow-300' },
     }
   },
   creator: {
@@ -74,8 +86,7 @@ export default function TikTokTabContent({
 }) {
   const [customRoleInput, setCustomRoleInput] = useState('');
   const [newOtherTikTok, setNewOtherTikTok] = useState('');
-  const [newModForName, setNewModForName] = useState('');
-  const [newTheirModName, setNewTheirModName] = useState('');
+  const [showEngagementSettings, setShowEngagementSettings] = useState(false);
 
   const toggleRole = (role) => {
     setFormData(prev => ({
@@ -102,19 +113,87 @@ export default function TikTokTabContent({
     }));
   };
 
+  const updateBattleInventory = (key, value) => {
+    setFormData(prev => ({
+      ...prev,
+      battle_inventory: {
+        ...(prev.battle_inventory || {}),
+        [key]: Math.max(0, parseInt(value) || 0)
+      }
+    }));
+  };
+
   return (
     <div className="space-y-4">
       {/* Feature Toggles */}
       <div className="p-3 bg-gray-50 rounded-lg">
         <h4 className="font-semibold text-sm mb-2">Enable Features</h4>
         <div className="grid grid-cols-3 gap-2">
-          <div
-            onClick={() => setFormData({ ...formData, engagement_enabled: !formData.engagement_enabled })}
-            className="flex items-center gap-1 p-2 border rounded-lg cursor-pointer hover:bg-white text-xs"
-          >
-            <Checkbox checked={formData.engagement_enabled} />
-            <Sparkles className="w-3 h-3 text-purple-500" />
-            <span className="text-gray-700 font-medium">Engage</span>
+          <div className="flex items-center gap-1">
+            <div
+              onClick={() => setFormData({ ...formData, engagement_enabled: !formData.engagement_enabled })}
+              className="flex items-center gap-1 p-2 border rounded-lg cursor-pointer hover:bg-white text-xs flex-1"
+            >
+              <Checkbox checked={formData.engagement_enabled} />
+              <Sparkles className="w-3 h-3 text-purple-500" />
+              <span className="text-gray-700 font-medium">Engage</span>
+            </div>
+            {formData.engagement_enabled && (
+              <Popover open={showEngagementSettings} onOpenChange={setShowEngagementSettings}>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                    <Pencil className="w-3 h-3 text-purple-500" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64 p-3">
+                  <div className="space-y-3">
+                    <h5 className="font-semibold text-sm text-purple-800">Engagement Frequency</h5>
+                    <Select 
+                      value={formData.engagement_frequency || 'multiple_per_week'} 
+                      onValueChange={(v) => setFormData({ ...formData, engagement_frequency: v })}
+                    >
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="daily">Daily</SelectItem>
+                        <SelectItem value="multiple_per_week">Specific Days</SelectItem>
+                        <SelectItem value="monthly">Monthly</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    {formData.engagement_frequency === 'multiple_per_week' && (
+                      <div className="flex flex-wrap gap-1">
+                        {daysOfWeek.map(day => (
+                          <Badge
+                            key={day}
+                            variant={formData.engagement_days?.includes(day) ? 'default' : 'outline'}
+                            className="cursor-pointer text-xs"
+                            onClick={() => toggleDay(day)}
+                          >
+                            {day.slice(0, 3)}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+
+                    {formData.engagement_frequency === 'monthly' && (
+                      <Select 
+                        value={String(formData.engagement_day_of_month || 1)} 
+                        onValueChange={(v) => setFormData({ ...formData, engagement_day_of_month: parseInt(v) })}
+                      >
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                            <SelectItem key={day} value={String(day)}>
+                              {day === 1 ? '1st' : day === 2 ? '2nd' : day === 3 ? '3rd' : `${day}th`}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            )}
           </div>
           <div
             onClick={() => setFormData({ ...formData, calendar_enabled: !formData.calendar_enabled })}
@@ -122,6 +201,7 @@ export default function TikTokTabContent({
           >
             <Checkbox checked={formData.calendar_enabled} />
             <Calendar className="w-3 h-3 text-blue-500" />
+            <span className="text-gray-700 font-medium text-[10px]">+ Creator Cal</span>
           </div>
           <div
             onClick={() => setFormData({ ...formData, is_gifter: !formData.is_gifter })}
@@ -129,7 +209,7 @@ export default function TikTokTabContent({
           >
             <Checkbox checked={formData.is_gifter} />
             <Gift className="w-3 h-3 text-amber-500" />
-            <span className="text-gray-700 font-medium">GG</span>
+            <span className="text-gray-700 font-medium text-[10px]">Top Gifter</span>
           </div>
         </div>
       </div>
@@ -138,11 +218,15 @@ export default function TikTokTabContent({
       <div className="grid grid-cols-3 gap-3">
         <div className="space-y-1">
           <Label className="text-xs">Username</Label>
-          <Input
-            placeholder="@username"
-            value={formData.username || ''}
-            onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-          />
+          <div className="relative">
+            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-sm">@</span>
+            <Input
+              placeholder="username"
+              value={(formData.username || '').replace('@', '')}
+              onChange={(e) => setFormData({ ...formData, username: e.target.value.replace('@', '') })}
+              className="pl-6"
+            />
+          </div>
         </div>
         <div className="space-y-1">
           <Label className="text-xs">Display Name</Label>
@@ -162,9 +246,88 @@ export default function TikTokTabContent({
         </div>
       </div>
 
-      {/* Roles */}
+      {/* Other TikTok Accounts - moved up */}
+      <div className="space-y-2">
+        <Label className="text-xs">Other TikTok Accounts</Label>
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-sm">@</span>
+            <Input
+              placeholder="otheraccount"
+              value={newOtherTikTok}
+              onChange={(e) => setNewOtherTikTok(e.target.value.replace('@', ''))}
+              className="h-8 pl-6"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && newOtherTikTok.trim()) {
+                  const cleaned = newOtherTikTok.replace('@', '').trim();
+                  if (!formData.other_tiktok_accounts?.includes(cleaned)) {
+                    setFormData({ ...formData, other_tiktok_accounts: [...(formData.other_tiktok_accounts || []), cleaned] });
+                  }
+                  setNewOtherTikTok('');
+                }
+              }}
+            />
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8"
+            onClick={() => {
+              if (newOtherTikTok.trim()) {
+                const cleaned = newOtherTikTok.replace('@', '').trim();
+                if (!formData.other_tiktok_accounts?.includes(cleaned)) {
+                  setFormData({ ...formData, other_tiktok_accounts: [...(formData.other_tiktok_accounts || []), cleaned] });
+                }
+                setNewOtherTikTok('');
+              }
+            }}
+          >
+            <Plus className="w-4 h-4" />
+          </Button>
+        </div>
+        {formData.other_tiktok_accounts?.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {formData.other_tiktok_accounts?.map((acc, idx) => (
+              <Badge
+                key={idx}
+                variant="secondary"
+                className="cursor-pointer text-xs bg-pink-100 text-pink-700"
+                onClick={() => setFormData({ ...formData, other_tiktok_accounts: formData.other_tiktok_accounts.filter((_, i) => i !== idx) })}
+              >
+                @{acc} ✕
+              </Badge>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* TikTok Notes - moved up */}
+      <NotesWithHistory
+        notes={formData.tiktok_notes || []}
+        onAddNote={handleAddNote}
+        label="TikTok Notes"
+      />
+
+      {/* Relationship Roles - moved to top of roles */}
       <div className="space-y-3">
         <Label className="text-sm font-medium">Roles</Label>
+        
+        <div className="space-y-1.5">
+          <span className="text-xs text-gray-500 font-medium">Relationship</span>
+          <div className="flex flex-wrap gap-1">
+            {Object.entries(textRoles).map(([key, config]) => (
+              <Badge
+                key={key}
+                variant={formData.role?.includes(key) ? 'default' : 'outline'}
+                className={`cursor-pointer text-xs ${formData.role?.includes(key) ? 'bg-purple-600' : config.color}`}
+                onClick={() => toggleRole(key)}
+              >
+                {config.label}
+              </Badge>
+            ))}
+          </div>
+        </div>
         
         {/* Categorized Icon Roles */}
         {Object.entries(roleCategories).map(([catKey, category]) => (
@@ -191,25 +354,29 @@ export default function TikTokTabContent({
                 );
               })}
             </div>
+            
+            {/* Battle Inventory - show under Battle section */}
+            {catKey === 'battle' && (formData.role?.includes('loves_to_battle') || formData.role?.includes('battle_sniper')) && (
+              <div className="p-3 bg-red-50 rounded-lg border border-red-200 mt-2">
+                <h5 className="text-xs font-semibold text-red-800 mb-2">Battle Inventory</h5>
+                <div className="grid grid-cols-5 gap-2">
+                  {battleInventoryItems.map(item => (
+                    <div key={item.key} className="text-center">
+                      <span className="text-lg">{item.icon}</span>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={formData.battle_inventory?.[item.key] || 0}
+                        onChange={(e) => updateBattleInventory(item.key, e.target.value)}
+                        className="h-7 text-xs text-center mt-1"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         ))}
-
-        {/* Relationship Roles */}
-        <div className="space-y-1.5">
-          <span className="text-xs text-gray-500 font-medium">Relationship</span>
-          <div className="flex flex-wrap gap-1">
-            {Object.entries(textRoles).map(([key, config]) => (
-              <Badge
-                key={key}
-                variant={formData.role?.includes(key) ? 'default' : 'outline'}
-                className={`cursor-pointer text-xs ${formData.role?.includes(key) ? 'bg-purple-600' : config.color}`}
-                onClick={() => toggleRole(key)}
-              >
-                {config.label}
-              </Badge>
-            ))}
-          </div>
-        </div>
 
         {/* Custom Roles */}
         <div className="space-y-1.5">
@@ -268,55 +435,6 @@ export default function TikTokTabContent({
         </div>
       </div>
 
-      {/* Engagement Settings */}
-      {formData.engagement_enabled && (
-        <div className="p-3 bg-purple-50 rounded-lg border-l-4 border-purple-400 space-y-3">
-          <h4 className="font-semibold text-sm text-purple-800">Engagement Settings</h4>
-          <Select 
-            value={formData.engagement_frequency || 'multiple_per_week'} 
-            onValueChange={(v) => setFormData({ ...formData, engagement_frequency: v })}
-          >
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="daily">Daily</SelectItem>
-              <SelectItem value="multiple_per_week">Specific Days</SelectItem>
-              <SelectItem value="monthly">Monthly</SelectItem>
-            </SelectContent>
-          </Select>
-
-          {formData.engagement_frequency === 'multiple_per_week' && (
-            <div className="flex flex-wrap gap-1">
-              {daysOfWeek.map(day => (
-                <Badge
-                  key={day}
-                  variant={formData.engagement_days?.includes(day) ? 'default' : 'outline'}
-                  className="cursor-pointer text-xs"
-                  onClick={() => toggleDay(day)}
-                >
-                  {day.slice(0, 3)}
-                </Badge>
-              ))}
-            </div>
-          )}
-
-          {formData.engagement_frequency === 'monthly' && (
-            <Select 
-              value={String(formData.engagement_day_of_month || 1)} 
-              onValueChange={(v) => setFormData({ ...formData, engagement_day_of_month: parseInt(v) })}
-            >
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
-                  <SelectItem key={day} value={String(day)}>
-                    {day === 1 ? '1st' : day === 2 ? '2nd' : day === 3 ? '3rd' : `${day}th`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        </div>
-      )}
-
       {/* Mods Section */}
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-2">
@@ -365,57 +483,6 @@ export default function TikTokTabContent({
               ) : null;
             })}
           </div>
-        </div>
-      </div>
-
-      {/* Other TikTok Accounts */}
-      <div className="space-y-2">
-        <Label className="text-xs">Other TikTok Accounts</Label>
-        <div className="flex gap-2">
-          <Input
-            placeholder="@otheraccount"
-            value={newOtherTikTok}
-            onChange={(e) => setNewOtherTikTok(e.target.value)}
-            className="h-8"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && newOtherTikTok.trim()) {
-                const cleaned = newOtherTikTok.replace('@', '').trim();
-                if (!formData.other_tiktok_accounts?.includes(cleaned)) {
-                  setFormData({ ...formData, other_tiktok_accounts: [...(formData.other_tiktok_accounts || []), cleaned] });
-                }
-                setNewOtherTikTok('');
-              }
-            }}
-          />
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="h-8"
-            onClick={() => {
-              if (newOtherTikTok.trim()) {
-                const cleaned = newOtherTikTok.replace('@', '').trim();
-                if (!formData.other_tiktok_accounts?.includes(cleaned)) {
-                  setFormData({ ...formData, other_tiktok_accounts: [...(formData.other_tiktok_accounts || []), cleaned] });
-                }
-                setNewOtherTikTok('');
-              }
-            }}
-          >
-            <Plus className="w-4 h-4" />
-          </Button>
-        </div>
-        <div className="flex flex-wrap gap-1">
-          {formData.other_tiktok_accounts?.map((acc, idx) => (
-            <Badge
-              key={idx}
-              variant="secondary"
-              className="cursor-pointer text-xs bg-pink-100 text-pink-700"
-              onClick={() => setFormData({ ...formData, other_tiktok_accounts: formData.other_tiktok_accounts.filter((_, i) => i !== idx) })}
-            >
-              @{acc} ✕
-            </Badge>
-          ))}
         </div>
       </div>
 
@@ -472,13 +539,6 @@ export default function TikTokTabContent({
           onChange={(e) => setFormData({ ...formData, started_going_live: e.target.value })}
         />
       </div>
-
-      {/* TikTok Notes */}
-      <NotesWithHistory
-        notes={formData.tiktok_notes || []}
-        onAddNote={handleAddNote}
-        label="TikTok Notes"
-      />
     </div>
   );
 }
