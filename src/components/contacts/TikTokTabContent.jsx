@@ -11,7 +11,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { 
   Plus, Gift, Users, Heart, Video, Moon, ShoppingBag, 
   MessageCircle, BookOpen, DollarSign, Calendar, Sparkles, 
-  Pencil, Flame, Zap, Award, X, ChevronDown, ChevronRight, Sticker
+  Pencil, Flame, Zap, Award, X, ChevronDown, ChevronRight, Sticker, Trash2
 } from 'lucide-react';
 import QuickAddContactSelect from './QuickAddContactSelect';
 
@@ -48,12 +48,11 @@ const battleRoles = {
   battle_sniper: { label: 'Battle Sniper', icon: Flame, color: 'bg-orange-100 text-orange-700' },
 };
 
-// Relationship roles (stacked in battle section)
+// Relationship roles (stacked in battle section) - removed irl_friend since it's in header now
 const relationshipRoles = {
   subscriber: { label: 'Subscriber', color: 'bg-cyan-100 text-cyan-700' },
   superfan: { label: 'Superfan', color: 'bg-rose-100 text-rose-700' },
-  discord: { label: 'Discord', color: 'bg-violet-100 text-violet-700' },
-  irl_friend: { label: 'Friend IRL', color: 'bg-green-100 text-green-700' }
+  discord: { label: 'Discord', color: 'bg-violet-100 text-violet-700' }
 };
 
 const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -370,8 +369,8 @@ export default function TikTokTabContent({
                   }}
                   className="flex-1"
                 />
-                <Button variant="ghost" size="sm" className="h-9 w-9 p-0" onClick={() => removeOtherAccount(idx)}>
-                  <X className="w-4 h-4 text-gray-400 hover:text-red-500" />
+                <Button variant="ghost" size="sm" className="h-9 w-9 p-0 text-gray-400 hover:text-red-500" onClick={() => removeOtherAccount(idx)}>
+                  <Trash2 className="w-4 h-4" />
                 </Button>
               </div>
             </div>
@@ -466,32 +465,32 @@ export default function TikTokTabContent({
         </div>
       </div>
 
-      {/* How did you find them? - Green themed */}
+      {/* How did you find each other? - Green themed */}
       <div className="p-3 bg-green-50 rounded-lg border border-green-200 space-y-2">
-        <Label className="text-xs font-semibold text-green-800">How did you find them?</Label>
+        <Label className="text-xs font-semibold text-green-800">How did you find each other?</Label>
         <div className="flex gap-2 items-center">
           <div
-            onClick={() => setFormData({ ...formData, found_on_fyp: !formData.found_on_fyp, met_through_id: formData.found_on_fyp ? formData.met_through_id : null })}
-            className={`flex items-center gap-1 px-3 py-1.5 border rounded-lg cursor-pointer text-xs ${formData.found_on_fyp ? 'border-green-500 bg-green-100 text-green-700' : 'border-gray-200 bg-white'}`}
+            onClick={() => setFormData({ ...formData, found_on_fyf: !formData.found_on_fyf, met_through_id: formData.found_on_fyf ? formData.met_through_id : null })}
+            className={`flex items-center gap-1 px-3 py-1.5 border rounded-lg cursor-pointer text-xs ${formData.found_on_fyf ? 'border-green-500 bg-green-100 text-green-700' : 'border-gray-200 bg-white'}`}
           >
-            <Checkbox checked={formData.found_on_fyp} className="h-3 w-3" />
-            <span>Found on FYP</span>
+            <Checkbox checked={formData.found_on_fyf} className="h-3 w-3" />
+            <span>FYF</span>
           </div>
           <span className="text-gray-400 text-xs">or</span>
           <div className="flex-1">
             <QuickAddContactSelect
               contacts={contacts?.filter(c => c.id !== editingContactId) || []}
               value={formData.met_through_id || ''}
-              onChange={(v) => setFormData({ ...formData, met_through_id: v, found_on_fyp: false })}
+              onChange={(v) => setFormData({ ...formData, met_through_id: v, found_on_fyf: false })}
               onQuickAdd={onQuickAddContact}
               placeholder="Through a contact..."
-              disabled={formData.found_on_fyp}
+              disabled={formData.found_on_fyf}
             />
           </div>
         </div>
         {formData.met_through_id && (
           <p className="text-xs text-green-600">
-            Found through: @{contacts?.find(c => c.id === formData.met_through_id)?.username || 'Unknown'}
+            Connected through: @{contacts?.find(c => c.id === formData.met_through_id)?.username || 'Unknown'}
           </p>
         )}
       </div>
@@ -508,9 +507,10 @@ export default function TikTokTabContent({
         />
       </div>
 
-      {/* Relationship Section - Rose themed */}
+      {/* Relationship & Custom Fields - Combined Rose themed */}
       <div className="p-3 bg-rose-50 rounded-lg border border-rose-200 space-y-2">
         <div className="flex flex-wrap gap-1">
+          {/* Relationship roles */}
           {Object.entries(relationshipRoles).map(([key, config]) => (
             <Badge
               key={key}
@@ -521,20 +521,14 @@ export default function TikTokTabContent({
               {config.label}
             </Badge>
           ))}
-        </div>
-      </div>
-
-      {/* Custom Fields - Red themed (moved here) */}
-      <div className="p-3 bg-red-50 rounded-lg border border-red-200 space-y-2">
-        <Label className="text-xs text-red-800 font-medium">Custom Fields</Label>
-        <div className="flex flex-wrap gap-1">
+          {/* Custom fields inline */}
           {savedCustomRoles?.map(role => {
             const customRole = `custom:${role}`;
             return (
               <Badge
                 key={role}
                 variant={formData.role?.includes(customRole) ? 'default' : 'outline'}
-                className={`cursor-pointer text-xs ${formData.role?.includes(customRole) ? 'bg-red-600' : 'bg-white text-red-700 border-red-300'}`}
+                className={`cursor-pointer text-xs ${formData.role?.includes(customRole) ? 'bg-purple-600' : 'bg-white text-purple-700 border-purple-300'}`}
                 onClick={() => toggleRole(customRole)}
               >
                 {role}
@@ -544,10 +538,10 @@ export default function TikTokTabContent({
         </div>
         <div className="flex gap-2">
           <Input
-            placeholder="Add custom field..."
+            placeholder="Add custom..."
             value={customRoleInput}
             onChange={(e) => setCustomRoleInput(e.target.value)}
-            className="h-8 text-xs"
+            className="h-7 text-xs"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && customRoleInput.trim()) {
                 const customRole = `custom:${customRoleInput.trim()}`;
@@ -563,7 +557,7 @@ export default function TikTokTabContent({
             type="button"
             size="sm"
             variant="outline"
-            className="h-8"
+            className="h-7 px-2"
             onClick={() => {
               if (customRoleInput.trim()) {
                 const customRole = `custom:${customRoleInput.trim()}`;
