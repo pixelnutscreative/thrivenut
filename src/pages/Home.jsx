@@ -128,26 +128,20 @@ export default function Home() {
   }, []);
 
   const handleLogin = () => {
-    base44.auth.redirectToLogin(createPageUrl('Dashboard'));
+    if (isAuthenticated) {
+      window.location.href = createPageUrl('Dashboard');
+    } else {
+      base44.auth.redirectToLogin(createPageUrl('Dashboard'));
+    }
   };
 
   const handleGetStarted = () => {
-    base44.auth.redirectToLogin(createPageUrl('Dashboard'));
+    if (isAuthenticated) {
+      window.location.href = createPageUrl('Dashboard');
+    } else {
+      base44.auth.redirectToLogin(createPageUrl('Dashboard'));
+    }
   };
-
-  if (checkingAuth) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 flex items-center justify-center">
-        <div className="animate-pulse">
-          <img 
-            src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6924840d3628eabd1d7f8247/e225113d4_Untitleddesign.png" 
-            alt="Thrive Nut" 
-            className="w-20 h-20"
-          />
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 text-white">
