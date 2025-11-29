@@ -11,10 +11,10 @@ import { useTheme } from '../components/shared/useTheme';
 
 // Pixel's AI Toolbox pricing options
 const aiToolboxOptions = [
-  { value: 'annual', label: '⭐ Annual (Best Value!) - $333.33/year', link: 'https://thenutsandbots.com/annual', badge: 'Best Value' },
-  { value: 'quarterly', label: '🗓️ Quarterly - $111/quarter', link: 'https://thenutsandbots.com/quarterly', badge: 'Quarterly' },
-  { value: 'monthly', label: '🗓️ Monthly - $77.77/month', link: 'https://thenutsandbots.com/monthly', badge: 'Monthly' },
-  { value: 'payment_plan', label: '💳 1 Year - Klarna/Afterpay - $333.33', link: 'https://thenutsandbots.com/payment-plans', badge: 'Payment Plans' },
+  { value: 'annual', label: '⭐ Annual (Best Value!) - $333.33/year', link: 'https://shop.pixelnutscreative.com/product-details/product/68d72d6ea79ca6592408a90e', badge: 'Best Value' },
+  { value: 'quarterly', label: '🗓️ Quarterly - $111/quarter', link: 'https://shop.pixelnutscreative.com/product-details/product/68d72e0097ff0c5ce998b466', badge: 'Quarterly' },
+  { value: 'monthly', label: '🗓️ Monthly - $77.77/month', link: 'https://shop.pixelnutscreative.com/product-details/product/68d733ea5847661b433808a3', badge: 'Monthly' },
+  { value: 'payment_plan', label: '💳 1 Year - Klarna/Afterpay - $333.33', link: 'https://shop.pixelnutscreative.com/product-details/product/69131c77b9c37c322d4cfefd', badge: 'Payment Plans' },
 ];
 
 const workshopItems = [
