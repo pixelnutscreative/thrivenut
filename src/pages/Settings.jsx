@@ -104,7 +104,9 @@ export default function Settings() {
     discord_username: '',
     discord_invite_link: '',
     discord_public: false,
-    communities: []
+    communities: [],
+    menu_color: '#ffffff',
+    quick_actions: ['mood', 'water', 'food', 'note']
     });
 
   useEffect(() => {
@@ -145,7 +147,9 @@ export default function Settings() {
         discord_username: preferences.discord_username || '',
         discord_invite_link: preferences.discord_invite_link || '',
         discord_public: preferences.discord_public || false,
-        communities: preferences.communities || []
+        communities: preferences.communities || [],
+        menu_color: preferences.menu_color || '#ffffff',
+        quick_actions: preferences.quick_actions || ['mood', 'water', 'food', 'note']
         });
     }
   }, [preferences]);

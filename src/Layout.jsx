@@ -37,6 +37,7 @@ import TikTokAccessGate from './components/access/TikTokAccessGate';
 import ImpersonationBanner, { getEffectiveUserEmail, isImpersonating } from './components/admin/ImpersonationBanner';
 import NotificationBell from './components/notifications/NotificationBell';
 import FloatingHelpButton from './components/support/FloatingHelpButton';
+import QuickActionsWidget from './components/widgets/QuickActionsWidget';
 
 // Map module IDs to nav items
 const moduleNavMap = {
@@ -69,6 +70,7 @@ const allNavItems = [
     { name: "Ping & Pong's Silly Songs", icon: Music, externalUrl: 'https://pingpong-sillysongs.base44.app' },
   ]},
   { name: 'Goals', icon: Target, path: 'Goals', moduleId: 'goals' },
+  { name: 'Prayer Requests', icon: Heart, path: 'PrayerRequests', requiresBibleBeliever: true },
   { name: 'Mental Health', icon: Brain, isSection: true, moduleId: 'mental_health', subItems: [
     { name: 'Mental Health Hub', icon: Brain, path: 'NeurodivergentSettings' },
     { name: 'Journal', icon: BookOpen, path: 'Journal', moduleId: 'journal' },
@@ -124,6 +126,8 @@ export default function Layout({ children, currentPageName }) {
   const featureOrder = preferences?.feature_order || [];
   const hasTikTokAccess = preferences?.tiktok_access_approved || user?.email?.toLowerCase() === 'pixelnutscreative@gmail.com';
   const isAdmin = user?.email?.toLowerCase() === 'pixelnutscreative@gmail.com';
+  const isBibleBeliever = preferences?.is_bible_believer || preferences?.greeting_type === 'scripture';
+  const menuColor = preferences?.menu_color || (isDark ? '#2a2a30' : '#ffffff');
 
   // Filter and order nav items based on enabled modules and feature order
   const getOrderedNavItems = () => {
@@ -133,6 +137,8 @@ export default function Layout({ children, currentPageName }) {
       if (item.alwaysShow) return true;
       // Admin only items
       if (item.adminOnly) return isAdmin;
+      // Bible believer only items
+      if (item.requiresBibleBeliever) return isBibleBeliever;
       // Hide SuperFan Access if user already has TikTok access
       if (item.showWhenNoTikTokAccess) return !hasTikTokAccess;
       // Show TikTok items for everyone (they'll be gated by popup)
@@ -248,9 +254,10 @@ export default function Layout({ children, currentPageName }) {
 
 
 
-  const sidebarClass = isDark
-    ? 'bg-[#2a2a30]/95 border-gray-700'
-    : 'bg-white/95 border-gray-200';
+  const sidebarStyle = {
+    backgroundColor: isDark ? `${menuColor}f2` : `${menuColor}f2`,
+    borderColor: isDark ? '#374151' : '#e5e7eb'
+  };
 
   const textClass = isDark ? 'text-gray-100' : 'text-gray-800';
   const subtextClass = isDark ? 'text-gray-400' : 'text-gray-500';
@@ -267,7 +274,7 @@ export default function Layout({ children, currentPageName }) {
         >
           <ImpersonationBanner />
       {/* Mobile Header */}
-      <div className={`lg:hidden fixed top-0 left-0 right-0 z-50 backdrop-blur-sm border-b px-4 py-3 ${sidebarClass}`}>
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 backdrop-blur-sm border-b px-4 py-3" style={sidebarStyle}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <img 
@@ -294,14 +301,15 @@ export default function Layout({ children, currentPageName }) {
 
       {/* Mobile Menu */}
       <AnimatePresence>
-        {mobileMenuOpen && (
-          <motion.div
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: 'tween' }}
-            className={`lg:hidden fixed inset-0 z-40 pt-16 ${isDark ? 'bg-[#1f1f23]' : 'bg-white'}`}
-          >
+      {mobileMenuOpen && (
+      <motion.div
+        initial={{ x: '100%' }}
+        animate={{ x: 0 }}
+        exit={{ x: '100%' }}
+        transition={{ type: 'tween' }}
+        className="lg:hidden fixed inset-0 z-40 pt-16"
+        style={{ backgroundColor: menuColor }}
+      >
             <nav className="p-6 space-y-1 overflow-y-auto max-h-[calc(100vh-8rem)]">
               {navItems.map((item) => {
                 const Icon = item.icon;
@@ -461,7 +469,7 @@ export default function Layout({ children, currentPageName }) {
 
       {/* Desktop Sidebar */}
       <div className="hidden lg:flex">
-        <div className={`fixed left-0 top-0 bottom-0 w-72 backdrop-blur-sm border-r p-6 flex flex-col ${sidebarClass}`}>
+        <div className="fixed left-0 top-0 bottom-0 w-72 backdrop-blur-sm border-r p-6 flex flex-col" style={sidebarStyle}>
           <div className="mb-8">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-3">
@@ -654,6 +662,15 @@ export default function Layout({ children, currentPageName }) {
 
               {/* Floating Help Button */}
               <FloatingHelpButton pageName={currentPageName} userEmail={user?.email} />
-            </div>
-          );
+
+              {/* Quick Actions Widget */}
+              {user && preferences && (
+                <QuickActionsWidget 
+                  preferences={preferences}
+                  primaryColor={primaryColor}
+                  accentColor={accentColor}
+                />
+              )}
+              </div>
+              );
         }
