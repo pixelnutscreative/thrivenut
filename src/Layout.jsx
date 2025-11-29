@@ -80,7 +80,8 @@ const allNavItems = [
             { name: 'Resources & Tools', icon: Palette, path: 'PixelsParadise' },
             { name: 'Live Reminders', icon: Bell, path: 'LiveReminders' },
           ]},
-  { name: 'Settings', icon: Settings, path: 'Settings', alwaysShow: true },
+  { name: 'Support', icon: Heart, path: 'Support', alwaysShow: true },
+    { name: 'Settings', icon: Settings, path: 'Settings', alwaysShow: true },
   { name: 'Admin Panel', icon: UserCog, path: 'Admin', adminOnly: true },
 ];
 
