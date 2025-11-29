@@ -503,9 +503,9 @@ export default function Layout({ children, currentPageName }) {
                   Thrive Nut
                 </h1>
               </div>
-              {user && <NotificationBell userEmail={effectiveEmail} isDark={isDark} />}
+              {user && <NotificationBell userEmail={effectiveEmail} isDark={isMenuDark} />}
             </div>
-            <p className={`text-sm ${subtextClass}`}>Crush your goals, thrive daily</p>
+            <p className={`text-sm ${menuSubtextClass}`}>Crush your goals, thrive daily</p>
           </div>
 
           <nav className="flex-1 space-y-1 overflow-y-auto">
@@ -531,10 +531,10 @@ export default function Layout({ children, currentPageName }) {
                                             }}
                                             className={`flex-1 flex items-center justify-between px-4 py-2 rounded-xl transition-all ${
                                               isModuleDisabled 
-                                                ? (isDark ? 'text-gray-500' : 'text-gray-400')
+                                                ? (isMenuDark ? 'text-gray-500' : 'text-gray-400')
                                                 : hasActiveSubItem 
-                                                  ? (isDark ? 'bg-gray-700 text-teal-400' : 'bg-teal-50 text-teal-700')
-                                                  : (isDark ? 'text-gray-300 hover:bg-gray-700/50' : 'text-gray-700 hover:bg-teal-50')
+                                                  ? menuActiveClass
+                                                  : `${menuTextClass} ${menuHoverClass}`
                                             }`}
                                           >
                                             <div className="flex items-center gap-3">
@@ -547,7 +547,7 @@ export default function Layout({ children, currentPageName }) {
                                           {isModuleDisabled && (
                                             <Link
                                               to={createPageUrl('Settings')}
-                                              className={`p-1 rounded hover:bg-gray-200 ${isDark ? 'hover:bg-gray-700' : ''}`}
+                                              className={`p-1 rounded ${isMenuDark ? 'hover:bg-white/10' : 'hover:bg-gray-200'}`}
                                               title="Enable in Settings"
                                             >
                                               <Settings className="w-4 h-4 text-gray-400 hover:text-teal-500" />
@@ -566,12 +566,12 @@ export default function Layout({ children, currentPageName }) {
                                               // Render dividers differently
                                               if (subItem.isDivider) {
                                                 return (
-                                                  <div key={subItem.name} className={`px-2 py-1 text-xs font-semibold ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                                                  <div key={subItem.name} className={`px-2 py-1 text-xs font-semibold ${isMenuDark ? 'text-gray-500' : 'text-gray-400'}`}>
                                                     {subItem.name}
                                                   </div>
                                                 );
                                               }
-                                              
+
                                               // Handle external URLs
                                               if (subItem.externalUrl) {
                                                 return (
@@ -580,7 +580,7 @@ export default function Layout({ children, currentPageName }) {
                                                     href={subItem.externalUrl}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-all text-sm ${isDark ? 'text-gray-400 hover:bg-gray-700/50' : 'text-gray-600 hover:bg-teal-50'}`}
+                                                    className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-all text-sm ${isMenuDark ? 'text-gray-400 hover:bg-white/10' : 'text-gray-600 hover:bg-teal-50'}`}
                                                   >
                                                     <SubIcon className="w-4 h-4" />
                                                     <span>{subItem.name}</span>
@@ -590,18 +590,18 @@ export default function Layout({ children, currentPageName }) {
                                               }
 
                                               return (
-                                                <Link
-                                                  key={subItem.path}
-                                                  to={createPageUrl(subItem.path)}
-                                                  className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-all text-sm ${
-                                                    subIsActive
-                                                      ? 'text-white shadow-lg'
-                                                      : subItem.highlight
-                                                        ? (isDark ? 'text-teal-300 bg-teal-900/30 hover:bg-teal-800/50' : 'text-teal-700 bg-teal-50 hover:bg-teal-100')
-                                                        : (isDark ? 'text-gray-400 hover:bg-gray-700/50' : 'text-gray-600 hover:bg-teal-50')
-                                                  }`}
-                                                  style={subIsActive ? { background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` } : {}}
-                                                >
+                                                    <Link
+                                                      key={subItem.path}
+                                                      to={createPageUrl(subItem.path)}
+                                                      className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-all text-sm ${
+                                                        subIsActive
+                                                          ? 'text-white shadow-lg'
+                                                          : subItem.highlight
+                                                            ? (isMenuDark ? 'text-teal-300 bg-teal-900/30 hover:bg-teal-800/50' : 'text-teal-700 bg-teal-50 hover:bg-teal-100')
+                                                            : (isMenuDark ? 'text-gray-400 hover:bg-white/10' : 'text-gray-600 hover:bg-teal-50')
+                                                      }`}
+                                                      style={subIsActive ? { background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` } : {}}
+                                                    >
                                                   <SubIcon className="w-4 h-4" />
                                                   <span>{subItem.name}</span>
                                                 </Link>
@@ -620,7 +620,7 @@ export default function Layout({ children, currentPageName }) {
                                       className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-all ${
                                         isActive
                                           ? 'text-white shadow-lg'
-                                          : (isDark ? 'text-gray-300 hover:bg-gray-700/50' : 'text-gray-700 hover:bg-teal-50')
+                                          : `${menuTextClass} ${menuHoverClass}`
                                       }`}
                                       style={isActive ? { background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` } : {}}
                                     >
@@ -628,11 +628,11 @@ export default function Layout({ children, currentPageName }) {
                                       <span className="font-medium">{item.name}</span>
                                     </Link>
                                   );
-                                })}
-          </nav>
+                                  })}
+                                  </nav>
 
           {user && (
-                        <div className={`pt-6 mt-6 border-t ${isDark ? 'border-gray-700' : ''}`}>
+                        <div className={`pt-6 mt-6 border-t ${menuBorderClass}`}>
                           <div className="flex items-center gap-3">
                             <Link to={createPageUrl('Settings')} title="Settings">
                               {preferences?.profile_image_url ? (
@@ -642,7 +642,7 @@ export default function Layout({ children, currentPageName }) {
                                   className="w-8 h-8 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-purple-400 transition-all"
                                 />
                               ) : (
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-purple-400 transition-all ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-purple-400 transition-all ${isMenuDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
                                   <Settings className="w-4 h-4 text-gray-500" />
                                 </div>
                               )}
@@ -651,7 +651,7 @@ export default function Layout({ children, currentPageName }) {
                               onClick={handleLogout}
                               variant="outline"
                               size="sm"
-                              className={`flex-1 ${isDark ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'text-gray-700 border-gray-300 hover:bg-gray-100'}`}
+                              className={`flex-1 ${isMenuDark ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'text-gray-700 border-gray-300 hover:bg-gray-100'}`}
                             >
                               <LogOut className="w-4 h-4 mr-2" />
                               Sign Out
@@ -659,7 +659,7 @@ export default function Layout({ children, currentPageName }) {
                           </div>
                         </div>
                       )}
-        </div>
+          </div>
 
         {/* Main Content */}
         <div className="ml-72 flex-1">
