@@ -367,6 +367,24 @@ export default function Layout({ children, currentPageName }) {
                                                     );
                                                   }
                                                   
+                                                  // Handle external URLs
+                                                  if (subItem.externalUrl) {
+                                                    return (
+                                                      <a
+                                                        key={subItem.name}
+                                                        href={subItem.externalUrl}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        onClick={() => setMobileMenuOpen(false)}
+                                                        className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-all text-sm ${isDark ? 'text-gray-400 hover:bg-gray-700/50' : 'text-gray-600 hover:bg-teal-50'}`}
+                                                      >
+                                                        <SubIcon className="w-4 h-4" />
+                                                        <span>{subItem.name}</span>
+                                                        <span className="text-xs opacity-50">↗</span>
+                                                      </a>
+                                                    );
+                                                  }
+
                                                   return (
                                                     <Link
                                                       key={subItem.path}
@@ -528,6 +546,23 @@ export default function Layout({ children, currentPageName }) {
                                                 );
                                               }
                                               
+                                              // Handle external URLs
+                                              if (subItem.externalUrl) {
+                                                return (
+                                                  <a
+                                                    key={subItem.name}
+                                                    href={subItem.externalUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-all text-sm ${isDark ? 'text-gray-400 hover:bg-gray-700/50' : 'text-gray-600 hover:bg-teal-50'}`}
+                                                  >
+                                                    <SubIcon className="w-4 h-4" />
+                                                    <span>{subItem.name}</span>
+                                                    <span className="text-xs opacity-50">↗</span>
+                                                  </a>
+                                                );
+                                              }
+
                                               return (
                                                 <Link
                                                   key={subItem.path}
