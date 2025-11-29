@@ -5,11 +5,14 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   MessageSquare, Bug, Lightbulb, HelpCircle, CheckCircle, 
-  Clock, AlertCircle, Loader2, Send, User, Calendar, Image
+  Clock, AlertCircle, Loader2, Send, User, Calendar, Image,
+  Star, UserCheck, UserX, Users
 } from 'lucide-react';
 
 const ticketTypes = {
@@ -37,10 +40,12 @@ const priorityColors = {
 
 export default function AdminSupportContent() {
   const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState('tickets');
   const [filterStatus, setFilterStatus] = useState('open');
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [response, setResponse] = useState('');
   const [adminNotes, setAdminNotes] = useState('');
+  const [betaFilterStatus, setBetaFilterStatus] = useState('pending');
 
   const { data: tickets = [], isLoading } = useQuery({
     queryKey: ['allSupportTickets'],
@@ -62,12 +67,24 @@ export default function AdminSupportContent() {
     },
   });
 
+  const updateBetaTesterMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.BetaTester.update(id, data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['allBetaTesters'] }),
+  });
+
   const filteredTickets = tickets.filter(t => 
     filterStatus === 'all' ? true : t.status === filterStatus
   );
 
+  const filteredBetaTesters = betaTesters.filter(bt =>
+    betaFilterStatus === 'all' ? true : bt.status === betaFilterStatus
+  );
+
   const openCount = tickets.filter(t => t.status === 'open').length;
   const inProgressCount = tickets.filter(t => t.status === 'in_progress').length;
+  const pendingBetaCount = betaTesters.filter(bt => bt.status === 'pending').length;
+  const activeBetaCount = betaTesters.filter(bt => bt.status === 'active').length;
+  const waitlistCount = betaTesters.filter(bt => bt.status === 'waitlist').length;
 
   const handleOpenTicket = (ticket) => {
     setSelectedTicket(ticket);
@@ -88,6 +105,7 @@ export default function AdminSupportContent() {
       status: selectedTicket.status,
     };
 
+    // Only auto-resolve if the response has changed AND there's a new response
     if (response.trim() && response !== selectedTicket.resolution) {
       const newMessage = {
         sender: 'admin',
@@ -97,7 +115,7 @@ export default function AdminSupportContent() {
       };
       updatedData.messages = [...(selectedTicket.messages || []), newMessage];
       updatedData.resolution = response;
-      updatedData.status = 'resolved';
+      // Keep the user-selected status instead of forcing resolved
     }
 
     updateTicketMutation.mutate({
@@ -106,10 +124,30 @@ export default function AdminSupportContent() {
     });
   };
 
+  const approveBetaTester = (tester) => {
+    const trialStart = new Date().toISOString().split('T')[0];
+    const trialEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    updateBetaTesterMutation.mutate({
+      id: tester.id,
+      data: { 
+        status: 'active',
+        trial_start: trialStart,
+        trial_end: trialEnd
+      }
+    });
+  };
+
+  const denyBetaTester = (tester) => {
+    updateBetaTesterMutation.mutate({
+      id: tester.id,
+      data: { status: 'waitlist' }
+    });
+  };
+
   return (
     <div className="space-y-6">
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card className="bg-blue-50 border-blue-200">
           <CardContent className="p-4 text-center">
             <p className="text-3xl font-bold text-blue-700">{openCount}</p>
@@ -128,14 +166,35 @@ export default function AdminSupportContent() {
             <p className="text-sm text-green-600">Resolved</p>
           </CardContent>
         </Card>
+        <Card className="bg-orange-50 border-orange-200">
+          <CardContent className="p-4 text-center">
+            <p className="text-3xl font-bold text-orange-700">{pendingBetaCount}</p>
+            <p className="text-sm text-orange-600">Pending Beta</p>
+          </CardContent>
+        </Card>
         <Card className="bg-purple-50 border-purple-200">
           <CardContent className="p-4 text-center">
-            <p className="text-3xl font-bold text-purple-700">{betaTesters.length}</p>
-            <p className="text-sm text-purple-600">Beta Testers</p>
+            <p className="text-3xl font-bold text-purple-700">{activeBetaCount}</p>
+            <p className="text-sm text-purple-600">Active Testers</p>
           </CardContent>
         </Card>
       </div>
 
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="tickets" className="flex items-center gap-2">
+            <MessageSquare className="w-4 h-4" />
+            Tickets
+            {openCount > 0 && <Badge className="bg-red-500 text-white ml-1">{openCount}</Badge>}
+          </TabsTrigger>
+          <TabsTrigger value="beta" className="flex items-center gap-2">
+            <Star className="w-4 h-4" />
+            Beta Testers
+            {pendingBetaCount > 0 && <Badge className="bg-orange-500 text-white ml-1">{pendingBetaCount}</Badge>}
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="tickets" className="mt-4 space-y-4">
       {/* Filter */}
       <div className="flex flex-wrap gap-2">
         {[{ value: 'all', label: 'All' }, ...statusOptions].map(status => (
@@ -240,6 +299,139 @@ export default function AdminSupportContent() {
           })}
         </div>
       )}
+
+        </TabsContent>
+
+        <TabsContent value="beta" className="mt-4 space-y-4">
+          {/* Beta Tester Filters */}
+          <div className="flex flex-wrap gap-2">
+            {[
+              { value: 'all', label: 'All' },
+              { value: 'pending', label: 'Pending', count: pendingBetaCount },
+              { value: 'active', label: 'Active', count: activeBetaCount },
+              { value: 'waitlist', label: 'Waitlist', count: waitlistCount },
+              { value: 'expired', label: 'Expired' },
+            ].map(status => (
+              <Button
+                key={status.value}
+                variant={betaFilterStatus === status.value ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setBetaFilterStatus(status.value)}
+                className={betaFilterStatus === status.value ? 'bg-purple-600' : ''}
+              >
+                {status.label}
+                {status.count > 0 && (
+                  <span className="ml-1 bg-orange-500 text-white text-xs rounded-full px-1.5">{status.count}</span>
+                )}
+              </Button>
+            ))}
+          </div>
+
+          {/* Beta Testers List */}
+          {filteredBetaTesters.length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <Users className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500">No beta testers in this category.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {filteredBetaTesters.map(tester => (
+                <Card key={tester.id}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-semibold text-gray-800">{tester.user_email}</span>
+                          <Badge className={
+                            tester.status === 'active' ? 'bg-green-100 text-green-700' :
+                            tester.status === 'pending' ? 'bg-orange-100 text-orange-700' :
+                            tester.status === 'waitlist' ? 'bg-gray-100 text-gray-700' :
+                            'bg-red-100 text-red-700'
+                          }>
+                            {tester.status}
+                          </Badge>
+                        </div>
+                        <div className="text-sm text-gray-500 space-x-3">
+                          <span>Applied: {tester.applied_date || tester.created_date?.split('T')[0] || 'N/A'}</span>
+                          {tester.trial_start && <span>Trial: {tester.trial_start} - {tester.trial_end}</span>}
+                          <span>Feedback: {tester.feedback_count || 0}</span>
+                        </div>
+                        {tester.notes && (
+                          <p className="text-sm text-gray-600 mt-1">{tester.notes}</p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {tester.status === 'pending' && (
+                          <>
+                            <Button
+                              size="sm"
+                              onClick={() => approveBetaTester(tester)}
+                              className="bg-green-600 hover:bg-green-700"
+                            >
+                              <UserCheck className="w-4 h-4 mr-1" />
+                              Approve
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => denyBetaTester(tester)}
+                              className="text-gray-600"
+                            >
+                              <UserX className="w-4 h-4 mr-1" />
+                              Waitlist
+                            </Button>
+                          </>
+                        )}
+                        {tester.status === 'waitlist' && (
+                          <Button
+                            size="sm"
+                            onClick={() => approveBetaTester(tester)}
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            <UserCheck className="w-4 h-4 mr-1" />
+                            Approve
+                          </Button>
+                        )}
+                        {tester.status === 'active' && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => updateBetaTesterMutation.mutate({ 
+                              id: tester.id, 
+                              data: { status: 'expired' } 
+                            })}
+                          >
+                            Expire
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {/* Capacity Info */}
+          <Card className="bg-purple-50 border-purple-200">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-semibold text-purple-800">Beta Capacity</h4>
+                  <p className="text-sm text-purple-600">
+                    {activeBetaCount} / 33 active testers • {waitlistCount} on waitlist
+                  </p>
+                </div>
+                <div className="text-3xl font-bold text-purple-700">
+                  {Math.round((activeBetaCount / 33) * 100)}%
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Ticket Detail Modal */}
       <Dialog open={!!selectedTicket} onOpenChange={() => setSelectedTicket(null)}>
