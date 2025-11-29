@@ -38,6 +38,7 @@ import ImpersonationBanner, { getEffectiveUserEmail, isImpersonating } from './c
 import NotificationBell from './components/notifications/NotificationBell';
 import FloatingHelpButton from './components/support/FloatingHelpButton';
 import QuickActionsWidget from './components/widgets/QuickActionsWidget';
+import SoundCloudPlayer, { FloatingSoundCloudPlayer } from './components/widgets/SoundCloudPlayer';
 
 // Map module IDs to nav items
 const moduleNavMap = {
@@ -63,12 +64,12 @@ const allNavItems = [
     { name: 'Social Engagement', icon: Users, path: 'TikTokEngagement' },
     { name: 'Content Calendar', icon: Video, path: 'LiveSchedule' },
   ]},
-  { name: 'Gift Gallery Gratitude', icon: Gift, path: 'WeeklyGifterGallery', moduleId: 'gifter', requiresTikTokAccess: true },
   { name: 'Music & Songs', icon: Music, isSection: true, moduleId: 'gifter', requiresTikTokAccess: true, subItems: [
-    { name: 'Sunny Songbird', icon: Music, path: 'SongGenerator' },
-    { name: 'Holy Hitmakers', icon: Music, path: 'HolyHitmakers' },
-    { name: "Ping & Pong's Silly Songs", icon: Music, externalUrl: 'https://pingpong-sillysongs.base44.app' },
-  ]},
+            { name: 'Gift Gallery Gratitude', icon: Gift, path: 'WeeklyGifterGallery' },
+            { name: 'Sunny Songbird', icon: Music, path: 'SongGenerator' },
+            { name: 'Holy Hitmakers', icon: Music, path: 'HolyHitmakers' },
+            { name: "Ping & Pong's Silly Songs", icon: Music, externalUrl: 'https://pingpong-sillysongs.base44.app' },
+          ]},
   { name: 'Goals', icon: Target, path: 'Goals', moduleId: 'goals' },
   { name: 'Prayer Requests', icon: Heart, path: 'PrayerRequests', requiresBibleBeliever: true },
   { name: 'Mental Health', icon: Brain, isSection: true, moduleId: 'mental_health', subItems: [
@@ -242,8 +243,10 @@ export default function Layout({ children, currentPageName }) {
   const themeType = preferences?.theme_type || 'light';
   const isDark = themeType === 'dark' || (themeType === 'system' && systemDark);
   const menuColor = preferences?.menu_color || (isDark ? '#2a2a30' : '#ffffff');
+          const soundcloudUrl = preferences?.soundcloud_playlist_url || '';
+          const soundcloudPosition = preferences?.soundcloud_player_position || 'hidden';
 
-  // Determine if menu color is dark to set text color appropriately
+          // Determine if menu color is dark to set text color appropriately
   const isMenuDark = (() => {
     const hex = menuColor.replace('#', '');
     const r = parseInt(hex.substr(0, 2), 16);
@@ -506,9 +509,19 @@ export default function Layout({ children, currentPageName }) {
               {user && <NotificationBell userEmail={effectiveEmail} isDark={isMenuDark} />}
             </div>
             <p className={`text-sm ${menuSubtextClass}`}>Crush your goals, thrive daily</p>
-          </div>
+              </div>
 
-          <nav className="flex-1 space-y-1 overflow-y-auto">
+              {/* SoundCloud Player in Menu */}
+              {soundcloudPosition === 'menu' && soundcloudUrl && (
+                <div className="mb-4">
+                  <SoundCloudPlayer 
+                    playlistUrl={soundcloudUrl} 
+                    isMenuDark={isMenuDark}
+                  />
+                </div>
+              )}
+
+              <nav className="flex-1 space-y-1 overflow-y-auto">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = currentPageName === item.path;
@@ -685,6 +698,15 @@ export default function Layout({ children, currentPageName }) {
               {user && preferences && (
                 <QuickActionsWidget 
                   preferences={preferences}
+                  primaryColor={primaryColor}
+                  accentColor={accentColor}
+                />
+              )}
+
+              {/* Floating SoundCloud Player */}
+              {soundcloudPosition === 'floating' && soundcloudUrl && (
+                <FloatingSoundCloudPlayer 
+                  playlistUrl={soundcloudUrl}
                   primaryColor={primaryColor}
                   accentColor={accentColor}
                 />
