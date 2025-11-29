@@ -55,6 +55,16 @@ const moduleNavMap = {
 
 const allNavItems = [
   { name: 'Dashboard', icon: LayoutDashboard, path: 'Dashboard', alwaysShow: true },
+  { name: 'Social Media Suite', icon: TrendingUp, isSection: true, moduleId: 'tiktok', requiresTikTokAccess: true, subItems: [
+    { name: 'Creator Contacts', icon: Users, path: 'TikTokContacts' },
+    { name: 'Social Engagement', icon: Users, path: 'TikTokEngagement' },
+    { name: 'Creator Calendar', icon: Video, path: 'LiveSchedule' },
+    { name: 'Content Schedule', icon: TrendingUp, path: 'TikTokGoals' },
+    { name: 'Discover Creators', icon: Users, path: 'DiscoverCreators' },
+    { name: '── Gift Gallery Gratitude ──', icon: Gift, isDivider: true },
+    { name: 'Weekly Gallery', icon: Gift, path: 'WeeklyGifterGallery', moduleId: 'gifter' },
+    { name: 'Song Generator', icon: Music, path: 'SongGenerator', moduleId: 'gifter' },
+  ]},
   { name: 'Goals', icon: Target, path: 'Goals', moduleId: 'goals' },
   { name: 'Wellness', icon: Heart, isSection: true, moduleId: 'wellness', subItems: [
     { name: 'Daily Wellness', icon: Heart, path: 'Wellness' },
@@ -66,21 +76,11 @@ const allNavItems = [
   { name: 'My People', icon: Users, path: 'People', moduleId: 'people' },
   { name: 'Journal', icon: BookOpen, path: 'Journal', moduleId: 'journal' },
   { name: 'Mental Health', icon: Brain, path: 'NeurodivergentSettings', moduleId: 'mental_health' },
-  { name: 'Social Media Suite', icon: TrendingUp, isSection: true, moduleId: 'tiktok', requiresTikTokAccess: true, subItems: [
-            { name: 'Creator Contacts', icon: Users, path: 'TikTokContacts' },
-            { name: 'Social Engagement', icon: Users, path: 'TikTokEngagement' },
-            { name: 'Creator Calendar', icon: Video, path: 'LiveSchedule' },
-            { name: 'Content Schedule', icon: TrendingUp, path: 'TikTokGoals' },
-                              { name: 'Discover Creators', icon: Users, path: 'DiscoverCreators' },
-            { name: '── Gift Gallery Gratitude ──', icon: Gift, isDivider: true },
-            { name: 'Weekly Gallery', icon: Gift, path: 'WeeklyGifterGallery', moduleId: 'gifter' },
-            { name: 'Song Generator', icon: Music, path: 'SongGenerator', moduleId: 'gifter' },
-  ]},
   { name: 'SuperFan Access', icon: Star, path: 'SuperFanAccess', showWhenNoTikTokAccess: true },
   { name: "Pixel's Place", icon: Sparkles, isSection: true, moduleId: 'pixels_paradise', alwaysShow: true, subItems: [
-            { name: 'Resources & Tools', icon: Palette, path: 'PixelsParadise' },
-            { name: 'Live Reminders', icon: Bell, path: 'LiveReminders' },
-          ]},
+    { name: 'Resources & Tools', icon: Palette, path: 'PixelsParadise' },
+    { name: 'Live Reminders', icon: Bell, path: 'LiveReminders' },
+  ]},
   { name: 'Support', icon: Heart, path: 'Support', alwaysShow: true },
   { name: 'Admin Panel', icon: UserCog, path: 'Admin', adminOnly: true },
 ];
