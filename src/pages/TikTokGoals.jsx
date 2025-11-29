@@ -85,6 +85,38 @@ export default function TikTokGoals() {
     toggleScheduleCompleteMutation.mutate({ scheduleType, index });
   };
 
+  const updateItemMutation = useMutation({
+    mutationFn: async ({ field, index, data }) => {
+      const currentSchedules = [...(contentGoal[field] || [])];
+      currentSchedules[index] = { ...currentSchedules[index], ...data };
+      return await base44.entities.ContentGoal.update(contentGoal.id, { [field]: currentSchedules });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contentGoal'] });
+    }
+  });
+
+  const deleteItemMutation = useMutation({
+    mutationFn: async ({ field, index }) => {
+      const currentSchedules = [...(contentGoal[field] || [])];
+      currentSchedules.splice(index, 1);
+      return await base44.entities.ContentGoal.update(contentGoal.id, { [field]: currentSchedules });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contentGoal'] });
+    }
+  });
+
+  const handleUpdateItem = (field, index, data) => {
+    updateItemMutation.mutate({ field, index, data });
+  };
+
+  const handleDeleteItem = (field, index) => {
+    if (confirm('Delete this item?')) {
+      deleteItemMutation.mutate({ field, index });
+    }
+  };
+
   const getWeekLabel = () => {
     if (selectedWeekOffset === 0) return 'This Week';
     if (selectedWeekOffset === -1) return 'Last Week';
@@ -136,8 +168,26 @@ export default function TikTokGoals() {
         {/* Current Week Goal */}
         <WeeklyGoalCard
           goal={contentGoal}
-          onEdit={() => setShowGoalModal(true)}
-          onToggleScheduleComplete={onToggleScheduleComplete}
+          onEditPosts={() => setShowGoalModal(true)}
+          onEditLives={() => setShowGoalModal(true)}
+          onEditEngagement={() => setShowGoalModal(true)}
+          onToggleDayComplete={(field, index, day) => {
+            if (!contentGoal) return;
+            const schedules = [...(contentGoal[field] || [])];
+            const schedule = { ...schedules[index] };
+            const completedDays = schedule.completed_days || [];
+            if (completedDays.includes(day)) {
+              schedule.completed_days = completedDays.filter(d => d !== day);
+            } else {
+              schedule.completed_days = [...completedDays, day];
+            }
+            schedules[index] = schedule;
+            base44.entities.ContentGoal.update(contentGoal.id, { [field]: schedules }).then(() => {
+              queryClient.invalidateQueries({ queryKey: ['contentGoal'] });
+            });
+          }}
+          onUpdateItem={handleUpdateItem}
+          onDeleteItem={handleDeleteItem}
         />
 
         {/* Past Weeks History */}
