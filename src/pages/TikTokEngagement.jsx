@@ -33,12 +33,13 @@ export default function TikTokEngagement() {
     engagement_day_of_month: 1
   });
 
+  const { isDark, bgClass, textClass, cardBgClass, subtextClass } = useTheme();
+
   React.useEffect(() => {
     base44.auth.me().then(setUser);
   }, []);
 
   const effectiveEmail = user ? getEffectiveUserEmail(user.email) : null;
-  const { isDark, bgClass, textClass, cardBgClass, subtextClass } = useTheme();
 
   const { data: preferences } = useQuery({
     queryKey: ['preferences', effectiveEmail],
