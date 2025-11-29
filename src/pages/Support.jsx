@@ -16,6 +16,7 @@ import {
   Loader2, CheckCircle, Clock, AlertCircle, Sparkles,
   Upload, X, Rocket, Gift, Star, User, Shield
 } from 'lucide-react';
+import { useTheme } from '../components/shared/useTheme';
 
 const ticketTypes = [
   { value: 'bug', label: 'Bug Report', icon: Bug, color: 'text-red-500' },
@@ -59,6 +60,8 @@ export default function Support() {
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
   }, []);
+
+  const { isDark, bgClass } = useTheme();
 
   const { data: myTickets = [] } = useQuery({
     queryKey: ['myTickets', user?.email],
@@ -152,7 +155,7 @@ export default function Support() {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 p-4 md:p-8">
+    <div className={`min-h-screen ${bgClass} ${isDark ? 'text-gray-100' : ''} p-4 md:p-8`}>
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Beta Notice */}
         <Alert className="bg-gradient-to-r from-purple-100 to-pink-100 border-purple-300">
