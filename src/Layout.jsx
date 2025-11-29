@@ -36,6 +36,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import TikTokAccessGate from './components/access/TikTokAccessGate';
 import ImpersonationBanner, { getEffectiveUserEmail, isImpersonating } from './components/admin/ImpersonationBanner';
 import NotificationBell from './components/notifications/NotificationBell';
+import FloatingHelpButton from './components/support/FloatingHelpButton';
 
 // Map module IDs to nav items
 const moduleNavMap = {
@@ -557,6 +558,9 @@ export default function Layout({ children, currentPageName }) {
                 isOpen={showAccessGate} 
                 onClose={() => setShowAccessGate(false)} 
               />
+
+              {/* Floating Help Button */}
+              <FloatingHelpButton pageName={currentPageName} userEmail={user?.email} />
             </div>
           );
         }
