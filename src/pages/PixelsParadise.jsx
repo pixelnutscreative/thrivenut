@@ -410,7 +410,7 @@ export default function PixelsParadise() {
         )}
 
         {/* Quick Links Section */}
-        <div className={`grid sm:grid-cols-2 gap-4 pt-4 border-t ${isDark ? 'border-gray-700' : 'border-purple-200'}`}
+        <div className={`grid sm:grid-cols-2 gap-4 pt-4 border-t ${isDark ? 'border-gray-700' : 'border-purple-200'}`}>
           <Card 
             className="bg-gradient-to-r from-red-50 to-orange-50 border-red-200 cursor-pointer hover:shadow-lg transition-all"
             onClick={() => window.open('https://youtube.com/@pixelnutscreative', '_blank')}
