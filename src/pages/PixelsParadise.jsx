@@ -168,6 +168,8 @@ export default function PixelsParadise() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedPlan, setSelectedPlan] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  
+  const { isDark, bgClass, textClass, cardBgClass, subtextClass } = useTheme();
 
   useEffect(() => {
     base44.auth.isAuthenticated().then(setIsAuthenticated).catch(() => {});
@@ -198,8 +200,6 @@ export default function PixelsParadise() {
       window.open(option.link, '_blank');
     }
   };
-
-  const { isDark, bgClass, textClass, cardBgClass, subtextClass } = useTheme();
 
   return (
     <div className={`min-h-screen ${bgClass} p-4 md:p-8`}>
