@@ -262,6 +262,16 @@ export default function Dashboard() {
     },
   });
 
+  // Toggle Google Calendar - must be before any conditional returns
+  const toggleGoogleCalendarMutation = useMutation({
+    mutationFn: async (enabled) => {
+      if (preferences?.id) {
+        return await base44.entities.UserPreferences.update(preferences.id, { show_google_calendar: enabled });
+      }
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['preferences'] }),
+  });
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
