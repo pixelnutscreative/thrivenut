@@ -19,6 +19,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
 import MasterContactPicker from '../components/tiktok/MasterContactPicker';
+import MasterUsernameSearch from '../components/contacts/MasterUsernameSearch';
 import ContactFormHeader from '../components/contacts/ContactFormHeader';
 import TikTokTabContent from '../components/contacts/TikTokTabContent';
 import PersonalTabContent from '../components/contacts/PersonalTabContent';
@@ -127,21 +128,23 @@ export default function TikTokContacts() {
   const [filterGifters, setFilterGifters] = useState(false);
   const defaultFormTab = 'tiktok'; // TikTok Contacts opens to TikTok tab
   
-  // Quick add contact function for dropdowns
-  const handleQuickAddContact = async (username) => {
-    try {
-      const newContact = await base44.entities.TikTokContact.create({
-        username: username,
-        role: [],
-        is_favorite: false
-      });
-      queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] });
-      return newContact.id;
-    } catch (error) {
-      console.error('Failed to quick add contact:', error);
-      return null;
-    }
-  };
+  // Quick add contact function for dropdowns - now accepts master data for auto-fill
+        const handleQuickAddContact = async (username, masterData = null) => {
+          try {
+            const newContact = await base44.entities.TikTokContact.create({
+              username: username,
+              display_name: masterData?.display_name || '',
+              phonetic: masterData?.phonetic || '',
+              role: [],
+              is_favorite: false
+            });
+            queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] });
+            return newContact.id;
+          } catch (error) {
+            console.error('Failed to quick add contact:', error);
+            return null;
+          }
+        };
   const [formData, setFormData] = useState(defaultFormData);
   const [filterVeterans, setFilterVeterans] = useState(false);
   const [filterLiveType, setFilterLiveType] = useState('');
@@ -775,6 +778,34 @@ export default function TikTokContacts() {
           </DialogHeader>
 
           <div className="space-y-4 py-4">
+            {/* Master Username Search - only show when adding new contact */}
+            {!editingContact && (
+              <div className="p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200">
+                <p className="text-xs text-purple-700 font-medium mb-2">Search existing contacts to auto-fill info:</p>
+                <MasterUsernameSearch
+                  onSelect={(data) => {
+                    setFormData(prev => ({
+                      ...prev,
+                      username: data.username,
+                      display_name: data.display_name || prev.display_name,
+                      phonetic: data.phonetic || prev.phonetic,
+                      real_name: data.real_name || prev.real_name,
+                      nickname: data.nickname || prev.nickname,
+                      image_url: data.image_url || prev.image_url,
+                    }));
+                  }}
+                  onCreateNew={(username) => {
+                    setFormData(prev => ({
+                      ...prev,
+                      username: username
+                    }));
+                  }}
+                  placeholder="Search by @username to auto-fill..."
+                  excludeUsernames={contacts.map(c => c.username)}
+                />
+              </div>
+            )}
+
             <ContactFormHeader
               formData={formData}
               setFormData={setFormData}
