@@ -20,6 +20,7 @@ import SpeakButton, { speak } from '../components/accessibility/SpeakButton';
 import FeatureOrderManager from '../components/settings/FeatureOrderManager';
 import DashboardPreferences from '../components/settings/DashboardPreferences';
 import { getEffectiveUserEmail, isImpersonating } from '../components/admin/ImpersonationBanner';
+import { useTheme } from '../components/shared/useTheme';
 
 
 
@@ -166,6 +167,8 @@ export default function Settings() {
     updatePreferencesMutation.mutate(formData);
   };
 
+  const { isDark, bgClass } = useTheme();
+
   if (loading || prefsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -175,7 +178,7 @@ export default function Settings() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 p-4 md:p-8">
+    <div className={`min-h-screen ${bgClass} ${isDark ? 'text-gray-100' : ''} p-4 md:p-8`}>
       <div className="max-w-5xl mx-auto space-y-6">
         <div className="flex items-center justify-between gap-4">
           <h1 className="text-3xl font-bold text-gray-800">Settings</h1>

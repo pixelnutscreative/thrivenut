@@ -16,6 +16,7 @@ import SpecialEventsCard from '../components/dashboard/SpecialEventsCard';
 import NotionTaskPicker from '../components/dashboard/NotionTaskPicker';
 import { format, startOfWeek } from 'date-fns';
 import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
+import { useTheme } from '../components/shared/useTheme';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -265,8 +266,10 @@ export default function Dashboard() {
     ? todaysMoodLogs[todaysMoodLogs.length - 1].mood 
     : null;
 
+  const { isDark, bgClass, textClass, cardBgClass } = useTheme();
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-purple-50 to-blue-50 p-4 md:p-8">
+    <div className={`min-h-screen ${bgClass} ${isDark ? 'text-gray-100' : ''} p-4 md:p-8`}>
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Special Events - Birthdays & Sobriety Anniversaries */}
         <SpecialEventsCard contacts={tiktokContacts} />

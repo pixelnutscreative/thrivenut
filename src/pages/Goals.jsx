@@ -18,6 +18,7 @@ import GoalShareSelector from '../components/goals/GoalShareSelector';
 import SharedGoalCard from '../components/goals/SharedGoalCard';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { useTheme } from '../components/shared/useTheme';
 
 const categoryColors = {
   spiritual: 'bg-purple-100 text-purple-800',
@@ -137,6 +138,8 @@ export default function Goals() {
   React.useEffect(() => {
     base44.auth.me().then(setUser);
   }, []);
+
+  const { isDark, bgClass, textClass, cardBgClass } = useTheme();
 
   const { data: goals } = useQuery({
     queryKey: ['goals', user?.email],
@@ -308,7 +311,7 @@ export default function Goals() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 p-4 md:p-8">
+    <div className={`min-h-screen ${bgClass} ${isDark ? 'text-gray-100' : ''} p-4 md:p-8`}>
       <div className="max-w-6xl mx-auto space-y-8">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
