@@ -11,8 +11,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { 
   Plus, Edit, Trash2, Check, X, Clock, AlertCircle, 
   Bug, Sparkles, Palette, Calendar, Heart, Brain, Music,
-  LayoutDashboard, Users, Target, BookOpen, Filter, Search
+  LayoutDashboard, Users, Target, BookOpen, Filter, Search,
+  ListChecks, Play, Copy, ChevronUp, ChevronDown
 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { format } from 'date-fns';
 
 const categoryConfig = {
@@ -163,12 +165,48 @@ export default function AdminFeedbackContent() {
     pending: items.filter(i => i.status === 'pending').length,
     inProgress: items.filter(i => i.status === 'in_progress').length,
     completed: items.filter(i => i.status === 'completed').length,
+    queued: items.filter(i => i.queued_for_batch).length,
+  };
+
+  // Get queued items sorted by batch_order
+  const queuedItems = items
+    .filter(i => i.queued_for_batch && i.status !== 'completed')
+    .sort((a, b) => (a.batch_order || 999) - (b.batch_order || 999));
+
+  const toggleQueuedForBatch = (item) => {
+    const isQueued = !item.queued_for_batch;
+    const batchOrder = isQueued ? (stats.queued + 1) : null;
+    updateMutation.mutate({ 
+      id: item.id, 
+      data: { queued_for_batch: isQueued, batch_order: batchOrder } 
+    });
+  };
+
+  const updateBatchOrder = (item, direction) => {
+    const currentOrder = item.batch_order || 999;
+    const newOrder = direction === 'up' ? currentOrder - 1.5 : currentOrder + 1.5;
+    updateMutation.mutate({ id: item.id, data: { batch_order: newOrder } });
+  };
+
+  const copyBatchSummary = () => {
+    const summary = queuedItems.map((item, idx) => 
+      `${idx + 1}. [${categoryConfig[item.category]?.label || item.category}] ${item.title}${item.description ? ': ' + item.description : ''}`
+    ).join('\n\n');
+    navigator.clipboard.writeText(summary);
+    alert('Batch summary copied to clipboard!');
+  };
+
+  const clearBatchQueue = () => {
+    if (!confirm('Clear all items from the batch queue?')) return;
+    queuedItems.forEach(item => {
+      updateMutation.mutate({ id: item.id, data: { queued_for_batch: false, batch_order: null } });
+    });
   };
 
   return (
     <div className="space-y-6">
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-5 gap-4">
         <Card className="bg-gray-50">
           <CardContent className="p-4 text-center">
             <p className="text-2xl font-bold">{stats.total}</p>
@@ -193,7 +231,83 @@ export default function AdminFeedbackContent() {
             <p className="text-xs text-green-600">Completed</p>
           </CardContent>
         </Card>
+        <Card className="bg-purple-50 border-2 border-purple-200">
+          <CardContent className="p-4 text-center">
+            <p className="text-2xl font-bold text-purple-700">{stats.queued}</p>
+            <p className="text-xs text-purple-600">Next Batch</p>
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Batch Queue Section */}
+      {queuedItems.length > 0 && (
+        <Card className="border-2 border-purple-300 bg-purple-50/50">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-lg text-purple-800">
+                <ListChecks className="w-5 h-5" />
+                Next Batch Queue
+                <Badge className="bg-purple-200 text-purple-800 ml-2">{queuedItems.length} items</Badge>
+              </CardTitle>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={copyBatchSummary}
+                  className="border-purple-300 text-purple-700 hover:bg-purple-100"
+                >
+                  <Copy className="w-4 h-4 mr-1" />
+                  Copy Summary
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={clearBatchQueue}
+                  className="border-red-300 text-red-600 hover:bg-red-50"
+                >
+                  <X className="w-4 h-4 mr-1" />
+                  Clear Queue
+                </Button>
+              </div>
+            </div>
+            <p className="text-sm text-purple-600">Check items below to add to this batch. Copy summary to paste into chat.</p>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {queuedItems.map((item, idx) => {
+              const catConfig = categoryConfig[item.category] || categoryConfig.other;
+              const CatIcon = catConfig.icon;
+              return (
+                <div key={item.id} className="flex items-center gap-3 p-2 bg-white rounded-lg border border-purple-200">
+                  <span className="w-6 h-6 rounded-full bg-purple-600 text-white text-xs flex items-center justify-center font-bold">
+                    {idx + 1}
+                  </span>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => updateBatchOrder(item, 'up')}>
+                      <ChevronUp className="w-4 h-4" />
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => updateBatchOrder(item, 'down')}>
+                      <ChevronDown className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <Badge className={`text-xs ${catConfig.color}`}>
+                    <CatIcon className="w-3 h-3 mr-1" />
+                    {catConfig.label}
+                  </Badge>
+                  <span className="flex-1 font-medium text-sm">{item.title}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => toggleQueuedForBatch(item)}
+                    className="h-6 w-6 p-0 text-red-500 hover:bg-red-50"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Filters */}
       <Card>
@@ -289,14 +403,27 @@ export default function AdminFeedbackContent() {
                       </div>
                       <div className="flex items-center gap-1">
                         {item.status !== 'completed' && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => quickStatusChange(item, 'completed')}
-                            className="h-8 w-8 p-0 text-green-600 hover:bg-green-50"
-                          >
-                            <Check className="w-4 h-4" />
-                          </Button>
+                          <>
+                            <button
+                              onClick={() => toggleQueuedForBatch(item)}
+                              className={`h-8 w-8 p-0 flex items-center justify-center rounded transition-colors ${
+                                item.queued_for_batch 
+                                  ? 'bg-purple-100 text-purple-700' 
+                                  : 'hover:bg-purple-50 text-gray-400'
+                              }`}
+                              title={item.queued_for_batch ? 'Remove from batch' : 'Add to next batch'}
+                            >
+                              <ListChecks className="w-4 h-4" />
+                            </button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => quickStatusChange(item, 'completed')}
+                              className="h-8 w-8 p-0 text-green-600 hover:bg-green-50"
+                            >
+                              <Check className="w-4 h-4" />
+                            </Button>
+                          </>
                         )}
                         <Button
                           variant="ghost"
