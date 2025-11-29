@@ -23,7 +23,6 @@ import ContactFormHeader from '../components/contacts/ContactFormHeader';
 import TikTokTabContent from '../components/contacts/TikTokTabContent';
 import PersonalTabContent from '../components/contacts/PersonalTabContent';
 import BusinessTabContent from '../components/contacts/BusinessTabContent';
-import { useTheme } from '../components/shared/useTheme';
 
 // Icon-based roles for contact cards
 const iconRoles = {
@@ -186,8 +185,6 @@ export default function TikTokContacts() {
   });
 
   const savedCustomRoles = preferences?.custom_tiktok_roles || [];
-
-  const { isDark, bgClass, textClass, cardBgClass } = useTheme();
 
   // Fetch shared clubs
   const { data: sharedClubs = [] } = useQuery({
