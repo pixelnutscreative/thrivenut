@@ -77,10 +77,7 @@ const allNavItems = [
   { name: 'Journal', icon: BookOpen, path: 'Journal', moduleId: 'journal' },
   { name: 'Mental Health', icon: Brain, path: 'NeurodivergentSettings', moduleId: 'mental_health' },
   { name: 'SuperFan Access', icon: Star, path: 'SuperFanAccess', showWhenNoTikTokAccess: true },
-  { name: "Pixel's Place", icon: Sparkles, isSection: true, moduleId: 'pixels_paradise', alwaysShow: true, subItems: [
-    { name: 'Resources & Tools', icon: Palette, path: 'PixelsParadise' },
-    { name: 'Live Reminders', icon: Bell, path: 'LiveReminders' },
-  ]},
+  { name: "Pixel's Place", icon: Sparkles, path: 'PixelsParadise', alwaysShow: true },
   { name: 'Support', icon: Heart, path: 'Support', alwaysShow: true },
   { name: 'Admin Panel', icon: UserCog, path: 'Admin', adminOnly: true },
 ];

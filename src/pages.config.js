@@ -11,7 +11,6 @@ import DiscoverCreators from './pages/DiscoverCreators';
 import Supplements from './pages/Supplements';
 import Medications from './pages/Medications';
 import GiftLibrary from './pages/GiftLibrary';
-import LiveReminders from './pages/LiveReminders';
 import PetCare from './pages/PetCare';
 import CareReminders from './pages/CareReminders';
 import People from './pages/People';
@@ -45,7 +44,6 @@ export const PAGES = {
     "Supplements": Supplements,
     "Medications": Medications,
     "GiftLibrary": GiftLibrary,
-    "LiveReminders": LiveReminders,
     "PetCare": PetCare,
     "CareReminders": CareReminders,
     "People": People,
