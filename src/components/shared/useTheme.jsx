@@ -5,34 +5,55 @@ import { useState, useEffect, useMemo } from 'react';
 
 export function useTheme() {
   const [user, setUser] = useState(null);
+  const [userLoading, setUserLoading] = useState(true);
   
   // Handle system theme detection - must be before any conditional returns
   const [systemDark, setSystemDark] = useState(() => {
     if (typeof window === 'undefined') return false;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    try {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    } catch {
+      return false;
+    }
   });
 
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => {});
+    base44.auth.me()
+      .then(setUser)
+      .catch(() => setUser(null))
+      .finally(() => setUserLoading(false));
   }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handler = (e) => setSystemDark(e.matches);
-    mediaQuery.addEventListener('change', handler);
-    return () => mediaQuery.removeEventListener('change', handler);
+    try {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const handler = (e) => setSystemDark(e.matches);
+      mediaQuery.addEventListener('change', handler);
+      return () => mediaQuery.removeEventListener('change', handler);
+    } catch {
+      // Ignore media query errors
+    }
   }, []);
 
   const effectiveEmail = useMemo(() => {
-    return user ? getEffectiveUserEmail(user.email) : null;
+    if (!user?.email) return null;
+    try {
+      return getEffectiveUserEmail(user.email);
+    } catch {
+      return user.email;
+    }
   }, [user]);
 
-  const { data: preferences } = useQuery({
+  const { data: preferences, isLoading: prefsLoading } = useQuery({
     queryKey: ['preferences', effectiveEmail],
     queryFn: async () => {
-      const prefs = await base44.entities.UserPreferences.filter({ user_email: effectiveEmail }, '-updated_date');
-      return prefs[0] || null;
+      try {
+        const prefs = await base44.entities.UserPreferences.filter({ user_email: effectiveEmail }, '-updated_date');
+        return prefs[0] || null;
+      } catch {
+        return null;
+      }
     },
     enabled: !!effectiveEmail,
   });
@@ -72,5 +93,6 @@ export function useTheme() {
     user,
     effectiveEmail,
     preferences,
+    isLoading: userLoading || (!!effectiveEmail && prefsLoading),
   };
 }
