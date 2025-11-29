@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Plus, ExternalLink, Check, Calendar, BookOpen, History, Settings, UserPlus } from 'lucide-react';
+import { Plus, ExternalLink, Check, Calendar, BookOpen, History, Settings, UserPlus, Undo2 } from 'lucide-react';
 import { format, getDay, addDays, parseISO, isPast, getDate } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -237,10 +237,51 @@ export default function TikTokEngagement() {
     return new Date(a.last_engaged_date) - new Date(b.last_engaged_date);
   });
 
+  // Count how many accounts a contact has
+  const getAccountCount = (contact) => {
+    let count = 0;
+    if (contact.username) count++;
+    count += (contact.other_tiktok_accounts || []).length;
+    if (contact.social_engagement) {
+      for (const [platform, enabled] of Object.entries(contact.social_engagement)) {
+        if (enabled && contact.social_links?.[platform]) count++;
+      }
+    }
+    return count;
+  };
+
+  // Count how many accounts are checked
+  const getCheckedCount = (contact) => {
+    const engaged = justEngaged[contact.id] || {};
+    let count = 0;
+    if (contact.username && engaged.primary) count++;
+    (contact.other_tiktok_accounts || []).forEach((_, idx) => {
+      if (engaged[`tiktok_${idx}`]) count++;
+    });
+    if (contact.social_engagement) {
+      for (const [platform, enabled] of Object.entries(contact.social_engagement)) {
+        if (enabled && contact.social_links?.[platform] && engaged[`social_${platform}`]) count++;
+      }
+    }
+    return count;
+  };
+
+  // Undo all checkmarks for a contact
+  const undoContact = (contactId) => {
+    setJustEngaged(prev => {
+      const newState = { ...prev };
+      delete newState[contactId];
+      return newState;
+    });
+  };
+
   const CreatorCard = ({ contact, index }) => {
     const engaged = justEngaged[contact.id] || {};
     const fullyEngaged = isFullyEngaged(contact);
     const categoryName = getCategoryName(contact.engagement_category_id);
+    const accountCount = getAccountCount(contact);
+    const checkedCount = getCheckedCount(contact);
+    const hasAnyChecks = checkedCount > 0;
 
     const toggleAccountEngaged = (accountKey) => {
       setJustEngaged(prev => ({
@@ -257,18 +298,28 @@ export default function TikTokEngagement() {
         key={contact.id}
         layout
         initial={{ opacity: 0, y: 20 }}
-        animate={fullyEngaged ? { opacity: 0, scale: 0.8, y: -20 } : { opacity: 1, y: 0 }}
+        animate={fullyEngaged ? { opacity: 0.5, scale: 0.95 } : { opacity: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.8 }}
         transition={{ type: "spring", stiffness: 300, damping: 25 }}
       >
         <Card 
-          className={`hover:shadow-lg transition-shadow overflow-hidden ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white'}`}
+          className={`hover:shadow-lg transition-shadow overflow-hidden ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white'} ${fullyEngaged ? 'opacity-60' : ''}`}
           style={{ borderTop: `4px solid ${contact.color || '#8B5CF6'}` }}
         >
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <CardTitle className={`text-lg ${textClass}`}>@{contact.username}</CardTitle>
+                <div className="flex items-center gap-2">
+                  <CardTitle className={`text-lg ${textClass}`}>@{contact.username}</CardTitle>
+                  {accountCount > 1 && (
+                    <Badge 
+                      variant={fullyEngaged ? "default" : "outline"} 
+                      className={`text-xs ${fullyEngaged ? 'bg-green-500' : ''}`}
+                    >
+                      {checkedCount}/{accountCount}
+                    </Badge>
+                  )}
+                </div>
                 {contact.display_name && (
                   <p className={`text-sm ${subtextClass}`}>{contact.display_name}</p>
                 )}
@@ -281,15 +332,28 @@ export default function TikTokEngagement() {
                   )}
                 </div>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => handleEditSchedule(contact)}
-                className="text-gray-400 hover:text-purple-600"
-                title="Edit Schedule"
-              >
-                <Settings className="w-4 h-4" />
-              </Button>
+              <div className="flex items-center gap-1">
+                {hasAnyChecks && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => undoContact(contact.id)}
+                    className="text-orange-500 hover:text-orange-600 hover:bg-orange-50"
+                    title="Undo - bring back to list"
+                  >
+                    <Undo2 className="w-4 h-4" />
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleEditSchedule(contact)}
+                  className="text-gray-400 hover:text-purple-600"
+                  title="Edit Schedule"
+                >
+                  <Settings className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-3">
