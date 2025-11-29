@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, Plus, Copy, Check, Video, RefreshCw } from 'lucide-react';
+import { Search, Plus, Copy, Check, Video, RefreshCw, MessageCircle, Users, ExternalLink, GraduationCap } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
@@ -32,7 +32,7 @@ export default function DiscoverCreators() {
     initialData: [],
   });
 
-  // Fetch preferences to get tiktok usernames
+  // Fetch preferences to get tiktok usernames and community info
   const { data: allPreferences = [] } = useQuery({
     queryKey: ['allUserPreferences'],
     queryFn: async () => {
@@ -42,9 +42,14 @@ export default function DiscoverCreators() {
     initialData: [],
   });
 
+  // Discord workshop signup URL
+  const discordWorkshopUrl = "https://pixelnutscreative.com/discord-workshop";
+
   // Group shared items by creator email
   const directoryCreators = React.useMemo(() => {
     const grouped = {};
+    
+    // Add creators who have shared calendar items
     sharedItems.forEach(item => {
       const email = item.created_by;
       if (!grouped[email]) {
@@ -52,11 +57,31 @@ export default function DiscoverCreators() {
         grouped[email] = {
           email,
           tiktok_username: pref?.tiktok_username || email.split('@')[0],
+          discord_username: pref?.discord_username,
+          discord_invite_link: pref?.discord_invite_link,
+          discord_public: pref?.discord_public,
+          communities: pref?.communities || [],
           items: []
         };
       }
       grouped[email].items.push(item);
     });
+    
+    // Also add creators who just have community info but no calendar items
+    allPreferences.forEach(pref => {
+      if (!grouped[pref.user_email] && (pref.discord_public || (pref.communities && pref.communities.some(c => c.is_public)))) {
+        grouped[pref.user_email] = {
+          email: pref.user_email,
+          tiktok_username: pref.tiktok_username || pref.user_email.split('@')[0],
+          discord_username: pref.discord_username,
+          discord_invite_link: pref.discord_invite_link,
+          discord_public: pref.discord_public,
+          communities: pref.communities || [],
+          items: []
+        };
+      }
+    });
+    
     return Object.values(grouped);
   }, [sharedItems, allPreferences]);
 
@@ -115,6 +140,30 @@ Would love to see you there! 🎉`;
           <h1 className="text-3xl font-bold text-gray-800">Discover Creators</h1>
           <p className="text-gray-600 mt-1">Find and follow ThriveNut creators' live schedules</p>
         </div>
+
+        {/* Discord Workshop Promo */}
+        <Card className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white border-0">
+          <CardContent className="p-6">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-white/20 rounded-xl">
+                  <GraduationCap className="w-8 h-8" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg">Discord Workshop / Open Office Hours</h3>
+                  <p className="text-white/80 text-sm">Join Pixel twice a month for help with Discord, Canva & more!</p>
+                </div>
+              </div>
+              <Button
+                onClick={() => window.open(discordWorkshopUrl, '_blank')}
+                className="bg-white text-purple-600 hover:bg-gray-100 shrink-0"
+              >
+                <MessageCircle className="w-4 h-4 mr-2" />
+                Register Now
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Search Bar */}
         <Card>
@@ -195,6 +244,42 @@ Would love to see you there! 🎉`;
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
+                      {/* Community Links */}
+                      {(creator.discord_public || creator.communities?.some(c => c.is_public)) && (
+                        <div className="flex flex-wrap gap-2 pb-2 border-b border-gray-100">
+                          {creator.discord_public && creator.discord_invite_link && (
+                            <a
+                              href={creator.discord_invite_link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1 px-2 py-1 bg-indigo-100 text-indigo-700 rounded-lg text-xs hover:bg-indigo-200 transition-colors"
+                            >
+                              <MessageCircle className="w-3 h-3" />
+                              Discord
+                              {creator.discord_username && <span className="opacity-70">@{creator.discord_username}</span>}
+                            </a>
+                          )}
+                          {creator.communities?.filter(c => c.is_public).map((community, idx) => (
+                            <a
+                              key={idx}
+                              href={community.link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs transition-colors ${
+                                community.platform === 'skool' ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200' :
+                                community.platform === 'facebook' ? 'bg-blue-100 text-blue-700 hover:bg-blue-200' :
+                                'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                              }`}
+                            >
+                              <Users className="w-3 h-3" />
+                              {community.name || community.platform}
+                              {community.is_paid && <Badge className="text-[10px] bg-amber-100 text-amber-700 ml-1">Paid</Badge>}
+                              {community.is_free && !community.is_paid && <Badge className="text-[10px] bg-green-100 text-green-700 ml-1">Free</Badge>}
+                            </a>
+                          ))}
+                        </div>
+                      )}
+                      
                       <p className="text-sm text-gray-600">
                         {creator.items.length} live{creator.items.length !== 1 ? 's' : ''} shared
                       </p>

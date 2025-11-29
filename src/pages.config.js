@@ -27,6 +27,7 @@ import MeetThePixelNuts from './pages/MeetThePixelNuts';
 import PixelsParadise from './pages/PixelsParadise';
 import TikTokContacts from './pages/TikTokContacts';
 import Support from './pages/Support';
+import HolyHitmakers from './pages/HolyHitmakers';
 import __Layout from './Layout.jsx';
 
 
@@ -60,6 +61,7 @@ export const PAGES = {
     "PixelsParadise": PixelsParadise,
     "TikTokContacts": TikTokContacts,
     "Support": Support,
+    "HolyHitmakers": HolyHitmakers,
 }
 
 export const pagesConfig = {
