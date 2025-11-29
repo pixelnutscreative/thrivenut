@@ -20,29 +20,25 @@ import { useTheme } from '../components/shared/useTheme';
 
 const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
+// Unified live type config - used across the app
 const liveTypeConfig = {
   regular: { label: 'Regular', icon: Camera, color: 'bg-blue-100 text-blue-700' },
   pop_up: { label: 'Pop Up', icon: Popcorn, color: 'bg-yellow-100 text-yellow-700' },
   battle: { label: 'Battle', icon: Swords, color: 'bg-red-100 text-red-700' },
-  tt_shop: { label: 'Shop', icon: ShoppingBag, color: 'bg-green-100 text-green-700' },
+  box_battle: { label: 'Box Battle', icon: LayoutGrid, color: 'bg-red-50 text-red-600' },
+  tt_shop: { label: 'TT Shop', icon: ShoppingBag, color: 'bg-green-100 text-green-700' },
   daily_heart_me: { label: 'Daily Heart', icon: Heart, color: 'bg-orange-100 text-orange-600' },
   engagement_live: { label: 'Engagement', icon: Handshake, color: 'bg-pink-100 text-pink-700' },
-  multi_guest: { label: 'Multi Box', icon: LayoutGrid, color: 'bg-indigo-100 text-indigo-700' },
+  multi_guest: { label: 'Multi Guest', icon: LayoutGrid, color: 'bg-indigo-100 text-indigo-700' },
   co_host: { label: 'Co-Host', icon: Users, color: 'bg-cyan-100 text-cyan-700' },
-  teaching: { label: 'Teaching', icon: GraduationCap, color: 'bg-purple-100 text-purple-700' }
+  teaching: { label: 'Teaching', icon: GraduationCap, color: 'bg-purple-100 text-purple-700' },
+  blessing_bus: { label: 'Blessing Bus', icon: Heart, color: 'bg-amber-100 text-amber-700' },
+  escape_room: { label: 'Escape Room', icon: Clock, color: 'bg-slate-100 text-slate-700' },
+  sleepover: { label: 'Sleepover Party', icon: Moon, color: 'bg-violet-100 text-violet-700' },
+  marathon: { label: '24hr / Marathon', icon: Clock, color: 'bg-rose-100 text-rose-700' },
+  special_appearance: { label: 'Special Appearance', icon: Sparkles, color: 'bg-fuchsia-100 text-fuchsia-700' },
+  other: { label: 'Other', icon: CalendarIcon, color: 'bg-gray-100 text-gray-700' }
 };
-
-// Special event types for one-time lives
-const specialEventTypes = [
-  { value: 'battle', label: 'Battle', icon: Swords },
-  { value: 'escape_room', label: 'Escape Room', icon: Clock },
-  { value: 'sleepover', label: 'Sleepover Party', icon: Moon },
-  { value: '24_hour', label: '24 Hour Stream', icon: Clock },
-  { value: 'co_host', label: 'Co-Host Session', icon: Users },
-  { value: 'box_battle', label: 'Box Battle', icon: LayoutGrid },
-  { value: 'special_appearance', label: 'Special Appearance', icon: Sparkles },
-  { value: 'other', label: 'Other Special Event', icon: CalendarIcon }
-];
 
 export default function LiveSchedule() {
   const queryClient = useQueryClient();
@@ -65,8 +61,7 @@ export default function LiveSchedule() {
     audience: 'all_ages',
     share_to_directory: false,
     specific_date: '',
-    live_type: 'regular',
-    special_event_type: ''
+    live_type: 'regular'
   });
   const [formData, setFormData] = useState({
     host_username: '',
@@ -158,8 +153,7 @@ export default function LiveSchedule() {
       audience: item.audience || 'all_ages',
       share_to_directory: item.share_to_directory || false,
       specific_date: item.specific_date || '',
-      live_type: item.live_type || 'regular',
-      special_event_type: item.special_event_type || ''
+      live_type: item.live_type || 'regular'
     });
   };
 
@@ -174,8 +168,7 @@ export default function LiveSchedule() {
       audience: item.audience || 'all_ages',
       share_to_directory: item.share_to_directory || false,
       specific_date: '',
-      live_type: item.live_type || 'regular',
-      special_event_type: ''
+      live_type: item.live_type || 'regular'
     });
   };
 
@@ -947,7 +940,7 @@ export default function LiveSchedule() {
       <Dialog open={!!editingContentItem} onOpenChange={(open) => {
         if (!open) {
           setEditingContentItem(null);
-          setContentFormData({ type: 'live', title: '', day_of_week: 'Monday', time: '12:00', is_recurring: true, audience: 'all_ages', share_to_directory: false, specific_date: '', live_type: 'regular', special_event_type: '' });
+          setContentFormData({ type: 'live', title: '', day_of_week: 'Monday', time: '12:00', is_recurring: true, audience: 'all_ages', share_to_directory: false, specific_date: '', live_type: 'regular' });
         }
       }}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
@@ -955,10 +948,10 @@ export default function LiveSchedule() {
             <DialogTitle>{editingContentItem?.id ? 'Edit My Live' : 'Add My Live'}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            {/* Live Type */}
+            {/* Unified Live Type Selector */}
             <div className="space-y-2">
               <Label>Type of Live</Label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-4 gap-2">
                 {Object.entries(liveTypeConfig).map(([key, config]) => {
                   const Icon = config.icon;
                   return (
@@ -972,7 +965,7 @@ export default function LiveSchedule() {
                       }`}
                     >
                       <Icon className="w-4 h-4 mx-auto mb-1" />
-                      <span>{config.label}</span>
+                      <span className="block truncate">{config.label}</span>
                     </div>
                   );
                 })}
@@ -1021,42 +1014,24 @@ export default function LiveSchedule() {
                 </div>
               </div>
             ) : (
-              <>
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Special Event Type</Label>
-                  <Select value={contentFormData.special_event_type} onValueChange={(v) => setContentFormData({ ...contentFormData, special_event_type: v })}>
-                    <SelectTrigger><SelectValue placeholder="Select event type..." /></SelectTrigger>
-                    <SelectContent>
-                      {specialEventTypes.map(event => (
-                        <SelectItem key={event.value} value={event.value}>
-                          <div className="flex items-center gap-2">
-                            <event.icon className="w-4 h-4" />
-                            {event.label}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label>Date</Label>
+                  <Input
+                    type="date"
+                    value={contentFormData.specific_date}
+                    onChange={(e) => setContentFormData({ ...contentFormData, specific_date: e.target.value })}
+                  />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Date</Label>
-                    <Input
-                      type="date"
-                      value={contentFormData.specific_date}
-                      onChange={(e) => setContentFormData({ ...contentFormData, specific_date: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Time</Label>
-                    <Input
-                      type="time"
-                      value={contentFormData.time}
-                      onChange={(e) => setContentFormData({ ...contentFormData, time: e.target.value })}
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label>Time</Label>
+                  <Input
+                    type="time"
+                    value={contentFormData.time}
+                    onChange={(e) => setContentFormData({ ...contentFormData, time: e.target.value })}
+                  />
                 </div>
-              </>
+              </div>
             )}
 
             <div className="space-y-2">
@@ -1080,6 +1055,16 @@ export default function LiveSchedule() {
                 <p className="text-xs text-gray-500">Let others see your live schedule</p>
               </div>
             </label>
+
+            {/* Blessing Bus note */}
+            {contentFormData.live_type === 'blessing_bus' && (
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm">
+                <p className="font-medium text-amber-800">🚌 Blessing Bus Schedule</p>
+                <p className="text-amber-700 text-xs mt-1">
+                  Sundays 1-2:30pm PST is Pixel Tour's Blessing Bus. Pick another time to keep blessings going all day!
+                </p>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditingContentItem(null)}>Cancel</Button>
