@@ -268,8 +268,6 @@ export default function Dashboard() {
     ? todaysMoodLogs[todaysMoodLogs.length - 1].mood 
     : null;
 
-  const { isDark, bgClass, textClass, cardBgClass } = useTheme();
-
   return (
     <div className={`min-h-screen ${bgClass} ${isDark ? 'text-gray-100' : ''} p-4 md:p-8`}>
       <div className="max-w-7xl mx-auto space-y-8">
