@@ -27,10 +27,12 @@ export default function Dashboard() {
   const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
   const [showPostsModal, setShowPostsModal] = useState(false);
-  const [showLivesModal, setShowLivesModal] = useState(false);
-  const [showEngagementModal, setShowEngagementModal] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(false);
-  const [loading, setLoading] = useState(true);
+    const [showLivesModal, setShowLivesModal] = useState(false);
+    const [showEngagementModal, setShowEngagementModal] = useState(false);
+    const [showOnboarding, setShowOnboarding] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [showDashboardSettings, setShowDashboardSettings] = useState(false);
+    const [collapsedSections, setCollapsedSections] = useState([]);
   
   const { isDark, bgClass, textClass, cardBgClass } = useTheme();
 
