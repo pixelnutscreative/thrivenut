@@ -211,6 +211,8 @@ export default function Layout({ children, currentPageName }) {
     ? 'bg-[#1f1f23] text-gray-100' 
     : 'bg-gradient-to-br from-teal-50 via-purple-50 to-blue-50 text-gray-900';
 
+  const backgroundImageUrl = preferences?.background_image_url;
+
   const sidebarClass = isDark
     ? 'bg-[#2a2a30]/95 border-gray-700'
     : 'bg-white/95 border-gray-200';
@@ -220,7 +222,19 @@ export default function Layout({ children, currentPageName }) {
   const hoverClass = isDark ? 'hover:bg-gray-700/50' : 'hover:bg-teal-50';
 
   return (
-        <div className={`min-h-screen ${bgClass} ${currentlyImpersonating ? 'pt-10' : ''}`} style={{ '--primary-color': primaryColor, '--accent-color': accentColor }}>
+        <div 
+          className={`min-h-screen ${bgClass} ${currentlyImpersonating ? 'pt-10' : ''}`} 
+          style={{ 
+            '--primary-color': primaryColor, 
+            '--accent-color': accentColor,
+            ...(backgroundImageUrl ? {
+              backgroundImage: `url(${backgroundImageUrl})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundAttachment: 'fixed'
+            } : {})
+          }}
+        >
           <ImpersonationBanner />
       {/* Mobile Header */}
       <div className={`lg:hidden fixed top-0 left-0 right-0 z-50 backdrop-blur-sm border-b px-4 py-3 ${sidebarClass}`}>
