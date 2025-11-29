@@ -10,10 +10,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { 
   MessageSquare, Bug, Lightbulb, HelpCircle, Send, 
   Loader2, CheckCircle, Clock, AlertCircle, Sparkles,
-  Upload, X, Rocket, Gift, Star
+  Upload, X, Rocket, Gift, Star, User, Shield
 } from 'lucide-react';
 
 const ticketTypes = [
@@ -52,6 +53,8 @@ export default function Support() {
   const [submitted, setSubmitted] = useState(false);
   const [screenshotUrl, setScreenshotUrl] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [selectedTicket, setSelectedTicket] = useState(null);
+  const [replyMessage, setReplyMessage] = useState('');
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -114,6 +117,27 @@ export default function Support() {
     if (!formData.subject.trim()) return;
     createTicketMutation.mutate(formData);
   };
+
+  const sendReplyMutation = useMutation({
+    mutationFn: async ({ ticketId, message }) => {
+      const ticket = myTickets.find(t => t.id === ticketId);
+      const newMessage = {
+        sender: user.email,
+        sender_type: 'user',
+        message,
+        timestamp: new Date().toISOString(),
+      };
+      const updatedMessages = [...(ticket.messages || []), newMessage];
+      return base44.entities.SupportTicket.update(ticketId, { 
+        messages: updatedMessages,
+        status: 'open' // Reopen ticket when user replies
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['myTickets'] });
+      setReplyMessage('');
+    },
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 p-4 md:p-8">
@@ -326,7 +350,11 @@ export default function Support() {
               </Card>
             ) : (
               myTickets.map(ticket => (
-                <Card key={ticket.id} className="overflow-hidden">
+                <Card 
+                  key={ticket.id} 
+                  className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+                  onClick={() => setSelectedTicket(ticket)}
+                >
                   <div className={`h-1 ${
                     ticket.status === 'resolved' ? 'bg-green-500' : 
                     ticket.status === 'in_progress' ? 'bg-amber-500' : 'bg-blue-500'
@@ -341,6 +369,11 @@ export default function Support() {
                           <Badge variant="outline" className="text-xs">
                             {ticketTypes.find(t => t.value === ticket.type)?.label || ticket.type}
                           </Badge>
+                          {(ticket.messages?.length > 0) && (
+                            <Badge className="bg-purple-100 text-purple-700 text-xs">
+                              {ticket.messages.length} message{ticket.messages.length > 1 ? 's' : ''}
+                            </Badge>
+                          )}
                         </div>
                         <h3 className="font-semibold text-gray-800">{ticket.subject}</h3>
                         {ticket.description && (
@@ -362,6 +395,148 @@ export default function Support() {
             )}
           </TabsContent>
         </Tabs>
+
+        {/* Ticket Detail Modal */}
+        <Dialog open={!!selectedTicket} onOpenChange={() => setSelectedTicket(null)}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <MessageSquare className="w-5 h-5 text-purple-500" />
+                {selectedTicket?.subject}
+              </DialogTitle>
+            </DialogHeader>
+
+            {selectedTicket && (
+              <div className="space-y-4">
+                {/* Status and meta */}
+                <div className="flex flex-wrap gap-2">
+                  <Badge className={statusColors[selectedTicket.status]}>
+                    {statusLabels[selectedTicket.status]}
+                  </Badge>
+                  <Badge variant="outline">
+                    {ticketTypes.find(t => t.value === selectedTicket.type)?.label}
+                  </Badge>
+                  <span className="text-sm text-gray-500">
+                    {new Date(selectedTicket.created_date).toLocaleString()}
+                  </span>
+                </div>
+
+                {/* Original description */}
+                {selectedTicket.description && (
+                  <div className="p-3 bg-gray-50 rounded-lg">
+                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{selectedTicket.description}</p>
+                  </div>
+                )}
+
+                {selectedTicket.screenshot_url && (
+                  <img 
+                    src={selectedTicket.screenshot_url} 
+                    alt="Screenshot" 
+                    className="max-w-full rounded-lg border cursor-pointer"
+                    onClick={() => window.open(selectedTicket.screenshot_url, '_blank')}
+                  />
+                )}
+
+                {/* Conversation Thread */}
+                {(selectedTicket.messages?.length > 0 || selectedTicket.resolution) && (
+                  <div className="space-y-3 border-t pt-4">
+                    <h4 className="font-semibold text-gray-700">Conversation</h4>
+                    
+                    {/* Show resolution as first admin message if exists but no messages array */}
+                    {selectedTicket.resolution && !selectedTicket.messages?.some(m => m.message === selectedTicket.resolution) && (
+                      <div className="flex gap-3">
+                        <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                          <Shield className="w-4 h-4 text-purple-600" />
+                        </div>
+                        <div className="flex-1 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-xs font-medium text-purple-700">Pixel (Admin)</span>
+                          </div>
+                          <p className="text-sm text-gray-700">{selectedTicket.resolution}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {selectedTicket.messages?.map((msg, idx) => (
+                      <div key={idx} className={`flex gap-3 ${msg.sender_type === 'user' ? 'flex-row-reverse' : ''}`}>
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                          msg.sender_type === 'admin' ? 'bg-purple-100' : 'bg-blue-100'
+                        }`}>
+                          {msg.sender_type === 'admin' 
+                            ? <Shield className="w-4 h-4 text-purple-600" />
+                            : <User className="w-4 h-4 text-blue-600" />
+                          }
+                        </div>
+                        <div className={`flex-1 max-w-[80%] p-3 rounded-lg border ${
+                          msg.sender_type === 'admin' 
+                            ? 'bg-purple-50 border-purple-200' 
+                            : 'bg-blue-50 border-blue-200'
+                        }`}>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className={`text-xs font-medium ${
+                              msg.sender_type === 'admin' ? 'text-purple-700' : 'text-blue-700'
+                            }`}>
+                              {msg.sender_type === 'admin' ? 'Pixel (Admin)' : 'You'}
+                            </span>
+                            <span className="text-xs text-gray-400">
+                              {new Date(msg.timestamp).toLocaleString()}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-700 whitespace-pre-wrap">{msg.message}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Reply input */}
+                {selectedTicket.status !== 'closed' && (
+                  <div className="border-t pt-4 space-y-2">
+                    <Label>Reply</Label>
+                    <Textarea
+                      placeholder="Type your reply..."
+                      value={replyMessage}
+                      onChange={(e) => setReplyMessage(e.target.value)}
+                      rows={3}
+                    />
+                    <div className="flex justify-end">
+                      <Button
+                        onClick={() => {
+                          if (replyMessage.trim()) {
+                            sendReplyMutation.mutate({ 
+                              ticketId: selectedTicket.id, 
+                              message: replyMessage 
+                            });
+                            // Update local state to show new message immediately
+                            setSelectedTicket(prev => ({
+                              ...prev,
+                              messages: [...(prev.messages || []), {
+                                sender: user.email,
+                                sender_type: 'user',
+                                message: replyMessage,
+                                timestamp: new Date().toISOString(),
+                              }]
+                            }));
+                            setReplyMessage('');
+                          }
+                        }}
+                        disabled={sendReplyMutation.isPending || !replyMessage.trim()}
+                        className="bg-purple-600 hover:bg-purple-700"
+                      >
+                        {sendReplyMutation.isPending ? (
+                          <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                        ) : (
+                          <Send className="w-4 h-4 mr-2" />
+                        )}
+                        Send Reply
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
 
         {/* Quick Suggestion Box */}
         <Card className="bg-gradient-to-r from-cyan-50 to-blue-50 border-cyan-200">
