@@ -42,7 +42,7 @@ export default function LiveSchedule() {
   const [noteContent, setNoteContent] = useState('');
   const [dayFilter, setDayFilter] = useState('today');
   const [selectedLiveTypes, setSelectedLiveTypes] = useState([]);
-  const [showMyContent, setShowMyContent] = useState(false);
+  const [showMyContent, setShowMyContent] = useState(true); // Default to showing user's content
   const [editingContentItem, setEditingContentItem] = useState(null);
   const [contentFormData, setContentFormData] = useState({
     type: 'live',
@@ -103,11 +103,11 @@ export default function LiveSchedule() {
 
   const calendarContacts = contacts.filter(c => c.calendar_enabled);
 
-  // Fetch my content calendar items
+  // Fetch my content calendar items - always fetch so we can show count
   const { data: myContentItems = [] } = useQuery({
     queryKey: ['contentCalendarItems', effectiveEmail],
     queryFn: () => base44.entities.ContentCalendarItem.filter({ created_by: effectiveEmail }),
-    enabled: !!effectiveEmail && showMyContent,
+    enabled: !!effectiveEmail,
   });
 
   const createContentMutation = useMutation({
@@ -516,7 +516,14 @@ export default function LiveSchedule() {
               className={showMyContent ? "bg-teal-600 hover:bg-teal-700" : "border-teal-300 text-teal-700 hover:bg-teal-50"}
             >
               <CalendarDays className="w-4 h-4 mr-2" />
-              {showMyContent ? "Hide My Content" : "Show My Content"}
+              {showMyContent ? `My Lives (${myContentItems.filter(i => i.type === 'live').length})` : "Show My Lives"}
+            </Button>
+            <Button
+              onClick={() => setEditingContentItem({})}
+              className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add My Live
             </Button>
             <Link to={createPageUrl('TikTokContacts')}>
               <Button variant="outline">
@@ -968,15 +975,6 @@ export default function LiveSchedule() {
         </DialogContent>
       </Dialog>
 
-      {/* Add Content Button when My Content is shown */}
-      {showMyContent && (
-        <Button
-          onClick={() => setEditingContentItem({})}
-          className="fixed bottom-6 right-6 rounded-full w-14 h-14 bg-teal-600 hover:bg-teal-700 shadow-lg"
-        >
-          <Plus className="w-6 h-6" />
-        </Button>
-      )}
     </div>
   );
 }
