@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Bell, Check, X, Users, Loader2, PartyPopper, HandHelping, Heart, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { createPageUrl } from '../utils';
+import { createPageUrl } from '../../utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const relationships = {
