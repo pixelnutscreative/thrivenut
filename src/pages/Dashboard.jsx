@@ -31,7 +31,6 @@ export default function Dashboard() {
     const [showEngagementModal, setShowEngagementModal] = useState(false);
     const [showOnboarding, setShowOnboarding] = useState(false);
     const [loading, setLoading] = useState(true);
-    const [showDashboardSettings, setShowDashboardSettings] = useState(false);
     const [collapsedSections, setCollapsedSections] = useState([]);
   
   const { isDark, bgClass, textClass, cardBgClass } = useTheme();
@@ -298,73 +297,8 @@ export default function Dashboard() {
   return (
     <div className={`min-h-screen ${bgClass} ${isDark ? 'text-gray-100' : ''} p-4 md:p-8`}>
       <div className="max-w-7xl mx-auto space-y-8">
-        {/* Dashboard Settings Toggle */}
-        <div className="flex justify-end">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowDashboardSettings(!showDashboardSettings)}
-            className="text-gray-500 hover:text-gray-700"
-          >
-            <Settings className="w-4 h-4 mr-1" />
-            Customize
-          </Button>
-        </div>
-
-        {/* Dashboard Settings Panel */}
-        {showDashboardSettings && (
-          <Card className="border-purple-200 bg-purple-50/50">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-purple-800">Dashboard Settings</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-blue-500" />
-                  <Label htmlFor="google-cal" className="text-sm">Show Google Calendar events</Label>
-                </div>
-                <Switch
-                  id="google-cal"
-                  checked={preferences?.show_google_calendar || false}
-                  onCheckedChange={(checked) => toggleGoogleCalendarMutation.mutate(checked)}
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Eye className="w-4 h-4 text-pink-500" />
-                  <Label htmlFor="creator-cal" className="text-sm">Show creator calendar reminders</Label>
-                </div>
-                <Switch
-                  id="creator-cal"
-                  checked={preferences?.show_creator_calendar_events !== false}
-                  onCheckedChange={async (checked) => {
-                    if (preferences?.id) {
-                      await base44.entities.UserPreferences.update(preferences.id, { show_creator_calendar_events: checked });
-                      queryClient.invalidateQueries({ queryKey: ['preferences'] });
-                    }
-                  }}
-                />
-              </div>
-              <p className="text-xs text-gray-500">
-                Toggle sections below by clicking their headers. Your preferences are saved automatically.
-              </p>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Special Events - Birthdays & Sobriety Anniversaries */}
-        <Collapsible open={!isSectionCollapsed('special-events')}>
-          <CollapsibleTrigger 
-            className="w-full flex items-center justify-between p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            onClick={() => toggleSectionCollapse('special-events')}
-          >
-            <span className="text-sm font-medium text-gray-600">Special Events</span>
-            {isSectionCollapsed('special-events') ? <ChevronRight className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <SpecialEventsCard contacts={tiktokContacts} />
-          </CollapsibleContent>
-        </Collapsible>
+        {/* Special Events - Birthdays & Sobriety Anniversaries from Contacts */}
+        <SpecialEventsCard contacts={tiktokContacts} />
 
         {/* My Day Section - All daily tasks unified */}
         <MyDaySection
@@ -373,6 +307,15 @@ export default function Dashboard() {
           onUpdateMealNotes={(noteKey, value) => mealNotesMutation.mutate({ noteKey, value })}
           preferences={{ ...preferences, user_email: user?.email }}
           viewMode={preferences?.dashboard_view_mode || 'detailed'}
+          showGoogleCalendar={preferences?.show_google_calendar || false}
+          showCreatorCalendarEvents={preferences?.show_creator_calendar_events !== false}
+          onToggleGoogleCalendar={(checked) => toggleGoogleCalendarMutation.mutate(checked)}
+          onToggleCreatorCalendar={async (checked) => {
+            if (preferences?.id) {
+              await base44.entities.UserPreferences.update(preferences.id, { show_creator_calendar_events: checked });
+              queryClient.invalidateQueries({ queryKey: ['preferences'] });
+            }
+          }}
         />
 
         <Collapsible open={!isSectionCollapsed('quick-stats')}>
