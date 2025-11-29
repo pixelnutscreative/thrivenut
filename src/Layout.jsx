@@ -77,8 +77,9 @@ const allNavItems = [
             { name: 'Song Generator', icon: Music, path: 'SongGenerator', moduleId: 'gifter' },
   ]},
   { name: 'SuperFan Access', icon: Star, path: 'SuperFanAccess', showWhenNoTikTokAccess: true },
-  { name: "Pixel's Paradise", icon: Sparkles, isSection: true, moduleId: 'pixels_paradise', alwaysShow: true, subItems: [
-            { name: 'Design Resources', icon: Palette, path: 'PixelsParadise' },
+  { name: "Pixel's Place", icon: Sparkles, isSection: true, moduleId: 'pixels_paradise', alwaysShow: true, subItems: [
+            { name: 'Resources & Tools', icon: Palette, path: 'PixelsParadise' },
+            { name: 'Live Reminders', icon: Bell, path: 'LiveReminders' },
           ]},
   { name: 'Settings', icon: Settings, path: 'Settings', alwaysShow: true },
   { name: 'Admin Panel', icon: UserCog, path: 'Admin', adminOnly: true },
