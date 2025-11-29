@@ -19,6 +19,8 @@ import TimezoneSelector from '../components/shared/TimezoneSelector';
 import SpeakButton, { speak } from '../components/accessibility/SpeakButton';
 import FeatureOrderManager from '../components/settings/FeatureOrderManager';
 import DashboardPreferences from '../components/settings/DashboardPreferences';
+import QuickActionsSettings from '../components/settings/QuickActionsSettings';
+import SoundCloudSettings from '../components/settings/SoundCloudSettings';
 import { getEffectiveUserEmail, isImpersonating } from '../components/admin/ImpersonationBanner';
 import { useTheme } from '../components/shared/useTheme';
 
@@ -106,7 +108,11 @@ export default function Settings() {
     discord_public: false,
     communities: [],
     menu_color: '#ffffff',
-    quick_actions: ['mood', 'water', 'food', 'note']
+    quick_actions: ['mood', 'water', 'food', 'note'],
+    quick_actions_position: 'bottom',
+    custom_quick_actions: [],
+    soundcloud_playlist_url: '',
+    soundcloud_player_position: 'hidden'
     });
 
   useEffect(() => {
@@ -149,7 +155,11 @@ export default function Settings() {
         discord_public: preferences.discord_public || false,
         communities: preferences.communities || [],
         menu_color: preferences.menu_color || '#ffffff',
-        quick_actions: preferences.quick_actions || ['mood', 'water', 'food', 'note']
+        quick_actions: preferences.quick_actions || ['mood', 'water', 'food', 'note'],
+        quick_actions_position: preferences.quick_actions_position || 'bottom',
+        custom_quick_actions: preferences.custom_quick_actions || [],
+        soundcloud_playlist_url: preferences.soundcloud_playlist_url || '',
+        soundcloud_player_position: preferences.soundcloud_player_position || 'hidden'
         });
     }
   }, [preferences]);
@@ -223,7 +233,7 @@ export default function Settings() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-6">
+          <TabsList className="grid w-full grid-cols-6 mb-6">
             <TabsTrigger value="profile" className="flex items-center gap-2">
               <User className="w-4 h-4" />
               <span className="hidden sm:inline">Profile</span>
@@ -241,10 +251,14 @@ export default function Settings() {
                   <span className="hidden sm:inline">Preferences</span>
                 </TabsTrigger>
                 <TabsTrigger value="dashboard" className="flex items-center gap-2">
-                  <Eye className="w-4 h-4" />
-                  <span className="hidden sm:inline">Dashboard</span>
-                </TabsTrigger>
-              </TabsList>
+                        <Eye className="w-4 h-4" />
+                        <span className="hidden sm:inline">Dashboard</span>
+                      </TabsTrigger>
+                      <TabsTrigger value="widgets" className="flex items-center gap-2">
+                        <Sparkles className="w-4 h-4" />
+                        <span className="hidden sm:inline">Widgets</span>
+                      </TabsTrigger>
+                    </TabsList>
 
           {/* Profile Tab - now includes TikTok info */}
           <TabsContent value="profile">
@@ -738,6 +752,14 @@ export default function Settings() {
           <TabsContent value="dashboard">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               <DashboardPreferences formData={formData} setFormData={setFormData} />
+            </motion.div>
+          </TabsContent>
+
+          {/* Widgets Tab */}
+          <TabsContent value="widgets">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+              <QuickActionsSettings formData={formData} setFormData={setFormData} />
+              <SoundCloudSettings formData={formData} setFormData={setFormData} />
             </motion.div>
           </TabsContent>
           </Tabs>
