@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
-import { Star, Upload, X, Plus, Users, Globe, Lock, Pencil, Eye, EyeOff, ChevronDown, PlusCircle } from 'lucide-react';
+import { Star, Upload, X, Plus, Users, Globe, Lock, Pencil, Eye, EyeOff, ChevronDown, PlusCircle, LockKeyhole } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { base44 } from '@/api/base44Client';
 
@@ -87,17 +87,14 @@ export default function ContactFormHeader({ formData, setFormData, onSave, isSav
           {/* Favorite Color with popover */}
           <div className="flex items-center gap-1">
             <span className="text-xs text-gray-400">Color</span>
-            <div
-              className="w-5 h-5 rounded-full ring-2 ring-offset-1 ring-gray-300"
-              style={{ backgroundColor: formData.color || '#000000' }}
-            />
             <Popover open={showColorPicker} onOpenChange={setShowColorPicker}>
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  className="relative w-5 h-5 rounded-full border-2 border-dashed border-gray-300 hover:border-purple-400 flex items-center justify-center"
+                  className="relative w-5 h-5 rounded-full ring-2 ring-offset-1 ring-gray-300 flex items-center justify-center group"
+                  style={{ backgroundColor: formData.color || '#000000' }}
                 >
-                  <Plus className="w-3 h-3 text-gray-400" />
+                  <Pencil className="w-2.5 h-2.5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                 </button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-3" align="start">
@@ -225,20 +222,22 @@ export default function ContactFormHeader({ formData, setFormData, onSave, isSav
               <Badge
                 key={`shared-${club.id}`}
                 variant="default"
-                className="text-xs bg-green-600"
+                className="text-xs bg-green-600 flex items-center gap-1"
               >
+                <Globe className="w-2.5 h-2.5" />
                 {club.name}
               </Badge>
             ))}
-          {/* Custom clubs - sorted alphabetically */}
+          {/* Custom clubs - sorted alphabetically - with lock icon for private */}
           {[...(formData.custom_clubs || [])]
             .sort((a, b) => a.localeCompare(b))
             .map((club, idx) => (
               <Badge
                 key={`custom-${idx}`}
                 variant="default"
-                className="text-xs bg-teal-600"
+                className="text-xs bg-teal-600 flex items-center gap-1"
               >
+                <LockKeyhole className="w-2.5 h-2.5" />
                 {club}
               </Badge>
             ))}
@@ -309,6 +308,7 @@ export default function ContactFormHeader({ formData, setFormData, onSave, isSav
                       className="flex items-center gap-1.5 p-1.5 bg-teal-50 rounded-lg border border-teal-200"
                     >
                       <Checkbox checked={true} disabled className="h-3.5 w-3.5" />
+                      <LockKeyhole className="w-3 h-3 text-teal-500" />
                       <span className="text-xs text-teal-700 flex-1 truncate">{club}</span>
                       <button
                         type="button"

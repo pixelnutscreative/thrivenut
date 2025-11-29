@@ -326,13 +326,6 @@ export default function TikTokEngagement() {
               {/* Primary TikTok account */}
               {contact.username && (
                 <div className="flex items-center gap-2">
-                  <Button 
-                    onClick={() => openTikTok(contact.username)} 
-                    className="flex-1 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 h-9 text-sm"
-                  >
-                    <ExternalLink className="w-3 h-3 mr-1" />
-                    @{contact.username}
-                  </Button>
                   <Button
                     variant="outline"
                     size="icon"
@@ -343,10 +336,17 @@ export default function TikTokEngagement() {
                         markEngagedMutation.mutate({ id: contact.id, currentHistory: contact.engagement_history, isLegacy: contact._isLegacy });
                       }
                     }}
-                    className={`h-9 w-9 transition-all duration-300 ${engaged.primary ? 'bg-green-500 border-green-500' : 'border-green-300 hover:bg-green-50'}`}
+                    className={`h-9 w-9 flex-shrink-0 transition-all duration-300 ${engaged.primary ? 'bg-green-500 border-green-500' : 'border-green-300 hover:bg-green-50'}`}
                     title="Mark as engaged"
                   >
                     <Check className={`w-4 h-4 ${engaged.primary ? 'text-white' : 'text-green-600'}`} />
+                  </Button>
+                  <Button 
+                    onClick={() => openTikTok(contact.username)} 
+                    className="flex-1 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 h-9 text-sm overflow-hidden"
+                  >
+                    <ExternalLink className="w-3 h-3 mr-1 flex-shrink-0" />
+                    <span className="truncate">@{contact.username}</span>
                   </Button>
                 </div>
               )}
@@ -357,22 +357,22 @@ export default function TikTokEngagement() {
                 const isAccountEngaged = engaged[`tiktok_${idx}`];
                 return (
                   <div key={`tiktok-${idx}`} className="flex items-center gap-2">
-                    <Button 
-                      onClick={() => openTikTok(account.username)} 
-                      variant="outline"
-                      className="flex-1 h-9 text-sm text-pink-600 border-pink-200 hover:bg-pink-50"
-                    >
-                      <ExternalLink className="w-3 h-3 mr-1" />
-                      @{account.username}
-                    </Button>
                     <Button
                       variant="outline"
                       size="icon"
                       onClick={() => toggleAccountEngaged(`tiktok_${idx}`)}
-                      className={`h-9 w-9 transition-all duration-300 ${isAccountEngaged ? 'bg-green-500 border-green-500' : 'border-gray-200 hover:bg-green-50'}`}
+                      className={`h-9 w-9 flex-shrink-0 transition-all duration-300 ${isAccountEngaged ? 'bg-green-500 border-green-500' : 'border-gray-200 hover:bg-green-50'}`}
                       title="Mark as engaged"
                     >
                       <Check className={`w-4 h-4 ${isAccountEngaged ? 'text-white' : 'text-gray-300'}`} />
+                    </Button>
+                    <Button 
+                      onClick={() => openTikTok(account.username)} 
+                      variant="outline"
+                      className="flex-1 h-9 text-sm text-pink-600 border-pink-200 hover:bg-pink-50 overflow-hidden"
+                    >
+                      <ExternalLink className="w-3 h-3 mr-1 flex-shrink-0" />
+                      <span className="truncate">@{account.username}</span>
                     </Button>
                   </div>
                 );
@@ -389,6 +389,23 @@ export default function TikTokEngagement() {
                     ? platform.replace('custom_', '').replace(/_/g, ' ')
                     : platform.charAt(0).toUpperCase() + platform.slice(1);
                   
+                  // Platform colors
+                  const platformColors = {
+                    instagram: 'from-purple-500 to-pink-500 text-white border-0',
+                    facebook: 'bg-blue-600 text-white border-0 hover:bg-blue-700',
+                    youtube: 'bg-red-600 text-white border-0 hover:bg-red-700',
+                    twitter: 'bg-black text-white border-0 hover:bg-gray-800',
+                    linkedin: 'bg-blue-700 text-white border-0 hover:bg-blue-800',
+                    twitch: 'bg-purple-600 text-white border-0 hover:bg-purple-700',
+                    threads: 'bg-black text-white border-0 hover:bg-gray-800',
+                    discord: 'bg-indigo-600 text-white border-0 hover:bg-indigo-700',
+                    snapchat: 'bg-yellow-400 text-black border-0 hover:bg-yellow-500',
+                    pinterest: 'bg-red-700 text-white border-0 hover:bg-red-800',
+                  };
+                  const colorClass = platform === 'instagram' 
+                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 hover:from-purple-600 hover:to-pink-600'
+                    : platformColors[platform] || 'bg-gray-600 text-white border-0 hover:bg-gray-700';
+                  
                   // Determine the URL to open
                   const getUrl = () => {
                     if (link.startsWith('http')) return link;
@@ -402,22 +419,21 @@ export default function TikTokEngagement() {
 
                   return (
                     <div key={`social-${platform}`} className="flex items-center gap-2">
-                      <Button 
-                        onClick={() => window.open(getUrl(), '_blank')} 
-                        variant="outline"
-                        className="flex-1 h-9 text-sm text-purple-600 border-purple-200 hover:bg-purple-50"
-                      >
-                        <ExternalLink className="w-3 h-3 mr-1" />
-                        {platformLabel}: {link}
-                      </Button>
                       <Button
                         variant="outline"
                         size="icon"
                         onClick={() => toggleAccountEngaged(`social_${platform}`)}
-                        className={`h-9 w-9 transition-all duration-300 ${isAccountEngaged ? 'bg-green-500 border-green-500' : 'border-gray-200 hover:bg-green-50'}`}
+                        className={`h-9 w-9 flex-shrink-0 transition-all duration-300 ${isAccountEngaged ? 'bg-green-500 border-green-500' : 'border-gray-200 hover:bg-green-50'}`}
                         title="Mark as engaged"
                       >
                         <Check className={`w-4 h-4 ${isAccountEngaged ? 'text-white' : 'text-gray-300'}`} />
+                      </Button>
+                      <Button 
+                        onClick={() => window.open(getUrl(), '_blank')} 
+                        className={`flex-1 h-9 text-sm overflow-hidden ${colorClass}`}
+                      >
+                        <ExternalLink className="w-3 h-3 mr-1 flex-shrink-0" />
+                        <span className="truncate">{platformLabel}: {link}</span>
                       </Button>
                     </div>
                   );

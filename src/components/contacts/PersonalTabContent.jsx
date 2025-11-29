@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, X, Instagram, Facebook, Youtube, Twitter, Linkedin, Twitch } from 'lucide-react';
+import { Plus, X, Instagram, Facebook, Youtube, Twitter, Linkedin, Twitch, Star } from 'lucide-react';
 import NotesWithHistory from './NotesWithHistory';
 
 const veteranBranches = [
@@ -218,7 +218,7 @@ export default function PersonalTabContent({ formData, setFormData }) {
       <div className="space-y-2">
         <div className="flex items-center gap-2">
           <Label className="text-sm font-medium">Social Media</Label>
-          <span className="text-xs text-gray-400">( ✨ = track engagement )</span>
+          <span className="text-xs text-gray-400">( ⭐ = show on engagement tracker )</span>
         </div>
         
         {/* Active social links */}
@@ -228,7 +228,6 @@ export default function PersonalTabContent({ formData, setFormData }) {
             const platform = defaultSocialPlatforms.find(p => p.key === key);
             const label = isCustom ? key.replace('custom_', '').replace(/_/g, ' ') : platform?.label || key;
             const Icon = platform?.icon;
-            const engageKey = `engage_${key}`;
             const isEngageEnabled = formData.social_engagement?.[key];
             
             return (
@@ -245,10 +244,10 @@ export default function PersonalTabContent({ formData, setFormData }) {
                       } 
                     });
                   }}
-                  className={`p-1 rounded hover:bg-purple-100 transition-colors ${isEngageEnabled ? 'text-purple-600' : 'text-gray-300'}`}
-                  title={isEngageEnabled ? 'Tracking engagement' : 'Click to track engagement'}
+                  className={`p-1 rounded hover:bg-yellow-100 transition-colors`}
+                  title={isEngageEnabled ? 'Tracking engagement - click to disable' : 'Click to track engagement'}
                 >
-                  <span className="text-sm">✨</span>
+                  <Star className={`w-4 h-4 ${isEngageEnabled ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />
                 </button>
                 <div className="w-20 flex items-center gap-1 text-xs text-gray-600">
                   {Icon && <Icon className="w-4 h-4" />}
