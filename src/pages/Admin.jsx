@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
-import { Shield, Star, UserCog, Users, Gift, Settings, Palette, Clock, MessageSquare } from 'lucide-react';
+import { Shield, Star, UserCog, Users, Gift, Settings, Palette, Clock, MessageSquare, ListTodo } from 'lucide-react';
 
 // Import the individual admin components/pages as content
 import AdminSuperFanContent from '../components/admin/AdminSuperFanContent';
@@ -14,12 +14,13 @@ import AdminGiftLibraryContent from '../components/admin/AdminGiftLibraryContent
 import AdminSettingsContent from '../components/admin/AdminSettingsContent';
 import AdminResourcesContent from '../components/admin/AdminResourcesContent';
 import AdminSupportContent from '../components/admin/AdminSupportContent';
+import AdminFeedbackContent from '../components/admin/AdminFeedbackContent';
 
 const ADMIN_EMAIL = 'pixelnutscreative@gmail.com';
 
 export default function Admin() {
   const [user, setUser] = useState(null);
-  const [activeTab, setActiveTab] = useState('support');
+  const [activeTab, setActiveTab] = useState('feedback');
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -53,7 +54,11 @@ export default function Admin() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-8">
+          <TabsList className="grid w-full grid-cols-9">
+            <TabsTrigger value="feedback" className="flex items-center gap-2">
+              <ListTodo className="w-4 h-4" />
+              <span className="hidden sm:inline">Feedback</span>
+            </TabsTrigger>
             <TabsTrigger value="support" className="flex items-center gap-2">
               <MessageSquare className="w-4 h-4" />
               <span className="hidden sm:inline">Support</span>
@@ -87,6 +92,10 @@ export default function Admin() {
               <span className="hidden sm:inline">Settings</span>
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="feedback" className="mt-6">
+            <AdminFeedbackContent />
+          </TabsContent>
 
           <TabsContent value="support" className="mt-6">
             <AdminSupportContent />
