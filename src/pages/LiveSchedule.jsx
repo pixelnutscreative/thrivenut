@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, Video, Calendar as CalendarIcon, Heart, Swords, Popcorn, ShoppingBag, CalendarPlus, Edit, FileText, Users, GraduationCap, Handshake, LayoutGrid, Camera, UserPlus, CalendarDays } from 'lucide-react';
+import { Plus, Trash2, Video, Calendar as CalendarIcon, Heart, Swords, Popcorn, ShoppingBag, CalendarPlus, Edit, FileText, Users, GraduationCap, Handshake, LayoutGrid, Camera, UserPlus, CalendarDays, Eye, EyeOff, Copy, Sparkles, Moon, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { motion } from 'framer-motion';
@@ -22,15 +22,27 @@ const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Sat
 
 const liveTypeConfig = {
   regular: { label: 'Regular', icon: Camera, color: 'bg-blue-100 text-blue-700' },
-  pop_up: { label: 'Pop', icon: Popcorn, color: 'bg-yellow-100 text-yellow-700' },
+  pop_up: { label: 'Pop Up', icon: Popcorn, color: 'bg-yellow-100 text-yellow-700' },
   battle: { label: 'Battle', icon: Swords, color: 'bg-red-100 text-red-700' },
   tt_shop: { label: 'Shop', icon: ShoppingBag, color: 'bg-green-100 text-green-700' },
-  daily_heart_me: { label: 'Daily', icon: Heart, color: 'bg-orange-100 text-orange-600' },
-  engagement_live: { label: 'Engage', icon: Handshake, color: 'bg-pink-100 text-pink-700' },
-  multi_guest: { label: 'Boxes', icon: LayoutGrid, color: 'bg-indigo-100 text-indigo-700' },
-  co_host: { label: 'CoHost', icon: Users, color: 'bg-cyan-100 text-cyan-700' },
-  teaching: { label: 'Teach', icon: GraduationCap, color: 'bg-purple-100 text-purple-700' }
+  daily_heart_me: { label: 'Daily Heart', icon: Heart, color: 'bg-orange-100 text-orange-600' },
+  engagement_live: { label: 'Engagement', icon: Handshake, color: 'bg-pink-100 text-pink-700' },
+  multi_guest: { label: 'Multi Box', icon: LayoutGrid, color: 'bg-indigo-100 text-indigo-700' },
+  co_host: { label: 'Co-Host', icon: Users, color: 'bg-cyan-100 text-cyan-700' },
+  teaching: { label: 'Teaching', icon: GraduationCap, color: 'bg-purple-100 text-purple-700' }
 };
+
+// Special event types for one-time lives
+const specialEventTypes = [
+  { value: 'battle', label: 'Battle', icon: Swords },
+  { value: 'escape_room', label: 'Escape Room', icon: Clock },
+  { value: 'sleepover', label: 'Sleepover Party', icon: Moon },
+  { value: '24_hour', label: '24 Hour Stream', icon: Clock },
+  { value: 'co_host', label: 'Co-Host Session', icon: Users },
+  { value: 'box_battle', label: 'Box Battle', icon: LayoutGrid },
+  { value: 'special_appearance', label: 'Special Appearance', icon: Sparkles },
+  { value: 'other', label: 'Other Special Event', icon: CalendarIcon }
+];
 
 export default function LiveSchedule() {
   const queryClient = useQueryClient();
@@ -52,7 +64,9 @@ export default function LiveSchedule() {
     is_recurring: true,
     audience: 'all_ages',
     share_to_directory: false,
-    specific_date: ''
+    specific_date: '',
+    live_type: 'regular',
+    special_event_type: ''
   });
   const [formData, setFormData] = useState({
     host_username: '',
@@ -143,7 +157,25 @@ export default function LiveSchedule() {
       is_recurring: item.is_recurring !== false,
       audience: item.audience || 'all_ages',
       share_to_directory: item.share_to_directory || false,
-      specific_date: item.specific_date || ''
+      specific_date: item.specific_date || '',
+      live_type: item.live_type || 'regular',
+      special_event_type: item.special_event_type || ''
+    });
+  };
+
+  const handleDuplicateContent = (item) => {
+    setEditingContentItem({}); // New item, no ID
+    setContentFormData({
+      type: item.type || 'live',
+      title: item.title ? `${item.title} (copy)` : '',
+      day_of_week: item.day_of_week || 'Monday',
+      time: item.time || '12:00',
+      is_recurring: item.is_recurring !== false,
+      audience: item.audience || 'all_ages',
+      share_to_directory: item.share_to_directory || false,
+      specific_date: '',
+      live_type: item.live_type || 'regular',
+      special_event_type: ''
     });
   };
 
@@ -515,8 +547,8 @@ export default function LiveSchedule() {
               onClick={() => setShowMyContent(!showMyContent)}
               className={showMyContent ? "bg-teal-600 hover:bg-teal-700" : "border-teal-300 text-teal-700 hover:bg-teal-50"}
             >
-              <CalendarDays className="w-4 h-4 mr-2" />
-              {showMyContent ? `My Lives (${myContentItems.filter(i => i.type === 'live').length})` : "Show My Lives"}
+              {showMyContent ? <EyeOff className="w-4 h-4 mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
+              {showMyContent ? "Hide My Lives" : "Show My Lives"}
             </Button>
             <Button
               onClick={() => setEditingContentItem({})}
@@ -525,19 +557,19 @@ export default function LiveSchedule() {
               <Plus className="w-4 h-4 mr-2" />
               Add My Live
             </Button>
-            <Link to={createPageUrl('TikTokContacts')}>
-              <Button variant="outline">
-                <UserPlus className="w-4 h-4 mr-2" />
-                Manage Contacts
+            <div className="relative group">
+              <Button
+                onClick={() => setShowModal(true)}
+                variant="outline"
+                className="border-purple-300 text-purple-700 hover:bg-purple-50"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                + Creator's LIVE
               </Button>
-            </Link>
-            <Button
-              onClick={() => setShowModal(true)}
-              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Live
-            </Button>
+              <div className="absolute top-full left-0 mt-1 p-2 bg-gray-800 text-white text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                Check Discover Creators first - they may have shared their schedule!
+              </div>
+            </div>
           </div>
         </div>
 
@@ -633,27 +665,38 @@ export default function LiveSchedule() {
                   </CardHeader>
                   <CardContent className="pt-3 space-y-2 max-h-96 overflow-y-auto">
                     {/* My Content Items */}
-                    {showMyContent && getMyContentForDay(day).map((item) => (
-                      <div key={`content-${item.id}`} className={`p-2 ${isDark ? 'bg-teal-900/30 border-teal-700' : 'bg-teal-50 border-teal-200'} border rounded-lg text-sm`}>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Badge className="bg-teal-600 text-white text-xs">MY LIVE</Badge>
-                            <span className={`text-xs ${subtextClass}`}>
-                              {item.time ? `${parseInt(item.time.split(':')[0]) % 12 || 12}:${item.time.split(':')[1]} ${parseInt(item.time.split(':')[0]) >= 12 ? 'PM' : 'AM'}` : ''}
-                            </span>
+                    {showMyContent && getMyContentForDay(day).map((item) => {
+                      const liveConfig = liveTypeConfig[item.live_type] || liveTypeConfig.regular;
+                      const LiveIcon = liveConfig.icon;
+                      return (
+                        <div key={`content-${item.id}`} className={`p-2 ${isDark ? 'bg-teal-900/30 border-teal-700' : 'bg-teal-50 border-teal-200'} border rounded-lg text-sm`}>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Badge className={`text-xs ${liveConfig.color}`}>
+                                <LiveIcon className="w-3 h-3 mr-1" />
+                                {liveConfig.label}
+                              </Badge>
+                              <span className={`text-xs ${subtextClass}`}>
+                                {item.time ? `${parseInt(item.time.split(':')[0]) % 12 || 12}:${item.time.split(':')[1]} ${parseInt(item.time.split(':')[0]) >= 12 ? 'PM' : 'AM'}` : ''}
+                              </span>
+                            </div>
+                            <div className="flex gap-1">
+                              <Button variant="ghost" size="icon" className="w-6 h-6" onClick={() => handleDuplicateContent(item)} title="Duplicate">
+                                <Copy className="w-3 h-3" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="w-6 h-6" onClick={() => handleEditContent(item)}>
+                                <Edit className="w-3 h-3" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="w-6 h-6 text-red-500" onClick={() => deleteContentMutation.mutate(item.id)}>
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
+                            </div>
                           </div>
-                          <div className="flex gap-1">
-                            <Button variant="ghost" size="icon" className="w-6 h-6" onClick={() => handleEditContent(item)}>
-                              <Edit className="w-3 h-3" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="w-6 h-6 text-red-500" onClick={() => deleteContentMutation.mutate(item.id)}>
-                              <Trash2 className="w-3 h-3" />
-                            </Button>
-                          </div>
+                          {item.title && <p className={`text-xs font-medium mt-1 ${textClass}`}>{item.title}</p>}
+                          {item.share_to_directory && <Badge className="mt-1 text-xs bg-purple-100 text-purple-700">Shared</Badge>}
                         </div>
-                        {item.title && <p className={`text-xs font-medium mt-1 ${textClass}`}>{item.title}</p>}
-                      </div>
-                    ))}
+                      );
+                    })}
                     
                     {daySchedules.length === 0 && (!showMyContent || getMyContentForDay(day).length === 0) ? (
                       <p className={`text-xs ${subtextClass} italic`}>No lives scheduled</p>
@@ -904,41 +947,118 @@ export default function LiveSchedule() {
       <Dialog open={!!editingContentItem} onOpenChange={(open) => {
         if (!open) {
           setEditingContentItem(null);
-          setContentFormData({ type: 'live', title: '', day_of_week: 'Monday', time: '12:00', is_recurring: true, audience: 'all_ages', share_to_directory: false, specific_date: '' });
+          setContentFormData({ type: 'live', title: '', day_of_week: 'Monday', time: '12:00', is_recurring: true, audience: 'all_ages', share_to_directory: false, specific_date: '', live_type: 'regular', special_event_type: '' });
         }
       }}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingContentItem?.id ? 'Edit My Content' : 'Add My Content'}</DialogTitle>
+            <DialogTitle>{editingContentItem?.id ? 'Edit My Live' : 'Add My Live'}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
+            {/* Live Type */}
             <div className="space-y-2">
-              <Label>Title</Label>
+              <Label>Type of Live</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {Object.entries(liveTypeConfig).map(([key, config]) => {
+                  const Icon = config.icon;
+                  return (
+                    <div
+                      key={key}
+                      onClick={() => setContentFormData({ ...contentFormData, live_type: key })}
+                      className={`p-2 rounded-lg border-2 cursor-pointer transition-all text-xs text-center ${
+                        contentFormData.live_type === key
+                          ? 'border-purple-500 bg-purple-50'
+                          : 'border-gray-200 hover:border-purple-300'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4 mx-auto mb-1" />
+                      <span>{config.label}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Title (optional)</Label>
               <Input
                 placeholder="e.g., Morning Live, Battle Night"
                 value={contentFormData.title}
                 onChange={(e) => setContentFormData({ ...contentFormData, title: e.target.value })}
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Day</Label>
-                <Select value={contentFormData.day_of_week} onValueChange={(v) => setContentFormData({ ...contentFormData, day_of_week: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {daysOfWeek.map(day => <SelectItem key={day} value={day}>{day}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Time</Label>
-                <Input
-                  type="time"
-                  value={contentFormData.time}
-                  onChange={(e) => setContentFormData({ ...contentFormData, time: e.target.value })}
-                />
+
+            {/* Recurring toggle */}
+            <div
+              onClick={() => setContentFormData({ ...contentFormData, is_recurring: !contentFormData.is_recurring })}
+              className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50"
+            >
+              <Checkbox checked={contentFormData.is_recurring} />
+              <div>
+                <p className="font-medium text-sm">🔄 Recurring Weekly</p>
+                <p className="text-xs text-gray-500">Same day/time every week</p>
               </div>
             </div>
+
+            {contentFormData.is_recurring ? (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Day</Label>
+                  <Select value={contentFormData.day_of_week} onValueChange={(v) => setContentFormData({ ...contentFormData, day_of_week: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {daysOfWeek.map(day => <SelectItem key={day} value={day}>{day}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Time</Label>
+                  <Input
+                    type="time"
+                    value={contentFormData.time}
+                    onChange={(e) => setContentFormData({ ...contentFormData, time: e.target.value })}
+                  />
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <Label>Special Event Type</Label>
+                  <Select value={contentFormData.special_event_type} onValueChange={(v) => setContentFormData({ ...contentFormData, special_event_type: v })}>
+                    <SelectTrigger><SelectValue placeholder="Select event type..." /></SelectTrigger>
+                    <SelectContent>
+                      {specialEventTypes.map(event => (
+                        <SelectItem key={event.value} value={event.value}>
+                          <div className="flex items-center gap-2">
+                            <event.icon className="w-4 h-4" />
+                            {event.label}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Date</Label>
+                    <Input
+                      type="date"
+                      value={contentFormData.specific_date}
+                      onChange={(e) => setContentFormData({ ...contentFormData, specific_date: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Time</Label>
+                    <Input
+                      type="time"
+                      value={contentFormData.time}
+                      onChange={(e) => setContentFormData({ ...contentFormData, time: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+
             <div className="space-y-2">
               <Label>Audience</Label>
               <Select value={contentFormData.audience} onValueChange={(v) => setContentFormData({ ...contentFormData, audience: v })}>
@@ -949,22 +1069,17 @@ export default function LiveSchedule() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex items-center gap-4">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <Checkbox
-                  checked={contentFormData.is_recurring}
-                  onCheckedChange={(c) => setContentFormData({ ...contentFormData, is_recurring: c })}
-                />
-                <span className="text-sm">Recurring Weekly</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <Checkbox
-                  checked={contentFormData.share_to_directory}
-                  onCheckedChange={(c) => setContentFormData({ ...contentFormData, share_to_directory: c })}
-                />
-                <span className="text-sm">Share to Directory</span>
-              </label>
-            </div>
+
+            <label className="flex items-center gap-2 cursor-pointer p-3 border rounded-lg hover:bg-purple-50">
+              <Checkbox
+                checked={contentFormData.share_to_directory}
+                onCheckedChange={(c) => setContentFormData({ ...contentFormData, share_to_directory: c })}
+              />
+              <div>
+                <span className="text-sm font-medium">📢 Share to Discover Creators</span>
+                <p className="text-xs text-gray-500">Let others see your live schedule</p>
+              </div>
+            </label>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditingContentItem(null)}>Cancel</Button>
