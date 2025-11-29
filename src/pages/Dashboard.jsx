@@ -178,9 +178,9 @@ export default function Dashboard() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['selfCareToday'] });
     },
-    });
+  });
 
-    const mealNotesMutation = useMutation({
+  const mealNotesMutation = useMutation({
     mutationFn: async ({ noteKey, value }) => {
       const today = format(new Date(), 'yyyy-MM-dd');
       if (selfCareLog) {
