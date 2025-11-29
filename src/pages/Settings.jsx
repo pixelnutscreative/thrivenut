@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Loader2, Save, User, Palette, Eye, Layers, MessageSquare, Clock, Share2, Music, Sparkles, ChevronDown } from 'lucide-react';
+import { Loader2, Save, User, Palette, Eye, Layers, MessageSquare, Clock, Share2, Music, Sparkles, ChevronDown, MessageCircle, Plus, Trash2, Users } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
@@ -100,7 +100,11 @@ export default function Settings() {
     eating_window_start: '12:00',
     eating_window_end: '20:00',
     google_calendar_connected: false,
-    show_google_calendar: false
+    show_google_calendar: false,
+    discord_username: '',
+    discord_invite_link: '',
+    discord_public: false,
+    communities: []
     });
 
   useEffect(() => {
@@ -137,7 +141,11 @@ export default function Settings() {
         eating_window_start: preferences.eating_window_start || '12:00',
         eating_window_end: preferences.eating_window_end || '20:00',
         google_calendar_connected: preferences.google_calendar_connected || false,
-        show_google_calendar: preferences.show_google_calendar || false
+        show_google_calendar: preferences.show_google_calendar || false,
+        discord_username: preferences.discord_username || '',
+        discord_invite_link: preferences.discord_invite_link || '',
+        discord_public: preferences.discord_public || false,
+        communities: preferences.communities || []
         });
     }
   }, [preferences]);
@@ -344,6 +352,166 @@ export default function Settings() {
                         <p className="text-xs text-gray-600">Add encouragement to level up!</p>
                       </div>
                     </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Discord & Community */}
+              <Card className="border-indigo-200">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <MessageCircle className="w-5 h-5 text-indigo-500" />
+                    Discord & Communities
+                  </CardTitle>
+                  <CardDescription>Share your Discord and other community links</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Discord Username</Label>
+                      <Input
+                        placeholder="username#1234 or just username"
+                        value={formData.discord_username}
+                        onChange={(e) => setFormData({ ...formData, discord_username: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Discord Invite Link</Label>
+                      <Input
+                        placeholder="https://discord.gg/..."
+                        value={formData.discord_invite_link}
+                        onChange={(e) => setFormData({ ...formData, discord_invite_link: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div
+                    onClick={() => setFormData({ ...formData, discord_public: !formData.discord_public })}
+                    className={`p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                      formData.discord_public ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200 hover:border-indigo-300'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Checkbox checked={formData.discord_public} />
+                      <div>
+                        <h4 className="font-semibold text-sm">Show Discord in Discover Creators</h4>
+                        <p className="text-xs text-gray-600">Let others see your Discord link</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Other Communities */}
+                  <div className="pt-4 border-t space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label className="flex items-center gap-2">
+                        <Users className="w-4 h-4" />
+                        Other Communities
+                      </Label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setFormData({ 
+                          ...formData, 
+                          communities: [...formData.communities, { platform: 'skool', name: '', link: '', is_free: true, is_paid: false, is_public: false }]
+                        })}
+                      >
+                        <Plus className="w-4 h-4 mr-1" />
+                        Add
+                      </Button>
+                    </div>
+
+                    {formData.communities.map((community, idx) => (
+                      <div key={idx} className="p-3 border rounded-lg space-y-3 bg-gray-50">
+                        <div className="flex items-center gap-2">
+                          <Select 
+                            value={community.platform} 
+                            onValueChange={(v) => {
+                              const updated = [...formData.communities];
+                              updated[idx] = { ...updated[idx], platform: v };
+                              setFormData({ ...formData, communities: updated });
+                            }}
+                          >
+                            <SelectTrigger className="w-32">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="skool">Skool</SelectItem>
+                              <SelectItem value="facebook">Facebook</SelectItem>
+                              <SelectItem value="base44">Base44 App</SelectItem>
+                              <SelectItem value="patreon">Patreon</SelectItem>
+                              <SelectItem value="other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Input
+                            placeholder="Community name"
+                            value={community.name}
+                            onChange={(e) => {
+                              const updated = [...formData.communities];
+                              updated[idx] = { ...updated[idx], name: e.target.value };
+                              setFormData({ ...formData, communities: updated });
+                            }}
+                            className="flex-1"
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              const updated = formData.communities.filter((_, i) => i !== idx);
+                              setFormData({ ...formData, communities: updated });
+                            }}
+                            className="text-red-500 hover:text-red-600"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                        <Input
+                          placeholder="Link (https://...)"
+                          value={community.link}
+                          onChange={(e) => {
+                            const updated = [...formData.communities];
+                            updated[idx] = { ...updated[idx], link: e.target.value };
+                            setFormData({ ...formData, communities: updated });
+                          }}
+                        />
+                        <div className="flex flex-wrap gap-4">
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <Checkbox 
+                              checked={community.is_free}
+                              onCheckedChange={(checked) => {
+                                const updated = [...formData.communities];
+                                updated[idx] = { ...updated[idx], is_free: checked };
+                                setFormData({ ...formData, communities: updated });
+                              }}
+                            />
+                            <span className="text-sm">Free</span>
+                          </label>
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <Checkbox 
+                              checked={community.is_paid}
+                              onCheckedChange={(checked) => {
+                                const updated = [...formData.communities];
+                                updated[idx] = { ...updated[idx], is_paid: checked };
+                                setFormData({ ...formData, communities: updated });
+                              }}
+                            />
+                            <span className="text-sm">Paid</span>
+                          </label>
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <Checkbox 
+                              checked={community.is_public}
+                              onCheckedChange={(checked) => {
+                                const updated = [...formData.communities];
+                                updated[idx] = { ...updated[idx], is_public: checked };
+                                setFormData({ ...formData, communities: updated });
+                              }}
+                            />
+                            <span className="text-sm">Show in Directory</span>
+                          </label>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </CardContent>
               </Card>
