@@ -375,26 +375,59 @@ export default function Dashboard() {
           viewMode={preferences?.dashboard_view_mode || 'detailed'}
         />
 
-        <QuickStats
-          contentGoal={contentGoal}
-          waterToday={todaysWater}
-          todaysMood={latestMood}
-          journalToday={todaysJournal}
-        />
+        <Collapsible open={!isSectionCollapsed('quick-stats')}>
+          <CollapsibleTrigger 
+            className="w-full flex items-center justify-between p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            onClick={() => toggleSectionCollapse('quick-stats')}
+          >
+            <span className="text-sm font-medium text-gray-600">Quick Stats</span>
+            {isSectionCollapsed('quick-stats') ? <ChevronRight className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <QuickStats
+              contentGoal={contentGoal}
+              waterToday={todaysWater}
+              todaysMood={latestMood}
+              journalToday={todaysJournal}
+            />
+          </CollapsibleContent>
+        </Collapsible>
 
         {/* Notion Task Picker - Only for admin account */}
         {user?.email?.toLowerCase() === 'pixelnutscreative@gmail.com' && (
-          <NotionTaskPicker userEmail={user?.email} />
+          <Collapsible open={!isSectionCollapsed('notion-tasks')}>
+            <CollapsibleTrigger 
+              className="w-full flex items-center justify-between p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              onClick={() => toggleSectionCollapse('notion-tasks')}
+            >
+              <span className="text-sm font-medium text-gray-600">Notion Tasks</span>
+              {isSectionCollapsed('notion-tasks') ? <ChevronRight className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <NotionTaskPicker userEmail={user?.email} />
+            </CollapsibleContent>
+          </Collapsible>
         )}
 
         {/* Weekly Content Schedule */}
-        <WeeklyGoalCard
-          goal={contentGoal}
-          onEditPosts={() => setShowPostsModal(true)}
-          onEditLives={() => setShowLivesModal(true)}
-          onEditEngagement={() => setShowEngagementModal(true)}
-          onToggleDayComplete={(field, index, day) => toggleDayCompleteMutation.mutate({ field, index, day })}
-        />
+        <Collapsible open={!isSectionCollapsed('weekly-schedule')}>
+          <CollapsibleTrigger 
+            className="w-full flex items-center justify-between p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            onClick={() => toggleSectionCollapse('weekly-schedule')}
+          >
+            <span className="text-sm font-medium text-gray-600">Weekly Content Schedule</span>
+            {isSectionCollapsed('weekly-schedule') ? <ChevronRight className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <WeeklyGoalCard
+              goal={contentGoal}
+              onEditPosts={() => setShowPostsModal(true)}
+              onEditLives={() => setShowLivesModal(true)}
+              onEditEngagement={() => setShowEngagementModal(true)}
+              onToggleDayComplete={(field, index, day) => toggleDayCompleteMutation.mutate({ field, index, day })}
+            />
+          </CollapsibleContent>
+        </Collapsible>
 
         {/* Quick action buttons */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
