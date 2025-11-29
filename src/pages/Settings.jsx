@@ -397,20 +397,7 @@ export default function Settings() {
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Custom Background</CardTitle>
-                  <CardDescription>Add a custom background image (MySpace vibes ✨)</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ImageUploader
-                    label="Background Image"
-                    currentImage={formData.background_image_url}
-                    onImageChange={(url) => setFormData({ ...formData, background_image_url: url })}
-                    aspectRatio="wide"
-                  />
-                </CardContent>
-              </Card>
+
             </motion.div>
           </TabsContent>
 

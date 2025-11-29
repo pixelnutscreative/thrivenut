@@ -82,7 +82,6 @@ const allNavItems = [
             { name: 'Live Reminders', icon: Bell, path: 'LiveReminders' },
           ]},
   { name: 'Support', icon: Heart, path: 'Support', alwaysShow: true },
-    { name: 'Settings', icon: Settings, path: 'Settings', alwaysShow: true },
   { name: 'Admin Panel', icon: UserCog, path: 'Admin', adminOnly: true },
 ];
 
@@ -227,7 +226,7 @@ export default function Layout({ children, currentPageName }) {
     ? 'bg-[#1f1f23] text-gray-100' 
     : 'bg-gradient-to-br from-teal-50 via-purple-50 to-blue-50 text-gray-900';
 
-  const backgroundImageUrl = preferences?.background_image_url;
+
 
   const sidebarClass = isDark
     ? 'bg-[#2a2a30]/95 border-gray-700'
@@ -243,12 +242,7 @@ export default function Layout({ children, currentPageName }) {
           style={{ 
             '--primary-color': primaryColor, 
             '--accent-color': accentColor,
-            ...(backgroundImageUrl ? {
-              backgroundImage: `url(${backgroundImageUrl})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              backgroundAttachment: 'fixed'
-            } : {})
+
           }}
         >
           <ImpersonationBanner />
@@ -395,19 +389,33 @@ export default function Layout({ children, currentPageName }) {
                                     })}
               
               {user && (
-                <div className="pt-6 mt-6 border-t">
-                  <p className="text-sm text-gray-500 mb-2">Signed in as</p>
-                  <p className="font-semibold text-gray-800 mb-4">{user.email}</p>
-                  <Button
-                    onClick={handleLogout}
-                    variant="outline"
-                    className="w-full text-gray-700 border-gray-300 hover:bg-gray-100"
-                  >
-                    <LogOut className="w-4 h-4 mr-2" />
-                    Sign Out
-                  </Button>
-                </div>
-              )}
+                  <div className={`pt-6 mt-6 border-t ${isDark ? 'border-gray-700' : ''}`}>
+                    <div className="flex items-center gap-3">
+                      <Link to={createPageUrl('Settings')} title="Settings" onClick={() => setMobileMenuOpen(false)}>
+                        {preferences?.profile_image_url ? (
+                          <img 
+                            src={preferences.profile_image_url} 
+                            alt="Profile" 
+                            className="w-10 h-10 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-purple-400 transition-all"
+                          />
+                        ) : (
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-purple-400 transition-all ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                            <Settings className="w-5 h-5 text-gray-500" />
+                          </div>
+                        )}
+                      </Link>
+                      <Button
+                        onClick={handleLogout}
+                        variant="outline"
+                        size="sm"
+                        className={`flex-1 ${isDark ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'text-gray-700 border-gray-300 hover:bg-gray-100'}`}
+                      >
+                        <LogOut className="w-4 h-4 mr-2" />
+                        Sign Out
+                      </Button>
+                    </div>
+                  </div>
+                )}
             </nav>
           </motion.div>
         )}
@@ -541,19 +549,33 @@ export default function Layout({ children, currentPageName }) {
           </nav>
 
           {user && (
-                <div className={`pt-6 mt-6 border-t ${isDark ? 'border-gray-700' : ''}`}>
-                  <p className={`text-sm ${subtextClass} mb-1`}>Signed in as</p>
-                  <p className={`font-semibold ${textClass} mb-4 truncate`}>{user.email}</p>
-                  <Button
-                    onClick={handleLogout}
-                    variant="outline"
-                    className={`w-full ${isDark ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'text-gray-700 border-gray-300 hover:bg-gray-100'}`}
-                  >
-                    <LogOut className="w-4 h-4 mr-2" />
-                    Sign Out
-                  </Button>
-                </div>
-              )}
+                        <div className={`pt-6 mt-6 border-t ${isDark ? 'border-gray-700' : ''}`}>
+                          <div className="flex items-center gap-3">
+                            <Link to={createPageUrl('Settings')} title="Settings">
+                              {preferences?.profile_image_url ? (
+                                <img 
+                                  src={preferences.profile_image_url} 
+                                  alt="Profile" 
+                                  className="w-10 h-10 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-purple-400 transition-all"
+                                />
+                              ) : (
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-purple-400 transition-all ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                                  <Settings className="w-5 h-5 text-gray-500" />
+                                </div>
+                              )}
+                            </Link>
+                            <Button
+                              onClick={handleLogout}
+                              variant="outline"
+                              size="sm"
+                              className={`flex-1 ${isDark ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'text-gray-700 border-gray-300 hover:bg-gray-100'}`}
+                            >
+                              <LogOut className="w-4 h-4 mr-2" />
+                              Sign Out
+                            </Button>
+                          </div>
+                        </div>
+                      )}
         </div>
 
         {/* Main Content */}

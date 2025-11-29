@@ -302,8 +302,8 @@ export default function Support() {
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="new">Submit Ticket</TabsTrigger>
-            <TabsTrigger value="history">My Tickets ({myTickets.length})</TabsTrigger>
+            <TabsTrigger value="new" className="text-sm">Submit Ticket</TabsTrigger>
+            <TabsTrigger value="history" className="text-sm">My Tickets ({myTickets.length})</TabsTrigger>
           </TabsList>
 
           <TabsContent value="new" className="mt-4">
