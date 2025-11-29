@@ -1,20 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Zap, Droplet, Smile, Utensils, Lightbulb, Cloud, StickyNote, 
-  X, Check, Plus, Settings, ChevronUp, Music, Heart
+  X, Check, Settings, Music, Heart, Home, Link, ExternalLink
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
-import { getEffectiveUserEmail } from '../admin/ImpersonationBanner';
+import { Link as RouterLink } from 'react-router-dom';
+import { createPageUrl } from '../../utils';
 
-const actionTypes = [
+const builtInActions = [
   { id: 'mood', label: 'Mood', icon: Smile, color: 'bg-pink-500' },
   { id: 'water', label: 'Water', icon: Droplet, color: 'bg-blue-500' },
   { id: 'food', label: 'Food', icon: Utensils, color: 'bg-orange-500' },
@@ -32,17 +31,19 @@ const moodOptions = [
   { value: 'anxious', emoji: '😰', label: 'Anxious' },
 ];
 
+const iconMap = { Smile, Droplet, Utensils, Lightbulb, Cloud, StickyNote, Heart, Home, Music, Zap, Link, ExternalLink };
+
 export default function QuickActionsWidget({ preferences, primaryColor, accentColor }) {
   const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
   const [activeAction, setActiveAction] = useState(null);
   const [noteContent, setNoteContent] = useState('');
-  const [showSettings, setShowSettings] = useState(false);
-  const [selectedMood, setSelectedMood] = useState(null);
   
   const today = format(new Date(), 'yyyy-MM-dd');
   const userEmail = preferences?.user_email;
   const quickActions = preferences?.quick_actions || ['mood', 'water', 'food', 'note'];
+  const customActions = preferences?.custom_quick_actions || [];
+  const position = preferences?.quick_actions_position || 'bottom';
 
   // Mutations
   const waterLogMutation = useMutation({
@@ -72,7 +73,6 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['moodLog'] });
       setActiveAction(null);
-      setSelectedMood(null);
     }
   });
 
@@ -107,14 +107,67 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
     moodLogMutation.mutate(mood);
   };
 
-  const visibleActions = actionTypes.filter(a => quickActions.includes(a.id));
+  // Get all visible actions (built-in + custom)
+  const getVisibleActions = () => {
+    const actions = [];
+    quickActions.forEach(id => {
+      const builtIn = builtInActions.find(a => a.id === id);
+      if (builtIn) {
+        actions.push(builtIn);
+      } else {
+        const custom = customActions.find(a => a.id === id);
+        if (custom) {
+          actions.push({
+            ...custom,
+            icon: iconMap[custom.icon] || Zap,
+            isCustom: true
+          });
+        }
+      }
+    });
+    return actions;
+  };
+
+  const visibleActions = getVisibleActions();
+
+  // Position-based styles
+  const getDrawerPosition = () => {
+    switch (position) {
+      case 'top':
+        return { button: 'top-6 right-6', drawer: 'top-20 right-6' };
+      case 'left':
+        return { button: 'bottom-6 left-6', drawer: 'bottom-20 left-6' };
+      case 'right':
+        return { button: 'bottom-6 right-6', drawer: 'bottom-20 right-6' };
+      case 'bottom':
+      default:
+        return { button: 'bottom-6 right-6', drawer: 'bottom-20 right-6' };
+    }
+  };
+
+  const getDrawerAnimation = () => {
+    switch (position) {
+      case 'top':
+        return { initial: { opacity: 0, y: -20 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -20 } };
+      case 'left':
+        return { initial: { opacity: 0, x: -20 }, animate: { opacity: 1, x: 0 }, exit: { opacity: 0, x: -20 } };
+      case 'right':
+        return { initial: { opacity: 0, x: 20 }, animate: { opacity: 1, x: 0 }, exit: { opacity: 0, x: 20 } };
+      case 'bottom':
+      default:
+        return { initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: 20 } };
+    }
+  };
+
+  const pos = getDrawerPosition();
+  const anim = getDrawerAnimation();
 
   return (
     <>
       {/* Floating Button */}
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center text-white"
+        className={`fixed ${pos.button} z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center text-white`}
         style={{ background: `linear-gradient(135deg, ${primaryColor || '#1fd2ea'}, ${accentColor || '#bd84f5'})` }}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
@@ -132,27 +185,57 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
         </AnimatePresence>
       </motion.button>
 
-      {/* Quick Actions Menu */}
+      {/* Quick Actions Drawer */}
       <AnimatePresence>
         {isOpen && !activeAction && (
           <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.9 }}
-            className="fixed bottom-24 right-6 z-50 bg-white rounded-2xl shadow-2xl p-4 min-w-[200px]"
+            {...anim}
+            className={`fixed ${pos.drawer} z-50 bg-white rounded-2xl shadow-2xl p-4 min-w-[220px]`}
           >
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-semibold text-gray-800">Quick Actions</h3>
-              <button
-                onClick={() => setShowSettings(true)}
+              <RouterLink
+                to={createPageUrl('Settings') + '?tab=widgets'}
                 className="p-1 hover:bg-gray-100 rounded"
               >
                 <Settings className="w-4 h-4 text-gray-400" />
-              </button>
+              </RouterLink>
             </div>
             <div className="grid grid-cols-3 gap-2">
               {visibleActions.map((action) => {
                 const Icon = action.icon;
+                
+                // Handle custom actions with page/external links
+                if (action.isCustom) {
+                  if (action.external_url) {
+                    return (
+                      <a
+                        key={action.id}
+                        href={action.external_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`flex flex-col items-center gap-1 p-3 rounded-xl ${action.color} text-white hover:opacity-90 transition-opacity`}
+                      >
+                        <Icon className="w-5 h-5" />
+                        <span className="text-xs font-medium text-center">{action.label}</span>
+                      </a>
+                    );
+                  }
+                  if (action.page) {
+                    return (
+                      <RouterLink
+                        key={action.id}
+                        to={createPageUrl(action.page)}
+                        onClick={() => setIsOpen(false)}
+                        className={`flex flex-col items-center gap-1 p-3 rounded-xl ${action.color} text-white hover:opacity-90 transition-opacity`}
+                      >
+                        <Icon className="w-5 h-5" />
+                        <span className="text-xs font-medium text-center">{action.label}</span>
+                      </RouterLink>
+                    );
+                  }
+                }
+
                 return (
                   <motion.button
                     key={action.id}
@@ -175,10 +258,8 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
       <AnimatePresence>
         {isOpen && activeAction === 'mood' && (
           <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.9 }}
-            className="fixed bottom-24 right-6 z-50 bg-white rounded-2xl shadow-2xl p-4"
+            {...anim}
+            className={`fixed ${pos.drawer} z-50 bg-white rounded-2xl shadow-2xl p-4`}
           >
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-semibold text-gray-800">How are you feeling?</h3>
@@ -206,10 +287,8 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
       <AnimatePresence>
         {isOpen && ['food', 'idea', 'negative_thought', 'note', 'gratitude'].includes(activeAction) && (
           <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.9 }}
-            className="fixed bottom-24 right-6 z-50 bg-white rounded-2xl shadow-2xl p-4 w-72"
+            {...anim}
+            className={`fixed ${pos.drawer} z-50 bg-white rounded-2xl shadow-2xl p-4 w-72`}
           >
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-semibold text-gray-800">
@@ -248,47 +327,6 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Settings Dialog */}
-      <Dialog open={showSettings} onOpenChange={setShowSettings}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Customize Quick Actions</DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-gray-500 mb-4">
-            Choose which quick actions appear in your floating widget
-          </p>
-          <div className="space-y-2">
-            {actionTypes.map((action) => {
-              const Icon = action.icon;
-              const isEnabled = quickActions.includes(action.id);
-              return (
-                <div
-                  key={action.id}
-                  onClick={async () => {
-                    const newActions = isEnabled 
-                      ? quickActions.filter(a => a !== action.id)
-                      : [...quickActions, action.id];
-                    if (preferences?.id) {
-                      await base44.entities.UserPreferences.update(preferences.id, { quick_actions: newActions });
-                      queryClient.invalidateQueries({ queryKey: ['preferences'] });
-                    }
-                  }}
-                  className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
-                    isEnabled ? 'bg-purple-50 border-2 border-purple-300' : 'bg-gray-50 border-2 border-transparent hover:border-gray-200'
-                  }`}
-                >
-                  <div className={`w-8 h-8 rounded-lg ${action.color} flex items-center justify-center`}>
-                    <Icon className="w-4 h-4 text-white" />
-                  </div>
-                  <span className="font-medium">{action.label}</span>
-                  {isEnabled && <Check className="w-4 h-4 text-purple-500 ml-auto" />}
-                </div>
-              );
-            })}
-          </div>
-        </DialogContent>
-      </Dialog>
     </>
   );
 }
