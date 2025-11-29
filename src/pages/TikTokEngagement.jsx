@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
+import { useTheme } from '../components/shared/useTheme';
 
 const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -37,6 +38,7 @@ export default function TikTokEngagement() {
   }, []);
 
   const effectiveEmail = user ? getEffectiveUserEmail(user.email) : null;
+  const { isDark, bgClass, textClass, cardBgClass, subtextClass } = useTheme();
 
   const { data: preferences } = useQuery({
     queryKey: ['preferences', effectiveEmail],
@@ -46,22 +48,6 @@ export default function TikTokEngagement() {
     },
     enabled: !!effectiveEmail,
   });
-
-  // Handle system theme
-  const [systemDark, setSystemDark] = useState(
-    typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches
-  );
-
-  React.useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handler = (e) => setSystemDark(e.matches);
-    mediaQuery.addEventListener('change', handler);
-    return () => mediaQuery.removeEventListener('change', handler);
-  }, []);
-
-  const themeType = preferences?.theme_type || 'light';
-  const isDark = themeType === 'dark' || (themeType === 'system' && systemDark);
 
   const { data: contacts = [] } = useQuery({
     queryKey: ['tiktokContacts', effectiveEmail],
@@ -254,7 +240,6 @@ export default function TikTokEngagement() {
     const engaged = justEngaged[contact.id] || {};
     const fullyEngaged = isFullyEngaged(contact);
     const categoryName = getCategoryName(contact.engagement_category_id);
-    const cardBgClass = isDark ? 'bg-gray-800 border-gray-700' : 'bg-white';
 
     const toggleAccountEngaged = (accountKey) => {
       setJustEngaged(prev => ({
@@ -470,14 +455,6 @@ export default function TikTokEngagement() {
       </motion.div>
     );
   };
-
-  const bgClass = isDark 
-    ? 'bg-[#1f1f23] text-gray-100' 
-    : 'bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 text-gray-900';
-
-  const cardBgClass = isDark ? 'bg-gray-800 border-gray-700' : 'bg-white';
-  const textClass = isDark ? 'text-gray-100' : 'text-gray-800';
-  const subtextClass = isDark ? 'text-gray-400' : 'text-gray-600';
 
   return (
     <div className={`min-h-screen ${bgClass} p-4 md:p-8`}>
