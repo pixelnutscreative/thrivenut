@@ -3,10 +3,11 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
-import { Shield, Star, UserCog, Users, Gift, Settings, Palette } from 'lucide-react';
+import { Shield, Star, UserCog, Users, Gift, Settings, Palette, Clock } from 'lucide-react';
 
 // Import the individual admin components/pages as content
 import AdminSuperFanContent from '../components/admin/AdminSuperFanContent';
+import AdminSuperFanQueue from '../components/admin/AdminSuperFanQueue';
 import AdminImpersonateContent from '../components/admin/AdminImpersonateContent';
 import AdminMasterContactsContent from '../components/admin/AdminMasterContactsContent';
 import AdminGiftLibraryContent from '../components/admin/AdminGiftLibraryContent';
@@ -51,7 +52,11 @@ export default function Admin() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
+            <TabsTrigger value="queue" className="flex items-center gap-2">
+              <Clock className="w-4 h-4" />
+              <span className="hidden sm:inline">Queue</span>
+            </TabsTrigger>
             <TabsTrigger value="superfan" className="flex items-center gap-2">
               <Star className="w-4 h-4" />
               <span className="hidden sm:inline">SuperFan</span>
@@ -77,6 +82,10 @@ export default function Admin() {
               <span className="hidden sm:inline">Settings</span>
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="queue" className="mt-6">
+            <AdminSuperFanQueue />
+          </TabsContent>
 
           <TabsContent value="superfan" className="mt-6">
             <AdminSuperFanContent />

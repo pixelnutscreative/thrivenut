@@ -18,14 +18,12 @@ import People from './pages/People';
 import GoalSharing from './pages/GoalSharing';
 import NeurodivergentSettings from './pages/NeurodivergentSettings';
 import SongGenerator from './pages/SongGenerator';
-import TikTokDashboard from './pages/TikTokDashboard';
 import SuperFanAccess from './pages/SuperFanAccess';
 import AdminSuperFanReview from './pages/AdminSuperFanReview';
 import AdminImpersonate from './pages/AdminImpersonate';
 import WeeklyGifterGallery from './pages/WeeklyGifterGallery';
 import MasterContactDatabase from './pages/MasterContactDatabase';
 import Admin from './pages/Admin';
-import ContentCalendar from './pages/ContentCalendar';
 import MeetThePixelNuts from './pages/MeetThePixelNuts';
 import PixelsParadise from './pages/PixelsParadise';
 import TikTokContacts from './pages/TikTokContacts';
@@ -54,14 +52,12 @@ export const PAGES = {
     "GoalSharing": GoalSharing,
     "NeurodivergentSettings": NeurodivergentSettings,
     "SongGenerator": SongGenerator,
-    "TikTokDashboard": TikTokDashboard,
     "SuperFanAccess": SuperFanAccess,
     "AdminSuperFanReview": AdminSuperFanReview,
     "AdminImpersonate": AdminImpersonate,
     "WeeklyGifterGallery": WeeklyGifterGallery,
     "MasterContactDatabase": MasterContactDatabase,
     "Admin": Admin,
-    "ContentCalendar": ContentCalendar,
     "MeetThePixelNuts": MeetThePixelNuts,
     "PixelsParadise": PixelsParadise,
     "TikTokContacts": TikTokContacts,
