@@ -257,10 +257,7 @@ export default function TikTokContacts() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] }),
   });
 
-  const { data: allMasterContacts = [] } = useQuery({
-    queryKey: ['allMasterContacts'],
-    queryFn: () => base44.entities.TikTokContact.list('username', 2000),
-  });
+
 
   const closeModal = () => {
     setShowModal(false);
