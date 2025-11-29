@@ -38,6 +38,17 @@ export default function TikTokEngagement() {
 
   const effectiveEmail = user ? getEffectiveUserEmail(user.email) : null;
 
+  const { data: preferences } = useQuery({
+    queryKey: ['preferences', effectiveEmail],
+    queryFn: async () => {
+      const prefs = await base44.entities.UserPreferences.filter({ user_email: effectiveEmail }, '-updated_date');
+      return prefs[0] || null;
+    },
+    enabled: !!effectiveEmail,
+  });
+
+  const isDark = preferences?.theme_type === 'dark';
+
   const { data: contacts = [] } = useQuery({
     queryKey: ['tiktokContacts', effectiveEmail],
     queryFn: () => base44.entities.TikTokContact.filter({ created_by: effectiveEmail }, '-created_date'),
@@ -229,6 +240,7 @@ export default function TikTokEngagement() {
     const engaged = justEngaged[contact.id] || {};
     const fullyEngaged = isFullyEngaged(contact);
     const categoryName = getCategoryName(contact.engagement_category_id);
+    const cardBgClass = isDark ? 'bg-gray-800 border-gray-700' : 'bg-white';
 
     const toggleAccountEngaged = (accountKey) => {
       setJustEngaged(prev => ({
@@ -250,18 +262,18 @@ export default function TikTokEngagement() {
         transition={{ type: "spring", stiffness: 300, damping: 25 }}
       >
         <Card 
-          className="hover:shadow-lg transition-shadow overflow-hidden"
+          className={`hover:shadow-lg transition-shadow overflow-hidden ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white'}`}
           style={{ borderTop: `4px solid ${contact.color || '#8B5CF6'}` }}
         >
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <CardTitle className="text-lg">@{contact.username}</CardTitle>
+                <CardTitle className={`text-lg ${textClass}`}>@{contact.username}</CardTitle>
                 {contact.display_name && (
-                  <p className="text-sm text-gray-600">{contact.display_name}</p>
+                  <p className={`text-sm ${subtextClass}`}>{contact.display_name}</p>
                 )}
                 <div className="flex items-center gap-2 mt-1">
-                  <p className="text-sm text-gray-500">{getFrequencyLabel(contact)}</p>
+                  <p className={`text-sm ${subtextClass}`}>{getFrequencyLabel(contact)}</p>
                   {categoryName && (
                     <Badge variant="outline" className="text-xs" style={{ borderColor: contact.color }}>
                       {categoryName}
@@ -283,7 +295,7 @@ export default function TikTokEngagement() {
           <CardContent className="space-y-3">
             {contact.last_engaged_date && (
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm text-gray-600">
+                <div className={`flex items-center gap-2 text-sm ${subtextClass}`}>
                   <Calendar className="w-4 h-4" />
                   <span>Last: {format(new Date(contact.last_engaged_date), 'MMM d, yyyy')}</span>
                 </div>
@@ -293,7 +305,7 @@ export default function TikTokEngagement() {
               </div>
             )}
             
-            {contact.notes && <p className="text-sm text-gray-600 italic">{contact.notes}</p>}
+            {contact.notes && <p className={`text-sm ${subtextClass} italic`}>{contact.notes}</p>}
 
             {contact.engagement_history?.length > 0 && (
               <div className="space-y-2">
@@ -445,13 +457,21 @@ export default function TikTokEngagement() {
     );
   };
 
+  const bgClass = isDark 
+    ? 'bg-[#1f1f23] text-gray-100' 
+    : 'bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 text-gray-900';
+
+  const cardBgClass = isDark ? 'bg-gray-800 border-gray-700' : 'bg-white';
+  const textClass = isDark ? 'text-gray-100' : 'text-gray-800';
+  const subtextClass = isDark ? 'text-gray-400' : 'text-gray-600';
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 p-4 md:p-8">
+    <div className={`min-h-screen ${bgClass} p-4 md:p-8`}>
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800">Social Engagement Tracker</h1>
-            <p className="text-gray-600 mt-1">Engage with creators you've added to your contacts</p>
+            <h1 className={`text-3xl font-bold ${textClass}`}>Social Engagement Tracker</h1>
+            <p className={`${subtextClass} mt-1`}>Engage with creators you've added to your contacts</p>
           </div>
           <Link to={createPageUrl('TikTokContacts')}>
             <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
@@ -462,13 +482,13 @@ export default function TikTokEngagement() {
         </div>
 
         {/* Engagement Guide */}
-        <Card className="bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200">
+        <Card className={isDark ? 'bg-gradient-to-r from-blue-900/30 to-cyan-900/30 border-blue-700' : 'bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200'}>
           <CardContent className="p-6">
             <div className="flex items-center gap-3">
-              <BookOpen className="w-6 h-6 text-blue-600" />
+              <BookOpen className={`w-6 h-6 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
               <div className="flex-1">
-                <h3 className="font-semibold text-gray-800">How to Properly Engage</h3>
-                <p className="text-sm text-gray-600">Learn the best practices for meaningful engagement</p>
+                <h3 className={`font-semibold ${textClass}`}>How to Properly Engage</h3>
+                <p className={`text-sm ${subtextClass}`}>Learn the best practices for meaningful engagement</p>
               </div>
               <Button variant="outline" onClick={() => window.open('https://www.tiktok.com/@pixelnutscreative/video/7568313920054627598', '_blank')} className="border-blue-300 hover:bg-blue-100">
                 <ExternalLink className="w-4 h-4 mr-2" />
@@ -479,8 +499,8 @@ export default function TikTokEngagement() {
         </Card>
 
         {engagementContacts.length === 0 ? (
-          <Card className="p-12 text-center">
-            <p className="text-gray-500 mb-4">No contacts set up for engagement tracking yet.</p>
+          <Card className={`p-12 text-center ${cardBgClass}`}>
+            <p className={`${subtextClass} mb-4`}>No contacts set up for engagement tracking yet.</p>
             <Link to={createPageUrl('TikTokContacts')}>
               <Button>
                 <Plus className="w-4 h-4 mr-2" />
@@ -499,8 +519,8 @@ export default function TikTokEngagement() {
               <motion.div layout className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <AnimatePresence mode="popLayout">
                   {contactsToShow.length === 0 ? (
-                    <Card className="col-span-full p-12 text-center">
-                      <p className="text-gray-500 mb-4">🎉 No creators due today. Great job!</p>
+                    <Card className={`col-span-full p-12 text-center ${cardBgClass}`}>
+                      <p className={`${subtextClass} mb-4`}>🎉 No creators due today. Great job!</p>
                       <Button onClick={() => setViewMode('all')} variant="outline">View All Creators</Button>
                     </Card>
                   ) : (

@@ -64,7 +64,9 @@ const categoryIcons = {
 export default function Goals() {
   const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
-  const [activeTab, setActiveTab] = useState('my-goals');
+  const urlParams = new URLSearchParams(window.location.search);
+  const tabFromUrl = urlParams.get('tab');
+  const [activeTab, setActiveTab] = useState(tabFromUrl || 'my-goals');
   const [showForm, setShowForm] = useState(false);
   const [editingGoal, setEditingGoal] = useState(null);
   const [showShareModal, setShowShareModal] = useState(false);

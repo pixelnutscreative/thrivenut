@@ -4,7 +4,9 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Bell, Check, X, Users, Loader2, PartyPopper, HandHelping, Heart } from 'lucide-react';
+import { Bell, Check, X, Users, Loader2, PartyPopper, HandHelping, Heart, ExternalLink } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '../utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const relationships = {
@@ -131,12 +133,18 @@ export default function NotificationBell({ userEmail, isDark }) {
                 const config = interactionIcons[interaction.interaction_type] || interactionIcons.reaction;
                 const Icon = config.icon;
                 return (
-                  <motion.div
+                  <Link
                     key={interaction.id}
+                    to={`${createPageUrl('Goals')}?tab=shared-with-me`}
+                    onClick={() => {
+                      markReadMutation.mutate(interaction.id);
+                      setOpen(false);
+                    }}
+                  >
+                  <motion.div
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     className="p-3 hover:bg-gray-50 cursor-pointer"
-                    onClick={() => markReadMutation.mutate(interaction.id)}
                   >
                     <div className="flex items-start gap-3">
                       <div className={`w-8 h-8 rounded-full ${config.bg} flex items-center justify-center shrink-0`}>
@@ -161,6 +169,7 @@ export default function NotificationBell({ userEmail, isDark }) {
                       </button>
                     </div>
                   </motion.div>
+                  </Link>
                 );
               })}
 
