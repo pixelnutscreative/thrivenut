@@ -120,7 +120,7 @@ export default function TikTokGoals() {
                 <p className="text-sm text-gray-500">Viewing</p>
                 <p className="text-xl font-bold text-gray-800">{getWeekLabel()}</p>
                 <p className="text-sm text-gray-500">
-                  {format(new Date(currentWeekStart), 'MMM d')} - {format(addWeeks(new Date(currentWeekStart), 1), 'MMM d')}
+                  {format(new Date(currentWeekStart), 'MMM d')} - {format(new Date(new Date(currentWeekStart).getTime() + 6 * 24 * 60 * 60 * 1000), 'MMM d')}
                 </p>
               </div>
               <button

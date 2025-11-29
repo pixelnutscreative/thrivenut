@@ -16,7 +16,6 @@ import { createPageUrl } from '../utils';
 import { motion } from 'framer-motion';
 import TimezoneSelector from '../components/shared/TimezoneSelector';
 import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
-import ContentCalendarModal from '../components/tiktok/ContentCalendarModal';
 import { useTheme } from '../components/shared/useTheme';
 
 const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -43,7 +42,18 @@ export default function LiveSchedule() {
   const [noteContent, setNoteContent] = useState('');
   const [dayFilter, setDayFilter] = useState('today');
   const [selectedLiveTypes, setSelectedLiveTypes] = useState([]);
-  const [showContentCalendar, setShowContentCalendar] = useState(false);
+  const [showMyContent, setShowMyContent] = useState(false);
+  const [editingContentItem, setEditingContentItem] = useState(null);
+  const [contentFormData, setContentFormData] = useState({
+    type: 'live',
+    title: '',
+    day_of_week: 'Monday',
+    time: '12:00',
+    is_recurring: true,
+    audience: 'all_ages',
+    share_to_directory: false,
+    specific_date: ''
+  });
   const [formData, setFormData] = useState({
     host_username: '',
     recurring_days: [],
@@ -92,6 +102,62 @@ export default function LiveSchedule() {
   });
 
   const calendarContacts = contacts.filter(c => c.calendar_enabled);
+
+  // Fetch my content calendar items
+  const { data: myContentItems = [] } = useQuery({
+    queryKey: ['contentCalendarItems', effectiveEmail],
+    queryFn: () => base44.entities.ContentCalendarItem.filter({ created_by: effectiveEmail }),
+    enabled: !!effectiveEmail && showMyContent,
+  });
+
+  const createContentMutation = useMutation({
+    mutationFn: (data) => base44.entities.ContentCalendarItem.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contentCalendarItems'] });
+      setEditingContentItem(null);
+      setContentFormData({ type: 'live', title: '', day_of_week: 'Monday', time: '12:00', is_recurring: true, audience: 'all_ages', share_to_directory: false, specific_date: '' });
+    },
+  });
+
+  const updateContentMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.ContentCalendarItem.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contentCalendarItems'] });
+      setEditingContentItem(null);
+      setContentFormData({ type: 'live', title: '', day_of_week: 'Monday', time: '12:00', is_recurring: true, audience: 'all_ages', share_to_directory: false, specific_date: '' });
+    },
+  });
+
+  const deleteContentMutation = useMutation({
+    mutationFn: (id) => base44.entities.ContentCalendarItem.delete(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['contentCalendarItems'] }),
+  });
+
+  const handleEditContent = (item) => {
+    setEditingContentItem(item);
+    setContentFormData({
+      type: item.type || 'live',
+      title: item.title || '',
+      day_of_week: item.day_of_week || 'Monday',
+      time: item.time || '12:00',
+      is_recurring: item.is_recurring !== false,
+      audience: item.audience || 'all_ages',
+      share_to_directory: item.share_to_directory || false,
+      specific_date: item.specific_date || ''
+    });
+  };
+
+  const handleSaveContent = () => {
+    if (editingContentItem?.id) {
+      updateContentMutation.mutate({ id: editingContentItem.id, data: contentFormData });
+    } else {
+      createContentMutation.mutate(contentFormData);
+    }
+  };
+
+  const getMyContentForDay = (day) => {
+    return myContentItems.filter(item => item.day_of_week === day && item.type === 'live').sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+  };
 
   const createScheduleMutation = useMutation({
     mutationFn: (data) => base44.entities.LiveSchedule.create(data),
@@ -445,12 +511,12 @@ export default function LiveSchedule() {
           </div>
           <div className="flex flex-wrap gap-2">
             <Button
-              variant="outline"
-              onClick={() => setShowContentCalendar(true)}
-              className="border-teal-300 text-teal-700 hover:bg-teal-50"
+              variant={showMyContent ? "default" : "outline"}
+              onClick={() => setShowMyContent(!showMyContent)}
+              className={showMyContent ? "bg-teal-600 hover:bg-teal-700" : "border-teal-300 text-teal-700 hover:bg-teal-50"}
             >
               <CalendarDays className="w-4 h-4 mr-2" />
-              My Content
+              {showMyContent ? "Hide My Content" : "Show My Content"}
             </Button>
             <Link to={createPageUrl('TikTokContacts')}>
               <Button variant="outline">
@@ -559,7 +625,30 @@ export default function LiveSchedule() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="pt-3 space-y-2 max-h-96 overflow-y-auto">
-                    {daySchedules.length === 0 ? (
+                    {/* My Content Items */}
+                    {showMyContent && getMyContentForDay(day).map((item) => (
+                      <div key={`content-${item.id}`} className={`p-2 ${isDark ? 'bg-teal-900/30 border-teal-700' : 'bg-teal-50 border-teal-200'} border rounded-lg text-sm`}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Badge className="bg-teal-600 text-white text-xs">MY LIVE</Badge>
+                            <span className={`text-xs ${subtextClass}`}>
+                              {item.time ? `${parseInt(item.time.split(':')[0]) % 12 || 12}:${item.time.split(':')[1]} ${parseInt(item.time.split(':')[0]) >= 12 ? 'PM' : 'AM'}` : ''}
+                            </span>
+                          </div>
+                          <div className="flex gap-1">
+                            <Button variant="ghost" size="icon" className="w-6 h-6" onClick={() => handleEditContent(item)}>
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="w-6 h-6 text-red-500" onClick={() => deleteContentMutation.mutate(item.id)}>
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </div>
+                        {item.title && <p className={`text-xs font-medium mt-1 ${textClass}`}>{item.title}</p>}
+                      </div>
+                    ))}
+                    
+                    {daySchedules.length === 0 && (!showMyContent || getMyContentForDay(day).length === 0) ? (
                       <p className={`text-xs ${subtextClass} italic`}>No lives scheduled</p>
                     ) : (
                       daySchedules.map((schedule) => (
@@ -804,12 +893,90 @@ export default function LiveSchedule() {
         </DialogContent>
       </Dialog>
 
-      {/* Content Calendar Modal */}
-      <ContentCalendarModal
-        isOpen={showContentCalendar}
-        onClose={() => setShowContentCalendar(false)}
-        effectiveEmail={effectiveEmail}
-      />
+      {/* Edit Content Item Dialog */}
+      <Dialog open={!!editingContentItem} onOpenChange={(open) => {
+        if (!open) {
+          setEditingContentItem(null);
+          setContentFormData({ type: 'live', title: '', day_of_week: 'Monday', time: '12:00', is_recurring: true, audience: 'all_ages', share_to_directory: false, specific_date: '' });
+        }
+      }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{editingContentItem?.id ? 'Edit My Content' : 'Add My Content'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Title</Label>
+              <Input
+                placeholder="e.g., Morning Live, Battle Night"
+                value={contentFormData.title}
+                onChange={(e) => setContentFormData({ ...contentFormData, title: e.target.value })}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Day</Label>
+                <Select value={contentFormData.day_of_week} onValueChange={(v) => setContentFormData({ ...contentFormData, day_of_week: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {daysOfWeek.map(day => <SelectItem key={day} value={day}>{day}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Time</Label>
+                <Input
+                  type="time"
+                  value={contentFormData.time}
+                  onChange={(e) => setContentFormData({ ...contentFormData, time: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Audience</Label>
+              <Select value={contentFormData.audience} onValueChange={(v) => setContentFormData({ ...contentFormData, audience: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all_ages">All Ages</SelectItem>
+                  <SelectItem value="18+">18+ Only</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <Checkbox
+                  checked={contentFormData.is_recurring}
+                  onCheckedChange={(c) => setContentFormData({ ...contentFormData, is_recurring: c })}
+                />
+                <span className="text-sm">Recurring Weekly</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <Checkbox
+                  checked={contentFormData.share_to_directory}
+                  onCheckedChange={(c) => setContentFormData({ ...contentFormData, share_to_directory: c })}
+                />
+                <span className="text-sm">Share to Directory</span>
+              </label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingContentItem(null)}>Cancel</Button>
+            <Button onClick={handleSaveContent} className="bg-teal-600 hover:bg-teal-700">
+              {editingContentItem?.id ? 'Update' : 'Add'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Content Button when My Content is shown */}
+      {showMyContent && (
+        <Button
+          onClick={() => setEditingContentItem({})}
+          className="fixed bottom-6 right-6 rounded-full w-14 h-14 bg-teal-600 hover:bg-teal-700 shadow-lg"
+        >
+          <Plus className="w-6 h-6" />
+        </Button>
+      )}
     </div>
   );
 }
