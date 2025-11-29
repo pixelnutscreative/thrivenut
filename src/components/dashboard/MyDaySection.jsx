@@ -825,8 +825,38 @@ export default function MyDaySection({
     if (task.type === 'visit_live') {
       return selfCareLog?.[`visited_${task.scheduleId}`];
     }
+    if (task.type === 'calendar') {
+      return selfCareLog?.[`calendar_${task.id}`];
+    }
+    if (task.type === 'engagement') {
+      return task.completed;
+    }
     return false;
   };
+
+  const toggleSectionCollapse = (sectionId) => {
+    setCollapsedSections(prev => 
+      prev.includes(sectionId) 
+        ? prev.filter(s => s !== sectionId)
+        : [...prev, sectionId]
+    );
+  };
+
+  const saveSectionVisibility = async () => {
+    if (preferences?.id) {
+      await base44.entities.UserPreferences.update(preferences.id, { 
+        dashboard_collapsed_sections: collapsedSections 
+      });
+      queryClient.invalidateQueries({ queryKey: ['preferences'] });
+    }
+  };
+
+  // Save collapsed sections when they change
+  useEffect(() => {
+    if (preferences?.id && collapsedSections.length !== (preferences?.dashboard_collapsed_sections?.length || 0)) {
+      saveSectionVisibility();
+    }
+  }, [collapsedSections]);
 
   const handleSaveSleep = () => {
     if (sleepForm.hours && sleepForm.quality) {
