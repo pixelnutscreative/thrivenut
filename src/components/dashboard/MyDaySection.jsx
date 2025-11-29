@@ -1427,6 +1427,21 @@ export default function MyDaySection({
           isBibleBeliever={preferences?.is_bible_believer}
         />
       </div>
+
+      {/* Carryover Tasks Modal */}
+      <CarryoverTasksModal
+        isOpen={showCarryoverModal}
+        onClose={() => setShowCarryoverModal(false)}
+        carryoverTasks={carryoverTasks}
+        userEmail={userEmail}
+      />
+
+      {/* Task History Modal */}
+      <TaskHistoryModal
+        isOpen={showHistoryModal}
+        onClose={() => setShowHistoryModal(false)}
+        userEmail={userEmail}
+      />
     </div>
   );
 }
