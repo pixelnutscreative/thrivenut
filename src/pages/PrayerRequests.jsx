@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Heart, Plus, Users, Lock, Globe, Check, Send, BookOpen, 
-  MessageCircle, Sparkles, Clock, AlertTriangle, PartyPopper
+  MessageCircle, Sparkles, Clock, AlertTriangle, PartyPopper, Edit, X, CheckCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, formatDistanceToNow } from 'date-fns';
@@ -50,6 +50,9 @@ export default function PrayerRequests() {
     allow_messages: true,
     visibility: 'community'
   });
+  const [updateModal, setUpdateModal] = useState(null); // holds request being updated
+  const [updateContent, setUpdateContent] = useState('');
+  const [isAnswerUpdate, setIsAnswerUpdate] = useState(false);
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -160,13 +163,44 @@ export default function PrayerRequests() {
     }
   });
 
-  const markAnsweredMutation = useMutation({
-    mutationFn: async ({ requestId, testimony }) => {
-      return base44.entities.PrayerRequest.update(requestId, {
-        is_answered: true,
-        answered_date: format(new Date(), 'yyyy-MM-dd'),
-        testimony
-      });
+  const addUpdateMutation = useMutation({
+    mutationFn: async ({ requestId, content, isAnswer, closeRequest }) => {
+      const request = myRequests.find(r => r.id === requestId);
+      const updates = request?.updates || [];
+      const newUpdate = {
+        date: new Date().toISOString(),
+        content,
+        is_answer: isAnswer
+      };
+      
+      const updateData = {
+        updates: [...updates, newUpdate]
+      };
+      
+      if (isAnswer) {
+        updateData.is_answered = true;
+        updateData.answered_date = format(new Date(), 'yyyy-MM-dd');
+        updateData.testimony = content;
+      }
+      
+      if (closeRequest) {
+        updateData.is_closed = true;
+      }
+      
+      return base44.entities.PrayerRequest.update(requestId, updateData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['prayerRequests'] });
+      queryClient.invalidateQueries({ queryKey: ['myPrayerRequests'] });
+      setUpdateModal(null);
+      setUpdateContent('');
+      setIsAnswerUpdate(false);
+    }
+  });
+
+  const closeRequestMutation = useMutation({
+    mutationFn: async (requestId) => {
+      return base44.entities.PrayerRequest.update(requestId, { is_closed: true });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['prayerRequests'] });
@@ -174,33 +208,42 @@ export default function PrayerRequests() {
     }
   });
 
-  const PrayerCard = ({ request, showPrayButton = true }) => {
+  const isMyRequest = (request) => request.created_by === effectiveEmail;
+
+  const PrayerCard = ({ request, showPrayButton = true, showActions = false }) => {
     const hasPrayed = myPrayers.includes(request.id);
     const categoryInfo = categories.find(c => c.value === request.category);
+    const isMine = isMyRequest(request);
     
     return (
-      <Card className={`${cardBgClass} ${request.is_answered ? 'border-green-300 bg-green-50/50' : ''} ${request.is_urgent ? 'border-red-300' : ''}`}>
+      <Card className={`${cardBgClass} ${request.is_answered ? (isDark ? 'border-green-600 bg-green-900/20' : 'border-green-300 bg-green-50/50') : ''} ${request.is_urgent && !request.is_answered ? (isDark ? 'border-red-600' : 'border-red-300') : ''}`}>
         <CardContent className="p-4">
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap mb-2">
-                {request.is_urgent && (
-                  <Badge className="bg-red-100 text-red-700">
+                {request.is_urgent && !request.is_answered && (
+                  <Badge className="bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300">
                     <AlertTriangle className="w-3 h-3 mr-1" />
                     Urgent
                   </Badge>
                 )}
                 {request.is_answered && (
-                  <Badge className="bg-green-100 text-green-700">
+                  <Badge className="bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300">
                     <PartyPopper className="w-3 h-3 mr-1" />
                     Answered!
+                  </Badge>
+                )}
+                {request.is_closed && !request.is_answered && (
+                  <Badge variant="secondary" className={isDark ? 'bg-gray-700 text-gray-300' : ''}>
+                    <X className="w-3 h-3 mr-1" />
+                    Closed
                   </Badge>
                 )}
                 {categoryInfo && (
                   <Badge className={categoryInfo.color}>{categoryInfo.label}</Badge>
                 )}
                 {request.is_anonymous && (
-                  <Badge variant="outline" className="text-xs">
+                  <Badge variant="outline" className={`text-xs ${isDark ? 'border-gray-500 text-gray-300' : ''}`}>
                     <Lock className="w-3 h-3 mr-1" />
                     Anonymous
                   </Badge>
@@ -212,14 +255,38 @@ export default function PrayerRequests() {
                 {request.description}
               </p>
               
-              {request.testimony && (
-                <div className="mt-3 p-3 bg-green-100 rounded-lg">
-                  <p className="text-sm text-green-800 font-medium">✨ Testimony:</p>
-                  <p className="text-sm text-green-700">{request.testimony}</p>
+              {/* Updates/Testimonies */}
+              {request.updates?.length > 0 && (
+                <div className="mt-3 space-y-2">
+                  {request.updates.map((update, idx) => (
+                    <div key={idx} className={`p-3 rounded-lg ${update.is_answer ? (isDark ? 'bg-green-900/30 border border-green-700' : 'bg-green-100') : (isDark ? 'bg-gray-700' : 'bg-gray-100')}`}>
+                      <div className="flex items-center gap-2 mb-1">
+                        {update.is_answer ? (
+                          <span className={`text-xs font-medium ${isDark ? 'text-green-400' : 'text-green-700'}`}>✨ Answered Prayer</span>
+                        ) : (
+                          <span className={`text-xs font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>📝 Update</span>
+                        )}
+                        <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                          {formatDistanceToNow(new Date(update.date), { addSuffix: true })}
+                        </span>
+                      </div>
+                      <p className={`text-sm ${update.is_answer ? (isDark ? 'text-green-300' : 'text-green-700') : (isDark ? 'text-gray-300' : 'text-gray-700')}`}>
+                        {update.content}
+                      </p>
+                    </div>
+                  ))}
                 </div>
               )}
               
-              <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
+              {/* Legacy testimony support */}
+              {request.testimony && !request.updates?.some(u => u.is_answer) && (
+                <div className={`mt-3 p-3 rounded-lg ${isDark ? 'bg-green-900/30 border border-green-700' : 'bg-green-100'}`}>
+                  <p className={`text-sm font-medium ${isDark ? 'text-green-400' : 'text-green-800'}`}>✨ Testimony:</p>
+                  <p className={`text-sm ${isDark ? 'text-green-300' : 'text-green-700'}`}>{request.testimony}</p>
+                </div>
+              )}
+              
+              <div className={`flex items-center gap-4 mt-3 text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                 {!request.is_anonymous && (
                   <span>By {request.requester_display_name}</span>
                 )}
@@ -231,38 +298,69 @@ export default function PrayerRequests() {
               </div>
             </div>
             
-            {showPrayButton && (
-              <div className="flex flex-col gap-2">
-                <Button
-                  size="sm"
-                  onClick={() => hasPrayed ? null : prayMutation.mutate(request.id)}
-                  disabled={hasPrayed || prayMutation.isPending}
-                  className={hasPrayed ? 'bg-green-500' : ''}
-                  style={!hasPrayed ? { background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` } : {}}
-                >
-                  {hasPrayed ? (
-                    <>
-                      <Check className="w-4 h-4 mr-1" />
-                      Prayed
-                    </>
-                  ) : (
-                    <>
-                      <Heart className="w-4 h-4 mr-1" />
-                      Pray
-                    </>
+            <div className="flex flex-col gap-2">
+              {showPrayButton && !request.is_closed && (
+                <>
+                  <Button
+                    size="sm"
+                    onClick={() => hasPrayed ? null : prayMutation.mutate(request.id)}
+                    disabled={hasPrayed || prayMutation.isPending}
+                    className={hasPrayed ? 'bg-green-500' : ''}
+                    style={!hasPrayed ? { background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` } : {}}
+                  >
+                    {hasPrayed ? (
+                      <>
+                        <Check className="w-4 h-4 mr-1" />
+                        Prayed
+                      </>
+                    ) : (
+                      <>
+                        <Heart className="w-4 h-4 mr-1" />
+                        Pray
+                      </>
+                    )}
+                  </Button>
+                  {request.allow_messages && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setSelectedRequest(request)}
+                      className={isDark ? 'border-gray-600 text-gray-300' : ''}
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                    </Button>
                   )}
-                </Button>
-                {request.allow_messages && (
+                </>
+              )}
+              
+              {/* Owner actions */}
+              {showActions && isMine && !request.is_closed && (
+                <div className="flex flex-col gap-1 mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => setSelectedRequest(request)}
+                    onClick={() => setUpdateModal(request)}
+                    className={`text-xs ${isDark ? 'border-gray-600 text-gray-300' : ''}`}
                   >
-                    <MessageCircle className="w-4 h-4" />
+                    <Edit className="w-3 h-3 mr-1" />
+                    Update
                   </Button>
-                )}
-              </div>
-            )}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      if (confirm('Close this prayer request? It will move to the Answered section.')) {
+                        closeRequestMutation.mutate(request.id);
+                      }
+                    }}
+                    className={`text-xs ${isDark ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500'}`}
+                  >
+                    <X className="w-3 h-3 mr-1" />
+                    Close
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -325,12 +423,12 @@ export default function PrayerRequests() {
           </TabsContent>
 
           <TabsContent value="mine" className="space-y-4 mt-4">
-            {myRequests.length === 0 ? (
+            {myRequests.filter(r => !r.is_closed && !r.is_answered).length === 0 ? (
               <Card className={cardBgClass}>
                 <CardContent className="p-8 text-center">
                   <Heart className="w-12 h-12 text-pink-300 mx-auto mb-4" />
                   <p className={isDark ? 'text-gray-400' : 'text-gray-500'}>
-                    You haven't shared any prayer requests yet.
+                    You don't have any active prayer requests.
                   </p>
                   <Button
                     onClick={() => setShowNewRequest(true)}
@@ -342,14 +440,14 @@ export default function PrayerRequests() {
                 </CardContent>
               </Card>
             ) : (
-              myRequests.map(request => (
-                <PrayerCard key={request.id} request={request} showPrayButton={false} />
+              myRequests.filter(r => !r.is_closed && !r.is_answered).map(request => (
+                <PrayerCard key={request.id} request={request} showPrayButton={false} showActions={true} />
               ))
             )}
           </TabsContent>
 
           <TabsContent value="answered" className="space-y-4 mt-4">
-            {prayerRequests.filter(r => r.is_answered).length === 0 ? (
+            {prayerRequests.filter(r => r.is_answered || r.is_closed).length === 0 ? (
               <Card className={cardBgClass}>
                 <CardContent className="p-8 text-center">
                   <Sparkles className="w-12 h-12 text-yellow-300 mx-auto mb-4" />
@@ -359,7 +457,7 @@ export default function PrayerRequests() {
                 </CardContent>
               </Card>
             ) : (
-              prayerRequests.filter(r => r.is_answered).map(request => (
+              prayerRequests.filter(r => r.is_answered || r.is_closed).map(request => (
                 <PrayerCard key={request.id} request={request} showPrayButton={false} />
               ))
             )}
@@ -455,6 +553,88 @@ export default function PrayerRequests() {
               Share Prayer Request
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Update/Answer Dialog */}
+      <Dialog open={!!updateModal} onOpenChange={() => { setUpdateModal(null); setUpdateContent(''); setIsAnswerUpdate(false); }}>
+        <DialogContent className={`max-w-lg ${isDark ? 'bg-gray-800 text-gray-100' : ''}`}>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {isAnswerUpdate ? (
+                <>
+                  <PartyPopper className="w-5 h-5 text-green-500" />
+                  Share Answered Prayer
+                </>
+              ) : (
+                <>
+                  <Edit className="w-5 h-5 text-blue-500" />
+                  Add Update
+                </>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {updateModal && (
+            <div className="space-y-4">
+              <div className={`p-3 rounded-lg ${isDark ? 'bg-gray-700' : 'bg-gray-50'}`}>
+                <p className={`font-medium ${textClass}`}>{updateModal.title}</p>
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  variant={!isAnswerUpdate ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setIsAnswerUpdate(false)}
+                  className={!isAnswerUpdate ? '' : (isDark ? 'border-gray-600' : '')}
+                >
+                  📝 Update
+                </Button>
+                <Button
+                  variant={isAnswerUpdate ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setIsAnswerUpdate(true)}
+                  className={isAnswerUpdate ? 'bg-green-600 hover:bg-green-700' : (isDark ? 'border-gray-600' : '')}
+                >
+                  ✨ Answered!
+                </Button>
+              </div>
+
+              <Textarea
+                placeholder={isAnswerUpdate ? 'Share how God answered this prayer...' : 'Share an update on your prayer request...'}
+                value={updateContent}
+                onChange={(e) => setUpdateContent(e.target.value)}
+                rows={4}
+                className={isDark ? 'bg-gray-700 border-gray-600' : ''}
+              />
+
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => addUpdateMutation.mutate({ 
+                    requestId: updateModal.id, 
+                    content: updateContent, 
+                    isAnswer: isAnswerUpdate,
+                    closeRequest: isAnswerUpdate
+                  })}
+                  disabled={!updateContent.trim() || addUpdateMutation.isPending}
+                  className="flex-1"
+                  style={{ background: isAnswerUpdate ? '#16a34a' : `linear-gradient(to right, ${primaryColor}, ${accentColor})` }}
+                >
+                  {isAnswerUpdate ? (
+                    <>
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Mark as Answered
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4 mr-2" />
+                      Post Update
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
