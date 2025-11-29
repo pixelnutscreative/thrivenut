@@ -23,6 +23,7 @@ import ContactFormHeader from '../components/contacts/ContactFormHeader';
 import TikTokTabContent from '../components/contacts/TikTokTabContent';
 import PersonalTabContent from '../components/contacts/PersonalTabContent';
 import BusinessTabContent from '../components/contacts/BusinessTabContent';
+import { useTheme } from '../components/shared/useTheme';
 
 // Icon-based roles for contact cards
 const iconRoles = {
@@ -117,6 +118,7 @@ const defaultFormData = {
 
 export default function TikTokContacts() {
   const queryClient = useQueryClient();
+  const { isDark, bgClass, textClass, cardBgClass } = useTheme();
   const [showModal, setShowModal] = useState(false);
   const [editingContact, setEditingContact] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
