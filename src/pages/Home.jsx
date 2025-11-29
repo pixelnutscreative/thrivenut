@@ -158,13 +158,24 @@ export default function Home() {
               Thrive Nut
             </span>
           </div>
-          <Button 
-            onClick={handleLogin}
-            className="bg-gradient-to-r from-teal-500 to-purple-500 hover:from-teal-600 hover:to-purple-600"
-          >
-            <LogIn className="w-4 h-4 mr-2" />
-            Sign In / Sign Up
-          </Button>
+          {checkingAuth ? (
+            <div className="w-8 h-8 rounded-full bg-gray-700 animate-pulse" />
+          ) : isAuthenticated ? (
+            <Button 
+              onClick={handleLogin}
+              className="bg-gradient-to-r from-teal-500 to-purple-500 hover:from-teal-600 hover:to-purple-600"
+            >
+              Go to Dashboard <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          ) : (
+            <Button 
+              onClick={handleLogin}
+              className="bg-gradient-to-r from-teal-500 to-purple-500 hover:from-teal-600 hover:to-purple-600"
+            >
+              <LogIn className="w-4 h-4 mr-2" />
+              Sign In / Sign Up
+            </Button>
+          )}
         </div>
       </header>
 
