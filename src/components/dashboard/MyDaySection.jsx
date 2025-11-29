@@ -729,7 +729,7 @@ export default function MyDaySection({
       if (timeCompare !== 0) return timeCompare;
       return (a.order || 50) - (b.order || 50);
     });
-  }, [medications, supplements, pets, careReminders, contentGoal, liveSchedules, goals, preferences, todayDayName, mealLabels, localTaskOrder]);
+  }, [medications, supplements, pets, careReminders, contentGoal, liveSchedules, goals, preferences, todayDayName, mealLabels, localTaskOrder, googleCalendarData, engagementContacts, creatorCalendarContacts, today]);
 
   // Helper functions
   function parseTimeString(timeStr) {
