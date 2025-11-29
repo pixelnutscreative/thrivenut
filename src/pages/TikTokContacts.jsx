@@ -836,16 +836,15 @@ export default function TikTokContacts() {
 
               <TabsContent value="tiktok" className="mt-4">
                 <TikTokTabContent
-                  formData={formData}
-                  setFormData={setFormData}
-                  contacts={contacts}
-                  categories={categories}
-                  savedCustomRoles={savedCustomRoles}
-                  onSaveCustomRole={(role) => saveCustomRoleMutation.mutate(role)}
-                  editingContactId={editingContact?.id}
-                  onQuickAddContact={handleQuickAddContact}
-                  allMasterContacts={allMasterContacts}
-                />
+                      formData={formData}
+                      setFormData={setFormData}
+                      contacts={contacts}
+                      categories={categories}
+                      savedCustomRoles={savedCustomRoles}
+                      onSaveCustomRole={(role) => saveCustomRoleMutation.mutate(role)}
+                      editingContactId={editingContact?.id}
+                      onQuickAddContact={handleQuickAddContact}
+                    />
               </TabsContent>
 
               <TabsContent value="personal" className="mt-4">
