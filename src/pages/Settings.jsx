@@ -98,7 +98,9 @@ export default function Settings() {
     intermittent_fasting: false,
     fasting_schedule: '16_8',
     eating_window_start: '12:00',
-    eating_window_end: '20:00'
+    eating_window_end: '20:00',
+    google_calendar_connected: false,
+    show_google_calendar: false
     });
 
   useEffect(() => {
@@ -133,7 +135,9 @@ export default function Settings() {
         intermittent_fasting: preferences.intermittent_fasting || false,
         fasting_schedule: preferences.fasting_schedule || '16_8',
         eating_window_start: preferences.eating_window_start || '12:00',
-        eating_window_end: preferences.eating_window_end || '20:00'
+        eating_window_end: preferences.eating_window_end || '20:00',
+        google_calendar_connected: preferences.google_calendar_connected || false,
+        show_google_calendar: preferences.show_google_calendar || false
         });
     }
   }, [preferences]);
