@@ -118,13 +118,10 @@ export default function Home() {
   const [checkingAuth, setCheckingAuth] = useState(true);
 
   useEffect(() => {
+    // Don't auto-redirect - let users see the landing page
     base44.auth.isAuthenticated().then(auth => {
       setIsAuthenticated(auth);
       setCheckingAuth(false);
-      // If already logged in, redirect to dashboard
-      if (auth) {
-        window.location.href = createPageUrl('Dashboard');
-      }
     }).catch(() => {
       setCheckingAuth(false);
     });
