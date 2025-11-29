@@ -2,9 +2,10 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { LayoutDashboard, Droplet, Heart, Clock, Eye, EyeOff, ArrowDown, NotebookPen } from 'lucide-react';
+import { LayoutDashboard, Droplet, Heart, Clock, Eye, EyeOff, ArrowDown, NotebookPen, Calendar, ExternalLink } from 'lucide-react';
 
 const displayOptions = [
   { value: 'show_checked', label: 'Show with checkmark', icon: Eye, description: 'Completed items stay visible with a checkmark' },
@@ -205,6 +206,96 @@ export default function DashboardPreferences({ formData, setFormData }) {
                 <p className="text-xs text-gray-500 mt-1">{opt.description}</p>
               </div>
             ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Google Calendar */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-blue-500" />
+            Google Calendar
+          </CardTitle>
+          <CardDescription>Connect your personal Google Calendar to see events in My Day</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {formData.google_calendar_connected ? (
+            <div className="p-4 bg-green-50 rounded-xl border-2 border-green-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
+                    <Calendar className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-green-800">✓ Google Calendar Connected</h4>
+                    <p className="text-sm text-green-600">Your events will show in My Day</p>
+                  </div>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setFormData({ ...formData, google_calendar_connected: false, show_google_calendar: false })}
+                  className="border-red-300 text-red-600 hover:bg-red-50"
+                >
+                  Disconnect
+                </Button>
+              </div>
+              
+              <div
+                onClick={() => setFormData({ ...formData, show_google_calendar: !formData.show_google_calendar })}
+                className="mt-4 p-3 rounded-lg border cursor-pointer hover:bg-green-100 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <Checkbox checked={formData.show_google_calendar} />
+                  <span className="text-sm">Show Google Calendar events in My Day</span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="p-4 bg-blue-50 rounded-xl border-2 border-blue-200">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+                  <Calendar className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h4 className="font-semibold">Connect Your Google Calendar</h4>
+                  <p className="text-sm text-gray-600">See your personal calendar events in My Day</p>
+                </div>
+              </div>
+              <Button 
+                onClick={() => setFormData({ ...formData, google_calendar_connected: true, show_google_calendar: true })}
+                className="w-full bg-blue-600 hover:bg-blue-700"
+              >
+                <Calendar className="w-4 h-4 mr-2" />
+                Connect Google Calendar
+              </Button>
+              <p className="text-xs text-gray-500 mt-2 text-center">
+                You'll be prompted to authorize access when you save settings
+              </p>
+            </div>
+          )}
+          
+          {/* Pixel Nuts Events Calendar link */}
+          <div className="p-4 bg-purple-50 rounded-xl border-2 border-purple-200">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center">
+                <Calendar className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h4 className="font-semibold text-purple-800">Pixel Nuts Events Calendar</h4>
+                <p className="text-sm text-purple-600">Subscribe to community events & workshops</p>
+              </div>
+            </div>
+            <a
+              href="https://pixelnutscreative.com/calendar"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 w-full p-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+            >
+              <ExternalLink className="w-4 h-4" />
+              View & Subscribe to Events
+            </a>
           </div>
         </CardContent>
       </Card>
