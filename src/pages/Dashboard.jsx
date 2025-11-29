@@ -195,7 +195,7 @@ export default function Dashboard() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['selfCareToday'] });
     },
-    });
+  });
 
   // Save schedule by type
   const saveScheduleMutation = useMutation({
