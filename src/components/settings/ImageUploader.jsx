@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Upload, X, Loader2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 
-export default function ImageUploader({ currentImage, onImageChange, label, aspectRatio = 'square' }) {
+export default function ImageUploader({ currentImage, onImageChange, label, aspectRatio = 'square', size = 'normal' }) {
   const [uploading, setUploading] = useState(false);
 
   const handleFileSelect = async (e) => {
@@ -31,16 +31,59 @@ export default function ImageUploader({ currentImage, onImageChange, label, aspe
     wide: 'aspect-video'
   };
 
+  // Small size for inline profile pics
+  if (size === 'small') {
+    return (
+      <div className="space-y-2">
+        {label && <label className="text-sm font-medium text-gray-700">{label}</label>}
+        {currentImage ? (
+          <div className="relative w-20 h-20">
+            <img
+              src={currentImage}
+              alt={label || 'Profile'}
+              className="w-20 h-20 rounded-full object-cover border-2 border-purple-200"
+            />
+            <Button
+              variant="destructive"
+              size="icon"
+              className="absolute -top-1 -right-1 w-6 h-6"
+              onClick={handleRemove}
+            >
+              <X className="w-3 h-3" />
+            </Button>
+          </div>
+        ) : (
+          <label className="cursor-pointer">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileSelect}
+              className="hidden"
+              disabled={uploading}
+            />
+            <div className="w-20 h-20 rounded-full border-2 border-dashed border-gray-300 flex flex-col items-center justify-center hover:border-purple-400 transition-colors bg-gray-50">
+              {uploading ? (
+                <Loader2 className="w-5 h-5 text-purple-600 animate-spin" />
+              ) : (
+                <Upload className="w-5 h-5 text-gray-400" />
+              )}
+            </div>
+          </label>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3">
-      <label className="text-sm font-medium text-gray-700">{label}</label>
+      {label && <label className="text-sm font-medium text-gray-700">{label}</label>}
       <Card>
         <CardContent className="p-4">
           {currentImage ? (
             <div className="relative">
               <img
                 src={currentImage}
-                alt={label}
+                alt={label || 'Image'}
                 className={`w-full ${aspectRatioClasses[aspectRatio]} object-cover rounded-lg`}
               />
               <Button
