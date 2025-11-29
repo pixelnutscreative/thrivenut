@@ -998,30 +998,45 @@ export default function LiveSchedule() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Content Item Dialog */}
+      {/* Edit Content Item Dialog - MY LIVE (Purple themed) */}
       <Dialog open={!!editingContentItem} onOpenChange={(open) => {
         if (!open) {
           setEditingContentItem(null);
-          setContentFormData({ type: 'live', title: '', day_of_week: 'Monday', time: '12:00', is_recurring: true, audience: 'all_ages', share_to_directory: false, specific_date: '', live_type: 'regular' });
+          setContentFormData({ type: 'live', title: '', day_of_week: 'Monday', time: '12:00', is_recurring: true, audience: 'all_ages', share_to_directory: false, specific_date: '', live_types: ['regular'], platforms: ['tiktok'], has_giveaway: false, must_be_present: false, requires_registration: false, superfan_only: false, is_in_person: false, city: '', state: '', address: '', stream_url: '' });
         }
       }}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{editingContentItem?.id ? 'Edit My Live' : 'Add My Live'}</DialogTitle>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="bg-gradient-to-r from-purple-500 to-pink-500 -m-6 mb-4 p-4 rounded-t-lg">
+            <DialogTitle className="text-white flex items-center gap-2">
+              <Video className="w-5 h-5" />
+              {editingContentItem?.id ? 'Edit My Live' : 'Add My Live'}
+            </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            {/* Unified Live Type Selector */}
+          
+          <div className="space-y-4">
+            {/* Title */}
             <div className="space-y-2">
-              <Label>Type of Live</Label>
+              <Label>Title (optional)</Label>
+              <Input
+                placeholder="e.g., Morning Live, Battle Night"
+                value={contentFormData.title}
+                onChange={(e) => setContentFormData({ ...contentFormData, title: e.target.value })}
+              />
+            </div>
+
+            {/* Live Types - Multi-select */}
+            <div className="space-y-2">
+              <Label>Type of Live (select all that apply)</Label>
               <div className="grid grid-cols-4 gap-2">
                 {Object.entries(liveTypeConfig).map(([key, config]) => {
                   const Icon = config.icon;
+                  const isSelected = contentFormData.live_types.includes(key);
                   return (
                     <div
                       key={key}
-                      onClick={() => setContentFormData({ ...contentFormData, live_type: key })}
+                      onClick={() => toggleContentLiveType(key)}
                       className={`p-2 rounded-lg border-2 cursor-pointer transition-all text-xs text-center ${
-                        contentFormData.live_type === key
+                        isSelected
                           ? 'border-purple-500 bg-purple-50'
                           : 'border-gray-200 hover:border-purple-300'
                       }`}
@@ -1034,13 +1049,23 @@ export default function LiveSchedule() {
               </div>
             </div>
 
+            {/* Platforms - Multi-select */}
             <div className="space-y-2">
-              <Label>Title (optional)</Label>
-              <Input
-                placeholder="e.g., Morning Live, Battle Night"
-                value={contentFormData.title}
-                onChange={(e) => setContentFormData({ ...contentFormData, title: e.target.value })}
-              />
+              <Label>Streaming Platform(s)</Label>
+              <div className="flex flex-wrap gap-2">
+                {Object.entries(platformConfig).map(([key, config]) => {
+                  const isSelected = contentFormData.platforms.includes(key);
+                  return (
+                    <Badge
+                      key={key}
+                      onClick={() => togglePlatform(key)}
+                      className={`cursor-pointer px-3 py-1 ${isSelected ? config.color : 'bg-gray-100 text-gray-600'}`}
+                    >
+                      {config.label}
+                    </Badge>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Recurring toggle */}
@@ -1096,6 +1121,47 @@ export default function LiveSchedule() {
               </div>
             )}
 
+            {/* In Person Event Details */}
+            {contentFormData.platforms.includes('in_person') && (
+              <div className="p-3 bg-green-50 border border-green-200 rounded-lg space-y-3">
+                <p className="font-medium text-green-800 flex items-center gap-2">
+                  <MapPin className="w-4 h-4" /> In-Person Event Location
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <Input
+                    placeholder="City"
+                    value={contentFormData.city}
+                    onChange={(e) => setContentFormData({ ...contentFormData, city: e.target.value })}
+                  />
+                  <Input
+                    placeholder="State"
+                    value={contentFormData.state}
+                    onChange={(e) => setContentFormData({ ...contentFormData, state: e.target.value })}
+                  />
+                </div>
+                <Input
+                  placeholder="Address (optional)"
+                  value={contentFormData.address}
+                  onChange={(e) => setContentFormData({ ...contentFormData, address: e.target.value })}
+                />
+              </div>
+            )}
+
+            {/* Stream URL for Zoom/Other */}
+            {(contentFormData.platforms.includes('zoom') || contentFormData.platforms.includes('other')) && (
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <LinkIcon className="w-4 h-4" /> Stream/Meeting URL
+                </Label>
+                <Input
+                  placeholder="https://..."
+                  value={contentFormData.stream_url}
+                  onChange={(e) => setContentFormData({ ...contentFormData, stream_url: e.target.value })}
+                />
+              </div>
+            )}
+
+            {/* Audience */}
             <div className="space-y-2">
               <Label>Audience</Label>
               <Select value={contentFormData.audience} onValueChange={(v) => setContentFormData({ ...contentFormData, audience: v })}>
@@ -1105,6 +1171,38 @@ export default function LiveSchedule() {
                   <SelectItem value="18+">18+ Only</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Options Grid */}
+            <div className="grid grid-cols-2 gap-2">
+              <label className="flex items-center gap-2 p-2 border rounded-lg cursor-pointer hover:bg-purple-50">
+                <Checkbox
+                  checked={contentFormData.has_giveaway}
+                  onCheckedChange={(c) => setContentFormData({ ...contentFormData, has_giveaway: c })}
+                />
+                <span className="text-sm">🎁 Has Giveaway</span>
+              </label>
+              <label className="flex items-center gap-2 p-2 border rounded-lg cursor-pointer hover:bg-purple-50">
+                <Checkbox
+                  checked={contentFormData.must_be_present}
+                  onCheckedChange={(c) => setContentFormData({ ...contentFormData, must_be_present: c })}
+                />
+                <span className="text-sm">✋ Must Be Present</span>
+              </label>
+              <label className="flex items-center gap-2 p-2 border rounded-lg cursor-pointer hover:bg-purple-50">
+                <Checkbox
+                  checked={contentFormData.requires_registration}
+                  onCheckedChange={(c) => setContentFormData({ ...contentFormData, requires_registration: c })}
+                />
+                <span className="text-sm">📝 Registration Required</span>
+              </label>
+              <label className="flex items-center gap-2 p-2 border rounded-lg cursor-pointer hover:bg-purple-50">
+                <Checkbox
+                  checked={contentFormData.superfan_only}
+                  onCheckedChange={(c) => setContentFormData({ ...contentFormData, superfan_only: c })}
+                />
+                <span className="text-sm">⭐ SuperFan Only</span>
+              </label>
             </div>
 
             <label className="flex items-center gap-2 cursor-pointer p-3 border rounded-lg hover:bg-purple-50">
@@ -1119,7 +1217,7 @@ export default function LiveSchedule() {
             </label>
 
             {/* Blessing Bus note */}
-            {contentFormData.live_type === 'blessing_bus' && (
+            {contentFormData.live_types.includes('blessing_bus') && (
               <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm">
                 <p className="font-medium text-amber-800">🚌 Blessing Bus Schedule</p>
                 <p className="text-amber-700 text-xs mt-1">
@@ -1130,8 +1228,8 @@ export default function LiveSchedule() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditingContentItem(null)}>Cancel</Button>
-            <Button onClick={handleSaveContent} className="bg-teal-600 hover:bg-teal-700">
-              {editingContentItem?.id ? 'Update' : 'Add'}
+            <Button onClick={handleSaveContent} className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
+              {editingContentItem?.id ? 'Update' : 'Add My Live'}
             </Button>
           </DialogFooter>
         </DialogContent>
