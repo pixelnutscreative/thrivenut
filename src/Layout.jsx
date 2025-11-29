@@ -83,7 +83,7 @@ const allNavItems = [
     { name: 'Pet Care', icon: Heart, path: 'PetCare', moduleId: 'pets' },
     { name: 'Care Reminders', icon: Bell, path: 'CareReminders', moduleId: 'care_reminders' },
   ]},
-  { name: 'My People', icon: Users, path: 'People', moduleId: 'people' },
+  { name: 'My People (IRL)', icon: Users, path: 'People', moduleId: 'people' },
   { name: 'SuperFan Access', icon: Star, path: 'SuperFanAccess', showWhenNoTikTokAccess: true },
   { name: 'Support', icon: Heart, path: 'Support', alwaysShow: true },
   { name: 'Admin Panel', icon: UserCog, path: 'Admin', adminOnly: true },
