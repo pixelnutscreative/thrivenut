@@ -18,6 +18,7 @@ import QuickPetCareCheck from '../components/wellness/QuickPetCareCheck';
 import QuickCareReminderCheck from '../components/wellness/QuickCareReminderCheck';
 import WaterCheckIns from '../components/wellness/WaterCheckIns';
 import FastingTracker from '../components/wellness/FastingTracker';
+import { useTheme } from '../components/shared/useTheme';
 
 const moodEmojis = {
   amazing: '🤩',
@@ -237,8 +238,10 @@ export default function Wellness() {
     return format(new Date(isoString), 'h:mm a');
   };
 
+  const { isDark, bgClass, textClass, cardBgClass, subtextClass } = useTheme();
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 p-4 md:p-8">
+    <div className={`min-h-screen ${bgClass} p-4 md:p-8`}>
       <div className="max-w-5xl mx-auto space-y-8">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -247,7 +250,7 @@ export default function Wellness() {
           <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
             Wellness Tracker
           </h1>
-          <p className="text-gray-600">Take care of your mind and body</p>
+          <p className={subtextClass}>Take care of your mind and body</p>
         </motion.div>
 
         {/* Self-Care Checklist */}
@@ -339,19 +342,19 @@ export default function Wellness() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <Card className="shadow-lg border-0 bg-gradient-to-br from-blue-50 to-cyan-50">
+          <Card className={`shadow-lg border-0 ${isDark ? 'bg-gradient-to-br from-blue-900/30 to-cyan-900/30' : 'bg-gradient-to-br from-blue-50 to-cyan-50'}`}>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-2xl">
+              <CardTitle className={`flex items-center gap-2 text-2xl ${textClass}`}>
                 <Droplet className="w-7 h-7 text-blue-500" />
                 Water Intake
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="text-center">
-                <div className="text-6xl font-bold text-blue-600 mb-2">
+                <div className={`text-6xl font-bold ${isDark ? 'text-blue-400' : 'text-blue-600'} mb-2`}>
                   {todaysWater?.glasses || 0}
                 </div>
-                <p className="text-gray-600 text-lg">
+                <p className={`${subtextClass} text-lg`}>
                   of {todaysWater?.goal_glasses || 8} glasses
                 </p>
               </div>
@@ -384,23 +387,23 @@ export default function Wellness() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <Card className="shadow-lg border-0 bg-gradient-to-br from-pink-50 to-rose-50">
+          <Card className={`shadow-lg border-0 ${isDark ? 'bg-gradient-to-br from-pink-900/30 to-rose-900/30' : 'bg-gradient-to-br from-pink-50 to-rose-50'}`}>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-2xl">
+              <CardTitle className={`flex items-center gap-2 text-2xl ${textClass}`}>
                 <Heart className="w-7 h-7 text-pink-500" />
                 Mood Check-In
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               {todaysMoods && todaysMoods.length > 0 && (
-                <div className="space-y-2 p-4 bg-white/50 rounded-lg">
-                  <p className="font-semibold text-gray-700">Today's Check-ins:</p>
+                <div className={`space-y-2 p-4 ${isDark ? 'bg-gray-800/50' : 'bg-white/50'} rounded-lg`}>
+                  <p className={`font-semibold ${textClass}`}>Today's Check-ins:</p>
                   <div className="flex flex-wrap gap-2">
                     {todaysMoods.map((log, i) => (
-                      <div key={i} className="px-4 py-2 bg-white rounded-full shadow-sm flex items-center gap-2">
+                      <div key={i} className={`px-4 py-2 ${isDark ? 'bg-gray-700' : 'bg-white'} rounded-full shadow-sm flex items-center gap-2`}>
                         <span className="text-2xl">{moodEmojis[log.mood]}</span>
                         <div className="text-sm">
-                          <span className="text-gray-600 flex items-center gap-1">
+                          <span className={`${subtextClass} flex items-center gap-1`}>
                             <Clock className="w-3 h-3" />
                             {log.timestamp ? formatTime(log.timestamp) : 'Earlier'}
                           </span>
@@ -412,7 +415,7 @@ export default function Wellness() {
               )}
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">How are you feeling right now?</label>
+                <label className={`text-sm font-medium ${textClass}`}>How are you feeling right now?</label>
                 <div className="grid grid-cols-5 gap-2">
                   {Object.entries(moodEmojis).map(([key, emoji]) => (
                     <button
@@ -420,12 +423,12 @@ export default function Wellness() {
                       onClick={() => setMoodForm({...moodForm, mood: key})}
                       className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center ${
                         moodForm.mood === key
-                          ? 'border-pink-500 bg-pink-50 scale-105'
-                          : 'border-gray-200 hover:border-pink-300'
+                          ? `border-pink-500 ${isDark ? 'bg-pink-900/30' : 'bg-pink-50'} scale-105`
+                          : `${isDark ? 'border-gray-600 hover:border-pink-400' : 'border-gray-200 hover:border-pink-300'}`
                       }`}
                     >
                       <span className="text-3xl mb-1">{emoji}</span>
-                      <span className="text-xs text-gray-600 capitalize">{key}</span>
+                      <span className={`text-xs ${subtextClass} capitalize`}>{key}</span>
                     </button>
                   ))}
                 </div>
@@ -457,9 +460,9 @@ export default function Wellness() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
-          <Card className="shadow-lg border-0 bg-gradient-to-br from-purple-50 to-indigo-50">
+          <Card className={`shadow-lg border-0 ${isDark ? 'bg-gradient-to-br from-purple-900/30 to-indigo-900/30' : 'bg-gradient-to-br from-purple-50 to-indigo-50'}`}>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-2xl">
+              <CardTitle className={`flex items-center gap-2 text-2xl ${textClass}`}>
                 <Moon className="w-7 h-7 text-purple-500" />
                 Sleep Log
               </CardTitle>
@@ -467,7 +470,7 @@ export default function Wellness() {
             <CardContent className="space-y-4">
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Hours of Sleep</label>
+                  <label className={`text-sm font-medium ${textClass}`}>Hours of Sleep</label>
                   <Input
                     type="number"
                     step="0.5"
@@ -479,9 +482,9 @@ export default function Wellness() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Sleep Quality</label>
+                  <label className={`text-sm font-medium ${textClass}`}>Sleep Quality</label>
                   <Select value={sleepForm.quality} onValueChange={(val) => setSleepForm({...sleepForm, quality: val})}>
-                    <SelectTrigger>
+                    <SelectTrigger className={isDark ? 'bg-gray-700 border-gray-600' : ''}>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>

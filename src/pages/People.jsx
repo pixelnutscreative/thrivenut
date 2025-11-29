@@ -19,6 +19,7 @@ import ContactFormHeader from '../components/contacts/ContactFormHeader';
 import TikTokTabContent from '../components/contacts/TikTokTabContent';
 import PersonalTabContent from '../components/contacts/PersonalTabContent';
 import BusinessTabContent from '../components/contacts/BusinessTabContent';
+import { useTheme } from '../components/shared/useTheme';
 
 const defaultFormData = {
   real_name: '',
@@ -227,6 +228,8 @@ export default function People() {
 
   const upcomingBirthdays = getUpcomingBirthdays();
 
+  const { isDark, bgClass, textClass, cardBgClass, subtextClass } = useTheme();
+
   const filteredContacts = contacts
     .filter(c => {
       const matchesSearch = 
@@ -239,12 +242,12 @@ export default function People() {
     .sort((a, b) => (b.is_favorite ? 1 : 0) - (a.is_favorite ? 1 : 0));
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 p-4 md:p-8">
+    <div className={`min-h-screen ${bgClass} p-4 md:p-8`}>
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800">My People</h1>
-            <p className="text-gray-600 mt-1">Birthdays, anniversaries & everything about the people you care about</p>
+            <h1 className={`text-3xl font-bold ${textClass}`}>My People</h1>
+            <p className={`${subtextClass} mt-1`}>Birthdays, anniversaries & everything about the people you care about</p>
           </div>
           <Button onClick={() => setShowModal(true)} className="bg-gradient-to-r from-purple-600 to-pink-600">
             <Plus className="w-4 h-4 mr-2" /> Add Person
@@ -286,7 +289,7 @@ export default function People() {
         )}
 
         {/* Search */}
-        <Card>
+        <Card className={cardBgClass}>
           <CardContent className="p-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -294,7 +297,7 @@ export default function People() {
                 placeholder="Search by name, nickname, or username..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className={`pl-10 ${isDark ? 'bg-gray-700 border-gray-600' : ''}`}
               />
             </div>
           </CardContent>
@@ -313,17 +316,17 @@ export default function People() {
                   exit={{ opacity: 0 }}
                   transition={{ delay: index * 0.05 }}
                 >
-                  <Card className={`relative overflow-hidden ${contact.is_favorite ? 'ring-2 ring-amber-400' : ''}`}>
+                  <Card className={`relative overflow-hidden ${contact.is_favorite ? 'ring-2 ring-amber-400' : ''} ${cardBgClass}`}>
                     <div className="h-2" style={{ backgroundColor: contact.color || '#8B5CF6' }} />
                     
                     <div className="absolute top-4 right-3 flex items-center gap-1">
-                      <button onClick={() => handleEdit(contact)} className="p-1 hover:bg-gray-100 rounded">
-                        <Edit className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+                      <button onClick={() => handleEdit(contact)} className={`p-1 ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} rounded`}>
+                        <Edit className={`w-4 h-4 ${isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'}`} />
                       </button>
-                      <button onClick={() => { if (confirm('Delete this contact?')) deleteMutation.mutate(contact.id); }} className="p-1 hover:bg-gray-100 rounded">
+                      <button onClick={() => { if (confirm('Delete this contact?')) deleteMutation.mutate(contact.id); }} className={`p-1 ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} rounded`}>
                         <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-500" />
                       </button>
-                      <button onClick={() => toggleFavoriteMutation.mutate({ id: contact.id, isFavorite: contact.is_favorite })} className="p-1 hover:bg-gray-100 rounded">
+                      <button onClick={() => toggleFavoriteMutation.mutate({ id: contact.id, isFavorite: contact.is_favorite })} className={`p-1 ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} rounded`}>
                         <Star className={`w-4 h-4 ${contact.is_favorite ? 'fill-amber-400 text-amber-400' : 'text-gray-300'}`} />
                       </button>
                     </div>
@@ -338,9 +341,9 @@ export default function People() {
                           </div>
                         )}
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-bold text-lg truncate">{displayName}</h3>
+                          <h3 className={`font-bold text-lg truncate ${textClass}`}>{displayName}</h3>
                           {contact.nickname && contact.real_name && (
-                            <p className="text-sm text-gray-500">"{contact.nickname}"</p>
+                            <p className={`text-sm ${subtextClass}`}>"{contact.nickname}"</p>
                           )}
                           {contact.username && (
                             <p className="text-sm text-purple-600">@{contact.username}</p>
@@ -351,13 +354,13 @@ export default function People() {
 
                       <div className="mt-4 space-y-2 text-sm">
                         {contact.birthday && (
-                          <p className="flex items-center gap-2 text-gray-600">
+                          <p className={`flex items-center gap-2 ${subtextClass}`}>
                             <Cake className="w-4 h-4 text-pink-500" />
                             {format(parseISO(contact.birthday), 'MMMM d')}
                           </p>
                         )}
                         {contact.occupation && (
-                          <p className="flex items-center gap-2 text-gray-600">
+                          <p className={`flex items-center gap-2 ${subtextClass}`}>
                             <Briefcase className="w-4 h-4" /> {contact.occupation}
                           </p>
                         )}
@@ -367,7 +370,7 @@ export default function People() {
                           </a>
                         )}
                         {contact.businesses?.length > 0 && (
-                          <p className="flex items-center gap-2 text-gray-500">
+                          <p className={`flex items-center gap-2 ${subtextClass}`}>
                             <Building2 className="w-4 h-4" />
                             {contact.businesses.length} business{contact.businesses.length > 1 ? 'es' : ''}
                           </p>
@@ -394,9 +397,9 @@ export default function People() {
 
         {contacts.length === 0 && (
           <div className="text-center py-12">
-            <Users className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-600">No people added yet</h3>
-            <p className="text-gray-500 mb-4">Add friends, family, and connections!</p>
+            <Users className={`w-12 h-12 ${isDark ? 'text-gray-600' : 'text-gray-300'} mx-auto mb-4`} />
+            <h3 className={`text-lg font-semibold ${subtextClass}`}>No people added yet</h3>
+            <p className={`${subtextClass} mb-4`}>Add friends, family, and connections!</p>
             <Button onClick={() => setShowModal(true)}><Plus className="w-4 h-4 mr-2" /> Add Person</Button>
           </div>
         )}

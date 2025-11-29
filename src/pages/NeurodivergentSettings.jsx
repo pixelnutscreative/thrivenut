@@ -10,6 +10,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Save, Brain, Heart, Sparkles, Eye, Shield, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 import CrisisResourcesCard from '../components/mental-health/CrisisResourcesCard';
+import { useTheme } from '../components/shared/useTheme';
 
 const selfCareTasks = [
   { id: 'shower', label: 'Shower/Bath', description: 'Daily hygiene' },
@@ -166,6 +167,8 @@ export default function NeurodivergentSettings() {
     updatePreferencesMutation.mutate(formData);
   };
 
+  const { isDark, bgClass, textClass, cardBgClass, subtextClass } = useTheme();
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -175,15 +178,15 @@ export default function NeurodivergentSettings() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 p-4 md:p-8">
+    <div className={`min-h-screen ${bgClass} p-4 md:p-8`}>
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
+            <h1 className={`text-3xl font-bold ${textClass} flex items-center gap-3`}>
               <Brain className="w-8 h-8 text-purple-600" />
               Mental Health & Wellness
             </h1>
-            <p className="text-gray-600 mt-1">Personalize your support, track your journey, and customize your experience</p>
+            <p className={`${subtextClass} mt-1`}>Personalize your support, track your journey, and customize your experience</p>
           </div>
           <Button
             onClick={handleSave}
@@ -207,22 +210,22 @@ export default function NeurodivergentSettings() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <Card>
+          <Card className={cardBgClass}>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className={`flex items-center gap-2 ${textClass}`}>
                 <Shield className="w-5 h-5 text-pink-500" />
                 Self-Care Gating
               </CardTitle>
-              <CardDescription>
+              <CardDescription className={subtextClass}>
                 Block access to certain app features until you've completed basic self-care tasks.
                 This is a gentle accountability tool from past-you to present-you. 💜
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="flex items-center justify-between p-4 bg-purple-50 rounded-lg">
+              <div className={`flex items-center justify-between p-4 ${isDark ? 'bg-purple-900/30' : 'bg-purple-50'} rounded-lg`}>
                 <div>
-                  <Label className="font-medium text-lg">Enable Self-Care Gating</Label>
-                  <p className="text-sm text-gray-600">
+                  <Label className={`font-medium text-lg ${textClass}`}>Enable Self-Care Gating</Label>
+                  <p className={`text-sm ${subtextClass}`}>
                     Require self-care completion before accessing selected modules
                   </p>
                 </div>
@@ -235,8 +238,8 @@ export default function NeurodivergentSettings() {
               {formData.enable_self_care_gating && (
                 <>
                   <div className="space-y-3">
-                    <Label className="font-medium">Required Self-Care Tasks</Label>
-                    <p className="text-sm text-gray-600">
+                    <Label className={`font-medium ${textClass}`}>Required Self-Care Tasks</Label>
+                    <p className={`text-sm ${subtextClass}`}>
                       Select which tasks must be completed before accessing gated modules
                     </p>
                     <div className="grid md:grid-cols-2 gap-3">
@@ -246,15 +249,15 @@ export default function NeurodivergentSettings() {
                           onClick={() => toggleSelfCareTask(task.id)}
                           className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
                             formData.required_self_care_tasks.includes(task.id)
-                              ? 'border-purple-500 bg-purple-50'
-                              : 'border-gray-200 hover:border-purple-300'
+                              ? `border-purple-500 ${isDark ? 'bg-purple-900/30' : 'bg-purple-50'}`
+                              : `${isDark ? 'border-gray-600 hover:border-purple-400' : 'border-gray-200 hover:border-purple-300'}`
                           }`}
                         >
                           <div className="flex items-center gap-3">
                             <Checkbox checked={formData.required_self_care_tasks.includes(task.id)} />
                             <div>
-                              <span className="font-medium">{task.label}</span>
-                              <p className="text-sm text-gray-500">{task.description}</p>
+                              <span className={`font-medium ${textClass}`}>{task.label}</span>
+                              <p className={`text-sm ${subtextClass}`}>{task.description}</p>
                             </div>
                           </div>
                         </div>
@@ -263,8 +266,8 @@ export default function NeurodivergentSettings() {
                   </div>
 
                   <div className="space-y-3">
-                    <Label className="font-medium">Modules to Gate</Label>
-                    <p className="text-sm text-gray-600">
+                    <Label className={`font-medium ${textClass}`}>Modules to Gate</Label>
+                    <p className={`text-sm ${subtextClass}`}>
                       Select which modules will be locked until self-care is complete
                     </p>
                     <div className="grid md:grid-cols-2 gap-3">
@@ -274,13 +277,13 @@ export default function NeurodivergentSettings() {
                           onClick={() => toggleGatedModule(module.id)}
                           className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
                             formData.gated_modules.includes(module.id)
-                              ? 'border-pink-500 bg-pink-50'
-                              : 'border-gray-200 hover:border-pink-300'
+                              ? `border-pink-500 ${isDark ? 'bg-pink-900/30' : 'bg-pink-50'}`
+                              : `${isDark ? 'border-gray-600 hover:border-pink-400' : 'border-gray-200 hover:border-pink-300'}`
                           }`}
                         >
                           <div className="flex items-center gap-3">
                             <Checkbox checked={formData.gated_modules.includes(module.id)} />
-                            <span className="font-medium">{module.name}</span>
+                            <span className={`font-medium ${textClass}`}>{module.name}</span>
                           </div>
                         </div>
                       ))}
@@ -298,19 +301,19 @@ export default function NeurodivergentSettings() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <Card>
+          <Card className={cardBgClass}>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className={`flex items-center gap-2 ${textClass}`}>
                 <Heart className="w-5 h-5 text-pink-500" />
                 What You're Working On
               </CardTitle>
-              <CardDescription>
+              <CardDescription className={subtextClass}>
                 This helps personalize your affirmations and AI support. 100% private. 💜
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <Label className="font-medium mb-3 block">Things I'm working through...</Label>
+                <Label className={`font-medium mb-3 block ${textClass}`}>Things I'm working through...</Label>
                 <div className="flex flex-wrap gap-2">
                   {struggles.map(item => (
                     <button
@@ -318,8 +321,8 @@ export default function NeurodivergentSettings() {
                       onClick={() => toggleStruggle(item.id)}
                       className={`px-3 py-2 rounded-full border-2 text-sm transition-all ${
                         formData.mental_health_struggles.includes(item.id)
-                          ? 'border-purple-500 bg-purple-100 text-purple-800'
-                          : 'border-gray-200 hover:border-purple-300'
+                          ? `border-purple-500 ${isDark ? 'bg-purple-900/50 text-purple-300' : 'bg-purple-100 text-purple-800'}`
+                          : `${isDark ? 'border-gray-600 hover:border-purple-400 text-gray-300' : 'border-gray-200 hover:border-purple-300'}`
                       }`}
                     >
                       <span className="mr-1">{item.emoji}</span>
@@ -330,7 +333,7 @@ export default function NeurodivergentSettings() {
               </div>
 
               <div>
-                <Label className="font-medium mb-3 block">Things I want to improve...</Label>
+                <Label className={`font-medium mb-3 block ${textClass}`}>Things I want to improve...</Label>
                 <div className="flex flex-wrap gap-2">
                   {improvementGoals.map(item => (
                     <button
@@ -338,8 +341,8 @@ export default function NeurodivergentSettings() {
                       onClick={() => toggleImprovement(item.id)}
                       className={`px-3 py-2 rounded-full border-2 text-sm transition-all ${
                         formData.improvement_goals.includes(item.id)
-                          ? 'border-pink-500 bg-pink-100 text-pink-800'
-                          : 'border-gray-200 hover:border-pink-300'
+                          ? `border-pink-500 ${isDark ? 'bg-pink-900/50 text-pink-300' : 'bg-pink-100 text-pink-800'}`
+                          : `${isDark ? 'border-gray-600 hover:border-pink-400 text-gray-300' : 'border-gray-200 hover:border-pink-300'}`
                       }`}
                     >
                       <span className="mr-1">{item.emoji}</span>
@@ -358,9 +361,9 @@ export default function NeurodivergentSettings() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
         >
-          <Card>
+          <Card className={cardBgClass}>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className={`flex items-center gap-2 ${textClass}`}>
                 <Sparkles className="w-5 h-5 text-amber-500" />
                 Mental Wellness Features
               </CardTitle>
@@ -370,16 +373,16 @@ export default function NeurodivergentSettings() {
                 onClick={() => setFormData({...formData, enable_ai_journaling: !formData.enable_ai_journaling})}
                 className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
                   formData.enable_ai_journaling
-                    ? 'border-purple-500 bg-purple-50'
-                    : 'border-gray-200 hover:border-purple-300'
+                    ? `border-purple-500 ${isDark ? 'bg-purple-900/30' : 'bg-purple-50'}`
+                    : `${isDark ? 'border-gray-600 hover:border-purple-400' : 'border-gray-200 hover:border-purple-300'}`
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Brain className="w-5 h-5 text-purple-500" />
                     <div>
-                      <span className="font-medium">AI Therapeutic Journaling</span>
-                      <p className="text-sm text-gray-600">
+                      <span className={`font-medium ${textClass}`}>AI Therapeutic Journaling</span>
+                      <p className={`text-sm ${subtextClass}`}>
                         Get perspective questions and reframing suggestions when journaling
                       </p>
                     </div>
@@ -392,16 +395,16 @@ export default function NeurodivergentSettings() {
                 onClick={() => setFormData({...formData, show_daily_affirmations: !formData.show_daily_affirmations})}
                 className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
                   formData.show_daily_affirmations
-                    ? 'border-amber-500 bg-amber-50'
-                    : 'border-gray-200 hover:border-amber-300'
+                    ? `border-amber-500 ${isDark ? 'bg-amber-900/30' : 'bg-amber-50'}`
+                    : `${isDark ? 'border-gray-600 hover:border-amber-400' : 'border-gray-200 hover:border-amber-300'}`
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Sparkles className="w-5 h-5 text-amber-500" />
                     <div>
-                      <span className="font-medium">Daily Affirmations</span>
-                      <p className="text-sm text-gray-600">
+                      <span className={`font-medium ${textClass}`}>Daily Affirmations</span>
+                      <p className={`text-sm ${subtextClass}`}>
                         Show personalized daily affirmations on your dashboard
                       </p>
                     </div>
@@ -414,16 +417,16 @@ export default function NeurodivergentSettings() {
                 onClick={() => setFormData({...formData, is_bible_believer: !formData.is_bible_believer})}
                 className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
                   formData.is_bible_believer
-                    ? 'border-amber-600 bg-amber-50'
-                    : 'border-gray-200 hover:border-amber-300'
+                    ? `border-amber-600 ${isDark ? 'bg-amber-900/30' : 'bg-amber-50'}`
+                    : `${isDark ? 'border-gray-600 hover:border-amber-400' : 'border-gray-200 hover:border-amber-300'}`
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <span className="text-xl">📖</span>
                     <div>
-                      <span className="font-medium">I'm a Bible Believer</span>
-                      <p className="text-sm text-gray-600">
+                      <span className={`font-medium ${textClass}`}>I'm a Bible Believer</span>
+                      <p className={`text-sm ${subtextClass}`}>
                         Show morning & night Bible reading checkboxes in self-care
                       </p>
                     </div>
@@ -436,9 +439,9 @@ export default function NeurodivergentSettings() {
         </motion.div>
 
         {/* Info Alert */}
-        <Alert className="bg-purple-50 border-purple-200">
-          <Heart className="w-4 h-4 text-purple-600" />
-          <AlertDescription className="text-purple-800">
+        <Alert className={isDark ? 'bg-purple-900/30 border-purple-700' : 'bg-purple-50 border-purple-200'}>
+          <Heart className={`w-4 h-4 ${isDark ? 'text-purple-400' : 'text-purple-600'}`} />
+          <AlertDescription className={isDark ? 'text-purple-300' : 'text-purple-800'}>
             These settings are designed with love for neurodivergent minds. Remember: 
             you're not broken, your brain just works differently - and that's beautiful. 💜
           </AlertDescription>

@@ -17,6 +17,7 @@ import { motion } from 'framer-motion';
 import TimezoneSelector from '../components/shared/TimezoneSelector';
 import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
 import ContentCalendarModal from '../components/tiktok/ContentCalendarModal';
+import { useTheme } from '../components/shared/useTheme';
 
 const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -366,23 +367,25 @@ export default function LiveSchedule() {
     );
   };
 
+  const { isDark, bgClass, textClass, cardBgClass, subtextClass } = useTheme();
+
   const ScheduleCard = ({ schedule }) => {
     const liveTypes = schedule.live_types || ['regular'];
     return (
-      <div className="p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors text-sm">
+      <div className={`p-2 ${isDark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-50 hover:bg-gray-100'} rounded-lg transition-colors text-sm`}>
         {/* Row 1: Priority, Name, Time */}
         <div className="flex items-center gap-2">
           <span className="w-5 h-5 rounded-full bg-purple-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
             {schedule.priority || 5}
           </span>
           <span
-            className="font-medium cursor-pointer hover:text-purple-600 flex-1"
+            className={`font-medium cursor-pointer hover:text-purple-600 flex-1 ${textClass}`}
             onClick={() => openTikTok(schedule.host_username)}
           >
             @{schedule.host_username}
           </span>
           {schedule.time && (
-            <span className="text-xs text-gray-600 flex-shrink-0">
+            <span className={`text-xs ${subtextClass} flex-shrink-0`}>
               {convertTime(schedule.time, schedule.creator_timezone || 'America/New_York', userTimezone)}
             </span>
           )}
@@ -433,12 +436,12 @@ export default function LiveSchedule() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 p-4 md:p-8">
+    <div className={`min-h-screen ${bgClass} p-4 md:p-8`}>
       <div className="max-w-7xl mx-auto space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800">Creator Calendar</h1>
-            <p className="text-gray-600 text-sm">Track your favorite TikTok creators' live schedules</p>
+            <h1 className={`text-3xl font-bold ${textClass}`}>Creator Calendar</h1>
+            <p className={`${subtextClass} text-sm`}>Track your favorite TikTok creators' live schedules</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button
@@ -467,9 +470,9 @@ export default function LiveSchedule() {
 
         {/* Calendar Contacts Info */}
         {calendarContacts.length > 0 && (
-          <Card className="bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200">
+          <Card className={isDark ? 'bg-gradient-to-r from-blue-900/30 to-cyan-900/30 border-blue-700' : 'bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200'}>
             <CardContent className="p-4">
-              <p className="text-sm text-gray-700">
+              <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                 <strong>{calendarContacts.length}</strong> contacts marked for calendar tracking. 
                 Add their live schedules below!
               </p>
@@ -547,7 +550,7 @@ export default function LiveSchedule() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: dayIndex * 0.05 }}
               >
-                <Card className="h-full">
+                <Card className={`h-full ${cardBgClass}`}>
                   <CardHeader className={`pb-2 ${isToday ? 'bg-gradient-to-r from-green-500 to-teal-500' : isTomorrow ? 'bg-gradient-to-r from-blue-500 to-indigo-500' : 'bg-gradient-to-r from-purple-500 to-pink-500'} text-white`}>
                     <CardTitle className="text-base flex items-center gap-2">
                       {day}
@@ -557,7 +560,7 @@ export default function LiveSchedule() {
                   </CardHeader>
                   <CardContent className="pt-3 space-y-2 max-h-96 overflow-y-auto">
                     {daySchedules.length === 0 ? (
-                      <p className="text-xs text-gray-400 italic">No lives scheduled</p>
+                      <p className={`text-xs ${subtextClass} italic`}>No lives scheduled</p>
                     ) : (
                       daySchedules.map((schedule) => (
                         <ScheduleCard key={schedule.id} schedule={schedule} />
@@ -573,7 +576,7 @@ export default function LiveSchedule() {
         {/* One-Time Lives */}
         {oneTimeLives.length > 0 && (
           <div className="space-y-3">
-            <h2 className="text-lg font-bold text-gray-800">One-Time Lives</h2>
+            <h2 className={`text-lg font-bold ${textClass}`}>One-Time Lives</h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
               {oneTimeLives.map((schedule, index) => (
                 <motion.div
@@ -582,7 +585,7 @@ export default function LiveSchedule() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
                 >
-                  <Card>
+                  <Card className={cardBgClass}>
                     <CardHeader className="pb-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white">
                       <CardTitle className="text-sm">{schedule.specific_date}</CardTitle>
                     </CardHeader>

@@ -14,6 +14,7 @@ import { BookOpen, Calendar, Sparkles, Brain, Shield, ChevronDown, ChevronUp } f
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import AIReframingCard from '../components/journal/AIReframingCard';
+import { useTheme } from '../components/shared/useTheme';
 
 const moodTags = [
   { value: 'grateful', label: 'Grateful', emoji: '🙏', color: 'bg-green-100 text-green-800' },
@@ -123,8 +124,10 @@ export default function Journal() {
 
   const isVentingMode = formData.entry_type === 'venting';
 
+  const { isDark, bgClass, textClass, cardBgClass, subtextClass } = useTheme();
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 p-4 md:p-8">
+    <div className={`min-h-screen ${bgClass} p-4 md:p-8`}>
       <div className="max-w-5xl mx-auto space-y-8">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -134,13 +137,13 @@ export default function Journal() {
             <BookOpen className="w-10 h-10 text-purple-600" />
             My Journal
           </h1>
-          <p className="text-gray-600">Your private space for thoughts, reflections, and healing</p>
+          <p className={subtextClass}>Your private space for thoughts, reflections, and healing</p>
         </motion.div>
 
         {/* Disclaimer */}
-        <Alert className="bg-purple-50 border-purple-200">
-          <Shield className="w-4 h-4 text-purple-600" />
-          <AlertDescription className="text-sm text-purple-800">
+        <Alert className={isDark ? 'bg-purple-900/30 border-purple-700' : 'bg-purple-50 border-purple-200'}>
+          <Shield className={`w-4 h-4 ${isDark ? 'text-purple-400' : 'text-purple-600'}`} />
+          <AlertDescription className={`text-sm ${isDark ? 'text-purple-300' : 'text-purple-800'}`}>
             Your journal is completely private. AI suggestions are supportive tools, not professional mental health advice.
             If you're in crisis, please reach out to a mental health professional.
           </AlertDescription>
@@ -152,9 +155,9 @@ export default function Journal() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <Card className="shadow-lg border-0 bg-white">
+          <Card className={`shadow-lg border-0 ${cardBgClass}`}>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className={`flex items-center gap-2 ${textClass}`}>
                 <Sparkles className="w-5 h-5 text-amber-500" />
                 New Entry
               </CardTitle>
@@ -162,7 +165,7 @@ export default function Journal() {
             <CardContent className="space-y-4">
               {/* Entry Type Selection */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">What kind of entry is this?</label>
+                <label className={`text-sm font-medium ${textClass}`}>What kind of entry is this?</label>
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
                   {entryTypes.map(type => (
                     <button
@@ -170,20 +173,20 @@ export default function Journal() {
                       onClick={() => setFormData({...formData, entry_type: type.value})}
                       className={`p-3 rounded-lg border-2 text-left transition-all ${
                         formData.entry_type === type.value
-                          ? 'border-purple-500 bg-purple-50'
-                          : 'border-gray-200 hover:border-purple-300'
+                          ? `border-purple-500 ${isDark ? 'bg-purple-900/30' : 'bg-purple-50'}`
+                          : `${isDark ? 'border-gray-600 hover:border-purple-400' : 'border-gray-200 hover:border-purple-300'}`
                       }`}
                     >
-                      <div className="font-medium text-sm">{type.label}</div>
+                      <div className={`font-medium text-sm ${textClass}`}>{type.label}</div>
                     </button>
                   ))}
                 </div>
               </div>
 
               {isVentingMode && (
-                <Alert className="bg-amber-50 border-amber-200">
-                  <Brain className="w-4 h-4 text-amber-600" />
-                  <AlertDescription className="text-sm text-amber-800">
+                <Alert className={isDark ? 'bg-amber-900/30 border-amber-700' : 'bg-amber-50 border-amber-200'}>
+                  <Brain className={`w-4 h-4 ${isDark ? 'text-amber-400' : 'text-amber-600'}`} />
+                  <AlertDescription className={`text-sm ${isDark ? 'text-amber-300' : 'text-amber-800'}`}>
                     <strong>Venting Mode:</strong> Let it all out! After you write, AI can help you 
                     gain perspective and reframe negative thoughts. This is a safe space. 💜
                   </AlertDescription>
@@ -192,16 +195,17 @@ export default function Journal() {
 
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Date</label>
+                  <label className={`text-sm font-medium ${textClass}`}>Date</label>
                   <Input
                     type="date"
                     value={formData.date}
                     onChange={(e) => setFormData({...formData, date: e.target.value})}
+                    className={isDark ? 'bg-gray-700 border-gray-600' : ''}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Mood</label>
+                  <label className={`text-sm font-medium ${textClass}`}>Mood</label>
                   <Select value={formData.mood_tag} onValueChange={(val) => setFormData({...formData, mood_tag: val})}>
                     <SelectTrigger>
                       <SelectValue />
@@ -219,16 +223,17 @@ export default function Journal() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Title (Optional)</label>
+                <label className={`text-sm font-medium ${textClass}`}>Title (Optional)</label>
                 <Input
                   placeholder="Give your entry a title..."
                   value={formData.title}
                   onChange={(e) => setFormData({...formData, title: e.target.value})}
+                  className={isDark ? 'bg-gray-700 border-gray-600' : ''}
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">
+                <label className={`text-sm font-medium ${textClass}`}>
                   {isVentingMode ? "Let it all out... (this is a safe space)" : "Your thoughts..."}
                 </label>
                 <Textarea
@@ -239,18 +244,18 @@ export default function Journal() {
                   value={formData.content}
                   onChange={(e) => setFormData({...formData, content: e.target.value})}
                   rows={8}
-                  className="resize-none"
+                  className={`resize-none ${isDark ? 'bg-gray-700 border-gray-600' : ''}`}
                 />
               </div>
 
               {/* AI Reframe Toggle */}
               {preferences?.enable_ai_journaling !== false && (
-                <div className="flex items-center justify-between p-4 bg-indigo-50 rounded-lg">
+                <div className={`flex items-center justify-between p-4 ${isDark ? 'bg-indigo-900/30' : 'bg-indigo-50'} rounded-lg`}
                   <div className="flex items-center gap-3">
-                    <Brain className="w-5 h-5 text-indigo-600" />
+                    <Brain className={`w-5 h-5 ${isDark ? 'text-indigo-400' : 'text-indigo-600'}`} />
                     <div>
-                      <Label className="font-medium">Get AI Perspective & Reframing</Label>
-                      <p className="text-sm text-gray-600">
+                      <Label className={`font-medium ${textClass}`}>Get AI Perspective & Reframing</Label>
+                      <p className={`text-sm ${subtextClass}`}>
                         Helpful questions and alternative viewpoints
                       </p>
                     </div>
@@ -292,7 +297,7 @@ export default function Journal() {
 
         {/* Previous Entries */}
         <div className="space-y-4">
-          <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+          <h2 className={`text-2xl font-bold ${textClass} flex items-center gap-2`}>
             <Calendar className="w-6 h-6" />
             Previous Entries
           </h2>
@@ -312,15 +317,15 @@ export default function Journal() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
                   >
-                    <Card className="shadow-md hover:shadow-lg transition-shadow">
+                    <Card className={`shadow-md hover:shadow-lg transition-shadow ${cardBgClass}`}>
                       <CardContent className="p-6">
                         <div className="flex items-start justify-between mb-3">
                           <div>
-                            <p className="text-sm text-gray-500 mb-1">
+                            <p className={`text-sm ${subtextClass} mb-1`}>
                               {format(new Date(entry.date), 'EEEE, MMMM d, yyyy')}
                             </p>
                             {entry.title && (
-                              <h3 className="text-xl font-bold text-gray-800">{entry.title}</h3>
+                              <h3 className={`text-xl font-bold ${textClass}`}>{entry.title}</h3>
                             )}
                           </div>
                           <div className="flex items-center gap-2">
@@ -335,7 +340,7 @@ export default function Journal() {
                             )}
                           </div>
                         </div>
-                        <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
+                        <p className={`${isDark ? 'text-gray-300' : 'text-gray-700'} whitespace-pre-wrap leading-relaxed`}>
                           {entry.content}
                         </p>
 
@@ -344,7 +349,7 @@ export default function Journal() {
                           <div className="mt-4">
                             <button
                               onClick={() => toggleEntryExpand(entry.id)}
-                              className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 text-sm font-medium"
+                              className={`flex items-center gap-2 ${isDark ? 'text-indigo-400 hover:text-indigo-300' : 'text-indigo-600 hover:text-indigo-700'} text-sm font-medium`}
                             >
                               <Brain className="w-4 h-4" />
                               {isExpanded ? 'Hide' : 'Show'} AI Insights
@@ -357,15 +362,15 @@ export default function Journal() {
                                   initial={{ opacity: 0, height: 0 }}
                                   animate={{ opacity: 1, height: 'auto' }}
                                   exit={{ opacity: 0, height: 0 }}
-                                  className="mt-3 p-4 bg-indigo-50 rounded-lg"
+                                  className={`mt-3 p-4 ${isDark ? 'bg-indigo-900/30' : 'bg-indigo-50'} rounded-lg`}
                                 >
-                                  <pre className="text-sm text-gray-700 whitespace-pre-wrap">
+                                  <pre className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'} whitespace-pre-wrap`}>
                                     {JSON.parse(entry.ai_suggestions).validation}
                                   </pre>
                                   {entry.user_reflection && (
-                                    <div className="mt-3 p-3 bg-white rounded-lg">
-                                      <p className="text-sm font-medium text-gray-600 mb-1">My Reflection:</p>
-                                      <p className="text-gray-700">{entry.user_reflection}</p>
+                                    <div className={`mt-3 p-3 ${isDark ? 'bg-gray-700' : 'bg-white'} rounded-lg`}>
+                                      <p className={`text-sm font-medium ${subtextClass} mb-1`}>My Reflection:</p>
+                                      <p className={isDark ? 'text-gray-300' : 'text-gray-700'}>{entry.user_reflection}</p>
                                     </div>
                                   )}
                                 </motion.div>
@@ -380,11 +385,11 @@ export default function Journal() {
               })}
             </div>
           ) : (
-            <Card className="shadow-md">
+            <Card className={`shadow-md ${cardBgClass}`}>
               <CardContent className="p-12 text-center">
-                <BookOpen className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                <p className="text-gray-500 text-lg">No journal entries yet</p>
-                <p className="text-gray-400">Start writing to capture your thoughts and memories</p>
+                <BookOpen className={`w-16 h-16 mx-auto mb-4 ${isDark ? 'text-gray-600' : 'text-gray-300'}`} />
+                <p className={`${subtextClass} text-lg`}>No journal entries yet</p>
+                <p className={subtextClass}>Start writing to capture your thoughts and memories</p>
               </CardContent>
             </Card>
           )}

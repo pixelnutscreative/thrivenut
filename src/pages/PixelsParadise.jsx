@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ExternalLink, Sparkles, Search, Loader2, Zap, Crown, Bot, Palette, GraduationCap, Users, Wrench, Youtube, BookOpen } from 'lucide-react';
+import { useTheme } from '../components/shared/useTheme';
 
 // Pixel's AI Toolbox pricing options
 const aiToolboxOptions = [
@@ -198,8 +199,10 @@ export default function PixelsParadise() {
     }
   };
 
+  const { isDark, bgClass, textClass, cardBgClass, subtextClass } = useTheme();
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-50 to-cyan-100 p-4 md:p-8">
+    <div className={`min-h-screen ${bgClass} p-4 md:p-8`}>
       <div className="max-w-6xl mx-auto space-y-8">
         {isLoading && (
           <div className="flex justify-center py-4">
@@ -213,7 +216,7 @@ export default function PixelsParadise() {
             <Sparkles className="w-10 h-10 text-purple-500" />
             Pixel's Place
           </h1>
-          <p className="text-gray-600 max-w-2xl mx-auto">
+          <p className={`${subtextClass} max-w-2xl mx-auto`}>
             Your one-stop shop for all things Pixel Nuts Creative! Links, programs, tools, subscriptions, affiliate goodies, 
             free trainings, and everything else I've hoarded like a digital squirrel. 🐿️
           </p>
@@ -259,21 +262,21 @@ export default function PixelsParadise() {
         <div className="grid md:grid-cols-2 gap-6">
           {/* Workshops */}
           <div className="space-y-4">
-            <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+            <h2 className={`text-xl font-bold ${textClass} flex items-center gap-2`}>
               <GraduationCap className="w-5 h-5 text-purple-500" />
               Workshops & Classes
-              <span className="text-sm font-normal text-gray-500">(where the magic happens)</span>
+              <span className={`text-sm font-normal ${subtextClass}`}>(where the magic happens)</span>
             </h2>
             {workshopItems.map((workshop) => (
               <Card 
                 key={workshop.name}
-                className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 overflow-hidden hover:shadow-lg transition-all cursor-pointer group"
+                className={`${isDark ? 'bg-gradient-to-br from-purple-900/30 to-pink-900/30 border-purple-700' : 'bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200'} overflow-hidden hover:shadow-lg transition-all cursor-pointer group`}
                 onClick={() => window.open(workshop.link, '_blank')}
               >
                 <CardContent className="p-5 space-y-2">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <h3 className="font-bold text-lg text-gray-800 group-hover:text-purple-600 transition-colors">
+                      <h3 className={`font-bold text-lg ${textClass} group-hover:text-purple-600 transition-colors`}>
                         {workshop.name}
                       </h3>
                       {workshop.nickname && (
@@ -282,7 +285,7 @@ export default function PixelsParadise() {
                     </div>
                     <ExternalLink className="w-4 h-4 text-gray-400 group-hover:text-purple-500 flex-shrink-0 mt-1" />
                   </div>
-                  <p className="text-sm text-gray-600">{workshop.description}</p>
+                  <p className={`text-sm ${subtextClass}`}>{workshop.description}</p>
                   <div className="flex flex-wrap items-center gap-2 pt-1">
                     {workshop.schedule && (
                       <Badge className="text-xs bg-green-100 text-green-700 border-0">
@@ -300,23 +303,23 @@ export default function PixelsParadise() {
 
           {/* Nuts + Bots */}
           <div className="space-y-4">
-            <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+            <h2 className={`text-xl font-bold ${textClass} flex items-center gap-2`}>
               <Bot className="w-5 h-5 text-teal-500" />
               The Nuts + Bots
-              <span className="text-sm font-normal text-gray-500">(business in a box)</span>
+              <span className={`text-sm font-normal ${subtextClass}`}>(business in a box)</span>
             </h2>
             <Card 
-              className="bg-gradient-to-br from-teal-50 to-cyan-50 border-2 border-teal-300 overflow-hidden hover:shadow-lg transition-all cursor-pointer group h-fit"
+              className={`${isDark ? 'bg-gradient-to-br from-teal-900/30 to-cyan-900/30 border-teal-700' : 'bg-gradient-to-br from-teal-50 to-cyan-50 border-2 border-teal-300'} overflow-hidden hover:shadow-lg transition-all cursor-pointer group h-fit`}
               onClick={() => window.open(nutsAndBotsItem.link, '_blank')}
             >
               <CardContent className="p-5 space-y-3">
                 <div className="flex items-start justify-between gap-2">
-                  <h3 className="font-bold text-xl text-gray-800 group-hover:text-teal-600 transition-colors">
+                  <h3 className={`font-bold text-xl ${textClass} group-hover:text-teal-600 transition-colors`}>
                     {nutsAndBotsItem.name}
                   </h3>
                   <ExternalLink className="w-4 h-4 text-gray-400 group-hover:text-teal-500 flex-shrink-0 mt-1" />
                 </div>
-                <p className="text-gray-600">{nutsAndBotsItem.description}</p>
+                <p className={subtextClass}>{nutsAndBotsItem.description}</p>
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge className="bg-teal-500 text-white border-0 text-sm">
                     {nutsAndBotsItem.badge}
@@ -331,11 +334,11 @@ export default function PixelsParadise() {
         </div>
 
         {/* ===== SEARCH & FILTERS ===== */}
-        <div className="space-y-4 pt-4 border-t border-purple-200">
-          <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+        <div className={`space-y-4 pt-4 border-t ${isDark ? 'border-gray-700' : 'border-purple-200'}`}>
+          <h2 className={`text-xl font-bold ${textClass} flex items-center gap-2`}>
             <Wrench className="w-5 h-5 text-purple-500" />
             Tools, Resources & Affiliate Links
-            <span className="text-sm font-normal text-gray-500">(the good stuff)</span>
+            <span className={`text-sm font-normal ${subtextClass}`}>(the good stuff)</span>
           </h2>
 
           {/* Search */}
@@ -345,7 +348,7 @@ export default function PixelsParadise() {
               placeholder="Search tools (e.g., video, music, ai, business...)"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 bg-white/80"
+              className={`pl-10 ${isDark ? 'bg-gray-700 border-gray-600' : 'bg-white/80'}`}
             />
           </div>
 
@@ -359,7 +362,7 @@ export default function PixelsParadise() {
                 onClick={() => setSelectedCategory(cat)}
                 className={selectedCategory === cat 
                   ? 'bg-purple-600 hover:bg-purple-700 text-white' 
-                  : 'bg-white border-purple-300 text-purple-700 hover:bg-purple-50 hover:border-purple-400'
+                  : `${isDark ? 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600' : 'bg-white border-purple-300 text-purple-700 hover:bg-purple-50 hover:border-purple-400'}`
                 }
               >
                 {cat}
@@ -373,18 +376,18 @@ export default function PixelsParadise() {
           {filteredResources.map((resource) => (
             <Card 
               key={resource.name} 
-              className="bg-white/90 backdrop-blur overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group"
+              className={`${isDark ? 'bg-gray-800/90' : 'bg-white/90'} backdrop-blur overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group`}
               onClick={() => window.open(resource.link, '_blank')}
             >
               <div className={`h-2 bg-gradient-to-r ${categoryColors[resource.category] || 'from-gray-400 to-gray-500'}`} />
               <CardContent className="p-4 space-y-2">
                 <div className="flex items-start justify-between gap-2">
-                  <h3 className="font-bold text-lg text-gray-800 group-hover:text-purple-600 transition-colors">
+                  <h3 className={`font-bold text-lg ${textClass} group-hover:text-purple-600 transition-colors`}>
                     {resource.name}
                   </h3>
                   <ExternalLink className="w-4 h-4 text-gray-400 group-hover:text-purple-500 flex-shrink-0 mt-1" />
                 </div>
-                <p className="text-sm text-gray-600">{resource.description}</p>
+                <p className={`text-sm ${subtextClass}`}>{resource.description}</p>
                 <div className="flex items-center justify-between pt-1">
                   <Badge variant="outline" className="text-xs border-purple-300 text-purple-600">
                     {resource.category}
@@ -402,12 +405,12 @@ export default function PixelsParadise() {
 
         {filteredResources.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-gray-500">No resources found matching "{search}". Maybe try "free stuff"? 😏</p>
+            <p className={subtextClass}>No resources found matching "{search}". Maybe try "free stuff"? 😏</p>
           </div>
         )}
 
         {/* Quick Links Section */}
-        <div className="grid sm:grid-cols-2 gap-4 pt-4 border-t border-purple-200">
+        <div className={`grid sm:grid-cols-2 gap-4 pt-4 border-t ${isDark ? 'border-gray-700' : 'border-purple-200'}`}
           <Card 
             className="bg-gradient-to-r from-red-50 to-orange-50 border-red-200 cursor-pointer hover:shadow-lg transition-all"
             onClick={() => window.open('https://youtube.com/@pixelnutscreative', '_blank')}
