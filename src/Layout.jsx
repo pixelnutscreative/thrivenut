@@ -127,7 +127,6 @@ export default function Layout({ children, currentPageName }) {
   const hasTikTokAccess = preferences?.tiktok_access_approved || user?.email?.toLowerCase() === 'pixelnutscreative@gmail.com';
   const isAdmin = user?.email?.toLowerCase() === 'pixelnutscreative@gmail.com';
   const isBibleBeliever = preferences?.is_bible_believer || preferences?.greeting_type === 'scripture';
-  const menuColor = preferences?.menu_color || (isDark ? '#2a2a30' : '#ffffff');
 
   // Filter and order nav items based on enabled modules and feature order
   const getOrderedNavItems = () => {
@@ -242,6 +241,7 @@ export default function Layout({ children, currentPageName }) {
   const accentColor = preferences?.accent_color || '#bd84f5';
   const themeType = preferences?.theme_type || 'light';
   const isDark = themeType === 'dark' || (themeType === 'system' && systemDark);
+  const menuColor = preferences?.menu_color || (isDark ? '#2a2a30' : '#ffffff');
 
   // Don't show layout on onboarding or home page (home is public landing page)
   if (currentPageName === 'Onboarding' || currentPageName === 'Home') {
