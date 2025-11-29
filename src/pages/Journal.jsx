@@ -250,7 +250,7 @@ export default function Journal() {
 
               {/* AI Reframe Toggle */}
               {preferences?.enable_ai_journaling !== false && (
-                <div className={`flex items-center justify-between p-4 ${isDark ? 'bg-indigo-900/30' : 'bg-indigo-50'} rounded-lg`}
+                <div className={`flex items-center justify-between p-4 ${isDark ? 'bg-indigo-900/30' : 'bg-indigo-50'} rounded-lg`}>
                   <div className="flex items-center gap-3">
                     <Brain className={`w-5 h-5 ${isDark ? 'text-indigo-400' : 'text-indigo-600'}`} />
                     <div>

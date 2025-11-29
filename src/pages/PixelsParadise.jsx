@@ -360,10 +360,10 @@ export default function PixelsParadise() {
                 variant={selectedCategory === cat ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setSelectedCategory(cat)}
-                className={selectedCategory === cat 
+                className={`${selectedCategory === cat 
                   ? 'bg-purple-600 hover:bg-purple-700 text-white' 
-                  : `${isDark ? 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600' : 'bg-white border-purple-300 text-purple-700 hover:bg-purple-50 hover:border-purple-400'}`
-                }
+                  : (isDark ? 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600' : 'bg-white border-purple-300 text-purple-700 hover:bg-purple-50 hover:border-purple-400')
+                }`}
               >
                 {cat}
               </Button>
