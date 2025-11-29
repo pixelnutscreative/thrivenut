@@ -98,7 +98,11 @@ export default function MyDaySection({
   onToggleTask, 
   onUpdateMealNotes,
   preferences,
-  viewMode = 'detailed'
+  viewMode = 'detailed',
+  showGoogleCalendar = false,
+  showCreatorCalendarEvents = true,
+  onToggleGoogleCalendar,
+  onToggleCreatorCalendar
 }) {
   const [layoutMode, setLayoutMode] = useState('two-column'); // 'single' or 'two-column'
   const queryClient = useQueryClient();
@@ -1026,6 +1030,31 @@ export default function MyDaySection({
               My Day
             </CardTitle>
             <div className="flex items-center gap-2 flex-wrap">
+              {/* Calendar toggles - inline */}
+              {onToggleGoogleCalendar && (
+                <button
+                  onClick={() => onToggleGoogleCalendar(!showGoogleCalendar)}
+                  className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors ${
+                    showGoogleCalendar ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'
+                  }`}
+                  title="Toggle Google Calendar"
+                >
+                  <Calendar className="w-3 h-3" />
+                  {showGoogleCalendar ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                </button>
+              )}
+              {onToggleCreatorCalendar && (
+                <button
+                  onClick={() => onToggleCreatorCalendar(!showCreatorCalendarEvents)}
+                  className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors ${
+                    showCreatorCalendarEvents ? 'bg-pink-100 text-pink-700' : 'bg-gray-100 text-gray-500'
+                  }`}
+                  title="Toggle Creator Calendar"
+                >
+                  <Video className="w-3 h-3" />
+                  {showCreatorCalendarEvents ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                </button>
+              )}
               <Button 
                 variant="ghost" 
                 size="sm" 
