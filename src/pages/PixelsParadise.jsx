@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent } from '@/components/ui/card';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ExternalLink, Sparkles, Search, Loader2, Zap, Crown, Bot, Palette, GraduationCap, Users, Wrench, Youtube, BookOpen } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ExternalLink, Sparkles, Search, Loader2, Zap, Crown, Bot, Palette, GraduationCap, Users, Wrench, Youtube, BookOpen, Bell, Check, X } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useTheme } from '../components/shared/useTheme';
 
 // Pixel's AI Toolbox pricing options
@@ -24,7 +28,7 @@ const workshopItems = [
     description: "The legendary class where we go absolutely nuts creating content with AI. Warning: Side effects include uncontrollable creativity and an addiction to prompts. 🥜", 
     link: 'https://pixelnutscreative.com/gonuts',
     badge: '🔥 Fan Favorite',
-    schedule: 'Weekdays 3pm PST',
+    schedule: 'T & Th 8am PST + Weekdays 3pm PST',
     is_recurring: true,
   },
 ];
@@ -164,16 +168,67 @@ const categoryColors = {
 };
 
 export default function PixelsParadise() {
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedPlan, setSelectedPlan] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showLiveReminders, setShowLiveReminders] = useState(false);
+  const [user, setUser] = useState(null);
+  const [reminderFormData, setReminderFormData] = useState({
+    email: '',
+    phone: '',
+    prefer_text: false,
+    prefer_email: true
+  });
+  const [reminderSubmitted, setReminderSubmitted] = useState(false);
   
   const { isDark, bgClass, textClass, cardBgClass, subtextClass } = useTheme();
 
   useEffect(() => {
     base44.auth.isAuthenticated().then(setIsAuthenticated).catch(() => {});
+    base44.auth.me().then(setUser).catch(() => {});
   }, []);
+
+  // Live reminder signup query
+  const { data: existingSignup } = useQuery({
+    queryKey: ['liveReminderSignup', user?.email],
+    queryFn: async () => {
+      const signups = await base44.entities.LiveReminderSignup.filter({ created_by: user.email });
+      return signups[0] || null;
+    },
+    enabled: !!user,
+  });
+
+  useEffect(() => {
+    if (existingSignup) {
+      setReminderFormData({
+        email: existingSignup.email || '',
+        phone: existingSignup.phone || '',
+        prefer_text: existingSignup.prefer_text || false,
+        prefer_email: existingSignup.prefer_email !== false
+      });
+      setReminderSubmitted(true);
+    }
+  }, [existingSignup]);
+
+  const saveReminderMutation = useMutation({
+    mutationFn: async (data) => {
+      if (existingSignup) {
+        return await base44.entities.LiveReminderSignup.update(existingSignup.id, data);
+      }
+      return await base44.entities.LiveReminderSignup.create(data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['liveReminderSignup'] });
+      setReminderSubmitted(true);
+    },
+  });
+
+  const handleReminderSubmit = (e) => {
+    e.preventDefault();
+    saveReminderMutation.mutate(reminderFormData);
+  };
 
   const { data: dbResources = [], isLoading } = useQuery({
     queryKey: ['designResources'],
@@ -210,20 +265,73 @@ export default function PixelsParadise() {
           </div>
         )}
 
-        {/* Header */}
-        <div className="text-center space-y-4">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 via-pink-500 to-cyan-500 bg-clip-text text-transparent flex items-center justify-center gap-3">
-            <Sparkles className="w-10 h-10 text-purple-500" />
-            Pixel's Place
-          </h1>
-          <p className={`${subtextClass} max-w-2xl mx-auto`}>
-            Your one-stop shop for all things Pixel Nuts Creative! Links, programs, tools, subscriptions, affiliate goodies, 
-            free trainings, and everything else I've hoarded like a digital squirrel. 🐿️
-          </p>
+        {/* Header with Live Reminder Bell */}
+        <div className="flex items-start justify-between">
+          <div className="flex-1 text-center space-y-4">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 via-pink-500 to-cyan-500 bg-clip-text text-transparent flex items-center justify-center gap-3">
+              <Sparkles className="w-10 h-10 text-purple-500" />
+              Pixel's Place
+            </h1>
+            <p className={`${subtextClass} max-w-2xl mx-auto`}>
+              Your one-stop shop for all things Pixel Nuts Creative! Links, programs, tools, subscriptions, affiliate goodies, 
+              free trainings, and everything else I've hoarded like a digital squirrel. 🐿️
+            </p>
+          </div>
+          
+          {/* Big Turquoise Bell */}
+          <button
+            onClick={() => setShowLiveReminders(true)}
+            className="flex-shrink-0 w-14 h-14 bg-gradient-to-br from-teal-400 to-cyan-500 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-105 transition-all"
+            title="Get Live Reminders"
+          >
+            <Bell className="w-7 h-7 text-white" />
+          </button>
         </div>
 
-        {/* ===== PIXEL'S AI TOOLBOX - TOP SECTION ===== */}
-        <div className="bg-gradient-to-br from-purple-600 via-pink-600 to-orange-500 rounded-2xl p-6 md:p-8 text-white shadow-2xl">
+        {/* ===== WORKSHOPS & CLASSES - TOP SECTION ===== */}
+        <div className="space-y-4">
+          <h2 className={`text-xl font-bold ${textClass} flex items-center gap-2`}>
+            <GraduationCap className="w-5 h-5 text-purple-500" />
+            Workshops & Classes
+            <span className={`text-sm font-normal ${subtextClass}`}>(where the magic happens)</span>
+          </h2>
+          {workshopItems.map((workshop) => (
+            <Card 
+              key={workshop.name}
+              className={`${isDark ? 'bg-gradient-to-br from-purple-900/30 to-pink-900/30 border-purple-700' : 'bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200'} overflow-hidden hover:shadow-lg transition-all cursor-pointer group`}
+              onClick={() => window.open(workshop.link, '_blank')}
+            >
+              <CardContent className="p-5 space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <h3 className={`font-bold text-lg ${textClass} group-hover:text-purple-600 transition-colors`}>
+                      {workshop.name}
+                    </h3>
+                    {workshop.nickname && (
+                      <span className="text-sm text-purple-500 font-medium">{workshop.nickname}</span>
+                    )}
+                  </div>
+                  <ExternalLink className="w-4 h-4 text-gray-400 group-hover:text-purple-500 flex-shrink-0 mt-1" />
+                </div>
+                <p className={`text-sm ${subtextClass}`}>{workshop.description}</p>
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  {workshop.schedule && (
+                    <Badge className="text-xs bg-green-100 text-green-700 border-0">
+                      🗓️ {workshop.schedule}
+                    </Badge>
+                  )}
+                  {workshop.badge && (
+                    <Badge className="text-xs bg-purple-100 text-purple-700 border-0">{workshop.badge}</Badge>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* ===== PIXEL'S AI TOOLBOX + NUTS & BOTS ===== */}
+        <div className="bg-gradient-to-br from-purple-600 via-pink-600 to-orange-500 rounded-2xl p-6 md:p-8 text-white shadow-2xl space-y-6">
+          {/* AI Toolbox */}
           <div className="flex flex-col md:flex-row items-center gap-6">
             <div className="flex-shrink-0">
               <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center">
@@ -256,82 +364,43 @@ export default function PixelsParadise() {
               </div>
             </div>
           </div>
-        </div>
-
-        {/* ===== WORKSHOPS + NUTS & BOTS SECTION ===== */}
-        <div className="grid md:grid-cols-2 gap-6">
-          {/* Workshops */}
-          <div className="space-y-4">
-            <h2 className={`text-xl font-bold ${textClass} flex items-center gap-2`}>
-              <GraduationCap className="w-5 h-5 text-purple-500" />
-              Workshops & Classes
-              <span className={`text-sm font-normal ${subtextClass}`}>(where the magic happens)</span>
-            </h2>
-            {workshopItems.map((workshop) => (
-              <Card 
-                key={workshop.name}
-                className={`${isDark ? 'bg-gradient-to-br from-purple-900/30 to-pink-900/30 border-purple-700' : 'bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200'} overflow-hidden hover:shadow-lg transition-all cursor-pointer group`}
-                onClick={() => window.open(workshop.link, '_blank')}
-              >
-                <CardContent className="p-5 space-y-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <h3 className={`font-bold text-lg ${textClass} group-hover:text-purple-600 transition-colors`}>
-                        {workshop.name}
-                      </h3>
-                      {workshop.nickname && (
-                        <span className="text-sm text-purple-500 font-medium">{workshop.nickname}</span>
-                      )}
-                    </div>
-                    <ExternalLink className="w-4 h-4 text-gray-400 group-hover:text-purple-500 flex-shrink-0 mt-1" />
-                  </div>
-                  <p className={`text-sm ${subtextClass}`}>{workshop.description}</p>
-                  <div className="flex flex-wrap items-center gap-2 pt-1">
-                    {workshop.schedule && (
-                      <Badge className="text-xs bg-green-100 text-green-700 border-0">
-                        🗓️ {workshop.schedule}
-                      </Badge>
-                    )}
-                    {workshop.badge && (
-                      <Badge className="text-xs bg-purple-100 text-purple-700 border-0">{workshop.badge}</Badge>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {/* Nuts + Bots */}
-          <div className="space-y-4">
-            <h2 className={`text-xl font-bold ${textClass} flex items-center gap-2`}>
-              <Bot className="w-5 h-5 text-teal-500" />
-              The Nuts + Bots
-              <span className={`text-sm font-normal ${subtextClass}`}>(business in a box)</span>
-            </h2>
-            <Card 
-              className={`${isDark ? 'bg-gradient-to-br from-teal-900/30 to-cyan-900/30 border-teal-700' : 'bg-gradient-to-br from-teal-50 to-cyan-50 border-2 border-teal-300'} overflow-hidden hover:shadow-lg transition-all cursor-pointer group h-fit`}
-              onClick={() => window.open(nutsAndBotsItem.link, '_blank')}
-            >
-              <CardContent className="p-5 space-y-3">
-                <div className="flex items-start justify-between gap-2">
-                  <h3 className={`font-bold text-xl ${textClass} group-hover:text-teal-600 transition-colors`}>
-                    {nutsAndBotsItem.name}
-                  </h3>
-                  <ExternalLink className="w-4 h-4 text-gray-400 group-hover:text-teal-500 flex-shrink-0 mt-1" />
+          
+          {/* WANT IT ALL - Nuts + Bots inside the orange/pink box */}
+          <div className="bg-white/15 backdrop-blur rounded-xl p-5 border border-white/20">
+            <div className="flex flex-col md:flex-row items-center gap-4">
+              <div className="flex-shrink-0">
+                <div className="w-14 h-14 bg-teal-400 rounded-xl flex items-center justify-center">
+                  <Bot className="w-7 h-7 text-white" />
                 </div>
-                <p className={subtextClass}>{nutsAndBotsItem.description}</p>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge className="bg-teal-500 text-white border-0 text-sm">
-                    {nutsAndBotsItem.badge}
-                  </Badge>
-                </div>
-                <p className="text-xs text-teal-600 font-medium pt-2 border-t border-teal-200">
-                  ✨ {nutsAndBotsItem.note}
+              </div>
+              <div className="flex-1 text-center md:text-left">
+                <h3 className="text-xl font-bold flex items-center justify-center md:justify-start gap-2">
+                  🚀 WANT IT ALL? Get The Nuts + Bots
+                </h3>
+                <p className="text-white/90 text-sm mt-1">
+                  All the tools you need to run your business - CRM, funnels, automations, AND Pixel's AI Toolbox included!
                 </p>
-              </CardContent>
-            </Card>
+                <div className="flex flex-wrap items-center gap-3 mt-3 justify-center md:justify-start">
+                  <Button
+                    onClick={() => window.open('https://thenutsandbots.com/pricing', '_blank')}
+                    className="bg-teal-500 hover:bg-teal-600 text-white"
+                  >
+                    See Pricing
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => window.open('https://pixelnutscreative.com/discovery', '_blank')}
+                    className="border-white/50 text-white hover:bg-white/20"
+                  >
+                    Book Discovery Call with Nikole
+                  </Button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
+
+
 
         {/* ===== SEARCH & FILTERS ===== */}
         <div className={`space-y-4 pt-4 border-t ${isDark ? 'border-gray-700' : 'border-purple-200'}`}>
@@ -426,16 +495,15 @@ export default function PixelsParadise() {
             </CardContent>
           </Card>
           <Card 
-            className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 cursor-pointer hover:shadow-lg transition-all"
-            onClick={() => window.open('https://pixelnutscreative.com/trainings', '_blank')}
+            className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 opacity-60 cursor-not-allowed"
           >
             <CardContent className="p-4 flex items-center gap-4">
-              <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center">
+              <div className="w-12 h-12 bg-blue-400 rounded-xl flex items-center justify-center">
                 <BookOpen className="w-6 h-6 text-white" />
               </div>
               <div>
                 <h3 className="font-bold text-gray-800">Free Trainings</h3>
-                <p className="text-sm text-gray-600">Because learning should be fun AND free</p>
+                <p className="text-sm text-gray-500">🚧 Coming Soon - New feature in the works!</p>
               </div>
             </CardContent>
           </Card>
@@ -447,6 +515,109 @@ export default function PixelsParadise() {
           <p className="text-xs mt-1">Some links are affiliate links - thanks for supporting! 🥜</p>
         </div>
       </div>
+
+      {/* Live Reminders Popup */}
+      <Dialog open={showLiveReminders} onOpenChange={setShowLiveReminders}>
+        <DialogContent className="max-w-md">
+          <DialogHeader className="bg-gradient-to-r from-teal-500 to-cyan-500 -m-6 mb-4 p-4 rounded-t-lg">
+            <DialogTitle className="text-white flex items-center gap-2">
+              <Bell className="w-5 h-5" />
+              Never Miss a Live!
+            </DialogTitle>
+          </DialogHeader>
+          
+          <p className="text-gray-600 text-sm mb-4">
+            Get notified when @pixelnutscreative goes live on TikTok
+          </p>
+
+          {reminderSubmitted ? (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-center py-6"
+            >
+              <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Check className="w-7 h-7 text-green-600" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-800 mb-2">You're Signed Up!</h3>
+              <p className="text-gray-600 text-sm mb-4">
+                You'll get notified before @pixelnutscreative goes live.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setReminderSubmitted(false)}
+              >
+                Update My Info
+              </Button>
+            </motion.div>
+          ) : (
+            <form onSubmit={handleReminderSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="reminder-email">Email Address</Label>
+                <Input
+                  id="reminder-email"
+                  type="email"
+                  placeholder="your@email.com"
+                  value={reminderFormData.email}
+                  onChange={(e) => setReminderFormData({ ...reminderFormData, email: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="reminder-phone">Phone Number (for text reminders)</Label>
+                <Input
+                  id="reminder-phone"
+                  type="tel"
+                  placeholder="(555) 123-4567"
+                  value={reminderFormData.phone}
+                  onChange={(e) => setReminderFormData({ ...reminderFormData, phone: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>How would you like to be notified?</Label>
+                <div className="flex flex-col gap-2">
+                  <div 
+                    className="flex items-center gap-3 p-2 border rounded-lg cursor-pointer hover:bg-gray-50"
+                    onClick={() => setReminderFormData({ ...reminderFormData, prefer_email: !reminderFormData.prefer_email })}
+                  >
+                    <Checkbox checked={reminderFormData.prefer_email} />
+                    <span className="text-sm">Email me before lives</span>
+                  </div>
+                  <div 
+                    className="flex items-center gap-3 p-2 border rounded-lg cursor-pointer hover:bg-gray-50"
+                    onClick={() => setReminderFormData({ ...reminderFormData, prefer_text: !reminderFormData.prefer_text })}
+                  >
+                    <Checkbox checked={reminderFormData.prefer_text} />
+                    <span className="text-sm">Text me before lives</span>
+                  </div>
+                </div>
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600"
+                disabled={saveReminderMutation.isPending || (!reminderFormData.email && !reminderFormData.phone)}
+              >
+                {saveReminderMutation.isPending ? 'Saving...' : existingSignup ? 'Update My Info' : 'Sign Me Up!'}
+              </Button>
+            </form>
+          )}
+
+          <div className="pt-4 border-t text-center">
+            <a
+              href="https://tiktok.com/@pixelnutscreative"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-teal-600 hover:text-teal-700 text-sm"
+            >
+              <ExternalLink className="w-4 h-4" />
+              Follow @pixelnutscreative on TikTok
+            </a>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
