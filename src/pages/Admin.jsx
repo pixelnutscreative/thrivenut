@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
-import { Shield, Star, UserCog, Users, Gift, Settings, Palette, Clock } from 'lucide-react';
+import { Shield, Star, UserCog, Users, Gift, Settings, Palette, Clock, MessageSquare } from 'lucide-react';
 
 // Import the individual admin components/pages as content
 import AdminSuperFanContent from '../components/admin/AdminSuperFanContent';
@@ -13,12 +13,13 @@ import AdminMasterContactsContent from '../components/admin/AdminMasterContactsC
 import AdminGiftLibraryContent from '../components/admin/AdminGiftLibraryContent';
 import AdminSettingsContent from '../components/admin/AdminSettingsContent';
 import AdminResourcesContent from '../components/admin/AdminResourcesContent';
+import AdminSupportContent from '../components/admin/AdminSupportContent';
 
 const ADMIN_EMAIL = 'pixelnutscreative@gmail.com';
 
 export default function Admin() {
   const [user, setUser] = useState(null);
-  const [activeTab, setActiveTab] = useState('superfan');
+  const [activeTab, setActiveTab] = useState('support');
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -52,7 +53,11 @@ export default function Admin() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-7">
+          <TabsList className="grid w-full grid-cols-8">
+            <TabsTrigger value="support" className="flex items-center gap-2">
+              <MessageSquare className="w-4 h-4" />
+              <span className="hidden sm:inline">Support</span>
+            </TabsTrigger>
             <TabsTrigger value="queue" className="flex items-center gap-2">
               <Clock className="w-4 h-4" />
               <span className="hidden sm:inline">Queue</span>
@@ -82,6 +87,10 @@ export default function Admin() {
               <span className="hidden sm:inline">Settings</span>
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="support" className="mt-6">
+            <AdminSupportContent />
+          </TabsContent>
 
           <TabsContent value="queue" className="mt-6">
             <AdminSuperFanQueue />
