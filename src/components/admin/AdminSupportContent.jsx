@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   MessageSquare, Bug, Lightbulb, HelpCircle, CheckCircle, 
   Clock, AlertCircle, Loader2, Send, User, Calendar, Image,
-  Star, UserCheck, UserX, Users
+  Star, UserCheck, UserX, Users, Trash2
 } from 'lucide-react';
 
 const ticketTypes = {
@@ -437,7 +437,7 @@ export default function AdminSupportContent() {
       <Dialog open={!!selectedTicket} onOpenChange={() => setSelectedTicket(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+                        <DialogTitle className="flex items-center justify-between">
               {selectedTicket && ticketTypes[selectedTicket.type] && (
                 React.createElement(ticketTypes[selectedTicket.type].icon, { className: "w-5 h-5" })
               )}
