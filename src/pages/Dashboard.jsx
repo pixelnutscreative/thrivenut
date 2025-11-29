@@ -27,6 +27,8 @@ export default function Dashboard() {
   const [showEngagementModal, setShowEngagementModal] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [loading, setLoading] = useState(true);
+  
+  const { isDark, bgClass, textClass, cardBgClass } = useTheme();
 
   // Get current week's Monday
   const getCurrentWeekStart = () => {
