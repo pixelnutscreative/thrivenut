@@ -295,16 +295,6 @@ export default function Dashboard() {
 
   const isSectionCollapsed = (sectionId) => collapsedSections.includes(sectionId);
 
-  // Toggle Google Calendar
-  const toggleGoogleCalendarMutation = useMutation({
-    mutationFn: async (enabled) => {
-      if (preferences?.id) {
-        return await base44.entities.UserPreferences.update(preferences.id, { show_google_calendar: enabled });
-      }
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['preferences'] }),
-  });
-
   return (
     <div className={`min-h-screen ${bgClass} ${isDark ? 'text-gray-100' : ''} p-4 md:p-8`}>
       <div className="max-w-7xl mx-auto space-y-8">
