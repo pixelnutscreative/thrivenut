@@ -11,10 +11,10 @@ import { useTheme } from '../components/shared/useTheme';
 
 // Pixel's AI Toolbox pricing options
 const aiToolboxOptions = [
-  { value: 'annual', label: 'Annual (Best Value!) - $997/year', link: 'https://thenutsandbots.com/annual' },
-  { value: 'quarterly', label: 'Quarterly - $297/quarter', link: 'https://thenutsandbots.com/quarterly' },
-  { value: 'monthly', label: 'Monthly - $111/month', link: 'https://thenutsandbots.com/monthly' },
-  { value: 'affirm', label: '💳 Need Payment Plan? (Affirm/Klarna/etc)', link: 'https://thenutsandbots.com/payment-plans' },
+  { value: 'annual', label: '⭐ Annual (Best Value!) - $333.33/year', link: 'https://thenutsandbots.com/annual', badge: 'Best Value' },
+  { value: 'quarterly', label: '🗓️ Quarterly - $111/quarter', link: 'https://thenutsandbots.com/quarterly', badge: 'Quarterly' },
+  { value: 'monthly', label: '🗓️ Monthly - $77.77/month', link: 'https://thenutsandbots.com/monthly', badge: 'Monthly' },
+  { value: 'payment_plan', label: '💳 1 Year - Klarna/Afterpay - $333.33', link: 'https://thenutsandbots.com/payment-plans', badge: 'Payment Plans' },
 ];
 
 const workshopItems = [
