@@ -81,13 +81,28 @@ export default function AdminSupportContent() {
 
   const handleSaveTicket = () => {
     if (!selectedTicket) return;
+    
+    // Build updated messages array if there's a new response
+    let updatedData = {
+      admin_notes: adminNotes,
+      status: selectedTicket.status,
+    };
+
+    if (response.trim() && response !== selectedTicket.resolution) {
+      const newMessage = {
+        sender: 'admin',
+        sender_type: 'admin',
+        message: response,
+        timestamp: new Date().toISOString(),
+      };
+      updatedData.messages = [...(selectedTicket.messages || []), newMessage];
+      updatedData.resolution = response;
+      updatedData.status = 'resolved';
+    }
+
     updateTicketMutation.mutate({
       id: selectedTicket.id,
-      data: {
-        resolution: response,
-        admin_notes: adminNotes,
-        status: response ? 'resolved' : selectedTicket.status,
-      }
+      data: updatedData
     });
   };
 
@@ -274,6 +289,34 @@ export default function AdminSupportContent() {
                     className="max-w-full rounded-lg border cursor-pointer"
                     onClick={() => window.open(selectedTicket.screenshot_url, '_blank')}
                   />
+                </div>
+              )}
+
+              {/* Conversation Thread */}
+              {selectedTicket.messages?.length > 0 && (
+                <div className="space-y-3">
+                  <h4 className="font-medium text-gray-700">Conversation Thread</h4>
+                  <div className="space-y-2 max-h-48 overflow-y-auto p-2 bg-gray-50 rounded-lg">
+                    {selectedTicket.messages.map((msg, idx) => (
+                      <div 
+                        key={idx} 
+                        className={`p-2 rounded-lg text-sm ${
+                          msg.sender_type === 'admin' 
+                            ? 'bg-purple-100 border-l-4 border-purple-500' 
+                            : 'bg-blue-100 border-l-4 border-blue-500'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 mb-1 text-xs text-gray-500">
+                          <span className="font-medium">
+                            {msg.sender_type === 'admin' ? 'Admin' : msg.sender}
+                          </span>
+                          <span>•</span>
+                          <span>{new Date(msg.timestamp).toLocaleString()}</span>
+                        </div>
+                        <p className="text-gray-700 whitespace-pre-wrap">{msg.message}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 
