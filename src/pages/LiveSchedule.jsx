@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, Video, Calendar as CalendarIcon, Heart, Swords, Popcorn, ShoppingBag, CalendarPlus, Edit, FileText, Users, GraduationCap, Handshake, LayoutGrid, Camera, UserPlus, CalendarDays, Eye, EyeOff, Copy, Sparkles, Moon, Clock } from 'lucide-react';
+import { Plus, Trash2, Video, Calendar as CalendarIcon, Heart, Swords, Popcorn, ShoppingBag, CalendarPlus, Edit, FileText, Users, GraduationCap, Handshake, LayoutGrid, Camera, UserPlus, CalendarDays, Eye, EyeOff, Copy, Sparkles, Moon, Clock, Gift, MapPin, Link as LinkIcon, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { motion } from 'framer-motion';
@@ -37,7 +37,20 @@ const liveTypeConfig = {
   sleepover: { label: 'Sleepover Party', icon: Moon, color: 'bg-violet-100 text-violet-700' },
   marathon: { label: '24hr / Marathon', icon: Clock, color: 'bg-rose-100 text-rose-700' },
   special_appearance: { label: 'Special Appearance', icon: Sparkles, color: 'bg-fuchsia-100 text-fuchsia-700' },
+  giveaway: { label: 'Giveaway', icon: Gift, color: 'bg-emerald-100 text-emerald-700' },
   other: { label: 'Other', icon: CalendarIcon, color: 'bg-gray-100 text-gray-700' }
+};
+
+// Streaming platforms
+const platformConfig = {
+  tiktok: { label: 'TikTok', color: 'bg-black text-white' },
+  youtube: { label: 'YouTube', color: 'bg-red-600 text-white' },
+  twitch: { label: 'Twitch', color: 'bg-purple-600 text-white' },
+  facebook: { label: 'Facebook', color: 'bg-blue-600 text-white' },
+  instagram: { label: 'Instagram', color: 'bg-pink-600 text-white' },
+  zoom: { label: 'Zoom', color: 'bg-blue-500 text-white' },
+  in_person: { label: 'In Person', color: 'bg-green-600 text-white' },
+  other: { label: 'Other', color: 'bg-gray-600 text-white' }
 };
 
 export default function LiveSchedule() {
@@ -61,7 +74,17 @@ export default function LiveSchedule() {
     audience: 'all_ages',
     share_to_directory: false,
     specific_date: '',
-    live_type: 'regular'
+    live_types: ['regular'],
+    platforms: ['tiktok'],
+    has_giveaway: false,
+    must_be_present: false,
+    requires_registration: false,
+    superfan_only: false,
+    is_in_person: false,
+    city: '',
+    state: '',
+    address: '',
+    stream_url: ''
   });
   const [formData, setFormData] = useState({
     host_username: '',
@@ -153,7 +176,17 @@ export default function LiveSchedule() {
       audience: item.audience || 'all_ages',
       share_to_directory: item.share_to_directory || false,
       specific_date: item.specific_date || '',
-      live_type: item.live_type || 'regular'
+      live_types: item.live_types || (item.live_type ? [item.live_type] : ['regular']),
+      platforms: item.platforms || ['tiktok'],
+      has_giveaway: item.has_giveaway || false,
+      must_be_present: item.must_be_present || false,
+      requires_registration: item.requires_registration || false,
+      superfan_only: item.superfan_only || false,
+      is_in_person: item.is_in_person || false,
+      city: item.city || '',
+      state: item.state || '',
+      address: item.address || '',
+      stream_url: item.stream_url || ''
     });
   };
 
@@ -168,8 +201,37 @@ export default function LiveSchedule() {
       audience: item.audience || 'all_ages',
       share_to_directory: item.share_to_directory || false,
       specific_date: '',
-      live_type: item.live_type || 'regular'
+      live_types: item.live_types || (item.live_type ? [item.live_type] : ['regular']),
+      platforms: item.platforms || ['tiktok'],
+      has_giveaway: item.has_giveaway || false,
+      must_be_present: item.must_be_present || false,
+      requires_registration: false,
+      superfan_only: false,
+      is_in_person: item.is_in_person || false,
+      city: '',
+      state: '',
+      address: '',
+      stream_url: ''
     });
+  };
+
+  const toggleContentLiveType = (type) => {
+    setContentFormData(prev => ({
+      ...prev,
+      live_types: prev.live_types.includes(type)
+        ? prev.live_types.filter(t => t !== type)
+        : [...prev.live_types, type]
+    }));
+  };
+
+  const togglePlatform = (platform) => {
+    setContentFormData(prev => ({
+      ...prev,
+      platforms: prev.platforms.includes(platform)
+        ? prev.platforms.filter(p => p !== platform)
+        : [...prev.platforms, platform],
+      is_in_person: platform === 'in_person' ? !prev.platforms.includes('in_person') : prev.is_in_person
+    }));
   };
 
   const handleSaveContent = () => {
