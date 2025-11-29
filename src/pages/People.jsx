@@ -179,7 +179,8 @@ export default function People() {
   const handleSubmit = () => {
     const cleanData = {
       ...formData,
-      username: (formData.username || '').replace('@', '').trim()
+      username: (formData.username || '').replace('@', '').trim(),
+      is_irl_contact: true // Always mark as IRL when created from My People
     };
     
     if (editingContact) {
@@ -230,7 +231,10 @@ export default function People() {
 
   const { isDark, bgClass, textClass, cardBgClass, subtextClass } = useTheme();
 
-  const filteredContacts = contacts
+  // Filter to only show IRL contacts in My People
+  const irlContacts = contacts.filter(c => c.is_irl_contact);
+
+  const filteredContacts = irlContacts
     .filter(c => {
       const matchesSearch = 
         c.real_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -246,8 +250,8 @@ export default function People() {
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className={`text-3xl font-bold ${textClass}`}>My People</h1>
-            <p className={`${subtextClass} mt-1`}>Birthdays, anniversaries & everything about the people you care about</p>
+            <h1 className={`text-3xl font-bold ${textClass}`}>My People (IRL)</h1>
+            <p className={`${subtextClass} mt-1`}>Real-life friends, family & the people you actually know</p>
           </div>
           <Button onClick={() => setShowModal(true)} className="bg-gradient-to-r from-purple-600 to-pink-600">
             <Plus className="w-4 h-4 mr-2" /> Add Person
@@ -395,7 +399,7 @@ export default function People() {
           </AnimatePresence>
         </div>
 
-        {contacts.length === 0 && (
+        {irlContacts.length === 0 && (
           <div className="text-center py-12">
             <Users className={`w-12 h-12 ${isDark ? 'text-gray-600' : 'text-gray-300'} mx-auto mb-4`} />
             <h3 className={`text-lg font-semibold ${subtextClass}`}>No people added yet</h3>

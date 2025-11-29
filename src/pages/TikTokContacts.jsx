@@ -296,7 +296,17 @@ export default function TikTokContacts() {
     setFilterRoles(prev => prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role]);
   };
 
-  const filteredContacts = contacts
+  // Helper to check if contact has any social presence
+  const hasSocialPresence = (c) => {
+    if (c.username) return true; // TikTok username
+    const links = c.social_links || {};
+    return Object.values(links).some(v => v && v.trim());
+  };
+
+  // Filter to only show contacts with social presence in Creator Contacts
+  const socialContacts = contacts.filter(c => hasSocialPresence(c));
+
+  const filteredContacts = socialContacts
     .filter(c => {
       const matchesSearch = 
         c.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -488,7 +498,7 @@ export default function TikTokContacts() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-800">TikTok Contacts</h1>
-            <p className="text-gray-600 mt-1">{contacts.length} contacts</p>
+            <p className="text-gray-600 mt-1">{socialContacts.length} creators with social presence</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button
