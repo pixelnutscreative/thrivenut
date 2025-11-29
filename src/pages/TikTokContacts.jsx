@@ -23,6 +23,7 @@ import ContactFormHeader from '../components/contacts/ContactFormHeader';
 import TikTokTabContent from '../components/contacts/TikTokTabContent';
 import PersonalTabContent from '../components/contacts/PersonalTabContent';
 import BusinessTabContent from '../components/contacts/BusinessTabContent';
+import { useTheme } from '../components/shared/useTheme';
 
 // Icon-based roles for contact cards
 const iconRoles = {
@@ -185,6 +186,8 @@ export default function TikTokContacts() {
   });
 
   const savedCustomRoles = preferences?.custom_tiktok_roles || [];
+
+  const { isDark, bgClass, textClass, cardBgClass } = useTheme();
 
   // Fetch shared clubs
   const { data: sharedClubs = [] } = useQuery({
@@ -481,7 +484,7 @@ export default function TikTokContacts() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 p-4 md:p-8">
+    <div className={`min-h-screen ${bgClass} ${isDark ? 'text-gray-100' : ''} p-4 md:p-8`}>
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
@@ -809,9 +812,9 @@ export default function TikTokContacts() {
                   categories={categories}
                   savedCustomRoles={savedCustomRoles}
                   onSaveCustomRole={(role) => saveCustomRoleMutation.mutate(role)}
-                  onEditCustomRoles={() => setShowCustomRolesModal(true)}
                   editingContactId={editingContact?.id}
                   onQuickAddContact={handleQuickAddContact}
+                  allMasterContacts={allMasterContacts}
                 />
               </TabsContent>
 
