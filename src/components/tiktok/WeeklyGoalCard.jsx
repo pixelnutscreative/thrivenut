@@ -1,12 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Check, ExternalLink, Video, MessageSquare, FileText } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Plus, Check, ExternalLink, Video, MessageSquare, FileText, Edit, Trash2, X } from 'lucide-react';
 
 const ALL_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const FULL_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const contentFormats = ["duet", "sync", "training", "series", "Q&A", "tutorial", "unboxing", "haul"];
 
-export default function WeeklyGoalCard({ goal, onEditPosts, onEditLives, onEditEngagement, onToggleDayComplete }) {
+export default function WeeklyGoalCard({ goal, onEditPosts, onEditLives, onEditEngagement, onToggleDayComplete, onUpdateItem, onDeleteItem }) {
+  const [editingItem, setEditingItem] = useState(null); // { type, index, data }
   if (!goal) {
     return (
       <Card className="shadow-md">
@@ -59,6 +67,8 @@ export default function WeeklyGoalCard({ goal, onEditPosts, onEditLives, onEditE
                 index={index}
                 field="scheduled_posts"
                 onToggleDay={onToggleDayComplete}
+                onEdit={(field, idx, data) => setEditingItem({ type: 'post', field, index: idx, data: { ...data } })}
+                onDelete={onDeleteItem}
               />
             ))}
             
@@ -72,6 +82,8 @@ export default function WeeklyGoalCard({ goal, onEditPosts, onEditLives, onEditE
                 index={index}
                 field="scheduled_lives"
                 onToggleDay={onToggleDayComplete}
+                onEdit={(field, idx, data) => setEditingItem({ type: 'live', field, index: idx, data: { ...data } })}
+                onDelete={onDeleteItem}
               />
             ))}
             
@@ -85,6 +97,8 @@ export default function WeeklyGoalCard({ goal, onEditPosts, onEditLives, onEditE
                 index={index}
                 field="scheduled_engagement"
                 onToggleDay={onToggleDayComplete}
+                onEdit={(field, idx, data) => setEditingItem({ type: 'engagement', field, index: idx, data: { ...data } })}
+                onDelete={onDeleteItem}
               />
             ))}
           </div>
@@ -99,11 +113,150 @@ export default function WeeklyGoalCard({ goal, onEditPosts, onEditLives, onEditE
           </div>
         )}
       </CardContent>
+
+      {/* Inline Edit Dialog */}
+      <Dialog open={!!editingItem} onOpenChange={(open) => !open && setEditingItem(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit {editingItem?.type === 'post' ? 'Post' : editingItem?.type === 'live' ? 'Live' : 'Engagement'}</DialogTitle>
+          </DialogHeader>
+          {editingItem && (
+            <div className="space-y-4 py-2">
+              {/* Days selector */}
+              <div>
+                <Label className="text-sm">Days</Label>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {FULL_DAYS.map(day => (
+                    <button
+                      key={day}
+                      type="button"
+                      onClick={() => {
+                        const days = editingItem.data.days || [];
+                        const updated = days.includes(day) ? days.filter(d => d !== day) : [...days, day];
+                        setEditingItem({ ...editingItem, data: { ...editingItem.data, days: updated } });
+                      }}
+                      className={`px-2 py-1 rounded text-xs font-medium ${
+                        (editingItem.data.days || []).includes(day) ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-600'
+                      }`}
+                    >
+                      {day.slice(0, 3)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-sm">Time</Label>
+                  <Input
+                    type="time"
+                    value={editingItem.data.time || ''}
+                    onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, time: e.target.value } })}
+                  />
+                </div>
+                {editingItem.type !== 'engagement' && (
+                  <div>
+                    <Label className="text-sm">Title</Label>
+                    <Input
+                      value={editingItem.data.title || ''}
+                      onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, title: e.target.value } })}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {editingItem.type !== 'engagement' && (
+                <div>
+                  <Label className="text-sm">Description</Label>
+                  <Textarea
+                    value={editingItem.data.description || ''}
+                    onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, description: e.target.value } })}
+                    rows={2}
+                  />
+                </div>
+              )}
+
+              {editingItem.type === 'live' && (
+                <div>
+                  <Label className="text-sm">Audience</Label>
+                  <Select
+                    value={editingItem.data.audience_restriction || 'all_ages'}
+                    onValueChange={(v) => setEditingItem({ ...editingItem, data: { ...editingItem.data, audience_restriction: v } })}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all_ages">All Ages</SelectItem>
+                      <SelectItem value="18+">18+</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {editingItem.type === 'post' && (
+                <div>
+                  <Label className="text-sm">Content Formats</Label>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {contentFormats.map(format => (
+                      <button
+                        key={format}
+                        type="button"
+                        onClick={() => {
+                          const formats = editingItem.data.content_formats || [];
+                          const updated = formats.includes(format) ? formats.filter(f => f !== format) : [...formats, format];
+                          setEditingItem({ ...editingItem, data: { ...editingItem.data, content_formats: updated } });
+                        }}
+                        className={`px-2 py-1 rounded text-xs ${
+                          (editingItem.data.content_formats || []).includes(format) ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-600'
+                        }`}
+                      >
+                        {format}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <Checkbox
+                    checked={editingItem.data.is_recurring || false}
+                    onCheckedChange={(c) => setEditingItem({ ...editingItem, data: { ...editingItem.data, is_recurring: c } })}
+                  />
+                  <span className="text-sm">🔄 Recurring</span>
+                </label>
+                {editingItem.type === 'live' && (
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <Checkbox
+                      checked={editingItem.data.is_shareable || false}
+                      onCheckedChange={(c) => setEditingItem({ ...editingItem, data: { ...editingItem.data, is_shareable: c } })}
+                    />
+                    <span className="text-sm">📢 Share</span>
+                  </label>
+                )}
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingItem(null)}>Cancel</Button>
+            <Button 
+              onClick={() => {
+                if (onUpdateItem && editingItem) {
+                  onUpdateItem(editingItem.field, editingItem.index, editingItem.data);
+                  setEditingItem(null);
+                }
+              }}
+              className="bg-purple-600"
+            >
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
 
-function ScheduleCard({ type, icon, schedule, index, field, onToggleDay }) {
+function ScheduleCard({ type, icon, schedule, index, field, onToggleDay, onEdit, onDelete }) {
   const typeStyles = {
     post: { bg: 'bg-purple-50', border: 'border-purple-200', accent: 'text-purple-600', label: 'Post' },
     live: { bg: 'bg-pink-50', border: 'border-pink-200', accent: 'text-pink-600', label: 'Live' },
@@ -128,7 +281,19 @@ function ScheduleCard({ type, icon, schedule, index, field, onToggleDay }) {
             <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">🔄 Recurring</span>
           )}
         </div>
-        <span className="text-sm font-medium text-gray-600">{schedule.time || '--:--'}</span>
+        <div className="flex items-center gap-1">
+          <span className="text-sm font-medium text-gray-600 mr-2">{schedule.time || '--:--'}</span>
+          {onEdit && (
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(field, index, schedule)}>
+              <Edit className="w-3.5 h-3.5 text-gray-500" />
+            </Button>
+          )}
+          {onDelete && (
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500 hover:text-red-700" onClick={() => onDelete(field, index)}>
+              <Trash2 className="w-3.5 h-3.5" />
+            </Button>
+          )}
+        </div>
       </div>
       
       {/* Title & Description */}
