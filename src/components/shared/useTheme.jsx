@@ -1,16 +1,32 @@
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { getEffectiveUserEmail } from '../admin/ImpersonationBanner';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 export function useTheme() {
   const [user, setUser] = useState(null);
+  
+  // Handle system theme detection - must be before any conditional returns
+  const [systemDark, setSystemDark] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
   }, []);
 
-  const effectiveEmail = user ? getEffectiveUserEmail(user.email) : null;
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handler = (e) => setSystemDark(e.matches);
+    mediaQuery.addEventListener('change', handler);
+    return () => mediaQuery.removeEventListener('change', handler);
+  }, []);
+
+  const effectiveEmail = useMemo(() => {
+    return user ? getEffectiveUserEmail(user.email) : null;
+  }, [user]);
 
   const { data: preferences } = useQuery({
     queryKey: ['preferences', effectiveEmail],
@@ -20,19 +36,6 @@ export function useTheme() {
     },
     enabled: !!effectiveEmail,
   });
-
-  // Handle system theme detection
-  const [systemDark, setSystemDark] = useState(
-    typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches
-  );
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handler = (e) => setSystemDark(e.matches);
-    mediaQuery.addEventListener('change', handler);
-    return () => mediaQuery.removeEventListener('change', handler);
-  }, []);
 
   const themeType = preferences?.theme_type || 'light';
   const isDark = themeType === 'dark' || (themeType === 'system' && systemDark);
