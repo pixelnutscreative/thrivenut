@@ -28,6 +28,7 @@ import PixelsParadise from './pages/PixelsParadise';
 import TikTokContacts from './pages/TikTokContacts';
 import Support from './pages/Support';
 import HolyHitmakers from './pages/HolyHitmakers';
+import PrayerRequests from './pages/PrayerRequests';
 import __Layout from './Layout.jsx';
 
 
@@ -62,6 +63,7 @@ export const PAGES = {
     "TikTokContacts": TikTokContacts,
     "Support": Support,
     "HolyHitmakers": HolyHitmakers,
+    "PrayerRequests": PrayerRequests,
 }
 
 export const pagesConfig = {
