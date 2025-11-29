@@ -7,6 +7,7 @@ import { Sun, Moon, Monitor, RotateCcw } from 'lucide-react';
 
 const DEFAULT_PRIMARY = '#1fd2ea';
 const DEFAULT_ACCENT = '#bd84f5';
+const DEFAULT_MENU = '#ffffff';
 
 export default function ThemeSelector({ themeData, onChange }) {
   const themes = [
@@ -19,7 +20,8 @@ export default function ThemeSelector({ themeData, onChange }) {
     onChange({
       ...themeData,
       primary_color: DEFAULT_PRIMARY,
-      accent_color: DEFAULT_ACCENT
+      accent_color: DEFAULT_ACCENT,
+      menu_color: DEFAULT_MENU
     });
   };
 
@@ -75,7 +77,7 @@ export default function ThemeSelector({ themeData, onChange }) {
           </Button>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label className="text-xs text-gray-500">Primary Color</Label>
             <div className="flex gap-2 items-center">
@@ -113,20 +115,62 @@ export default function ThemeSelector({ themeData, onChange }) {
               />
             </div>
           </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs text-gray-500">Menu Color</Label>
+            <div className="flex gap-2 items-center">
+              <Input
+                type="color"
+                value={themeData.menu_color || DEFAULT_MENU}
+                onChange={(e) => onChange({ ...themeData, menu_color: e.target.value })}
+                className="w-12 h-10 p-1 cursor-pointer"
+              />
+              <Input
+                type="text"
+                value={themeData.menu_color || DEFAULT_MENU}
+                onChange={(e) => onChange({ ...themeData, menu_color: e.target.value })}
+                className="flex-1 font-mono text-sm"
+                placeholder="#ffffff"
+              />
+            </div>
+          </div>
         </div>
 
         {/* Preview */}
         <div className="p-4 rounded-lg border bg-white">
           <p className="text-sm text-gray-500 mb-2">Preview:</p>
           <div className="flex gap-2">
-            <div
-              className="h-8 flex-1 rounded"
-              style={{ backgroundColor: themeData.primary_color || DEFAULT_PRIMARY }}
-            />
-            <div
-              className="h-8 flex-1 rounded"
-              style={{ backgroundColor: themeData.accent_color || DEFAULT_ACCENT }}
-            />
+            <div className="flex-1 text-center">
+              <div
+                className="h-8 rounded mb-1"
+                style={{ backgroundColor: themeData.primary_color || DEFAULT_PRIMARY }}
+              />
+              <span className="text-xs text-gray-400">Primary</span>
+            </div>
+            <div className="flex-1 text-center">
+              <div
+                className="h-8 rounded mb-1"
+                style={{ backgroundColor: themeData.accent_color || DEFAULT_ACCENT }}
+              />
+              <span className="text-xs text-gray-400">Accent</span>
+            </div>
+            <div className="flex-1 text-center">
+              <div
+                className="h-8 rounded mb-1 border"
+                style={{ backgroundColor: themeData.menu_color || DEFAULT_MENU }}
+              />
+              <span className="text-xs text-gray-400">Menu</span>
+            </div>
+          </div>
+          {/* Button Preview */}
+          <div className="mt-3 pt-3 border-t">
+            <p className="text-xs text-gray-400 mb-2">Button Preview:</p>
+            <button
+              className="w-full py-2 rounded-lg text-white font-medium text-sm"
+              style={{ background: `linear-gradient(to right, ${themeData.primary_color || DEFAULT_PRIMARY}, ${themeData.accent_color || DEFAULT_ACCENT})` }}
+            >
+              Save Changes
+            </button>
           </div>
         </div>
       </div>

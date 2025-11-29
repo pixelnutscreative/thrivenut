@@ -23,9 +23,8 @@ const fastingSchedules = [
 ];
 
 const genderOptions = [
-  { value: 'female', label: 'Female' },
-  { value: 'male', label: 'Male' },
-  { value: 'non_binary', label: 'Non-binary' },
+  { value: 'female', label: '👑 Queen' },
+  { value: 'male', label: '🤴 King' },
   { value: 'prefer_not_to_say', label: 'Prefer not to say' }
 ];
 
