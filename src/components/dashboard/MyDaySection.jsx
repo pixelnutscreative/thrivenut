@@ -1227,13 +1227,23 @@ export default function MyDaySection({
                               : 'bg-white border-2 border-gray-100 hover:border-teal-300'
                           }`}
                         >
-                          {/* Reorder handle */}
+                          {/* Reorder buttons */}
                           {isReordering && (
-                            <div 
-                              className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-200 rounded"
-                              title="Drag to reorder"
-                            >
-                              <GripVertical className="w-4 h-4 text-gray-400" />
+                            <div className="flex flex-col gap-0.5">
+                              <button
+                                onClick={(e) => { e.stopPropagation(); moveTaskUp(task.id); }}
+                                className="p-1 hover:bg-gray-200 rounded"
+                                title="Move up"
+                              >
+                                <ChevronUp className="w-3 h-3 text-gray-500" />
+                              </button>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); moveTaskDown(task.id); }}
+                                className="p-1 hover:bg-gray-200 rounded"
+                                title="Move down"
+                              >
+                                <ChevronDown className="w-3 h-3 text-gray-500" />
+                              </button>
                             </div>
                           )}
                           
@@ -1272,6 +1282,25 @@ export default function MyDaySection({
                                 >
                                   <ExternalLink className="w-4 h-4 text-gray-400" />
                                 </a>
+                              )}
+                              
+                              {/* Edit button for editable task types */}
+                              {(task.type === 'medication' || task.type === 'supplement' || task.type === 'pet' || task.type === 'reminder' || task.type === 'content' || task.type === 'goal') && (
+                                <Link
+                                  to={createPageUrl(
+                                    task.type === 'medication' ? 'Medications' :
+                                    task.type === 'supplement' ? 'Supplements' :
+                                    task.type === 'pet' ? 'PetCare' :
+                                    task.type === 'reminder' ? 'CareReminders' :
+                                    task.type === 'content' ? 'TikTokGoals' :
+                                    task.type === 'goal' ? 'Goals' : 'Dashboard'
+                                  )}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="p-2 hover:bg-gray-100 rounded-lg"
+                                  title="Edit this item"
+                                >
+                                  <Pencil className="w-4 h-4 text-gray-400" />
+                                </Link>
                               )}
                               
                               {task.hasMealNote && (
