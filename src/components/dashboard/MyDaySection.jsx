@@ -200,14 +200,15 @@ export default function MyDaySection({
     enabled: !!userEmail,
   });
 
-  // Fetch Google Calendar events
-  const { data: googleCalendarData } = useQuery({
-    queryKey: ['googleCalendar', today],
+  // Fetch Google Calendar events - only if user has connected THEIR OWN calendar
+  // Note: Google Calendar connector is per-user via OAuth, so each user gets their own
+  const { data: googleCalendarData, error: googleCalError } = useQuery({
+    queryKey: ['googleCalendar', today, userEmail],
     queryFn: async () => {
       const response = await base44.functions.invoke('fetchGoogleCalendar', {});
       return response.data;
     },
-    enabled: !!userEmail && preferences?.show_google_calendar,
+    enabled: !!userEmail && preferences?.show_google_calendar && preferences?.google_calendar_connected,
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: false,
   });
@@ -1003,30 +1004,29 @@ export default function MyDaySection({
             </CardTitle>
             <div className="flex items-center gap-2 flex-wrap">
               {/* Calendar toggles - inline */}
-              {onToggleGoogleCalendar && (
+              {preferences?.google_calendar_connected && onToggleGoogleCalendar && (
                 <button
                   onClick={() => onToggleGoogleCalendar(!showGoogleCalendar)}
                   className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors ${
                     showGoogleCalendar ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'
                   }`}
-                  title="Toggle Google Calendar"
+                  title="Toggle Your Google Calendar"
                 >
                   <Calendar className="w-3 h-3" />
                   {showGoogleCalendar ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
                 </button>
               )}
-              {onToggleCreatorCalendar && (
-                <button
-                  onClick={() => onToggleCreatorCalendar(!showCreatorCalendarEvents)}
-                  className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors ${
-                    showCreatorCalendarEvents ? 'bg-pink-100 text-pink-700' : 'bg-gray-100 text-gray-500'
-                  }`}
-                  title="Toggle Creator Calendar"
-                >
-                  <Video className="w-3 h-3" />
-                  {showCreatorCalendarEvents ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
-                </button>
-              )}
+              {/* Link to Pixel Nuts Events Calendar */}
+              <a
+                href="https://pixelnutscreative.com/calendar"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 px-2 py-1 rounded text-xs bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors"
+                title="Subscribe to Pixel Nuts Events"
+              >
+                <CalendarDays className="w-3 h-3" />
+                <span>Pixel Events</span>
+              </a>
               <Button 
                 variant="ghost" 
                 size="sm" 
