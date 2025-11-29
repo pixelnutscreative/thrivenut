@@ -92,22 +92,31 @@ export default function Layout({ children, currentPageName }) {
   const [expandedSections, setExpandedSections] = useState(['TikTok', 'Wellness']);
   const [showAccessGate, setShowAccessGate] = useState(false);
 
+  const [userLoading, setUserLoading] = useState(true);
+
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => {});
+    base44.auth.me()
+      .then(setUser)
+      .catch(() => setUser(null))
+      .finally(() => setUserLoading(false));
   }, []);
 
   // Get effective email (real user or impersonated)
-      const effectiveEmail = user ? getEffectiveUserEmail(user.email) : null;
-      const currentlyImpersonating = isImpersonating();
+  const effectiveEmail = user?.email ? getEffectiveUserEmail(user.email) : null;
+  const currentlyImpersonating = isImpersonating();
 
-      const { data: preferences } = useQuery({
-        queryKey: ['preferences', effectiveEmail],
-        queryFn: async () => {
-          const prefs = await base44.entities.UserPreferences.filter({ user_email: effectiveEmail }, '-updated_date');
-          return prefs[0] || null;
-        },
-        enabled: !!effectiveEmail,
-      });
+  const { data: preferences } = useQuery({
+    queryKey: ['preferences', effectiveEmail],
+    queryFn: async () => {
+      try {
+        const prefs = await base44.entities.UserPreferences.filter({ user_email: effectiveEmail }, '-updated_date');
+        return prefs[0] || null;
+      } catch {
+        return null;
+      }
+    },
+    enabled: !!effectiveEmail,
+  });
 
   const enabledModules = preferences?.enabled_modules || ['tiktok', 'gifter', 'goals', 'wellness', 'supplements', 'medications', 'pets', 'care_reminders', 'people', 'journal', 'mental_health'];
   const featureOrder = preferences?.feature_order || [];
@@ -199,16 +208,25 @@ export default function Layout({ children, currentPageName }) {
   };
 
   // Handle system theme detection
-  const [systemDark, setSystemDark] = useState(
-    typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches
-  );
+  const [systemDark, setSystemDark] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    } catch {
+      return false;
+    }
+  });
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handler = (e) => setSystemDark(e.matches);
-    mediaQuery.addEventListener('change', handler);
-    return () => mediaQuery.removeEventListener('change', handler);
+    try {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const handler = (e) => setSystemDark(e.matches);
+      mediaQuery.addEventListener('change', handler);
+      return () => mediaQuery.removeEventListener('change', handler);
+    } catch {
+      // Ignore media query errors
+    }
   }, []);
 
   // Get theme colors
