@@ -36,14 +36,22 @@ export default function ThemeSelector({ themeData, onChange }) {
               <Card
                 key={theme.id}
                 className={`cursor-pointer transition-all ${
-                  isSelected ? 'ring-2 ring-purple-500 bg-purple-50' : 'hover:bg-gray-50'
+                  isSelected ? 'ring-2 ring-purple-500' : ''
+                } ${
+                  theme.id === 'dark' 
+                    ? 'bg-gray-800 text-white hover:bg-gray-700' 
+                    : theme.id === 'system'
+                    ? 'bg-gradient-to-br from-white to-gray-800 hover:from-gray-50 hover:to-gray-700'
+                    : 'bg-white hover:bg-gray-50'
                 }`}
                 onClick={() => onChange({ ...themeData, theme_type: theme.id })}
               >
                 <CardContent className="p-4 text-center">
-                  <Icon className={`w-6 h-6 mx-auto mb-2 ${isSelected ? 'text-purple-600' : 'text-gray-500'}`} />
-                  <p className="font-medium text-sm">{theme.name}</p>
-                  <p className="text-xs text-gray-500 mt-1">{theme.description}</p>
+                  <Icon className={`w-6 h-6 mx-auto mb-2 ${
+                    isSelected ? 'text-purple-400' : theme.id === 'dark' ? 'text-gray-300' : 'text-gray-500'
+                  }`} />
+                  <p className={`font-medium text-sm ${theme.id === 'dark' ? 'text-white' : ''}`}>{theme.name}</p>
+                  <p className={`text-xs mt-1 ${theme.id === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{theme.description}</p>
                 </CardContent>
               </Card>
             );

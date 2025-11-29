@@ -67,6 +67,14 @@ export default function AdminSupportContent() {
     },
   });
 
+  const deleteTicketMutation = useMutation({
+    mutationFn: (id) => base44.entities.SupportTicket.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['allSupportTickets'] });
+      setSelectedTicket(null);
+    },
+  });
+
   const updateBetaTesterMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.BetaTester.update(id, data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['allBetaTesters'] }),
@@ -437,11 +445,25 @@ export default function AdminSupportContent() {
       <Dialog open={!!selectedTicket} onOpenChange={() => setSelectedTicket(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-                        <DialogTitle className="flex items-center justify-between">
-              {selectedTicket && ticketTypes[selectedTicket.type] && (
-                React.createElement(ticketTypes[selectedTicket.type].icon, { className: "w-5 h-5" })
-              )}
-              {selectedTicket?.subject}
+            <DialogTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {selectedTicket && ticketTypes[selectedTicket.type] && (
+                  React.createElement(ticketTypes[selectedTicket.type].icon, { className: "w-5 h-5" })
+                )}
+                {selectedTicket?.subject}
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                onClick={() => {
+                  if (confirm('Delete this ticket permanently?')) {
+                    deleteTicketMutation.mutate(selectedTicket.id);
+                  }
+                }}
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
             </DialogTitle>
           </DialogHeader>
 
