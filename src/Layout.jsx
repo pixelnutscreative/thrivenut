@@ -199,10 +199,24 @@ export default function Layout({ children, currentPageName }) {
     await base44.auth.logout();
   };
 
+  // Handle system theme detection
+  const [systemDark, setSystemDark] = useState(
+    typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches
+  );
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handler = (e) => setSystemDark(e.matches);
+    mediaQuery.addEventListener('change', handler);
+    return () => mediaQuery.removeEventListener('change', handler);
+  }, []);
+
   // Get theme colors
   const primaryColor = preferences?.primary_color || '#1fd2ea';
   const accentColor = preferences?.accent_color || '#bd84f5';
-  const isDark = preferences?.theme_type === 'dark';
+  const themeType = preferences?.theme_type || 'light';
+  const isDark = themeType === 'dark' || (themeType === 'system' && systemDark);
 
   // Don't show layout on onboarding or home page (home is public landing page)
   if (currentPageName === 'Onboarding' || currentPageName === 'Home') {
