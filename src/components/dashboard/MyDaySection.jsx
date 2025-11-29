@@ -104,7 +104,7 @@ export default function MyDaySection({
   onToggleGoogleCalendar,
   onToggleCreatorCalendar
 }) {
-  const [layoutMode, setLayoutMode] = useState('two-column'); // 'single' or 'two-column'
+  const [layoutMode, setLayoutMode] = useState('single'); // 'single' or 'two-column'
   const queryClient = useQueryClient();
   const today = format(new Date(), 'yyyy-MM-dd');
   const todayDayName = format(new Date(), 'EEEE');
@@ -113,7 +113,7 @@ export default function MyDaySection({
   const [editingMeal, setEditingMeal] = useState(null);
   const [mealNoteInput, setMealNoteInput] = useState('');
   const [expandedSections, setExpandedSections] = useState(['morning', 'midday', 'afternoon', 'evening', 'night', 'anytime']);
-  const [localViewMode, setLocalViewMode] = useState(viewMode);
+  const [localViewMode, setLocalViewMode] = useState('compact'); // Default to compact
   const [skippedTasks, setSkippedTasks] = useState([]);
   const [isReordering, setIsReordering] = useState(false);
   const [localTaskOrder, setLocalTaskOrder] = useState(preferences?.my_day_task_order || []);
@@ -678,42 +678,8 @@ export default function MyDaySection({
       });
     }
 
-    // Engagement contacts for today
-    engagementContacts.forEach(contact => {
-      const alreadyEngaged = contact.last_engaged_date === today;
-      tasks.push({
-        id: `engage_${contact.id}`,
-        type: 'engagement',
-        contactId: contact.id,
-        label: `Engage with @${contact.username}`,
-        sublabel: `💬 ${contact.engagement_frequency === 'daily' ? 'Daily' : contact.engagement_frequency === 'monthly' ? 'Monthly' : 'Weekly'} engagement`,
-        icon: Users,
-        color: 'text-teal-500',
-        timeOfDay: 'anytime',
-        order: 30,
-        isLink: true,
-        linkTo: 'TikTokEngagement',
-        completed: alreadyEngaged,
-      });
-    });
-
-    // Creator calendar events (contacts with calendar_enabled - show their live times)
-    // Note: This uses data from LiveSchedule entity for those contacts
-    // For now, we'll show a reminder to check the Creator Calendar page
-    if (creatorCalendarContacts.length > 0 && preferences?.show_creator_calendar_events !== false) {
-      tasks.push({
-        id: 'creator_calendar_reminder',
-        type: 'reminder',
-        label: `Check ${creatorCalendarContacts.length} creator(s) live schedule`,
-        sublabel: `🔴 ${creatorCalendarContacts.map(c => `@${c.username}`).slice(0, 3).join(', ')}${creatorCalendarContacts.length > 3 ? '...' : ''}`,
-        icon: Video,
-        color: 'text-pink-500',
-        timeOfDay: 'anytime',
-        order: 25,
-        isLink: true,
-        linkTo: 'LiveSchedule',
-      });
-    }
+    // Note: Engagement contacts and creator calendar reminders removed - 
+    // users can access those from their dedicated pages
 
     // Sort by custom order first, then by timeOfDay, then default order
     const timeOrder = { morning: 1, midday: 2, afternoon: 3, evening: 4, night: 5, anytime: 6 };
@@ -739,24 +705,30 @@ export default function MyDaySection({
   function parseTimeString(timeStr) {
     if (!timeStr) return null;
     
-    // Handle HH:MM format (24-hour)
-    if (timeStr.includes(':')) {
+    // Handle formats like "10:00 PM", "10 PM", "10pm"
+    const pmMatch = timeStr.toLowerCase().includes('pm');
+    const amMatch = timeStr.toLowerCase().includes('am');
+    
+    // Extract hours and minutes
+    const timeMatch = timeStr.match(/(\d{1,2}):?(\d{2})?\s*(am|pm)?/i);
+    
+    if (timeMatch) {
+      let hour = parseInt(timeMatch[1]) || 0;
+      const min = parseInt(timeMatch[2]) || 0;
+      
+      // Convert to 24-hour format
+      if (pmMatch && hour < 12) hour += 12;
+      if (amMatch && hour === 12) hour = 0;
+      
+      return { hour, min };
+    }
+    
+    // Handle HH:MM format (24-hour) without AM/PM
+    if (timeStr.includes(':') && !pmMatch && !amMatch) {
       const parts = timeStr.split(':');
       let hour = parseInt(parts[0]) || 0;
       const min = parseInt(parts[1]) || 0;
       return { hour, min };
-    }
-    
-    // Handle formats like "10pm", "10 PM", "10:00 PM"
-    const pmMatch = timeStr.toLowerCase().includes('pm');
-    const amMatch = timeStr.toLowerCase().includes('am');
-    const numMatch = timeStr.match(/(\d+)/);
-    
-    if (numMatch) {
-      let hour = parseInt(numMatch[1]) || 12;
-      if (pmMatch && hour < 12) hour += 12;
-      if (amMatch && hour === 12) hour = 0;
-      return { hour, min: 0 };
     }
     
     return null;
@@ -1256,22 +1228,23 @@ export default function MyDaySection({
                               : 'bg-white border-2 border-gray-100 hover:border-teal-300'
                           }`}
                         >
-                          {/* Reorder buttons */}
+                          {/* Reorder grip handle */}
                           {isReordering && (
-                            <div className="flex flex-col gap-0.5">
+                            <div className="flex flex-col items-center">
                               <button
                                 onClick={(e) => { e.stopPropagation(); moveTaskUp(task.id); }}
-                                className="p-1 hover:bg-gray-200 rounded"
+                                className="p-0.5 hover:bg-gray-200 rounded"
                                 title="Move up"
                               >
-                                <ChevronUp className="w-3 h-3 text-gray-500" />
+                                <ChevronUp className="w-4 h-4 text-gray-400" />
                               </button>
+                              <GripVertical className="w-4 h-4 text-gray-400" />
                               <button
                                 onClick={(e) => { e.stopPropagation(); moveTaskDown(task.id); }}
-                                className="p-1 hover:bg-gray-200 rounded"
+                                className="p-0.5 hover:bg-gray-200 rounded"
                                 title="Move down"
                               >
-                                <ChevronDown className="w-3 h-3 text-gray-500" />
+                                <ChevronDown className="w-4 h-4 text-gray-400" />
                               </button>
                             </div>
                           )}
@@ -1307,9 +1280,9 @@ export default function MyDaySection({
                                   rel="noopener noreferrer"
                                   onClick={(e) => e.stopPropagation()}
                                   className="p-2 hover:bg-gray-100 rounded-lg"
-                                  title="Open reading plan"
+                                  title={task.isCalendarEvent ? "Edit in Google Calendar" : "Open"}
                                 >
-                                  <ExternalLink className="w-4 h-4 text-gray-400" />
+                                  {task.isCalendarEvent ? <Pencil className="w-4 h-4 text-blue-400" /> : <ExternalLink className="w-4 h-4 text-gray-400" />}
                                 </a>
                               )}
                               
