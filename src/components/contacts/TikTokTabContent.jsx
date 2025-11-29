@@ -14,6 +14,8 @@ import {
   Pencil, Flame, Zap, Award, X, ChevronDown, ChevronRight, Sticker, Trash2
 } from 'lucide-react';
 import QuickAddContactSelect from './QuickAddContactSelect';
+import { base44 } from '@/api/base44Client';
+import { useQuery } from '@tanstack/react-query';
 
 // Battle inventory icons
 const battleInventoryItems = [
@@ -57,37 +59,12 @@ const relationshipRoles = {
 
 const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-// Organized live stream types
-const liveStreamCategories = [
-  {
-    label: 'Collaboration',
-    color: 'bg-purple-50 border-purple-200',
-    types: ['Co-Host', 'Multi-Guest', 'Battle']
-  },
-  {
-    label: 'Interactive',
-    color: 'bg-blue-50 border-blue-200',
-    types: ['Engagement', 'Q&A', 'Talk Show', 'Storytime']
-  },
-  {
-    label: 'Educational',
-    color: 'bg-green-50 border-green-200',
-    types: ['Teaching', 'Cooking', 'DIY/Crafts', 'Fitness']
-  },
-  {
-    label: 'Entertainment',
-    color: 'bg-amber-50 border-amber-200',
-    types: ['Gaming', 'Music', 'ASMR', 'Unboxing']
-  },
-  {
-    label: 'Lifestyle',
-    color: 'bg-gray-50 border-gray-200',
-    types: ['Religious', 'Sleep', 'Chat']
-  }
+// Default live stream types (alphabetical)
+const defaultLiveTypes = [
+  'ASMR', 'Battle', 'Chat', 'Co-Host', 'Cooking', 'DIY/Crafts', 
+  'Engagement', 'Fitness', 'Gaming', 'Multi-Guest', 'Music', 
+  'Q&A', 'Religious', 'Sleep', 'Storytime', 'Talk Show', 'Teaching', 'Unboxing'
 ];
-
-// Flat list of all live types for filtering
-const allLiveTypes = liveStreamCategories.flatMap(cat => cat.types);
 
 export default function TikTokTabContent({ 
   formData, 
@@ -96,17 +73,25 @@ export default function TikTokTabContent({
   categories, 
   savedCustomRoles,
   onSaveCustomRole,
-  onEditCustomRoles,
   editingContactId,
   onQuickAddContact
 }) {
   const [customRoleInput, setCustomRoleInput] = useState('');
+  const [showCustomRoleInput, setShowCustomRoleInput] = useState(false);
   const [showEngagementSettings, setShowEngagementSettings] = useState(false);
   const [newAccountUsername, setNewAccountUsername] = useState('');
   const [newAccountDisplay, setNewAccountDisplay] = useState('');
   const [newAccountPhonetic, setNewAccountPhonetic] = useState('');
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [showAddAccount, setShowAddAccount] = useState(false);
+  const [customLiveType, setCustomLiveType] = useState('');
+
+  // Fetch master database for lookups
+  const { data: allMasterContacts = [] } = useQuery({
+    queryKey: ['masterTikTokContacts'],
+    queryFn: () => base44.entities.TikTokContact.list('username', 5000),
+    staleTime: 5 * 60 * 1000,
+  });
 
   const toggleRole = (role) => {
     setFormData(prev => ({
@@ -485,6 +470,7 @@ export default function TikTokTabContent({
               onQuickAdd={onQuickAddContact}
               placeholder="Through a contact..."
               disabled={formData.found_on_fyf}
+              useMasterDb={true}
             />
             {formData.met_through_id && (
               <Button
@@ -501,7 +487,7 @@ export default function TikTokTabContent({
         </div>
         {formData.met_through_id && (
           <p className="text-xs text-green-600">
-            Connected through: @{contacts?.find(c => c.id === formData.met_through_id)?.username || 'Unknown'}
+            Connected through: @{contacts?.find(c => c.id === formData.met_through_id)?.username || allMasterContacts?.find(c => c.id === formData.met_through_id)?.username || 'Unknown'}
           </p>
         )}
       </div>
@@ -548,79 +534,120 @@ export default function TikTokTabContent({
               );
             })}
           </div>
-          {onEditCustomRoles && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="h-6 w-6 p-0 text-rose-600 hover:text-rose-700"
-              onClick={onEditCustomRoles}
-            >
-              <Pencil className="w-3 h-3" />
-            </Button>
-          )}
-        </div>
-        <div className="flex gap-2">
-          <Input
-            placeholder="Add custom..."
-            value={customRoleInput}
-            onChange={(e) => setCustomRoleInput(e.target.value)}
-            className="h-7 text-xs"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && customRoleInput.trim()) {
-                const customRole = `custom:${customRoleInput.trim()}`;
-                if (!formData.role?.includes(customRole)) {
-                  setFormData({ ...formData, role: [...(formData.role || []), customRole] });
-                }
-                onSaveCustomRole?.(customRoleInput.trim());
-                setCustomRoleInput('');
-              }
-            }}
-          />
           <Button
             type="button"
+            variant="ghost"
             size="sm"
-            variant="outline"
-            className="h-7 px-2"
-            onClick={() => {
-              if (customRoleInput.trim()) {
-                const customRole = `custom:${customRoleInput.trim()}`;
-                if (!formData.role?.includes(customRole)) {
-                  setFormData({ ...formData, role: [...(formData.role || []), customRole] });
-                }
-                onSaveCustomRole?.(customRoleInput.trim());
-                setCustomRoleInput('');
-              }
-            }}
+            className={`h-6 w-6 p-0 ${showCustomRoleInput ? 'text-purple-600' : 'text-rose-600 hover:text-rose-700'}`}
+            onClick={() => setShowCustomRoleInput(!showCustomRoleInput)}
           >
-            <Plus className="w-3 h-3" />
+            <Pencil className="w-3 h-3" />
           </Button>
         </div>
+        {showCustomRoleInput && (
+          <div className="flex gap-2">
+            <Input
+              placeholder="Add custom..."
+              value={customRoleInput}
+              onChange={(e) => setCustomRoleInput(e.target.value)}
+              className="h-7 text-xs"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && customRoleInput.trim()) {
+                  const customRole = `custom:${customRoleInput.trim()}`;
+                  if (!formData.role?.includes(customRole)) {
+                    setFormData({ ...formData, role: [...(formData.role || []), customRole] });
+                  }
+                  onSaveCustomRole?.(customRoleInput.trim());
+                  setCustomRoleInput('');
+                }
+              }}
+            />
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-7 px-2"
+              onClick={() => {
+                if (customRoleInput.trim()) {
+                  const customRole = `custom:${customRoleInput.trim()}`;
+                  if (!formData.role?.includes(customRole)) {
+                    setFormData({ ...formData, role: [...(formData.role || []), customRole] });
+                  }
+                  onSaveCustomRole?.(customRoleInput.trim());
+                  setCustomRoleInput('');
+                }
+              }}
+            >
+              <Plus className="w-3 h-3" />
+            </Button>
+          </div>
+        )}
       </div>
 
-      {/* Live Stream Types - Organized by category */}
-      <div className="p-3 bg-violet-50 rounded-lg border border-violet-200 space-y-2">
-        <Label className="text-xs text-violet-800 font-medium">Live Stream Types</Label>
-        <div className="space-y-2">
-          {liveStreamCategories.map(category => (
-            <div key={category.label} className={`p-2 rounded border ${category.color}`}>
-              <span className="text-[10px] font-semibold text-gray-600 mb-1 block">{category.label}</span>
-              <div className="flex flex-wrap gap-1">
-                {category.types.map(type => (
-                  <Badge
-                    key={type}
-                    variant={formData.live_stream_types?.includes(type) ? 'default' : 'outline'}
-                    className={`cursor-pointer text-xs ${formData.live_stream_types?.includes(type) ? 'bg-violet-600' : 'bg-white text-violet-700'}`}
-                    onClick={() => toggleLiveStreamType(type)}
-                  >
-                    {type}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* Live Stream Types - Simple alphabetical with custom */}
+      <Collapsible>
+        <CollapsibleTrigger className="flex items-center gap-2 w-full p-2 bg-violet-50 rounded-lg border border-violet-200 hover:bg-violet-100 transition-colors">
+          <ChevronRight className="w-4 h-4 text-violet-600" />
+          <span className="font-medium text-sm text-violet-800">Live Stream Types</span>
+          {formData.live_stream_types?.length > 0 && (
+            <span className="text-xs text-violet-600">({formData.live_stream_types.length} selected)</span>
+          )}
+        </CollapsibleTrigger>
+        <CollapsibleContent className="mt-2 p-3 bg-violet-50 rounded-lg border border-violet-200 space-y-2">
+          <div className="flex flex-wrap gap-1">
+            {defaultLiveTypes.map(type => (
+              <Badge
+                key={type}
+                variant={formData.live_stream_types?.includes(type) ? 'default' : 'outline'}
+                className={`cursor-pointer text-xs ${formData.live_stream_types?.includes(type) ? 'bg-violet-600' : 'bg-white text-violet-700'}`}
+                onClick={() => toggleLiveStreamType(type)}
+              >
+                {type}
+              </Badge>
+            ))}
+            {/* Custom live types */}
+            {formData.live_stream_types?.filter(t => !defaultLiveTypes.includes(t)).map(type => (
+              <Badge
+                key={type}
+                variant="default"
+                className="cursor-pointer text-xs bg-purple-600"
+                onClick={() => toggleLiveStreamType(type)}
+              >
+                {type} ✕
+              </Badge>
+            ))}
+          </div>
+          <div className="flex gap-2 pt-1">
+            <Input
+              placeholder="Add custom type..."
+              value={customLiveType}
+              onChange={(e) => setCustomLiveType(e.target.value)}
+              className="h-7 text-xs"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && customLiveType.trim()) {
+                  toggleLiveStreamType(customLiveType.trim());
+                  setCustomLiveType('');
+                }
+              }}
+            />
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-7 px-2"
+              onClick={() => {
+                if (customLiveType.trim()) {
+                  toggleLiveStreamType(customLiveType.trim());
+                  setCustomLiveType('');
+                }
+              }}
+            >
+              <Plus className="w-3 h-3" />
+            </Button>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
 
       {/* Collapsible Details Section */}
       <Collapsible open={detailsOpen} onOpenChange={setDetailsOpen}>
@@ -645,10 +672,11 @@ export default function TikTokTabContent({
                 }}
                 onQuickAdd={onQuickAddContact}
                 placeholder="Search contacts..."
+                useMasterDb={true}
               />
               <div className="flex flex-wrap gap-1">
                 {formData.mods_for?.map(id => {
-                  const contact = contacts?.find(c => c.id === id);
+                  const contact = contacts?.find(c => c.id === id) || allMasterContacts?.find(c => c.id === id);
                   return contact ? (
                     <Badge key={id} variant="secondary" className="cursor-pointer text-xs" onClick={() => setFormData({ ...formData, mods_for: formData.mods_for.filter(m => m !== id) })}>
                       @{contact.username} ✕
@@ -671,10 +699,11 @@ export default function TikTokTabContent({
                 }}
                 onQuickAdd={onQuickAddContact}
                 placeholder="Search contacts..."
+                useMasterDb={true}
               />
               <div className="flex flex-wrap gap-1">
                 {formData.their_mods?.map(id => {
-                  const contact = contacts?.find(c => c.id === id);
+                  const contact = contacts?.find(c => c.id === id) || allMasterContacts?.find(c => c.id === id);
                   return contact ? (
                     <Badge key={id} variant="secondary" className="cursor-pointer text-xs" onClick={() => setFormData({ ...formData, their_mods: formData.their_mods.filter(m => m !== id) })}>
                       @{contact.username} ✕
