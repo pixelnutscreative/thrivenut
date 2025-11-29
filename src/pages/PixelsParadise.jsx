@@ -9,7 +9,8 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ExternalLink, Sparkles, Search, Loader2, Zap, Crown, Bot, Palette, GraduationCap, Users, Wrench, Youtube, BookOpen, Bell, Check, X } from 'lucide-react';
+import { ExternalLink, Sparkles, Search, Loader2, Zap, Crown, Bot, Palette, GraduationCap, Users, Wrench, Youtube, BookOpen, Bell, Check, X, MessageSquare } from 'lucide-react';
+import EmojiArtMaker from '../components/fun/EmojiArtMaker';
 import { motion } from 'framer-motion';
 import { useTheme } from '../components/shared/useTheme';
 
@@ -401,6 +402,16 @@ export default function PixelsParadise() {
         </div>
 
 
+
+        {/* ===== FUN ZONE - EMOJI ART MAKER ===== */}
+        <div className="space-y-4">
+          <h2 className={`text-xl font-bold ${textClass} flex items-center gap-2`}>
+            <MessageSquare className="w-5 h-5 text-pink-500" />
+            Fun Zone
+            <span className={`text-sm font-normal ${subtextClass}`}>(make your comments POP!)</span>
+          </h2>
+          <EmojiArtMaker />
+        </div>
 
         {/* ===== SEARCH & FILTERS ===== */}
         <div className={`space-y-4 pt-4 border-t ${isDark ? 'border-gray-700' : 'border-purple-200'}`}>
