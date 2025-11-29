@@ -47,7 +47,21 @@ export default function TikTokEngagement() {
     enabled: !!effectiveEmail,
   });
 
-  const isDark = preferences?.theme_type === 'dark';
+  // Handle system theme
+  const [systemDark, setSystemDark] = useState(
+    typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches
+  );
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handler = (e) => setSystemDark(e.matches);
+    mediaQuery.addEventListener('change', handler);
+    return () => mediaQuery.removeEventListener('change', handler);
+  }, []);
+
+  const themeType = preferences?.theme_type || 'light';
+  const isDark = themeType === 'dark' || (themeType === 'system' && systemDark);
 
   const { data: contacts = [] } = useQuery({
     queryKey: ['tiktokContacts', effectiveEmail],
