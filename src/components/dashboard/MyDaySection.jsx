@@ -1027,6 +1027,15 @@ export default function MyDaySection({
             </CardTitle>
             <div className="flex items-center gap-2 flex-wrap">
               <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setShowHistoryModal(true)} 
+                className="h-7 text-xs"
+                title="View task history"
+              >
+                <History className="w-3 h-3" />
+              </Button>
+              <Button 
                 variant={layoutMode === 'two-column' ? 'default' : 'outline'} 
                 size="sm" 
                 onClick={() => setLayoutMode(layoutMode === 'two-column' ? 'single' : 'two-column')} 
