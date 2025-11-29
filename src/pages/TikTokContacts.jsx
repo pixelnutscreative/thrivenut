@@ -497,7 +497,7 @@ export default function TikTokContacts() {
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800">TikTok Contacts</h1>
+            <h1 className="text-3xl font-bold text-gray-800">Creator Contacts</h1>
             <p className="text-gray-600 mt-1">{socialContacts.length} creators with social presence</p>
           </div>
           <div className="flex flex-wrap gap-2">

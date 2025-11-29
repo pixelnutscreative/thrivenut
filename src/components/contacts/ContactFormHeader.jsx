@@ -33,7 +33,7 @@ const defaultClubs = [
   { id: 'we_do_not_have', label: 'We Do Not Have Club', display: 'We Do Not Have Club' },
 ];
 
-export default function ContactFormHeader({ formData, setFormData, onSave, isSaving, isEditing, sharedClubs = [], onAddSharedClub, hiddenClubs = [], onToggleClubVisibility, primaryColor }) {
+export default function ContactFormHeader({ formData, setFormData, onSave, isSaving, isEditing, sharedClubs = [], onAddSharedClub, hiddenClubs = [], onToggleClubVisibility, primaryColor, showIrlToggle = true }) {
   const [newClub, setNewClub] = useState('');
   const [showClubsModal, setShowClubsModal] = useState(false);
   const [shareNewClub, setShareNewClub] = useState(false);
@@ -63,26 +63,20 @@ export default function ContactFormHeader({ formData, setFormData, onSave, isSav
             <Star className={`w-5 h-5 ${formData.is_favorite ? 'fill-amber-400 text-amber-400' : 'text-gray-300'}`} />
           </button>
           
-          {/* Friend IRL toggle */}
-          <div
-            onClick={() => {
-              const current = formData.role || [];
-              setFormData({
-                ...formData,
-                role: current.includes('irl_friend')
-                  ? current.filter(r => r !== 'irl_friend')
-                  : [...current, 'irl_friend']
-              });
-            }}
-            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border cursor-pointer transition-colors text-xs ${
-              formData.role?.includes('irl_friend')
-                ? 'bg-green-100 border-green-400 text-green-700'
-                : 'bg-gray-50 border-gray-200 text-gray-500 hover:border-green-300'
-            }`}
-          >
-            <Checkbox checked={formData.role?.includes('irl_friend')} className="h-3 w-3" />
-            <span className="font-medium">Friend IRL</span>
-          </div>
+          {/* My People (IRL) toggle */}
+          {showIrlToggle && (
+            <div
+              onClick={() => setFormData({ ...formData, is_irl_contact: !formData.is_irl_contact })}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border cursor-pointer transition-colors text-xs ${
+                formData.is_irl_contact
+                  ? 'bg-green-100 border-green-400 text-green-700'
+                  : 'bg-gray-50 border-gray-200 text-gray-500 hover:border-green-300'
+              }`}
+            >
+              <Checkbox checked={formData.is_irl_contact} className="h-3 w-3" />
+              <span className="font-medium">My People (IRL)</span>
+            </div>
+          )}
           
           {/* Favorite Color with popover */}
           <div className="flex items-center gap-1">
