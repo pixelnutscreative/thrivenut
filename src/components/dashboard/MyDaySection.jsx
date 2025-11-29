@@ -655,6 +655,62 @@ export default function MyDaySection({
       }
     });
 
+    // Google Calendar events
+    if (googleCalendarData?.events && preferences?.show_google_calendar) {
+      googleCalendarData.events.forEach(event => {
+        const timeOfDay = getTimeOfDayFromTimeString(event.sortTime);
+        tasks.push({
+          id: `gcal_${event.id}`,
+          type: 'calendar',
+          label: event.title,
+          sublabel: `📅 ${event.displayTime}${event.location ? ` • ${event.location}` : ''}`,
+          icon: Calendar,
+          color: 'text-blue-500',
+          timeOfDay: event.isAllDay ? 'morning' : timeOfDay,
+          order: event.isAllDay ? 5 : getOrderFromTimeString(event.sortTime),
+          externalLink: event.htmlLink,
+          isCalendarEvent: true,
+        });
+      });
+    }
+
+    // Engagement contacts for today
+    engagementContacts.forEach(contact => {
+      const alreadyEngaged = contact.last_engaged_date === today;
+      tasks.push({
+        id: `engage_${contact.id}`,
+        type: 'engagement',
+        contactId: contact.id,
+        label: `Engage with @${contact.username}`,
+        sublabel: `💬 ${contact.engagement_frequency === 'daily' ? 'Daily' : contact.engagement_frequency === 'monthly' ? 'Monthly' : 'Weekly'} engagement`,
+        icon: Users,
+        color: 'text-teal-500',
+        timeOfDay: 'anytime',
+        order: 30,
+        isLink: true,
+        linkTo: 'TikTokEngagement',
+        completed: alreadyEngaged,
+      });
+    });
+
+    // Creator calendar events (contacts with calendar_enabled - show their live times)
+    // Note: This uses data from LiveSchedule entity for those contacts
+    // For now, we'll show a reminder to check the Creator Calendar page
+    if (creatorCalendarContacts.length > 0 && preferences?.show_creator_calendar_events !== false) {
+      tasks.push({
+        id: 'creator_calendar_reminder',
+        type: 'reminder',
+        label: `Check ${creatorCalendarContacts.length} creator(s) live schedule`,
+        sublabel: `🔴 ${creatorCalendarContacts.map(c => `@${c.username}`).slice(0, 3).join(', ')}${creatorCalendarContacts.length > 3 ? '...' : ''}`,
+        icon: Video,
+        color: 'text-pink-500',
+        timeOfDay: 'anytime',
+        order: 25,
+        isLink: true,
+        linkTo: 'LiveSchedule',
+      });
+    }
+
     // Sort by custom order first, then by timeOfDay, then default order
     const timeOrder = { morning: 1, midday: 2, afternoon: 3, evening: 4, night: 5, anytime: 6 };
     const customOrder = localTaskOrder.length > 0 ? localTaskOrder : (preferences?.my_day_task_order || []);
