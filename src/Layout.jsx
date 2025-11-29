@@ -243,6 +243,16 @@ export default function Layout({ children, currentPageName }) {
   const isDark = themeType === 'dark' || (themeType === 'system' && systemDark);
   const menuColor = preferences?.menu_color || (isDark ? '#2a2a30' : '#ffffff');
 
+  // Determine if menu color is dark to set text color appropriately
+  const isMenuDark = (() => {
+    const hex = menuColor.replace('#', '');
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance < 0.5;
+  })();
+
   // Don't show layout on onboarding or home page (home is public landing page)
   if (currentPageName === 'Onboarding' || currentPageName === 'Home') {
     return children;
@@ -259,6 +269,14 @@ export default function Layout({ children, currentPageName }) {
     borderColor: isDark ? '#374151' : '#e5e7eb'
   };
 
+  // Menu text classes based on menu color brightness (not just theme)
+  const menuTextClass = isMenuDark ? 'text-gray-100' : 'text-gray-800';
+  const menuSubtextClass = isMenuDark ? 'text-gray-400' : 'text-gray-500';
+  const menuHoverClass = isMenuDark ? 'hover:bg-white/10' : 'hover:bg-teal-50';
+  const menuActiveClass = isMenuDark ? 'bg-white/10 text-teal-400' : 'bg-teal-50 text-teal-700';
+  const menuBorderClass = isMenuDark ? 'border-gray-600' : 'border-gray-200';
+
+  // Page content text classes (based on theme)
   const textClass = isDark ? 'text-gray-100' : 'text-gray-800';
   const subtextClass = isDark ? 'text-gray-400' : 'text-gray-500';
   const hoverClass = isDark ? 'hover:bg-gray-700/50' : 'hover:bg-teal-50';
