@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,12 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { 
   Sun, Moon, Coffee, Utensils, Droplet, Pill, Heart, BookOpen, 
   Dumbbell, ShowerHead, Sparkles, Check, Pencil, X, List, Grid3X3,
   ChevronDown, ChevronUp, PawPrint, Bell, Clock, Video, Users, 
   MessageSquare, SkipForward, ArrowRight, Loader2,
-  Bed, Smile, NotebookPen, GripVertical, ExternalLink, Target, Columns
+  Bed, Smile, NotebookPen, GripVertical, ExternalLink, Target, Columns,
+  Calendar, History, Settings, Eye, EyeOff, CalendarDays
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -19,6 +21,8 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
 import { format } from 'date-fns';
 import DailyMotivationSidebar from './DailyMotivationSidebar';
+import CarryoverTasksModal from './CarryoverTasksModal';
+import TaskHistoryModal from './TaskHistoryModal';
 
 // Time category mapping to time slots
 const timeSlotOrder = {
@@ -111,6 +115,9 @@ export default function MyDaySection({
   const [localTaskOrder, setLocalTaskOrder] = useState(preferences?.my_day_task_order || []);
   const [sleepForm, setSleepForm] = useState({ hours: '', quality: '' });
   const [showSleepForm, setShowSleepForm] = useState(false);
+  const [showCarryoverModal, setShowCarryoverModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [collapsedSections, setCollapsedSections] = useState(preferences?.dashboard_collapsed_sections || []);
   
   const mealLabels = getMealLabels(preferences?.gender);
   const displayMode = preferences?.completed_tasks_display || 'show_checked';
@@ -188,6 +195,66 @@ export default function MyDaySection({
     queryFn: () => base44.entities.Goal.filter({ status: 'active', created_by: userEmail }),
     enabled: !!userEmail,
   });
+
+  // Fetch Google Calendar events
+  const { data: googleCalendarData } = useQuery({
+    queryKey: ['googleCalendar', today],
+    queryFn: async () => {
+      const response = await base44.functions.invoke('fetchGoogleCalendar', {});
+      return response.data;
+    },
+    enabled: !!userEmail && preferences?.show_google_calendar,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: false,
+  });
+
+  // Fetch carryover tasks
+  const { data: carryoverTasks = [] } = useQuery({
+    queryKey: ['carryoverTasks', userEmail],
+    queryFn: () => base44.entities.CarryoverTask.filter({ 
+      status: 'pending',
+      created_by: userEmail 
+    }),
+    enabled: !!userEmail,
+  });
+
+  // Fetch TikTok contacts with engagement enabled for today
+  const { data: engagementContacts = [] } = useQuery({
+    queryKey: ['engagementContacts', userEmail, todayDayName],
+    queryFn: async () => {
+      const contacts = await base44.entities.TikTokContact.filter({ 
+        engagement_enabled: true,
+        created_by: userEmail 
+      });
+      return contacts.filter(c => {
+        if (c.engagement_frequency === 'daily') return true;
+        if (c.engagement_frequency === 'multiple_per_week' && c.engagement_days?.includes(todayDayName)) return true;
+        if (c.engagement_frequency === 'monthly') {
+          const dayOfMonth = new Date().getDate();
+          return c.engagement_day_of_month === dayOfMonth;
+        }
+        return false;
+      });
+    },
+    enabled: !!userEmail,
+  });
+
+  // Fetch creator calendar events (lives from contacts with calendar_enabled)
+  const { data: creatorCalendarContacts = [] } = useQuery({
+    queryKey: ['creatorCalendarContacts', userEmail],
+    queryFn: () => base44.entities.TikTokContact.filter({ 
+      calendar_enabled: true,
+      created_by: userEmail 
+    }),
+    enabled: !!userEmail && preferences?.show_creator_calendar_events !== false,
+  });
+
+  // Show carryover modal if there are pending tasks
+  useEffect(() => {
+    if (carryoverTasks.length > 0) {
+      setShowCarryoverModal(true);
+    }
+  }, [carryoverTasks.length]);
 
   // Fetch today's sleep log
   const { data: todaysSleep } = useQuery({
