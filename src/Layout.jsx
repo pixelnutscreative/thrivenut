@@ -65,13 +65,11 @@ const allNavItems = [
   { name: 'My People', icon: Users, path: 'People', moduleId: 'people' },
   { name: 'Journal', icon: BookOpen, path: 'Journal', moduleId: 'journal' },
   { name: 'Mental Health', icon: Brain, path: 'NeurodivergentSettings', moduleId: 'mental_health' },
-  { name: 'TikTok', icon: TrendingUp, isSection: true, moduleId: 'tiktok', requiresTikTokAccess: true, subItems: [
-            { name: 'TikTok Dashboard', icon: TrendingUp, path: 'TikTokDashboard' },
-            { name: 'TikTok Contacts', icon: Users, path: 'TikTokContacts' },
-            { name: 'Content Goals', icon: TrendingUp, path: 'TikTokGoals' },
+  { name: 'Social Media Suite', icon: TrendingUp, isSection: true, moduleId: 'tiktok', requiresTikTokAccess: true, subItems: [
+            { name: 'Creator Contacts', icon: Users, path: 'TikTokContacts' },
             { name: 'Social Engagement', icon: Users, path: 'TikTokEngagement' },
-                      { name: 'Content Calendar', icon: Video, path: 'ContentCalendar' },
-                      { name: 'Creator Calendar', icon: Video, path: 'LiveSchedule' },
+            { name: 'Creator Calendar', icon: Video, path: 'LiveSchedule' },
+            { name: 'Content Schedule', icon: TrendingUp, path: 'TikTokGoals' },
             { name: 'Live Reminders', icon: Bell, path: 'LiveReminders' },
             { name: 'Discover Creators', icon: Users, path: 'DiscoverCreators' },
             { name: '── Gift Gallery Gratitude ──', icon: Gift, isDivider: true },

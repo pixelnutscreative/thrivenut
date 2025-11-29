@@ -10,12 +10,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, Video, Calendar as CalendarIcon, Heart, Swords, Popcorn, ShoppingBag, CalendarPlus, Edit, FileText, Users, GraduationCap, Handshake, LayoutGrid, Camera, UserPlus } from 'lucide-react';
+import { Plus, Trash2, Video, Calendar as CalendarIcon, Heart, Swords, Popcorn, ShoppingBag, CalendarPlus, Edit, FileText, Users, GraduationCap, Handshake, LayoutGrid, Camera, UserPlus, CalendarDays } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { motion } from 'framer-motion';
 import TimezoneSelector from '../components/shared/TimezoneSelector';
 import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
+import ContentCalendarModal from '../components/tiktok/ContentCalendarModal';
 
 const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -41,6 +42,7 @@ export default function LiveSchedule() {
   const [noteContent, setNoteContent] = useState('');
   const [dayFilter, setDayFilter] = useState('today');
   const [selectedLiveTypes, setSelectedLiveTypes] = useState([]);
+  const [showContentCalendar, setShowContentCalendar] = useState(false);
   const [formData, setFormData] = useState({
     host_username: '',
     recurring_days: [],
@@ -438,7 +440,15 @@ export default function LiveSchedule() {
             <h1 className="text-3xl font-bold text-gray-800">Creator Calendar</h1>
             <p className="text-gray-600 text-sm">Track your favorite TikTok creators' live schedules</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowContentCalendar(true)}
+              className="border-teal-300 text-teal-700 hover:bg-teal-50"
+            >
+              <CalendarDays className="w-4 h-4 mr-2" />
+              My Content
+            </Button>
             <Link to={createPageUrl('TikTokContacts')}>
               <Button variant="outline">
                 <UserPlus className="w-4 h-4 mr-2" />
@@ -790,6 +800,13 @@ export default function LiveSchedule() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Content Calendar Modal */}
+      <ContentCalendarModal
+        isOpen={showContentCalendar}
+        onClose={() => setShowContentCalendar(false)}
+        effectiveEmail={effectiveEmail}
+      />
     </div>
   );
 }

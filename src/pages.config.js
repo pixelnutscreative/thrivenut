@@ -29,6 +29,7 @@ import ContentCalendar from './pages/ContentCalendar';
 import MeetThePixelNuts from './pages/MeetThePixelNuts';
 import PixelsParadise from './pages/PixelsParadise';
 import TikTokContacts from './pages/TikTokContacts';
+import Landing from './pages/Landing';
 import __Layout from './Layout.jsx';
 
 
@@ -64,6 +65,7 @@ export const PAGES = {
     "MeetThePixelNuts": MeetThePixelNuts,
     "PixelsParadise": PixelsParadise,
     "TikTokContacts": TikTokContacts,
+    "Landing": Landing,
 }
 
 export const pagesConfig = {
