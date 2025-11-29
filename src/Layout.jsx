@@ -54,30 +54,31 @@ const moduleNavMap = {
 };
 
 const allNavItems = [
+  { name: "Pixel's Place", icon: Sparkles, path: 'PixelsParadise', alwaysShow: true },
   { name: 'Dashboard', icon: LayoutDashboard, path: 'Dashboard', alwaysShow: true },
   { name: 'Social Media Suite', icon: TrendingUp, isSection: true, moduleId: 'tiktok', requiresTikTokAccess: true, subItems: [
+    { name: 'Discover Creators', icon: Users, path: 'DiscoverCreators', highlight: true },
     { name: 'Creator Contacts', icon: Users, path: 'TikTokContacts' },
     { name: 'Social Engagement', icon: Users, path: 'TikTokEngagement' },
-    { name: 'Creator Calendar', icon: Video, path: 'LiveSchedule' },
-    { name: 'Content Schedule', icon: TrendingUp, path: 'TikTokGoals' },
-    { name: 'Discover Creators', icon: Users, path: 'DiscoverCreators' },
-    { name: '── Gift Gallery Gratitude ──', icon: Gift, isDivider: true },
-    { name: 'Weekly Gallery', icon: Gift, path: 'WeeklyGifterGallery', moduleId: 'gifter' },
-    { name: 'Song Generator', icon: Music, path: 'SongGenerator', moduleId: 'gifter' },
+    { name: 'Content Calendar', icon: Video, path: 'LiveSchedule' },
   ]},
+  { name: 'Gift Gallery Gratitude', icon: Gift, path: 'WeeklyGifterGallery', moduleId: 'gifter', requiresTikTokAccess: true },
+  { name: 'Sunny Songbird', icon: Music, path: 'SongGenerator', moduleId: 'gifter', requiresTikTokAccess: true },
   { name: 'Goals', icon: Target, path: 'Goals', moduleId: 'goals' },
+  { name: 'Mental Health', icon: Brain, isSection: true, moduleId: 'mental_health', subItems: [
+    { name: 'Mental Health Hub', icon: Brain, path: 'NeurodivergentSettings' },
+    { name: 'Journal', icon: BookOpen, path: 'Journal', moduleId: 'journal' },
+  ]},
   { name: 'Wellness', icon: Heart, isSection: true, moduleId: 'wellness', subItems: [
     { name: 'Daily Wellness', icon: Heart, path: 'Wellness' },
     { name: 'Supplements', icon: Pill, path: 'Supplements', moduleId: 'supplements' },
     { name: 'Medications', icon: Pill, path: 'Medications', moduleId: 'medications' },
+    { name: '── Care Tasks ──', icon: Heart, isDivider: true },
     { name: 'Pet Care', icon: Heart, path: 'PetCare', moduleId: 'pets' },
-    { name: 'Care Reminders', icon: Heart, path: 'CareReminders', moduleId: 'care_reminders' },
+    { name: 'Care Reminders', icon: Bell, path: 'CareReminders', moduleId: 'care_reminders' },
   ]},
   { name: 'My People', icon: Users, path: 'People', moduleId: 'people' },
-  { name: 'Journal', icon: BookOpen, path: 'Journal', moduleId: 'journal' },
-  { name: 'Mental Health', icon: Brain, path: 'NeurodivergentSettings', moduleId: 'mental_health' },
   { name: 'SuperFan Access', icon: Star, path: 'SuperFanAccess', showWhenNoTikTokAccess: true },
-  { name: "Pixel's Place", icon: Sparkles, path: 'PixelsParadise', alwaysShow: true },
   { name: 'Support', icon: Heart, path: 'Support', alwaysShow: true },
   { name: 'Admin Panel', icon: UserCog, path: 'Admin', adminOnly: true },
 ];
@@ -530,7 +531,9 @@ export default function Layout({ children, currentPageName }) {
                                                   className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-all text-sm ${
                                                     subIsActive
                                                       ? 'text-white shadow-lg'
-                                                      : (isDark ? 'text-gray-400 hover:bg-gray-700/50' : 'text-gray-600 hover:bg-teal-50')
+                                                      : subItem.highlight
+                                                        ? (isDark ? 'text-teal-300 bg-teal-900/30 hover:bg-teal-800/50' : 'text-teal-700 bg-teal-50 hover:bg-teal-100')
+                                                        : (isDark ? 'text-gray-400 hover:bg-gray-700/50' : 'text-gray-600 hover:bg-teal-50')
                                                   }`}
                                                   style={subIsActive ? { background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` } : {}}
                                                 >

@@ -241,13 +241,39 @@ export default function Settings() {
                   </CardTitle>
                   <CardDescription>Your profile picture and personal info</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6">
-                  <ImageUploader
-                    label="Profile Picture"
-                    currentImage={formData.profile_image_url}
-                    onImageChange={(url) => setFormData({ ...formData, profile_image_url: url })}
-                    aspectRatio="square"
-                  />
+                <CardContent>
+                  <div className="flex items-start gap-6">
+                    {/* Small profile pic on left */}
+                    <div className="flex-shrink-0">
+                      <ImageUploader
+                        label=""
+                        currentImage={formData.profile_image_url}
+                        onImageChange={(url) => setFormData({ ...formData, profile_image_url: url })}
+                        aspectRatio="square"
+                        size="small"
+                      />
+                    </div>
+                    {/* Two columns of info on right */}
+                    <div className="flex-1 grid md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>TikTok Username</Label>
+                        <Input
+                          placeholder="@username"
+                          value={formData.tiktok_username}
+                          onChange={(e) => setFormData({ ...formData, tiktok_username: e.target.value.replace('@', '') })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Display Name (for songs)</Label>
+                        <Input
+                          placeholder="e.g., Pixel, Queen Sarah"
+                          value={formData.tiktok_display_name}
+                          onChange={(e) => setFormData({ ...formData, tiktok_display_name: e.target.value })}
+                        />
+                        <p className="text-xs text-gray-500">How Sunny Songbird will call you</p>
+                      </div>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
 
@@ -261,25 +287,6 @@ export default function Settings() {
                   <CardDescription>Your TikTok info for songs and sharing</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>TikTok Username</Label>
-                      <Input
-                        placeholder="@username"
-                        value={formData.tiktok_username}
-                        onChange={(e) => setFormData({ ...formData, tiktok_username: e.target.value.replace('@', '') })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Display Name (for songs)</Label>
-                      <Input
-                        placeholder="e.g., Pixel, Queen Sarah"
-                        value={formData.tiktok_display_name}
-                        onChange={(e) => setFormData({ ...formData, tiktok_display_name: e.target.value })}
-                      />
-                      <p className="text-xs text-gray-500">How Sunny Songbird will call you</p>
-                    </div>
-                  </div>
                   
                   <div className="grid md:grid-cols-2 gap-4">
                     <div className="space-y-2">
