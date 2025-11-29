@@ -49,6 +49,9 @@ export function useTheme() {
   const subtextClass = isDark ? 'text-gray-400' : 'text-gray-600';
   const cardBgClass = isDark ? 'bg-gray-800 border-gray-700' : 'bg-white';
   const inputBgClass = isDark ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-white';
+  const borderClass = isDark ? 'border-gray-700' : 'border-gray-200';
+  const hoverClass = isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-50';
+  const mutedBgClass = isDark ? 'bg-gray-700/50' : 'bg-gray-50';
 
   return {
     isDark,
@@ -60,6 +63,9 @@ export function useTheme() {
     subtextClass,
     cardBgClass,
     inputBgClass,
+    borderClass,
+    hoverClass,
+    mutedBgClass,
     user,
     effectiveEmail,
     preferences,
