@@ -414,11 +414,11 @@ export default function Layout({ children, currentPageName }) {
                           <img 
                             src={preferences.profile_image_url} 
                             alt="Profile" 
-                            className="w-10 h-10 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-purple-400 transition-all"
+                            className="w-8 h-8 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-purple-400 transition-all"
                           />
                         ) : (
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-purple-400 transition-all ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
-                            <Settings className="w-5 h-5 text-gray-500" />
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-purple-400 transition-all ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                            <Settings className="w-4 h-4 text-gray-500" />
                           </div>
                         )}
                       </Link>
@@ -574,11 +574,11 @@ export default function Layout({ children, currentPageName }) {
                                 <img 
                                   src={preferences.profile_image_url} 
                                   alt="Profile" 
-                                  className="w-10 h-10 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-purple-400 transition-all"
+                                  className="w-8 h-8 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-purple-400 transition-all"
                                 />
                               ) : (
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-purple-400 transition-all ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
-                                  <Settings className="w-5 h-5 text-gray-500" />
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-purple-400 transition-all ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                                  <Settings className="w-4 h-4 text-gray-500" />
                                 </div>
                               )}
                             </Link>
