@@ -200,17 +200,31 @@ export default function NotionTaskPicker({ userEmail, onAddToDay }) {
                       toggleCompleteMutation.mutate({ taskId: task.id, completed: checked })
                     }
                   />
-                  <span className={`flex-1 text-sm ${task.completed_in_app ? 'line-through text-gray-400' : ''}`}>
-                    {task.title}
-                  </span>
+                  <div className={`flex-1 min-w-0 ${task.completed_in_app ? 'line-through text-gray-400' : ''}`}>
+                    <p className="text-sm font-medium truncate">{task.title || 'Untitled Task'}</p>
+                    {task.status && (
+                      <p className="text-xs text-gray-500">{task.status}</p>
+                    )}
+                  </div>
                   {task.category && (
-                    <Badge variant="outline" className="text-xs">{task.category}</Badge>
+                    <Badge variant="outline" className="text-xs shrink-0">{task.category}</Badge>
+                  )}
+                  {task.notion_url && (
+                    <a
+                      href={task.notion_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1 hover:bg-gray-100 rounded shrink-0"
+                      title="Open in Notion"
+                    >
+                      <ExternalLink className="w-3 h-3 text-gray-400" />
+                    </a>
                   )}
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => unscheduleTaskMutation.mutate(task.id)}
-                    className="h-6 px-2 text-xs text-gray-400 hover:text-red-500"
+                    className="h-6 px-2 text-xs text-gray-400 hover:text-red-500 shrink-0"
                   >
                     Remove
                   </Button>

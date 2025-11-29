@@ -63,7 +63,11 @@ const allNavItems = [
     { name: 'Content Calendar', icon: Video, path: 'LiveSchedule' },
   ]},
   { name: 'Gift Gallery Gratitude', icon: Gift, path: 'WeeklyGifterGallery', moduleId: 'gifter', requiresTikTokAccess: true },
-  { name: 'Sunny Songbird', icon: Music, path: 'SongGenerator', moduleId: 'gifter', requiresTikTokAccess: true },
+  { name: 'Music & Songs', icon: Music, isSection: true, moduleId: 'gifter', requiresTikTokAccess: true, subItems: [
+    { name: 'Sunny Songbird', icon: Music, path: 'SongGenerator' },
+    { name: 'Holy Hitmakers', icon: Music, path: 'HolyHitmakers' },
+    { name: "Ping & Pong's Silly Songs", icon: Music, externalUrl: 'https://pingpong-sillysongs.base44.app' },
+  ]},
   { name: 'Goals', icon: Target, path: 'Goals', moduleId: 'goals' },
   { name: 'Mental Health', icon: Brain, isSection: true, moduleId: 'mental_health', subItems: [
     { name: 'Mental Health Hub', icon: Brain, path: 'NeurodivergentSettings' },
