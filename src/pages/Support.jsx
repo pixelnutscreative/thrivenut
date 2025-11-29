@@ -90,14 +90,26 @@ export default function Support() {
     },
   });
 
+  const { data: allBetaTesters = [] } = useQuery({
+    queryKey: ['betaTesterCount'],
+    queryFn: () => base44.entities.BetaTester.filter({ status: 'active' }),
+  });
+
+  const activeBetaCount = allBetaTesters.length;
+  const isFull = activeBetaCount >= 33;
+  const [showBetaConfirm, setShowBetaConfirm] = useState(false);
+
   const joinBetaMutation = useMutation({
     mutationFn: () => base44.entities.BetaTester.create({
       user_email: user.email,
-      trial_start: new Date().toISOString().split('T')[0],
-      trial_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      applied_date: new Date().toISOString().split('T')[0],
+      status: isFull ? 'waitlist' : 'pending',
       feedback_count: 0,
     }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['betaTester'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['betaTester'] });
+      setShowBetaConfirm(true);
+    },
   });
 
   const handleImageUpload = async (e) => {
@@ -180,31 +192,103 @@ export default function Support() {
                     and active feedback providers get exclusive discounts when we launch. 
                     Plus, bragging rights. Mostly bragging rights. 😎
                   </p>
+                  {isFull && (
+                    <p className="text-orange-600 text-sm mt-2 font-medium">
+                      ⚠️ We may be full, but we'll keep your contact info and let you know if/when any more spots open up!
+                    </p>
+                  )}
                 </div>
                 <Button 
                   onClick={() => joinBetaMutation.mutate()}
                   disabled={joinBetaMutation.isPending}
                   className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
                 >
-                  {joinBetaMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Count Me In!'}
+                  {joinBetaMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Put Me In, Coach!'}
                 </Button>
               </div>
             </CardContent>
           </Card>
         )}
 
+        {/* Beta Application Confirmation Modal */}
+        <Dialog open={showBetaConfirm} onOpenChange={setShowBetaConfirm}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-center justify-center">
+                <Star className="w-6 h-6 text-amber-500" />
+                You're On The List! 🎉
+              </DialogTitle>
+            </DialogHeader>
+            <div className="text-center space-y-4 py-4">
+              {isFull ? (
+                <>
+                  <p className="text-gray-600">
+                    We're currently at capacity for beta testers, but you've been added to the waitlist!
+                  </p>
+                  <p className="text-orange-600 font-medium">
+                    We'll notify you via the 🔔 notification bell when a spot opens up.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-gray-600">
+                    Your application has been submitted! If we still have room on the beta team, 
+                    you'll be notified via the 🔔 notification bell.
+                  </p>
+                  <p className="text-purple-600 font-medium">
+                    Keep an eye on that bell for updates!
+                  </p>
+                </>
+              )}
+              <Button 
+                onClick={() => setShowBetaConfirm(false)}
+                className="bg-gradient-to-r from-purple-600 to-pink-600"
+              >
+                Got It!
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         {betaTester && (
-          <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-300">
+          <Card className={`border ${
+            betaTester.status === 'active' 
+              ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-300'
+              : betaTester.status === 'pending'
+              ? 'bg-gradient-to-br from-amber-50 to-orange-50 border-amber-300'
+              : 'bg-gradient-to-br from-gray-50 to-gray-100 border-gray-300'
+          }`}>
             <CardContent className="p-4 flex items-center gap-4">
-              <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center">
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                betaTester.status === 'active' ? 'bg-green-500' :
+                betaTester.status === 'pending' ? 'bg-amber-500' : 'bg-gray-400'
+              }`}>
                 <Star className="w-6 h-6 text-white" />
               </div>
               <div className="flex-1">
-                <h3 className="font-bold text-green-800">You're a Beta Tester! 🎉</h3>
-                <p className="text-sm text-green-600">
-                  Trial ends: {new Date(betaTester.trial_end).toLocaleDateString()} • 
-                  Feedback submitted: {betaTester.feedback_count || 0}
-                </p>
+                {betaTester.status === 'active' ? (
+                  <>
+                    <h3 className="font-bold text-green-800">You're a Beta Tester! 🎉</h3>
+                    <p className="text-sm text-green-600">
+                      Trial ends: {new Date(betaTester.trial_end).toLocaleDateString()} • 
+                      Feedback submitted: {betaTester.feedback_count || 0}
+                    </p>
+                  </>
+                ) : betaTester.status === 'pending' ? (
+                  <>
+                    <h3 className="font-bold text-amber-800">Application Pending ⏳</h3>
+                    <p className="text-sm text-amber-600">
+                      We'll notify you via the 🔔 bell when you're approved!
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <h3 className="font-bold text-gray-700">On the Waitlist 📋</h3>
+                    <p className="text-sm text-gray-500">
+                      We'll let you know when a spot opens up!
+                    </p>
+                  </>
+                )}
               </div>
               {betaTester.discount_code && (
                 <Badge className="bg-green-600 text-white">{betaTester.discount_code}</Badge>
