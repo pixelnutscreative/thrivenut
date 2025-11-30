@@ -191,9 +191,9 @@ export default function MasterUsernameSearch({
                     <p className="font-medium font-mono text-purple-700 truncate">
                       @{contact.username}
                     </p>
-                    {(contact.real_name || contact.display_name) && (
+                    {contact.display_name && (
                       <p className="text-sm text-gray-600 truncate">
-                        {contact.real_name || contact.display_name}
+                        {contact.display_name}
                       </p>
                     )}
                   </div>

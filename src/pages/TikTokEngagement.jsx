@@ -183,25 +183,35 @@ export default function TikTokEngagement() {
     const engaged = justEngaged[contact.id];
     if (!engaged) return false;
     
-    // Must have primary checked (if they have a TikTok username)
-    if (contact.username && !engaged.primary) return false;
+    // Count total engageable accounts
+    let totalAccounts = 0;
+    let checkedAccounts = 0;
     
-    // Must have all other TikTok accounts checked
-    const otherAccounts = contact.other_tiktok_accounts || [];
-    for (let i = 0; i < otherAccounts.length; i++) {
-      if (!engaged[`tiktok_${i}`]) return false;
+    // Primary TikTok account
+    if (contact.username) {
+      totalAccounts++;
+      if (engaged.primary) checkedAccounts++;
     }
     
-    // Must have all social engagement accounts checked
+    // Other TikTok accounts
+    const otherAccounts = contact.other_tiktok_accounts || [];
+    for (let i = 0; i < otherAccounts.length; i++) {
+      totalAccounts++;
+      if (engaged[`tiktok_${i}`]) checkedAccounts++;
+    }
+    
+    // Social engagement accounts
     if (contact.social_engagement) {
       for (const [platform, enabled] of Object.entries(contact.social_engagement)) {
-        if (enabled && contact.social_links?.[platform] && !engaged[`social_${platform}`]) {
-          return false;
+        if (enabled && contact.social_links?.[platform]) {
+          totalAccounts++;
+          if (engaged[`social_${platform}`]) checkedAccounts++;
         }
       }
     }
     
-    return true;
+    // Only fully engaged if ALL accounts are checked
+    return totalAccounts > 0 && checkedAccounts === totalAccounts;
   };
 
   const contactsToShow = engagementContacts.filter(contact => {
@@ -310,7 +320,9 @@ export default function TikTokEngagement() {
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <div className="flex items-center gap-2">
-                  <CardTitle className={`text-lg ${textClass}`}>@{contact.username}</CardTitle>
+                  <CardTitle className={`text-lg ${textClass}`}>
+                    {contact.nickname || contact.display_name || `@${contact.username}`}
+                  </CardTitle>
                   {accountCount > 1 && (
                     <Badge 
                       variant={fullyEngaged ? "default" : "outline"} 
@@ -320,7 +332,7 @@ export default function TikTokEngagement() {
                     </Badge>
                   )}
                 </div>
-                {contact.display_name && (
+                {contact.nickname && contact.display_name && (
                   <p className={`text-sm ${subtextClass}`}>{contact.display_name}</p>
                 )}
                 <div className="flex items-center gap-2 mt-1">
