@@ -358,10 +358,10 @@ export default function TikTokContacts() {
             {/* Names - no image */}
             <div className="flex-1 min-w-0 pr-16">
               <h3 className="font-bold text-lg truncate">
-                {contact.real_name || contact.nickname || contact.display_name || `@${contact.username}`}
+                {contact.nickname || contact.display_name || `@${contact.username}`}
               </h3>
-              {contact.nickname && contact.real_name && (
-                <p className="text-sm text-gray-500">"{contact.nickname}"</p>
+              {contact.nickname && contact.display_name && (
+                <p className="text-sm text-gray-500">{contact.display_name}</p>
               )}
               {contact.username && (
                 <p 
