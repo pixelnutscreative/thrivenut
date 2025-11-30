@@ -29,6 +29,7 @@ import TikTokContacts from './pages/TikTokContacts';
 import Support from './pages/Support';
 import HolyHitmakers from './pages/HolyHitmakers';
 import PrayerRequests from './pages/PrayerRequests';
+import VisionBoard from './pages/VisionBoard';
 import __Layout from './Layout.jsx';
 
 
@@ -64,6 +65,7 @@ export const PAGES = {
     "Support": Support,
     "HolyHitmakers": HolyHitmakers,
     "PrayerRequests": PrayerRequests,
+    "VisionBoard": VisionBoard,
 }
 
 export const pagesConfig = {
