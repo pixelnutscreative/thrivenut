@@ -38,10 +38,10 @@ const colorOptions = [
 ];
 
 const positionOptions = [
-  { value: 'bottom', label: 'Bottom', icon: ArrowUp, description: 'Drawer slides up from bottom' },
-  { value: 'top', label: 'Top', icon: ArrowDown, description: 'Drawer slides down from top' },
-  { value: 'left', label: 'Left', icon: ArrowRight, description: 'Drawer slides in from left' },
-  { value: 'right', label: 'Right', icon: ArrowLeft, description: 'Drawer slides in from right' },
+  { value: 'bottom', label: 'Bottom Center', icon: ArrowUp, description: 'Bar at bottom of screen' },
+  { value: 'top', label: 'Top Center', icon: ArrowDown, description: 'Bar at top of screen' },
+  { value: 'left', label: 'Left Side', icon: ArrowRight, description: 'Vertical bar on left' },
+  { value: 'right', label: 'Right Side', icon: ArrowLeft, description: 'Vertical bar on right' },
 ];
 
 export default function QuickActionsSettings({ formData, setFormData }) {
@@ -126,7 +126,7 @@ export default function QuickActionsSettings({ formData, setFormData }) {
       <Card>
         <CardHeader>
           <CardTitle>Built-in Quick Actions</CardTitle>
-          <CardDescription>Toggle which actions appear in your drawer</CardDescription>
+          <CardDescription>Toggle up to 7 actions for your quick bar</CardDescription>
         </CardHeader>
         <CardContent className="space-y-2">
           {builtInActions.map(action => {

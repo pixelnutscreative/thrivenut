@@ -30,6 +30,7 @@ import Support from './pages/Support';
 import HolyHitmakers from './pages/HolyHitmakers';
 import PrayerRequests from './pages/PrayerRequests';
 import VisionBoard from './pages/VisionBoard';
+import QuickNotes from './pages/QuickNotes';
 import __Layout from './Layout.jsx';
 
 
@@ -66,6 +67,7 @@ export const PAGES = {
     "HolyHitmakers": HolyHitmakers,
     "PrayerRequests": PrayerRequests,
     "VisionBoard": VisionBoard,
+    "QuickNotes": QuickNotes,
 }
 
 export const pagesConfig = {
