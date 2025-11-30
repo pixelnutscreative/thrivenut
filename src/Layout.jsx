@@ -71,6 +71,7 @@ const allNavItems = [
             { name: "Ping & Pong's Silly Songs", icon: Music, externalUrl: 'https://pingpong-sillysongs.base44.app' },
           ]},
   { name: 'Goals', icon: Target, path: 'Goals', moduleId: 'goals' },
+    { name: 'Vision Board', icon: Sparkles, path: 'VisionBoard', moduleId: 'goals' },
   { name: 'Prayer Requests', icon: Heart, path: 'PrayerRequests', requiresBibleBeliever: true },
   { name: 'Mental Health', icon: Brain, isSection: true, moduleId: 'mental_health', subItems: [
     { name: 'Mental Health Hub', icon: Brain, path: 'NeurodivergentSettings' },
