@@ -9,13 +9,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Target, Plus, Edit, Trash2, CheckCircle2, ChevronDown, ChevronRight, Share2, Users, UserPlus, Eye, Clock, Check, X, Send, Loader2, Mail } from 'lucide-react';
+import { Target, Plus, Edit, Trash2, CheckCircle2, ChevronDown, ChevronRight, Share2, Users, UserPlus, Eye, Clock, Check, X, Send, Loader2, Mail, ImageIcon, Sparkles } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '../utils';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import AIStepsGenerator from '../components/goals/AIStepsGenerator';
 import GoalStepsList from '../components/goals/GoalStepsList';
 import GoalShareSelector from '../components/goals/GoalShareSelector';
 import SharedGoalCard from '../components/goals/SharedGoalCard';
+import VisionBoardImageUploader from '../components/goals/VisionBoardImageUploader';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useTheme } from '../components/shared/useTheme';
@@ -38,6 +41,16 @@ const goalTypes = [
   { id: 'milestone', label: '🎯 Milestone', description: 'Single achievement (get promoted, graduate)' },
   { id: 'learning', label: '📚 Learning', description: 'Skill or knowledge acquisition' },
   { id: 'preparation', label: '🧘 Preparation', description: 'Getting ready for something (relationship, interview)' }
+];
+
+const visionBoardCategories = [
+  { id: 'personal', label: '❤️ Personal' },
+  { id: 'business', label: '💼 Business' },
+  { id: 'family', label: '👨‍👩‍👧 Family' },
+  { id: 'project', label: '📁 Project' },
+  { id: 'nonprofit', label: '🏢 Nonprofit' },
+  { id: 'child', label: '👶 For a Child' },
+  { id: 'other', label: '✨ Other' },
 ];
 
 const relationships = [
@@ -89,7 +102,9 @@ export default function Goals() {
     steps: [],
     target_date: '',
     shared_with: [],
-    start_date: format(new Date(), 'yyyy-MM-dd')
+    start_date: format(new Date(), 'yyyy-MM-dd'),
+    vision_image_url: '',
+    vision_board_category: ''
   });
   const [expandedGoals, setExpandedGoals] = useState({});
 
@@ -205,7 +220,9 @@ export default function Goals() {
       steps: [],
       target_date: '',
       shared_with: [],
-      start_date: format(new Date(), 'yyyy-MM-dd')
+      start_date: format(new Date(), 'yyyy-MM-dd'),
+      vision_image_url: '',
+      vision_board_category: ''
     });
     setEditingGoal(null);
     setShowForm(false);
@@ -300,7 +317,9 @@ export default function Goals() {
       steps: goal.steps || [],
       target_date: goal.target_date || '',
       shared_with: goal.shared_with || [],
-      start_date: goal.start_date || format(new Date(), 'yyyy-MM-dd')
+      start_date: goal.start_date || format(new Date(), 'yyyy-MM-dd'),
+      vision_image_url: goal.vision_image_url || '',
+      vision_board_category: goal.vision_board_category || ''
     });
     setShowForm(true);
   };
@@ -326,12 +345,18 @@ export default function Goals() {
             <p className="text-gray-600">Track your personal goals and progress</p>
           </div>
           <div className="flex gap-2">
+            <Link to={createPageUrl('VisionBoard')}>
+              <Button variant="outline" className="gap-2">
+                <Sparkles className="w-4 h-4" />
+                <span className="hidden sm:inline">Vision Board</span>
+              </Button>
+            </Link>
             <Button 
               variant="outline"
               onClick={() => setShowShareModal(true)}
             >
               <UserPlus className="w-4 h-4 mr-2" />
-              Invite Someone
+              <span className="hidden sm:inline">Invite</span>
             </Button>
             <Button 
               onClick={() => { resetForm(); setShowForm(!showForm); }}
@@ -500,6 +525,40 @@ export default function Goals() {
                     )}
                   </div>
 
+                  {/* Vision Board Section */}
+                  <div className="space-y-3 pt-4 border-t">
+                    <label className="text-sm font-medium flex items-center gap-2">
+                      <ImageIcon className="w-4 h-4" />
+                      Vision Board Image
+                    </label>
+                    <div className="flex items-start gap-4">
+                      <VisionBoardImageUploader
+                        currentImage={formData.vision_image_url}
+                        onImageChange={(url) => setFormData({...formData, vision_image_url: url})}
+                        size="medium"
+                      />
+                      {formData.vision_image_url && (
+                        <div className="space-y-2 flex-1">
+                          <label className="text-sm font-medium">Vision Board Category</label>
+                          <Select 
+                            value={formData.vision_board_category} 
+                            onValueChange={(val) => setFormData({...formData, vision_board_category: val})}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Choose a category..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {visionBoardCategories.map(cat => (
+                                <SelectItem key={cat.id} value={cat.id}>{cat.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <p className="text-xs text-gray-500">Group this vision on your board</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                   {/* Steps Section */}
                   <div className="space-y-3 pt-4 border-t">
                     <label className="text-sm font-medium">Steps / Mini-Goals</label>
@@ -571,6 +630,15 @@ export default function Goals() {
                 >
                   <Card className="shadow-lg hover:shadow-xl transition-all h-full">
                     <CardHeader className="pb-3">
+                      {goal.vision_image_url && (
+                        <div className="w-full h-32 -mx-6 -mt-6 mb-3 overflow-hidden rounded-t-lg">
+                          <img 
+                            src={goal.vision_image_url} 
+                            alt={goal.title}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      )}
                       <div className="flex items-start justify-between mb-2">
                         <Badge className={`${categoryColors[goal.category]} border-0`}>
                           {goal.category}
