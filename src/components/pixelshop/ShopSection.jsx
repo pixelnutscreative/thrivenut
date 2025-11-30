@@ -6,8 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
   ShoppingBag, ExternalLink, Calendar, ChevronLeft, ChevronRight,
-  Sparkles, Video, Image, Palette, Users, Zap, Star
+  Sparkles, Video, Image, Palette, Users, Zap, Star, Clock
 } from 'lucide-react';
+import NutPalsCarousel from './NutPalsCarousel';
 
 const categoryConfig = {
   live_stream: { label: 'LIVE Stream Graphics', icon: Video, color: 'bg-purple-100 text-purple-700' },
@@ -28,42 +29,8 @@ const fallbackItems = [
     name: 'LIVE Stream Graphics Package',
     description: 'Custom overlays, banners, and animations for your TikTok LIVE',
     category: 'live_stream',
-    price_description: 'Starting at $25',
     is_featured: true,
     badge: '🔥 Popular',
-    gallery_images: []
-  },
-  {
-    id: 'fan_stickers',
-    name: 'Custom Fan Stickers',
-    description: 'Personalized sticker packs for your superfans',
-    category: 'fan_stickers',
-    price_description: 'Starting at $15',
-    gallery_images: []
-  },
-  {
-    id: 'greenscreens',
-    name: 'Greenscreen Backgrounds',
-    description: 'Custom backgrounds including "Losing for a Friend" style and more',
-    category: 'greenscreens',
-    price_description: 'Starting at $10',
-    gallery_images: []
-  },
-  {
-    id: 'battle_posters',
-    name: 'Battle Posters',
-    description: 'Eye-catching graphics to announce your TikTok battles',
-    category: 'battle_posters',
-    price_description: 'Starting at $20',
-    badge: '⚡ New',
-    gallery_images: []
-  },
-  {
-    id: 'pipsqueeks',
-    name: 'PipSqueeks Characters',
-    description: 'Adorable mini character versions of you or your brand',
-    category: 'pipsqueeks',
-    price_description: 'Starting at $30',
     gallery_images: []
   },
   {
@@ -71,7 +38,6 @@ const fallbackItems = [
     name: 'Digital Twins',
     description: 'Full digital avatar versions of yourself',
     category: 'digital_twins',
-    price_description: 'Starting at $50',
     is_featured: true,
     gallery_images: []
   },
@@ -80,17 +46,8 @@ const fallbackItems = [
     name: 'NutPals Custom Characters',
     description: 'Any animal or object personified! From designer bags to toilet paper with personality',
     category: 'nutpals',
-    price_description: 'Starting at $25',
     badge: '🎨 Custom',
     is_featured: true,
-    gallery_images: []
-  },
-  {
-    id: 'consultation',
-    name: '1-on-1 Creative Session',
-    description: 'Book time with Pixel to plan your creative vision',
-    category: 'consultation',
-    price_description: '$75/hour',
     gallery_images: []
   }
 ];
@@ -125,13 +82,13 @@ function ImageCarousel({ images }) {
       {images.length > 1 && (
         <>
           <button
-            onClick={() => setCurrent(prev => (prev - 1 + images.length) % images.length)}
+            onClick={(e) => { e.stopPropagation(); setCurrent(prev => (prev - 1 + images.length) % images.length); }}
             className="absolute left-2 top-1/2 -translate-y-1/2 p-1 bg-black/50 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
           <button
-            onClick={() => setCurrent(prev => (prev + 1) % images.length)}
+            onClick={(e) => { e.stopPropagation(); setCurrent(prev => (prev + 1) % images.length); }}
             className="absolute right-2 top-1/2 -translate-y-1/2 p-1 bg-black/50 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
           >
             <ChevronRight className="w-4 h-4" />
@@ -151,8 +108,11 @@ function ImageCarousel({ images }) {
 }
 
 export default function ShopSection({ isDark, primaryColor, accentColor }) {
-  const shopUrl = 'https://www.nutsandbots.co/shop';
-  const bookingUrl = 'https://www.nutsandbots.co/book';
+  const shopUrl = 'https://shop.pixelnutscreative.com';
+  const bookingUrl = 'https://api.leadconnectorhq.com/widget/booking/kYlIpWiW6Cl1hulku154';
+  const hoursPackageUrl = 'https://shop.pixelnutscreative.com/shop/collections/design-sessions';
+
+  const gradientStyle = { background: `linear-gradient(135deg, ${primaryColor || '#1fd2ea'}, ${accentColor || '#bd84f5'})` };
 
   const { data: dbItems = [] } = useQuery({
     queryKey: ['shopItems'],
@@ -174,7 +134,7 @@ export default function ShopSection({ isDark, primaryColor, accentColor }) {
       {/* Header */}
       <div className="text-center">
         <h2 className={`text-2xl font-bold ${isDark ? 'text-gray-100' : 'text-gray-800'} flex items-center justify-center gap-2`}>
-          <ShoppingBag className="w-7 h-7 text-purple-500" />
+          <ShoppingBag className="w-7 h-7" style={{ color: primaryColor }} />
           Pixel's Creative Shop
         </h2>
         <p className={`mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -187,7 +147,8 @@ export default function ShopSection({ isDark, primaryColor, accentColor }) {
         <Button
           onClick={() => window.open(shopUrl, '_blank')}
           size="lg"
-          style={{ background: `linear-gradient(to right, ${primaryColor || '#8B5CF6'}, ${accentColor || '#EC4899'})` }}
+          className="text-white"
+          style={gradientStyle}
         >
           <ShoppingBag className="w-5 h-5 mr-2" />
           Browse Full Shop
@@ -198,19 +159,37 @@ export default function ShopSection({ isDark, primaryColor, accentColor }) {
           variant="outline"
           className={isDark ? 'border-gray-600 text-gray-200 hover:bg-gray-700' : ''}
         >
+          <Clock className="w-5 h-5 mr-2" />
+          Book Your First Session
+        </Button>
+        <Button
+          onClick={() => window.open(hoursPackageUrl, '_blank')}
+          size="lg"
+          variant="outline"
+          className={isDark ? 'border-gray-600 text-gray-200 hover:bg-gray-700' : ''}
+        >
           <Calendar className="w-5 h-5 mr-2" />
-          Book 1-on-1 Session
+          Get a Package of Hours
         </Button>
       </div>
 
-      {/* Featured Items */}
+      <p className={`text-center text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+        Book a session and we'll dive in and get working together! Or get the tools and learn FREE 7 times a week.
+      </p>
+
+      {/* Featured Items - No prices shown */}
       {featuredItems.length > 0 && (
         <div className="grid md:grid-cols-3 gap-4">
           {featuredItems.map(item => {
             const config = categoryConfig[item.category] || categoryConfig.other;
             const Icon = config.icon;
             return (
-              <Card key={item.id} className={`overflow-hidden ${isDark ? 'bg-gray-800 border-gray-700' : ''} ${item.is_featured ? 'ring-2 ring-purple-400' : ''}`}>
+              <Card 
+                key={item.id} 
+                className={`overflow-hidden cursor-pointer hover:shadow-lg transition-shadow ${isDark ? 'bg-gray-800 border-gray-700' : ''}`}
+                style={{ borderColor: item.is_featured ? primaryColor : undefined }}
+                onClick={() => window.open(shopUrl, '_blank')}
+              >
                 <ImageCarousel images={item.gallery_images} />
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between gap-2 mb-2">
@@ -224,17 +203,6 @@ export default function ShopSection({ isDark, primaryColor, accentColor }) {
                   </div>
                   <h3 className={`font-bold ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>{item.name}</h3>
                   <p className={`text-sm mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{item.description}</p>
-                  <div className="flex items-center justify-between mt-3">
-                    <span className={`font-semibold text-purple-600`}>{item.price_description}</span>
-                    <Button
-                      size="sm"
-                      onClick={() => window.open(item.shop_url || shopUrl, '_blank')}
-                      style={{ background: `linear-gradient(to right, ${primaryColor || '#8B5CF6'}, ${accentColor || '#EC4899'})` }}
-                    >
-                      <ExternalLink className="w-3 h-3 mr-1" />
-                      Order
-                    </Button>
-                  </div>
                 </CardContent>
               </Card>
             );
@@ -242,51 +210,33 @@ export default function ShopSection({ isDark, primaryColor, accentColor }) {
         </div>
       )}
 
-      {/* All Categories Grid */}
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        {Object.entries(categoryConfig).map(([key, config]) => {
-          const Icon = config.icon;
-          const categoryItems = items.filter(i => i.category === key);
-          if (categoryItems.length === 0 && key !== 'consultation') return null;
+      {/* NutPals Carousel Section */}
+      <Card className="text-white border-0" style={gradientStyle}>
+        <CardContent className="p-6">
+          <div className="text-center mb-4">
+            <h3 className="text-xl font-bold mb-2">🐿️ Meet the NutPals!</h3>
+            <p className="text-white/90">
+              50+ character styles! Any animal or object personified - from designer bags to toilet paper with personality. 
+              If you can dream it, I can create it!
+            </p>
+          </div>
           
-          return (
-            <Card 
-              key={key} 
-              className={`cursor-pointer hover:shadow-lg transition-shadow ${isDark ? 'bg-gray-800 border-gray-700 hover:border-gray-600' : 'hover:border-purple-300'}`}
+          <NutPalsCarousel 
+            isDark={false} 
+            primaryColor={primaryColor} 
+            accentColor={accentColor}
+          />
+          
+          <div className="text-center mt-4">
+            <Button
               onClick={() => window.open(shopUrl, '_blank')}
+              className="bg-white hover:bg-gray-100"
+              style={{ color: primaryColor }}
             >
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className={`p-3 rounded-xl ${config.color}`}>
-                  <Icon className="w-6 h-6" />
-                </div>
-                <div>
-                  <h4 className={`font-semibold ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>{config.label}</h4>
-                  <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                    {categoryItems.length > 0 ? `${categoryItems.length} options` : 'View options'}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-
-      {/* NutPals Callout */}
-      <Card className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white border-0">
-        <CardContent className="p-6 text-center">
-          <div className="text-4xl mb-2">🐿️</div>
-          <h3 className="text-xl font-bold mb-2">Meet the NutPals!</h3>
-          <p className="text-white/90 mb-4">
-            Any character you can imagine! Animals, objects, even a designer handbag or roll of toilet paper with personality. 
-            If you can dream it, I can create it!
-          </p>
-          <Button
-            onClick={() => window.open(shopUrl, '_blank')}
-            className="bg-white text-teal-600 hover:bg-gray-100"
-          >
-            <Sparkles className="w-4 h-4 mr-2" />
-            Create Your NutPal
-          </Button>
+              <Sparkles className="w-4 h-4 mr-2" />
+              Create Your NutPal
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>

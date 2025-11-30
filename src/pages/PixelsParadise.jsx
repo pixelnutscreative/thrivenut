@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ExternalLink, Sparkles, Search, Loader2, Zap, Crown, Bot, Palette, GraduationCap, Users, Wrench, Youtube, BookOpen, Bell, Check, X, MessageSquare, ShoppingBag } from 'lucide-react';
+import { ExternalLink, Sparkles, Search, Loader2, Zap, Crown, Bot, Palette, GraduationCap, Users, Wrench, Youtube, BookOpen, Bell, Check, X, MessageSquare, ShoppingBag, Clock } from 'lucide-react';
 import EmojiArtMaker from '../components/fun/EmojiArtMaker';
 import ShopSection from '../components/pixelshop/ShopSection';
 import { motion } from 'framer-motion';
@@ -17,7 +17,7 @@ import { useTheme } from '../components/shared/useTheme';
 
 // Pixel's AI Toolbox pricing options
 const aiToolboxOptions = [
-  { value: 'annual', label: '⭐ Annual (Best Value!) - $333.33/year', link: 'https://shop.pixelnutscreative.com/product-details/product/68d72d6ea79ca6592408a90e', badge: 'Best Value' },
+  { value: 'annual', label: '⭐ Annual (Best Value!) - $333.33/year', link: 'https://thenutsandbots.com/order-thenutsandbotsplusai-annual-8125-6335-3387-5540', badge: 'Best Value' },
   { value: 'quarterly', label: '🗓️ Quarterly - $111/quarter', link: 'https://shop.pixelnutscreative.com/product-details/product/68d72e0097ff0c5ce998b466', badge: 'Quarterly' },
   { value: 'monthly', label: '🗓️ Monthly - $77.77/month', link: 'https://shop.pixelnutscreative.com/product-details/product/68d733ea5847661b433808a3', badge: 'Monthly' },
   { value: 'payment_plan', label: '💳 1 Year - Klarna/Afterpay - $333.33', link: 'https://shop.pixelnutscreative.com/product-details/product/69131c77b9c37c322d4cfefd', badge: 'Payment Plans' },
@@ -28,7 +28,7 @@ const workshopItems = [
     name: "Go Nuts! Content Creation Challenge", 
     nickname: "(aka AI Class)",
     description: "The legendary class where we go absolutely nuts creating content with AI. Warning: Side effects include uncontrollable creativity and an addiction to prompts. 🥜", 
-    link: 'https://pixelnutscreative.com/gonuts',
+    link: 'https://pixelnutscreative.com/aiclass',
     badge: '🔥 Fan Favorite',
     schedule: 'T & Th 8am PST + Weekdays 3pm PST',
     is_recurring: true,
@@ -49,28 +49,28 @@ const fallbackResources = [
     description: "Browser-based AI that actually remembers your conversations. Unlike my ex. 💅", 
     link: 'https://magai.co/?via=blue', 
     badge: '🔥 Recommended',
-    category: 'AI',
+    category: ['AI'],
     keywords: ['ai', 'chat', 'assistant', 'writing', 'gpt', 'chatbot', 'personalities', 'browser']
   },
   { 
     name: 'Suno', 
     description: 'Turn your shower singing into actual songs. AI does the heavy lifting. ($10/mo for rights)', 
     link: 'https://suno.com/invite/@iamnikolewithak',
-    category: 'AI',
+    category: ['AI'],
     keywords: ['ai', 'music', 'songs', 'audio', 'create', 'generate', 'singing']
   },
   { 
     name: 'Kling AI', 
     description: 'Images to video magic. Your static pics are about to get a LOT more interesting.', 
     link: 'https://klingai.com/h5-app/invitation?code=7BRNCEDRHUZE',
-    category: 'AI',
+    category: ['AI'],
     keywords: ['ai', 'video', 'images', 'animation', 'create', 'generate']
   },
   { 
     name: 'ElevenLabs', 
     description: "Clone your voice so you don't have to talk anymore. Living the dream. 🎤", 
     link: 'https://try.elevenlabs.io/vit4ewk7bgyi',
-    category: 'AI',
+    category: ['AI'],
     keywords: ['ai', 'audio', 'voice', 'clone', 'sound', 'effects', 'music', 'text to speech', 'tts']
   },
   { 
@@ -78,14 +78,14 @@ const fallbackResources = [
     description: 'Make your logo dance and yourself look fabulous. Win-win.', 
     link: 'https://glam.onelink.me/OCYu/qi44plg8', 
     badge: '📱 App',
-    category: 'AI',
+    category: ['AI'],
     keywords: ['ai', 'logo', 'animate', 'animation', 'photos', 'selfie', 'app', 'mobile']
   },
   { 
     name: 'Base44', 
     description: 'Build apps without coding. Yes, this very app was made with it. Meta, right?', 
     link: 'https://base44.pxf.io/c/5371887/2049275/25619?subId1=blue&trafcat=base',
-    category: 'Creative',
+    category: ['Creative'],
     keywords: ['no code', 'apps', 'websites', 'builder', 'create', 'development', 'software']
   },
   { 
@@ -93,7 +93,7 @@ const fallbackResources = [
     description: 'Images to videos - $179 ONE TIME. Unlimited forever. Do the math. 🧮', 
     link: 'https://paykstrt.com/50942/156400', 
     badge: '💎 One-Time',
-    category: 'Creative',
+    category: ['Creative'],
     keywords: ['video', 'images', 'create', 'animation', 'unlimited', 'one time', 'lifetime']
   },
   { 
@@ -101,7 +101,7 @@ const fallbackResources = [
     description: "Make any pic talk. Great for memes. Terrible for your ex's photos. $97 one time!", 
     link: 'https://paykstrt.com/52357/156400', 
     badge: '💎 One-Time',
-    category: 'Creative',
+    category: ['Creative'],
     keywords: ['video', 'photos', 'talking', 'cartoon', 'animation', 'one time', 'lifetime']
   },
   { 
@@ -109,7 +109,7 @@ const fallbackResources = [
     description: 'AI graphics on steroids. $149 one time = unlimited everything. Yes, really.', 
     link: 'https://paykstrt.com/52357/156400', 
     badge: '💎 One-Time',
-    category: 'Creative',
+    category: ['Creative'],
     keywords: ['ai', 'graphics', 'design', 'images', 'create', 'one time', 'lifetime', 'unlimited']
   },
   { 
@@ -117,14 +117,14 @@ const fallbackResources = [
     description: 'The community app where nuts gather. Available on both app stores! 🥜', 
     link: 'https://keenkard.com/letsgonuts', 
     badge: '📱 App',
-    category: 'Community',
+    category: ['Community'],
     keywords: ['community', 'app', 'mobile', 'social', 'connect']
   },
   { 
     name: 'AI Filmmaking (Skool)', 
     description: "Learn to make films with AI for $5/mo. That's like... half a coffee. ☕", 
     link: 'https://keenkard.com/aifilmmaking',
-    category: 'Learning',
+    category: ['Learning'],
     keywords: ['ai', 'film', 'video', 'learn', 'course', 'community', 'skool', 'filmmaking']
   },
   { 
@@ -132,14 +132,14 @@ const fallbackResources = [
     description: "Email marketing that's actually FREE. Build that list, bestie! 📧", 
     link: 'https://login.mailchimp.com/signup/?plan=free_monthly_plan_v0&locale=en', 
     badge: '🆓 Free',
-    category: 'Business',
+    category: ['Business'],
     keywords: ['email', 'marketing', 'newsletter', 'free', 'automation']
   },
   { 
     name: 'Bellator Life', 
     description: 'Digital vending machines = passive income while you sleep. Yes please.', 
     link: 'https://bellatorlife.com/register?reference=iamnikolewithak',
-    category: 'Business',
+    category: ['Business'],
     keywords: ['passive income', 'vending', 'digital', 'business', 'money', 'earn']
   },
   { 
@@ -147,27 +147,12 @@ const fallbackResources = [
     description: 'Free business resources because we love free things. 🆓', 
     link: 'https://dreamsresources.com/join/?refid=AA5551', 
     badge: '🆓 Free',
-    category: 'Business',
+    category: ['Business'],
     keywords: ['business', 'resources', 'tools', 'free']
   },
 ];
 
-// Hidden workshops (admin can toggle these)
-const hiddenWorkshops = [
-  { id: 'graphics_bootcamp', name: 'Graphic Essentials Boot Camp', description: 'Coming soon!', link: '', enabled: false },
-  { id: 'design_intensive', name: 'Design My Business Graphics Intensive', description: 'Coming soon!', link: '', enabled: false },
-  { id: 'master_ai_graphics', name: 'Master AI Graphics', description: 'Coming soon!', link: '', enabled: false },
-];
-
-const categories = ['All', 'AI', 'Creative', 'Business', 'Learning', 'Community'];
-
-const categoryColors = {
-  AI: 'from-purple-500 to-pink-500',
-  Creative: 'from-teal-500 to-cyan-500',
-  Business: 'from-orange-500 to-amber-500',
-  Learning: 'from-blue-500 to-indigo-500',
-  Community: 'from-green-500 to-emerald-500',
-};
+const defaultCategories = ['All', 'AI', 'Creative', 'Business', 'Learning', 'Workshops', 'Community'];
 
 export default function PixelsParadise() {
   const queryClient = useQueryClient();
@@ -185,12 +170,29 @@ export default function PixelsParadise() {
   });
   const [reminderSubmitted, setReminderSubmitted] = useState(false);
   
-  const { isDark, bgClass, textClass, cardBgClass, subtextClass } = useTheme();
+  const { isDark, bgClass, textClass, cardBgClass, subtextClass, primaryColor, accentColor } = useTheme();
 
   useEffect(() => {
     base44.auth.isAuthenticated().then(setIsAuthenticated).catch(() => {});
     base44.auth.me().then(setUser).catch(() => {});
   }, []);
+
+  // Fetch custom categories
+  const { data: customCategories = [] } = useQuery({
+    queryKey: ['resourceCategories'],
+    queryFn: async () => {
+      try {
+        const cats = await base44.entities.ResourceCategory.filter({ is_active: true }, 'sort_order');
+        return cats.map(c => c.name);
+      } catch {
+        return [];
+      }
+    }
+  });
+
+  const categories = customCategories.length > 0 
+    ? ['All', ...customCategories] 
+    : defaultCategories;
 
   // Live reminder signup query
   const { data: existingSignup } = useQuery({
@@ -241,7 +243,8 @@ export default function PixelsParadise() {
   const resources = dbResources.length > 0 ? dbResources : fallbackResources;
 
   const filteredResources = resources.filter(resource => {
-    const matchesCategory = selectedCategory === 'All' || resource.category === selectedCategory;
+    const resourceCats = Array.isArray(resource.category) ? resource.category : [resource.category];
+    const matchesCategory = selectedCategory === 'All' || resourceCats.includes(selectedCategory);
     const searchLower = search.toLowerCase();
     const matchesSearch = !search || 
       resource.name.toLowerCase().includes(searchLower) ||
@@ -258,20 +261,24 @@ export default function PixelsParadise() {
     }
   };
 
+  // Gradient style using theme colors
+  const gradientStyle = { background: `linear-gradient(135deg, ${primaryColor}, ${accentColor})` };
+  const gradientTextStyle = { backgroundImage: `linear-gradient(to right, ${primaryColor}, ${accentColor})` };
+
   return (
     <div className={`min-h-screen ${bgClass} p-4 md:p-8`}>
       <div className="max-w-6xl mx-auto space-y-8">
         {isLoading && (
           <div className="flex justify-center py-4">
-            <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
+            <Loader2 className="w-6 h-6 animate-spin" style={{ color: primaryColor }} />
           </div>
         )}
 
         {/* Header with Live Reminder Bell */}
         <div className="flex items-start justify-between">
           <div className="flex-1 text-center space-y-4">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 via-pink-500 to-cyan-500 bg-clip-text text-transparent flex items-center justify-center gap-3">
-              <Sparkles className="w-10 h-10 text-purple-500" />
+            <h1 className="text-4xl font-bold bg-clip-text text-transparent flex items-center justify-center gap-3" style={gradientTextStyle}>
+              <Sparkles className="w-10 h-10" style={{ color: primaryColor }} />
               Pixel's Place
             </h1>
             <p className={`${subtextClass} max-w-2xl mx-auto`}>
@@ -280,10 +287,11 @@ export default function PixelsParadise() {
             </p>
           </div>
           
-          {/* Big Turquoise Bell */}
+          {/* Big Bell */}
           <button
             onClick={() => setShowLiveReminders(true)}
-            className="flex-shrink-0 w-14 h-14 bg-gradient-to-br from-teal-400 to-cyan-500 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-105 transition-all"
+            className="flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-105 transition-all"
+            style={gradientStyle}
             title="Get Live Reminders"
           >
             <Bell className="w-7 h-7 text-white" />
@@ -293,37 +301,43 @@ export default function PixelsParadise() {
         {/* ===== WORKSHOPS & CLASSES - TOP SECTION ===== */}
         <div className="space-y-4">
           <h2 className={`text-xl font-bold ${textClass} flex items-center gap-2`}>
-            <GraduationCap className="w-5 h-5 text-purple-500" />
+            <GraduationCap className="w-5 h-5" style={{ color: primaryColor }} />
             Workshops & Classes
             <span className={`text-sm font-normal ${subtextClass}`}>(where the magic happens)</span>
           </h2>
           {workshopItems.map((workshop) => (
             <Card 
               key={workshop.name}
-              className={`${isDark ? 'bg-gradient-to-br from-purple-900/30 to-pink-900/30 border-purple-700' : 'bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200'} overflow-hidden hover:shadow-lg transition-all cursor-pointer group`}
+              className={`overflow-hidden hover:shadow-lg transition-all cursor-pointer group`}
+              style={{ 
+                background: isDark 
+                  ? `linear-gradient(135deg, ${primaryColor}20, ${accentColor}20)` 
+                  : `linear-gradient(135deg, ${primaryColor}15, ${accentColor}15)`,
+                borderColor: isDark ? `${primaryColor}50` : `${primaryColor}40`
+              }}
               onClick={() => window.open(workshop.link, '_blank')}
             >
               <CardContent className="p-5 space-y-2">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <h3 className={`font-bold text-lg ${textClass} group-hover:text-purple-600 transition-colors`}>
+                    <h3 className={`font-bold text-lg ${textClass} group-hover:opacity-80 transition-colors`}>
                       {workshop.name}
                     </h3>
                     {workshop.nickname && (
-                      <span className="text-sm text-purple-500 font-medium">{workshop.nickname}</span>
+                      <span className="text-sm font-medium" style={{ color: primaryColor }}>{workshop.nickname}</span>
                     )}
                   </div>
-                  <ExternalLink className="w-4 h-4 text-gray-400 group-hover:text-purple-500 flex-shrink-0 mt-1" />
+                  <ExternalLink className="w-4 h-4 text-gray-400 group-hover:opacity-80 flex-shrink-0 mt-1" style={{ color: primaryColor }} />
                 </div>
                 <p className={`text-sm ${subtextClass}`}>{workshop.description}</p>
                 <div className="flex flex-wrap items-center gap-2 pt-1">
                   {workshop.schedule && (
-                    <Badge className="text-xs bg-green-100 text-green-700 border-0">
+                    <Badge className="text-xs border-0" style={{ backgroundColor: `${primaryColor}20`, color: primaryColor }}>
                       🗓️ {workshop.schedule}
                     </Badge>
                   )}
                   {workshop.badge && (
-                    <Badge className="text-xs bg-purple-100 text-purple-700 border-0">{workshop.badge}</Badge>
+                    <Badge className="text-xs border-0" style={{ backgroundColor: `${accentColor}20`, color: accentColor }}>{workshop.badge}</Badge>
                   )}
                 </div>
               </CardContent>
@@ -332,7 +346,7 @@ export default function PixelsParadise() {
         </div>
 
         {/* ===== PIXEL'S AI TOOLBOX + NUTS & BOTS ===== */}
-        <div className="bg-gradient-to-br from-purple-600 via-pink-600 to-orange-500 rounded-2xl p-6 md:p-8 text-white shadow-2xl space-y-6">
+        <div className="rounded-2xl p-6 md:p-8 text-white shadow-2xl space-y-6" style={gradientStyle}>
           {/* AI Toolbox */}
           <div className="flex flex-col md:flex-row items-center gap-6">
             <div className="flex-shrink-0">
@@ -352,7 +366,7 @@ export default function PixelsParadise() {
               <div className="flex flex-col sm:flex-row gap-3 items-center justify-center md:justify-start">
                 <Select value={selectedPlan} onValueChange={handlePlanSelect}>
                   <SelectTrigger className="w-full sm:w-72 bg-white/20 border-white/30 text-white">
-                    <SelectValue placeholder="Choose your adventure..." />
+                    <SelectValue placeholder="Get access now..." />
                   </SelectTrigger>
                   <SelectContent>
                     {aiToolboxOptions.map(option => (
@@ -367,11 +381,11 @@ export default function PixelsParadise() {
             </div>
           </div>
           
-          {/* WANT IT ALL - Nuts + Bots inside the orange/pink box */}
+          {/* WANT IT ALL - Nuts + Bots inside the box */}
           <div className="bg-white/15 backdrop-blur rounded-xl p-5 border border-white/20">
             <div className="flex flex-col md:flex-row items-center gap-4">
               <div className="flex-shrink-0">
-                <div className="w-14 h-14 bg-teal-400 rounded-xl flex items-center justify-center">
+                <div className="w-14 h-14 bg-white/30 rounded-xl flex items-center justify-center">
                   <Bot className="w-7 h-7 text-white" />
                 </div>
               </div>
@@ -385,18 +399,22 @@ export default function PixelsParadise() {
                 <div className="flex flex-wrap items-center gap-3 mt-3 justify-center md:justify-start">
                   <Button
                     onClick={() => window.open('https://thenutsandbots.com/pricing', '_blank')}
-                    className="bg-teal-500 hover:bg-teal-600 text-white"
+                    className="bg-white/30 hover:bg-white/40 text-white"
                   >
                     See Pricing
                   </Button>
                   <Button
                     variant="outline"
-                    onClick={() => window.open('https://pixelnutscreative.com/discovery', '_blank')}
+                    onClick={() => window.open('https://api.leadconnectorhq.com/widget/booking/kYlIpWiW6Cl1hulku154', '_blank')}
                     className="border-white/50 text-white hover:bg-white/20"
                   >
-                    Book Discovery Call with Nikole
+                    <Clock className="w-4 h-4 mr-2" />
+                    Book Your First Session
                   </Button>
                 </div>
+                <p className="text-white/70 text-xs mt-2 text-center md:text-left">
+                  Ready to dive in? Book a session and we'll get working together right away.
+                </p>
               </div>
             </div>
           </div>
@@ -405,14 +423,14 @@ export default function PixelsParadise() {
 
 
         {/* ===== PIXEL'S CREATIVE SHOP ===== */}
-        <div className={`pt-4 border-t ${isDark ? 'border-gray-700' : 'border-purple-200'}`}>
-          <ShopSection isDark={isDark} primaryColor={null} accentColor={null} />
+        <div className={`pt-4 border-t ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+          <ShopSection isDark={isDark} primaryColor={primaryColor} accentColor={accentColor} />
         </div>
 
         {/* ===== FUN ZONE - EMOJI ART MAKER ===== */}
         <div className="space-y-4">
           <h2 className={`text-xl font-bold ${textClass} flex items-center gap-2`}>
-            <MessageSquare className="w-5 h-5 text-pink-500" />
+            <MessageSquare className="w-5 h-5" style={{ color: accentColor }} />
             Fun Zone
             <span className={`text-sm font-normal ${subtextClass}`}>(make your comments POP!)</span>
           </h2>
@@ -420,10 +438,10 @@ export default function PixelsParadise() {
         </div>
 
         {/* ===== SEARCH & FILTERS ===== */}
-        <div className={`space-y-4 pt-4 border-t ${isDark ? 'border-gray-700' : 'border-purple-200'}`}>
+        <div className={`space-y-4 pt-4 border-t ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
           <h2 className={`text-xl font-bold ${textClass} flex items-center gap-2`}>
-            <Wrench className="w-5 h-5 text-purple-500" />
-            Tools, Resources & Affiliate Links
+            <Wrench className="w-5 h-5" style={{ color: primaryColor }} />
+            Products I Actually Use and LOVE
             <span className={`text-sm font-normal ${subtextClass}`}>(the good stuff)</span>
           </h2>
 
@@ -438,7 +456,7 @@ export default function PixelsParadise() {
             />
           </div>
 
-          {/* Category Filter - Fixed visibility */}
+          {/* Category Filter */}
           <div className="flex flex-wrap justify-center gap-2">
             {categories.map(cat => (
               <Button
@@ -446,10 +464,8 @@ export default function PixelsParadise() {
                 variant={selectedCategory === cat ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setSelectedCategory(cat)}
-                className={`${selectedCategory === cat 
-                  ? 'bg-purple-600 hover:bg-purple-700 text-white' 
-                  : (isDark ? 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600' : 'bg-white border-purple-300 text-purple-700 hover:bg-purple-50 hover:border-purple-400')
-                }`}
+                className={selectedCategory === cat ? 'text-white' : (isDark ? 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600' : '')}
+                style={selectedCategory === cat ? gradientStyle : {}}
               >
                 {cat}
               </Button>
@@ -459,34 +475,39 @@ export default function PixelsParadise() {
 
         {/* Resource Cards Grid */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredResources.map((resource) => (
-            <Card 
-              key={resource.name} 
-              className={`${isDark ? 'bg-gray-800/90' : 'bg-white/90'} backdrop-blur overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group`}
-              onClick={() => window.open(resource.link, '_blank')}
-            >
-              <div className={`h-2 bg-gradient-to-r ${categoryColors[resource.category] || 'from-gray-400 to-gray-500'}`} />
-              <CardContent className="p-4 space-y-2">
-                <div className="flex items-start justify-between gap-2">
-                  <h3 className={`font-bold text-lg ${textClass} group-hover:text-purple-600 transition-colors`}>
-                    {resource.name}
-                  </h3>
-                  <ExternalLink className="w-4 h-4 text-gray-400 group-hover:text-purple-500 flex-shrink-0 mt-1" />
-                </div>
-                <p className={`text-sm ${subtextClass}`}>{resource.description}</p>
-                <div className="flex items-center justify-between pt-1">
-                  <Badge variant="outline" className="text-xs border-purple-300 text-purple-600">
-                    {resource.category}
-                  </Badge>
-                  {resource.badge && (
-                    <Badge className="text-xs bg-purple-100 text-purple-700 border-0">
-                      {resource.badge}
-                    </Badge>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+          {filteredResources.map((resource) => {
+            const resourceCats = Array.isArray(resource.category) ? resource.category : [resource.category];
+            return (
+              <Card 
+                key={resource.name} 
+                className={`${isDark ? 'bg-gray-800/90' : 'bg-white/90'} backdrop-blur overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group`}
+                onClick={() => window.open(resource.link, '_blank')}
+              >
+                <div className="h-2" style={gradientStyle} />
+                <CardContent className="p-4 space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className={`font-bold text-lg ${textClass} group-hover:opacity-80 transition-colors`}>
+                      {resource.name}
+                    </h3>
+                    <ExternalLink className="w-4 h-4 text-gray-400 flex-shrink-0 mt-1" style={{ color: primaryColor }} />
+                  </div>
+                  <p className={`text-sm ${subtextClass}`}>{resource.description}</p>
+                  <div className="flex items-center justify-between pt-1 flex-wrap gap-1">
+                    {resourceCats.slice(0, 2).map(cat => (
+                      <Badge key={cat} variant="outline" className="text-xs" style={{ borderColor: primaryColor, color: primaryColor }}>
+                        {cat}
+                      </Badge>
+                    ))}
+                    {resource.badge && (
+                      <Badge className="text-xs border-0" style={{ backgroundColor: `${accentColor}20`, color: accentColor }}>
+                        {resource.badge}
+                      </Badge>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
 
         {filteredResources.length === 0 && (
@@ -496,38 +517,51 @@ export default function PixelsParadise() {
         )}
 
         {/* Quick Links Section */}
-        <div className={`grid sm:grid-cols-2 gap-4 pt-4 border-t ${isDark ? 'border-gray-700' : 'border-purple-200'}`}>
+        <div className={`grid sm:grid-cols-2 gap-4 pt-4 border-t ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
           <Card 
-            className="bg-gradient-to-r from-red-50 to-orange-50 border-red-200 cursor-pointer hover:shadow-lg transition-all"
+            className="cursor-pointer hover:shadow-lg transition-all"
+            style={{ 
+              background: isDark 
+                ? `linear-gradient(135deg, ${primaryColor}20, ${accentColor}20)` 
+                : `linear-gradient(135deg, ${primaryColor}10, ${accentColor}10)`,
+              borderColor: `${primaryColor}40`
+            }}
             onClick={() => window.open('https://youtube.com/@pixelnutscreative', '_blank')}
           >
             <CardContent className="p-4 flex items-center gap-4">
-              <div className="w-12 h-12 bg-red-500 rounded-xl flex items-center justify-center">
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={gradientStyle}>
                 <Youtube className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h3 className="font-bold text-gray-800">YouTube Channel</h3>
-                <p className="text-sm text-gray-600">Free tutorials & behind the scenes chaos</p>
+                <h3 className={`font-bold ${textClass}`}>YouTube Channel</h3>
+                <p className={`text-sm ${subtextClass}`}>Free tutorials & behind the scenes chaos</p>
               </div>
             </CardContent>
           </Card>
           <Card 
-            className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 opacity-60 cursor-not-allowed"
+            className="cursor-pointer hover:shadow-lg transition-all"
+            style={{ 
+              background: isDark 
+                ? `linear-gradient(135deg, ${primaryColor}20, ${accentColor}20)` 
+                : `linear-gradient(135deg, ${primaryColor}10, ${accentColor}10)`,
+              borderColor: `${primaryColor}40`
+            }}
+            onClick={() => window.open('https://pixelnutscreative.com/aiclass', '_blank')}
           >
             <CardContent className="p-4 flex items-center gap-4">
-              <div className="w-12 h-12 bg-blue-400 rounded-xl flex items-center justify-center">
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={gradientStyle}>
                 <BookOpen className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h3 className="font-bold text-gray-800">Free Trainings</h3>
-                <p className="text-sm text-gray-500">🚧 Coming Soon - New feature in the works!</p>
+                <h3 className={`font-bold ${textClass}`}>Free Trainings</h3>
+                <p className={`text-sm ${subtextClass}`}>Join the Go Nuts! AI Class - 7 times a week!</p>
               </div>
             </CardContent>
           </Card>
         </div>
 
         {/* Footer */}
-        <div className="text-center pt-6 text-gray-500 text-sm">
+        <div className={`text-center pt-6 ${subtextClass} text-sm`}>
           <p>Made with 💜 and probably too much coffee by @PixelNutsCreative</p>
           <p className="text-xs mt-1">Some links are affiliate links - thanks for supporting! 🥜</p>
         </div>
@@ -536,7 +570,7 @@ export default function PixelsParadise() {
       {/* Live Reminders Popup */}
       <Dialog open={showLiveReminders} onOpenChange={setShowLiveReminders}>
         <DialogContent className="max-w-md">
-          <DialogHeader className="bg-gradient-to-r from-teal-500 to-cyan-500 -m-6 mb-4 p-4 rounded-t-lg">
+          <DialogHeader className="-m-6 mb-4 p-4 rounded-t-lg" style={gradientStyle}>
             <DialogTitle className="text-white flex items-center gap-2">
               <Bell className="w-5 h-5" />
               Never Miss a Live!
@@ -553,8 +587,8 @@ export default function PixelsParadise() {
               animate={{ opacity: 1, scale: 1 }}
               className="text-center py-6"
             >
-              <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Check className="w-7 h-7 text-green-600" />
+              <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3" style={{ backgroundColor: `${primaryColor}20` }}>
+                <Check className="w-7 h-7" style={{ color: primaryColor }} />
               </div>
               <h3 className="text-lg font-bold text-gray-800 mb-2">You're Signed Up!</h3>
               <p className="text-gray-600 text-sm mb-4">
@@ -614,7 +648,8 @@ export default function PixelsParadise() {
 
               <Button
                 type="submit"
-                className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600"
+                className="w-full text-white"
+                style={gradientStyle}
                 disabled={saveReminderMutation.isPending || (!reminderFormData.email && !reminderFormData.phone)}
               >
                 {saveReminderMutation.isPending ? 'Saving...' : existingSignup ? 'Update My Info' : 'Sign Me Up!'}
@@ -627,7 +662,8 @@ export default function PixelsParadise() {
               href="https://tiktok.com/@pixelnutscreative"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-teal-600 hover:text-teal-700 text-sm"
+              className="inline-flex items-center gap-2 text-sm hover:opacity-80"
+              style={{ color: primaryColor }}
             >
               <ExternalLink className="w-4 h-4" />
               Follow @pixelnutscreative on TikTok
