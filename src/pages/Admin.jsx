@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
-import { Shield, Star, UserCog, Users, Gift, Settings, Palette, Clock, MessageSquare, ListTodo } from 'lucide-react';
+import { Shield, Star, UserCog, Users, Gift, Settings, Palette, Clock, MessageSquare, ListTodo, Squirrel, FolderOpen } from 'lucide-react';
 
 // Import the individual admin components/pages as content
 import AdminSuperFanContent from '../components/admin/AdminSuperFanContent';
@@ -15,6 +15,8 @@ import AdminSettingsContent from '../components/admin/AdminSettingsContent';
 import AdminResourcesContent from '../components/admin/AdminResourcesContent';
 import AdminSupportContent from '../components/admin/AdminSupportContent';
 import AdminFeedbackContent from '../components/admin/AdminFeedbackContent';
+import AdminNutPalsContent from '../components/admin/AdminNutPalsContent';
+import AdminCategoriesContent from '../components/admin/AdminCategoriesContent';
 
 const ADMIN_EMAIL = 'pixelnutscreative@gmail.com';
 
@@ -54,7 +56,7 @@ export default function Admin() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-9">
+          <TabsList className="grid w-full grid-cols-11">
             <TabsTrigger value="feedback" className="flex items-center gap-2">
               <ListTodo className="w-4 h-4" />
               <span className="hidden sm:inline">Feedback</span>
@@ -86,6 +88,14 @@ export default function Admin() {
             <TabsTrigger value="resources" className="flex items-center gap-2">
               <Palette className="w-4 h-4" />
               <span className="hidden sm:inline">Resources</span>
+            </TabsTrigger>
+            <TabsTrigger value="nutpals" className="flex items-center gap-2">
+              <Squirrel className="w-4 h-4" />
+              <span className="hidden sm:inline">NutPals</span>
+            </TabsTrigger>
+            <TabsTrigger value="categories" className="flex items-center gap-2">
+              <FolderOpen className="w-4 h-4" />
+              <span className="hidden sm:inline">Categories</span>
             </TabsTrigger>
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <Settings className="w-4 h-4" />
@@ -123,6 +133,14 @@ export default function Admin() {
 
           <TabsContent value="resources" className="mt-6">
             <AdminResourcesContent />
+          </TabsContent>
+
+          <TabsContent value="nutpals" className="mt-6">
+            <AdminNutPalsContent />
+          </TabsContent>
+
+          <TabsContent value="categories" className="mt-6">
+            <AdminCategoriesContent />
           </TabsContent>
 
           <TabsContent value="settings" className="mt-6">
