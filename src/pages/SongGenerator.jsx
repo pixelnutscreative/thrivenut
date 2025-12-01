@@ -20,6 +20,7 @@ import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
 import { format, startOfWeek, subWeeks, addWeeks } from 'date-fns';
 import SunoInfoModal from '../components/song/SunoInfoModal';
 import SongHistoryModal from '../components/song/SongHistoryModal';
+import GifterEntryRow from '../components/gifter/GifterEntryRow';
 
 const songTypes = [
   { id: 'gift_gallery', label: '🎁 Gift Gallery Thank-You', icon: Gift, description: 'Celebrate your top gifters from the week', hasGift: true },
