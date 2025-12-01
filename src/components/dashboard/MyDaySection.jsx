@@ -876,6 +876,56 @@ export default function MyDaySection({
     setSkippedTasks(prev => [...prev, taskId]);
   };
 
+  const handlePushToNextDay = async (taskId, date) => {
+    // Create a carryover task for the next day
+    await base44.entities.CarryoverTask.create({
+      original_date: today,
+      task_type: 'reminder',
+      task_id: taskId,
+      task_label: allTasks.find(t => t.id === taskId)?.label || taskId,
+      rescheduled_to: date,
+      status: 'rescheduled'
+    });
+    setSkippedTasks(prev => [...prev, taskId]);
+    queryClient.invalidateQueries({ queryKey: ['carryoverTasks'] });
+  };
+
+  const handlePushToDate = async (taskId, date) => {
+    await base44.entities.CarryoverTask.create({
+      original_date: today,
+      task_type: 'reminder',
+      task_id: taskId,
+      task_label: allTasks.find(t => t.id === taskId)?.label || taskId,
+      rescheduled_to: date,
+      status: 'rescheduled'
+    });
+    setSkippedTasks(prev => [...prev, taskId]);
+    queryClient.invalidateQueries({ queryKey: ['carryoverTasks'] });
+  };
+
+  const handlePauseTask = (taskId, days, resumeDate) => {
+    setPausedTasks(prev => ({ ...prev, [taskId]: resumeDate }));
+    setSkippedTasks(prev => [...prev, taskId]);
+    // Store in localStorage for persistence
+    const stored = JSON.parse(localStorage.getItem('pausedTasks') || '{}');
+    stored[taskId] = resumeDate;
+    localStorage.setItem('pausedTasks', JSON.stringify(stored));
+  };
+
+  // Load paused tasks from localStorage on mount
+  useEffect(() => {
+    const stored = JSON.parse(localStorage.getItem('pausedTasks') || '{}');
+    const stillPaused = {};
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    Object.entries(stored).forEach(([taskId, resumeDate]) => {
+      if (resumeDate > todayStr) {
+        stillPaused[taskId] = resumeDate;
+      }
+    });
+    setPausedTasks(stillPaused);
+    localStorage.setItem('pausedTasks', JSON.stringify(stillPaused));
+  }, []);
+
   // Reorder tasks
   const moveTaskUp = (taskId) => {
     const currentOrder = localTaskOrder.length > 0 ? [...localTaskOrder] : allTasks.map(t => t.id);
