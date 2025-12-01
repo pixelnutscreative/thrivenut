@@ -43,6 +43,203 @@ const toneOptions = [
   { value: 'cozy', label: '☕ Cozy' },
 ];
 
+// Searchable Gifter Row Component
+function GifterRow({ gifter, idx, allContacts, gifts, updateGifter, removeGifter }) {
+  const [usernameOpen, setUsernameOpen] = useState(false);
+  const [giftOpen, setGiftOpen] = useState(false);
+  const [usernameSearch, setUsernameSearch] = useState('');
+  const [giftSearch, setGiftSearch] = useState('');
+
+  // Normalize contact data
+  const normalizedContacts = allContacts
+    .map(c => ({
+      id: c.id,
+      username: c.username || c.data?.username || '',
+      display_name: c.display_name || c.data?.display_name || '',
+      phonetic: c.phonetic || c.data?.phonetic || ''
+    }))
+    .filter(c => c.username)
+    .sort((a, b) => (a.display_name || a.username).toLowerCase().localeCompare((b.display_name || b.username).toLowerCase()));
+
+  // Filter contacts by search
+  const filteredContacts = usernameSearch 
+    ? normalizedContacts.filter(c => 
+        c.username.toLowerCase().includes(usernameSearch.toLowerCase()) ||
+        c.display_name.toLowerCase().includes(usernameSearch.toLowerCase())
+      )
+    : normalizedContacts;
+
+  // Filter gifts by search
+  const filteredGifts = giftSearch
+    ? gifts.filter(g => g.name?.toLowerCase().includes(giftSearch.toLowerCase()))
+    : gifts;
+
+  const handleSelectContact = (contact) => {
+    updateGifter(idx, 'username', contact.username);
+    updateGifter(idx, 'display_name', contact.display_name || contact.username);
+    updateGifter(idx, 'name', contact.phonetic || contact.display_name || contact.username);
+    setUsernameOpen(false);
+    setUsernameSearch('');
+  };
+
+  const handleAddNewUsername = () => {
+    if (usernameSearch.trim()) {
+      updateGifter(idx, 'username', usernameSearch.replace('@', ''));
+      setUsernameOpen(false);
+      setUsernameSearch('');
+    }
+  };
+
+  return (
+    <div className="grid grid-cols-12 gap-2 p-3 bg-gray-50 rounded-lg">
+      {/* Username - Searchable */}
+      <div className="col-span-2">
+        <Popover open={usernameOpen} onOpenChange={setUsernameOpen}>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className="w-full h-8 text-xs font-mono justify-start truncate">
+              {gifter.username ? `@${gifter.username}` : 'Select...'}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-64 p-0" align="start">
+            <Command>
+              <CommandInput 
+                placeholder="Search or type username..." 
+                value={usernameSearch}
+                onValueChange={setUsernameSearch}
+              />
+              <CommandList>
+                <CommandEmpty>
+                  {usernameSearch ? (
+                    <button 
+                      onClick={handleAddNewUsername}
+                      className="w-full p-2 text-sm text-left hover:bg-gray-100 text-purple-600"
+                    >
+                      + Add "@{usernameSearch.replace('@', '')}"
+                    </button>
+                  ) : (
+                    <span className="text-gray-500">Type to search...</span>
+                  )}
+                </CommandEmpty>
+                <CommandGroup>
+                  {filteredContacts.slice(0, 50).map(c => (
+                    <CommandItem 
+                      key={c.id} 
+                      value={c.username}
+                      onSelect={() => handleSelectContact(c)}
+                      className="cursor-pointer"
+                    >
+                      <span className="font-mono text-xs">@{c.username}</span>
+                      {c.display_name && (
+                        <span className="ml-2 text-gray-500 text-xs truncate">- {c.display_name}</span>
+                      )}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+      </div>
+
+      {/* Display Name */}
+      <div className="col-span-2">
+        <Input
+          placeholder="Display name"
+          value={gifter.display_name || ''}
+          onChange={(e) => updateGifter(idx, 'display_name', e.target.value)}
+          className="h-8 text-xs"
+        />
+      </div>
+
+      {/* Phonetic */}
+      <div className="col-span-2">
+        <Input
+          placeholder="Phonetic"
+          value={gifter.name}
+          onChange={(e) => updateGifter(idx, 'name', e.target.value)}
+          className="h-8 text-xs"
+        />
+      </div>
+
+      {/* Rank */}
+      <div className="col-span-2">
+        <Select value={gifter.rank} onValueChange={(v) => updateGifter(idx, 'rank', v)}>
+          <SelectTrigger className="h-8 text-xs">
+            <SelectValue placeholder="Rank" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="1st">🥇 1st</SelectItem>
+            <SelectItem value="2nd">🥈 2nd</SelectItem>
+            <SelectItem value="3rd">🥉 3rd</SelectItem>
+            <SelectItem value="shoutout">⭐ Shoutout</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Gift - Searchable */}
+      <div className="col-span-3">
+        <Popover open={giftOpen} onOpenChange={setGiftOpen}>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className="w-full h-8 text-xs justify-start truncate">
+              {gifter.gift || 'Select gift...'}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-56 p-0" align="start">
+            <Command>
+              <CommandInput 
+                placeholder="Search gifts..." 
+                value={giftSearch}
+                onValueChange={setGiftSearch}
+              />
+              <CommandList>
+                <CommandEmpty>
+                  {giftSearch ? (
+                    <button 
+                      onClick={() => {
+                        updateGifter(idx, 'gift', giftSearch);
+                        setGiftOpen(false);
+                        setGiftSearch('');
+                      }}
+                      className="w-full p-2 text-sm text-left hover:bg-gray-100 text-purple-600"
+                    >
+                      + Add "{giftSearch}"
+                    </button>
+                  ) : (
+                    <span className="text-gray-500">No gifts found</span>
+                  )}
+                </CommandEmpty>
+                <CommandGroup>
+                  {filteredGifts.slice(0, 50).map(g => (
+                    <CommandItem 
+                      key={g.id} 
+                      value={g.name}
+                      onSelect={() => {
+                        updateGifter(idx, 'gift', g.name);
+                        setGiftOpen(false);
+                        setGiftSearch('');
+                      }}
+                      className="cursor-pointer"
+                    >
+                      {g.name}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+      </div>
+
+      {/* Remove */}
+      <div className="col-span-1">
+        <Button variant="ghost" size="sm" onClick={() => removeGifter(idx)} className="h-8 text-red-500">
+          ×
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export default function SongGenerator() {
   const queryClient = useQueryClient();
   const [songType, setSongType] = useState('');
