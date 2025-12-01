@@ -9,6 +9,7 @@ const allFeatures = [
   { id: 'gifter', name: 'Gifter Songs', description: 'Track gifters & generate songs', requiresTikTokAccess: true },
   { id: 'goals', name: 'Personal Goals', description: 'Goal tracking for all areas' },
   { id: 'journal', name: 'Daily Journal', description: 'Reflections and AI reframing' },
+  { id: 'quick_notes', name: 'Quick Notes', description: 'Ideas, gratitudes & captured thoughts' },
   { id: 'wellness', name: 'Wellness Tracker', description: 'Water, sleep, mood & self-care' },
   { id: 'supplements', name: 'Supplements & Vitamins', description: 'Track daily supplements' },
   { id: 'medications', name: 'Medications', description: 'Medication tracking' },
