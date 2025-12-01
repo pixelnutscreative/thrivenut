@@ -57,6 +57,7 @@ const moduleNavMap = {
 
 const allNavItems = [
   { name: "Pixel's Place", icon: Sparkles, path: 'PixelsParadise', alwaysShow: true },
+  { name: 'Saved Motivations', icon: Sparkles, path: 'SavedMotivations', alwaysShow: true },
   { name: 'Dashboard', icon: LayoutDashboard, path: 'Dashboard', alwaysShow: true },
   { name: 'Social Media Suite', icon: TrendingUp, isSection: true, moduleId: 'tiktok', requiresTikTokAccess: true, subItems: [
     { name: 'Discover Creators', icon: Users, path: 'DiscoverCreators', highlight: true },

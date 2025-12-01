@@ -26,11 +26,21 @@ import { useTheme } from '../components/shared/useTheme';
 
 
 
-const greetingTypes = [
-  { id: 'scripture', name: 'Scripture', description: 'Daily Bible verse' },
-  { id: 'positive_quote', name: 'Positive Quote', description: 'Uplifting quotes' },
-  { id: 'motivational', name: 'Motivational', description: 'Get pumped up!' },
-  { id: 'affirmation', name: 'Daily Affirmation', description: 'Personalized affirmations' }
+const greetingTypeOptions = [
+  { id: 'scripture', name: 'Scripture', description: 'Daily Bible verse', icon: '📖' },
+  { id: 'positive_quote', name: 'Positive Quote', description: 'Uplifting quotes', icon: '✨' },
+  { id: 'motivational', name: 'Motivational', description: 'Get pumped up!', icon: '🔥' },
+  { id: 'affirmation', name: 'Daily Affirmation', description: 'Personalized affirmations', icon: '💜' }
+];
+
+const pageOptions = [
+  { id: 'Dashboard', name: 'Dashboard' },
+  { id: 'Goals', name: 'Goals' },
+  { id: 'Wellness', name: 'Wellness' },
+  { id: 'Journal', name: 'Journal' },
+  { id: 'TikTokContacts', name: 'Creator Contacts' },
+  { id: 'LiveSchedule', name: 'Content Calendar' },
+  { id: 'PixelsParadise', name: "Pixel's Place" },
 ];
 
 const accessibilityModes = [
@@ -75,6 +85,10 @@ export default function Settings() {
     primary_color: '#1fd2ea',
     accent_color: '#bd84f5',
     greeting_type: 'positive_quote',
+    greeting_types: ['positive_quote'],
+    default_landing_page: 'Dashboard',
+    ai_tool_links: [],
+    motivation_categories: ['Content Ideas', 'Personal Growth', 'Spiritual', 'Business'],
     user_timezone: 'America/New_York',
     enabled_modules: ['tiktok', 'gifter', 'goals', 'wellness', 'supplements', 'medications', 'pets', 'care_reminders', 'people', 'journal', 'mental_health'],
     feature_order: [],
@@ -122,6 +136,10 @@ export default function Settings() {
         primary_color: preferences.primary_color || '#1fd2ea',
         accent_color: preferences.accent_color || '#bd84f5',
         greeting_type: preferences.greeting_type || 'positive_quote',
+      greeting_types: preferences.greeting_types || [preferences.greeting_type || 'positive_quote'],
+      default_landing_page: preferences.default_landing_page || 'Dashboard',
+      ai_tool_links: preferences.ai_tool_links || [],
+      motivation_categories: preferences.motivation_categories || ['Content Ideas', 'Personal Growth', 'Spiritual', 'Business'],
         user_timezone: preferences.user_timezone || 'America/New_York',
         enabled_modules: preferences.enabled_modules || ['tiktok', 'gifter', 'goals', 'wellness', 'supplements', 'medications', 'pets', 'care_reminders', 'people', 'journal', 'mental_health'],
         feature_order: preferences.feature_order || [],
@@ -642,38 +660,68 @@ export default function Settings() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <MessageSquare className="w-5 h-5" />
-                    Daily Greeting
+                    Daily Greeting Types
                   </CardTitle>
-                  <CardDescription>How should we greet you each day?</CardDescription>
+                  <CardDescription>Select multiple types to rotate through on your dashboard</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {greetingTypes.map(greeting => (
-                    <div
-                      key={greeting.id}
-                      onClick={() => setFormData({ ...formData, greeting_type: greeting.id })}
-                      className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                        formData.greeting_type === greeting.id
-                          ? 'border-purple-500 bg-purple-50'
-                          : 'border-gray-200 hover:border-purple-300'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                          formData.greeting_type === greeting.id
-                            ? 'border-purple-500'
-                            : 'border-gray-300'
-                        }`}>
-                          {formData.greeting_type === greeting.id && (
-                            <div className="w-2.5 h-2.5 rounded-full bg-purple-500" />
-                          )}
-                        </div>
-                        <div>
-                          <h4 className="font-semibold">{greeting.name}</h4>
-                          <p className="text-sm text-gray-600">{greeting.description}</p>
+                  {greetingTypeOptions.map(greeting => {
+                    const isSelected = formData.greeting_types?.includes(greeting.id);
+                    return (
+                      <div
+                        key={greeting.id}
+                        onClick={() => {
+                          const current = formData.greeting_types || [];
+                          const newTypes = isSelected
+                            ? current.filter(t => t !== greeting.id)
+                            : [...current, greeting.id];
+                          // Ensure at least one is selected
+                          if (newTypes.length > 0) {
+                            setFormData({ ...formData, greeting_types: newTypes, greeting_type: newTypes[0] });
+                          }
+                        }}
+                        className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                          isSelected
+                            ? 'border-purple-500 bg-purple-50'
+                            : 'border-gray-200 hover:border-purple-300'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <Checkbox checked={isSelected} />
+                          <span className="text-xl">{greeting.icon}</span>
+                          <div>
+                            <h4 className="font-semibold">{greeting.name}</h4>
+                            <p className="text-sm text-gray-600">{greeting.description}</p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Layers className="w-5 h-5" />
+                    Default Landing Page
+                  </CardTitle>
+                  <CardDescription>Which page opens when you log in or click the logo</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Select
+                    value={formData.default_landing_page}
+                    onValueChange={(v) => setFormData({ ...formData, default_landing_page: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {pageOptions.map(page => (
+                        <SelectItem key={page.id} value={page.id}>{page.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </CardContent>
               </Card>
 
