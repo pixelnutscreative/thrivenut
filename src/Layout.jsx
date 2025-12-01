@@ -134,12 +134,9 @@ export default function Layout({ children, currentPageName }) {
   const adminEmails = ['pixelnutscreative@gmail.com', 'pixel@thrivenut.app'];
   const isAdmin = adminEmails.includes(realUserEmail);
   
-  // hasTikTokAccess and isBibleBeliever use preferences (which could be for impersonated user)
-  const hasTikTokAccess = preferences?.tiktok_access_approved || isAdmin;
+  // hasTikTokAccess - admins ALWAYS have access
+  const hasTikTokAccess = isAdmin || preferences?.tiktok_access_approved;
   const isBibleBeliever = preferences?.is_bible_believer || preferences?.greeting_type === 'scripture';
-  
-  // Debug log for admin check
-  console.log('Layout admin check:', { realUserEmail, isAdmin, user: user?.email });
 
   // Filter and order nav items based on enabled modules and feature order
   const getOrderedNavItems = () => {
