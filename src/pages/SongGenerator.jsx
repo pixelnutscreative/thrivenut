@@ -295,7 +295,17 @@ ${includeLevelUp ? 'Include a verse encouraging the community to help level up!'
       } else if (songType === 'most_shares') {
         prompt += `Create a song thanking those who share the lyve! Celebrate people who spread the word and bring new viewers to ${hostDisplayName}'s stream.`;
       } else if (songType === 'top_viewers') {
-        prompt += `Create a song celebrating loyal viewers who watch the longest! Thank them for their time and dedication to ${hostDisplayName}'s content.`;
+        const timePeriodLabel = timePeriodOptions.find(t => t.value === formData.time_period)?.label || 'recently';
+        const viewerList = formData.gifters.map(g => 
+          `${g.rank || 'Viewer'}: "${g.name}" (this is the PHONETIC pronunciation)${g.amount ? ` - watched ${g.amount}` : ''}`
+        ).join('\n');
+        prompt += `Create a song celebrating the top viewers from ${timePeriodLabel} for ${hostDisplayName}!\n${viewerList}\n\nCRITICAL: Use the PHONETIC name provided in quotes for each viewer - that's exactly how it should appear in the lyrics!\nThank them for their time and dedication. Make each viewer feel special!`;
+      } else if (songType === 'top_gifters') {
+        const timePeriodLabel = timePeriodOptions.find(t => t.value === formData.time_period)?.label || 'recently';
+        const gifterList = formData.gifters.map(g => 
+          `${g.rank || 'Gifter'}: "${g.name}" (this is the PHONETIC pronunciation)${g.amount ? ` - gifted ${g.amount}` : ''}`
+        ).join('\n');
+        prompt += `Create a song celebrating the top gifters by amount from ${timePeriodLabel} for ${hostDisplayName}!\n${gifterList}\n\nCRITICAL: Use the PHONETIC name provided in quotes for each gifter - that's exactly how it should appear in the lyrics!\nCelebrate their generosity and support!`;
       }
 
       const result = await base44.integrations.Core.InvokeLLM({
