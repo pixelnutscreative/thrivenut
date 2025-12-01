@@ -22,15 +22,22 @@ import SunoInfoModal from '../components/song/SunoInfoModal';
 import SongHistoryModal from '../components/song/SongHistoryModal';
 
 const songTypes = [
-  { id: 'gift_gallery', label: '🎁 Gift Gallery Thank-You', icon: Gift, description: 'Celebrate your top gifters from the week' },
-  { id: 'top_viewers', label: '👑 Top Viewers Song', icon: Users, description: 'Thank viewers who watched the longest' },
-  { id: 'top_gifters', label: '💎 Top Gifters Song', icon: Gift, description: 'Celebrate biggest gifters' },
+  { id: 'gift_gallery', label: '🎁 Gift Gallery Thank-You', icon: Gift, description: 'Celebrate your top gifters from the week', hasGift: true },
+  { id: 'top_viewers', label: '👑 Top Viewers Song', icon: Users, description: 'Thank viewers who watched the longest', hasGift: false, hasAmount: true, amountLabel: 'Watch Time' },
+  { id: 'top_gifters', label: '💎 Top Gifters Song', icon: Gift, description: 'Celebrate biggest gifters by amount', hasGift: false, hasAmount: true, amountLabel: 'Gift Amount' },
   { id: 'most_taps', label: '❤️ Most Taps Song', icon: Heart, description: 'Hype up your tappers' },
   { id: 'most_shares', label: '🔄 Most Shares Song', icon: Share2, description: 'Thank those who shared' },
   { id: 'battle_hype', label: '⚔️ Battle Hype Song', icon: Swords, description: 'Get pumped for battles' },
   { id: 'milestone', label: '🎉 Milestone Song', icon: Trophy, description: 'Celebrate a big achievement' },
   { id: 'engagement', label: '🔥 Engagement Hype Song', icon: Zap, description: 'Get the crowd moving' },
   { id: 'custom', label: '✨ Custom Celebration', icon: Star, description: 'Something special' },
+];
+
+const timePeriodOptions = [
+  { value: 'current_live', label: 'This Live' },
+  { value: 'last_7_days', label: 'Last 7 Days' },
+  { value: 'last_30_days', label: 'Last 30 Days' },
+  { value: 'last_60_days', label: 'Last 60 Days' },
 ];
 
 const toneOptions = [
