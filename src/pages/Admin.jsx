@@ -57,7 +57,7 @@ export default function Admin() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-11">
+          <TabsList className="grid w-full grid-cols-12">
             <TabsTrigger value="feedback" className="flex items-center gap-2">
               <ListTodo className="w-4 h-4" />
               <span className="hidden sm:inline">Feedback</span>
@@ -81,6 +81,10 @@ export default function Admin() {
             <TabsTrigger value="contacts" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
               <span className="hidden sm:inline">Contacts</span>
+            </TabsTrigger>
+            <TabsTrigger value="duplicates" className="flex items-center gap-2">
+              <Merge className="w-4 h-4" />
+              <span className="hidden sm:inline">Duplicates</span>
             </TabsTrigger>
             <TabsTrigger value="gifts" className="flex items-center gap-2">
               <Gift className="w-4 h-4" />
@@ -126,6 +130,10 @@ export default function Admin() {
 
           <TabsContent value="contacts" className="mt-6">
             <AdminMasterContactsContent />
+          </TabsContent>
+
+          <TabsContent value="duplicates" className="mt-6">
+            <DuplicateContactMerger />
           </TabsContent>
 
           <TabsContent value="gifts" className="mt-6">
