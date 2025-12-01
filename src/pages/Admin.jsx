@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
-import { Shield, Star, UserCog, Users, Gift, Settings, Palette, Clock, MessageSquare, ListTodo, Squirrel, FolderOpen } from 'lucide-react';
+import { Shield, Star, UserCog, Users, Gift, Settings, Palette, Clock, MessageSquare, ListTodo, Squirrel, FolderOpen, Merge } from 'lucide-react';
 
 // Import the individual admin components/pages as content
 import AdminSuperFanContent from '../components/admin/AdminSuperFanContent';
@@ -17,6 +17,7 @@ import AdminSupportContent from '../components/admin/AdminSupportContent';
 import AdminFeedbackContent from '../components/admin/AdminFeedbackContent';
 import AdminNutPalsContent from '../components/admin/AdminNutPalsContent';
 import AdminCategoriesContent from '../components/admin/AdminCategoriesContent';
+import DuplicateContactMerger from '../components/admin/DuplicateContactMerger';
 
 const ADMIN_EMAIL = 'pixelnutscreative@gmail.com';
 
