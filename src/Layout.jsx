@@ -128,8 +128,8 @@ export default function Layout({ children, currentPageName }) {
 
   const enabledModules = preferences?.enabled_modules || ['tiktok', 'gifter', 'goals', 'wellness', 'supplements', 'medications', 'pets', 'care_reminders', 'people', 'journal', 'mental_health'];
   const featureOrder = preferences?.feature_order || [];
-  const hasTikTokAccess = preferences?.tiktok_access_approved || user?.email?.toLowerCase() === 'pixelnutscreative@gmail.com';
-  const isAdmin = user?.email?.toLowerCase() === 'pixelnutscreative@gmail.com';
+  const hasTikTokAccess = preferences?.tiktok_access_approved || user?.email?.toLowerCase() === 'pixelnutscreative@gmail.com' || user?.email?.toLowerCase() === 'pixel@thrivenut.app';
+  const isAdmin = user?.email?.toLowerCase() === 'pixelnutscreative@gmail.com' || user?.email?.toLowerCase() === 'pixel@thrivenut.app';
   const isBibleBeliever = preferences?.is_bible_believer || preferences?.greeting_type === 'scripture';
 
   // Filter and order nav items based on enabled modules and feature order

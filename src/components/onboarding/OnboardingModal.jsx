@@ -142,12 +142,12 @@ export default function OnboardingModal({ isOpen, user, onComplete }) {
 
         {/* Progress */}
         <div className="flex justify-center mb-4">
-          {[1, 2, 3, 4, 5].map(num => (
+          {[1, 2, 3, 4].map(num => (
             <div key={num} className="flex items-center">
               <div className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-semibold ${
                 step >= num ? 'bg-purple-500 text-white' : 'bg-gray-200 text-gray-500'
               }`}>{num}</div>
-              {num < 5 && <div className={`w-6 h-1 mx-1 ${step > num ? 'bg-purple-500' : 'bg-gray-200'}`} />}
+              {num < 4 && <div className={`w-6 h-1 mx-1 ${step > num ? 'bg-purple-500' : 'bg-gray-200'}`} />}
             </div>
           ))}
         </div>
@@ -193,20 +193,8 @@ export default function OnboardingModal({ isOpen, user, onComplete }) {
           </motion.div>
         )}
 
-        {/* Step 2: Theme */}
+        {/* Step 2: Timezone & Bible */}
         {step === 2 && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <h3 className="text-lg font-bold mb-3 text-center">Pick your appearance</h3>
-            <ThemeSelector themeData={themeData} onChange={setThemeData} />
-            <div className="flex gap-3 mt-4">
-              <Button onClick={() => setStep(1)} variant="outline" className="flex-1">Back</Button>
-              <Button onClick={() => setStep(3)} className="flex-1 bg-purple-600 hover:bg-purple-700">Continue</Button>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Step 3: Timezone & Bible */}
-        {step === 3 && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <h3 className="text-lg font-bold mb-3 text-center">A few quick settings</h3>
             <div className="space-y-4">
@@ -233,8 +221,8 @@ export default function OnboardingModal({ isOpen, user, onComplete }) {
           </motion.div>
         )}
 
-        {/* Step 4: Mental Health */}
-        {step === 4 && (
+        {/* Step 3: Mental Health */}
+        {step === 3 && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <h3 className="text-lg font-bold mb-2 text-center">What are you working on?</h3>
             <p className="text-gray-500 text-xs text-center mb-3">This helps personalize your support. 100% private. 💜</p>
@@ -274,14 +262,14 @@ export default function OnboardingModal({ isOpen, user, onComplete }) {
               </div>
             </div>
             <div className="flex gap-3 mt-4">
-              <Button onClick={() => setStep(3)} variant="outline" className="flex-1">Back</Button>
-              <Button onClick={() => setStep(5)} className="flex-1 bg-purple-600 hover:bg-purple-700">Continue</Button>
+              <Button onClick={() => setStep(2)} variant="outline" className="flex-1">Back</Button>
+              <Button onClick={() => setStep(4)} className="flex-1 bg-purple-600 hover:bg-purple-700">Continue</Button>
             </div>
           </motion.div>
         )}
 
-        {/* Step 5: Greeting */}
-        {step === 5 && (
+        {/* Step 4: Greeting */}
+        {step === 4 && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <h3 className="text-lg font-bold mb-3 text-center">How should we greet you?</h3>
             <div className="space-y-2">
@@ -308,7 +296,7 @@ export default function OnboardingModal({ isOpen, user, onComplete }) {
               ))}
             </div>
             <div className="flex gap-3 mt-4">
-              <Button onClick={() => setStep(4)} variant="outline" className="flex-1">Back</Button>
+              <Button onClick={() => setStep(3)} variant="outline" className="flex-1">Back</Button>
               <Button 
                 onClick={completeOnboarding}
                 disabled={loading}

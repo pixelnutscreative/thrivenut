@@ -56,16 +56,24 @@ export default function PetCare() {
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [selectedPetForHistory, setSelectedPetForHistory] = useState(null);
 
+  const [user, setUser] = useState(null);
+  
+  React.useEffect(() => {
+    base44.auth.me().then(setUser);
+  }, []);
+
   const { data: pets = [] } = useQuery({
-    queryKey: ['pets'],
-    queryFn: () => base44.entities.Pet.list('-created_date'),
+    queryKey: ['pets', user?.email],
+    queryFn: () => base44.entities.Pet.filter({ created_by: user.email }, '-created_date'),
+    enabled: !!user,
   });
 
   const today = format(new Date(), 'yyyy-MM-dd');
 
   const { data: todaysActivityLogs = [] } = useQuery({
-    queryKey: ['petActivityLogs', today],
-    queryFn: () => base44.entities.PetActivityLog.filter({ date: today }),
+    queryKey: ['petActivityLogs', today, user?.email],
+    queryFn: () => base44.entities.PetActivityLog.filter({ date: today, created_by: user.email }),
+    enabled: !!user,
   });
 
   const { data: allActivityLogs = [] } = useQuery({
