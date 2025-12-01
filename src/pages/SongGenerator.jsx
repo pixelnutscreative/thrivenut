@@ -482,7 +482,7 @@ Creator display name: ${hostDisplayName}`,
   const addGifter = () => {
     setFormData(prev => ({
       ...prev,
-      gifters: [...prev.gifters, { name: '', username: '', display_name: '', rank: '', gift: '' }]
+      gifters: [...prev.gifters, { name: '', username: '', display_name: '', rank: '', gift: '', amount: '' }]
     }));
   };
 
