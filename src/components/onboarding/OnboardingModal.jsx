@@ -215,8 +215,8 @@ export default function OnboardingModal({ isOpen, user, onComplete }) {
               </div>
             </div>
             <div className="flex gap-3 mt-4">
-              <Button onClick={() => setStep(2)} variant="outline" className="flex-1">Back</Button>
-              <Button onClick={() => setStep(4)} className="flex-1 bg-purple-600 hover:bg-purple-700">Continue</Button>
+              <Button onClick={() => setStep(1)} variant="outline" className="flex-1">Back</Button>
+              <Button onClick={() => setStep(3)} className="flex-1 bg-purple-600 hover:bg-purple-700">Continue</Button>
             </div>
           </motion.div>
         )}
