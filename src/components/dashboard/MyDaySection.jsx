@@ -1464,15 +1464,47 @@ export default function MyDaySection({
         {skippedTasks.length > 0 && (
           <div className="p-3 bg-gray-100 rounded-xl">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-gray-600 font-medium">Skipped today ({skippedTasks.length})</span>
+              <span className="text-sm text-gray-600 font-medium">Skipped today ({skippedTasks.filter(id => !pausedTasks[id]).length})</span>
               <Button 
                 variant="ghost" 
                 size="sm" 
-                onClick={() => setSkippedTasks([])}
+                onClick={() => setSkippedTasks(skippedTasks.filter(id => pausedTasks[id]))}
                 className="text-xs"
               >
                 Restore all
               </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Paused tasks info */}
+        {Object.keys(pausedTasks).length > 0 && (
+          <div className="p-3 bg-amber-50 rounded-xl border border-amber-200">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm text-amber-700 font-medium">⏸️ Paused tasks ({Object.keys(pausedTasks).length})</span>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => {
+                  setPausedTasks({});
+                  setSkippedTasks(prev => prev.filter(id => !pausedTasks[id]));
+                  localStorage.setItem('pausedTasks', '{}');
+                }}
+                className="text-xs text-amber-700"
+              >
+                Resume all
+              </Button>
+            </div>
+            <div className="space-y-1">
+              {Object.entries(pausedTasks).map(([taskId, resumeDate]) => {
+                const task = allTasks.find(t => t.id === taskId);
+                return (
+                  <div key={taskId} className="flex items-center justify-between text-xs">
+                    <span className="text-amber-800">{task?.label || taskId}</span>
+                    <span className="text-amber-600">resumes {format(new Date(resumeDate), 'MMM d')}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
