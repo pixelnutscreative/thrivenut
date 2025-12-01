@@ -1338,25 +1338,6 @@ export default function MyDaySection({
                                 </a>
                               )}
                               
-                              {/* Edit button for editable task types */}
-                              {(task.type === 'medication' || task.type === 'supplement' || task.type === 'pet' || task.type === 'reminder' || task.type === 'content' || task.type === 'goal') && (
-                                <Link
-                                  to={createPageUrl(
-                                    task.type === 'medication' ? 'Medications' :
-                                    task.type === 'supplement' ? 'Supplements' :
-                                    task.type === 'pet' ? 'PetCare' :
-                                    task.type === 'reminder' ? 'CareReminders' :
-                                    task.type === 'content' ? 'TikTokGoals' :
-                                    task.type === 'goal' ? 'Goals' : 'Dashboard'
-                                  )}
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="p-2 hover:bg-gray-100 rounded-lg"
-                                  title="Edit this item"
-                                >
-                                  <Pencil className="w-4 h-4 text-gray-400" />
-                                </Link>
-                              )}
-                              
                               {task.hasMealNote && (
                                 <button
                                   onClick={(e) => { e.stopPropagation(); handleEditMeal(task.id); }}
@@ -1367,15 +1348,15 @@ export default function MyDaySection({
                                 </button>
                               )}
                               
-                              {!isComplete && (task.canSkip || (task.type !== 'selfcare' && task.type !== 'sleep')) && (
-                                <button
-                                  onClick={(e) => { e.stopPropagation(); handleSkipTask(task.id); }}
-                                  className="p-2 hover:bg-gray-100 rounded-lg"
-                                  title="Skip for today"
-                                >
-                                  <SkipForward className="w-4 h-4 text-gray-400" />
-                                </button>
-                              )}
+                              {/* Task Options Gear Menu */}
+                              <TaskOptionsMenu
+                                task={task}
+                                onSkip={handleSkipTask}
+                                onPushToNextDay={handlePushToNextDay}
+                                onPushToDate={handlePushToDate}
+                                onPause={handlePauseTask}
+                                onMarkComplete={handleToggleTask}
+                              />
                             </div>
                           )}
                         </div>
