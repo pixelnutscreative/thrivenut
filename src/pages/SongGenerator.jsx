@@ -111,6 +111,18 @@ export default function SongGenerator() {
     enabled: !!effectiveEmail,
   });
 
+  // Master contact database - ALL contacts for matching
+  const { data: allContacts = [] } = useQuery({
+    queryKey: ['allTiktokContacts'],
+    queryFn: () => base44.entities.TikTokContact.list('username', 1000),
+  });
+
+  // Gifts list for dropdown
+  const { data: gifts = [] } = useQuery({
+    queryKey: ['gifts'],
+    queryFn: () => base44.entities.Gift.list('name'),
+  });
+
   // Get selected week's entries for auto-population
   const { data: rawEntries = [] } = useQuery({
     queryKey: ['giftingEntries', selectedWeek, effectiveEmail],
