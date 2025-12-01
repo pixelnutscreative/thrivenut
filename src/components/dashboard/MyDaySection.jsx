@@ -23,6 +23,7 @@ import { format } from 'date-fns';
 import DailyMotivationSidebar from './DailyMotivationSidebar';
 import CarryoverTasksModal from './CarryoverTasksModal';
 import TaskHistoryModal from './TaskHistoryModal';
+import TaskOptionsMenu from './TaskOptionsMenu';
 
 // Time category mapping to time slots
 const timeSlotOrder = {
