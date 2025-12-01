@@ -819,8 +819,8 @@ Creator display name: ${hostDisplayName}`,
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Gift Gallery / Top Gifters */}
-                {(songType === 'gift_gallery' || songType === 'top_gifters') && (
+                {/* Gift Gallery (with gifts) */}
+                {songType === 'gift_gallery' && (
                   <div className="space-y-3">
                     {/* Week Picker */}
                     <div className="flex items-center justify-between p-3 bg-amber-50 rounded-lg border border-amber-200">
@@ -952,29 +952,127 @@ Creator display name: ${hostDisplayName}`,
                     </div>
 
                     {/* Column Headers */}
-                    <div className="grid grid-cols-12 gap-2 px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide border-b">
+                    <div className="grid grid-cols-8 gap-2 px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide border-b">
                       <div className="col-span-2">@Username</div>
-                      <div className="col-span-2">Display Name</div>
-                      <div className="col-span-2">Phonetic</div>
-                      <div className="col-span-2">Rank</div>
-                      <div className="col-span-3">Gift</div>
-                      <div className="col-span-1"></div>
+                      <div>Display Name</div>
+                      <div>Phonetic</div>
+                      <div>Rank</div>
+                      <div className="col-span-2">Gift</div>
+                      <div></div>
                     </div>
 
                     {formData.gifters.map((gifter, idx) => (
-                      <GifterRow 
-                        key={idx}
-                        gifter={gifter}
-                        idx={idx}
+                      <GifterEntryRow 
+                        key={gifter.id || idx}
+                        entry={gifter.id ? {
+                          id: gifter.id,
+                          gifter_username: gifter.username,
+                          gifter_screen_name: gifter.display_name,
+                          gifter_phonetic: gifter.name,
+                          rank: gifter.rank,
+                          gift_name: gifter.gift,
+                        } : null}
                         allContacts={allContacts}
                         gifts={gifts}
-                        updateGifter={updateGifter}
-                        removeGifter={removeGifter}
+                        week={selectedWeek}
+                        ownerEmail={effectiveEmail}
+                        onSaved={(result) => {
+                          // Update local state with saved data
+                          setFormData(prev => ({
+                            ...prev,
+                            gifters: prev.gifters.map((g, i) => i === idx ? {
+                              ...g,
+                              id: result?.id || g.id
+                            } : g)
+                          }));
+                        }}
+                        onRemove={() => removeGifter(idx)}
+                        showGift={true}
+                        showAmount={false}
                       />
                     ))}
                     {formData.gifters.length === 0 && (
                       <p className="text-sm text-gray-500 text-center py-4">
-                        No gifters added yet. Add some above or <Link to={createPageUrl('GiftScreenshotImport')} className="text-purple-600 underline">import from screenshots</Link>!
+                        No gifters added yet. Add some above or <Link to={createPageUrl('WeeklyGifterGallery')} className="text-purple-600 underline">import from screenshots</Link>!
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Top Viewers / Top Gifters by Amount (no gift column, has amount) */}
+                {(songType === 'top_viewers' || songType === 'top_gifters') && (
+                  <div className="space-y-3">
+                    {/* Time Period Selector */}
+                    <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <Label className="text-blue-700 mb-2 block">Time Period</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {timePeriodOptions.map(opt => (
+                          <Button
+                            key={opt.value}
+                            type="button"
+                            variant={formData.time_period === opt.value ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setFormData(prev => ({ ...prev, time_period: opt.value }))}
+                            className={formData.time_period === opt.value ? 'bg-blue-600' : ''}
+                          >
+                            {opt.label}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <Label>
+                        {songType === 'top_viewers' ? 'Top Viewers' : 'Top Gifters'} ({formData.gifters.length})
+                      </Label>
+                      <Button variant="outline" size="sm" onClick={addGifter}>
+                        + Add Person
+                      </Button>
+                    </div>
+
+                    {/* Column Headers - no gift, has amount */}
+                    <div className="grid grid-cols-7 gap-2 px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide border-b">
+                      <div className="col-span-2">@Username</div>
+                      <div>Display Name</div>
+                      <div>Phonetic</div>
+                      <div>Rank</div>
+                      <div>{songType === 'top_viewers' ? 'Watch Time' : 'Gift Amount'}</div>
+                      <div></div>
+                    </div>
+
+                    {formData.gifters.map((gifter, idx) => (
+                      <GifterEntryRow 
+                        key={gifter.id || idx}
+                        entry={gifter.id ? {
+                          id: gifter.id,
+                          gifter_username: gifter.username,
+                          gifter_screen_name: gifter.display_name,
+                          gifter_phonetic: gifter.name,
+                          rank: gifter.rank,
+                          amount: gifter.amount,
+                        } : null}
+                        allContacts={allContacts}
+                        gifts={[]}
+                        week={selectedWeek}
+                        ownerEmail={effectiveEmail}
+                        onSaved={(result) => {
+                          setFormData(prev => ({
+                            ...prev,
+                            gifters: prev.gifters.map((g, i) => i === idx ? {
+                              ...g,
+                              id: result?.id || g.id
+                            } : g)
+                          }));
+                        }}
+                        onRemove={() => removeGifter(idx)}
+                        showGift={false}
+                        showAmount={true}
+                        amountLabel={songType === 'top_viewers' ? 'Watch Time' : 'Gift Amount'}
+                      />
+                    ))}
+                    {formData.gifters.length === 0 && (
+                      <p className="text-sm text-gray-500 text-center py-4">
+                        No entries yet. Click "+ Add Person" to add your top {songType === 'top_viewers' ? 'viewers' : 'gifters'}.
                       </p>
                     )}
                   </div>
