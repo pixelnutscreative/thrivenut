@@ -1165,16 +1165,28 @@ export default function MyDaySection({
                   return (
                     <div
                       key={task.id}
-                      onClick={() => !isReordering && (task.isLink ? null : handleToggleTask(task))}
-                      className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all ${
+                      className={`flex items-center gap-2 p-2 rounded-lg transition-all ${
                         isComplete 
                           ? 'bg-green-100 border border-green-300' 
                           : 'bg-white border border-gray-100 hover:border-teal-300'
                       }`}
                     >
-                      <Checkbox checked={isComplete} className="pointer-events-none" />
-                      <Icon className={`w-4 h-4 ${isComplete ? 'text-green-500' : task.color}`} />
-                      <span className={`text-sm flex-1 ${isComplete ? 'line-through text-gray-400' : ''}`}>{task.label}</span>
+                      <div 
+                        className="flex items-center gap-2 flex-1 cursor-pointer"
+                        onClick={() => !isReordering && (task.isLink ? null : handleToggleTask(task))}
+                      >
+                        <Checkbox checked={isComplete} className="pointer-events-none" />
+                        <Icon className={`w-4 h-4 ${isComplete ? 'text-green-500' : task.color}`} />
+                        <span className={`text-sm flex-1 ${isComplete ? 'line-through text-gray-400' : ''}`}>{task.label}</span>
+                      </div>
+                      <TaskOptionsMenu
+                        task={task}
+                        onSkip={handleSkipTask}
+                        onPushToNextDay={handlePushToNextDay}
+                        onPushToDate={handlePushToDate}
+                        onPause={handlePauseTask}
+                        onMarkComplete={handleToggleTask}
+                      />
                     </div>
                   );
                 })
