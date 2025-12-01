@@ -32,6 +32,8 @@ const categoryColors = {
   learning: 'bg-orange-100 text-orange-800',
   career: 'bg-indigo-100 text-indigo-800',
   creative: 'bg-teal-100 text-teal-800',
+  create_content: 'bg-violet-100 text-violet-800',
+  engage_community: 'bg-cyan-100 text-cyan-800',
   other: 'bg-gray-100 text-gray-800'
 };
 
@@ -72,6 +74,8 @@ const categoryIcons = {
   learning: '📚',
   career: '💼',
   creative: '🎨',
+  create_content: '✍️',
+  engage_community: '🤝',
   other: '✨'
 };
 
@@ -104,7 +108,8 @@ export default function Goals() {
     shared_with: [],
     start_date: format(new Date(), 'yyyy-MM-dd'),
     vision_image_url: '',
-    vision_board_category: ''
+    vision_board_category: '',
+    custom_category_name: ''
   });
   const [expandedGoals, setExpandedGoals] = useState({});
 
@@ -222,7 +227,8 @@ export default function Goals() {
       shared_with: [],
       start_date: format(new Date(), 'yyyy-MM-dd'),
       vision_image_url: '',
-      vision_board_category: ''
+      vision_board_category: '',
+      custom_category_name: ''
     });
     setEditingGoal(null);
     setShowForm(false);
@@ -319,7 +325,8 @@ export default function Goals() {
       shared_with: goal.shared_with || [],
       start_date: goal.start_date || format(new Date(), 'yyyy-MM-dd'),
       vision_image_url: goal.vision_image_url || '',
-      vision_board_category: goal.vision_board_category || ''
+      vision_board_category: goal.vision_board_category || '',
+      custom_category_name: goal.custom_category_name || ''
     });
     setShowForm(true);
   };
@@ -445,9 +452,19 @@ export default function Goals() {
                           <SelectItem value="learning">📚 Learning</SelectItem>
                           <SelectItem value="career">💼 Career</SelectItem>
                           <SelectItem value="creative">🎨 Creative</SelectItem>
+                          <SelectItem value="create_content">✍️ Create Content</SelectItem>
+                          <SelectItem value="engage_community">🤝 Engage with Community</SelectItem>
                           <SelectItem value="other">✨ Other</SelectItem>
                         </SelectContent>
                       </Select>
+                      {formData.category === 'other' && (
+                        <Input
+                          placeholder="Enter your custom category name..."
+                          value={formData.custom_category_name}
+                          onChange={(e) => setFormData({...formData, custom_category_name: e.target.value})}
+                          className="mt-2"
+                        />
+                      )}
                     </div>
                   </div>
 
@@ -641,7 +658,7 @@ export default function Goals() {
                       )}
                       <div className="flex items-start justify-between mb-2">
                         <Badge className={`${categoryColors[goal.category]} border-0`}>
-                          {goal.category}
+                          {goal.category === 'other' && goal.custom_category_name ? goal.custom_category_name : goal.category.replace('_', ' ')}
                         </Badge>
                         <div className="flex gap-1">
                           <Button
