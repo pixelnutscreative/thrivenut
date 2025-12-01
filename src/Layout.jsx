@@ -128,8 +128,13 @@ export default function Layout({ children, currentPageName }) {
 
   const enabledModules = preferences?.enabled_modules || ['tiktok', 'gifter', 'goals', 'wellness', 'supplements', 'medications', 'pets', 'care_reminders', 'people', 'journal', 'mental_health'];
   const featureOrder = preferences?.feature_order || [];
-  const hasTikTokAccess = preferences?.tiktok_access_approved || user?.email?.toLowerCase() === 'pixelnutscreative@gmail.com' || user?.email?.toLowerCase() === 'pixel@thrivenut.app';
-  const isAdmin = user?.email?.toLowerCase() === 'pixelnutscreative@gmail.com' || user?.email?.toLowerCase() === 'pixel@thrivenut.app';
+  
+  // IMPORTANT: isAdmin checks the REAL user email (not impersonated), so admin always sees admin menu
+  const realUserEmail = user?.email?.toLowerCase();
+  const isAdmin = realUserEmail === 'pixelnutscreative@gmail.com' || realUserEmail === 'pixel@thrivenut.app';
+  
+  // hasTikTokAccess and isBibleBeliever use preferences (which could be for impersonated user)
+  const hasTikTokAccess = preferences?.tiktok_access_approved || isAdmin;
   const isBibleBeliever = preferences?.is_bible_believer || preferences?.greeting_type === 'scripture';
 
   // Filter and order nav items based on enabled modules and feature order
