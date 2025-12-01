@@ -1052,6 +1052,44 @@ export default function WeeklyGifterGallery() {
                     
                     {showAddGifter ? (
                       <div className="p-3 bg-purple-50 rounded-lg border border-purple-200 space-y-3">
+                        <p className="text-sm text-purple-700 font-medium">Search master contacts or add new:</p>
+                        <div className="space-y-2">
+                          <Select
+                            value={newGifterData.username ? `search_${newGifterData.username}` : ''}
+                            onValueChange={(v) => {
+                              if (v.startsWith('master_')) {
+                                const masterId = v.replace('master_', '');
+                                const match = allContacts.find(c => c.id === masterId);
+                                if (match) {
+                                  setNewGifterData({
+                                    username: match.username || match.data?.username || '',
+                                    display_name: match.display_name || match.data?.display_name || '',
+                                    phonetic: match.phonetic || match.data?.phonetic || ''
+                                  });
+                                }
+                              }
+                            }}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Search master database..." />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-60">
+                              {allContacts
+                                .filter(c => c.username || c.data?.username)
+                                .sort((a, b) => {
+                                  const aName = (a.display_name || a.data?.display_name || a.username || a.data?.username || '').toLowerCase();
+                                  const bName = (b.display_name || b.data?.display_name || b.username || b.data?.username || '').toLowerCase();
+                                  return aName.localeCompare(bName);
+                                })
+                                .map(c => (
+                                  <SelectItem key={c.id} value={`master_${c.id}`}>
+                                    @{c.username || c.data?.username} - {c.display_name || c.data?.display_name || 'No name'}
+                                  </SelectItem>
+                                ))
+                              }
+                            </SelectContent>
+                          </Select>
+                        </div>
                         <div className="grid grid-cols-3 gap-2 text-xs font-semibold text-gray-500 uppercase tracking-wide px-1">
                           <span>@Username</span>
                           <span>Display Name</span>
@@ -1165,7 +1203,7 @@ export default function WeeklyGifterGallery() {
                     <Label>Gift *</Label>
                     <Select value={formData.gift_id} onValueChange={(value) => setFormData({ ...formData, gift_id: value })}>
                       <SelectTrigger><SelectValue placeholder="Select gift" /></SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="max-h-60">
                         {gifts.map(gift => (
                           <SelectItem key={gift.id} value={gift.id}>
                             {gift.name} {gift.league_range ? `(${gift.league_range})` : ''}
@@ -1173,6 +1211,9 @@ export default function WeeklyGifterGallery() {
                         ))}
                       </SelectContent>
                     </Select>
+                    <Link to={createPageUrl('GiftLibrary')} className="text-xs text-purple-600 hover:underline">
+                      Manage gift library →
+                    </Link>
                   </div>
                 </div>
 

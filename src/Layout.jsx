@@ -73,10 +73,11 @@ const allNavItems = [
   { name: 'Goals', icon: Target, path: 'Goals', moduleId: 'goals' },
     { name: 'Vision Board', icon: Sparkles, path: 'VisionBoard', moduleId: 'goals' },
   { name: 'Prayer Requests', icon: Heart, path: 'PrayerRequests', requiresBibleBeliever: true },
-  { name: 'Mental Health', icon: Brain, isSection: true, moduleId: 'mental_health', subItems: [
-    { name: 'Mental Health Hub', icon: Brain, path: 'NeurodivergentSettings' },
-    { name: 'Journal', icon: BookOpen, path: 'Journal', moduleId: 'journal' },
-  ]},
+      { name: 'Mental Health', icon: Brain, isSection: true, moduleId: 'mental_health', subItems: [
+        { name: 'Mental Health Hub', icon: Brain, path: 'NeurodivergentSettings' },
+        { name: 'Journal', icon: BookOpen, path: 'Journal', moduleId: 'journal' },
+        { name: 'Quick Notes', icon: BookOpen, path: 'QuickNotes', moduleId: 'quick_notes' },
+      ]},
   { name: 'Wellness', icon: Heart, isSection: true, moduleId: 'wellness', subItems: [
     { name: 'Daily Wellness', icon: Heart, path: 'Wellness' },
     { name: 'Supplements', icon: Pill, path: 'Supplements', moduleId: 'supplements' },
@@ -304,9 +305,9 @@ export default function Layout({ children, currentPageName }) {
                                 alt="Let's Thrive!" 
                                 className="w-8 h-8"
                               />
-                              <h1 className="text-2xl font-bold bg-gradient-to-r from-teal-600 to-purple-400 bg-clip-text text-transparent">
-                                Let's Thrive!
-                              </h1>
+                              <h1 className="text-xl font-bold bg-gradient-to-r from-teal-600 to-purple-400 bg-clip-text text-transparent whitespace-nowrap">
+                                                                    Let's Thrive!
+                                                                  </h1>
           </div>
           <div className="flex items-center gap-2">
             {user && <NotificationBell userEmail={effectiveEmail} isDark={isDark} />}
@@ -501,11 +502,11 @@ export default function Layout({ children, currentPageName }) {
                                         className="w-10 h-10"
                                       />
                                       <h1 
-                                        className="text-3xl font-bold bg-clip-text text-transparent"
-                                        style={{ backgroundImage: `linear-gradient(to right, ${primaryColor}, ${accentColor})` }}
-                                      >
-                                        Let's Thrive!
-                                      </h1>
+                                                                                    className="text-2xl font-bold bg-clip-text text-transparent whitespace-nowrap"
+                                                                                    style={{ backgroundImage: `linear-gradient(to right, ${primaryColor}, ${accentColor})` }}
+                                                                                  >
+                                                                                    Let's Thrive!
+                                                                                  </h1>
               </div>
               {user && <NotificationBell userEmail={effectiveEmail} isDark={isMenuDark} />}
             </div>
