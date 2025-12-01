@@ -75,6 +75,18 @@ export default function OnboardingModal({ isOpen, user, onComplete }) {
       // Get all existing preferences sorted by most recent
       const existingPrefs = await base44.entities.UserPreferences.filter({ user_email: user.email }, '-updated_date');
       
+      // Check if user is pre-approved for full access
+      let isPreApproved = false;
+      try {
+        const preApproved = await base44.entities.PreApprovedEmail.filter({ 
+          email: user.email.toLowerCase(), 
+          is_active: true 
+        });
+        isPreApproved = preApproved.length > 0;
+      } catch (e) {
+        // Ignore - user may not have access to this entity
+      }
+      
       const prefsData = {
         user_email: user.email,
         theme_type: themeData.theme_type || 'light',
@@ -89,7 +101,8 @@ export default function OnboardingModal({ isOpen, user, onComplete }) {
         accessibility_mode: 'standard',
         enable_ai_journaling: true,
         show_daily_affirmations: selectedGreeting === 'affirmation',
-        onboarding_completed: true
+        onboarding_completed: true,
+        tiktok_access_approved: isPreApproved
       };
       
       if (existingPrefs && existingPrefs.length > 0) {

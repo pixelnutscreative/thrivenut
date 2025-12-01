@@ -51,6 +51,18 @@ export default function Dashboard() {
         const prefs = await base44.entities.UserPreferences.filter({ user_email: userData.email }, '-updated_date');
         // Check if ANY preference record has onboarding_completed = true
         const hasCompletedOnboarding = prefs.some(p => p.onboarding_completed === true);
+        
+        // Check if user is pre-approved and auto-grant access
+        if (prefs[0] && !prefs[0].tiktok_access_approved) {
+          const preApproved = await base44.entities.PreApprovedEmail.filter({ 
+            email: userData.email.toLowerCase(), 
+            is_active: true 
+          });
+          if (preApproved.length > 0) {
+            await base44.entities.UserPreferences.update(prefs[0].id, { tiktok_access_approved: true });
+          }
+        }
+        
         if (!hasCompletedOnboarding) {
           setShowOnboarding(true);
         }
