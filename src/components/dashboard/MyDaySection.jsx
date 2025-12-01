@@ -954,7 +954,7 @@ export default function MyDaySection({
   };
 
   const getVisibleTasks = (sectionTasks) => {
-    let filtered = sectionTasks.filter(t => !skippedTasks.includes(t.id));
+    let filtered = sectionTasks.filter(t => !skippedTasks.includes(t.id) && !pausedTasks[t.id]);
     if (displayMode === 'hide') {
       filtered = filtered.filter(t => !isTaskComplete(t));
     }
