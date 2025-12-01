@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Loader2, LogOut, ChevronDown, ChevronRight, Settings, Calendar, Eye, EyeOff } from 'lucide-react';
 import QuickStats from '../components/dashboard/QuickStats';
 import MyDaySection from '../components/dashboard/MyDaySection';
+import DailyMotivationBanner from '../components/dashboard/DailyMotivationBanner';
 import WeeklyGoalCard from '../components/tiktok/WeeklyGoalCard';
 import PostScheduleModal from '../components/tiktok/PostScheduleModal';
 import LiveScheduleModal from '../components/tiktok/LiveScheduleModal';
@@ -297,6 +298,16 @@ export default function Dashboard() {
   return (
     <div className={`min-h-screen ${bgClass} ${isDark ? 'text-gray-100' : ''} p-4 md:p-8`}>
       <div className="max-w-7xl mx-auto space-y-8">
+        {/* Daily Motivation Banner - AT THE TOP */}
+        <DailyMotivationBanner
+          greetingTypes={preferences?.greeting_types || [preferences?.greeting_type || 'positive_quote']}
+          userName={user?.full_name?.split(' ')[0] || 'Friend'}
+          struggles={preferences?.mental_health_struggles || []}
+          goals={preferences?.improvement_goals || []}
+          isBibleBeliever={preferences?.is_bible_believer || preferences?.greeting_type === 'scripture'}
+          userEmail={user?.email}
+        />
+
         {/* Special Events - Birthdays & Sobriety Anniversaries from Contacts */}
         <SpecialEventsCard contacts={tiktokContacts} />
 
