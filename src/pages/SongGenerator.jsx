@@ -256,7 +256,8 @@ export default function SongGenerator() {
     milestone: '',
     engagement_action: 'taps',
     custom_prompt: '',
-    tone_override: ''
+    tone_override: '',
+    time_period: 'last_7_days'
   });
   const [generatedSong, setGeneratedSong] = useState('');
   const [songTitles, setSongTitles] = useState([]);
