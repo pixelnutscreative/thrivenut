@@ -123,6 +123,7 @@ export default function MyDaySection({
   const [showCarryoverModal, setShowCarryoverModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [collapsedSections, setCollapsedSections] = useState(preferences?.dashboard_collapsed_sections || []);
+  const [pausedTasks, setPausedTasks] = useState({}); // { taskId: resumeDate }
   
   const mealLabels = getMealLabels(preferences?.gender);
   const displayMode = preferences?.completed_tasks_display || 'show_checked';
