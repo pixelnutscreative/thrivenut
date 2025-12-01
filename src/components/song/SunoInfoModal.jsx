@@ -29,7 +29,7 @@ export default function SunoInfoModal({ isOpen, onClose }) {
   ];
 
   const handleOpenSuno = () => {
-    window.open('https://suno.com/invite/@iamnikolewithak', '_blank');
+    window.open('https://suno.com/invite/@pixelnutscreative', '_blank');
     onClose();
   };
 

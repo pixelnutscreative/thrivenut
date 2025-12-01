@@ -238,7 +238,7 @@ export default function TikTokContacts() {
     mutationFn: ({ id, data }) => base44.entities.TikTokContact.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] });
-      closeModal();
+      // Keep modal open after update - just refresh data
     },
   });
 
@@ -276,7 +276,7 @@ export default function TikTokContacts() {
     setShowModal(true);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = (keepOpen = false) => {
     const cleanData = {
       ...formData,
       username: (formData.username || '').replace('@', '').trim()
@@ -284,6 +284,7 @@ export default function TikTokContacts() {
     
     if (editingContact) {
       updateMutation.mutate({ id: editingContact.id, data: cleanData });
+      // Keep modal open after update
     } else {
       createMutation.mutate(cleanData);
     }

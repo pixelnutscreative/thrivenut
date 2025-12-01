@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Target, Plus, Edit, Trash2, CheckCircle2, ChevronDown, ChevronRight, Share2, Users, UserPlus, Eye, Clock, Check, X, Send, Loader2, Mail, ImageIcon, Sparkles } from 'lucide-react';
+import { Target, Plus, Edit, Trash2, CheckCircle2, ChevronDown, ChevronRight, Share2, Users, UserPlus, Eye, Clock, Check, X, Send, Loader2, Mail, ImageIcon, Sparkles, EyeOff, Filter, RotateCcw } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { format } from 'date-fns';
@@ -167,6 +167,49 @@ export default function Goals() {
       return await base44.entities.Goal.filter({ status: 'active', created_by: user.email }, '-created_date');
     },
     enabled: !!user,
+  });
+
+  const { data: completedGoals } = useQuery({
+    queryKey: ['completedGoals', user?.email],
+    queryFn: async () => {
+      return await base44.entities.Goal.filter({ status: 'completed', created_by: user.email }, '-end_date');
+    },
+    enabled: !!user,
+  });
+
+  // Goal filters
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [hiddenGoals, setHiddenGoals] = useState(() => {
+    const saved = localStorage.getItem('hiddenGoals');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const toggleHideGoal = (goalId) => {
+    setHiddenGoals(prev => {
+      const newHidden = prev.includes(goalId) 
+        ? prev.filter(id => id !== goalId) 
+        : [...prev, goalId];
+      localStorage.setItem('hiddenGoals', JSON.stringify(newHidden));
+      return newHidden;
+    });
+  };
+
+  const filteredGoals = (goals || []).filter(goal => {
+    if (hiddenGoals.includes(goal.id)) return false;
+    if (categoryFilter !== 'all' && goal.category !== categoryFilter) return false;
+    return true;
+  });
+
+  const allCategories = [...new Set((goals || []).map(g => g.category))];
+
+  const restoreGoalMutation = useMutation({
+    mutationFn: async (goalId) => {
+      return await base44.entities.Goal.update(goalId, { status: 'active' });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['goals'] });
+      queryClient.invalidateQueries({ queryKey: ['completedGoals'] });
+    },
   });
 
   const createGoalMutation = useMutation({
@@ -406,14 +449,53 @@ export default function Goals() {
         )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsList className="grid w-full grid-cols-3 mb-6">
             <TabsTrigger value="my-goals">My Goals</TabsTrigger>
+            <TabsTrigger value="completed">Completed</TabsTrigger>
             <TabsTrigger value="shared-with-me">
               Shared With Me {acceptedReceived.length > 0 && `(${acceptedReceived.length})`}
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="my-goals" className="space-y-6">
+            {/* Filter Bar */}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-2">
+                <Filter className="w-4 h-4 text-gray-500" />
+                <span className="text-sm text-gray-600">Filter:</span>
+              </div>
+              <Badge
+                variant={categoryFilter === 'all' ? 'default' : 'outline'}
+                className="cursor-pointer"
+                onClick={() => setCategoryFilter('all')}
+              >
+                All ({goals?.length || 0})
+              </Badge>
+              {allCategories.map(cat => (
+                <Badge
+                  key={cat}
+                  variant={categoryFilter === cat ? 'default' : 'outline'}
+                  className={`cursor-pointer ${categoryFilter === cat ? categoryColors[cat] : ''}`}
+                  onClick={() => setCategoryFilter(cat)}
+                >
+                  {categoryIcons[cat]} {cat === 'other' ? 'Other' : cat.replace('_', ' ')}
+                </Badge>
+              ))}
+              {hiddenGoals.length > 0 && (
+                <Badge
+                  variant="outline"
+                  className="cursor-pointer text-gray-500 ml-auto"
+                  onClick={() => {
+                    setHiddenGoals([]);
+                    localStorage.setItem('hiddenGoals', '[]');
+                  }}
+                >
+                  <EyeOff className="w-3 h-3 mr-1" />
+                  {hiddenGoals.length} hidden - Show all
+                </Badge>
+              )}
+            </div>
+
             {/* Inline Goal Form */}
             <AnimatePresence>
           {showForm && (
@@ -629,9 +711,9 @@ export default function Goals() {
         </AnimatePresence>
 
         {/* Goals Grid */}
-        {goals && goals.length > 0 ? (
+        {filteredGoals && filteredGoals.length > 0 ? (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {goals.map((goal, index) => {
+            {filteredGoals.map((goal, index) => {
               const percentage = goal.target_value > 0 ? (goal.current_value / goal.target_value) * 100 : 0;
               const hasSteps = goal.steps && goal.steps.length > 0;
               const stepsCompleted = hasSteps ? goal.steps.filter(s => s.completed).length : 0;
@@ -661,6 +743,15 @@ export default function Goals() {
                           {goal.category === 'other' && goal.custom_category_name ? goal.custom_category_name : goal.category.replace('_', ' ')}
                         </Badge>
                         <div className="flex gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => toggleHideGoal(goal.id)}
+                            className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
+                            title="Hide goal"
+                          >
+                            <EyeOff className="w-4 h-4" />
+                          </Button>
                           <Button
                             size="sm"
                             variant="ghost"
@@ -806,6 +897,71 @@ export default function Goals() {
             </CardContent>
           </Card>
         )}
+          </TabsContent>
+
+          {/* Completed Goals Tab */}
+          <TabsContent value="completed" className="space-y-6">
+            {completedGoals && completedGoals.length > 0 ? (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {completedGoals.map((goal, index) => (
+                  <motion.div
+                    key={goal.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                  >
+                    <Card className="shadow-lg bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
+                      <CardHeader className="pb-3">
+                        {goal.vision_image_url && (
+                          <div className="w-full h-32 -mx-6 -mt-6 mb-3 overflow-hidden rounded-t-lg opacity-75">
+                            <img 
+                              src={goal.vision_image_url} 
+                              alt={goal.title}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        )}
+                        <div className="flex items-start justify-between mb-2">
+                          <Badge className={`${categoryColors[goal.category]} border-0`}>
+                            {goal.category === 'other' && goal.custom_category_name ? goal.custom_category_name : goal.category.replace('_', ' ')}
+                          </Badge>
+                          <div className="flex gap-1">
+                            <Badge className="bg-green-100 text-green-700">
+                              <CheckCircle2 className="w-3 h-3 mr-1" /> Completed
+                            </Badge>
+                          </div>
+                        </div>
+                        <CardTitle className="text-xl">{goal.title}</CardTitle>
+                        {goal.end_date && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            Completed on {format(new Date(goal.end_date), 'MMM d, yyyy')}
+                          </p>
+                        )}
+                      </CardHeader>
+                      <CardContent>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => restoreGoalMutation.mutate(goal.id)}
+                          className="w-full"
+                        >
+                          <RotateCcw className="w-4 h-4 mr-2" />
+                          Restore to Active
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              <Card className="shadow-md">
+                <CardContent className="p-12 text-center">
+                  <CheckCircle2 className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                  <p className="text-gray-500 text-lg mb-2">No completed goals yet</p>
+                  <p className="text-gray-400">When you complete a goal, it will appear here</p>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           {/* Shared With Me Tab */}

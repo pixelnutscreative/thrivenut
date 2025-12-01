@@ -11,10 +11,18 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const categoryIcons = {
   spiritual: '🙏', health: '💪', personal: '🎯', financial: '💰',
-  relationship: '❤️', learning: '📚', career: '💼', creative: '🎨', other: '✨'
+  relationship: '❤️', learning: '📚', career: '💼', creative: '🎨', 
+  create_content: '✍️', engage_community: '🤝', other: '✨'
 };
 
-const emojiOptions = ['👏', '🔥', '💪', '🌟', '❤️', '🎉', '👍', '🙌'];
+// Updated reactions: Praying, On Fire, Stay Strong, Cheering, Poke
+const reactionOptions = [
+  { emoji: '🙏', label: 'Praying', type: 'praying' },
+  { emoji: '🔥', label: 'On Fire', type: 'on_fire' },
+  { emoji: '💪', label: 'Stay Strong', type: 'stay_strong' },
+  { emoji: '📣', label: 'Cheering', type: 'cheering' },
+  { emoji: '👉', label: 'Poke', type: 'poke' },
+];
 
 export default function SharedGoalCard({ goal, sharerEmail, sharerName, currentUser }) {
   const queryClient = useQueryClient();
@@ -149,16 +157,17 @@ export default function SharedGoalCard({ goal, sharerEmail, sharerName, currentU
 
           {/* Interaction buttons */}
           <div className="flex flex-wrap items-center gap-2 pt-2 border-t">
-            {/* Quick emoji reactions */}
+            {/* Quick emoji reactions - updated set */}
             <div className="flex gap-1">
-              {emojiOptions.slice(0, 4).map(emoji => (
+              {reactionOptions.map(reaction => (
                 <button
-                  key={emoji}
-                  onClick={() => sendReaction(emoji)}
+                  key={reaction.type}
+                  onClick={() => sendReaction(reaction.emoji)}
                   disabled={interactionMutation.isPending}
                   className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-lg transition-transform hover:scale-110"
+                  title={reaction.label}
                 >
-                  {emoji}
+                  {reaction.emoji}
                 </button>
               ))}
             </div>
@@ -169,17 +178,9 @@ export default function SharedGoalCard({ goal, sharerEmail, sharerName, currentU
             <Button
               size="sm"
               variant="ghost"
-              onClick={sendCheer}
-              disabled={interactionMutation.isPending}
-              className="text-amber-600 hover:bg-amber-50"
-            >
-              <PartyPopper className="w-4 h-4" />
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
               onClick={() => setShowNudgeModal(true)}
               className="text-purple-600 hover:bg-purple-50"
+              title="Send a nudge"
             >
               <Bell className="w-4 h-4" />
             </Button>
@@ -188,6 +189,7 @@ export default function SharedGoalCard({ goal, sharerEmail, sharerName, currentU
               variant="ghost"
               onClick={() => setShowHelpModal(true)}
               className="text-teal-600 hover:bg-teal-50"
+              title="Offer help"
             >
               <HandHelping className="w-4 h-4" />
             </Button>
