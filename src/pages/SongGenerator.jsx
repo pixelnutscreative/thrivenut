@@ -756,12 +756,44 @@ Creator display name: ${hostDisplayName}`,
                     {formData.gifters.map((gifter, idx) => (
                       <div key={idx} className="grid grid-cols-12 gap-2 p-3 bg-gray-50 rounded-lg">
                         <div className="col-span-2">
-                          <Input
-                            placeholder="@username"
-                            value={gifter.username || ''}
-                            onChange={(e) => updateGifter(idx, 'username', e.target.value.replace('@', ''))}
-                            className="h-8 text-xs font-mono"
-                          />
+                          <Select 
+                            value={gifter.username || ''} 
+                            onValueChange={(v) => {
+                              if (v.startsWith('master_')) {
+                                const masterId = v.replace('master_', '');
+                                const match = allContacts.find(c => c.id === masterId);
+                                if (match) {
+                                  updateGifter(idx, 'username', match.username || match.data?.username || '');
+                                  updateGifter(idx, 'display_name', match.display_name || match.data?.display_name || '');
+                                  updateGifter(idx, 'name', match.phonetic || match.data?.phonetic || match.display_name || match.data?.display_name || '');
+                                }
+                              } else {
+                                updateGifter(idx, 'username', v);
+                              }
+                            }}
+                          >
+                            <SelectTrigger className="h-8 text-xs font-mono">
+                              <SelectValue placeholder="@username" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-60">
+                              {gifter.username && !allContacts.find(c => (c.username || c.data?.username) === gifter.username) && (
+                                <SelectItem value={gifter.username}>@{gifter.username}</SelectItem>
+                              )}
+                              {allContacts
+                                .filter(c => c.username || c.data?.username)
+                                .sort((a, b) => {
+                                  const aName = (a.display_name || a.data?.display_name || a.username || a.data?.username || '').toLowerCase();
+                                  const bName = (b.display_name || b.data?.display_name || b.username || b.data?.username || '').toLowerCase();
+                                  return aName.localeCompare(bName);
+                                })
+                                .map(c => (
+                                  <SelectItem key={c.id} value={`master_${c.id}`}>
+                                    @{c.username || c.data?.username} - {c.display_name || c.data?.display_name || 'No name'}
+                                  </SelectItem>
+                                ))
+                              }
+                            </SelectContent>
+                          </Select>
                         </div>
                         <div className="col-span-2">
                           <Input
@@ -793,12 +825,22 @@ Creator display name: ${hostDisplayName}`,
                           </Select>
                         </div>
                         <div className="col-span-3">
-                          <Input
-                            placeholder="Gift name"
-                            value={gifter.gift}
-                            onChange={(e) => updateGifter(idx, 'gift', e.target.value)}
-                            className="h-8 text-xs"
-                          />
+                          <Select 
+                            value={gifter.gift || ''} 
+                            onValueChange={(v) => updateGifter(idx, 'gift', v)}
+                          >
+                            <SelectTrigger className="h-8 text-xs">
+                              <SelectValue placeholder="Gift" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-60">
+                              {gifter.gift && !gifts.find(g => g.name === gifter.gift) && (
+                                <SelectItem value={gifter.gift}>{gifter.gift}</SelectItem>
+                              )}
+                              {gifts.map(g => (
+                                <SelectItem key={g.id} value={g.name}>{g.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                         <div className="col-span-1">
                           <Button variant="ghost" size="sm" onClick={() => removeGifter(idx)} className="h-8 text-red-500">
