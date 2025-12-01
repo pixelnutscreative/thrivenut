@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
-import { Shield, Star, UserCog, Users, Gift, Settings, Palette, Clock, MessageSquare, ListTodo, Squirrel, FolderOpen, Merge } from 'lucide-react';
+import { Shield, Star, UserCog, Users, Gift, Settings, Palette, Clock, MessageSquare, ListTodo, Squirrel, FolderOpen, Merge, Mail } from 'lucide-react';
 
 // Import the individual admin components/pages as content
 import AdminSuperFanContent from '../components/admin/AdminSuperFanContent';
@@ -18,8 +18,9 @@ import AdminFeedbackContent from '../components/admin/AdminFeedbackContent';
 import AdminNutPalsContent from '../components/admin/AdminNutPalsContent';
 import AdminCategoriesContent from '../components/admin/AdminCategoriesContent';
 import DuplicateContactMerger from '../components/admin/DuplicateContactMerger';
+import AdminPreApprovedEmailsContent from '../components/admin/AdminPreApprovedEmailsContent';
 
-const ADMIN_EMAIL = 'pixelnutscreative@gmail.com';
+const ADMIN_EMAILS = ['pixelnutscreative@gmail.com', 'pixel@thrivenut.app'];
 
 export default function Admin() {
   const [user, setUser] = useState(null);
@@ -29,7 +30,7 @@ export default function Admin() {
     base44.auth.me().then(setUser).catch(() => {});
   }, []);
 
-  const isAdmin = user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+  const isAdmin = ADMIN_EMAILS.includes(user?.email?.toLowerCase());
 
   if (!isAdmin) {
     return (
@@ -57,7 +58,11 @@ export default function Admin() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-12">
+          <TabsList className="flex flex-wrap gap-1">
+            <TabsTrigger value="emails" className="flex items-center gap-2">
+              <Mail className="w-4 h-4" />
+              <span className="hidden sm:inline">Emails</span>
+            </TabsTrigger>
             <TabsTrigger value="feedback" className="flex items-center gap-2">
               <ListTodo className="w-4 h-4" />
               <span className="hidden sm:inline">Feedback</span>
@@ -107,6 +112,10 @@ export default function Admin() {
               <span className="hidden sm:inline">Settings</span>
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="emails" className="mt-6">
+            <AdminPreApprovedEmailsContent />
+          </TabsContent>
 
           <TabsContent value="feedback" className="mt-6">
             <AdminFeedbackContent />
