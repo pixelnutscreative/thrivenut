@@ -169,8 +169,9 @@ export default function Layout({ children, currentPageName }) {
 
     // If there's a feature order, apply it
     if (featureOrder.length > 0) {
-      const alwaysShowItems = filtered.filter(item => item.alwaysShow);
-      const orderableItems = filtered.filter(item => !item.alwaysShow && item.moduleId);
+      const alwaysShowItems = filtered.filter(item => item.alwaysShow || item.adminOnly);
+      const orderableItems = filtered.filter(item => !item.alwaysShow && !item.adminOnly && item.moduleId);
+      const otherItems = filtered.filter(item => !item.alwaysShow && !item.adminOnly && !item.moduleId);
       
       // Sort orderable items by feature order
       orderableItems.sort((a, b) => {
@@ -182,12 +183,15 @@ export default function Layout({ children, currentPageName }) {
         return aIndex - bIndex;
       });
 
-      // Rebuild: Home, Dashboard first, then ordered features, then Settings at the end
-      const home = alwaysShowItems.find(i => i.name === 'Home');
+      // Rebuild: alwaysShow items at start (Pixel's Place, Saved Motivations, Dashboard), 
+      // then ordered features, then other items, then Support/Admin at end
+      const pixelsPlace = alwaysShowItems.find(i => i.name === "Pixel's Place");
+      const savedMotivations = alwaysShowItems.find(i => i.name === 'Saved Motivations');
       const dashboard = alwaysShowItems.find(i => i.name === 'Dashboard');
-      const settings = alwaysShowItems.find(i => i.name === 'Settings');
+      const support = alwaysShowItems.find(i => i.name === 'Support');
+      const adminPanel = alwaysShowItems.find(i => i.name === 'Admin Panel');
       
-      return [home, dashboard, ...orderableItems, settings].filter(Boolean);
+      return [pixelsPlace, savedMotivations, dashboard, ...orderableItems, ...otherItems, support, adminPanel].filter(Boolean);
     }
 
     return filtered;
