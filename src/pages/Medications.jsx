@@ -29,9 +29,12 @@ export default function Medications() {
   const [editingMedication, setEditingMedication] = useState(null);
   const today = new Date().toISOString().split('T')[0];
 
-  const { data: medications = [] } = useQuery({
+  const { data: medications = [], isLoading: medsLoading } = useQuery({
     queryKey: ['medications'],
-    queryFn: () => base44.entities.Medication.filter({ is_active: true }),
+    queryFn: async () => {
+      const user = await base44.auth.me();
+      return base44.entities.Medication.filter({ is_active: true, created_by: user.email });
+    },
     initialData: [],
   });
 

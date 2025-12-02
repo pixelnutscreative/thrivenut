@@ -55,9 +55,16 @@ export default function CareReminders() {
     notes: ''
   });
 
+  const [user, setUser] = useState(null);
+
+  React.useEffect(() => {
+    base44.auth.me().then(setUser);
+  }, []);
+
   const { data: reminders = [] } = useQuery({
-    queryKey: ['careReminders'],
-    queryFn: () => base44.entities.CareReminder.list('-created_date'),
+    queryKey: ['careReminders', user?.email],
+    queryFn: () => base44.entities.CareReminder.filter({ created_by: user.email }, '-created_date'),
+    enabled: !!user,
   });
 
   const createMutation = useMutation({

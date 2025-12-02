@@ -71,9 +71,9 @@ export default function Journal() {
   }, []);
 
   const { data: entries } = useQuery({
-    queryKey: ['journalEntries'],
+    queryKey: ['journalEntries', user?.email],
     queryFn: async () => {
-      return await base44.entities.JournalEntry.list('-date', 20);
+      return await base44.entities.JournalEntry.filter({ created_by: user.email }, '-date', 20);
     },
     enabled: !!user,
   });

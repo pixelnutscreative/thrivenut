@@ -31,7 +31,10 @@ export default function Supplements() {
 
   const { data: supplements = [] } = useQuery({
     queryKey: ['supplements'],
-    queryFn: () => base44.entities.Supplement.filter({ is_active: true }),
+    queryFn: async () => {
+      const user = await base44.auth.me();
+      return base44.entities.Supplement.filter({ is_active: true, created_by: user.email });
+    },
     initialData: [],
   });
 
