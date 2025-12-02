@@ -69,7 +69,7 @@ const allNavItems = [
             { name: 'Gift Gallery Gratitude', icon: Gift, path: 'WeeklyGifterGallery' },
             { name: 'Sunny Songbird', icon: Music, path: 'SongGenerator' },
             { name: 'Holy Hitmakers', icon: Music, path: 'HolyHitmakers' },
-            { name: "Ping & Pong's Silly Songs", icon: Music, externalUrl: 'https://pingpong-sillysongs.base44.app' },
+            { name: "Ping & Pong's Silly Songs", icon: Music, externalUrl: 'https://sillysongs.pixelnutscreative.com' },
           ]},
   { name: 'Goals', icon: Target, path: 'Goals', moduleId: 'goals' },
     { name: 'Vision Board', icon: Sparkles, path: 'VisionBoard', moduleId: 'goals' },
