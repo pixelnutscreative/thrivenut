@@ -167,18 +167,43 @@ export default function AdminMenuContent() {
     }
   };
 
+  const [pendingChanges, setPendingChanges] = useState([]);
+  const [localItems, setLocalItems] = useState([]);
+
+  // Sync local items when menuItems changes
+  React.useEffect(() => {
+    if (menuItems.length > 0 && localItems.length === 0) {
+      setLocalItems(menuItems);
+    }
+  }, [menuItems]);
+
   const handleDragEnd = (result) => {
     if (!result.destination) return;
     
-    const items = Array.from(menuItems);
+    const items = Array.from(localItems.length > 0 ? localItems : menuItems);
     const [reorderedItem] = items.splice(result.source.index, 1);
     items.splice(result.destination.index, 0, reorderedItem);
     
-    // Update sort orders
-    items.forEach((item, index) => {
-      updateMutation.mutate({ id: item.id, data: { sort_order: (index + 1) * 10 } });
-    });
+    // Update local state and track changes
+    const updatedItems = items.map((item, index) => ({
+      ...item,
+      sort_order: (index + 1) * 10
+    }));
+    setLocalItems(updatedItems);
+    setPendingChanges(updatedItems);
   };
+
+  const saveAllChangesMutation = useMutation({
+    mutationFn: async () => {
+      for (const item of pendingChanges) {
+        await base44.entities.MenuConfig.update(item.id, { sort_order: item.sort_order });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['menuConfig'] });
+      setPendingChanges([]);
+    }
+  });
 
   const sections = menuItems.filter(i => i.is_section);
 
@@ -206,6 +231,20 @@ export default function AdminMenuContent() {
                   Load Defaults
                 </Button>
               )}
+              {pendingChanges.length > 0 && (
+                <Button 
+                  onClick={() => saveAllChangesMutation.mutate()}
+                  disabled={saveAllChangesMutation.isPending}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  {saveAllChangesMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Save className="w-4 h-4 mr-2" />
+                  )}
+                  Save Order ({pendingChanges.length} changes)
+                </Button>
+              )}
               <Button onClick={() => { resetForm(); setShowModal(true); }}>
                 <Plus className="w-4 h-4 mr-2" />
                 Add Item
@@ -223,7 +262,7 @@ export default function AdminMenuContent() {
               <Droppable droppableId="menu-items">
                 {(provided) => (
                   <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-2">
-                    {menuItems.map((item, index) => (
+                    {(localItems.length > 0 ? localItems : menuItems).map((item, index) => (
                       <Draggable key={item.id} draggableId={item.id} index={index}>
                         {(provided, snapshot) => (
                           <div

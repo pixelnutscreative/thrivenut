@@ -59,64 +59,91 @@ export default function Admin() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="flex flex-wrap gap-1">
-            <TabsTrigger value="emails" className="flex items-center gap-2">
-              <Mail className="w-4 h-4" />
-              <span className="hidden sm:inline">Emails</span>
-            </TabsTrigger>
-            <TabsTrigger value="feedback" className="flex items-center gap-2">
-              <ListTodo className="w-4 h-4" />
-              <span className="hidden sm:inline">Feedback</span>
-            </TabsTrigger>
-            <TabsTrigger value="support" className="flex items-center gap-2">
-              <MessageSquare className="w-4 h-4" />
-              <span className="hidden sm:inline">Support</span>
-            </TabsTrigger>
-            <TabsTrigger value="queue" className="flex items-center gap-2">
-              <Clock className="w-4 h-4" />
-              <span className="hidden sm:inline">Queue</span>
-            </TabsTrigger>
-            <TabsTrigger value="superfan" className="flex items-center gap-2">
-              <Star className="w-4 h-4" />
-              <span className="hidden sm:inline">SuperFan</span>
-            </TabsTrigger>
-            <TabsTrigger value="impersonate" className="flex items-center gap-2">
-              <UserCog className="w-4 h-4" />
-              <span className="hidden sm:inline">Users</span>
-            </TabsTrigger>
-            <TabsTrigger value="contacts" className="flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              <span className="hidden sm:inline">Contacts</span>
-            </TabsTrigger>
-            <TabsTrigger value="duplicates" className="flex items-center gap-2">
-              <Merge className="w-4 h-4" />
-              <span className="hidden sm:inline">Duplicates</span>
-            </TabsTrigger>
-            <TabsTrigger value="gifts" className="flex items-center gap-2">
-              <Gift className="w-4 h-4" />
-              <span className="hidden sm:inline">Gifts</span>
-            </TabsTrigger>
-            <TabsTrigger value="resources" className="flex items-center gap-2">
-              <Palette className="w-4 h-4" />
-              <span className="hidden sm:inline">Resources</span>
-            </TabsTrigger>
-            <TabsTrigger value="nutpals" className="flex items-center gap-2">
-              <Squirrel className="w-4 h-4" />
-              <span className="hidden sm:inline">NutPals</span>
-            </TabsTrigger>
-            <TabsTrigger value="categories" className="flex items-center gap-2">
-              <FolderOpen className="w-4 h-4" />
-              <span className="hidden sm:inline">Categories</span>
-            </TabsTrigger>
-            <TabsTrigger value="menu" className="flex items-center gap-2">
-              <Menu className="w-4 h-4" />
-              <span className="hidden sm:inline">Menu</span>
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="flex items-center gap-2">
-              <Settings className="w-4 h-4" />
-              <span className="hidden sm:inline">Settings</span>
-            </TabsTrigger>
-          </TabsList>
+          <div className="space-y-2 mb-6">
+            {/* Row 1: User & Access Management */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-semibold text-gray-500 uppercase w-20">Users</span>
+              <TabsList className="flex gap-1">
+                <TabsTrigger value="emails" className="flex items-center gap-2">
+                  <Mail className="w-4 h-4" />
+                  <span className="hidden sm:inline">Emails</span>
+                </TabsTrigger>
+                <TabsTrigger value="superfan" className="flex items-center gap-2">
+                  <Star className="w-4 h-4" />
+                  <span className="hidden sm:inline">SuperFan</span>
+                </TabsTrigger>
+                <TabsTrigger value="queue" className="flex items-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  <span className="hidden sm:inline">Queue</span>
+                </TabsTrigger>
+                <TabsTrigger value="impersonate" className="flex items-center gap-2">
+                  <UserCog className="w-4 h-4" />
+                  <span className="hidden sm:inline">Impersonate</span>
+                </TabsTrigger>
+              </TabsList>
+            </div>
+
+            {/* Row 2: Support & Feedback */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-semibold text-gray-500 uppercase w-20">Support</span>
+              <TabsList className="flex gap-1">
+                <TabsTrigger value="feedback" className="flex items-center gap-2">
+                  <ListTodo className="w-4 h-4" />
+                  <span className="hidden sm:inline">Feedback</span>
+                </TabsTrigger>
+                <TabsTrigger value="support" className="flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4" />
+                  <span className="hidden sm:inline">Tickets</span>
+                </TabsTrigger>
+              </TabsList>
+            </div>
+
+            {/* Row 3: Content & Data */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-semibold text-gray-500 uppercase w-20">Content</span>
+              <TabsList className="flex gap-1">
+                <TabsTrigger value="contacts" className="flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  <span className="hidden sm:inline">Contacts</span>
+                </TabsTrigger>
+                <TabsTrigger value="duplicates" className="flex items-center gap-2">
+                  <Merge className="w-4 h-4" />
+                  <span className="hidden sm:inline">Duplicates</span>
+                </TabsTrigger>
+                <TabsTrigger value="gifts" className="flex items-center gap-2">
+                  <Gift className="w-4 h-4" />
+                  <span className="hidden sm:inline">Gifts</span>
+                </TabsTrigger>
+                <TabsTrigger value="resources" className="flex items-center gap-2">
+                  <Palette className="w-4 h-4" />
+                  <span className="hidden sm:inline">Resources</span>
+                </TabsTrigger>
+                <TabsTrigger value="nutpals" className="flex items-center gap-2">
+                  <Squirrel className="w-4 h-4" />
+                  <span className="hidden sm:inline">NutPals</span>
+                </TabsTrigger>
+                <TabsTrigger value="categories" className="flex items-center gap-2">
+                  <FolderOpen className="w-4 h-4" />
+                  <span className="hidden sm:inline">Categories</span>
+                </TabsTrigger>
+              </TabsList>
+            </div>
+
+            {/* Row 4: App Settings */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-semibold text-gray-500 uppercase w-20">App</span>
+              <TabsList className="flex gap-1">
+                <TabsTrigger value="menu" className="flex items-center gap-2">
+                  <Menu className="w-4 h-4" />
+                  <span className="hidden sm:inline">Menu</span>
+                </TabsTrigger>
+                <TabsTrigger value="settings" className="flex items-center gap-2">
+                  <Settings className="w-4 h-4" />
+                  <span className="hidden sm:inline">Settings</span>
+                </TabsTrigger>
+              </TabsList>
+            </div>
+          </div>
 
           <TabsContent value="emails" className="mt-6">
             <AdminPreApprovedEmailsContent />
