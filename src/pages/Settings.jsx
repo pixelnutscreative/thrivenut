@@ -630,7 +630,6 @@ export default function Settings() {
                 <CardContent>
                   <FeatureOrderManager
                     enabledModules={formData.enabled_modules}
-                    featureOrder={formData.feature_order}
                     onChange={(updates) => setFormData({ ...formData, ...updates })}
                   />
                 </CardContent>

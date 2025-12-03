@@ -491,13 +491,16 @@ export default function Home() {
       </div>
 
       {/* Pricing Section */}
-      <div id="pricing" className="max-w-5xl mx-auto px-4 py-20">
+      <div id="pricing" className="max-w-6xl mx-auto px-4 py-20">
         <motion.div 
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           className="text-center mb-12"
         >
+          <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-lg px-4 py-1 mb-4 animate-pulse">
+            🎄 HOLIDAY SPECIAL - Ends December 7th!
+          </Badge>
           <h2 className="text-4xl md:text-5xl font-bold mb-4">
             Get <span className="text-purple-400">Access</span>
           </h2>
@@ -506,112 +509,184 @@ export default function Home() {
           </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-          {/* SuperFan Option */}
+        <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          {/* Holiday Special - 7 months */}
           <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <Card className="h-full bg-gradient-to-br from-amber-900/30 to-orange-900/30 border-amber-500/50 relative overflow-hidden">
-              <div className="absolute top-0 right-0 bg-gradient-to-l from-amber-500 to-orange-500 text-white text-sm font-bold px-4 py-1 rounded-bl-lg">
-                <Star className="w-4 h-4 inline mr-1" /> SUPERFAN
+            <Card className="h-full bg-gradient-to-br from-teal-900/30 to-emerald-900/30 border-teal-500/50 relative overflow-hidden">
+              <div className="absolute top-0 right-0 bg-gradient-to-l from-teal-500 to-emerald-500 text-white text-sm font-bold px-4 py-1 rounded-bl-lg">
+                🎄 HOLIDAY DEAL
               </div>
-              <CardContent className="p-8 pt-12">
+              <CardContent className="p-6 pt-12">
                 <div className="text-center mb-6">
-                  <h3 className="text-2xl font-bold text-amber-400 mb-2">Pixel's SuperFan</h3>
-                  <div className="text-5xl font-bold text-white mb-2">FREE</div>
-                  <p className="text-amber-300">Forever access to everything</p>
+                  <h3 className="text-xl font-bold text-teal-400 mb-2">7 for 7 Special</h3>
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="text-4xl font-bold text-white">$7</span>
+                    <span className="text-gray-400">/month</span>
+                  </div>
+                  <p className="text-teal-300 text-sm mt-1">for 7 months ($49 total)</p>
+                  <p className="text-xs text-gray-500 mt-2">Ends December 7th!</p>
                 </div>
 
-                <div className="space-y-3 mb-8">
-                  <div className="flex items-start gap-3">
-                    <Check className="w-5 h-5 text-amber-400 mt-0.5 flex-shrink-0" />
-                    <span className="text-gray-300">All free features included</span>
+                <div className="space-y-2 mb-6 text-sm">
+                  <div className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-teal-400 mt-0.5 flex-shrink-0" />
+                    <span className="text-gray-300">All free features</span>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <Check className="w-5 h-5 text-amber-400 mt-0.5 flex-shrink-0" />
-                    <span className="text-gray-300">Full Social Media Suite access</span>
+                  <div className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-teal-400 mt-0.5 flex-shrink-0" />
+                    <span className="text-gray-300">Full Social Media Suite</span>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <Check className="w-5 h-5 text-amber-400 mt-0.5 flex-shrink-0" />
-                    <span className="text-gray-300">Lifetime access as long as you're a SuperFan</span>
+                  <div className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-teal-400 mt-0.5 flex-shrink-0" />
+                    <span className="text-gray-300">Priority support</span>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <Star className="w-5 h-5 text-amber-400 mt-0.5 flex-shrink-0" />
-                    <span className="text-gray-300">Special recognition in the app</span>
-                  </div>
-                </div>
-
-                <div className="bg-amber-900/30 rounded-lg p-4 mb-6">
-                  <p className="text-sm text-amber-200 text-center">
-                    Already a SuperFan of @PixelNutsCreative? 
-                    Upload a screenshot when you sign up to verify!
-                  </p>
                 </div>
 
                 <Button 
                   onClick={handleGetStarted}
-                  className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-lg py-6"
+                  className="w-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600"
                 >
-                  I'm a SuperFan! <Crown className="w-5 h-5 ml-2" />
+                  Get 7 for 7 <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </CardContent>
             </Card>
           </motion.div>
 
-          {/* Paid Option */}
+          {/* Holiday Annual - $77 */}
           <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
           >
-            <Card className="h-full bg-gradient-to-br from-purple-900/30 to-pink-900/30 border-purple-500/50 relative overflow-hidden">
+            <Card className="h-full bg-gradient-to-br from-purple-900/30 to-pink-900/30 border-purple-500/50 relative overflow-hidden ring-2 ring-purple-500">
               <div className="absolute top-0 right-0 bg-gradient-to-l from-purple-500 to-pink-500 text-white text-sm font-bold px-4 py-1 rounded-bl-lg">
-                <Zap className="w-4 h-4 inline mr-1" /> FULL ACCESS
+                ⭐ BEST VALUE
               </div>
-              <CardContent className="p-8 pt-12">
+              <CardContent className="p-6 pt-12">
                 <div className="text-center mb-6">
-                  <h3 className="text-2xl font-bold text-purple-400 mb-2">Annual Subscription</h3>
-                  <div className="text-5xl font-bold text-white mb-2">$111</div>
-                  <p className="text-purple-300">per year (less than $10/month!)</p>
+                  <h3 className="text-xl font-bold text-purple-400 mb-2">Annual (Holiday)</h3>
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="text-2xl text-gray-500 line-through">$111</span>
+                    <span className="text-4xl font-bold text-white">$77</span>
+                  </div>
+                  <p className="text-purple-300 text-sm mt-1">per year (~$6.42/month)</p>
+                  <Badge className="mt-2 bg-green-500/20 text-green-400 border-green-500/30">
+                    Save $34!
+                  </Badge>
                 </div>
 
-                <div className="space-y-3 mb-8">
-                  <div className="flex items-start gap-3">
-                    <Check className="w-5 h-5 text-purple-400 mt-0.5 flex-shrink-0" />
-                    <span className="text-gray-300">All free features included</span>
+                <div className="space-y-2 mb-6 text-sm">
+                  <div className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-purple-400 mt-0.5 flex-shrink-0" />
+                    <span className="text-gray-300">All free features</span>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <Check className="w-5 h-5 text-purple-400 mt-0.5 flex-shrink-0" />
-                    <span className="text-gray-300">Full Social Media Suite access</span>
+                  <div className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-purple-400 mt-0.5 flex-shrink-0" />
+                    <span className="text-gray-300">Full Social Media Suite</span>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <Check className="w-5 h-5 text-purple-400 mt-0.5 flex-shrink-0" />
-                    <span className="text-gray-300">Support an independent creator</span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Shield className="w-5 h-5 text-purple-400 mt-0.5 flex-shrink-0" />
+                  <div className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-purple-400 mt-0.5 flex-shrink-0" />
                     <span className="text-gray-300">Priority support</span>
                   </div>
+                  <div className="flex items-start gap-2">
+                    <Star className="w-4 h-4 text-purple-400 mt-0.5 flex-shrink-0" />
+                    <span className="text-gray-300">Best price per month!</span>
+                  </div>
                 </div>
 
-                <div className="bg-purple-900/30 rounded-lg p-4 mb-6">
-                  <p className="text-sm text-purple-200 text-center">
-                    🎉 Start with a <strong>7-day free preview</strong> - no payment required!
+                <Button 
+                  onClick={handleGetStarted}
+                  className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                >
+                  Get Annual Deal <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* AI Toolbox Bundle */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+          >
+            <Card className="h-full bg-gradient-to-br from-amber-900/30 to-orange-900/30 border-amber-500/50 relative overflow-hidden">
+              <div className="absolute top-0 right-0 bg-gradient-to-l from-amber-500 to-orange-500 text-white text-sm font-bold px-4 py-1 rounded-bl-lg">
+                🎁 BUNDLE
+              </div>
+              <CardContent className="p-6 pt-12">
+                <div className="text-center mb-6">
+                  <h3 className="text-xl font-bold text-amber-400 mb-2">AI Toolbox Bundle</h3>
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="text-4xl font-bold text-white">FREE</span>
+                  </div>
+                  <p className="text-amber-300 text-sm mt-1">with AI Toolbox annual sub</p>
+                </div>
+
+                <div className="space-y-2 mb-6 text-sm">
+                  <div className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
+                    <span className="text-gray-300">Everything in Let's Thrive!</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
+                    <span className="text-gray-300">Pixel's AI Toolbox access</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
+                    <span className="text-gray-300">Two apps, one subscription!</span>
+                  </div>
+                </div>
+
+                <div className="bg-amber-900/30 rounded-lg p-3 mb-4">
+                  <p className="text-xs text-amber-200 text-center">
+                    Already an AI Toolbox subscriber? You get this FREE!
                   </p>
                 </div>
 
                 <Button 
                   onClick={handleGetStarted}
-                  className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-lg py-6"
+                  className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
                 >
-                  Start 7-Day Preview <ArrowRight className="w-5 h-5 ml-2" />
+                  Learn More <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </CardContent>
             </Card>
           </motion.div>
         </div>
+
+        {/* SuperFan Option - Below */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mt-8 max-w-md mx-auto"
+        >
+          <Card className="bg-gray-800/50 border-gray-700">
+            <CardContent className="p-6 text-center">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <Crown className="w-5 h-5 text-amber-400" />
+                <span className="font-bold text-amber-400">Already a SuperFan?</span>
+              </div>
+              <p className="text-sm text-gray-400 mb-4">
+                If you're a SuperFan of @PixelNutsCreative on TikTok, you get FREE access!
+              </p>
+              <Button 
+                onClick={handleGetStarted}
+                variant="outline"
+                className="border-amber-500 text-amber-400 hover:bg-amber-500/10"
+              >
+                Verify SuperFan Status <Star className="w-4 h-4 ml-2" />
+              </Button>
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
 
       {/* Final CTA */}
