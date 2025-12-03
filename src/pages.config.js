@@ -32,6 +32,8 @@ import PrayerRequests from './pages/PrayerRequests';
 import VisionBoard from './pages/VisionBoard';
 import QuickNotes from './pages/QuickNotes';
 import SavedMotivations from './pages/SavedMotivations';
+import SubscriptionSuccess from './pages/SubscriptionSuccess';
+import Pricing from './pages/Pricing';
 import __Layout from './Layout.jsx';
 
 
@@ -70,6 +72,8 @@ export const PAGES = {
     "VisionBoard": VisionBoard,
     "QuickNotes": QuickNotes,
     "SavedMotivations": SavedMotivations,
+    "SubscriptionSuccess": SubscriptionSuccess,
+    "Pricing": Pricing,
 }
 
 export const pagesConfig = {
