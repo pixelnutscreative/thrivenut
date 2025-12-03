@@ -8,58 +8,73 @@ import { Badge } from '@/components/ui/badge';
 import { 
   Target, Heart, Pill, PawPrint, Bell, Users, BookOpen, Brain, 
   Sparkles, Check, Star, Crown, Zap, Gift, Music, Calendar,
-  Video, MessageSquare, TrendingUp, Palette, ArrowRight, Shield, LogIn
+  Video, MessageSquare, TrendingUp, Palette, ArrowRight, Shield, LogIn,
+  Droplet, Moon, Apple, CheckSquare, ImageIcon, Mic, Share2, Eye,
+  Sliders, Accessibility, MessageCircle
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
+// ===================== FREE FEATURES =====================
 const freeFeatures = [
   { 
     icon: Target, 
-    title: 'Goal Setting & Tracking', 
-    description: 'Set meaningful goals, break them into steps, track daily habits, and share progress with accountability partners.',
+    title: 'Goal Setting & Vision Boards', 
+    description: 'Set meaningful goals with AI-generated steps, track habits, create vision boards with images, and share progress with accountability partners.',
     color: 'from-purple-500 to-indigo-500'
   },
   { 
     icon: Heart, 
-    title: 'Daily Wellness Tracking', 
-    description: 'Track self-care routines, water intake, meals, sleep, mood check-ins, fasting schedules, and build healthy habits.',
+    title: 'Complete Wellness Tracking', 
+    description: 'Track self-care routines, water intake (multiple check-ins), meals, sleep, mood check-ins, intermittent fasting, elimination diets, and more.',
     color: 'from-pink-500 to-rose-500'
   },
   { 
     icon: Pill, 
     title: 'Medication & Supplement Management', 
-    description: 'Never miss a dose. Track multiple medications and supplements with flexible scheduling and daily reminders.',
+    description: 'Never miss a dose. Track medications and supplements with flexible scheduling by time of day, dosage notes, and prescribing doctor info.',
     color: 'from-teal-500 to-cyan-500'
   },
   { 
     icon: PawPrint, 
     title: 'Pet Care Tracking', 
-    description: 'Keep your fur babies happy! Track feeding schedules, walks, medications, grooming, and vet appointments.',
+    description: 'Track feeding schedules, walks, playtime, medications, grooming, and activity logs for all your fur babies.',
     color: 'from-amber-500 to-orange-500'
   },
   { 
     icon: Bell, 
     title: 'Care Reminders', 
-    description: 'Custom reminders for anything - plant watering, car maintenance, birthdays, or any recurring task you need.',
+    description: 'Custom reminders for caregiving, plant watering, car maintenance, birthdays, or any recurring task. Organized by person or category.',
     color: 'from-green-500 to-emerald-500'
   },
   { 
     icon: Users, 
-    title: 'Contact Management', 
-    description: 'Keep track of your people with birthdays, notes, social links, business info, and relationship details.',
+    title: 'Personal Contact Manager', 
+    description: 'Track your IRL people with birthdays, notes, social links, relationship details, and family roles.',
     color: 'from-blue-500 to-sky-500'
   },
   { 
     icon: BookOpen, 
-    title: 'Journaling with AI Support', 
-    description: 'Reflect on your day with guided prompts. Get AI-powered therapeutic reframing to shift negative thoughts.',
+    title: 'Journaling with AI Reframing', 
+    description: 'Multiple journal entry types (gratitude, venting, reflection). AI-powered therapeutic reframing to shift negative thoughts.',
     color: 'from-violet-500 to-purple-500'
   },
   { 
-    icon: Brain, 
-    title: 'Neurodivergent-Friendly Design', 
-    description: 'ADHD & autism-friendly modes, high contrast options, reduced animations, and customizable interfaces.',
-    color: 'from-fuchsia-500 to-pink-500'
+    icon: MessageSquare, 
+    title: 'Quick Notes & Ideas', 
+    description: 'Capture ideas, negative thoughts (with AI reframing), gratitude moments, and reminders on the go.',
+    color: 'from-indigo-500 to-blue-500'
+  },
+  { 
+    icon: Heart, 
+    title: 'Prayer Requests', 
+    description: 'Track prayer requests, share with community, receive encouragement, and celebrate answered prayers.',
+    color: 'from-rose-500 to-pink-500'
+  },
+  { 
+    icon: Sparkles, 
+    title: 'Daily Motivations', 
+    description: 'Personalized daily greetings with scriptures, quotes, affirmations, or motivational messages. Save favorites for content creation.',
+    color: 'from-amber-500 to-yellow-500'
   },
   { 
     icon: Palette, 
@@ -69,47 +84,71 @@ const freeFeatures = [
   },
 ];
 
-const paidFeatures = [
+// ===================== NEURODIVERGENT FEATURES =====================
+const neurodivergentFeatures = [
+  { icon: Brain, title: 'ADHD-Friendly Mode', description: 'Checklists, structure, and simplified interfaces to reduce overwhelm' },
+  { icon: Accessibility, title: 'Autism-Friendly Mode', description: 'Reduced animations, sensory-friendly design, clear navigation' },
+  { icon: Eye, title: 'High Contrast Mode', description: 'Enhanced visibility for those with visual needs' },
+  { icon: Sliders, title: 'Fully Customizable', description: 'Drag-and-drop feature ordering, custom colors, choose your theme' },
+  { icon: Mic, title: 'Text-to-Speech', description: 'Have options and buttons read aloud' },
+  { icon: CheckSquare, title: 'Self-Care Gating', description: 'Optional: Block certain features until self-care tasks are done' },
+];
+
+// ===================== SOCIAL MEDIA SUITE (PREMIUM) =====================
+const socialMediaFeatures = [
   { 
     icon: Users, 
     title: 'Creator Contact Database', 
-    description: 'Track creators with usernames, roles, engagement preferences, mod relationships, clubs/groups, battle inventory, and more.',
+    description: 'Track creators with usernames, pronouns, phonetics for songs, roles, mod relationships, clubs/groups, battle inventory, and detailed notes.',
   },
   { 
-    icon: Sparkles, 
+    icon: TrendingUp, 
     title: 'Social Engagement Tracker', 
-    description: 'Never forget to engage! Set daily, weekly, or custom schedules. Track engagement across multiple platforms.',
+    description: 'Never forget to engage! Set daily, weekly, or monthly schedules. Track across TikTok, Instagram, YouTube, and more.',
   },
   { 
     icon: Calendar, 
     title: 'Creator Calendar', 
-    description: 'Track your favorite creators\' live schedules. Filter by day, type, priority. Export to your device calendar.',
+    description: "Track your favorite creators' live schedules by day and type. Filter by battles, shops, teaching, and more. Export to your device calendar.",
   },
   { 
     icon: Video, 
     title: 'Content Calendar', 
-    description: 'Plan your own content creation, scheduled posts, lives, and engagement activities throughout the week.',
+    description: 'Plan your own lives, posts, and engagement sessions. Multiple platforms supported. Share to the community directory.',
   },
   { 
-    icon: Bell, 
-    title: 'Live Reminders', 
-    description: 'Get notified when your favorite creators go live. Sign up for reminders from the Discover Creators directory.',
-  },
-  { 
-    icon: TrendingUp, 
+    icon: Eye, 
     title: 'Discover Creators', 
-    description: 'Find new creators to watch! Browse the community directory of live schedules shared by other users.',
+    description: 'Browse the community directory of live schedules. Find new creators by type, platform, and schedule. Sign up for reminders.',
   },
   { 
     icon: Gift, 
     title: 'Gift Gallery Gratitude', 
-    description: 'Track your top gifters weekly. Add them to your gallery with usernames, phonetics, and the gifts they sent.',
+    description: 'Track your weekly top gifters with usernames, phonetics, gifts, and rankings. Perfect for shoutout songs.',
   },
   { 
     icon: Music, 
-    title: 'AI Song Generator', 
-    description: 'Generate personalized thank-you songs for your gifters! Custom lyrics featuring their names and gifts.',
+    title: 'AI Song Generators', 
+    description: 'Multiple song types: Gift Gallery songs, Holy Hitmakers (faith-based), battle hype songs, milestone celebrations, and custom themes.',
   },
+  { 
+    icon: Share2, 
+    title: 'Song Collaboration', 
+    description: 'Share generated songs with collaborators. Perfect for working with music producers or other creators.',
+  },
+];
+
+// ===================== CUSTOMIZATION FEATURES =====================
+const customizationFeatures = [
+  { title: 'Custom Theme Colors', description: 'Choose your primary and accent colors' },
+  { title: 'Dark/Light/System Mode', description: 'Automatic or manual theme switching' },
+  { title: 'Menu Color Customization', description: 'Personalize your sidebar color' },
+  { title: 'Profile & Header Images', description: 'Add your own branding' },
+  { title: 'Feature Ordering', description: 'Drag and drop to reorder menu items' },
+  { title: 'Enable/Disable Modules', description: 'Show only what you need' },
+  { title: 'Quick Actions Widget', description: 'Floating shortcuts to frequently used features' },
+  { title: 'SoundCloud Integration', description: 'Embed your playlist in the app' },
+  { title: 'Multiple Greeting Types', description: 'Rotate through scriptures, quotes, and affirmations' },
 ];
 
 export default function Home() {
@@ -118,7 +157,6 @@ export default function Home() {
   const [checkingAuth, setCheckingAuth] = useState(true);
 
   useEffect(() => {
-    // Don't auto-redirect - let users see the landing page
     base44.auth.isAuthenticated().then(auth => {
       setIsAuthenticated(auth);
       setCheckingAuth(false);
@@ -145,17 +183,17 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 text-white">
-      {/* Header with Login */}
+      {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-gray-900/80 backdrop-blur-md border-b border-gray-800">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <img 
               src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6924840d3628eabd1d7f8247/e225113d4_Untitleddesign.png" 
-              alt="Thrive Nut" 
+              alt="Let's Thrive!" 
               className="w-8 h-8"
             />
             <span className="text-xl font-bold bg-gradient-to-r from-teal-400 to-purple-400 bg-clip-text text-transparent">
-              Thrive Nut
+              Let's Thrive!
             </span>
           </div>
           {checkingAuth ? (
@@ -194,11 +232,11 @@ export default function Home() {
             <div className="flex items-center justify-center gap-3 mb-6">
               <img 
                 src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6924840d3628eabd1d7f8247/e225113d4_Untitleddesign.png" 
-                alt="Thrive Nut" 
+                alt="Let's Thrive!" 
                 className="w-16 h-16 md:w-20 md:h-20"
               />
               <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-teal-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                Thrive Nut
+                Let's Thrive!
               </h1>
             </div>
             
@@ -210,7 +248,7 @@ export default function Home() {
             
             <p className="text-lg text-gray-400 mb-8 max-w-2xl mx-auto">
               Built with love for creators, go-getters, and anyone who wants to level up their life. 
-              Neurodivergent-friendly. Beautifully designed. Actually useful.
+              <span className="text-purple-400 font-semibold"> Neurodivergent-friendly.</span> Beautifully designed. Actually useful.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -221,9 +259,9 @@ export default function Home() {
               >
                 Start Free <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
-              <a href="#pricing">
+              <a href="#features">
                 <Button size="lg" variant="outline" className="border-purple-400 text-purple-400 hover:bg-purple-400/10 text-lg px-8 py-6">
-                  See Pricing
+                  See All Features
                 </Button>
               </a>
             </div>
@@ -232,7 +270,7 @@ export default function Home() {
       </div>
 
       {/* Free Features Section */}
-      <div className="max-w-6xl mx-auto px-4 py-20">
+      <div id="features" className="max-w-6xl mx-auto px-4 py-20">
         <motion.div 
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
@@ -259,7 +297,7 @@ export default function Home() {
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
+                transition={{ delay: index * 0.05 }}
                 onMouseEnter={() => setHoveredFeature(index)}
                 onMouseLeave={() => setHoveredFeature(null)}
               >
@@ -278,7 +316,60 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Social Media Suite Add-On Section */}
+      {/* Neurodivergent Section */}
+      <div className="bg-gradient-to-r from-fuchsia-900/30 via-purple-900/30 to-fuchsia-900/30 py-20">
+        <div className="max-w-6xl mx-auto px-4">
+          <motion.div 
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <Badge className="bg-fuchsia-500/20 text-fuchsia-400 border-fuchsia-500/30 text-lg px-4 py-1 mb-4">
+              <Brain className="w-4 h-4 inline mr-2" />
+              NEURODIVERGENT-FRIENDLY
+            </Badge>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">
+              Built for <span className="text-fuchsia-400">How Your Brain Works</span>
+            </h2>
+            <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+              ADHD? Autism? Anxiety? We've got you covered with customizable interfaces, 
+              reduced sensory input, and features designed for different ways of thinking.
+            </p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {neurodivergentFeatures.map((feature, index) => {
+              const Icon = feature.icon;
+              return (
+                <motion.div
+                  key={feature.title}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.05 }}
+                >
+                  <Card className="h-full bg-gray-800/80 border-fuchsia-500/30">
+                    <CardContent className="p-5">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-r from-fuchsia-500 to-purple-500 flex items-center justify-center flex-shrink-0">
+                          <Icon className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-bold text-white mb-1">{feature.title}</h3>
+                          <p className="text-sm text-gray-400">{feature.description}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Social Media Suite Section */}
       <div className="bg-gradient-to-r from-purple-900/50 via-pink-900/50 to-purple-900/50 py-20">
         <div className="max-w-6xl mx-auto px-4">
           <motion.div 
@@ -302,7 +393,7 @@ export default function Home() {
           </motion.div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
-            {paidFeatures.map((feature, index) => {
+            {socialMediaFeatures.map((feature, index) => {
               const Icon = feature.icon;
               return (
                 <motion.div
@@ -310,7 +401,7 @@ export default function Home() {
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
+                  transition={{ delay: index * 0.05 }}
                 >
                   <Card className="h-full bg-gray-800/80 border-purple-500/30 hover:border-pink-500/50 transition-all">
                     <CardContent className="p-5">
@@ -325,6 +416,77 @@ export default function Home() {
               );
             })}
           </div>
+        </div>
+      </div>
+
+      {/* Customization Section */}
+      <div className="max-w-6xl mx-auto px-4 py-20">
+        <motion.div 
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          className="text-center mb-12"
+        >
+          <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-lg px-4 py-1 mb-4">
+            <Sliders className="w-4 h-4 inline mr-2" />
+            FULLY CUSTOMIZABLE
+          </Badge>
+          <h2 className="text-4xl md:text-5xl font-bold mb-4">
+            Make It <span className="text-amber-400">Yours</span>
+          </h2>
+          <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+            Every feature can be customized. And if there's something you want that doesn't exist yet - just ask!
+          </p>
+        </motion.div>
+
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-8">
+          {customizationFeatures.map((feature, index) => (
+            <motion.div
+              key={feature.title}
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.03 }}
+              className="p-4 rounded-xl bg-gray-800/50 border border-amber-500/20"
+            >
+              <h4 className="font-semibold text-white mb-1">{feature.title}</h4>
+              <p className="text-sm text-gray-400">{feature.description}</p>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+
+      {/* Creator Message */}
+      <div className="bg-gray-800/50 py-16">
+        <div className="max-w-4xl mx-auto px-4 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <div className="flex items-center justify-center mb-6">
+              <MessageCircle className="w-12 h-12 text-purple-400" />
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Built by <span className="text-purple-400">@PixelNutsCreative</span>
+            </h2>
+            <p className="text-xl text-gray-300 mb-6">
+              I built this app because I needed it myself. As someone who is neurodivergent, 
+              I wanted tools that actually work for how my brain operates.
+            </p>
+            <p className="text-lg text-gray-400 mb-8">
+              <strong className="text-teal-400">Have a feature idea?</strong> I'm always listening! 
+              If you think of something that would help you thrive, let me know. 
+              If it's a good fit, I'll build it!
+            </p>
+            <div className="flex flex-wrap justify-center gap-4">
+              <a href="https://tiktok.com/@pixelnutscreative" target="_blank" rel="noopener noreferrer">
+                <Button variant="outline" className="border-purple-400 text-purple-400 hover:bg-purple-400/10">
+                  Follow on TikTok
+                </Button>
+              </a>
+            </div>
+          </motion.div>
         </div>
       </div>
 
@@ -464,7 +626,7 @@ export default function Home() {
               Ready to <span className="text-teal-400">Thrive</span>?
             </h2>
             <p className="text-xl text-gray-300 mb-8">
-              Join thousands of creators and go-getters who are crushing their goals daily.
+              Join creators and go-getters who are crushing their goals daily.
             </p>
             <Button 
               onClick={handleGetStarted}

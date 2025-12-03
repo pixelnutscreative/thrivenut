@@ -49,21 +49,29 @@ export default function Dashboard() {
 
         // Check if onboarding completed - get most recent preferences
         const prefs = await base44.entities.UserPreferences.filter({ user_email: userData.email }, '-updated_date');
-        // Check if ANY preference record has onboarding_completed = true
+        
+        // IMPORTANT: Check if ANY preference record has onboarding_completed = true
+        // Also check localStorage as a backup to prevent double onboarding
         const hasCompletedOnboarding = prefs.some(p => p.onboarding_completed === true);
+        const localOnboardingDone = localStorage.getItem(`onboarding_completed_${userData.email}`);
         
         // Check if user is pre-approved and auto-grant access
         if (prefs[0] && !prefs[0].tiktok_access_approved) {
-          const preApproved = await base44.entities.PreApprovedEmail.filter({ 
-            email: userData.email.toLowerCase(), 
-            is_active: true 
-          });
-          if (preApproved.length > 0) {
-            await base44.entities.UserPreferences.update(prefs[0].id, { tiktok_access_approved: true });
+          try {
+            const preApproved = await base44.entities.PreApprovedEmail.filter({ 
+              email: userData.email.toLowerCase(), 
+              is_active: true 
+            });
+            if (preApproved.length > 0) {
+              await base44.entities.UserPreferences.update(prefs[0].id, { tiktok_access_approved: true });
+            }
+          } catch (e) {
+            // Ignore - user may not have access to PreApprovedEmail entity
           }
         }
         
-        if (!hasCompletedOnboarding) {
+        // Only show onboarding if BOTH db and localStorage say it's not complete
+        if (!hasCompletedOnboarding && !localOnboardingDone) {
           setShowOnboarding(true);
         }
       } catch (error) {
@@ -461,6 +469,10 @@ export default function Dashboard() {
         isOpen={showOnboarding}
         user={user}
         onComplete={async () => {
+          // Mark onboarding complete in localStorage as backup
+          if (user?.email) {
+            localStorage.setItem(`onboarding_completed_${user.email}`, 'true');
+          }
           setShowOnboarding(false);
           await queryClient.invalidateQueries({ queryKey: ['preferences'] });
           await queryClient.refetchQueries({ queryKey: ['preferences', user?.email] });

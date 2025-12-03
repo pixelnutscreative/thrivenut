@@ -111,11 +111,18 @@ export default function OnboardingModal({ isOpen, user, onComplete }) {
         
         // Delete any duplicate preference records
         for (let i = 1; i < existingPrefs.length; i++) {
-          await base44.entities.UserPreferences.delete(existingPrefs[i].id);
+          try {
+            await base44.entities.UserPreferences.delete(existingPrefs[i].id);
+          } catch (e) {
+            // Ignore delete errors for duplicates
+          }
         }
       } else {
         await base44.entities.UserPreferences.create(prefsData);
       }
+
+      // Also store in localStorage as backup to prevent double onboarding
+      localStorage.setItem(`onboarding_completed_${user.email}`, 'true');
 
       onComplete();
     } catch (err) {
