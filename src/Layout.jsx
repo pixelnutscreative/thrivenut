@@ -55,7 +55,14 @@ const moduleNavMap = {
   mental_health: ['Mental Health'],
 };
 
-const allNavItems = [
+// Icon mapping for dynamic menu
+const iconMap = {
+  LayoutDashboard, Target, Heart, BookOpen, Settings, TrendingUp, Users, Video,
+  Pill, Gift, Brain, Home, ChevronDown, ChevronRight, Bell, Share2, Music, Star,
+  Lock, UserCog, Sparkles
+};
+
+const defaultNavItems = [
   { name: "Pixel's Place", icon: Sparkles, path: 'PixelsParadise', alwaysShow: true },
   { name: 'Saved Motivations', icon: Heart, path: 'SavedMotivations', alwaysShow: true },
   { name: 'Dashboard', icon: LayoutDashboard, path: 'Dashboard', alwaysShow: true },
@@ -64,10 +71,10 @@ const allNavItems = [
     { name: 'Creator Contacts', icon: Users, path: 'TikTokContacts' },
     { name: 'Social Engagement', icon: Users, path: 'TikTokEngagement' },
     { name: 'Content Calendar', icon: Video, path: 'LiveSchedule' },
+    { name: 'Sunny Songbird', icon: Music, path: 'SongGenerator' },
+    { name: 'Gift Gallery Gratitude', icon: Gift, path: 'WeeklyGifterGallery' },
   ]},
-  { name: 'Music & Songs', icon: Music, isSection: true, moduleId: 'gifter', requiresTikTokAccess: true, subItems: [
-            { name: 'Gift Gallery Gratitude', icon: Gift, path: 'WeeklyGifterGallery' },
-            { name: 'Sunny Songbird', icon: Music, path: 'SongGenerator' },
+  { name: 'Music & Songs', icon: Music, isSection: true, subItems: [
             { name: 'Holy Hitmakers', icon: Music, path: 'HolyHitmakers' },
             { name: "Ping & Pong's Silly Songs", icon: Music, externalUrl: 'https://sillysongs.pixelnutscreative.com' },
           ]},
@@ -127,7 +134,68 @@ export default function Layout({ children, currentPageName }) {
   });
 
   const enabledModules = preferences?.enabled_modules || ['tiktok', 'gifter', 'goals', 'wellness', 'supplements', 'medications', 'pets', 'care_reminders', 'people', 'journal', 'mental_health'];
-  const featureOrder = preferences?.feature_order || [];
+  
+  // Fetch admin menu config
+  const { data: menuConfig = [] } = useQuery({
+    queryKey: ['menuConfig'],
+    queryFn: async () => {
+      try {
+        const items = await base44.entities.MenuConfig.filter({ is_active: true }, 'sort_order');
+        return items;
+      } catch {
+        return [];
+      }
+    },
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+
+  // Build nav items from database config or use defaults
+  const allNavItems = React.useMemo(() => {
+    if (menuConfig.length === 0) return defaultNavItems;
+    
+    // Group items by parent_section
+    const sections = {};
+    const topLevel = [];
+    
+    menuConfig.forEach(item => {
+      if (item.parent_section) {
+        if (!sections[item.parent_section]) sections[item.parent_section] = [];
+        sections[item.parent_section].push({
+          name: item.name,
+          icon: iconMap[item.icon] || Star,
+          path: item.path,
+          externalUrl: item.external_url,
+          moduleId: item.module_id,
+          highlight: item.highlight,
+          isDivider: item.name?.startsWith('──'),
+        });
+      } else {
+        const navItem = {
+          name: item.name,
+          icon: iconMap[item.icon] || Star,
+          path: item.path,
+          externalUrl: item.external_url,
+          moduleId: item.module_id,
+          isSection: item.is_section,
+          alwaysShow: item.always_show,
+          adminOnly: item.admin_only,
+          requiresTikTokAccess: item.requires_tiktok_access,
+          requiresBibleBeliever: item.requires_bible_believer,
+          showWhenNoTikTokAccess: item.show_when_no_tiktok_access,
+          highlight: item.highlight,
+        };
+        topLevel.push(navItem);
+      }
+    });
+    
+    // Attach sub-items to sections
+    return topLevel.map(item => {
+      if (item.isSection && sections[item.name]) {
+        return { ...item, subItems: sections[item.name] };
+      }
+      return item;
+    });
+  }, [menuConfig]);
   
   // IMPORTANT: isAdmin checks the REAL user email (not impersonated), so admin always sees admin menu
   const realUserEmail = user?.email?.toLowerCase() || '';
@@ -138,10 +206,9 @@ export default function Layout({ children, currentPageName }) {
   const hasTikTokAccess = isAdmin || preferences?.tiktok_access_approved;
   const isBibleBeliever = preferences?.is_bible_believer || preferences?.greeting_type === 'scripture';
 
-  // Filter and order nav items based on enabled modules and feature order
+  // Filter nav items based on enabled modules (order comes from admin config)
   const getOrderedNavItems = () => {
-    // First filter based on enabled modules - but SHOW TikTok items always (gated by popup)
-    // Also show disabled modules with a way to enable them
+    // Filter based on enabled modules - but SHOW TikTok items always (gated by popup)
     let filtered = allNavItems.filter(item => {
       if (item.alwaysShow) return true;
       // Admin only items
@@ -166,33 +233,6 @@ export default function Layout({ children, currentPageName }) {
       }
       return item;
     });
-
-    // If there's a feature order, apply it
-    if (featureOrder.length > 0) {
-      const alwaysShowItems = filtered.filter(item => item.alwaysShow || item.adminOnly);
-      const orderableItems = filtered.filter(item => !item.alwaysShow && !item.adminOnly && item.moduleId);
-      const otherItems = filtered.filter(item => !item.alwaysShow && !item.adminOnly && !item.moduleId);
-      
-      // Sort orderable items by feature order
-      orderableItems.sort((a, b) => {
-        const aIndex = featureOrder.indexOf(a.moduleId);
-        const bIndex = featureOrder.indexOf(b.moduleId);
-        if (aIndex === -1 && bIndex === -1) return 0;
-        if (aIndex === -1) return 1;
-        if (bIndex === -1) return -1;
-        return aIndex - bIndex;
-      });
-
-      // Rebuild: alwaysShow items at start (Pixel's Place, Saved Motivations, Dashboard), 
-      // then ordered features, then other items, then Support/Admin at end
-      const pixelsPlace = alwaysShowItems.find(i => i.name === "Pixel's Place");
-      const savedMotivations = alwaysShowItems.find(i => i.name === 'Saved Motivations');
-      const dashboard = alwaysShowItems.find(i => i.name === 'Dashboard');
-      const support = alwaysShowItems.find(i => i.name === 'Support');
-      const adminPanel = alwaysShowItems.find(i => i.name === 'Admin Panel');
-      
-      return [pixelsPlace, savedMotivations, dashboard, ...orderableItems, ...otherItems, support, adminPanel].filter(Boolean);
-    }
 
     return filtered;
   };
