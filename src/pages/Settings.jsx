@@ -3,15 +3,14 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Loader2, Save, User, Palette, Eye, Layers, MessageSquare, Clock, Share2, Music, Sparkles, ChevronDown, MessageCircle, Plus, Trash2, Users } from 'lucide-react';
+import { Loader2, Save, User, Palette, Eye, Layers, MessageSquare, Clock, Share2, Music, Sparkles, ChevronDown, ChevronRight, MessageCircle, Plus, Trash2, Users, LayoutDashboard, Zap } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 import ThemeSelector from '../components/onboarding/ThemeSelector';
 import ImageUploader from '../components/settings/ImageUploader';
@@ -56,7 +55,15 @@ export default function Settings() {
   const [user, setUser] = useState(null);
   const [saveMessage, setSaveMessage] = useState('');
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('profile');
+  const [expandedSections, setExpandedSections] = useState(['profile']);
+
+  const toggleSection = (section) => {
+    setExpandedSections(prev => 
+      prev.includes(section) 
+        ? prev.filter(s => s !== section)
+        : [...prev, section]
+    );
+  };
 
   useEffect(() => {
     base44.auth.me().then(userData => {
@@ -250,37 +257,27 @@ export default function Settings() {
           </Button>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-6 mb-6">
-            <TabsTrigger value="profile" className="flex items-center gap-2">
-              <User className="w-4 h-4" />
-              <span className="hidden sm:inline">Profile</span>
-            </TabsTrigger>
-            <TabsTrigger value="appearance" className="flex items-center gap-2">
-              <Palette className="w-4 h-4" />
-              <span className="hidden sm:inline">Appearance</span>
-            </TabsTrigger>
-            <TabsTrigger value="modules" className="flex items-center gap-2">
-                <Layers className="w-4 h-4" />
-                <span className="hidden sm:inline">Features</span>
-              </TabsTrigger>
-            <TabsTrigger value="preferences" className="flex items-center gap-2">
-                  <MessageSquare className="w-4 h-4" />
-                  <span className="hidden sm:inline">Preferences</span>
-                </TabsTrigger>
-                <TabsTrigger value="dashboard" className="flex items-center gap-2">
-                        <Eye className="w-4 h-4" />
-                        <span className="hidden sm:inline">Dashboard</span>
-                      </TabsTrigger>
-                      <TabsTrigger value="widgets" className="flex items-center gap-2">
-                        <Sparkles className="w-4 h-4" />
-                        <span className="hidden sm:inline">Widgets</span>
-                      </TabsTrigger>
-                    </TabsList>
-
-          {/* Profile Tab - now includes TikTok info */}
-          <TabsContent value="profile">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+        <div className="space-y-4">
+          {/* ========== PROFILE SECTION ========== */}
+          <Collapsible open={expandedSections.includes('profile')} onOpenChange={() => toggleSection('profile')}>
+            <CollapsibleTrigger className="w-full">
+              <Card className={`cursor-pointer transition-all ${expandedSections.includes('profile') ? 'ring-2 ring-purple-300' : 'hover:shadow-md'}`}>
+                <CardHeader className="flex flex-row items-center justify-between py-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center">
+                      <User className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="text-left">
+                      <CardTitle className="text-lg">Profile & Social</CardTitle>
+                      <CardDescription>Your profile, TikTok info, and communities</CardDescription>
+                    </div>
+                  </div>
+                  {expandedSections.includes('profile') ? <ChevronDown className="w-5 h-5 text-gray-500" /> : <ChevronRight className="w-5 h-5 text-gray-500" />}
+                </CardHeader>
+              </Card>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 mt-4">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -591,43 +588,63 @@ export default function Settings() {
                 </CardContent>
               </Card>
             </motion.div>
-          </TabsContent>
+          </CollapsibleContent>
+        </Collapsible>
 
-          {/* Appearance Tab - now includes background image */}
-          <TabsContent value="appearance">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+        {/* ========== APPEARANCE SECTION ========== */}
+        <Collapsible open={expandedSections.includes('appearance')} onOpenChange={() => toggleSection('appearance')}>
+          <CollapsibleTrigger className="w-full">
+            <Card className={`cursor-pointer transition-all ${expandedSections.includes('appearance') ? 'ring-2 ring-purple-300' : 'hover:shadow-md'}`}>
+              <CardHeader className="flex flex-row items-center justify-between py-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-r from-pink-500 to-orange-500 flex items-center justify-center">
+                    <Palette className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="text-left">
+                    <CardTitle className="text-lg">Theme & Appearance</CardTitle>
+                    <CardDescription>Colors, dark mode, and visual style</CardDescription>
+                  </div>
+                </div>
+                {expandedSections.includes('appearance') ? <ChevronDown className="w-5 h-5 text-gray-500" /> : <ChevronRight className="w-5 h-5 text-gray-500" />}
+              </CardHeader>
+            </Card>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-4">
               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Palette className="w-5 h-5" />
-                    Theme & Colors
-                  </CardTitle>
-                  <CardDescription>Choose your theme and colors</CardDescription>
-                </CardHeader>
-                <CardContent>
+                <CardContent className="pt-6">
                   <ThemeSelector
                     themeData={formData}
                     onChange={(data) => setFormData({ ...formData, ...data })}
                   />
                 </CardContent>
               </Card>
-
-
             </motion.div>
-          </TabsContent>
+          </CollapsibleContent>
+        </Collapsible>
 
-          {/* Features Tab */}
-          <TabsContent value="modules">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+        {/* ========== FEATURES SECTION ========== */}
+        <Collapsible open={expandedSections.includes('features')} onOpenChange={() => toggleSection('features')}>
+          <CollapsibleTrigger className="w-full">
+            <Card className={`cursor-pointer transition-all ${expandedSections.includes('features') ? 'ring-2 ring-purple-300' : 'hover:shadow-md'}`}>
+              <CardHeader className="flex flex-row items-center justify-between py-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center">
+                    <Layers className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="text-left">
+                    <CardTitle className="text-lg">Features</CardTitle>
+                    <CardDescription>Show or hide features in your menu</CardDescription>
+                  </div>
+                </div>
+                {expandedSections.includes('features') ? <ChevronDown className="w-5 h-5 text-gray-500" /> : <ChevronRight className="w-5 h-5 text-gray-500" />}
+              </CardHeader>
+            </Card>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-4">
               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Layers className="w-5 h-5" />
-                    Features
-                  </CardTitle>
-                  <CardDescription>Enable features and drag to reorder them in the menu</CardDescription>
-                </CardHeader>
-                <CardContent>
+                <CardContent className="pt-6">
                   <FeatureOrderManager
                     enabledModules={formData.enabled_modules}
                     onChange={(updates) => setFormData({ ...formData, ...updates })}
@@ -635,15 +652,58 @@ export default function Settings() {
                 </CardContent>
               </Card>
             </motion.div>
-          </TabsContent>
+          </CollapsibleContent>
+        </Collapsible>
 
-          {/* Preferences Tab - now includes accessibility in collapsible */}
-          <TabsContent value="preferences">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+        {/* ========== DASHBOARD SECTION ========== */}
+        <Collapsible open={expandedSections.includes('dashboard')} onOpenChange={() => toggleSection('dashboard')}>
+          <CollapsibleTrigger className="w-full">
+            <Card className={`cursor-pointer transition-all ${expandedSections.includes('dashboard') ? 'ring-2 ring-purple-300' : 'hover:shadow-md'}`}>
+              <CardHeader className="flex flex-row items-center justify-between py-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-r from-green-500 to-teal-500 flex items-center justify-center">
+                    <LayoutDashboard className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="text-left">
+                    <CardTitle className="text-lg">Dashboard</CardTitle>
+                    <CardDescription>My Day view, task display, and reminders</CardDescription>
+                  </div>
+                </div>
+                {expandedSections.includes('dashboard') ? <ChevronDown className="w-5 h-5 text-gray-500" /> : <ChevronRight className="w-5 h-5 text-gray-500" />}
+              </CardHeader>
+            </Card>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-4">
+              <DashboardPreferences formData={formData} setFormData={setFormData} />
+            </motion.div>
+          </CollapsibleContent>
+        </Collapsible>
+
+        {/* ========== PREFERENCES SECTION ========== */}
+        <Collapsible open={expandedSections.includes('preferences')} onOpenChange={() => toggleSection('preferences')}>
+          <CollapsibleTrigger className="w-full">
+            <Card className={`cursor-pointer transition-all ${expandedSections.includes('preferences') ? 'ring-2 ring-purple-300' : 'hover:shadow-md'}`}>
+              <CardHeader className="flex flex-row items-center justify-between py-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-r from-amber-500 to-yellow-500 flex items-center justify-center">
+                    <MessageSquare className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="text-left">
+                    <CardTitle className="text-lg">Preferences</CardTitle>
+                    <CardDescription>Timezone, greetings, and landing page</CardDescription>
+                  </div>
+                </div>
+                {expandedSections.includes('preferences') ? <ChevronDown className="w-5 h-5 text-gray-500" /> : <ChevronRight className="w-5 h-5 text-gray-500" />}
+              </CardHeader>
+            </Card>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4 mt-4">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Clock className="w-5 h-5" />
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Clock className="w-4 h-4" />
                     Timezone
                   </CardTitle>
                 </CardHeader>
@@ -657,13 +717,10 @@ export default function Settings() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <MessageSquare className="w-5 h-5" />
-                    Daily Greeting Types
-                  </CardTitle>
-                  <CardDescription>Select multiple types to rotate through on your dashboard</CardDescription>
+                  <CardTitle className="text-base">Daily Greeting Types</CardTitle>
+                  <CardDescription>Select multiple to rotate through</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent className="space-y-2">
                   {greetingTypeOptions.map(greeting => {
                     const isSelected = formData.greeting_types?.includes(greeting.id);
                     return (
@@ -674,24 +731,18 @@ export default function Settings() {
                           const newTypes = isSelected
                             ? current.filter(t => t !== greeting.id)
                             : [...current, greeting.id];
-                          // Ensure at least one is selected
                           if (newTypes.length > 0) {
                             setFormData({ ...formData, greeting_types: newTypes, greeting_type: newTypes[0] });
                           }
                         }}
-                        className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                          isSelected
-                            ? 'border-purple-500 bg-purple-50'
-                            : 'border-gray-200 hover:border-purple-300'
+                        className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                          isSelected ? 'border-purple-500 bg-purple-50' : 'border-gray-200 hover:border-purple-300'
                         }`}
                       >
                         <div className="flex items-center gap-3">
                           <Checkbox checked={isSelected} />
-                          <span className="text-xl">{greeting.icon}</span>
-                          <div>
-                            <h4 className="font-semibold">{greeting.name}</h4>
-                            <p className="text-sm text-gray-600">{greeting.description}</p>
-                          </div>
+                          <span>{greeting.icon}</span>
+                          <span className="font-medium">{greeting.name}</span>
                         </div>
                       </div>
                     );
@@ -701,11 +752,7 @@ export default function Settings() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Layers className="w-5 h-5" />
-                    Default Landing Page
-                  </CardTitle>
-                  <CardDescription>Which page opens when you log in or click the logo</CardDescription>
+                  <CardTitle className="text-base">Default Landing Page</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <Select
@@ -723,93 +770,111 @@ export default function Settings() {
                   </Select>
                 </CardContent>
               </Card>
-
-              {/* Accessibility - Collapsible */}
-              <Collapsible>
-                <Card>
-                  <CollapsibleTrigger className="w-full">
-                    <CardHeader className="cursor-pointer hover:bg-gray-50 rounded-t-lg">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Eye className="w-5 h-5" />
-                          <CardTitle>Accessibility Options</CardTitle>
-                        </div>
-                        <ChevronDown className="w-5 h-5 text-gray-500" />
-                      </div>
-                      <CardDescription className="text-left">Visual modes and text-to-speech</CardDescription>
-                    </CardHeader>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <CardContent className="space-y-6 pt-0">
-                      <div className="space-y-3">
-                        <h4 className="font-semibold">Visual Mode</h4>
-                        {accessibilityModes.map(mode => (
-                          <div
-                            key={mode.id}
-                            onClick={() => setFormData({ ...formData, accessibility_mode: mode.id })}
-                            className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                              formData.accessibility_mode === mode.id
-                                ? 'border-purple-500 bg-purple-50'
-                                : 'border-gray-200 hover:border-purple-300'
-                            }`}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                                formData.accessibility_mode === mode.id ? 'border-purple-500' : 'border-gray-300'
-                              }`}>
-                                {formData.accessibility_mode === mode.id && (
-                                  <div className="w-2.5 h-2.5 rounded-full bg-purple-500" />
-                                )}
-                              </div>
-                              <div>
-                                <h4 className="font-semibold">{mode.name}</h4>
-                                <p className="text-sm text-gray-600">{mode.description}</p>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-
-                      <div className="pt-4 border-t">
-                        <div
-                          onClick={() => setFormData({ ...formData, use_text_to_speech: !formData.use_text_to_speech })}
-                          className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                            formData.use_text_to_speech
-                              ? 'border-purple-500 bg-purple-50'
-                              : 'border-gray-200 hover:border-purple-300'
-                          }`}
-                        >
-                          <div className="flex items-start gap-3">
-                            <Checkbox checked={formData.use_text_to_speech} />
-                            <div>
-                              <h4 className="font-semibold">Enable Text-to-Speech</h4>
-                              <p className="text-sm text-gray-600">Hear options read aloud (works on this page only for now)</p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </CollapsibleContent>
-                </Card>
-              </Collapsible>
             </motion.div>
-          </TabsContent>
+          </CollapsibleContent>
+        </Collapsible>
 
-          {/* Dashboard Tab */}
-          <TabsContent value="dashboard">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              <DashboardPreferences formData={formData} setFormData={setFormData} />
-            </motion.div>
-          </TabsContent>
-
-          {/* Widgets Tab */}
-          <TabsContent value="widgets">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+        {/* ========== WIDGETS SECTION ========== */}
+        <Collapsible open={expandedSections.includes('widgets')} onOpenChange={() => toggleSection('widgets')}>
+          <CollapsibleTrigger className="w-full">
+            <Card className={`cursor-pointer transition-all ${expandedSections.includes('widgets') ? 'ring-2 ring-purple-300' : 'hover:shadow-md'}`}>
+              <CardHeader className="flex flex-row items-center justify-between py-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-r from-violet-500 to-purple-500 flex items-center justify-center">
+                    <Zap className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="text-left">
+                    <CardTitle className="text-lg">Widgets</CardTitle>
+                    <CardDescription>Quick actions and SoundCloud player</CardDescription>
+                  </div>
+                </div>
+                {expandedSections.includes('widgets') ? <ChevronDown className="w-5 h-5 text-gray-500" /> : <ChevronRight className="w-5 h-5 text-gray-500" />}
+              </CardHeader>
+            </Card>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4 mt-4">
               <QuickActionsSettings formData={formData} setFormData={setFormData} />
               <SoundCloudSettings formData={formData} setFormData={setFormData} />
             </motion.div>
-          </TabsContent>
-          </Tabs>
+          </CollapsibleContent>
+        </Collapsible>
+
+        {/* ========== ACCESSIBILITY SECTION ========== */}
+        <Collapsible open={expandedSections.includes('accessibility')} onOpenChange={() => toggleSection('accessibility')}>
+          <CollapsibleTrigger className="w-full">
+            <Card className={`cursor-pointer transition-all ${expandedSections.includes('accessibility') ? 'ring-2 ring-purple-300' : 'hover:shadow-md'}`}>
+              <CardHeader className="flex flex-row items-center justify-between py-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-r from-indigo-500 to-blue-500 flex items-center justify-center">
+                    <Eye className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="text-left">
+                    <CardTitle className="text-lg">Accessibility</CardTitle>
+                    <CardDescription>Visual modes and text-to-speech</CardDescription>
+                  </div>
+                </div>
+                {expandedSections.includes('accessibility') ? <ChevronDown className="w-5 h-5 text-gray-500" /> : <ChevronRight className="w-5 h-5 text-gray-500" />}
+              </CardHeader>
+            </Card>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-4">
+              <Card>
+                <CardContent className="space-y-4 pt-6">
+                  <div className="space-y-2">
+                    <Label className="font-semibold">Visual Mode</Label>
+                    {accessibilityModes.map(mode => (
+                      <div
+                        key={mode.id}
+                        onClick={() => setFormData({ ...formData, accessibility_mode: mode.id })}
+                        className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                          formData.accessibility_mode === mode.id
+                            ? 'border-purple-500 bg-purple-50'
+                            : 'border-gray-200 hover:border-purple-300'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                            formData.accessibility_mode === mode.id ? 'border-purple-500' : 'border-gray-300'
+                          }`}>
+                            {formData.accessibility_mode === mode.id && (
+                              <div className="w-2 h-2 rounded-full bg-purple-500" />
+                            )}
+                          </div>
+                          <div>
+                            <span className="font-medium">{mode.name}</span>
+                            <span className="text-sm text-gray-500 ml-2">{mode.description}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="pt-4 border-t">
+                    <div
+                      onClick={() => setFormData({ ...formData, use_text_to_speech: !formData.use_text_to_speech })}
+                      className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                        formData.use_text_to_speech
+                          ? 'border-purple-500 bg-purple-50'
+                          : 'border-gray-200 hover:border-purple-300'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Checkbox checked={formData.use_text_to_speech} />
+                        <div>
+                          <span className="font-medium">Enable Text-to-Speech</span>
+                          <p className="text-sm text-gray-500">Hear options read aloud</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </CollapsibleContent>
+        </Collapsible>
+        </div>
       </div>
     </div>
   );
