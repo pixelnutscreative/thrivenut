@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
-import { Shield, Star, UserCog, Users, Gift, Settings, Palette, Clock, MessageSquare, ListTodo, Squirrel, FolderOpen, Merge, Mail, Menu } from 'lucide-react';
+import { Shield, Star, UserCog, Users, Gift, Settings, Palette, Clock, MessageSquare, ListTodo, Squirrel, FolderOpen, Merge, Mail, Menu, Sparkles } from 'lucide-react';
 
 // Import the individual admin components/pages as content
 import AdminSuperFanContent from '../components/admin/AdminSuperFanContent';
@@ -20,6 +20,7 @@ import AdminCategoriesContent from '../components/admin/AdminCategoriesContent';
 import DuplicateContactMerger from '../components/admin/DuplicateContactMerger';
 import AdminPreApprovedEmailsContent from '../components/admin/AdminPreApprovedEmailsContent';
 import AdminMenuContent from '../components/admin/AdminMenuContent';
+import AdminPixelsPlaceContent from '../components/admin/AdminPixelsPlaceContent';
 
 const ADMIN_EMAILS = ['pixelnutscreative@gmail.com', 'pixel@thrivenut.app'];
 
@@ -137,6 +138,10 @@ export default function Admin() {
                   <Menu className="w-4 h-4" />
                   <span className="hidden sm:inline">Menu</span>
                 </TabsTrigger>
+                <TabsTrigger value="pixelsplace" className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4" />
+                  <span className="hidden sm:inline">Pixel's Place</span>
+                </TabsTrigger>
                 <TabsTrigger value="settings" className="flex items-center gap-2">
                   <Settings className="w-4 h-4" />
                   <span className="hidden sm:inline">Settings</span>
@@ -195,6 +200,10 @@ export default function Admin() {
 
           <TabsContent value="menu" className="mt-6">
             <AdminMenuContent />
+          </TabsContent>
+
+          <TabsContent value="pixelsplace" className="mt-6">
+            <AdminPixelsPlaceContent />
           </TabsContent>
 
           <TabsContent value="settings" className="mt-6">
