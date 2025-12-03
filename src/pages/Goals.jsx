@@ -858,15 +858,27 @@ export default function Goals() {
                         </>
                       )}
 
+                      {/* For habit goals: reset progress. For other goals: mark complete */}
                       {(percentage >= 100 || (hasSteps && stepsPercent >= 100)) && (
-                        <Button
-                          size="sm"
-                          onClick={() => completeGoalMutation.mutate(goal.id)}
-                          className="w-full bg-green-600 hover:bg-green-700"
-                        >
-                          <CheckCircle2 className="w-4 h-4 mr-2" />
-                          Mark Complete
-                        </Button>
+                        goal.goal_type === 'habit' ? (
+                          <Button
+                            size="sm"
+                            onClick={() => updateProgressMutation.mutate({ goalId: goal.id, newValue: 0 })}
+                            className="w-full bg-teal-600 hover:bg-teal-700"
+                          >
+                            <RotateCcw className="w-4 h-4 mr-2" />
+                            Reset for Next {goal.frequency === 'daily' ? 'Day' : goal.frequency === 'weekly' ? 'Week' : 'Month'}
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            onClick={() => completeGoalMutation.mutate(goal.id)}
+                            className="w-full bg-green-600 hover:bg-green-700"
+                          >
+                            <CheckCircle2 className="w-4 h-4 mr-2" />
+                            Mark Complete
+                          </Button>
+                        )
                       )}
 
                       <div className="text-xs text-gray-500 flex justify-between pt-2 border-t">
