@@ -157,9 +157,9 @@ export default function Pricing() {
                   </CardHeader>
                   <CardContent className="text-center space-y-4">
                     <div>
-                      <span className="text-4xl font-bold">$7</span>
-                      <span className="text-gray-500">/month</span>
+                      <span className="text-4xl font-bold">$49</span>
                       <p className="text-sm text-green-600 font-medium">for 7 months!</p>
+                      <p className="text-xs text-gray-400">One-time payment</p>
                     </div>
                     <Button
                       onClick={() => handleSubscribe('monthly')}

@@ -20,17 +20,15 @@ Deno.serve(async (req) => {
     let mode = 'subscription';
     
     if (plan_type === 'monthly') {
-      // $7/month for 7 months special
+      // $49 one-time for 7 months special (not recurring)
+      mode = 'payment';
       priceData = {
         currency: 'usd',
         product_data: {
-          name: "Let's Thrive! Monthly (Holiday Special)",
-          description: '$7/month for 7 months - Holiday Special ends Dec 7th!',
+          name: "Let's Thrive! 7-Month Access (Holiday Special)",
+          description: '$49 for 7 months of access - Holiday Special ends Dec 7th!',
         },
-        unit_amount: 700, // $7.00
-        recurring: {
-          interval: 'month',
-        },
+        unit_amount: 4900, // $49.00
       };
     } else if (plan_type === 'annual') {
       // $77/year holiday special (normally $111)
@@ -74,7 +72,7 @@ Deno.serve(async (req) => {
     const appId = Deno.env.get("BASE44_APP_ID");
     const baseUrl = `https://${appId}.base44.app`;
 
-    const session = await stripe.checkout.sessions.create({
+    const sessionConfig = {
       customer: customerId,
       mode: mode,
       line_items: [
@@ -89,13 +87,19 @@ Deno.serve(async (req) => {
         user_email: user.email,
         plan_type: plan_type,
       },
-      subscription_data: {
+    };
+
+    // Only add subscription_data for subscription mode
+    if (mode === 'subscription') {
+      sessionConfig.subscription_data = {
         metadata: {
           user_email: user.email,
           plan_type: plan_type,
         },
-      },
-    });
+      };
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionConfig);
 
     return Response.json({ url: session.url, sessionId: session.id });
   } catch (error) {

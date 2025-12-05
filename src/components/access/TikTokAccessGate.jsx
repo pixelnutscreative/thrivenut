@@ -40,7 +40,7 @@ export default function TikTokAccessGate({ isOpen, onClose }) {
               <p className="text-sm font-semibold text-red-700">🎄 Holiday Special - Ends Dec 7th!</p>
             </div>
 
-            {/* Monthly Option */}
+            {/* 7-Month Option */}
             <Button 
               onClick={() => handleSubscribe('monthly')}
               disabled={loading}
@@ -52,7 +52,7 @@ export default function TikTokAccessGate({ isOpen, onClose }) {
               ) : (
                 <CreditCard className="w-4 h-4 mr-2" />
               )}
-              $7/month for 7 months
+              $49 for 7 months
             </Button>
 
             {/* Annual Option - Best Value */}
