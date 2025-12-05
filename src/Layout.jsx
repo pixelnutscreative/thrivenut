@@ -309,10 +309,24 @@ export default function Layout({ children, currentPageName }) {
     return luminance < 0.5;
   })();
 
-  // Don't show layout on public pages (landing, pricing, etc.)
+  // Public pages - no layout, no auth required
   const publicPages = ['Onboarding', 'Home', 'Pricing', 'SubscriptionSuccess'];
   if (publicPages.includes(currentPageName)) {
     return children;
+  }
+
+  // For all other pages, require authentication
+  // If not logged in, redirect to Home page
+  if (!userLoading && !user) {
+    window.location.href = createPageUrl('Home');
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p>Redirecting to login...</p>
+        </div>
+      </div>
+    );
   }
 
   const bgClass = isDark 
