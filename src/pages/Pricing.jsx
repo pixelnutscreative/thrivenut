@@ -61,6 +61,8 @@ export default function Pricing() {
 
   const handleSubscribe = async (planType) => {
     if (!user) {
+      // Save the selected plan to localStorage so we can resume after login
+      localStorage.setItem('pending_plan_type', planType);
       await base44.auth.redirectToLogin(window.location.href);
       return;
     }
@@ -76,6 +78,21 @@ export default function Pricing() {
       setLoading(false);
     }
   };
+
+  // Check for pending plan after login
+  useEffect(() => {
+    const checkPendingPlan = async () => {
+      if (user && !checkingSubscription) {
+        const pendingPlan = localStorage.getItem('pending_plan_type');
+        if (pendingPlan) {
+          localStorage.removeItem('pending_plan_type');
+          // Auto-trigger checkout for the saved plan
+          handleSubscribe(pendingPlan);
+        }
+      }
+    };
+    checkPendingPlan();
+  }, [user, checkingSubscription]);
 
   const gradientStyle = { background: `linear-gradient(135deg, ${primaryColor}, ${accentColor})` };
   const gradientTextStyle = { backgroundImage: `linear-gradient(to right, ${primaryColor}, ${accentColor})` };

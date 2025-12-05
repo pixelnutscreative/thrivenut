@@ -1,11 +1,27 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Lock, Star, CreditCard } from 'lucide-react';
+import { Lock, Star, CreditCard, Loader2, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
+import { base44 } from '@/api/base44Client';
 
 export default function TikTokAccessGate({ isOpen, onClose }) {
+  const [loading, setLoading] = useState(null);
+
+  const handleSubscribe = async (planType) => {
+    setLoading(planType);
+    try {
+      const response = await base44.functions.invoke('createCheckout', { plan_type: planType });
+      if (response.data?.url) {
+        window.location.href = response.data.url;
+      }
+    } catch (err) {
+      console.error('Checkout error:', err);
+      setLoading(null);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
@@ -19,12 +35,39 @@ export default function TikTokAccessGate({ isOpen, onClose }) {
           </p>
 
           <div className="space-y-3">
-            <Link to={createPageUrl('SuperFanAccess')} onClick={onClose}>
-              <Button className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
-                <Star className="w-4 h-4 mr-2" />
-                I'm a SuperFan - Request Access
-              </Button>
-            </Link>
+            {/* Holiday Special */}
+            <div className="p-3 bg-gradient-to-r from-red-50 to-green-50 rounded-lg border border-red-200 mb-4">
+              <p className="text-sm font-semibold text-red-700">🎄 Holiday Special - Ends Dec 7th!</p>
+            </div>
+
+            {/* Monthly Option */}
+            <Button 
+              onClick={() => handleSubscribe('monthly')}
+              disabled={loading}
+              variant="outline"
+              className="w-full border-2 border-teal-300 hover:border-teal-500 hover:bg-teal-50"
+            >
+              {loading === 'monthly' ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <CreditCard className="w-4 h-4 mr-2" />
+              )}
+              $7/month for 7 months
+            </Button>
+
+            {/* Annual Option - Best Value */}
+            <Button 
+              onClick={() => handleSubscribe('annual')}
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+            >
+              {loading === 'annual' ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Sparkles className="w-4 h-4 mr-2" />
+              )}
+              $77/year (Best Value!)
+            </Button>
             
             <div className="relative my-4">
               <div className="absolute inset-0 flex items-center">
@@ -35,15 +78,12 @@ export default function TikTokAccessGate({ isOpen, onClose }) {
               </div>
             </div>
 
-            <Button 
-              variant="outline" 
-              className="w-full border-2 border-purple-200 hover:border-purple-400 hover:bg-purple-50"
-              disabled
-            >
-              <CreditCard className="w-4 h-4 mr-2" />
-              Subscribe for $111/year
-              <span className="ml-2 text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">Coming Soon</span>
-            </Button>
+            <Link to={createPageUrl('SuperFanAccess')} onClick={onClose}>
+              <Button variant="outline" className="w-full border-2 border-amber-300 hover:border-amber-500 hover:bg-amber-50">
+                <Star className="w-4 h-4 mr-2 text-amber-500" />
+                I'm a SuperFan - Get Free Access
+              </Button>
+            </Link>
           </div>
 
           <p className="text-xs text-gray-500 mt-6">

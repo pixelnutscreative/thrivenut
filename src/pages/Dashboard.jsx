@@ -47,32 +47,55 @@ export default function Dashboard() {
         const userData = await base44.auth.me();
         setUser(userData);
 
-        // Check if onboarding completed - get most recent preferences
-        const prefs = await base44.entities.UserPreferences.filter({ user_email: userData.email }, '-updated_date');
-        
-        // IMPORTANT: Check if ANY preference record has onboarding_completed = true
-        // Also check localStorage as a backup to prevent double onboarding
-        const hasCompletedOnboarding = prefs.some(p => p.onboarding_completed === true);
+        // Check if onboarding completed - check localStorage FIRST (fastest, most reliable)
         const localOnboardingDone = localStorage.getItem(`onboarding_completed_${userData.email}`);
         
-        // Check if user is pre-approved and auto-grant access
-        if (prefs[0] && !prefs[0].tiktok_access_approved) {
-          try {
-            const preApproved = await base44.entities.PreApprovedEmail.filter({ 
-              email: userData.email.toLowerCase(), 
-              is_active: true 
-            });
-            if (preApproved.length > 0) {
-              await base44.entities.UserPreferences.update(prefs[0].id, { tiktok_access_approved: true });
+        // If localStorage says done, don't even check the database - we're done
+        if (localOnboardingDone) {
+          // Still fetch prefs for other checks, but don't show onboarding
+          const prefs = await base44.entities.UserPreferences.filter({ user_email: userData.email }, '-updated_date');
+          
+          // Check if user is pre-approved and auto-grant access
+          if (prefs[0] && !prefs[0].tiktok_access_approved) {
+            try {
+              const preApproved = await base44.entities.PreApprovedEmail.filter({ 
+                email: userData.email.toLowerCase(), 
+                is_active: true 
+              });
+              if (preApproved.length > 0) {
+                await base44.entities.UserPreferences.update(prefs[0].id, { tiktok_access_approved: true });
+              }
+            } catch (e) {
+              // Ignore - user may not have access to PreApprovedEmail entity
             }
-          } catch (e) {
-            // Ignore - user may not have access to PreApprovedEmail entity
           }
-        }
-        
-        // Only show onboarding if BOTH db and localStorage say it's not complete
-        if (!hasCompletedOnboarding && !localOnboardingDone) {
-          setShowOnboarding(true);
+        } else {
+          // localStorage doesn't have it - check database
+          const prefs = await base44.entities.UserPreferences.filter({ user_email: userData.email }, '-updated_date');
+          const hasCompletedOnboarding = prefs.some(p => p.onboarding_completed === true);
+          
+          if (hasCompletedOnboarding) {
+            // Database says complete - save to localStorage so we never check again
+            localStorage.setItem(`onboarding_completed_${userData.email}`, 'true');
+          } else {
+            // Neither localStorage nor database has it - show onboarding
+            setShowOnboarding(true);
+          }
+          
+          // Check if user is pre-approved and auto-grant access
+          if (prefs[0] && !prefs[0].tiktok_access_approved) {
+            try {
+              const preApproved = await base44.entities.PreApprovedEmail.filter({ 
+                email: userData.email.toLowerCase(), 
+                is_active: true 
+              });
+              if (preApproved.length > 0) {
+                await base44.entities.UserPreferences.update(prefs[0].id, { tiktok_access_approved: true });
+              }
+            } catch (e) {
+              // Ignore - user may not have access to PreApprovedEmail entity
+            }
+          }
         }
       } catch (error) {
         console.error('Auth error:', error);
