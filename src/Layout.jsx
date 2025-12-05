@@ -309,8 +309,9 @@ export default function Layout({ children, currentPageName }) {
     return luminance < 0.5;
   })();
 
-  // Don't show layout on onboarding or home page (home is public landing page)
-  if (currentPageName === 'Onboarding' || currentPageName === 'Home') {
+  // Don't show layout on public pages (landing, pricing, etc.)
+  const publicPages = ['Onboarding', 'Home', 'Pricing', 'SubscriptionSuccess'];
+  if (publicPages.includes(currentPageName)) {
     return children;
   }
 
