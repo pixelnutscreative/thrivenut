@@ -16,6 +16,14 @@ export default function SubscriptionSuccess() {
   useEffect(() => {
     const checkSub = async () => {
       try {
+        // First check if user is logged in
+        const user = await base44.auth.me();
+        if (!user) {
+          // Not logged in - just show success without subscription details
+          setLoading(false);
+          return;
+        }
+        
         const response = await base44.functions.invoke('checkSubscription');
         if (response.data?.hasActiveSubscription) {
           setSubscription(response.data.subscription);

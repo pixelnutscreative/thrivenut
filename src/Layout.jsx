@@ -28,9 +28,23 @@ import {
   Star,
   Lock,
   UserCog,
-  SettingsIcon,
   Sparkles,
-  Palette
+  Palette,
+  Eye,
+  Bookmark,
+  HandMetal,
+  PawPrint,
+  Search,
+  MousePointerClick,
+  Calendar,
+  Sun,
+  Cross,
+  Smile,
+  FileText,
+  StickyNote,
+  Tablet,
+  HelpCircle,
+  MessageCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import TikTokAccessGate from './components/access/TikTokAccessGate';
@@ -59,44 +73,78 @@ const moduleNavMap = {
 const iconMap = {
   LayoutDashboard, Target, Heart, BookOpen, Settings, TrendingUp, Users, Video,
   Pill, Gift, Brain, Home, ChevronDown, ChevronRight, Bell, Share2, Music, Star,
-  Lock, UserCog, Sparkles
+  Lock, UserCog, Sparkles, Eye, Bookmark, HandMetal, PawPrint, Search, 
+  MousePointerClick, Calendar, Sun, Cross, Smile, FileText, StickyNote, 
+  Tablet, HelpCircle, MessageCircle
 };
+
+// Custom peanut icon component
+const PeanutIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <ellipse cx="12" cy="7" rx="4" ry="5" />
+    <ellipse cx="12" cy="17" rx="4" ry="5" />
+    <path d="M8 12h8" />
+  </svg>
+);
+
+// Custom praying hands icon
+const PrayingHandsIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 2v4" />
+    <path d="M8 6l4 4 4-4" />
+    <path d="M7 10c0 0-2 2-2 5s2 5 2 5" />
+    <path d="M17 10c0 0 2 2 2 5s-2 5-2 5" />
+    <path d="M12 10v12" />
+    <path d="M9 14h6" />
+  </svg>
+);
+
+// Custom reminder string icon  
+const ReminderIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 5a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
+    <path d="M12 5v3" />
+    <path d="M9 8h6" />
+    <circle cx="12" cy="15" r="6" />
+    <path d="M12 12v3l2 2" />
+  </svg>
+);
 
 const defaultNavItems = [
   { name: "Pixel's Place", icon: Sparkles, path: 'PixelsParadise', alwaysShow: true },
-  { name: 'Saved Motivations', icon: Heart, path: 'SavedMotivations', alwaysShow: true },
+  { name: 'Saved Motivations', icon: Bookmark, path: 'SavedMotivations', alwaysShow: true },
   { name: 'Dashboard', icon: LayoutDashboard, path: 'Dashboard', alwaysShow: true },
-  { name: 'Social Media Suite', icon: TrendingUp, isSection: true, moduleId: 'tiktok', requiresTikTokAccess: true, subItems: [
-    { name: 'Discover Creators', icon: Users, path: 'DiscoverCreators', highlight: true },
+  { name: 'Social Media Suite', icon: Share2, isSection: true, moduleId: 'tiktok', requiresTikTokAccess: true, subItems: [
+    { name: 'Discover Creators', icon: Search, path: 'DiscoverCreators', highlight: true },
     { name: 'Creator Contacts', icon: Users, path: 'TikTokContacts' },
-    { name: 'Social Engagement', icon: Users, path: 'TikTokEngagement' },
-    { name: 'Content Calendar', icon: Video, path: 'LiveSchedule' },
-    { name: 'Sunny Songbird', icon: Music, path: 'SongGenerator' },
+    { name: 'Social Engagement', icon: MousePointerClick, path: 'TikTokEngagement' },
+    { name: 'Content Calendar', icon: Calendar, path: 'LiveSchedule' },
+    { name: 'Sunny Songbird', icon: Sun, path: 'SongGenerator' },
     { name: 'Gift Gallery Gratitude', icon: Gift, path: 'WeeklyGifterGallery' },
   ]},
   { name: 'Music & Songs', icon: Music, isSection: true, subItems: [
-            { name: 'Holy Hitmakers', icon: Music, path: 'HolyHitmakers' },
-            { name: "Ping & Pong's Silly Songs", icon: Music, externalUrl: 'https://sillysongs.pixelnutscreative.com' },
+            { name: 'Holy Hitmakers', icon: Cross, path: 'HolyHitmakers' },
+            { name: "Ping & Pong's Silly Songs", icon: Smile, externalUrl: 'https://sillysongs.pixelnutscreative.com' },
           ]},
   { name: 'Goals', icon: Target, path: 'Goals', moduleId: 'goals' },
-    { name: 'Vision Board', icon: Sparkles, path: 'VisionBoard', moduleId: 'goals' },
-  { name: 'Prayer Requests', icon: Heart, path: 'PrayerRequests', requiresBibleBeliever: true },
+    { name: 'Vision Board', icon: Eye, path: 'VisionBoard', moduleId: 'goals' },
+  { name: 'Prayer Requests', icon: HandMetal, path: 'PrayerRequests', requiresBibleBeliever: true },
       { name: 'Mental Health', icon: Brain, isSection: true, moduleId: 'mental_health', subItems: [
         { name: 'Mental Health Hub', icon: Brain, path: 'NeurodivergentSettings' },
-        { name: 'Journal', icon: BookOpen, path: 'Journal', moduleId: 'journal' },
-        { name: 'Quick Notes', icon: BookOpen, path: 'QuickNotes', moduleId: 'quick_notes' },
+        { name: 'Journal', icon: FileText, path: 'Journal', moduleId: 'journal' },
+        { name: 'Quick Notes', icon: StickyNote, path: 'QuickNotes', moduleId: 'quick_notes' },
       ]},
   { name: 'Wellness', icon: Heart, isSection: true, moduleId: 'wellness', subItems: [
     { name: 'Daily Wellness', icon: Heart, path: 'Wellness' },
-    { name: 'Supplements', icon: Pill, path: 'Supplements', moduleId: 'supplements' },
+    { name: 'Supplements', icon: Tablet, path: 'Supplements', moduleId: 'supplements' },
     { name: 'Medications', icon: Pill, path: 'Medications', moduleId: 'medications' },
     { name: '── Care Tasks ──', icon: Heart, isDivider: true },
-    { name: 'Pet Care', icon: Heart, path: 'PetCare', moduleId: 'pets' },
+    { name: 'Pet Care', icon: PawPrint, path: 'PetCare', moduleId: 'pets' },
     { name: 'Care Reminders', icon: Bell, path: 'CareReminders', moduleId: 'care_reminders' },
   ]},
   { name: 'My People (IRL)', icon: Users, path: 'People', moduleId: 'people' },
   { name: 'SuperFan Access', icon: Star, path: 'SuperFanAccess', showWhenNoTikTokAccess: true },
-  { name: 'Support', icon: Heart, path: 'Support', alwaysShow: true },
+  { name: 'Support', icon: HelpCircle, path: 'Support', alwaysShow: true },
   { name: 'Admin Panel', icon: UserCog, path: 'Admin', adminOnly: true },
 ];
 
