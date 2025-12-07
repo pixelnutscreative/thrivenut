@@ -87,41 +87,6 @@ export default function QuickActionsSettings({ formData, setFormData }) {
 
   return (
     <div className="space-y-6">
-      {/* Drawer Position */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Zap className="w-5 h-5" />
-            Quick Actions Drawer Position
-          </CardTitle>
-          <CardDescription>Choose where the quick actions drawer appears</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 gap-3">
-            {positionOptions.map(opt => {
-              const Icon = opt.icon;
-              return (
-                <div
-                  key={opt.value}
-                  onClick={() => setFormData({ ...formData, quick_actions_position: opt.value })}
-                  className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-center gap-3 ${
-                    position === opt.value
-                      ? 'border-purple-500 bg-purple-50'
-                      : 'border-gray-200 hover:border-purple-300'
-                  }`}
-                >
-                  <Icon className={`w-5 h-5 ${position === opt.value ? 'text-purple-600' : 'text-gray-500'}`} />
-                  <div>
-                    <h4 className="font-semibold">{opt.label}</h4>
-                    <p className="text-xs text-gray-500">{opt.description}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Built-in Actions */}
       <Card>
         <CardHeader>

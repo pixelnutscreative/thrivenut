@@ -262,13 +262,19 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
         ref={dragRef}
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="fixed z-50 flex items-center gap-1 bg-gray-900/95 backdrop-blur-sm rounded-full px-2 py-1.5 shadow-2xl"
+        className="fixed z-50 bg-gray-900/95 backdrop-blur-sm rounded-full px-2 py-1.5 shadow-2xl"
         style={{
           left: position.x || 'calc(50% - 150px)',
           top: position.y || 16,
-          cursor: isDragging ? 'grabbing' : 'default'
+          cursor: isDragging ? 'grabbing' : 'default',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '4px'
         }}
       >
+        {/* Main action bar */}
+        <div className="flex items-center gap-1">
         {/* Drag handle */}
         <button
           onMouseDown={handleDragStart}
@@ -372,6 +378,26 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
         >
           <Settings className="w-4 h-4 text-gray-400 hover:text-white" />
         </button>
+        </div>
+
+        {/* SoundCloud Player - Hangs below toolbar */}
+        {preferences?.soundcloud_playlist_url && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            className="w-80 bg-gray-900/95 backdrop-blur-sm rounded-lg overflow-hidden shadow-lg"
+          >
+            <iframe 
+              width="100%" 
+              height="200" 
+              scrolling="no" 
+              frameBorder="no" 
+              allow="autoplay" 
+              src={`https://w.soundcloud.com/player/?url=${encodeURIComponent(preferences.soundcloud_playlist_url)}&color=%23ff5500&auto_play=false&hide_related=false&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=false`}
+              className="rounded-lg"
+            />
+          </motion.div>
+        )}
       </motion.div>
 
       {/* Mood Selector Popup */}
