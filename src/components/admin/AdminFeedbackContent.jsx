@@ -168,6 +168,16 @@ export default function AdminFeedbackContent() {
     queued: items.filter(i => i.queued_for_batch).length,
   };
 
+  // Get items needing verification (completed from batch)
+  const needsVerification = items
+    .filter(i => i.status === 'completed' && i.notes?.includes('✅ COMPLETED - Please verify'))
+    .sort((a, b) => new Date(b.completed_date) - new Date(a.completed_date));
+
+  // Get items needing your input (needs_info with questions)
+  const needsYourInput = items
+    .filter(i => i.status === 'needs_info' && i.notes?.includes('❓ NEEDS'))
+    .sort((a, b) => (a.batch_order || 999) - (b.batch_order || 999));
+
   // Get queued items sorted by batch_order
   const queuedItems = items
     .filter(i => i.queued_for_batch && i.status !== 'completed')
@@ -238,6 +248,107 @@ export default function AdminFeedbackContent() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Items Needing Verification */}
+      {needsVerification.length > 0 && (
+        <Card className="border-2 border-green-300 bg-green-50/50">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-lg text-green-800">
+              <Check className="w-5 h-5" />
+              ✅ Completed - Please Verify
+              <Badge className="bg-green-200 text-green-800 ml-2">{needsVerification.length} items</Badge>
+            </CardTitle>
+            <p className="text-sm text-green-600">These items are marked complete. Please verify and close the ticket.</p>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {needsVerification.map((item) => {
+              const catConfig = categoryConfig[item.category] || categoryConfig.other;
+              const CatIcon = catConfig.icon;
+              return (
+                <div key={item.id} className="p-3 bg-white rounded-lg border border-green-200">
+                  <div className="flex items-start gap-3">
+                    <Badge className={`text-xs ${catConfig.color}`}>
+                      <CatIcon className="w-3 h-3 mr-1" />
+                      {catConfig.label}
+                    </Badge>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-sm">{item.title}</h4>
+                      {item.description && <p className="text-xs text-gray-600 mt-1">{item.description}</p>}
+                      <div className="mt-2 p-2 bg-green-50 rounded border border-green-200">
+                        <p className="text-xs text-green-700">{item.notes}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-1">
+                      <Button
+                        size="sm"
+                        onClick={() => handleEdit(item)}
+                        className="h-7 px-2 bg-blue-600 hover:bg-blue-700"
+                      >
+                        <Edit className="w-3 h-3 mr-1" />
+                        Review
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => deleteMutation.mutate(item.id)}
+                        className="h-7 px-2 text-green-600 border-green-300 hover:bg-green-50"
+                      >
+                        <Check className="w-3 h-3 mr-1" />
+                        Close
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Items Needing Your Input */}
+      {needsYourInput.length > 0 && (
+        <Card className="border-2 border-amber-300 bg-amber-50/50">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-lg text-amber-800">
+              <AlertCircle className="w-5 h-5" />
+              ❓ Questions for You
+              <Badge className="bg-amber-200 text-amber-800 ml-2">{needsYourInput.length} items</Badge>
+            </CardTitle>
+            <p className="text-sm text-amber-600">Please answer these questions so I can complete these tasks.</p>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {needsYourInput.map((item) => {
+              const catConfig = categoryConfig[item.category] || categoryConfig.other;
+              const CatIcon = catConfig.icon;
+              return (
+                <div key={item.id} className="p-3 bg-white rounded-lg border border-amber-200">
+                  <div className="flex items-start gap-3">
+                    <Badge className={`text-xs ${catConfig.color}`}>
+                      <CatIcon className="w-3 h-3 mr-1" />
+                      {catConfig.label}
+                    </Badge>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-sm">{item.title}</h4>
+                      {item.description && <p className="text-xs text-gray-600 mt-1">{item.description}</p>}
+                      <div className="mt-2 p-2 bg-amber-50 rounded border border-amber-200">
+                        <p className="text-xs text-amber-700 font-medium">{item.notes}</p>
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => handleEdit(item)}
+                      className="h-7 px-2 bg-amber-600 hover:bg-amber-700"
+                    >
+                      <Edit className="w-3 h-3 mr-1" />
+                      Answer
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Batch Queue Section */}
       {queuedItems.length > 0 && (
