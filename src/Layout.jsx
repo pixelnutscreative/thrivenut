@@ -112,10 +112,21 @@ const ReminderIcon = ({ className }) => (
 );
 
 const defaultNavItems = [
-  { name: "Pixel's Place", icon: Sparkles, path: 'PixelsParadise', alwaysShow: true },
-  { name: 'Saved Motivations', icon: Bookmark, path: 'SavedMotivations', alwaysShow: true },
-  { name: 'Dashboard', icon: LayoutDashboard, path: 'Dashboard', alwaysShow: true },
-  { name: 'Social Media Suite', icon: Share2, isSection: true, moduleId: 'tiktok', requiresTikTokAccess: true, subItems: [
+  // TURQUOISE: Core Life
+  { name: '── Core Life ──', isGroupHeader: true, color: 'text-teal-400', bgColor: 'bg-teal-500/10' },
+  { name: 'Dashboard', icon: LayoutDashboard, path: 'Dashboard', alwaysShow: true, groupColor: 'teal' },
+  { name: "Pixel's Place", icon: Sparkles, path: 'PixelsParadise', alwaysShow: true, groupColor: 'teal' },
+  { name: 'Prayer Requests', icon: HandMetal, path: 'PrayerRequests', requiresBibleBeliever: true, groupColor: 'teal' },
+  
+  // PURPLE: Dreams & Direction
+  { name: '── Dreams & Direction ──', isGroupHeader: true, color: 'text-purple-400', bgColor: 'bg-purple-500/10' },
+  { name: 'Goals', icon: Target, path: 'Goals', moduleId: 'goals', groupColor: 'purple' },
+  { name: 'Vision Board', icon: Eye, path: 'VisionBoard', moduleId: 'goals', groupColor: 'purple' },
+  { name: 'Saved Motivations', icon: Bookmark, path: 'SavedMotivations', alwaysShow: true, groupColor: 'purple' },
+  
+  // PINK: Creator Life
+  { name: '── Creator Life ──', isGroupHeader: true, color: 'text-pink-400', bgColor: 'bg-pink-500/10' },
+  { name: 'Social Media Suite', icon: Share2, isSection: true, moduleId: 'tiktok', requiresTikTokAccess: true, groupColor: 'pink', subItems: [
     { name: 'Discover Creators', icon: Search, path: 'DiscoverCreators', highlight: true },
     { name: 'Creator Contacts', icon: Users, path: 'TikTokContacts' },
     { name: 'Social Engagement', icon: MousePointerClick, path: 'TikTokEngagement' },
@@ -123,20 +134,23 @@ const defaultNavItems = [
     { name: 'Sunny Songbird', icon: Sun, path: 'SongGenerator' },
     { name: 'Gift Gallery Gratitude', icon: Gift, path: 'WeeklyGifterGallery' },
   ]},
-  { name: 'Music & Songs', icon: Music, isSection: true, subItems: [
-            { name: 'Holy Hitmakers', icon: Cross, path: 'HolyHitmakers' },
-            { name: "Ping & Pong's Silly Songs", icon: Smile, externalUrl: 'https://sillysongs.pixelnutscreative.com' },
-          ]},
-  { name: 'Goals', icon: Target, path: 'Goals', moduleId: 'goals' },
-    { name: 'Vision Board', icon: Eye, path: 'VisionBoard', moduleId: 'goals' },
-  { name: 'Tasks', icon: FileText, path: 'Tasks', moduleId: 'tasks' },
-  { name: 'Prayer Requests', icon: HandMetal, path: 'PrayerRequests', requiresBibleBeliever: true },
-      { name: 'Mental Health', icon: Brain, isSection: true, moduleId: 'mental_health', subItems: [
-        { name: 'Mental Health Hub', icon: Brain, path: 'NeurodivergentSettings' },
-        { name: 'Journal', icon: FileText, path: 'Journal', moduleId: 'journal' },
-        { name: 'Quick Notes', icon: StickyNote, path: 'QuickNotes', moduleId: 'quick_notes' },
-      ]},
-  { name: 'Wellness', icon: Heart, isSection: true, moduleId: 'wellness', subItems: [
+  { name: 'Music & Songs', icon: Music, isSection: true, groupColor: 'pink', subItems: [
+    { name: 'Holy Hitmakers', icon: Cross, path: 'HolyHitmakers' },
+    { name: "Ping & Pong's Silly Songs", icon: Smile, externalUrl: 'https://sillysongs.pixelnutscreative.com' },
+  ]},
+  
+  // GOLD: Mental & Emotional
+  { name: '── Mental & Emotional ──', isGroupHeader: true, color: 'text-amber-400', bgColor: 'bg-amber-500/10' },
+  { name: 'Mental Health', icon: Brain, isSection: true, moduleId: 'mental_health', groupColor: 'amber', subItems: [
+    { name: 'Mental Health Hub', icon: Brain, path: 'NeurodivergentSettings' },
+    { name: 'Journal', icon: FileText, path: 'Journal', moduleId: 'journal' },
+    { name: 'Quick Notes', icon: StickyNote, path: 'QuickNotes', moduleId: 'quick_notes' },
+  ]},
+  { name: 'Support', icon: HelpCircle, path: 'Support', alwaysShow: true, groupColor: 'amber' },
+  
+  // GREEN: Health & Care
+  { name: '── Health & Care ──', isGroupHeader: true, color: 'text-green-400', bgColor: 'bg-green-500/10' },
+  { name: 'Wellness', icon: Heart, isSection: true, moduleId: 'wellness', groupColor: 'green', subItems: [
     { name: 'Daily Wellness', icon: Heart, path: 'Wellness' },
     { name: 'Supplements', icon: Tablet, path: 'Supplements', moduleId: 'supplements' },
     { name: 'Medications', icon: Pill, path: 'Medications', moduleId: 'medications' },
@@ -144,10 +158,18 @@ const defaultNavItems = [
     { name: 'Pet Care', icon: PawPrint, path: 'PetCare', moduleId: 'pets' },
     { name: 'Care Reminders', icon: Bell, path: 'CareReminders', moduleId: 'care_reminders' },
   ]},
-  { name: 'My People (IRL)', icon: Users, path: 'People', moduleId: 'people' },
+  { name: 'Tasks', icon: FileText, path: 'Tasks', moduleId: 'tasks', groupColor: 'green' },
+  
+  // BLUE: Connections
+  { name: '── Connections ──', isGroupHeader: true, color: 'text-blue-400', bgColor: 'bg-blue-500/10' },
+  { name: 'My People (IRL)', icon: Users, path: 'People', moduleId: 'people', groupColor: 'blue' },
+  
+  // Special items
   { name: 'SuperFan Access', icon: Star, path: 'SuperFanAccess', showWhenNoTikTokAccess: true },
-  { name: 'Support', icon: HelpCircle, path: 'Support', alwaysShow: true },
-  { name: 'Admin Panel', icon: UserCog, path: 'Admin', adminOnly: true },
+  
+  // GRAY: System Stuff (rendered at bottom separately)
+  { name: '── System ──', isGroupHeader: true, color: 'text-gray-400', bgColor: 'bg-gray-500/10' },
+  { name: 'Admin Panel', icon: UserCog, path: 'Admin', adminOnly: true, groupColor: 'gray' },
 ];
 
 export default function Layout({ children, currentPageName }) {
@@ -451,6 +473,18 @@ export default function Layout({ children, currentPageName }) {
       >
             <nav className="p-6 space-y-1 overflow-y-auto max-h-[calc(100vh-8rem)]">
               {navItems.map((item) => {
+                // Render group headers
+                if (item.isGroupHeader) {
+                  return (
+                    <div 
+                      key={item.name} 
+                      className={`px-2 py-2 mt-4 mb-1 text-xs font-bold uppercase tracking-wider ${item.color} ${item.bgColor} rounded-lg`}
+                    >
+                      {item.name.replace(/──/g, '').trim()}
+                    </div>
+                  );
+                }
+
                 const Icon = item.icon;
                 const isActive = currentPageName === item.path;
                 const isExpanded = expandedSections.includes(item.name);
@@ -630,7 +664,19 @@ export default function Layout({ children, currentPageName }) {
               </div>
 
               <nav className="flex-1 space-y-1 overflow-y-auto">
-            {navItems.map((item) => {
+              {navItems.map((item) => {
+              // Render group headers
+              if (item.isGroupHeader) {
+                return (
+                  <div 
+                    key={item.name} 
+                    className={`px-2 py-2 mt-4 mb-1 text-xs font-bold uppercase tracking-wider ${item.color} ${item.bgColor} rounded-lg`}
+                  >
+                    {item.name.replace(/──/g, '').trim()}
+                  </div>
+                );
+              }
+
               const Icon = item.icon;
               const isActive = currentPageName === item.path;
               const isExpanded = expandedSections.includes(item.name);
