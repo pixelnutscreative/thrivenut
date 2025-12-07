@@ -244,8 +244,26 @@ export default function Settings() {
   return (
     <div className={`min-h-screen ${bgClass} ${isDark ? 'text-gray-100' : ''} p-4 md:p-8`}>
       <div className="max-w-5xl mx-auto space-y-6">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
           <h1 className="text-3xl font-bold text-gray-800">Settings</h1>
+          <Button
+            variant="outline"
+            onClick={() => {
+              const onboardingModal = document.querySelector('[data-onboarding-trigger]');
+              if (onboardingModal) onboardingModal.click();
+              else {
+                // Trigger onboarding by clearing localStorage flag
+                if (user?.email) {
+                  localStorage.removeItem(`onboarding_completed_${user.email}`);
+                  window.location.reload();
+                }
+              }
+            }}
+            className="text-sm"
+          >
+            <Sparkles className="w-4 h-4 mr-2" />
+            Start Setup Tour
+          </Button>
           {saveMessage && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}

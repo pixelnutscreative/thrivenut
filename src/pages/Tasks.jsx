@@ -13,7 +13,18 @@ import { Plus, Check, X, Calendar, ChevronRight, ArrowRight, Trash2, Lightbulb, 
 import { format, parseISO, isToday, isBefore, startOfDay } from 'date-fns';
 import { useTheme } from '../components/shared/useTheme';
 
-const categoryOptions = ['Work', 'Personal', 'Errands', 'Calls', 'Email', 'Family', 'Health', 'Creative', 'Project-Based', 'Other'];
+const categoryOptions = [
+  { value: 'Work', emoji: '💼' },
+  { value: 'Personal', emoji: '🏠' },
+  { value: 'Errands', emoji: '🏃' },
+  { value: 'Calls', emoji: '📞' },
+  { value: 'Email', emoji: '📧' },
+  { value: 'Family', emoji: '👨‍👩‍👧‍👦' },
+  { value: 'Health', emoji: '❤️' },
+  { value: 'Creative', emoji: '🎨' },
+  { value: 'Project-Based', emoji: '📋' },
+  { value: 'Other', emoji: '📝' }
+];
 
 export default function Tasks() {
   const queryClient = useQueryClient();
@@ -184,7 +195,10 @@ export default function Tasks() {
             )}
             <div className="flex flex-wrap gap-2 mt-2">
               {task.category && (
-                <Badge variant="outline" className="text-xs">{task.category}</Badge>
+                <Badge variant="outline" className="text-xs">
+                  <span className="mr-1">{categoryOptions.find(c => c.value === task.category)?.emoji || '📝'}</span>
+                  {task.category}
+                </Badge>
               )}
               <Badge className={`text-xs ${priorityColors[task.priority]}`}>
                 {task.priority}
@@ -339,7 +353,10 @@ export default function Tasks() {
                 <SelectContent>
                   <SelectItem value="all">All Categories</SelectItem>
                   {categoryOptions.map(cat => (
-                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    <SelectItem key={cat.value} value={cat.value}>
+                      <span className="mr-2">{cat.emoji}</span>
+                      {cat.value}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -408,7 +425,10 @@ export default function Tasks() {
                     </SelectTrigger>
                     <SelectContent>
                       {categoryOptions.map(cat => (
-                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                        <SelectItem key={cat.value} value={cat.value}>
+                          <span className="mr-2">{cat.emoji}</span>
+                          {cat.value}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>

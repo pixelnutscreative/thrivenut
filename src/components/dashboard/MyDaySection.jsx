@@ -1055,6 +1055,16 @@ export default function MyDaySection({
               My Day
             </CardTitle>
             <div className="flex items-center gap-2 flex-wrap">
+              {/* View mode toggle */}
+              <Button 
+                variant={localViewMode === 'compact' ? 'default' : 'outline'} 
+                size="sm" 
+                onClick={() => setLocalViewMode(localViewMode === 'compact' ? 'detailed' : 'compact')} 
+                className="h-7 text-xs"
+              >
+                {localViewMode === 'compact' ? <Grid3X3 className="w-3 h-3 mr-1" /> : <List className="w-3 h-3 mr-1" />}
+                {localViewMode === 'compact' ? 'Compact' : 'Detailed'}
+              </Button>
               {/* Calendar toggles - inline */}
               {preferences?.google_calendar_connected && onToggleGoogleCalendar && (
                 <button
@@ -1130,20 +1140,48 @@ export default function MyDaySection({
 
           {/* Auto-complete indicators */}
           {medications.length > 0 && (
-            <div className="flex items-center gap-2 mt-2 text-sm">
-              <Pill className="w-4 h-4 text-pink-500" />
-              <span className={allMedsTaken ? 'text-green-600' : 'text-gray-500'}>
-                Medications: {allMedsTaken ? '✓ All taken' : `${medicationLogs.reduce((sum, l) => sum + (l.doses_taken?.length || 0), 0)} doses logged`}
-              </span>
-            </div>
+            <Link to={createPageUrl('Medications')} className="block">
+              <div className="flex items-center gap-2 mt-2 text-sm hover:bg-white/50 rounded p-1 transition-colors cursor-pointer">
+                <Pill className="w-4 h-4 text-pink-500" />
+                <span className={allMedsTaken ? 'text-green-600' : 'text-gray-500'}>
+                  Medications: {allMedsTaken ? '✓ All taken' : `${medicationLogs.reduce((sum, l) => sum + (l.doses_taken?.length || 0), 0)} doses logged`}
+                </span>
+                <ExternalLink className="w-3 h-3 text-gray-400" />
+              </div>
+            </Link>
           )}
           {supplements.length > 0 && (
-            <div className="flex items-center gap-2 text-sm">
-              <Pill className="w-4 h-4 text-amber-500" />
-              <span className={allSuppsTaken ? 'text-green-600' : 'text-gray-500'}>
-                Supplements: {allSuppsTaken ? '✓ All taken' : `${supplementLogs.reduce((sum, l) => sum + (l.doses_taken?.length || 0), 0)} doses logged`}
-              </span>
-            </div>
+            <Link to={createPageUrl('Supplements')} className="block">
+              <div className="flex items-center gap-2 text-sm hover:bg-white/50 rounded p-1 transition-colors cursor-pointer">
+                <Pill className="w-4 h-4 text-amber-500" />
+                <span className={allSuppsTaken ? 'text-green-600' : 'text-gray-500'}>
+                  Supplements: {allSuppsTaken ? '✓ All taken' : `${supplementLogs.reduce((sum, l) => sum + (l.doses_taken?.length || 0), 0)} doses logged`}
+                </span>
+                <ExternalLink className="w-3 h-3 text-gray-400" />
+              </div>
+            </Link>
+          )}
+          {pets.length > 0 && (
+            <Link to={createPageUrl('PetCare')} className="block">
+              <div className="flex items-center gap-2 text-sm hover:bg-white/50 rounded p-1 transition-colors cursor-pointer">
+                <PawPrint className="w-4 h-4 text-orange-500" />
+                <span className="text-gray-500">
+                  Pet Care: {petLogs.reduce((sum, l) => sum + (l.completed_tasks?.length || 0), 0)} tasks done
+                </span>
+                <ExternalLink className="w-3 h-3 text-gray-400" />
+              </div>
+            </Link>
+          )}
+          {careReminders.length > 0 && (
+            <Link to={createPageUrl('CareReminders')} className="block">
+              <div className="flex items-center gap-2 text-sm hover:bg-white/50 rounded p-1 transition-colors cursor-pointer">
+                <Bell className="w-4 h-4 text-purple-500" />
+                <span className="text-gray-500">
+                  Care Reminders: {(selfCareLog?.completed_care_reminders || []).length}/{careReminders.length} done
+                </span>
+                <ExternalLink className="w-3 h-3 text-gray-400" />
+              </div>
+            </Link>
           )}
         </CardHeader>
       

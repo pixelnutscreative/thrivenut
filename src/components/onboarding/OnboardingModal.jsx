@@ -52,7 +52,7 @@ function OnboardingModal({ isOpen, user, onComplete }) {
 
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
-      <DialogContent className="max-w-md" onPointerDownOutside={(e) => e.preventDefault()}>
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <MapPin className="w-5 h-5" />
@@ -62,7 +62,7 @@ function OnboardingModal({ isOpen, user, onComplete }) {
         
         <div className="space-y-4 py-4">
           <p className="text-sm text-gray-600">
-            We'd love to show where our community is from on a map! This is totally optional - you can skip this if you prefer.
+            We'd love to show where our Pixel Nuts community is from on a map! Your name won't show - you'll just be a dot at your city center so we can all see where everyone is. Totally optional!
           </p>
 
           {!skipLocation && (
