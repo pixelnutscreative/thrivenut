@@ -75,7 +75,7 @@ export default function AdminResourcesContent() {
       description: resource.description || '',
       link: resource.link || '',
       badge: resource.badge || '',
-      category: resource.category || 'AI',
+      category: Array.isArray(resource.category) ? resource.category[0] : (resource.category || 'AI'),
       keywords: resource.keywords || [],
       sort_order: resource.sort_order || 100,
       is_active: resource.is_active !== false,
@@ -89,7 +89,11 @@ export default function AdminResourcesContent() {
 
   const handleSubmit = () => {
     const keywords = keywordsInput.split(',').map(k => k.trim().toLowerCase()).filter(Boolean);
-    const data = { ...formData, keywords };
+    const data = { 
+      ...formData, 
+      keywords,
+      category: Array.isArray(formData.category) ? formData.category : [formData.category]
+    };
     
     if (editingResource) {
       updateMutation.mutate({ id: editingResource.id, data });
@@ -125,7 +129,7 @@ export default function AdminResourcesContent() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-semibold">{resource.name}</span>
-                    <Badge variant="outline" className="text-xs">{resource.category}</Badge>
+                    <Badge variant="outline" className="text-xs">{Array.isArray(resource.category) ? resource.category[0] : resource.category}</Badge>
                     {resource.badge && <Badge className="text-xs bg-purple-100 text-purple-700">{resource.badge}</Badge>}
                     {resource.is_featured && <Badge className="text-xs bg-yellow-100 text-yellow-700">⭐ Featured</Badge>}
                     {resource.is_recurring && <Badge className="text-xs bg-green-100 text-green-700">🔄 Recurring</Badge>}
