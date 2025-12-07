@@ -206,8 +206,12 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-4 right-4 z-50 w-12 h-12 rounded-full shadow-lg flex items-center justify-center text-white"
-        style={{ background: `linear-gradient(135deg, ${primaryColor || '#1fd2ea'}, ${accentColor || '#bd84f5'})` }}
+        className="fixed right-4 z-50 w-12 h-12 rounded-full shadow-lg flex items-center justify-center text-white"
+        style={{ 
+          top: '50%',
+          transform: 'translateY(-50%)',
+          background: `linear-gradient(135deg, ${primaryColor || '#1fd2ea'}, ${accentColor || '#bd84f5'})` 
+        }}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
       >
@@ -310,13 +314,20 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
         >
           <BookOpen className="w-4 h-4 text-gray-400 hover:text-white" />
         </RouterLink>
-        <RouterLink
-          to={createPageUrl('Settings') + '?tab=widgets'}
+        <button
+          onClick={() => {
+            const settingsUrl = createPageUrl('Settings');
+            window.location.href = settingsUrl;
+            setTimeout(() => {
+              const section = document.querySelector('[data-section="widgets"]');
+              section?.scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+          }}
           className="p-1.5 hover:bg-white/10 rounded-full transition-colors"
           title="Settings"
         >
           <Settings className="w-4 h-4 text-gray-400 hover:text-white" />
-        </RouterLink>
+        </button>
       </motion.div>
 
       {/* Mood Selector Popup */}

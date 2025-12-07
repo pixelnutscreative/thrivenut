@@ -124,6 +124,9 @@ export default function Settings() {
     eating_window_end: '20:00',
     google_calendar_connected: false,
     show_google_calendar: false,
+    location_city: '',
+    location_state: '',
+    show_on_map: false,
     discord_username: '',
     discord_invite_link: '',
     discord_public: false,
@@ -175,6 +178,9 @@ export default function Settings() {
         eating_window_end: preferences.eating_window_end || '20:00',
         google_calendar_connected: preferences.google_calendar_connected || false,
         show_google_calendar: preferences.show_google_calendar || false,
+        location_city: preferences.location_city || '',
+        location_state: preferences.location_state || '',
+        show_on_map: preferences.show_on_map || false,
         discord_username: preferences.discord_username || '',
         discord_invite_link: preferences.discord_invite_link || '',
         discord_public: preferences.discord_public || false,
@@ -299,23 +305,46 @@ export default function Settings() {
                       />
                     </div>
                     {/* Two columns of info on right */}
-                    <div className="flex-1 grid md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>TikTok Username</Label>
-                        <Input
-                          placeholder="@username"
-                          value={formData.tiktok_username}
-                          onChange={(e) => setFormData({ ...formData, tiktok_username: e.target.value.replace('@', '') })}
-                        />
+                    <div className="flex-1 space-y-4">
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>TikTok Username</Label>
+                          <Input
+                            placeholder="@username"
+                            value={formData.tiktok_username}
+                            onChange={(e) => setFormData({ ...formData, tiktok_username: e.target.value.replace('@', '') })}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Display Name (for songs)</Label>
+                          <Input
+                            placeholder="e.g., Pixel, Queen Sarah"
+                            value={formData.tiktok_display_name}
+                            onChange={(e) => setFormData({ ...formData, tiktok_display_name: e.target.value })}
+                          />
+                          <p className="text-xs text-gray-500">How Sunny Songbird will call you</p>
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        <Label>Display Name (for songs)</Label>
-                        <Input
-                          placeholder="e.g., Pixel, Queen Sarah"
-                          value={formData.tiktok_display_name}
-                          onChange={(e) => setFormData({ ...formData, tiktok_display_name: e.target.value })}
-                        />
-                        <p className="text-xs text-gray-500">How Sunny Songbird will call you</p>
+                      
+                      {/* Location */}
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>City</Label>
+                          <Input
+                            placeholder="Your city"
+                            value={formData.location_city || ''}
+                            onChange={(e) => setFormData({ ...formData, location_city: e.target.value })}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>State / Country</Label>
+                          <Input
+                            placeholder="e.g., California or France"
+                            value={formData.location_state || ''}
+                            onChange={(e) => setFormData({ ...formData, location_state: e.target.value })}
+                          />
+                          <p className="text-xs text-gray-500">State if in US, Country if outside US</p>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -777,7 +806,7 @@ export default function Settings() {
         {/* ========== WIDGETS SECTION ========== */}
         <Collapsible open={expandedSections.includes('widgets')} onOpenChange={() => toggleSection('widgets')}>
           <CollapsibleTrigger className="w-full">
-            <Card className={`cursor-pointer transition-all ${expandedSections.includes('widgets') ? 'ring-2 ring-purple-300' : 'hover:shadow-md'}`}>
+            <Card className={`cursor-pointer transition-all ${expandedSections.includes('widgets') ? 'ring-2 ring-purple-300' : 'hover:shadow-md'}`} data-section="widgets">
               <CardHeader className="flex flex-row items-center justify-between py-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-gradient-to-r from-violet-500 to-purple-500 flex items-center justify-center">

@@ -121,6 +121,8 @@ export default function TikTokContacts() {
   const queryClient = useQueryClient();
   const { isDark, bgClass, textClass, cardBgClass } = useTheme();
   const [showModal, setShowModal] = useState(false);
+  const [showUsernamePrompt, setShowUsernamePrompt] = useState(false);
+  const [usernameInput, setUsernameInput] = useState('');
   const [editingContact, setEditingContact] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRoles, setFilterRoles] = useState([]);
@@ -261,9 +263,22 @@ export default function TikTokContacts() {
 
   const closeModal = () => {
     setShowModal(false);
+    setShowUsernamePrompt(false);
+    setUsernameInput('');
     setEditingContact(null);
     setFormData(defaultFormData);
     setFormTab(defaultFormTab);
+  };
+
+  const handleStartAddContact = () => {
+    setShowUsernamePrompt(true);
+  };
+
+  const handleUsernameSubmit = () => {
+    if (!usernameInput.trim()) return;
+    setFormData({ ...defaultFormData, username: usernameInput.replace('@', '').trim() });
+    setShowUsernamePrompt(false);
+    setShowModal(true);
   };
 
   const handleEdit = (contact) => {
@@ -529,7 +544,7 @@ export default function TikTokContacts() {
               <span className="hidden md:inline">Backup</span>
             </Button>
             <Button
-              onClick={() => setShowModal(true)}
+              onClick={handleStartAddContact}
               size="sm"
               className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-xs md:text-sm"
             >
@@ -724,13 +739,49 @@ export default function TikTokContacts() {
           <div className="text-center py-12">
             <Users className="w-12 h-12 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-600 mb-2">No contacts found</h3>
-            <Button onClick={() => setShowModal(true)}>
+            <Button onClick={handleStartAddContact}>
               <Plus className="w-4 h-4 mr-2" />
               Add Your First Contact
             </Button>
           </div>
         )}
       </div>
+
+      {/* Username Prompt Modal - First Step */}
+      <Dialog open={showUsernamePrompt} onOpenChange={(open) => { if (!open) { setShowUsernamePrompt(false); setUsernameInput(''); }}}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Enter TikTok Username</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-gray-600">
+              The TikTok username is the most important piece of info. Let's start there:
+            </p>
+            <Input
+              placeholder="@username"
+              value={usernameInput}
+              onChange={(e) => setUsernameInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleUsernameSubmit();
+              }}
+              autoFocus
+              className="text-lg"
+            />
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setShowUsernamePrompt(false)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleUsernameSubmit}
+                disabled={!usernameInput.trim()}
+                className="bg-purple-600 hover:bg-purple-700"
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Custom Roles Modal */}
       <Dialog open={showCustomRolesModal} onOpenChange={setShowCustomRolesModal}>
