@@ -12,7 +12,8 @@ import {
   Plus, Edit, Trash2, Check, X, Clock, AlertCircle, 
   Bug, Sparkles, Palette, Calendar, Heart, Brain, Music,
   LayoutDashboard, Users, Target, BookOpen, Filter, Search,
-  ListChecks, Play, Copy, ChevronUp, ChevronDown
+  ListChecks, Play, Copy, ChevronUp, ChevronDown, Upload,
+  Image as ImageIcon
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { format } from 'date-fns';
@@ -64,7 +65,10 @@ export default function AdminFeedbackContent() {
     status: 'pending',
     priority: 'medium',
     notes: '',
+    screenshot_url: '',
+    video_url: '',
   });
+  const [uploading, setUploading] = useState(false);
 
   const { data: items = [] } = useQuery({
     queryKey: ['feedbackItems'],
@@ -103,6 +107,8 @@ export default function AdminFeedbackContent() {
       status: 'pending',
       priority: 'medium',
       notes: '',
+      screenshot_url: '',
+      video_url: '',
     });
   };
 
@@ -116,8 +122,22 @@ export default function AdminFeedbackContent() {
       status: item.status || 'pending',
       priority: item.priority || 'medium',
       notes: item.notes || '',
+      screenshot_url: item.screenshot_url || '',
+      video_url: item.video_url || '',
     });
     setShowModal(true);
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      setFormData({ ...formData, screenshot_url: file_url });
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleSubmit = () => {
@@ -660,6 +680,35 @@ export default function AdminFeedbackContent() {
                 onChange={(e) => setFormData({...formData, notes: e.target.value})}
                 placeholder="Additional notes..."
                 rows={2}
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium mb-1 block">Screenshot or Video</label>
+              <p className="text-xs text-gray-500 mb-2">Upload a screenshot or paste a video URL</p>
+              {formData.screenshot_url ? (
+                <div className="relative inline-block">
+                  <img src={formData.screenshot_url} alt="" className="max-w-xs rounded-lg border" />
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, screenshot_url: '' })}
+                    className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ) : (
+                <label className="inline-flex items-center gap-2 px-3 py-2 border rounded-lg cursor-pointer hover:bg-gray-50">
+                  {uploading ? <Clock className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
+                  <span className="text-sm">Upload screenshot</span>
+                  <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                </label>
+              )}
+              <Input
+                placeholder="Or paste video URL (e.g., Loom, YouTube)"
+                value={formData.video_url}
+                onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
+                className="mt-2"
               />
             </div>
 
