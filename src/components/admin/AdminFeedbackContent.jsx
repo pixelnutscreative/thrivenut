@@ -199,8 +199,14 @@ export default function AdminFeedbackContent() {
     .sort((a, b) => (a.batch_order || 999) - (b.batch_order || 999));
 
   // Get queued items sorted by batch_order
+  const [showCompletedInQueue, setShowCompletedInQueue] = useState(false);
+
   const queuedItems = items
-    .filter(i => i.queued_for_batch && i.status !== 'completed')
+    .filter(i => {
+      if (!i.queued_for_batch) return false;
+      if (!showCompletedInQueue && i.status === 'completed') return false;
+      return true;
+    })
     .sort((a, b) => (a.batch_order || 999) - (b.batch_order || 999));
 
   const toggleQueuedForBatch = (item) => {
@@ -384,6 +390,14 @@ export default function AdminFeedbackContent() {
                 <Button
                   variant="outline"
                   size="sm"
+                  onClick={() => setShowCompletedInQueue(!showCompletedInQueue)}
+                  className="border-purple-300 text-purple-700 hover:bg-purple-100"
+                >
+                  {showCompletedInQueue ? 'Hide' : 'Show'} Completed
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={copyBatchSummary}
                   className="border-purple-300 text-purple-700 hover:bg-purple-100"
                 >
@@ -401,16 +415,23 @@ export default function AdminFeedbackContent() {
                 </Button>
               </div>
             </div>
-            <p className="text-sm text-purple-600">Check items below to add to this batch. Copy summary to paste into chat.</p>
+            <p className="text-sm text-purple-600">Items queued for next batch. Completed ones are hidden by default.</p>
           </CardHeader>
           <CardContent className="space-y-2">
             {queuedItems.map((item, idx) => {
               const catConfig = categoryConfig[item.category] || categoryConfig.other;
               const CatIcon = catConfig.icon;
+              const isCompleted = item.status === 'completed';
               return (
-                <div key={item.id} className="flex items-center gap-3 p-2 bg-white rounded-lg border border-purple-200">
-                  <span className="w-6 h-6 rounded-full bg-purple-600 text-white text-xs flex items-center justify-center font-bold">
-                    {idx + 1}
+                <div key={item.id} className={`flex items-center gap-3 p-2 rounded-lg border ${
+                  isCompleted 
+                    ? 'bg-green-50 border-green-200 opacity-60' 
+                    : 'bg-white border-purple-200'
+                }`}>
+                  <span className={`w-6 h-6 rounded-full text-white text-xs flex items-center justify-center font-bold ${
+                    isCompleted ? 'bg-green-600' : 'bg-purple-600'
+                  }`}>
+                    {isCompleted ? <Check className="w-4 h-4" /> : idx + 1}
                   </span>
                   <div className="flex gap-1">
                     <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => updateBatchOrder(item, 'up')}>
@@ -424,7 +445,12 @@ export default function AdminFeedbackContent() {
                     <CatIcon className="w-3 h-3 mr-1" />
                     {catConfig.label}
                   </Badge>
-                  <span className="flex-1 font-medium text-sm">{item.title}</span>
+                  <span className={`flex-1 font-medium text-sm ${isCompleted ? 'line-through text-gray-500' : ''}`}>
+                    {item.title}
+                  </span>
+                  {isCompleted && (
+                    <Badge className="bg-green-200 text-green-800 text-xs">✓ Done</Badge>
+                  )}
                   <Button
                     variant="ghost"
                     size="sm"
