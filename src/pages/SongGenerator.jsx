@@ -1170,7 +1170,7 @@ Creator display name: ${hostDisplayName}`,
               </Button>
               
               <a 
-                href="https://suno.com/r/pixelnuts" 
+                href="https://suno.com/invite/@pixelnutscreative" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="block"
