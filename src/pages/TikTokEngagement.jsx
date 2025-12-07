@@ -294,13 +294,26 @@ export default function TikTokEngagement() {
     const hasAnyChecks = checkedCount > 0;
 
     const toggleAccountEngaged = (accountKey) => {
-      setJustEngaged(prev => ({
+      const newState = {
         ...prev,
         [contact.id]: {
           ...(prev[contact.id] || {}),
           [accountKey]: !(prev[contact.id]?.[accountKey])
         }
-      }));
+      };
+      
+      setJustEngaged(prev => newState);
+      
+      // Check if ALL accounts are now checked after this toggle
+      const allChecked = isFullyEngaged(contact);
+      if (allChecked) {
+        // Save to database when ALL are checked
+        markEngagedMutation.mutate({ 
+          id: contact.id, 
+          currentHistory: contact.engagement_history, 
+          isLegacy: contact._isLegacy 
+        });
+      }
     };
 
     return (
@@ -419,10 +432,6 @@ export default function TikTokEngagement() {
                     size="icon"
                     onClick={() => {
                       toggleAccountEngaged('primary');
-                      // Also update the database when primary is checked
-                      if (!engaged.primary) {
-                        markEngagedMutation.mutate({ id: contact.id, currentHistory: contact.engagement_history, isLegacy: contact._isLegacy });
-                      }
                     }}
                     className={`h-9 w-9 flex-shrink-0 transition-all duration-300 ${engaged.primary ? 'bg-green-500 border-green-500' : 'border-green-300 hover:bg-green-50'}`}
                     title="Mark as engaged"
