@@ -8,17 +8,21 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Check, X, Calendar, ChevronRight, ArrowRight, Trash2 } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Plus, Check, X, Calendar, ChevronRight, ArrowRight, Trash2, Lightbulb, Filter, Zap } from 'lucide-react';
 import { format, parseISO, isToday, isBefore, startOfDay } from 'date-fns';
 import { useTheme } from '../components/shared/useTheme';
 
-const categoryOptions = ['Work', 'Personal', 'Errands', 'Calls', 'Email', 'Family', 'Health', 'Creative', 'Other'];
+const categoryOptions = ['Work', 'Personal', 'Errands', 'Calls', 'Email', 'Family', 'Health', 'Creative', 'Project-Based', 'Other'];
 
 export default function Tasks() {
   const queryClient = useQueryClient();
   const { isDark, bgClass, primaryColor, textClass, cardBgClass } = useTheme();
   const [newTask, setNewTask] = useState('');
+  const [brainDumpText, setBrainDumpText] = useState('');
   const [showDetails, setShowDetails] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedPriority, setSelectedPriority] = useState('all');
   const [taskDetails, setTaskDetails] = useState({
     notes: '',
     due_date: format(new Date(), 'yyyy-MM-dd'),
@@ -29,6 +33,11 @@ export default function Tasks() {
   const { data: tasks = [] } = useQuery({
     queryKey: ['tasks'],
     queryFn: () => base44.entities.Task.list('-updated_date'),
+  });
+
+  const { data: brainDumps = [] } = useQuery({
+    queryKey: ['brainDumps'],
+    queryFn: () => base44.entities.BrainDump.filter({ is_processed: false }, '-created_date'),
   });
 
   const createMutation = useMutation({
@@ -49,6 +58,34 @@ export default function Tasks() {
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.Task.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tasks'] })
+  });
+
+  const createBrainDumpMutation = useMutation({
+    mutationFn: (text) => base44.entities.BrainDump.create({ content: text }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['brainDumps'] });
+      setBrainDumpText('');
+    }
+  });
+
+  const convertToTaskMutation = useMutation({
+    mutationFn: async ({ brainDump, taskData }) => {
+      const task = await base44.entities.Task.create(taskData);
+      await base44.entities.BrainDump.update(brainDump.id, { 
+        is_processed: true, 
+        converted_to_task_id: task.id 
+      });
+      return task;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['brainDumps'] });
+    }
+  });
+
+  const deleteBrainDumpMutation = useMutation({
+    mutationFn: (id) => base44.entities.BrainDump.delete(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['brainDumps'] })
   });
 
   const handleAddTask = () => {
@@ -95,11 +132,32 @@ export default function Tasks() {
     });
   };
 
-  // Group tasks
-  const pendingTasks = tasks.filter(t => t.status === 'pending');
-  const todayTasks = pendingTasks.filter(t => t.due_date && isToday(parseISO(t.due_date)));
-  const overdueTasks = pendingTasks.filter(t => t.due_date && isBefore(parseISO(t.due_date), startOfDay(new Date())) && !isToday(parseISO(t.due_date)));
-  const upcomingTasks = pendingTasks.filter(t => !t.due_date || (!isToday(parseISO(t.due_date)) && !isBefore(parseISO(t.due_date), startOfDay(new Date()))));
+  const handleBrainDump = () => {
+    if (!brainDumpText.trim()) return;
+    createBrainDumpMutation.mutate(brainDumpText);
+  };
+
+  const handleConvertToTask = (brainDump) => {
+    convertToTaskMutation.mutate({
+      brainDump,
+      taskData: {
+        title: brainDump.content,
+        status: 'pending',
+        priority: 'medium',
+        category: brainDump.category || 'Personal'
+      }
+    });
+  };
+
+  // Filter tasks
+  let filteredTasks = tasks.filter(t => t.status === 'pending');
+  if (selectedCategory !== 'all') {
+    filteredTasks = filteredTasks.filter(t => t.category === selectedCategory);
+  }
+  if (selectedPriority !== 'all') {
+    filteredTasks = filteredTasks.filter(t => t.priority === selectedPriority);
+  }
+
   const completedTasks = tasks.filter(t => t.status === 'completed').slice(0, 10);
 
   const priorityColors = {
@@ -180,12 +238,139 @@ export default function Tasks() {
     <div className={`min-h-screen ${bgClass} p-4 md:p-8`}>
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className={`text-3xl font-bold ${textClass}`}>My Tasks</h1>
+          <h1 className={`text-3xl font-bold ${textClass}`}>Tasks & Brain Dump</h1>
         </div>
 
-        {/* Add Task */}
-        <Card className={cardBgClass}>
-          <CardContent className="pt-6">
+        <Tabs defaultValue="tasks" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="tasks">My Tasks ({filteredTasks.length})</TabsTrigger>
+            <TabsTrigger value="braindump">Brain Dump ({brainDumps.length})</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="braindump" className="space-y-4">
+            {/* Brain Dump Section */}
+            <Card className={cardBgClass}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Lightbulb className="w-5 h-5" style={{ color: primaryColor }} />
+                  Quick Capture - Brain Dump
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-gray-500">
+                  Dump everything on your mind here. No structure needed. Organize later.
+                </p>
+                <div className="flex gap-2">
+                  <Textarea
+                    value={brainDumpText}
+                    onChange={(e) => setBrainDumpText(e.target.value)}
+                    placeholder="Type anything that comes to mind... ideas, todos, random thoughts..."
+                    className="flex-1"
+                    rows={3}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleBrainDump();
+                      }
+                    }}
+                  />
+                  <Button onClick={handleBrainDump} style={{ backgroundColor: primaryColor }}>
+                    <Zap className="w-4 h-4 mr-2" />
+                    Capture
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Brain Dump Items */}
+            {brainDumps.length === 0 ? (
+              <Card className={cardBgClass}>
+                <CardContent className="py-12 text-center text-gray-500">
+                  Your brain dump is empty. Start capturing ideas!
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-2">
+                {brainDumps.map(dump => (
+                  <Card key={dump.id} className={cardBgClass}>
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-1">
+                          <p className={textClass}>{dump.content}</p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            {format(new Date(dump.created_date), 'MMM d, h:mm a')}
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            onClick={() => handleConvertToTask(dump)}
+                            style={{ backgroundColor: primaryColor }}
+                          >
+                            <Check className="w-4 h-4 mr-1" />
+                            Make Task
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => deleteBrainDumpMutation.mutate(dump.id)}
+                            className="text-red-500"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="tasks" className="space-y-4">
+
+            {/* Filters */}
+            <div className="flex flex-wrap gap-2 items-center">
+              <Filter className="w-4 h-4 text-gray-500" />
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {categoryOptions.map(cat => (
+                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={selectedPriority} onValueChange={setSelectedPriority}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Priorities</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="low">Low</SelectItem>
+                </SelectContent>
+              </Select>
+              {(selectedCategory !== 'all' || selectedPriority !== 'all') && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSelectedCategory('all');
+                    setSelectedPriority('all');
+                  }}
+                >
+                  Clear Filters
+                </Button>
+              )}
+            </div>
+
+            {/* Add Task */}
+            <Card className={cardBgClass}>
+              <CardContent className="pt-6">
             <div className="space-y-4">
               <div className="flex gap-2">
                 <Input
@@ -244,76 +429,50 @@ export default function Tasks() {
                 </div>
               )}
             </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
 
-        {/* Overdue Tasks */}
-        {overdueTasks.length > 0 && (
-          <Card className={`${cardBgClass} border-red-300`}>
-            <CardHeader>
-              <CardTitle className="text-red-600 flex items-center gap-2">
-                <X className="w-5 h-5" />
-                Overdue ({overdueTasks.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {overdueTasks.map(task => (
-                <TaskItem key={task.id} task={task} showDate />
-              ))}
-            </CardContent>
-          </Card>
-        )}
+            {/* All Tasks */}
+            <Card className={cardBgClass}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2" style={{ color: primaryColor }}>
+                  <Check className="w-5 h-5" />
+                  Tasks ({filteredTasks.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {filteredTasks.length === 0 ? (
+                  <p className="text-gray-500 text-center py-4">
+                    {selectedCategory === 'all' && selectedPriority === 'all' 
+                      ? 'No tasks yet. Add one above!'
+                      : 'No tasks match your filters'}
+                  </p>
+                ) : (
+                  filteredTasks.map(task => (
+                    <TaskItem key={task.id} task={task} showDate />
+                  ))
+                )}
+              </CardContent>
+            </Card>
 
-        {/* Today's Tasks */}
-        <Card className={cardBgClass}>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2" style={{ color: primaryColor }}>
-              <Check className="w-5 h-5" />
-              Today ({todayTasks.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {todayTasks.length === 0 ? (
-              <p className="text-gray-500 text-center py-4">No tasks for today</p>
-            ) : (
-              todayTasks.map(task => (
-                <TaskItem key={task.id} task={task} />
-              ))
+            {/* Recently Completed - moved here to be inside the tasks tab */}
+            {completedTasks.length > 0 && (
+              <Card className={cardBgClass}>
+                <CardHeader>
+                  <CardTitle className="text-green-600 flex items-center gap-2">
+                    <Check className="w-5 h-5" />
+                    Recently Completed
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {completedTasks.map(task => (
+                    <TaskItem key={task.id} task={task} showDate />
+                  ))}
+                </CardContent>
+              </Card>
             )}
-          </CardContent>
-        </Card>
-
-        {/* Upcoming Tasks */}
-        <Card className={cardBgClass}>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <ChevronRight className="w-5 h-5" />
-              Upcoming ({upcomingTasks.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {upcomingTasks.map(task => (
-              <TaskItem key={task.id} task={task} showDate />
-            ))}
-          </CardContent>
-        </Card>
-
-        {/* Recently Completed */}
-        {completedTasks.length > 0 && (
-          <Card className={cardBgClass}>
-            <CardHeader>
-              <CardTitle className="text-green-600 flex items-center gap-2">
-                <Check className="w-5 h-5" />
-                Recently Completed
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {completedTasks.map(task => (
-                <TaskItem key={task.id} task={task} showDate />
-              ))}
-            </CardContent>
-          </Card>
-        )}
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
