@@ -271,13 +271,6 @@ export default function TikTokContacts() {
   };
 
   const handleStartAddContact = () => {
-    setShowUsernamePrompt(true);
-  };
-
-  const handleUsernameSubmit = () => {
-    if (!usernameInput.trim()) return;
-    setFormData({ ...defaultFormData, username: usernameInput.replace('@', '').trim() });
-    setShowUsernamePrompt(false);
     setShowModal(true);
   };
 
@@ -747,42 +740,6 @@ export default function TikTokContacts() {
         )}
       </div>
 
-      {/* Username Prompt Modal - First Step */}
-      <Dialog open={showUsernamePrompt} onOpenChange={(open) => { if (!open) { setShowUsernamePrompt(false); setUsernameInput(''); }}}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Enter TikTok Username</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <p className="text-sm text-gray-600">
-              The TikTok username is the most important piece of info. Let's start there:
-            </p>
-            <Input
-              placeholder="@username"
-              value={usernameInput}
-              onChange={(e) => setUsernameInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleUsernameSubmit();
-              }}
-              autoFocus
-              className="text-lg"
-            />
-            <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => setShowUsernamePrompt(false)}>
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleUsernameSubmit}
-                disabled={!usernameInput.trim()}
-                className="bg-purple-600 hover:bg-purple-700"
-              >
-                Next
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
       {/* Custom Roles Modal */}
       <Dialog open={showCustomRolesModal} onOpenChange={setShowCustomRolesModal}>
         <DialogContent className="max-w-sm">
@@ -837,10 +794,13 @@ export default function TikTokContacts() {
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            {/* Master Username Search - only show when adding new contact */}
-            {!editingContact && (
-              <div className="p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200">
-                <p className="text-xs text-purple-700 font-medium mb-2">Search existing contacts to auto-fill info:</p>
+            {/* Username Required Section - dim the rest until filled */}
+            {!editingContact && !formData.username && (
+              <div className="p-4 bg-gradient-to-r from-purple-100 to-pink-100 rounded-lg border-2 border-purple-400 shadow-lg">
+                <p className="text-sm font-semibold text-purple-800 mb-3">
+                  ⭐ TikTok Username Required
+                </p>
+                <p className="text-xs text-purple-700 mb-3">Search existing or enter new username:</p>
                 <MasterUsernameSearch
                   onSelect={(data) => {
                     setFormData(prev => ({
@@ -859,12 +819,14 @@ export default function TikTokContacts() {
                       username: username
                     }));
                   }}
-                  placeholder="Search by @username to auto-fill..."
+                  placeholder="Search by @username or type new one..."
                   excludeUsernames={contacts.map(c => c.username)}
                 />
               </div>
             )}
 
+            {/* Dim/disable rest of form until username is entered */}
+            <div className={!editingContact && !formData.username ? 'opacity-30 pointer-events-none' : ''}>
             <ContactFormHeader
               formData={formData}
               setFormData={setFormData}
@@ -920,6 +882,7 @@ export default function TikTokContacts() {
                 />
               </TabsContent>
             </Tabs>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

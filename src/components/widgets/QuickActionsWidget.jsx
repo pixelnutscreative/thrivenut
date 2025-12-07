@@ -409,8 +409,8 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
             exit={{ opacity: 0, scale: 0.9 }}
             className="fixed z-[60] bg-white rounded-2xl shadow-2xl p-4"
             style={{ 
-              left: Math.min(position.x || window.innerWidth / 2, window.innerWidth - 280),
-              top: (position.y || 16) + 60
+              right: '80px',
+              top: (position.y || 16)
             }}
           >
             <div className="flex items-center justify-between mb-3">
@@ -486,8 +486,8 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
             exit={{ opacity: 0, scale: 0.9 }}
             className="fixed z-[60] bg-white rounded-2xl shadow-2xl p-4 w-80"
             style={{ 
-              left: Math.min(position.x || window.innerWidth / 2, window.innerWidth - 340),
-              top: (position.y || 16) + 60
+              right: '80px',
+              top: (position.y || 16)
             }}
           >
             <div className="flex items-center justify-between mb-3">
