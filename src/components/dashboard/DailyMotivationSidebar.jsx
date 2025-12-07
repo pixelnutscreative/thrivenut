@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Sparkles, BookOpen, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
+import { Sparkles, BookOpen, RefreshCw, ChevronDown, ChevronUp, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const timeSlots = [
@@ -20,6 +20,7 @@ export default function DailyMotivationSidebar({
   userName = 'Friend',
   struggles = [],
   improvements = [],
+  customTopics = [],
   isBibleBeliever = false
 }) {
   const [motivations, setMotivations] = useState([]);
@@ -36,7 +37,7 @@ export default function DailyMotivationSidebar({
 
   useEffect(() => {
     generateMotivations();
-  }, [greetingType, struggles, improvements]);
+  }, [greetingType, struggles, improvements, customTopics]);
 
   const generateMotivations = async () => {
     setLoading(true);
@@ -47,6 +48,9 @@ export default function DailyMotivationSidebar({
     }
     if (improvements.length > 0) {
       contextParts.push(`They want to improve: ${improvements.join(', ')}`);
+    }
+    if (customTopics.length > 0) {
+      contextParts.push(`Custom topics they care about: ${customTopics.join(', ')}`);
     }
     
     const useScripture = isBibleBeliever || greetingType === 'scripture';
@@ -113,29 +117,33 @@ ${useScripture ? 'Include the Bible reference (book chapter:verse) for each.' : 
 
   if (isCollapsed) {
     return (
-      <Card className="p-3 bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-200">
+      <Card className="p-2 bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-200">
         <button 
           onClick={() => setIsCollapsed(false)}
           className="flex items-center gap-2 w-full text-left"
         >
-          <Sparkles className="w-4 h-4 text-purple-500" />
-          <span className="text-sm font-medium text-purple-700">Daily Motivation</span>
-          <ChevronDown className="w-4 h-4 ml-auto text-purple-400" />
+          <Sparkles className="w-3 h-3 text-purple-500" />
+          <span className="text-xs font-medium text-purple-700">Daily Motivation</span>
+          <ChevronDown className="w-3 h-3 ml-auto text-purple-400" />
         </button>
       </Card>
     );
   }
 
+  // Only show current time slot by default
+  const currentSlot = timeSlots[currentSlotIndex];
+  const currentMotivation = motivations[currentSlotIndex];
+
   return (
-    <Card className="p-4 bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-200">
-      <div className="flex items-center justify-between mb-3">
+    <Card className="p-3 bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-200">
+      <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           {isBibleBeliever || greetingType === 'scripture' ? (
-            <BookOpen className="w-4 h-4 text-purple-500" />
+            <BookOpen className="w-3 h-3 text-purple-500" />
           ) : (
-            <Sparkles className="w-4 h-4 text-purple-500" />
+            <Sparkles className="w-3 h-3 text-purple-500" />
           )}
-          <span className="text-sm font-semibold text-purple-700">Daily Motivation</span>
+          <span className="text-xs font-semibold text-purple-700">Daily Motivation</span>
         </div>
         <div className="flex items-center gap-1">
           <Button
@@ -143,86 +151,81 @@ ${useScripture ? 'Include the Bible reference (book chapter:verse) for each.' : 
             size="sm"
             onClick={generateMotivations}
             disabled={loading}
-            className="h-6 w-6 p-0"
+            className="h-5 w-5 p-0"
           >
             <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
           </Button>
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setIsCollapsed(true)}
-            className="h-6 w-6 p-0"
+            onClick={() => setExpandedSlot(expandedSlot ? null : 'all')}
+            className="h-5 w-5 p-0"
+            title={expandedSlot === 'all' ? 'Show current only' : 'Show all'}
           >
-            <ChevronUp className="w-3 h-3" />
+            {expandedSlot === 'all' ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsCollapsed(true)}
+            className="h-5 w-5 p-0"
+          >
+            <X className="w-3 h-3" />
           </Button>
         </div>
       </div>
 
-      <div className="space-y-2">
-        {timeSlots.map((slot, index) => {
-          const status = getSlotStatus(index);
-          const motivation = motivations[index];
-          const isExpanded = expandedSlot === slot.id || status === 'current';
-          
-          return (
-            <motion.div
-              key={slot.id}
-              initial={{ opacity: 0, y: 5 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-              className={`rounded-lg transition-all cursor-pointer ${
-                status === 'current' 
-                  ? 'bg-purple-100 border-2 border-purple-300 shadow-sm' 
-                  : status === 'past'
-                    ? 'bg-white/50 opacity-60'
-                    : 'bg-white/70 hover:bg-white'
-              }`}
-              onClick={() => setExpandedSlot(isExpanded ? null : slot.id)}
-            >
-              <div className="p-2">
-                <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${
-                    status === 'current' ? 'bg-purple-500 animate-pulse' :
-                    status === 'past' ? 'bg-gray-300' : 'bg-purple-200'
+      {expandedSlot === 'all' ? (
+        <div className="space-y-1">
+          {timeSlots.map((slot, index) => {
+            const status = getSlotStatus(index);
+            const motivation = motivations[index];
+            
+            return (
+              <div
+                key={slot.id}
+                className={`rounded p-1.5 text-xs ${
+                  status === 'current' 
+                    ? 'bg-purple-100 border border-purple-300' 
+                    : 'bg-white/50 opacity-70'
+                }`}
+              >
+                <div className="flex items-center gap-1.5 mb-1">
+                  <div className={`w-1.5 h-1.5 rounded-full ${
+                    status === 'current' ? 'bg-purple-500 animate-pulse' : 'bg-gray-300'
                   }`} />
-                  <span className={`text-xs font-medium ${
-                    status === 'current' ? 'text-purple-700' : 'text-gray-500'
-                  }`}>
-                    {slot.label}
-                  </span>
-                  {status === 'current' && (
-                    <span className="text-[10px] bg-purple-200 text-purple-700 px-1.5 py-0.5 rounded-full ml-auto">
-                      Now
-                    </span>
-                  )}
+                  <span className="font-medium text-gray-600">{slot.label}</span>
                 </div>
-                
-                <AnimatePresence>
-                  {(isExpanded || status === 'current') && motivation && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      className="mt-2 overflow-hidden"
-                    >
-                      <p className={`text-sm leading-relaxed ${
-                        status === 'current' ? 'text-purple-800 font-medium' : 'text-gray-600'
-                      }`}>
-                        {loading ? '...' : motivation.text}
-                      </p>
-                      {motivation.reference && (
-                        <p className="text-xs text-purple-500 mt-1 italic">
-                          — {motivation.reference}
-                        </p>
-                      )}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                {motivation && (
+                  <p className="text-xs text-gray-600 leading-snug">
+                    {loading ? '...' : motivation.text}
+                  </p>
+                )}
               </div>
-            </motion.div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      ) : (
+        currentSlot && currentMotivation && (
+          <div className="bg-purple-100 border border-purple-300 rounded-lg p-2">
+            <div className="flex items-center gap-1.5 mb-1">
+              <div className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" />
+              <span className="text-xs font-medium text-purple-700">{currentSlot.label}</span>
+              <span className="text-[10px] bg-purple-200 text-purple-700 px-1.5 py-0.5 rounded-full ml-auto">
+                Now
+              </span>
+            </div>
+            <p className="text-xs text-purple-800 leading-relaxed">
+              {loading ? '...' : currentMotivation.text}
+            </p>
+            {currentMotivation.reference && (
+              <p className="text-[10px] text-purple-500 mt-1 italic">
+                — {currentMotivation.reference}
+              </p>
+            )}
+          </div>
+        )
+      )}
     </Card>
   );
 }

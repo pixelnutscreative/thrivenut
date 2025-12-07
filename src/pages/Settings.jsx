@@ -97,6 +97,7 @@ export default function Settings() {
     default_landing_page: 'Dashboard',
     ai_tool_links: [],
     motivation_categories: ['Content Ideas', 'Personal Growth', 'Spiritual', 'Business'],
+    custom_motivation_topics: [],
     user_timezone: 'America/New_York',
     enabled_modules: ['tiktok', 'gifter', 'goals', 'tasks', 'wellness', 'supplements', 'medications', 'pets', 'care_reminders', 'people', 'journal', 'mental_health'],
     feature_order: [],
@@ -153,6 +154,7 @@ export default function Settings() {
       default_landing_page: preferences.default_landing_page || 'Dashboard',
       ai_tool_links: preferences.ai_tool_links || [],
       motivation_categories: preferences.motivation_categories || ['Content Ideas', 'Personal Growth', 'Spiritual', 'Business'],
+      custom_motivation_topics: preferences.custom_motivation_topics || [],
         user_timezone: preferences.user_timezone || 'America/New_York',
         enabled_modules: preferences.enabled_modules || ['tiktok', 'gifter', 'goals', 'tasks', 'wellness', 'supplements', 'medications', 'pets', 'care_reminders', 'people', 'journal', 'mental_health'],
         feature_order: preferences.feature_order || [],
@@ -781,6 +783,64 @@ export default function Settings() {
                       </div>
                     );
                   })}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Custom Motivation Topics</CardTitle>
+                  <CardDescription>Add topics you want motivations about (pulled from your goals and mental health settings too)</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="e.g., Building my business, Faith journey..."
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && e.target.value.trim()) {
+                          const newTopic = e.target.value.trim();
+                          setFormData({ 
+                            ...formData, 
+                            custom_motivation_topics: [...(formData.custom_motivation_topics || []), newTopic]
+                          });
+                          e.target.value = '';
+                        }
+                      }}
+                    />
+                    <Button 
+                      size="sm"
+                      onClick={(e) => {
+                        const input = e.target.closest('.flex').querySelector('input');
+                        if (input.value.trim()) {
+                          const newTopic = input.value.trim();
+                          setFormData({ 
+                            ...formData, 
+                            custom_motivation_topics: [...(formData.custom_motivation_topics || []), newTopic]
+                          });
+                          input.value = '';
+                        }
+                      }}
+                    >
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {(formData.custom_motivation_topics || []).map((topic, idx) => (
+                      <Badge key={idx} variant="secondary" className="flex items-center gap-1">
+                        {topic}
+                        <button
+                          onClick={() => {
+                            setFormData({
+                              ...formData,
+                              custom_motivation_topics: formData.custom_motivation_topics.filter((_, i) => i !== idx)
+                            });
+                          }}
+                          className="ml-1 hover:text-red-600"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
 
