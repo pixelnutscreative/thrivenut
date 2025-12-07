@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Plus, Pencil, Trash2, ExternalLink, Loader2, GripVertical } from 'lucide-react';
 
-const categories = ['AI', 'Creative', 'Business', 'Learning', 'Workshops', 'Community'];
+const categories = ['AI', 'Creative', 'Business', 'Learning', 'Workshops', 'Community', 'Custom GPT'];
 
 const defaultResource = {
   name: '',
@@ -243,10 +243,11 @@ export default function AdminResourcesContent() {
             </div>
             <div>
               <Label>Keywords (comma separated)</Label>
-              <Input
+              <Textarea
                 value={keywordsInput}
                 onChange={(e) => setKeywordsInput(e.target.value)}
                 placeholder="ai, video, music, create"
+                rows={2}
               />
               <p className="text-xs text-gray-500 mt-1">Used for search matching</p>
             </div>
