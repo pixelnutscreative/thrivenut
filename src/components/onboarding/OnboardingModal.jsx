@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, MapPin } from 'lucide-react';
 
-export default function OnboardingModal({ isOpen, user, onComplete }) {
+function OnboardingModal({ isOpen, user, onComplete }) {
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
   const [showOnMap, setShowOnMap] = useState(false);
@@ -133,3 +133,5 @@ export default function OnboardingModal({ isOpen, user, onComplete }) {
     </Dialog>
   );
 }
+
+export default OnboardingModal;
