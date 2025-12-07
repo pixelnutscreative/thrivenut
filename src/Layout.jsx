@@ -59,6 +59,7 @@ const moduleNavMap = {
   tiktok: ['TikTok'],
   gifter: ['Gift Gallery Gratitude'],
   goals: ['Goals', 'Goal Sharing'],
+  tasks: ['Tasks'],
   wellness: ['Wellness'],
   supplements: ['Supplements'],
   medications: ['Medications'],
@@ -128,6 +129,7 @@ const defaultNavItems = [
           ]},
   { name: 'Goals', icon: Target, path: 'Goals', moduleId: 'goals' },
     { name: 'Vision Board', icon: Eye, path: 'VisionBoard', moduleId: 'goals' },
+  { name: 'Tasks', icon: FileText, path: 'Tasks', moduleId: 'tasks' },
   { name: 'Prayer Requests', icon: HandMetal, path: 'PrayerRequests', requiresBibleBeliever: true },
       { name: 'Mental Health', icon: Brain, isSection: true, moduleId: 'mental_health', subItems: [
         { name: 'Mental Health Hub', icon: Brain, path: 'NeurodivergentSettings' },
@@ -181,7 +183,7 @@ export default function Layout({ children, currentPageName }) {
     enabled: !!effectiveEmail,
   });
 
-  const enabledModules = preferences?.enabled_modules || ['tiktok', 'gifter', 'goals', 'wellness', 'supplements', 'medications', 'pets', 'care_reminders', 'people', 'journal', 'mental_health'];
+  const enabledModules = preferences?.enabled_modules || ['tiktok', 'gifter', 'goals', 'tasks', 'wellness', 'supplements', 'medications', 'pets', 'care_reminders', 'people', 'journal', 'mental_health'];
   
   // Fetch admin menu config
   const { data: menuConfig = [] } = useQuery({
