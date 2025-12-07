@@ -50,6 +50,7 @@ export default function Support() {
     description: '',
     type: 'question',
     priority: 'medium',
+    video_url: '',
   });
   const [submitted, setSubmitted] = useState(false);
   const [screenshotUrl, setScreenshotUrl] = useState('');
@@ -86,7 +87,7 @@ export default function Support() {
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['myTickets'] });
-      setFormData({ subject: '', description: '', type: 'question', priority: 'medium' });
+      setFormData({ subject: '', description: '', type: 'question', priority: 'medium', video_url: '' });
       setScreenshotUrl('');
       setSubmitted(true);
       setTimeout(() => setSubmitted(false), 5000);
@@ -370,43 +371,49 @@ export default function Support() {
                       />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Priority</Label>
-                        <Select value={formData.priority} onValueChange={(v) => setFormData({ ...formData, priority: v })}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="low">Low - Whenever you get to it</SelectItem>
-                            <SelectItem value="medium">Medium - Somewhat urgent</SelectItem>
-                            <SelectItem value="high">High - Pretty important</SelectItem>
-                            <SelectItem value="urgent">Urgent - App is on fire 🔥</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
+                    <div className="space-y-2">
+                      <Label>Priority</Label>
+                      <Select value={formData.priority} onValueChange={(v) => setFormData({ ...formData, priority: v })}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="low">Low - Whenever you get to it</SelectItem>
+                          <SelectItem value="medium">Medium - Somewhat urgent</SelectItem>
+                          <SelectItem value="high">High - Pretty important</SelectItem>
+                          <SelectItem value="urgent">Urgent - App is on fire 🔥</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                      <div className="space-y-2">
-                        <Label>Screenshot (optional)</Label>
-                        {screenshotUrl ? (
-                          <div className="relative w-20 h-20">
-                            <img src={screenshotUrl} alt="" className="w-full h-full object-cover rounded-lg" />
-                            <button
-                              type="button"
-                              onClick={() => setScreenshotUrl('')}
-                              className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </div>
-                        ) : (
-                          <label className="flex items-center gap-2 px-3 py-2 border rounded-lg cursor-pointer hover:bg-gray-50">
+                    <div className="space-y-2">
+                      <Label>Screenshot or Video (optional)</Label>
+                      <p className="text-xs text-gray-500">Upload an image or paste a video URL</p>
+                      {screenshotUrl ? (
+                        <div className="relative">
+                          <img src={screenshotUrl} alt="" className="max-w-xs rounded-lg border" />
+                          <button
+                            type="button"
+                            onClick={() => setScreenshotUrl('')}
+                            className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex gap-2">
+                          <label className="flex-1 flex items-center gap-2 px-3 py-2 border rounded-lg cursor-pointer hover:bg-gray-50">
                             {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
                             <span className="text-sm text-gray-600">Upload image</span>
                             <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
                           </label>
-                        )}
-                      </div>
+                        </div>
+                      )}
+                      <Input
+                        placeholder="Or paste video URL (e.g., Loom, YouTube)"
+                        value={formData.video_url || ''}
+                        onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
+                      />
                     </div>
 
                     <Button 
@@ -522,6 +529,20 @@ export default function Support() {
                     className="max-w-full rounded-lg border cursor-pointer"
                     onClick={() => window.open(selectedTicket.screenshot_url, '_blank')}
                   />
+                )}
+
+                {selectedTicket.video_url && (
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm font-medium text-blue-800 mb-2">Video:</p>
+                    <a 
+                      href={selectedTicket.video_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-sm text-blue-600 hover:text-blue-700 underline break-all"
+                    >
+                      {selectedTicket.video_url}
+                    </a>
+                  </div>
                 )}
 
                 {/* Conversation Thread */}
