@@ -417,28 +417,13 @@ export default function Settings() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Room Vibe / Theme</Label>
-                    <Textarea
-                      placeholder="e.g., Beach party vibes, chill zone, neon club energy..."
-                      value={formData.room_vibe}
-                      onChange={(e) => setFormData({ ...formData, room_vibe: e.target.value })}
-                      rows={2}
-                    />
-                  </div>
-
-                  <div 
-                    onClick={() => setFormData({ ...formData, include_levelup_verse: !formData.include_levelup_verse })}
-                    className={`p-3 rounded-xl border-2 cursor-pointer transition-all ${
-                      formData.include_levelup_verse ? 'border-purple-400 bg-purple-50' : 'border-gray-200 hover:border-purple-300'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Checkbox checked={formData.include_levelup_verse} />
-                      <div>
-                        <h4 className="font-semibold text-sm">Include Level-Up Verse in Songs</h4>
-                        <p className="text-xs text-gray-600">Add encouragement to level up!</p>
-                      </div>
-                    </div>
+                   <Label>Room Vibe / Theme</Label>
+                   <Textarea
+                     placeholder="e.g., Beach party vibes, chill zone, neon club energy..."
+                     value={formData.room_vibe}
+                     onChange={(e) => setFormData({ ...formData, room_vibe: e.target.value })}
+                     rows={2}
+                   />
                   </div>
                 </CardContent>
               </Card>
