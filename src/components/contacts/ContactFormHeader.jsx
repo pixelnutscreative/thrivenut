@@ -121,15 +121,26 @@ export default function ContactFormHeader({ formData, setFormData, onSave, isSav
             </Popover>
           </div>
         </div>
-        <Button
-          onClick={onSave}
-          disabled={isSaving}
-          size="sm"
-          style={{ backgroundColor: buttonColor }}
-          className="hover:opacity-90"
-        >
-          {isEditing ? 'Update' : 'Add'}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => onSave(false)}
+            disabled={isSaving}
+            size="sm"
+            variant="outline"
+            className="border-purple-300 text-purple-600 hover:bg-purple-50"
+          >
+            {isEditing ? 'Update' : 'Save'}
+          </Button>
+          <Button
+            onClick={() => onSave(true)}
+            disabled={isSaving}
+            size="sm"
+            style={{ backgroundColor: buttonColor }}
+            className="hover:opacity-90"
+          >
+            {isEditing ? 'Update & Close' : 'Save & Close'}
+          </Button>
+        </div>
       </div>
 
       {/* Photo and names row */}
