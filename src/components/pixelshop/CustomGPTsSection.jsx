@@ -91,10 +91,10 @@ export default function CustomGPTsSection({ isDark, primaryColor, accentColor })
                 className={`overflow-hidden ${isDark ? 'bg-gray-800/90 border-gray-700' : 'bg-white/90'} backdrop-blur hover:shadow-xl transition-shadow`}
               >
                 {/* Image */}
-                {currentGPT.gallery_images?.[0] && (
+                {(currentGPT.gpt_image_url || currentGPT.gallery_images?.[0]) && (
                   <div className="aspect-square w-full max-w-md mx-auto">
                     <img 
-                      src={currentGPT.gallery_images[0]} 
+                      src={currentGPT.gpt_image_url || currentGPT.gallery_images[0]} 
                       alt={currentGPT.name}
                       className="w-full h-full object-cover"
                     />
