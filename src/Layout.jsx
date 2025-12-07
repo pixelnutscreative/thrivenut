@@ -52,7 +52,7 @@ import ImpersonationBanner, { getEffectiveUserEmail, isImpersonating } from './c
 import NotificationBell from './components/notifications/NotificationBell';
 import FloatingHelpButton from './components/support/FloatingHelpButton';
 import QuickActionsWidget from './components/widgets/QuickActionsWidget';
-import SoundCloudPlayer, { FloatingSoundCloudPlayer } from './components/widgets/SoundCloudPlayer';
+import SoundCloudPlayer, { FloatingSoundCloudPlayer, MobileSoundCloudPopup } from './components/widgets/SoundCloudPlayer';
 
 // Map module IDs to nav items
 const moduleNavMap = {
@@ -629,16 +629,6 @@ export default function Layout({ children, currentPageName }) {
             <p className={`text-sm ${menuSubtextClass}`}>Crush your goals, thrive daily</p>
               </div>
 
-              {/* SoundCloud Player in Menu */}
-              {soundcloudPosition === 'menu' && soundcloudUrl && (
-                <div className="mb-4">
-                  <SoundCloudPlayer 
-                    playlistUrl={soundcloudUrl} 
-                    isMenuDark={isMenuDark}
-                  />
-                </div>
-              )}
-
               <nav className="flex-1 space-y-1 overflow-y-auto">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -763,33 +753,43 @@ export default function Layout({ children, currentPageName }) {
                                   </nav>
 
           {user && (
-                        <div className={`pt-6 mt-6 border-t ${menuBorderClass}`}>
-                          <div className="flex items-center gap-3">
-                            <Link to={createPageUrl('Settings')} title="Settings">
-                              {preferences?.profile_image_url ? (
-                                <img 
-                                  src={preferences.profile_image_url} 
-                                  alt="Profile" 
-                                  className="w-8 h-8 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-purple-400 transition-all"
-                                />
-                              ) : (
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-purple-400 transition-all ${isMenuDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
-                                  <Settings className="w-4 h-4 text-gray-500" />
-                                </div>
-                              )}
-                            </Link>
-                            <Button
-                              onClick={handleLogout}
-                              variant="outline"
-                              size="sm"
-                              className={`flex-1 ${isMenuDark ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'text-gray-700 border-gray-300 hover:bg-gray-100'}`}
-                            >
-                              <LogOut className="w-4 h-4 mr-2" />
-                              Sign Out
-                            </Button>
-                          </div>
+                    <div className={`pt-6 mt-6 border-t ${menuBorderClass}`}>
+                      <div className="flex items-center gap-3">
+                        <Link to={createPageUrl('Settings')} title="Settings">
+                          {preferences?.profile_image_url ? (
+                            <img 
+                              src={preferences.profile_image_url} 
+                              alt="Profile" 
+                              className="w-8 h-8 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-purple-400 transition-all"
+                            />
+                          ) : (
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-purple-400 transition-all ${isMenuDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                              <Settings className="w-4 h-4 text-gray-500" />
+                            </div>
+                          )}
+                        </Link>
+                        <Button
+                          onClick={handleLogout}
+                          variant="outline"
+                          size="sm"
+                          className={`flex-1 ${isMenuDark ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'text-gray-700 border-gray-300 hover:bg-gray-100'}`}
+                        >
+                          <LogOut className="w-4 h-4 mr-2" />
+                          Sign Out
+                        </Button>
+                      </div>
+
+                      {/* SoundCloud Player at Bottom of Menu */}
+                      {soundcloudPosition === 'menu' && soundcloudUrl && (
+                        <div className="mt-4 pt-4 border-t" style={{ borderColor: menuBorderClass }}>
+                          <SoundCloudPlayer 
+                            playlistUrl={soundcloudUrl} 
+                            isMenuDark={isMenuDark}
+                          />
                         </div>
                       )}
+                    </div>
+                  )}
           </div>
 
         {/* Main Content */}
@@ -802,6 +802,15 @@ export default function Layout({ children, currentPageName }) {
               <div className="lg:hidden pt-16">
                 {children}
               </div>
+
+              {/* Mobile SoundCloud Popup */}
+              {soundcloudPosition === 'menu' && soundcloudUrl && (
+                <MobileSoundCloudPopup 
+                  playlistUrl={soundcloudUrl}
+                  primaryColor={primaryColor}
+                  accentColor={accentColor}
+                />
+              )}
 
               {/* TikTok Access Gate Modal */}
               <TikTokAccessGate 
