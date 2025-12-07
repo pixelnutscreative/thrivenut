@@ -20,6 +20,7 @@ import FeatureOrderManager from '../components/settings/FeatureOrderManager';
 import DashboardPreferences from '../components/settings/DashboardPreferences';
 import QuickActionsSettings from '../components/settings/QuickActionsSettings';
 import SoundCloudSettings from '../components/settings/SoundCloudSettings';
+import MoodEmojiSettings from '../components/settings/MoodEmojiSettings';
 import { getEffectiveUserEmail, isImpersonating } from '../components/admin/ImpersonationBanner';
 import { useTheme } from '../components/shared/useTheme';
 
@@ -136,7 +137,9 @@ export default function Settings() {
     quick_actions_position: 'bottom',
     custom_quick_actions: [],
     soundcloud_playlist_url: '',
-    soundcloud_player_position: 'hidden'
+    soundcloud_player_position: 'hidden',
+    custom_mood_options: [],
+    top_mood_emojis: ['great', 'good', 'okay', 'low', 'anxious', 'sad', 'motivated']
     });
 
   useEffect(() => {
@@ -190,7 +193,9 @@ export default function Settings() {
         quick_actions_position: preferences.quick_actions_position || 'bottom',
         custom_quick_actions: preferences.custom_quick_actions || [],
         soundcloud_playlist_url: preferences.soundcloud_playlist_url || '',
-        soundcloud_player_position: preferences.soundcloud_player_position || 'hidden'
+        soundcloud_player_position: preferences.soundcloud_player_position || 'hidden',
+        custom_mood_options: preferences.custom_mood_options || [],
+        top_mood_emojis: preferences.top_mood_emojis || ['great', 'good', 'okay', 'low', 'anxious', 'sad', 'motivated']
         });
     }
   }, [preferences]);
@@ -823,6 +828,7 @@ export default function Settings() {
           </CollapsibleTrigger>
           <CollapsibleContent>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4 mt-4">
+              <MoodEmojiSettings formData={formData} setFormData={setFormData} />
               <QuickActionsSettings formData={formData} setFormData={setFormData} />
               <SoundCloudSettings formData={formData} setFormData={setFormData} />
             </motion.div>

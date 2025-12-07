@@ -22,12 +22,17 @@ const builtInActions = [
   { id: 'gratitude', label: 'Gratitude', icon: Heart, color: 'bg-red-500' },
 ];
 
-const moodOptions = [
+const defaultMoodOptions = [
   { value: 'great', emoji: '😄', label: 'Great' },
   { value: 'good', emoji: '🙂', label: 'Good' },
   { value: 'okay', emoji: '😐', label: 'Okay' },
   { value: 'low', emoji: '😔', label: 'Low' },
   { value: 'anxious', emoji: '😰', label: 'Anxious' },
+  { emoji: '😡', label: 'Angry', value: 'angry' },
+  { emoji: '😢', label: 'Sad', value: 'sad' },
+  { emoji: '🥰', label: 'Loved', value: 'loved' },
+  { emoji: '💪', label: 'Motivated', value: 'motivated' },
+  { emoji: '😴', label: 'Tired', value: 'tired' },
 ];
 
 const iconMap = { Smile, Droplet, Utensils, Lightbulb, Cloud, StickyNote, Heart, Home, Music, Zap, Link, ExternalLink };
@@ -40,6 +45,8 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
   const [isDragging, setIsDragging] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const dragRef = useRef(null);
+  const [showAddMoodInput, setShowAddMoodInput] = useState(false);
+  const [customMoodInput, setCustomMoodInput] = useState({ emoji: '', label: '' });
   
   const today = format(new Date(), 'yyyy-MM-dd');
   const userEmail = preferences?.user_email;
@@ -67,6 +74,8 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
   };
 
   // Mutations
+  const [waterSuccess, setWaterSuccess] = useState(false);
+
   const waterLogMutation = useMutation({
     mutationFn: async () => {
       const existing = await base44.entities.WaterLog.filter({ date: today, created_by: userEmail });
@@ -79,6 +88,9 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['waterLog'] });
+      queryClient.invalidateQueries({ queryKey: ['waterToday'] });
+      setWaterSuccess(true);
+      setTimeout(() => setWaterSuccess(false), 2000);
       setActiveAction(null);
     }
   });
@@ -99,6 +111,16 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
 
   const quickNoteMutation = useMutation({
     mutationFn: async (data) => {
+      // If it's a negative thought, reframe it with AI
+      if (data.type === 'negative_thought') {
+        const response = await base44.integrations.Core.InvokeLLM({
+          prompt: `Someone is having this negative thought: "${data.content}"\n\nPlease provide a kind, supportive reframe that helps them see this situation from a healthier perspective. Be empathetic and constructive. Keep it under 100 words.`,
+        });
+        return base44.entities.QuickNote.create({
+          ...data,
+          reframe: response
+        });
+      }
       return base44.entities.QuickNote.create(data);
     },
     onSuccess: () => {
@@ -127,6 +149,19 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
   const handleMoodSelect = (mood) => {
     moodLogMutation.mutate(mood);
   };
+
+  const handleAddCustomMood = () => {
+    if (!customMoodInput.emoji.trim() || !customMoodInput.label.trim()) return;
+    moodLogMutation.mutate(customMoodInput.label.toLowerCase().replace(/\s+/g, '_'));
+    setShowAddMoodInput(false);
+    setCustomMoodInput({ emoji: '', label: '' });
+  };
+
+  // Get user's mood options
+  const customMoods = preferences?.custom_mood_options || [];
+  const topMoodValues = preferences?.top_mood_emojis || defaultMoodOptions.slice(0, 7).map(m => m.value);
+  const allMoodOptions = [...defaultMoodOptions, ...customMoods];
+  const moodOptions = allMoodOptions.filter(m => topMoodValues.includes(m.value));
 
   // Get all visible actions (built-in + custom) - limit to 7
   const getVisibleActions = () => {
@@ -293,12 +328,21 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
             <motion.button
               key={action.id}
               onClick={() => handleAction(action.id)}
-              className={`w-9 h-9 rounded-full ${action.color} flex items-center justify-center text-white hover:opacity-90 transition-all`}
+              className={`w-9 h-9 rounded-full ${action.color} flex items-center justify-center text-white hover:opacity-90 transition-all relative`}
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
               title={action.label}
             >
               <Icon className="w-4 h-4" />
+              {action.id === 'water' && waterSuccess && (
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center"
+                >
+                  <Check className="w-3 h-3 text-white" />
+                </motion.div>
+              )}
             </motion.button>
           );
         })}
@@ -349,7 +393,7 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               {moodOptions.map((mood) => (
                 <button
                   key={mood.value}
@@ -360,6 +404,48 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
                   <span className="text-xs text-gray-600">{mood.label}</span>
                 </button>
               ))}
+              
+              {/* Add Custom Mood Button */}
+              {!showAddMoodInput ? (
+                <button
+                  onClick={() => setShowAddMoodInput(true)}
+                  className="flex flex-col items-center justify-center gap-1 p-3 rounded-xl border-2 border-dashed border-gray-300 hover:border-purple-400 hover:bg-purple-50 transition-colors min-w-[60px]"
+                >
+                  <Plus className="w-5 h-5 text-gray-400" />
+                  <span className="text-xs text-gray-500">Add</span>
+                </button>
+              ) : (
+                <div className="w-full mt-2 p-3 bg-gray-50 rounded-xl border border-gray-200 space-y-2">
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="😊"
+                      value={customMoodInput.emoji}
+                      onChange={(e) => setCustomMoodInput({ ...customMoodInput, emoji: e.target.value })}
+                      className="w-16 text-center text-xl"
+                      maxLength={2}
+                      autoFocus
+                    />
+                    <Input
+                      placeholder="Feeling name"
+                      value={customMoodInput.label}
+                      onChange={(e) => setCustomMoodInput({ ...customMoodInput, label: e.target.value })}
+                      className="flex-1"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleAddCustomMood();
+                        if (e.key === 'Escape') setShowAddMoodInput(false);
+                      }}
+                    />
+                  </div>
+                  <div className="flex gap-2 justify-end">
+                    <Button size="sm" variant="outline" onClick={() => { setShowAddMoodInput(false); setCustomMoodInput({ emoji: '', label: '' }); }}>
+                      Cancel
+                    </Button>
+                    <Button size="sm" onClick={handleAddCustomMood} disabled={!customMoodInput.emoji.trim() || !customMoodInput.label.trim()}>
+                      Add
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </motion.div>
         )}
@@ -403,14 +489,23 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
               className="min-h-[80px] mb-3"
               autoFocus
             />
+            {activeAction === 'negative_thought' && (
+              <p className="text-xs text-purple-600 mb-2">
+                ✨ AI will help you reframe this in a healthier way
+              </p>
+            )}
             <Button
               onClick={handleSubmitNote}
               disabled={!noteContent.trim() || quickNoteMutation.isPending}
               className="w-full"
               style={{ background: `linear-gradient(to right, ${primaryColor || '#1fd2ea'}, ${accentColor || '#bd84f5'})` }}
             >
-              <Check className="w-4 h-4 mr-2" />
-              Save
+              {quickNoteMutation.isPending ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Check className="w-4 h-4 mr-2" />
+              )}
+              {activeAction === 'negative_thought' ? 'Reframe with AI' : 'Save'}
             </Button>
           </motion.div>
         )}
