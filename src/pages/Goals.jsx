@@ -38,7 +38,6 @@ const categoryColors = {
 };
 
 const goalTypes = [
-  { id: 'habit', label: '🔄 Habit', description: 'Recurring goal (daily water, weekly exercise)' },
   { id: 'project', label: '📋 Project', description: 'One-time goal with steps (buy a car, move)' },
   { id: 'milestone', label: '🎯 Milestone', description: 'Single achievement (get promoted, graduate)' },
   { id: 'learning', label: '📚 Learning', description: 'Skill or knowledge acquisition' },
@@ -226,14 +225,7 @@ export default function Goals() {
     },
   });
 
-  const updateProgressMutation = useMutation({
-    mutationFn: async ({ goalId, newValue }) => {
-      return await base44.entities.Goal.update(goalId, { current_value: newValue });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['goals'] });
-    },
-  });
+
 
   const deleteGoalMutation = useMutation({
     mutationFn: async (goalId) => {
@@ -570,9 +562,7 @@ export default function Goals() {
                           type="button"
                           onClick={() => setFormData({
                             ...formData, 
-                            goal_type: type.id,
-                            frequency: type.id === 'habit' ? 'daily' : 'one-time',
-                            target_value: type.id === 'habit' ? 1 : 0
+                            goal_type: type.id
                           })}
                           className={`px-3 py-2 rounded-lg border-2 text-sm transition-all ${
                             formData.goal_type === type.id
@@ -586,42 +576,13 @@ export default function Goals() {
                     </div>
                   </div>
 
-                  <div className="grid md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Target Date</label>
-                      <Input
-                        type="date"
-                        value={formData.target_date}
-                        onChange={(e) => setFormData({...formData, target_date: e.target.value})}
-                      />
-                    </div>
-                    
-                    {formData.goal_type === 'habit' && (
-                      <>
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium">Frequency</label>
-                          <Select value={formData.frequency} onValueChange={(val) => setFormData({...formData, frequency: val})}>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="daily">Daily</SelectItem>
-                              <SelectItem value="weekly">Weekly</SelectItem>
-                              <SelectItem value="monthly">Monthly</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium">Target Value</label>
-                          <Input
-                            type="number"
-                            min="1"
-                            value={formData.target_value}
-                            onChange={(e) => setFormData({...formData, target_value: parseInt(e.target.value) || 1})}
-                          />
-                        </div>
-                      </>
-                    )}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Target Date (Optional)</label>
+                    <Input
+                      type="date"
+                      value={formData.target_date}
+                      onChange={(e) => setFormData({...formData, target_date: e.target.value})}
+                    />
                   </div>
 
                   {/* Vision Board Section */}
@@ -817,76 +778,28 @@ export default function Goals() {
                         </div>
                       )}
 
-                      {/* Progress for target-based goals */}
-                      {goal.target_value > 0 && (
-                        <>
-                          <div>
-                            <div className="flex justify-between text-sm mb-2">
-                              <span className="text-gray-600">Progress</span>
-                              <span className="font-semibold">
-                                {goal.current_value} / {goal.target_value}
-                              </span>
-                            </div>
-                            <Progress value={percentage} className="h-3" />
-                          </div>
-
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => updateProgressMutation.mutate({ 
-                                goalId: goal.id, 
-                                newValue: Math.max(0, goal.current_value - 1) 
-                              })}
-                              disabled={goal.current_value === 0}
-                              className="flex-1"
-                            >
-                              -1
-                            </Button>
-                            <Button
-                              size="sm"
-                              onClick={() => updateProgressMutation.mutate({ 
-                                goalId: goal.id, 
-                                newValue: Math.min(goal.target_value, goal.current_value + 1) 
-                              })}
-                              disabled={goal.current_value >= goal.target_value}
-                              className="flex-1 bg-purple-600 hover:bg-purple-700"
-                            >
-                              +1
-                            </Button>
-                          </div>
-                        </>
+                      {/* Mark Complete Button */}
+                      {hasSteps && stepsPercent >= 100 && (
+                        <Button
+                          size="sm"
+                          onClick={() => completeGoalMutation.mutate(goal.id)}
+                          className="w-full bg-green-600 hover:bg-green-700"
+                        >
+                          <CheckCircle2 className="w-4 h-4 mr-2" />
+                          Mark Complete
+                        </Button>
                       )}
 
-                      {/* For habit goals: reset progress. For other goals: mark complete */}
-                      {(percentage >= 100 || (hasSteps && stepsPercent >= 100)) && (
-                        goal.goal_type === 'habit' ? (
-                          <Button
-                            size="sm"
-                            onClick={() => updateProgressMutation.mutate({ goalId: goal.id, newValue: 0 })}
-                            className="w-full bg-teal-600 hover:bg-teal-700"
-                          >
-                            <RotateCcw className="w-4 h-4 mr-2" />
-                            Reset for Next {goal.frequency === 'daily' ? 'Day' : goal.frequency === 'weekly' ? 'Week' : 'Month'}
-                          </Button>
-                        ) : (
-                          <Button
-                            size="sm"
-                            onClick={() => completeGoalMutation.mutate(goal.id)}
-                            className="w-full bg-green-600 hover:bg-green-700"
-                          >
-                            <CheckCircle2 className="w-4 h-4 mr-2" />
-                            Mark Complete
-                          </Button>
-                        )
+                      {(goal.start_date || goal.target_date) && (
+                        <div className="text-xs text-gray-500 flex justify-between pt-2 border-t">
+                          {goal.start_date && (
+                            <span>Started {format(new Date(goal.start_date), 'MMM d')}</span>
+                          )}
+                          {goal.target_date && (
+                            <span>Target: {format(new Date(goal.target_date), 'MMM d')}</span>
+                          )}
+                        </div>
                       )}
-
-                      <div className="text-xs text-gray-500 flex justify-between pt-2 border-t">
-                        <span>{goal.frequency}</span>
-                        {goal.start_date && (
-                          <span>Started {format(new Date(goal.start_date), 'MMM d')}</span>
-                        )}
-                      </div>
                     </CardContent>
                   </Card>
                 </motion.div>
