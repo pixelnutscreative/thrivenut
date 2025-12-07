@@ -114,7 +114,7 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
       // If it's a negative thought, reframe it with AI
       if (data.type === 'negative_thought') {
         const response = await base44.integrations.Core.InvokeLLM({
-          prompt: `Someone is having this negative thought: "${data.content}"\n\nPlease provide a kind, supportive reframe that helps them see this situation from a healthier perspective. Be empathetic and constructive. Keep it under 100 words.`,
+          prompt: `Someone is having this negative thought: "${data.content}"\n\nProvide a supportive biblical reframe that helps them see this differently. Address common struggles like complaining, unforgiveness, or negativity. If they mention unforgiveness, remind them to pray blessings for that person - it's not for the other person (who may never know or care), it's so they can move forward without holding onto that poison, and put their eyes back on Jesus. Be empathetic, constructive, and Christ-centered. Keep it under 150 words.`,
         });
         return base44.entities.QuickNote.create({
           ...data,

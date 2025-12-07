@@ -32,16 +32,9 @@ Deno.serve(async (req) => {
     const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
 
-    // Fetch events from Google Calendar API
-    const calendarResponse = await fetch(
-      `https://www.googleapis.com/calendar/v3/calendars/primary/events?` + 
-      new URLSearchParams({
-        timeMin: startOfDay.toISOString(),
-        timeMax: endOfDay.toISOString(),
-        singleEvents: 'true',
-        orderBy: 'startTime',
-        maxResults: '50'
-      }),
+    // First, fetch calendar list
+    const calendarListResponse = await fetch(
+      'https://www.googleapis.com/calendar/v3/users/me/calendarList',
       {
         headers: {
           'Authorization': `Bearer ${accessToken}`,
@@ -50,19 +43,70 @@ Deno.serve(async (req) => {
       }
     );
 
-    if (!calendarResponse.ok) {
-      const errorText = await calendarResponse.text();
-      console.error('Google Calendar API error:', errorText);
+    if (!calendarListResponse.ok) {
+      const errorText = await calendarListResponse.text();
+      console.error('Failed to fetch calendar list:', errorText);
       return Response.json({ 
-        error: 'Failed to fetch calendar events',
+        error: 'Failed to fetch calendar list',
         details: errorText
       }, { status: 500 });
     }
 
-    const calendarData = await calendarResponse.json();
+    const calendarList = await calendarListResponse.json();
+    const calendars = calendarList.items || [];
+
+    // Fetch events from all calendars in parallel
+    const eventPromises = calendars.map(async (calendar) => {
+      try {
+        const response = await fetch(
+          `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendar.id)}/events?` + 
+          new URLSearchParams({
+            timeMin: startOfDay.toISOString(),
+            timeMax: endOfDay.toISOString(),
+            singleEvents: 'true',
+            orderBy: 'startTime',
+            maxResults: '50'
+          }),
+          {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+
+        if (!response.ok) return { items: [], calendarName: calendar.summary, calendarColor: calendar.backgroundColor };
+        
+        const data = await response.json();
+        return { 
+          items: data.items || [], 
+          calendarName: calendar.summary,
+          calendarColor: calendar.backgroundColor 
+        };
+      } catch (e) {
+        console.error(`Error fetching calendar ${calendar.summary}:`, e);
+        return { items: [], calendarName: calendar.summary, calendarColor: calendar.backgroundColor };
+      }
+    });
+
+    const allCalendarEvents = await Promise.all(eventPromises);
+    
+    // Combine all events from all calendars
+    const allEvents = [];
+
+    // Flatten and transform all events
+    allCalendarEvents.forEach(calendarData => {
+      calendarData.items.forEach(event => {
+        allEvents.push({
+          ...event,
+          calendarName: calendarData.calendarName,
+          calendarColor: calendarData.calendarColor
+        });
+      });
+    });
 
     // Transform events to a simpler format
-    const events = (calendarData.items || []).map(event => {
+    const events = allEvents.map(event => {
       const startTime = event.start?.dateTime || event.start?.date;
       const endTime = event.end?.dateTime || event.end?.date;
       
@@ -88,7 +132,9 @@ Deno.serve(async (req) => {
         sortTime,
         isAllDay: !event.start?.dateTime,
         htmlLink: event.htmlLink,
-        colorId: event.colorId
+        colorId: event.colorId,
+        calendarName: event.calendarName || 'Primary',
+        calendarColor: event.calendarColor || '#4285f4'
       };
     });
 

@@ -351,6 +351,22 @@ export default function NeurodivergentSettings() {
                   ))}
                 </div>
               </div>
+
+              {/* Custom Working On Bubbles */}
+              <div className="pt-4 border-t">
+                <Label className={`font-medium mb-2 block ${textClass}`}>Custom Items I'm Working On</Label>
+                <p className={`text-sm ${subtextClass} mb-3`}>
+                  Add your own custom items. Once submitted, admin can add them to the global list for others.
+                </p>
+                
+                {/* Coming soon placeholder for now */}
+                <Alert className={isDark ? 'bg-blue-900/30 border-blue-700' : 'bg-blue-50 border-blue-200'}>
+                  <Sparkles className={`w-4 h-4 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
+                  <AlertDescription className={isDark ? 'text-blue-300' : 'text-blue-800'}>
+                    Coming soon: Add your own custom items and submit them to admin for review!
+                  </AlertDescription>
+                </Alert>
+              </div>
             </CardContent>
           </Card>
         </motion.div>

@@ -1161,12 +1161,29 @@ Creator display name: ${hostDisplayName}`,
             </Card>
 
             {/* Suno Button */}
-            <Button 
-              onClick={() => setShowSunoModal(true)}
-              className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
-            >
-              <ExternalLink className="w-4 h-4 mr-2" /> Create Your Track with Suno 🎵
-            </Button>
+            <div className="space-y-3">
+              <Button 
+                onClick={() => setShowSunoModal(true)}
+                className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+              >
+                <ExternalLink className="w-4 h-4 mr-2" /> Create Your Track with Suno 🎵
+              </Button>
+              
+              <a 
+                href="https://suno.com/r/pixelnuts" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="block"
+              >
+                <Button 
+                  variant="outline" 
+                  className="w-full border-amber-300 text-amber-700 hover:bg-amber-50"
+                >
+                  <Zap className="w-4 h-4 mr-2" />
+                  Get Suno Credits (Affiliate Link)
+                </Button>
+              </a>
+            </div>
 
             {/* Suno Style Card */}
             {songStyles && (
