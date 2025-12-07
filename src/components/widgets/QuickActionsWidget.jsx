@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { 
   Zap, Droplet, Smile, Utensils, Lightbulb, Cloud, StickyNote, 
-  X, Check, Settings, Music, Heart, Home, Link, ExternalLink, GripHorizontal, BookOpen
+  X, Check, Settings, Music, Heart, Home, Link, ExternalLink, GripHorizontal, BookOpen, Loader2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';

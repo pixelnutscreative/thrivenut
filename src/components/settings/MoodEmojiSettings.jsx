@@ -87,90 +87,74 @@ export default function MoodEmojiSettings({ formData, setFormData }) {
             Your Top 7 Moods ({topMoods.length}/7)
           </Label>
           <p className="text-xs text-gray-500 mb-3">
-            These will appear in quick actions. Click to add/remove from your top 7.
+            Click to add/remove from your top 7.
           </p>
-          <div className="grid grid-cols-5 gap-2">
+          <div className="grid grid-cols-7 md:grid-cols-10 gap-1.5">
             {allMoods.map((mood) => {
               const isTop = topMoods.includes(mood.value);
               const canAdd = topMoods.length < 7;
-              const canRemove = topMoods.length > 1;
               
               return (
                 <button
                   key={mood.value}
                   onClick={() => toggleTopMood(mood.value)}
                   disabled={!isTop && !canAdd}
-                  className={`p-3 rounded-xl border-2 transition-all ${
+                  className={`p-2 rounded-lg border transition-all ${
                     isTop 
-                      ? 'border-purple-500 bg-purple-50 scale-105' 
-                      : 'border-gray-200 hover:border-purple-300 opacity-60'
+                      ? 'border-purple-500 bg-purple-50 ring-1 ring-purple-300' 
+                      : 'border-gray-200 hover:border-purple-300 opacity-50'
                   } ${!isTop && !canAdd ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                   title={mood.label}
                 >
-                  <div className="text-2xl mb-1">{mood.emoji}</div>
-                  <div className="text-xs text-gray-600 truncate">{mood.label}</div>
-                  {isTop && (
-                    <div className="text-[10px] text-purple-600 font-semibold mt-1">
-                      #{topMoods.indexOf(mood.value) + 1}
-                    </div>
-                  )}
+                  <div className="text-xl">{mood.emoji}</div>
+                  <div className="text-[10px] text-gray-600 truncate leading-tight">{mood.label}</div>
                 </button>
               );
             })}
           </div>
         </div>
 
-        {/* Add Custom Mood */}
-        <div className="pt-4 border-t space-y-3">
+        {/* Add Custom Mood - Compact */}
+        <div className="pt-3 border-t space-y-2">
           <Label className="text-sm">Add Custom Mood</Label>
           <div className="flex gap-2">
             <Input
               placeholder="😊"
               value={newEmoji}
               onChange={(e) => setNewEmoji(e.target.value)}
-              className="w-16 text-center text-2xl"
+              className="w-14 text-center text-xl p-1"
               maxLength={2}
             />
             <Input
-              placeholder="Mood name"
+              placeholder="Name"
               value={newLabel}
               onChange={(e) => setNewLabel(e.target.value)}
-              className="flex-1"
+              className="flex-1 h-9"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') addCustomMood();
               }}
             />
-            <Button onClick={addCustomMood} disabled={!newEmoji.trim() || !newLabel.trim()}>
+            <Button size="sm" onClick={addCustomMood} disabled={!newEmoji.trim() || !newLabel.trim()} className="h-9">
               <Plus className="w-4 h-4" />
             </Button>
           </div>
-          <p className="text-xs text-gray-500">
-            Use any emoji you want! These will be available in your mood tracker.
-          </p>
         </div>
 
-        {/* Custom Moods List */}
+        {/* Custom Moods List - Compact */}
         {customMoods.length > 0 && (
-          <div className="pt-4 border-t space-y-2">
-            <Label className="text-sm">Your Custom Moods</Label>
-            <div className="space-y-1">
+          <div className="pt-2 space-y-1">
+            <Label className="text-xs text-gray-500">Custom:</Label>
+            <div className="flex flex-wrap gap-1">
               {customMoods.map((mood) => (
-                <div key={mood.value} className="flex items-center justify-between p-2 bg-purple-50 rounded-lg border border-purple-200">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">{mood.emoji}</span>
-                    <span className="text-sm">{mood.label}</span>
-                    {topMoods.includes(mood.value) && (
-                      <Badge variant="secondary" className="text-xs">Top 7</Badge>
-                    )}
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                <div key={mood.value} className="inline-flex items-center gap-1 px-2 py-1 bg-purple-50 rounded-full border border-purple-200 text-xs">
+                  <span>{mood.emoji}</span>
+                  <span>{mood.label}</span>
+                  <button
                     onClick={() => removeCustomMood(mood.value)}
-                    className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                    className="ml-1 text-red-400 hover:text-red-600"
                   >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                    <X className="w-3 h-3" />
+                  </button>
                 </div>
               ))}
             </div>
