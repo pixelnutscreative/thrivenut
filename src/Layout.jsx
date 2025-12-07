@@ -52,7 +52,7 @@ import ImpersonationBanner, { getEffectiveUserEmail, isImpersonating } from './c
 import NotificationBell from './components/notifications/NotificationBell';
 import FloatingHelpButton from './components/support/FloatingHelpButton';
 import QuickActionsWidget from './components/widgets/QuickActionsWidget';
-import SoundCloudPlayer, { FloatingSoundCloudPlayer, MobileSoundCloudPopup } from './components/widgets/SoundCloudPlayer';
+import SoundCloudPlayer, { FloatingSoundCloudPlayer, MobileSoundCloudPopup } from './components/widgets/SoundCloudPlayer.jsx';
 
 // Map module IDs to nav items
 const moduleNavMap = {
