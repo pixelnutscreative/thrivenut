@@ -16,7 +16,6 @@ import WeeklyGoalCard from '../components/tiktok/WeeklyGoalCard';
 import PostScheduleModal from '../components/tiktok/PostScheduleModal';
 import LiveScheduleModal from '../components/tiktok/LiveScheduleModal';
 import EngagementScheduleModal from '../components/tiktok/EngagementScheduleModal';
-import OnboardingModal from '../components/onboarding/OnboardingModal';
 import SpecialEventsCard from '../components/dashboard/SpecialEventsCard';
 import NotionTaskPicker from '../components/dashboard/NotionTaskPicker';
 import { format, startOfWeek } from 'date-fns';
@@ -30,7 +29,6 @@ export default function Dashboard() {
   const [showPostsModal, setShowPostsModal] = useState(false);
     const [showLivesModal, setShowLivesModal] = useState(false);
     const [showEngagementModal, setShowEngagementModal] = useState(false);
-    const [showOnboarding, setShowOnboarding] = useState(false);
     const [loading, setLoading] = useState(true);
     const [collapsedSections, setCollapsedSections] = useState([]);
   
@@ -47,54 +45,19 @@ export default function Dashboard() {
         const userData = await base44.auth.me();
         setUser(userData);
 
-        // Check if onboarding completed - check localStorage FIRST (fastest, most reliable)
-        const localOnboardingDone = localStorage.getItem(`onboarding_completed_${userData.email}`);
-        
-        // If localStorage says done, don't even check the database - we're done
-        if (localOnboardingDone) {
-          // Still fetch prefs for other checks, but don't show onboarding
-          const prefs = await base44.entities.UserPreferences.filter({ user_email: userData.email }, '-updated_date');
-          
-          // Check if user is pre-approved and auto-grant access
-          if (prefs[0] && !prefs[0].tiktok_access_approved) {
-            try {
-              const preApproved = await base44.entities.PreApprovedEmail.filter({ 
-                email: userData.email.toLowerCase(), 
-                is_active: true 
-              });
-              if (preApproved.length > 0) {
-                await base44.entities.UserPreferences.update(prefs[0].id, { tiktok_access_approved: true });
-              }
-            } catch (e) {
-              // Ignore - user may not have access to PreApprovedEmail entity
+        // Check if user is pre-approved and auto-grant TikTok access
+        const prefs = await base44.entities.UserPreferences.filter({ user_email: userData.email }, '-updated_date');
+        if (prefs[0] && !prefs[0].tiktok_access_approved) {
+          try {
+            const preApproved = await base44.entities.PreApprovedEmail.filter({ 
+              email: userData.email.toLowerCase(), 
+              is_active: true 
+            });
+            if (preApproved.length > 0) {
+              await base44.entities.UserPreferences.update(prefs[0].id, { tiktok_access_approved: true });
             }
-          }
-        } else {
-          // localStorage doesn't have it - check database
-          const prefs = await base44.entities.UserPreferences.filter({ user_email: userData.email }, '-updated_date');
-          const hasCompletedOnboarding = prefs.some(p => p.onboarding_completed === true);
-          
-          if (hasCompletedOnboarding) {
-            // Database says complete - save to localStorage so we never check again
-            localStorage.setItem(`onboarding_completed_${userData.email}`, 'true');
-          } else {
-            // Neither localStorage nor database has it - show onboarding
-            setShowOnboarding(true);
-          }
-          
-          // Check if user is pre-approved and auto-grant access
-          if (prefs[0] && !prefs[0].tiktok_access_approved) {
-            try {
-              const preApproved = await base44.entities.PreApprovedEmail.filter({ 
-                email: userData.email.toLowerCase(), 
-                is_active: true 
-              });
-              if (preApproved.length > 0) {
-                await base44.entities.UserPreferences.update(prefs[0].id, { tiktok_access_approved: true });
-              }
-            } catch (e) {
-              // Ignore - user may not have access to PreApprovedEmail entity
-            }
+          } catch (e) {
+            // Ignore - user may not have access to PreApprovedEmail entity
           }
         }
       } catch (error) {
@@ -486,20 +449,6 @@ export default function Dashboard() {
         onClose={() => setShowEngagementModal(false)}
         engagements={contentGoal?.scheduled_engagement || []}
         onSave={(data) => saveScheduleMutation.mutate({ field: 'scheduled_engagement', data })}
-      />
-
-      <OnboardingModal
-        isOpen={showOnboarding}
-        user={user}
-        onComplete={async () => {
-          // Mark onboarding complete in localStorage as backup
-          if (user?.email) {
-            localStorage.setItem(`onboarding_completed_${user.email}`, 'true');
-          }
-          setShowOnboarding(false);
-          await queryClient.invalidateQueries({ queryKey: ['preferences'] });
-          await queryClient.refetchQueries({ queryKey: ['preferences', user?.email] });
-        }}
       />
     </div>
   );
