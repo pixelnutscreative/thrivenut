@@ -228,11 +228,17 @@ export default function TikTokContacts() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['preferences'] }),
   });
 
+  const [shouldCloseAfterSave, setShouldCloseAfterSave] = useState(true);
+
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.TikTokContact.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] });
-      closeModal();
+      if (shouldCloseAfterSave) {
+        closeModal();
+      } else {
+        setFormData(defaultFormData);
+      }
     },
   });
 
@@ -240,7 +246,9 @@ export default function TikTokContacts() {
     mutationFn: ({ id, data }) => base44.entities.TikTokContact.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] });
-      // Keep modal open after update - just refresh data
+      if (shouldCloseAfterSave) {
+        closeModal();
+      }
     },
   });
 
@@ -284,7 +292,8 @@ export default function TikTokContacts() {
     setShowModal(true);
   };
 
-  const handleSubmit = (keepOpen = false) => {
+  const handleSubmit = (shouldClose = true) => {
+    setShouldCloseAfterSave(shouldClose);
     const cleanData = {
       ...formData,
       username: (formData.username || '').replace('@', '').trim()
@@ -292,7 +301,6 @@ export default function TikTokContacts() {
     
     if (editingContact) {
       updateMutation.mutate({ id: editingContact.id, data: cleanData });
-      // Keep modal open after update
     } else {
       createMutation.mutate(cleanData);
     }
