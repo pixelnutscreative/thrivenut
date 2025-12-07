@@ -7,6 +7,7 @@ const allFeatures = [
   { id: 'tiktok', name: 'Social Media Suite', description: 'Content calendar, engagement & creator contacts', requiresTikTokAccess: true },
   { id: 'gifter', name: 'Gift Gallery & Songs', description: 'Track gifters & generate thank-you songs', requiresTikTokAccess: true },
   { id: 'goals', name: 'Personal Goals', description: 'Goal tracking for all areas of life' },
+  { id: 'tasks', name: 'Tasks & Brain Dump', description: 'Daily to-dos and quick idea capture' },
   { id: 'journal', name: 'Daily Journal', description: 'Reflections and AI reframing' },
   { id: 'quick_notes', name: 'Quick Notes', description: 'Ideas, gratitudes & captured thoughts' },
   { id: 'wellness', name: 'Wellness Tracker', description: 'Water, sleep, mood & self-care' },
