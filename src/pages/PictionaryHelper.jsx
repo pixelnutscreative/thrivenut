@@ -22,23 +22,23 @@ export default function PictionaryHelper() {
     setStyle(drawStyle);
     
     try {
-      const prompts = {
-        easy: `You're helping someone draw "${word}" for Pictionary and they want it to be EASY to guess. Provide 5-7 simple, clear drawing tips that make it immediately recognizable. Be specific about shapes, key features, and what NOT to include. Format as a numbered list.`,
-        pro: `You're helping someone draw "${word}" for Pictionary and they want to draw it WELL (like a good artist). Provide detailed step-by-step instructions for drawing this professionally. Include proportions, shading tips, and details. Format as a numbered list.`,
-        tricky: `You're helping someone draw "${word}" for Pictionary and they want to make it TRICKY - draw it in a way that could be multiple things so people keep guessing. Provide 5-7 tips for making it ambiguous while still being drawable. What features should be vague? What could it look like instead? Format as a numbered list.`
+      const imagePrompts = {
+        easy: `Simple line drawing tutorial showing how to draw "${word}" for Pictionary. Clear, basic shapes that are easy to recognize. Black lines on white background, step-by-step drawing guide, minimalist style, easy to copy.`,
+        pro: `Professional art tutorial showing how to draw "${word}" step-by-step. Detailed, well-proportioned, artistic quality. Black lines on white background, multiple steps showing progression from basic shapes to finished drawing.`,
+        tricky: `Ambiguous line drawing of "${word}" that could be mistaken for other things. Make it vague and open to interpretation while still being drawable. Simple black lines on white background, intentionally unclear features.`
       };
 
-      const response = await base44.integrations.Core.InvokeLLM({
-        prompt: prompts[drawStyle]
+      const imageUrl = await base44.integrations.Core.GenerateImage({
+        prompt: imagePrompts[drawStyle]
       });
 
       setSuggestions({
         style: drawStyle,
         word,
-        tips: response
+        imageUrl: imageUrl.url
       });
     } catch (error) {
-      console.error('Error generating suggestions:', error);
+      console.error('Error generating drawing:', error);
     } finally {
       setLoading(false);
     }
@@ -106,7 +106,7 @@ export default function PictionaryHelper() {
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
                   <Sparkles className="w-5 h-5" style={{ color: primaryColor }} />
-                  Drawing Tips for "{suggestions.word}"
+                  How to Draw "{suggestions.word}"
                 </CardTitle>
                 <Badge className={styleOptions.find(s => s.value === suggestions.style)?.color}>
                   {styleOptions.find(s => s.value === suggestions.style)?.label}
@@ -114,12 +114,17 @@ export default function PictionaryHelper() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="prose max-w-none">
-                <Textarea
-                  value={suggestions.tips}
-                  readOnly
-                  className="min-h-[300px] font-mono text-sm"
+              <div className="flex flex-col items-center gap-4">
+                <img 
+                  src={suggestions.imageUrl} 
+                  alt={`How to draw ${suggestions.word}`}
+                  className="w-full max-w-2xl rounded-lg border-2 border-gray-200"
                 />
+                <p className="text-sm text-gray-500 text-center">
+                  {suggestions.style === 'easy' && 'Follow these simple shapes - keep it basic and recognizable!'}
+                  {suggestions.style === 'pro' && 'Follow the steps to create a detailed, artistic drawing.'}
+                  {suggestions.style === 'tricky' && 'Draw it ambiguously - make them guess multiple things!'}
+                </p>
               </div>
             </CardContent>
           </Card>
