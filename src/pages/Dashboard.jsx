@@ -312,6 +312,7 @@ export default function Dashboard() {
           goals={preferences?.improvement_goals || []}
           isBibleBeliever={preferences?.is_bible_believer || preferences?.greeting_type === 'scripture'}
           userEmail={user?.email}
+          bibleVersion={preferences?.bible_version || 'NIV'}
         />
 
         {/* Special Events - Birthdays & Sobriety Anniversaries from Contacts */}
