@@ -36,6 +36,7 @@ import SubscriptionSuccess from './pages/SubscriptionSuccess';
 import Pricing from './pages/Pricing';
 import CommunityMap from './pages/CommunityMap';
 import Tasks from './pages/Tasks';
+import FamilyMembers from './pages/FamilyMembers';
 import __Layout from './Layout.jsx';
 
 
@@ -78,6 +79,7 @@ export const PAGES = {
     "Pricing": Pricing,
     "CommunityMap": CommunityMap,
     "Tasks": Tasks,
+    "FamilyMembers": FamilyMembers,
 }
 
 export const pagesConfig = {
