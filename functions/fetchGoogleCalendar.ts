@@ -27,7 +27,11 @@ Deno.serve(async (req) => {
       }, { status: 401 });
     }
 
-    // Get today's date range
+    // Get user's timezone from preferences
+    const prefs = await base44.entities.UserPreferences.filter({ user_email: user.email }, '-updated_date');
+    const userTimezone = prefs[0]?.user_timezone || 'America/New_York';
+
+    // Get today's date range in user's timezone
     const now = new Date();
     const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
@@ -110,13 +114,25 @@ Deno.serve(async (req) => {
       const startTime = event.start?.dateTime || event.start?.date;
       const endTime = event.end?.dateTime || event.end?.date;
       
-      // Parse time for display
+      // Parse time for display in user's timezone
       let displayTime = '';
       let sortTime = '00:00';
       if (event.start?.dateTime) {
         const date = new Date(event.start.dateTime);
-        displayTime = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-        sortTime = date.toTimeString().slice(0, 5);
+        displayTime = date.toLocaleTimeString('en-US', { 
+          hour: 'numeric', 
+          minute: '2-digit', 
+          hour12: true,
+          timeZone: userTimezone 
+        });
+        // Get sortTime in user's timezone
+        const localTime = date.toLocaleTimeString('en-US', { 
+          hour: '2-digit', 
+          minute: '2-digit', 
+          hour12: false,
+          timeZone: userTimezone 
+        });
+        sortTime = localTime;
       } else {
         displayTime = 'All day';
       }
