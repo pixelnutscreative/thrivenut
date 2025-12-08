@@ -94,6 +94,7 @@ export default function Settings() {
     accent_color: '#bd84f5',
     greeting_type: 'positive_quote',
     greeting_types: ['positive_quote'],
+    bible_version: 'NIV',
     default_landing_page: 'Dashboard',
     ai_tool_links: [],
     motivation_categories: ['Content Ideas', 'Personal Growth', 'Spiritual', 'Business'],
@@ -150,8 +151,9 @@ export default function Settings() {
         primary_color: preferences.primary_color || '#1fd2ea',
         accent_color: preferences.accent_color || '#bd84f5',
         greeting_type: preferences.greeting_type || 'positive_quote',
-      greeting_types: preferences.greeting_types || [preferences.greeting_type || 'positive_quote'],
-      default_landing_page: preferences.default_landing_page || 'Dashboard',
+        greeting_types: preferences.greeting_types || [preferences.greeting_type || 'positive_quote'],
+        bible_version: preferences.bible_version || 'NIV',
+        default_landing_page: preferences.default_landing_page || 'Dashboard',
       ai_tool_links: preferences.ai_tool_links || [],
       motivation_categories: preferences.motivation_categories || ['Content Ideas', 'Personal Growth', 'Spiritual', 'Business'],
       custom_motivation_topics: preferences.custom_motivation_topics || [],
@@ -786,6 +788,33 @@ export default function Settings() {
                       </div>
                     );
                   })}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Bible Version</CardTitle>
+                  <CardDescription>Choose your preferred Bible translation for scripture</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Select
+                    value={formData.bible_version}
+                    onValueChange={(v) => setFormData({ ...formData, bible_version: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="NIV">NIV (New International Version)</SelectItem>
+                      <SelectItem value="KJV">KJV (King James Version)</SelectItem>
+                      <SelectItem value="ESV">ESV (English Standard Version)</SelectItem>
+                      <SelectItem value="NKJV">NKJV (New King James Version)</SelectItem>
+                      <SelectItem value="NLT">NLT (New Living Translation)</SelectItem>
+                      <SelectItem value="NASB">NASB (New American Standard)</SelectItem>
+                      <SelectItem value="MSG">MSG (The Message)</SelectItem>
+                      <SelectItem value="AMP">AMP (Amplified Bible)</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </CardContent>
               </Card>
 

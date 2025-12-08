@@ -148,14 +148,31 @@ ${type === 'scripture' ? 'Include the Bible reference (book chapter:verse).' : '
   return (
     <Card className="overflow-hidden bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 text-white shadow-xl">
       <div className="p-3">
-        {/* Compact Header */}
+        {/* Compact Header - Type badge and controls only */}
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <TypeIcon className="w-4 h-4" />
-            <div>
-              <h2 className="text-base font-bold leading-tight">{timeOfDayGreeting()}!</h2>
-              <p className="text-white/70 text-xs">{getTimeSlotLabel()} Inspiration</p>
-            </div>
+            {typeConfig && (
+              <Badge className={`${typeConfig.color} text-xs`}>
+                <TypeIcon className="w-3 h-3 mr-1" />
+                {typeConfig.label}
+              </Badge>
+            )}
+            {currentMotivation && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => saveMotivationMutation.mutate(currentMotivation)}
+                disabled={saveMotivationMutation.isPending || savedId === currentMotivation.text}
+                className="text-white/80 hover:text-white hover:bg-white/20 h-6 px-2 text-xs"
+              >
+                {savedId === currentMotivation.text ? (
+                  <Check className="w-3 h-3 mr-1" />
+                ) : (
+                  <Heart className="w-3 h-3 mr-1" />
+                )}
+                {savedId === currentMotivation.text ? 'Saved' : 'Save'}
+              </Button>
+            )}
           </div>
           <div className="flex items-center gap-2">
             {greetingTypes.length > 1 && (
@@ -202,18 +219,13 @@ ${type === 'scripture' ? 'Include the Bible reference (book chapter:verse).' : '
                 exit={{ opacity: 0, x: -20 }}
                 className="px-8"
               >
-                {typeConfig && (
-                 <Badge className={`${typeConfig.color} mb-1 text-xs`}>
-                   {typeConfig.label}
-                 </Badge>
-                )}
                 <p className="text-sm font-medium leading-snug">
-                 {loading ? '...' : `"${currentMotivation.text}"`}
+                  {loading ? '...' : `"${currentMotivation.text}"`}
                 </p>
                 {currentMotivation.reference && (
-                 <p className="text-white/70 text-xs mt-0.5 italic">
-                   — {currentMotivation.reference}
-                 </p>
+                  <p className="text-white/70 text-xs mt-0.5 italic">
+                    — {currentMotivation.reference}
+                  </p>
                 )}
               </motion.div>
             )}
@@ -229,24 +241,7 @@ ${type === 'scripture' ? 'Include the Bible reference (book chapter:verse).' : '
           )}
         </div>
 
-        {/* Compact Save Button */}
-        {currentMotivation && (
-          <div className="flex justify-end mt-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => saveMotivationMutation.mutate(currentMotivation)}
-              disabled={saveMotivationMutation.isPending || savedId === currentMotivation.text}
-              className="text-white/80 hover:text-white hover:bg-white/20 h-6 text-xs"
-            >
-              {savedId === currentMotivation.text ? (
-                <><Check className="w-3 h-3 mr-1" /> Saved!</>
-              ) : (
-                <><Bookmark className="w-3 h-3 mr-1" /> Save</>
-              )}
-            </Button>
-          </div>
-        )}
+
       </div>
     </Card>
   );
