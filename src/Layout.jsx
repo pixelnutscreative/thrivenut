@@ -118,8 +118,7 @@ const defaultNavItems = [
   
   // PURPLE: Faith & Purpose
   { name: '── Faith & Purpose ──', isGroupHeader: true, color: 'text-purple-400', bgColor: 'bg-purple-500/10', isCollapsible: true, defaultCollapsed: true },
-  { name: 'Goals', icon: Target, path: 'Goals', moduleId: 'goals', groupColor: 'purple' },
-  { name: 'Vision Board', icon: Eye, path: 'VisionBoard', moduleId: 'goals', groupColor: 'purple' },
+  { name: 'Goals & Vision', icon: Target, path: 'Goals', moduleId: 'goals', groupColor: 'purple' },
   { name: 'Saved Motivations', icon: Bookmark, path: 'SavedMotivations', alwaysShow: true, groupColor: 'purple' },
   { name: 'Prayer Requests', icon: Heart, path: 'PrayerRequests', requiresBibleBeliever: true, groupColor: 'purple' },
   { name: 'Tasks', icon: FileText, path: 'Tasks', moduleId: 'tasks', groupColor: 'purple' },

@@ -196,8 +196,8 @@ export default function Settings() {
         quick_actions: preferences.quick_actions || ['mood', 'water', 'food', 'note'],
         quick_actions_position: preferences.quick_actions_position || 'bottom',
         custom_quick_actions: preferences.custom_quick_actions || [],
-        soundcloud_playlist_url: preferences.soundcloud_playlist_url || 'https://api.soundcloud.com/playlists/2154370043',
-        soundcloud_player_position: preferences.soundcloud_player_position || 'floating',
+        soundcloud_playlist_url: preferences.soundcloud_playlist_url || '',
+        soundcloud_player_position: preferences.soundcloud_player_position || 'hidden',
         custom_mood_options: preferences.custom_mood_options || [],
         top_mood_emojis: preferences.top_mood_emojis || ['great', 'good', 'okay', 'low', 'anxious', 'sad', 'motivated']
         });
