@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Check, X, Calendar, ChevronRight, ArrowRight, Trash2, Lightbulb, Filter, Zap } from 'lucide-react';
+import { Plus, Check, X, Calendar, ChevronRight, ArrowRight, Trash2, Lightbulb, Filter, Zap, User, Camera } from 'lucide-react';
 import { format, parseISO, isToday, isBefore, startOfDay } from 'date-fns';
 import { useTheme } from '../components/shared/useTheme';
 
@@ -38,7 +38,9 @@ export default function Tasks() {
     notes: '',
     due_date: format(new Date(), 'yyyy-MM-dd'),
     priority: 'medium',
-    category: 'Personal'
+    category: 'Personal',
+    assigned_to_family_id: null,
+    requires_photo_proof: false
   });
 
   const { data: tasks = [] } = useQuery({
@@ -51,13 +53,25 @@ export default function Tasks() {
     queryFn: () => base44.entities.BrainDump.filter({ is_processed: false }, '-created_date'),
   });
 
+  const { data: familyMembers = [] } = useQuery({
+    queryKey: ['familyMembers'],
+    queryFn: () => base44.entities.FamilyMember.filter({ is_active: true }, 'name'),
+  });
+
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Task.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       setNewTask('');
       setShowDetails(false);
-      setTaskDetails({ notes: '', due_date: format(new Date(), 'yyyy-MM-dd'), priority: 'medium', category: 'Personal' });
+      setTaskDetails({ 
+        notes: '', 
+        due_date: format(new Date(), 'yyyy-MM-dd'), 
+        priority: 'medium', 
+        category: 'Personal',
+        assigned_to_family_id: null,
+        requires_photo_proof: false
+      });
     }
   });
 
@@ -102,9 +116,12 @@ export default function Tasks() {
   const handleAddTask = () => {
     if (!newTask.trim()) return;
     
+    const assignedMember = familyMembers.find(m => m.id === taskDetails.assigned_to_family_id);
+    
     createMutation.mutate({
       title: newTask,
       ...taskDetails,
+      assigned_to_name: assignedMember?.name || null,
       status: 'pending'
     });
   };
@@ -211,6 +228,18 @@ export default function Tasks() {
               {task.carry_over_count > 0 && (
                 <Badge variant="outline" className="text-xs text-orange-600">
                   Carried {task.carry_over_count}x
+                </Badge>
+              )}
+              {task.assigned_to_name && (
+                <Badge variant="outline" className="text-xs text-purple-600 flex items-center gap-1">
+                  <User className="w-3 h-3" />
+                  {task.assigned_to_name}
+                </Badge>
+              )}
+              {task.requires_photo_proof && (
+                <Badge variant="outline" className="text-xs text-blue-600 flex items-center gap-1">
+                  <Camera className="w-3 h-3" />
+                  Photo Required
                 </Badge>
               )}
             </div>
@@ -438,6 +467,33 @@ export default function Tasks() {
                     value={taskDetails.due_date}
                     onChange={(e) => setTaskDetails({...taskDetails, due_date: e.target.value})}
                   />
+
+                  <Select 
+                    value={taskDetails.assigned_to_family_id || 'none'} 
+                    onValueChange={(v) => setTaskDetails({...taskDetails, assigned_to_family_id: v === 'none' ? null : v})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Assign to..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Not Assigned</SelectItem>
+                      {familyMembers.map(member => (
+                        <SelectItem key={member.id} value={member.id}>
+                          {member.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <div className="col-span-2 flex items-center gap-2">
+                    <Checkbox
+                      checked={taskDetails.requires_photo_proof}
+                      onCheckedChange={(checked) => setTaskDetails({...taskDetails, requires_photo_proof: checked})}
+                    />
+                    <label className="text-sm cursor-pointer" onClick={() => setTaskDetails({...taskDetails, requires_photo_proof: !taskDetails.requires_photo_proof})}>
+                      Require photo proof when completed
+                    </label>
+                  </div>
 
                   <Textarea
                     value={taskDetails.notes}
