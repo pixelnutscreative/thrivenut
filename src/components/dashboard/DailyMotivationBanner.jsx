@@ -58,63 +58,64 @@ export default function DailyMotivationBanner({
     setLoading(true);
     
     const types = greetingTypes.length > 0 ? greetingTypes : ['positive_quote'];
-    const allMotivations = [];
+    
+    // Pick ONE random type from the user's selected types
+    const randomType = types[Math.floor(Math.random() * types.length)];
+    
+    // Pick ONE random struggle/goal to focus on
+    const contextParts = [];
+    if (struggles.length > 0) {
+      const randomStruggle = struggles[Math.floor(Math.random() * struggles.length)];
+      contextParts.push(`Focus on this struggle: ${randomStruggle}`);
+    } else if (goals.length > 0) {
+      const randomGoal = goals[Math.floor(Math.random() * goals.length)];
+      contextParts.push(`Focus on this goal: ${randomGoal}`);
+    }
 
-    for (const type of types) {
-      const contextParts = [];
-      if (struggles.length > 0) {
-        contextParts.push(`They struggle with: ${struggles.join(', ')}`);
-      }
-      if (goals.length > 0) {
-        contextParts.push(`They're working toward: ${goals.slice(0, 3).join(', ')}`);
-      }
+    const contentType = randomType === 'scripture' ? `${bibleVersion} Bible verses with brief application` : 
+                        randomType === 'affirmation' ? 'personal affirmations (use "I am", "I can", etc.)' :
+                        randomType === 'motivational' ? 'motivational quotes from famous leaders' : 
+                        'positive, uplifting quotes';
 
-      const contentType = type === 'scripture' ? `${bibleVersion} Bible verses with brief application` : 
-                          type === 'affirmation' ? 'personal affirmations (use "I am", "I can", etc.)' :
-                          type === 'motivational' ? 'motivational quotes from famous leaders' : 
-                          'positive, uplifting quotes';
-
-      const prompt = `Generate 1 short ${contentType} for the ${getTimeSlotLabel().toLowerCase()} hours.
+    const prompt = `Generate 1 short ${contentType} for the ${getTimeSlotLabel().toLowerCase()} hours.
 ${contextParts.length > 0 ? contextParts.join('. ') + '.' : ''}
 
 Requirements:
 - Very short (1-2 sentences max)
 - Relevant to ${getTimeSlotLabel().toLowerCase()} time of day
-- Helpful for their specific struggles/goals if mentioned
+${contextParts.length > 0 ? '- Specifically address the focus area mentioned above' : ''}
 - Uplifting and actionable
 - DO NOT include any person's name - make it universal so it can be shared as a quote/post on social media
 - Use generic language like "you", "we", or no pronouns at all
 
-${type === 'scripture' ? `Include the Bible reference (book chapter:verse) from the ${bibleVersion} translation.` : ''}`;
+${randomType === 'scripture' ? `Include the Bible reference (book chapter:verse) from the ${bibleVersion} translation.` : ''}`;
 
-      try {
-        const result = await base44.integrations.Core.InvokeLLM({
-          prompt,
-          response_json_schema: {
-            type: "object",
-            properties: {
-              text: { type: "string" },
-              reference: { type: "string" }
-            }
+    try {
+      const result = await base44.integrations.Core.InvokeLLM({
+        prompt,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            text: { type: "string" },
+            reference: { type: "string" }
           }
-        });
-        
-        allMotivations.push({
-          text: result.text,
-          reference: result.reference || '',
-          type
-        });
-      } catch (error) {
-        console.error('Failed to generate motivation:', error);
-        allMotivations.push({
-          text: "You're doing amazing. Keep going!",
-          reference: '',
-          type
-        });
-      }
+        }
+      });
+      
+      setMotivations([{
+        text: result.text,
+        reference: result.reference || '',
+        type: randomType
+      }]);
+    } catch (error) {
+      console.error('Failed to generate motivation:', error);
+      setMotivations([{
+        text: "You're doing amazing. Keep going!",
+        reference: '',
+        type: randomType
+      }]);
     }
     
-    setMotivations(allMotivations);
     setCurrentIndex(0);
     setLoading(false);
   };
@@ -176,18 +177,6 @@ ${type === 'scripture' ? `Include the Bible reference (book chapter:verse) from 
             )}
           </div>
           <div className="flex items-center gap-2">
-            {greetingTypes.length > 1 && (
-              <div className="flex gap-1">
-                {greetingTypes.map((type, idx) => (
-                  <div 
-                    key={type}
-                    className={`w-1.5 h-1.5 rounded-full transition-all ${
-                      idx === currentIndex ? 'bg-white scale-125' : 'bg-white/40'
-                    }`}
-                  />
-                ))}
-              </div>
-            )}
             <Button
               variant="ghost"
               size="sm"
@@ -202,23 +191,13 @@ ${type === 'scripture' ? `Include the Bible reference (book chapter:verse) from 
 
         {/* Compact Motivation Content */}
         <div className="relative">
-          {motivations.length > 1 && currentIndex > 0 && (
-            <button
-              onClick={() => scroll('left')}
-              className="absolute left-0 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center z-10"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-          )}
-
           <AnimatePresence mode="wait">
             {currentMotivation && (
               <motion.div
                 key={currentIndex}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="px-8"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
               >
                 <p className="text-sm font-medium leading-snug">
                   {loading ? '...' : `"${currentMotivation.text}"`}
@@ -231,15 +210,6 @@ ${type === 'scripture' ? `Include the Bible reference (book chapter:verse) from 
               </motion.div>
             )}
           </AnimatePresence>
-
-          {motivations.length > 1 && currentIndex < motivations.length - 1 && (
-            <button
-              onClick={() => scroll('right')}
-              className="absolute right-0 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center z-10"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          )}
         </div>
 
 

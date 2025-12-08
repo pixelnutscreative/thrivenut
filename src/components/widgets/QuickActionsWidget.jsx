@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { 
   Zap, Droplet, Smile, Utensils, Lightbulb, Cloud, StickyNote, 
-  X, Check, Settings, Music, Heart, Home, Link, ExternalLink, GripHorizontal, BookOpen, Loader2
+  X, Check, Settings, Music, Heart, Home, Link, ExternalLink, GripHorizontal, BookOpen, Loader2, ChevronDown, ChevronRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
@@ -47,6 +47,7 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
   const dragRef = useRef(null);
   const [showAddMoodInput, setShowAddMoodInput] = useState(false);
   const [customMoodInput, setCustomMoodInput] = useState({ emoji: '', label: '' });
+  const [musicMinimized, setMusicMinimized] = useState(false);
   
   const today = format(new Date(), 'yyyy-MM-dd');
   const userEmail = preferences?.user_email;
