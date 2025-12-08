@@ -356,7 +356,7 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
         {/* Divider */}
         <div className="h-6 w-px bg-gray-600 mx-1" />
 
-        {/* View notes & Settings */}
+        {/* View notes */}
         <RouterLink
           to={createPageUrl('QuickNotes')}
           className="p-1.5 hover:bg-white/10 rounded-full transition-colors"
@@ -364,40 +364,8 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
         >
           <BookOpen className="w-4 h-4 text-gray-400 hover:text-white" />
         </RouterLink>
-        <button
-          onClick={() => {
-            const settingsUrl = createPageUrl('Settings');
-            window.location.href = settingsUrl;
-            setTimeout(() => {
-              const section = document.querySelector('[data-section="widgets"]');
-              section?.scrollIntoView({ behavior: 'smooth' });
-            }, 100);
-          }}
-          className="p-1.5 hover:bg-white/10 rounded-full transition-colors"
-          title="Settings"
-        >
-          <Settings className="w-4 h-4 text-gray-400 hover:text-white" />
-        </button>
         </div>
 
-        {/* SoundCloud Player - Hangs below toolbar */}
-        {preferences?.soundcloud_playlist_url && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            className="w-80 bg-gray-900/95 backdrop-blur-sm rounded-lg overflow-hidden shadow-lg"
-          >
-            <iframe 
-              width="100%" 
-              height="200" 
-              scrolling="no" 
-              frameBorder="no" 
-              allow="autoplay" 
-              src={`https://w.soundcloud.com/player/?url=${encodeURIComponent(preferences.soundcloud_playlist_url)}&color=%23ff5500&auto_play=false&hide_related=false&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=false`}
-              className="rounded-lg"
-            />
-          </motion.div>
-        )}
       </motion.div>
 
       {/* Mood Selector Popup */}

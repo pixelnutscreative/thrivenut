@@ -73,7 +73,7 @@ export default function DailyMotivationBanner({
                           type === 'motivational' ? 'motivational quotes from famous leaders' : 
                           'positive, uplifting quotes';
 
-      const prompt = `Generate 1 short ${contentType} for someone named ${userName} for the ${getTimeSlotLabel().toLowerCase()} hours.
+      const prompt = `Generate 1 short ${contentType} for the ${getTimeSlotLabel().toLowerCase()} hours.
 ${contextParts.length > 0 ? contextParts.join('. ') + '.' : ''}
 
 Requirements:
@@ -81,6 +81,8 @@ Requirements:
 - Relevant to ${getTimeSlotLabel().toLowerCase()} time of day
 - Helpful for their specific struggles/goals if mentioned
 - Uplifting and actionable
+- DO NOT include any person's name - make it universal so it can be shared as a quote/post on social media
+- Use generic language like "you", "we", or no pronouns at all
 
 ${type === 'scripture' ? 'Include the Bible reference (book chapter:verse).' : ''}`;
 
@@ -145,13 +147,13 @@ ${type === 'scripture' ? 'Include the Bible reference (book chapter:verse).' : '
 
   return (
     <Card className="overflow-hidden bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 text-white shadow-xl">
-      <div className="p-4">
+      <div className="p-3">
         {/* Compact Header */}
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <TypeIcon className="w-5 h-5" />
+            <TypeIcon className="w-4 h-4" />
             <div>
-              <h2 className="text-lg font-bold">{timeOfDayGreeting()}, {userName}!</h2>
+              <h2 className="text-base font-bold leading-tight">{timeOfDayGreeting()}!</h2>
               <p className="text-white/70 text-xs">{getTimeSlotLabel()} Inspiration</p>
             </div>
           </div>
@@ -173,9 +175,9 @@ ${type === 'scripture' ? 'Include the Bible reference (book chapter:verse).' : '
               size="sm"
               onClick={generateMotivations}
               disabled={loading}
-              className="text-white hover:bg-white/20 h-7 w-7 p-0"
+              className="text-white hover:bg-white/20 h-6 w-6 p-0"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
             </Button>
           </div>
         </div>
@@ -201,17 +203,17 @@ ${type === 'scripture' ? 'Include the Bible reference (book chapter:verse).' : '
                 className="px-8"
               >
                 {typeConfig && (
-                  <Badge className={`${typeConfig.color} mb-1 text-xs`}>
-                    {typeConfig.label}
-                  </Badge>
+                 <Badge className={`${typeConfig.color} mb-1 text-xs`}>
+                   {typeConfig.label}
+                 </Badge>
                 )}
-                <p className="text-base font-medium leading-snug">
-                  {loading ? '...' : `"${currentMotivation.text}"`}
+                <p className="text-sm font-medium leading-snug">
+                 {loading ? '...' : `"${currentMotivation.text}"`}
                 </p>
                 {currentMotivation.reference && (
-                  <p className="text-white/70 text-xs mt-1 italic">
-                    — {currentMotivation.reference}
-                  </p>
+                 <p className="text-white/70 text-xs mt-0.5 italic">
+                   — {currentMotivation.reference}
+                 </p>
                 )}
               </motion.div>
             )}
@@ -229,13 +231,13 @@ ${type === 'scripture' ? 'Include the Bible reference (book chapter:verse).' : '
 
         {/* Compact Save Button */}
         {currentMotivation && (
-          <div className="flex justify-end mt-2">
+          <div className="flex justify-end mt-1">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => saveMotivationMutation.mutate(currentMotivation)}
               disabled={saveMotivationMutation.isPending || savedId === currentMotivation.text}
-              className="text-white/80 hover:text-white hover:bg-white/20 h-7 text-xs"
+              className="text-white/80 hover:text-white hover:bg-white/20 h-6 text-xs"
             >
               {savedId === currentMotivation.text ? (
                 <><Check className="w-3 h-3 mr-1" /> Saved!</>
