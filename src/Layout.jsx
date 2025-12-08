@@ -112,20 +112,20 @@ const ReminderIcon = ({ className }) => (
 );
 
 const defaultNavItems = [
-  // TURQUOISE: Core Life
-  { name: '── Core Life ──', isGroupHeader: true, color: 'text-teal-400', bgColor: 'bg-teal-500/10' },
+  // Core Life (no header shown)
   { name: 'Dashboard', icon: LayoutDashboard, path: 'Dashboard', alwaysShow: true, groupColor: 'teal' },
   { name: "Pixel's Place", icon: Sparkles, path: 'PixelsParadise', alwaysShow: true, groupColor: 'teal' },
-  { name: 'Prayer Requests', icon: HandMetal, path: 'PrayerRequests', requiresBibleBeliever: true, groupColor: 'teal' },
   
-  // PURPLE: Dreams & Direction
-  { name: '── Dreams & Direction ──', isGroupHeader: true, color: 'text-purple-400', bgColor: 'bg-purple-500/10' },
+  // PURPLE: Faith & Purpose
+  { name: '── Faith & Purpose ──', isGroupHeader: true, color: 'text-purple-400', bgColor: 'bg-purple-500/10', isCollapsible: true, defaultCollapsed: true },
   { name: 'Goals', icon: Target, path: 'Goals', moduleId: 'goals', groupColor: 'purple' },
   { name: 'Vision Board', icon: Eye, path: 'VisionBoard', moduleId: 'goals', groupColor: 'purple' },
   { name: 'Saved Motivations', icon: Bookmark, path: 'SavedMotivations', alwaysShow: true, groupColor: 'purple' },
+  { name: 'Prayer Requests', icon: Heart, path: 'PrayerRequests', requiresBibleBeliever: true, groupColor: 'purple' },
+  { name: 'Tasks', icon: FileText, path: 'Tasks', moduleId: 'tasks', groupColor: 'purple' },
   
   // PINK: Creator Life
-  { name: '── Creator Life ──', isGroupHeader: true, color: 'text-pink-400', bgColor: 'bg-pink-500/10' },
+  { name: '── Creator Life ──', isGroupHeader: true, color: 'text-pink-400', bgColor: 'bg-pink-500/10', isCollapsible: true, defaultCollapsed: true },
   { name: 'Social Media Suite', icon: Share2, isSection: true, moduleId: 'tiktok', requiresTikTokAccess: true, groupColor: 'pink', subItems: [
     { name: 'Discover Creators', icon: Search, path: 'DiscoverCreators', highlight: true },
     { name: 'Creator Contacts', icon: Users, path: 'TikTokContacts' },
@@ -140,43 +140,42 @@ const defaultNavItems = [
   ]},
   
   // GOLD: Mental & Emotional
-  { name: '── Mental & Emotional ──', isGroupHeader: true, color: 'text-amber-400', bgColor: 'bg-amber-500/10' },
+  { name: '── Mental & Emotional ──', isGroupHeader: true, color: 'text-amber-400', bgColor: 'bg-amber-500/10', isCollapsible: true, defaultCollapsed: true },
   { name: 'Mental Health', icon: Brain, isSection: true, moduleId: 'mental_health', groupColor: 'amber', subItems: [
     { name: 'Mental Health Hub', icon: Brain, path: 'NeurodivergentSettings' },
     { name: 'Journal', icon: FileText, path: 'Journal', moduleId: 'journal' },
     { name: 'Quick Notes', icon: StickyNote, path: 'QuickNotes', moduleId: 'quick_notes' },
   ]},
-  { name: 'Support', icon: HelpCircle, path: 'Support', alwaysShow: true, groupColor: 'amber' },
   
   // GREEN: Health & Care
-  { name: '── Health & Care ──', isGroupHeader: true, color: 'text-green-400', bgColor: 'bg-green-500/10' },
-  { name: 'Wellness', icon: Heart, isSection: true, moduleId: 'wellness', groupColor: 'green', subItems: [
-    { name: 'Daily Wellness', icon: Heart, path: 'Wellness' },
-    { name: 'Supplements', icon: Tablet, path: 'Supplements', moduleId: 'supplements' },
-    { name: 'Medications', icon: Pill, path: 'Medications', moduleId: 'medications' },
-    { name: '── Care Tasks ──', icon: Heart, isDivider: true },
-    { name: 'Pet Care', icon: PawPrint, path: 'PetCare', moduleId: 'pets' },
-    { name: 'Care Reminders', icon: Bell, path: 'CareReminders', moduleId: 'care_reminders' },
-  ]},
-  { name: 'Tasks', icon: FileText, path: 'Tasks', moduleId: 'tasks', groupColor: 'green' },
+  { name: '── Health & Care ──', isGroupHeader: true, color: 'text-green-400', bgColor: 'bg-green-500/10', isCollapsible: true, defaultCollapsed: true },
+  { name: 'Daily Wellness', icon: Heart, path: 'Wellness', moduleId: 'wellness', groupColor: 'green' },
+  { name: 'Supplements', icon: Tablet, path: 'Supplements', moduleId: 'supplements', groupColor: 'green' },
+  { name: 'Medications', icon: Pill, path: 'Medications', moduleId: 'medications', groupColor: 'green' },
+  { name: 'Care Reminders', icon: Bell, path: 'CareReminders', moduleId: 'care_reminders', groupColor: 'green' },
+  { name: 'Pet Care', icon: PawPrint, path: 'PetCare', moduleId: 'pets', groupColor: 'green' },
   
   // BLUE: Connections
-  { name: '── Connections ──', isGroupHeader: true, color: 'text-blue-400', bgColor: 'bg-blue-500/10' },
+  { name: '── Connections ──', isGroupHeader: true, color: 'text-blue-400', bgColor: 'bg-blue-500/10', isCollapsible: true, defaultCollapsed: true },
   { name: 'My People (IRL)', icon: Users, path: 'People', moduleId: 'people', groupColor: 'blue' },
   
   // Special items
   { name: 'SuperFan Access', icon: Star, path: 'SuperFanAccess', showWhenNoTikTokAccess: true },
   
-  // GRAY: System Stuff (rendered at bottom separately)
-  { name: '── System ──', isGroupHeader: true, color: 'text-gray-400', bgColor: 'bg-gray-500/10' },
-  { name: 'Admin Panel', icon: UserCog, path: 'Admin', adminOnly: true, groupColor: 'gray' },
+  // System items (at bottom)
+  { name: 'Support', icon: HelpCircle, path: 'Support', alwaysShow: true },
+  { name: 'Admin Panel', icon: UserCog, path: 'Admin', adminOnly: true },
 ];
 
 export default function Layout({ children, currentPageName }) {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
-  const [expandedSections, setExpandedSections] = useState(['TikTok', 'Wellness']);
+  const [expandedSections, setExpandedSections] = useState([]);
+  const [collapsedGroups, setCollapsedGroups] = useState(() => {
+    // Default collapsed groups based on menu config
+    return ['── Faith & Purpose ──', '── Creator Life ──', '── Mental & Emotional ──', '── Health & Care ──', '── Connections ──'];
+  });
   const [showAccessGate, setShowAccessGate] = useState(false);
 
   const [userLoading, setUserLoading] = useState(true);
@@ -329,6 +328,14 @@ export default function Layout({ children, currentPageName }) {
     );
   };
 
+  const toggleGroup = (groupName) => {
+    setCollapsedGroups(prev =>
+      prev.includes(groupName)
+        ? prev.filter(g => g !== groupName)
+        : [...prev, groupName]
+    );
+  };
+
   const isSubItemActive = (item) => {
     if (item.subItems) {
       return item.subItems.some(sub => sub.path === currentPageName);
@@ -472,17 +479,29 @@ export default function Layout({ children, currentPageName }) {
         style={{ backgroundColor: menuColor }}
       >
             <nav className="p-6 space-y-1 overflow-y-auto max-h-[calc(100vh-8rem)]">
-              {navItems.map((item) => {
-                // Render group headers
+              {navItems.map((item, index) => {
+                // Render group headers (collapsible)
                 if (item.isGroupHeader) {
+                  const isCollapsed = collapsedGroups.includes(item.name);
                   return (
-                    <div 
-                      key={item.name} 
-                      className={`px-2 py-2 mt-4 mb-1 text-xs font-bold uppercase tracking-wider ${item.color} ${item.bgColor} rounded-lg`}
+                    <button
+                      key={item.name}
+                      onClick={() => item.isCollapsible && toggleGroup(item.name)}
+                      className={`w-full px-2 py-2 mt-4 mb-1 text-xs font-bold uppercase tracking-wider ${item.color} ${item.bgColor} rounded-lg flex items-center justify-between ${item.isCollapsible ? 'cursor-pointer hover:opacity-80' : ''}`}
                     >
-                      {item.name.replace(/──/g, '').trim()}
-                    </div>
+                      <span>{item.name.replace(/──/g, '').trim()}</span>
+                      {item.isCollapsible && (
+                        isCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />
+                      )}
+                    </button>
                   );
+                }
+
+                // Skip items in collapsed groups
+                const currentGroupIndex = navItems.slice(0, index).reverse().findIndex(i => i.isGroupHeader);
+                const currentGroup = currentGroupIndex !== -1 ? navItems[index - currentGroupIndex - 1] : null;
+                if (currentGroup?.isCollapsible && collapsedGroups.includes(currentGroup.name)) {
+                  return null;
                 }
 
                 const Icon = item.icon;
@@ -767,7 +786,7 @@ export default function Layout({ children, currentPageName }) {
                                                         subIsActive
                                                           ? 'text-white shadow-lg'
                                                           : subItem.highlight
-                                                            ? (isMenuDark ? 'text-teal-300 bg-teal-900/30 hover:bg-teal-800/50' : 'text-teal-700 bg-teal-50 hover:bg-teal-100')
+                                                            ? (isMenuDark ? 'text-teal-300 bg-teal-500/40 hover:bg-teal-500/60' : 'text-teal-900 bg-teal-200 hover:bg-teal-300')
                                                             : (isMenuDark ? 'text-gray-400 hover:bg-white/10' : 'text-gray-600 hover:bg-teal-50')
                                                       }`}
                                                       style={subIsActive ? { background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` } : {}}
