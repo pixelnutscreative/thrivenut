@@ -28,7 +28,8 @@ export default function DailyMotivationBanner({
   struggles = [],
   goals = [],
   isBibleBeliever = false,
-  userEmail
+  userEmail,
+  bibleVersion = 'NIV'
 }) {
   const queryClient = useQueryClient();
   const scrollRef = useRef(null);
@@ -68,7 +69,7 @@ export default function DailyMotivationBanner({
         contextParts.push(`They're working toward: ${goals.slice(0, 3).join(', ')}`);
       }
 
-      const contentType = type === 'scripture' ? 'Bible verses with brief application' : 
+      const contentType = type === 'scripture' ? `${bibleVersion} Bible verses with brief application` : 
                           type === 'affirmation' ? 'personal affirmations (use "I am", "I can", etc.)' :
                           type === 'motivational' ? 'motivational quotes from famous leaders' : 
                           'positive, uplifting quotes';
@@ -84,7 +85,7 @@ Requirements:
 - DO NOT include any person's name - make it universal so it can be shared as a quote/post on social media
 - Use generic language like "you", "we", or no pronouns at all
 
-${type === 'scripture' ? 'Include the Bible reference (book chapter:verse).' : ''}`;
+${type === 'scripture' ? `Include the Bible reference (book chapter:verse) from the ${bibleVersion} translation.` : ''}`;
 
       try {
         const result = await base44.integrations.Core.InvokeLLM({
