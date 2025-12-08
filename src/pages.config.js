@@ -38,6 +38,9 @@ import CommunityMap from './pages/CommunityMap';
 import Tasks from './pages/Tasks';
 import FamilyMembers from './pages/FamilyMembers';
 import LoveAway from './pages/LoveAway';
+import WorkSchedules from './pages/WorkSchedules';
+import CleaningTasks from './pages/CleaningTasks';
+import PictionaryHelper from './pages/PictionaryHelper';
 import __Layout from './Layout.jsx';
 
 
@@ -82,6 +85,9 @@ export const PAGES = {
     "Tasks": Tasks,
     "FamilyMembers": FamilyMembers,
     "LoveAway": LoveAway,
+    "WorkSchedules": WorkSchedules,
+    "CleaningTasks": CleaningTasks,
+    "PictionaryHelper": PictionaryHelper,
 }
 
 export const pagesConfig = {
