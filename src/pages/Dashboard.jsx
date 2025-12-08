@@ -17,6 +17,7 @@ import PostScheduleModal from '../components/tiktok/PostScheduleModal';
 import LiveScheduleModal from '../components/tiktok/LiveScheduleModal';
 import EngagementScheduleModal from '../components/tiktok/EngagementScheduleModal';
 import SpecialEventsCard from '../components/dashboard/SpecialEventsCard';
+import SubscribedEventsSection from '../components/dashboard/SubscribedEventsSection';
 import NotionTaskPicker from '../components/dashboard/NotionTaskPicker';
 import { format, startOfWeek } from 'date-fns';
 import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
@@ -32,7 +33,7 @@ export default function Dashboard() {
     const [loading, setLoading] = useState(true);
     const [collapsedSections, setCollapsedSections] = useState([]);
   
-  const { isDark, bgClass, textClass, cardBgClass } = useTheme();
+  const { isDark, bgClass, textClass, cardBgClass, primaryColor } = useTheme();
 
   // Get current week's Monday
   const getCurrentWeekStart = () => {
@@ -317,6 +318,12 @@ export default function Dashboard() {
 
         {/* Special Events - Birthdays & Sobriety Anniversaries from Contacts */}
         <SpecialEventsCard contacts={tiktokContacts} />
+
+        {/* Subscribed Creator Events - Shows today's events from followed creators */}
+        <SubscribedEventsSection 
+          userEmail={user?.email}
+          primaryColor={primaryColor}
+        />
 
         {/* My Day Section - All daily tasks unified */}
         <MyDaySection
