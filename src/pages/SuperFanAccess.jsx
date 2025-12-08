@@ -131,6 +131,11 @@ export default function SuperFanAccess() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['preferences'] });
       queryClient.invalidateQueries({ queryKey: ['managedAccounts'] });
+      
+      // Auto-reload after 1 second so user sees the success
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
     },
   });
 
@@ -335,7 +340,7 @@ export default function SuperFanAccess() {
                   </p>
                   {autoApproveMutation.isPending && <Loader2 className="w-6 h-6 animate-spin mx-auto mt-3" />}
                   {autoApproveMutation.isSuccess && (
-                    <p className="text-green-800 font-semibold mt-2">✓ Access granted! Refresh the page to see your features.</p>
+                    <p className="text-green-800 font-semibold mt-2">✓ Access granted! Redirecting you now...</p>
                   )}
                 </motion.div>
               )}
