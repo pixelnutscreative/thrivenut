@@ -44,7 +44,8 @@ import {
   StickyNote,
   Tablet,
   HelpCircle,
-  MessageCircle
+  MessageCircle,
+  Briefcase
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import TikTokAccessGate from './components/access/TikTokAccessGate';
@@ -76,7 +77,7 @@ const iconMap = {
   Pill, Gift, Brain, Home, ChevronDown, ChevronRight, Bell, Share2, Music, Star,
   Lock, UserCog, Sparkles, Eye, Bookmark, HandMetal, PawPrint, Search, 
   MousePointerClick, Calendar, Sun, Cross, Smile, FileText, StickyNote, 
-  Tablet, HelpCircle, MessageCircle
+  Tablet, HelpCircle, MessageCircle, Briefcase, Palette
 };
 
 // Custom peanut icon component
@@ -117,14 +118,18 @@ const defaultNavItems = [
   { name: "Pixel's Place", icon: Sparkles, path: 'PixelsParadise', alwaysShow: true, groupColor: 'teal' },
   
   // PURPLE: Faith & Purpose
-  { name: '── Faith & Purpose ──', isGroupHeader: true, color: 'text-purple-400', bgColor: 'bg-purple-500/10', isCollapsible: true, defaultCollapsed: true },
-  { name: 'Goals & Vision', icon: Target, path: 'Goals', moduleId: 'goals', groupColor: 'purple' },
+  { name: '── Faith & Purpose ──', isGroupHeader: true, color: 'text-purple-400', bgColor: 'bg-purple-500/10', isCollapsible: true, defaultCollapsed: false },
+  { name: 'Goals', icon: Target, path: 'Goals', moduleId: 'goals', groupColor: 'purple' },
+  { name: 'Vision Board', icon: Eye, path: 'VisionBoard', moduleId: 'goals', groupColor: 'purple' },
   { name: 'Saved Motivations', icon: Bookmark, path: 'SavedMotivations', alwaysShow: true, groupColor: 'purple' },
   { name: 'Prayer Requests', icon: Heart, path: 'PrayerRequests', requiresBibleBeliever: true, groupColor: 'purple' },
   { name: 'Tasks', icon: FileText, path: 'Tasks', moduleId: 'tasks', groupColor: 'purple' },
+  { name: 'Family Members', icon: Users, path: 'FamilyMembers', moduleId: 'people', groupColor: 'purple' },
+  { name: 'Work Schedules', icon: Briefcase, path: 'WorkSchedules', alwaysShow: true, groupColor: 'purple' },
+  { name: 'Cleaning Tasks', icon: Sparkles, path: 'CleaningTasks', alwaysShow: true, groupColor: 'purple' },
   
   // PINK: Creator Life
-  { name: '── Creator Life ──', isGroupHeader: true, color: 'text-pink-400', bgColor: 'bg-pink-500/10', isCollapsible: true, defaultCollapsed: true },
+  { name: '── Creator Life ──', isGroupHeader: true, color: 'text-pink-400', bgColor: 'bg-pink-500/10', isCollapsible: true, defaultCollapsed: false },
   { name: 'Social Media Suite', icon: Share2, isSection: true, moduleId: 'tiktok', requiresTikTokAccess: true, groupColor: 'pink', subItems: [
     { name: 'Discover Creators', icon: Search, path: 'DiscoverCreators', highlight: true },
     { name: 'Creator Contacts', icon: Users, path: 'TikTokContacts' },
@@ -139,7 +144,7 @@ const defaultNavItems = [
   ]},
   
   // GOLD: Mental & Emotional
-  { name: '── Mental & Emotional ──', isGroupHeader: true, color: 'text-amber-400', bgColor: 'bg-amber-500/10', isCollapsible: true, defaultCollapsed: true },
+  { name: '── Mental & Emotional ──', isGroupHeader: true, color: 'text-amber-400', bgColor: 'bg-amber-500/10', isCollapsible: true, defaultCollapsed: false },
   { name: 'Mental Health', icon: Brain, isSection: true, moduleId: 'mental_health', groupColor: 'amber', subItems: [
     { name: 'Mental Health Hub', icon: Brain, path: 'NeurodivergentSettings' },
     { name: 'Journal', icon: FileText, path: 'Journal', moduleId: 'journal' },
@@ -147,16 +152,17 @@ const defaultNavItems = [
   ]},
   
   // GREEN: Health & Care
-  { name: '── Health & Care ──', isGroupHeader: true, color: 'text-green-400', bgColor: 'bg-green-500/10', isCollapsible: true, defaultCollapsed: true },
+  { name: '── Health & Care ──', isGroupHeader: true, color: 'text-green-400', bgColor: 'bg-green-500/10', isCollapsible: true, defaultCollapsed: false },
   { name: 'Daily Wellness', icon: Heart, path: 'Wellness', moduleId: 'wellness', groupColor: 'green' },
   { name: 'Supplements', icon: Tablet, path: 'Supplements', moduleId: 'supplements', groupColor: 'green' },
   { name: 'Medications', icon: Pill, path: 'Medications', moduleId: 'medications', groupColor: 'green' },
   { name: 'Care Reminders', icon: Bell, path: 'CareReminders', moduleId: 'care_reminders', groupColor: 'green' },
   { name: 'Pet Care', icon: PawPrint, path: 'PetCare', moduleId: 'pets', groupColor: 'green' },
   
-  // BLUE: Connections
-  { name: '── Connections ──', isGroupHeader: true, color: 'text-blue-400', bgColor: 'bg-blue-500/10', isCollapsible: true, defaultCollapsed: true },
-  { name: 'My People (IRL)', icon: Users, path: 'People', moduleId: 'people', groupColor: 'blue' },
+  // BLUE: Connections & Fun
+  { name: '── Fun & Tools ──', isGroupHeader: true, color: 'text-blue-400', bgColor: 'bg-blue-500/10', isCollapsible: true, defaultCollapsed: false },
+  { name: 'Love Away Giveaways', icon: Gift, path: 'LoveAway', requiresTikTokAccess: true, groupColor: 'blue' },
+  { name: 'Pictionary Helper', icon: Palette, path: 'PictionaryHelper', alwaysShow: true, groupColor: 'blue' },
   
   // Special items
   { name: 'SuperFan Access', icon: Star, path: 'SuperFanAccess', showWhenNoTikTokAccess: true },
