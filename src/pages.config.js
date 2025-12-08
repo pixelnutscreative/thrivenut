@@ -37,6 +37,7 @@ import Pricing from './pages/Pricing';
 import CommunityMap from './pages/CommunityMap';
 import Tasks from './pages/Tasks';
 import FamilyMembers from './pages/FamilyMembers';
+import LoveAway from './pages/LoveAway';
 import __Layout from './Layout.jsx';
 
 
@@ -80,6 +81,7 @@ export const PAGES = {
     "CommunityMap": CommunityMap,
     "Tasks": Tasks,
     "FamilyMembers": FamilyMembers,
+    "LoveAway": LoveAway,
 }
 
 export const pagesConfig = {
