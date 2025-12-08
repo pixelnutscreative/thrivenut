@@ -1,332 +1,143 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
+import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Palette, Eraser, Download, Trash2, Undo, Smile, Circle, Square, Heart, Star, User } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { Sparkles, Lightbulb, Target, Shuffle, Loader2 } from 'lucide-react';
 import { useTheme } from '../components/shared/useTheme';
 
 export default function PictionaryHelper() {
   const { isDark, bgClass, primaryColor, textClass, cardBgClass } = useTheme();
-  const canvasRef = useRef(null);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [color, setColor] = useState('#000000');
-  const [brushSize, setBrushSize] = useState(3);
-  const [tool, setTool] = useState('pen');
-  const [history, setHistory] = useState([]);
+  const [word, setWord] = useState('');
+  const [style, setStyle] = useState('easy');
+  const [loading, setLoading] = useState(false);
+  const [suggestions, setSuggestions] = useState(null);
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+  const getDrawingSuggestions = async (drawStyle) => {
+    if (!word.trim()) return;
     
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    saveState();
-  }, []);
-
-  const saveState = () => {
-    const canvas = canvasRef.current;
-    if (canvas) {
-      setHistory([...history, canvas.toDataURL()]);
-    }
-  };
-
-  const startDrawing = (e) => {
-    setIsDrawing(true);
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-  };
-
-  const draw = (e) => {
-    if (!isDrawing) return;
-
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    if (tool === 'eraser') {
-      ctx.globalCompositeOperation = 'destination-out';
-      ctx.lineWidth = brushSize * 3;
-    } else {
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.lineWidth = brushSize;
-      ctx.strokeStyle = color;
-    }
-
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.lineTo(x, y);
-    ctx.stroke();
-  };
-
-  const stopDrawing = () => {
-    if (isDrawing) {
-      setIsDrawing(false);
-      saveState();
-    }
-  };
-
-  const clearCanvas = () => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    saveState();
-  };
-
-  const undo = () => {
-    if (history.length <= 1) return;
+    setLoading(true);
+    setStyle(drawStyle);
     
-    const newHistory = history.slice(0, -1);
-    setHistory(newHistory);
-    
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    const img = new Image();
-    img.src = newHistory[newHistory.length - 1];
-    img.onload = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, 0, 0);
-    };
-  };
+    try {
+      const prompts = {
+        easy: `You're helping someone draw "${word}" for Pictionary and they want it to be EASY to guess. Provide 5-7 simple, clear drawing tips that make it immediately recognizable. Be specific about shapes, key features, and what NOT to include. Format as a numbered list.`,
+        pro: `You're helping someone draw "${word}" for Pictionary and they want to draw it WELL (like a good artist). Provide detailed step-by-step instructions for drawing this professionally. Include proportions, shading tips, and details. Format as a numbered list.`,
+        tricky: `You're helping someone draw "${word}" for Pictionary and they want to make it TRICKY - draw it in a way that could be multiple things so people keep guessing. Provide 5-7 tips for making it ambiguous while still being drawable. What features should be vague? What could it look like instead? Format as a numbered list.`
+      };
 
-  const downloadDrawing = () => {
-    const canvas = canvasRef.current;
-    const link = document.createElement('a');
-    link.download = `pictionary-${Date.now()}.png`;
-    link.href = canvas.toDataURL();
-    link.click();
-  };
+      const response = await base44.integrations.Core.InvokeLLM({
+        prompt: prompts[drawStyle]
+      });
 
-  const drawShape = (shape) => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
-    const size = 80;
-
-    ctx.strokeStyle = color;
-    ctx.lineWidth = brushSize;
-    ctx.fillStyle = color + '40'; // 25% opacity
-
-    switch (shape) {
-      case 'circle':
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, size, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-        break;
-      case 'square':
-        ctx.fillRect(centerX - size, centerY - size, size * 2, size * 2);
-        ctx.strokeRect(centerX - size, centerY - size, size * 2, size * 2);
-        break;
-      case 'heart':
-        ctx.beginPath();
-        ctx.moveTo(centerX, centerY + size / 4);
-        ctx.bezierCurveTo(centerX, centerY, centerX - size / 2, centerY - size / 2, centerX, centerY - size);
-        ctx.bezierCurveTo(centerX + size / 2, centerY - size / 2, centerX, centerY, centerX, centerY + size / 4);
-        ctx.fill();
-        ctx.stroke();
-        break;
-      case 'star':
-        const spikes = 5;
-        const outerRadius = size;
-        const innerRadius = size / 2;
-        let rot = Math.PI / 2 * 3;
-        let x = centerX;
-        let y = centerY;
-        const step = Math.PI / spikes;
-
-        ctx.beginPath();
-        ctx.moveTo(centerX, centerY - outerRadius);
-        for (let i = 0; i < spikes; i++) {
-          x = centerX + Math.cos(rot) * outerRadius;
-          y = centerY + Math.sin(rot) * outerRadius;
-          ctx.lineTo(x, y);
-          rot += step;
-
-          x = centerX + Math.cos(rot) * innerRadius;
-          y = centerY + Math.sin(rot) * innerRadius;
-          ctx.lineTo(x, y);
-          rot += step;
-        }
-        ctx.lineTo(centerX, centerY - outerRadius);
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
-        break;
-      case 'stick':
-        // Stick figure
-        const headRadius = 20;
-        const bodyLength = 60;
-        const armLength = 40;
-        const legLength = 50;
-        
-        // Head
-        ctx.beginPath();
-        ctx.arc(centerX, centerY - bodyLength, headRadius, 0, Math.PI * 2);
-        ctx.stroke();
-        
-        // Body
-        ctx.beginPath();
-        ctx.moveTo(centerX, centerY - bodyLength + headRadius);
-        ctx.lineTo(centerX, centerY);
-        ctx.stroke();
-        
-        // Arms
-        ctx.beginPath();
-        ctx.moveTo(centerX - armLength, centerY - bodyLength / 2);
-        ctx.lineTo(centerX, centerY - bodyLength / 2);
-        ctx.lineTo(centerX + armLength, centerY - bodyLength / 2);
-        ctx.stroke();
-        
-        // Legs
-        ctx.beginPath();
-        ctx.moveTo(centerX, centerY);
-        ctx.lineTo(centerX - armLength / 2, centerY + legLength);
-        ctx.moveTo(centerX, centerY);
-        ctx.lineTo(centerX + armLength / 2, centerY + legLength);
-        ctx.stroke();
-        break;
+      setSuggestions({
+        style: drawStyle,
+        word,
+        tips: response
+      });
+    } catch (error) {
+      console.error('Error generating suggestions:', error);
+    } finally {
+      setLoading(false);
     }
-    saveState();
   };
 
-  const colors = [
-    '#000000', '#FF0000', '#00FF00', '#0000FF', 
-    '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500',
-    '#800080', '#FFC0CB', '#A52A2A', '#808080'
+  const styleOptions = [
+    { value: 'easy', label: 'Make it Easy', icon: Target, color: 'bg-green-500', description: 'Simple & obvious to guess' },
+    { value: 'pro', label: 'Draw it Well', icon: Sparkles, color: 'bg-blue-500', description: 'Like a real artist' },
+    { value: 'tricky', label: 'Make it Tricky', icon: Shuffle, color: 'bg-purple-500', description: 'Ambiguous & confusing' }
   ];
 
   return (
     <div className={`min-h-screen ${bgClass} p-4 md:p-8`}>
-      <div className="max-w-5xl mx-auto space-y-6">
+      <div className="max-w-4xl mx-auto space-y-6">
         <div>
           <h1 className={`text-3xl font-bold ${textClass}`}>Pictionary Helper</h1>
-          <p className="text-gray-500 mt-1">Draw simple shapes and stick figures for charades!</p>
+          <p className="text-gray-500 mt-1">AI-powered drawing tips for your word!</p>
         </div>
 
-        <div className="grid lg:grid-cols-4 gap-4">
-          {/* Tools Panel */}
+        <Card className={cardBgClass}>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Lightbulb className="w-5 h-5" style={{ color: primaryColor }} />
+              What word do you need to draw?
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Input
+              placeholder="Enter your word (e.g., elephant, pizza, spaceship)"
+              value={word}
+              onChange={(e) => setWord(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && getDrawingSuggestions('easy')}
+              className="text-lg"
+            />
+
+            <div className="grid md:grid-cols-3 gap-3">
+              {styleOptions.map(opt => {
+                const Icon = opt.icon;
+                return (
+                  <Button
+                    key={opt.value}
+                    onClick={() => getDrawingSuggestions(opt.value)}
+                    disabled={!word.trim() || loading}
+                    className={`h-auto py-4 flex-col gap-2 ${opt.color} hover:opacity-90 text-white`}
+                  >
+                    {loading && style === opt.value ? (
+                      <Loader2 className="w-6 h-6 animate-spin" />
+                    ) : (
+                      <Icon className="w-6 h-6" />
+                    )}
+                    <div>
+                      <div className="font-semibold">{opt.label}</div>
+                      <div className="text-xs opacity-90">{opt.description}</div>
+                    </div>
+                  </Button>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+
+        {suggestions && (
           <Card className={cardBgClass}>
             <CardHeader>
-              <CardTitle className="text-base">Tools</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Sparkles className="w-5 h-5" style={{ color: primaryColor }} />
+                  Drawing Tips for "{suggestions.word}"
+                </CardTitle>
+                <Badge className={styleOptions.find(s => s.value === suggestions.style)?.color}>
+                  {styleOptions.find(s => s.value === suggestions.style)?.label}
+                </Badge>
+              </div>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Draw Tool</label>
-                <div className="flex gap-2">
-                  <Button
-                    size="icon"
-                    variant={tool === 'pen' ? 'default' : 'outline'}
-                    onClick={() => setTool('pen')}
-                    style={tool === 'pen' ? { backgroundColor: primaryColor } : {}}
-                  >
-                    <Palette className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant={tool === 'eraser' ? 'default' : 'outline'}
-                    onClick={() => setTool('eraser')}
-                  >
-                    <Eraser className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Brush Size: {brushSize}px</label>
-                <input
-                  type="range"
-                  min="1"
-                  max="20"
-                  value={brushSize}
-                  onChange={(e) => setBrushSize(parseInt(e.target.value))}
-                  className="w-full"
+            <CardContent>
+              <div className="prose max-w-none">
+                <Textarea
+                  value={suggestions.tips}
+                  readOnly
+                  className="min-h-[300px] font-mono text-sm"
                 />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Color</label>
-                <div className="grid grid-cols-4 gap-2">
-                  {colors.map(c => (
-                    <button
-                      key={c}
-                      onClick={() => setColor(c)}
-                      className={`w-10 h-10 rounded-lg border-2 ${color === c ? 'ring-2 ring-offset-2' : ''}`}
-                      style={{ backgroundColor: c, borderColor: color === c ? primaryColor : '#ccc' }}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Quick Shapes</label>
-                <div className="grid grid-cols-3 gap-2">
-                  <Button size="sm" variant="outline" onClick={() => drawShape('circle')}>
-                    <Circle className="w-4 h-4" />
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => drawShape('square')}>
-                    <Square className="w-4 h-4" />
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => drawShape('heart')}>
-                    <Heart className="w-4 h-4" />
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => drawShape('star')}>
-                    <Star className="w-4 h-4" />
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => drawShape('stick')} className="col-span-2">
-                    <User className="w-4 h-4 mr-1" />
-                    Stick Figure
-                  </Button>
-                </div>
-              </div>
-
-              <div className="space-y-2 pt-4 border-t">
-                <Button size="sm" variant="outline" className="w-full" onClick={undo}>
-                  <Undo className="w-4 h-4 mr-2" />
-                  Undo
-                </Button>
-                <Button size="sm" variant="outline" className="w-full" onClick={clearCanvas}>
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Clear
-                </Button>
-                <Button size="sm" className="w-full" onClick={downloadDrawing} style={{ backgroundColor: primaryColor }}>
-                  <Download className="w-4 h-4 mr-2" />
-                  Download
-                </Button>
               </div>
             </CardContent>
           </Card>
+        )}
 
-          {/* Canvas */}
-          <div className="lg:col-span-3">
-            <Card className={cardBgClass}>
-              <CardContent className="pt-6">
-                <canvas
-                  ref={canvasRef}
-                  width={800}
-                  height={600}
-                  onMouseDown={startDrawing}
-                  onMouseMove={draw}
-                  onMouseUp={stopDrawing}
-                  onMouseLeave={stopDrawing}
-                  className="border-2 rounded-lg cursor-crosshair w-full"
-                  style={{ maxWidth: '100%', height: 'auto' }}
-                />
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+        {!suggestions && !loading && (
+          <Card className={cardBgClass}>
+            <CardContent className="py-12 text-center text-gray-500">
+              <Lightbulb className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+              <p className="text-lg font-semibold mb-2">How it works:</p>
+              <ul className="text-left max-w-md mx-auto space-y-2">
+                <li>🎯 <strong>Make it Easy:</strong> Get simple tips for obvious drawings</li>
+                <li>✨ <strong>Draw it Well:</strong> Professional step-by-step instructions</li>
+                <li>🎲 <strong>Make it Tricky:</strong> Ambiguous tips to keep them guessing</li>
+              </ul>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
