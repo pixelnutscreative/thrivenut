@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, Plus, Calendar, Trash2, Edit, Save, Gift, Shirt, Palette, Heart, X, ExternalLink } from 'lucide-react';
+import { Users, Plus, Calendar, Trash2, Edit, Save, Gift, Shirt, Palette, Heart, X, ExternalLink, Camera, Sparkles, MessageCircle, Music } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../components/shared/useTheme';
 import ImageUploader from '../components/settings/ImageUploader';
@@ -25,6 +25,8 @@ export default function FamilyMembers() {
   const [linkedProfile, setLinkedProfile] = useState(null);
   const [suggestionMode, setSuggestionMode] = useState(false);
   const [suggestionData, setSuggestionData] = useState({ item: '', link: '', notes: '' });
+  const [generatedContent, setGeneratedContent] = useState('');
+  const [generating, setGenerating] = useState(false);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -42,7 +44,8 @@ export default function FamilyMembers() {
     interests: '',
     wish_list: [],
     beauty_profile: { hair_color_preference: '', nail_polish_preference: '', makeup_notes: '', scent_notes: '' },
-    style_profile: { vibe: '', favorite_brands: '', favorite_materials: '', disliked_materials: '' }
+    style_profile: { vibe: '', favorite_brands: '', favorite_materials: '', disliked_materials: '' },
+    memorable_moments: []
   });
 
   const { data: familyMembers = [], isLoading } = useQuery({
@@ -92,13 +95,15 @@ export default function FamilyMembers() {
       interests: '',
       wish_list: [],
       beauty_profile: { hair_color_preference: '', nail_polish_preference: '', makeup_notes: '', scent_notes: '' },
-      style_profile: { vibe: '', favorite_brands: '', favorite_materials: '', disliked_materials: '' }
+      style_profile: { vibe: '', favorite_brands: '', favorite_materials: '', disliked_materials: '' },
+      memorable_moments: []
     });
     setEditingMember(null);
     setShowForm(false);
     setActiveTab('basic');
     setLinkedProfile(null);
     setSuggestionMode(false);
+    setGeneratedContent('');
   };
 
   const handleEdit = async (member) => {
@@ -139,7 +144,8 @@ export default function FamilyMembers() {
       interests: isLinked ? (profileData.interests || '') : (member.interests || ''),
       wish_list: isLinked ? (profileData.wish_list || []) : (member.wish_list || []),
       beauty_profile: isLinked ? (profileData.beauty_profile || {}) : (member.beauty_profile || { hair_color_preference: '', nail_polish_preference: '', makeup_notes: '', scent_notes: '' }),
-      style_profile: isLinked ? (profileData.style_profile || {}) : (member.style_profile || { vibe: '', favorite_brands: '', favorite_materials: '', disliked_materials: '' })
+      style_profile: isLinked ? (profileData.style_profile || {}) : (member.style_profile || { vibe: '', favorite_brands: '', favorite_materials: '', disliked_materials: '' }),
+      memorable_moments: member.memorable_moments || []
     });
     setShowForm(true);
   };
@@ -182,6 +188,47 @@ export default function FamilyMembers() {
       ...prev,
       wish_list: prev.wish_list.filter((_, i) => i !== index)
     }));
+  };
+
+  const addMoment = () => {
+    setFormData(prev => ({
+      ...prev,
+      memorable_moments: [...prev.memorable_moments, { id: Date.now().toString(), date: '', title: '', description: '', type: 'funny' }]
+    }));
+  };
+
+  const updateMoment = (index, field, value) => {
+    const newMoments = [...formData.memorable_moments];
+    newMoments[index] = { ...newMoments[index], [field]: value };
+    setFormData(prev => ({ ...prev, memorable_moments: newMoments }));
+  };
+
+  const removeMoment = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      memorable_moments: prev.memorable_moments.filter((_, i) => i !== index)
+    }));
+  };
+
+  const generateContent = async (type) => {
+    setGenerating(true);
+    setGeneratedContent('');
+    try {
+      const momentsText = formData.memorable_moments.map(m => `Date: ${m.date}, Title: ${m.title}, Detail: ${m.description}, Type: ${m.type}`).join('\n');
+      const prompt = `Write a ${type} for my ${formData.relationship} named ${formData.name}. 
+      Use these memorable moments we've shared to make it personal and touching:
+      ${momentsText}
+      
+      Include their interests: ${formData.interests}
+      Make it feel special and specific to our relationship.`;
+      
+      const response = await base44.integrations.Core.InvokeLLM({ prompt });
+      setGeneratedContent(response);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setGenerating(false);
+    }
   };
 
   const sendSuggestion = useMutation({
@@ -327,10 +374,11 @@ export default function FamilyMembers() {
             </DialogHeader>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="basic">Basic Info</TabsTrigger>
                 <TabsTrigger value="style">Sizes & Style</TabsTrigger>
                 <TabsTrigger value="wishes">Interests & Wishes</TabsTrigger>
+                <TabsTrigger value="moments">Moments</TabsTrigger>
               </TabsList>
 
               <div className="mt-4 space-y-4">
@@ -570,6 +618,100 @@ export default function FamilyMembers() {
                         </div>
                       ))}
                     </div>
+                  </div>
+                </TabsContent>
+
+                {/* MEMORABLE MOMENTS TAB */}
+                <TabsContent value="moments" className="space-y-6">
+                  <div className="flex flex-col gap-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label className="flex items-center gap-2"><Camera className="w-4 h-4 text-pink-500" /> Memorable Moments</Label>
+                        <p className="text-sm text-gray-500">Track special times to use for creating personal messages later.</p>
+                      </div>
+                      <Button size="sm" variant="outline" onClick={addMoment}><Plus className="w-3 h-3 mr-1" /> Add Memory</Button>
+                    </div>
+
+                    {formData.memorable_moments?.length === 0 && (
+                      <div className="text-center p-8 bg-gray-50 rounded-lg border border-dashed text-gray-400">
+                        <Camera className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                        <p>No moments added yet. Add funny stories, trips, or milestones!</p>
+                      </div>
+                    )}
+
+                    <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
+                      {formData.memorable_moments?.map((moment, idx) => (
+                        <div key={idx} className="bg-white p-3 rounded-lg border shadow-sm space-y-3">
+                          <div className="flex gap-2">
+                            <div className="w-1/3">
+                              <Label className="text-xs">Date</Label>
+                              <Input type="date" value={moment.date} onChange={(e) => updateMoment(idx, 'date', e.target.value)} />
+                            </div>
+                            <div className="flex-1">
+                              <Label className="text-xs">Title</Label>
+                              <Input placeholder="Beach Day..." value={moment.title} onChange={(e) => updateMoment(idx, 'title', e.target.value)} />
+                            </div>
+                            <div className="w-1/4">
+                              <Label className="text-xs">Type</Label>
+                              <Select value={moment.type} onValueChange={(v) => updateMoment(idx, 'type', v)}>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="funny">Funny</SelectItem>
+                                  <SelectItem value="sentimental">Sentimental</SelectItem>
+                                  <SelectItem value="milestone">Milestone</SelectItem>
+                                  <SelectItem value="travel">Travel</SelectItem>
+                                  <SelectItem value="other">Other</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <Button size="icon" variant="ghost" onClick={() => removeMoment(idx)} className="mt-6 text-red-400">
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                          <div>
+                            <Label className="text-xs">Story / Details</Label>
+                            <Textarea 
+                              placeholder="What happened? Why was it special?" 
+                              value={moment.description} 
+                              onChange={(e) => updateMoment(idx, 'description', e.target.value)} 
+                              rows={2}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {formData.memorable_moments?.length > 0 && (
+                      <div className="mt-6 border-t pt-4">
+                        <Label className="flex items-center gap-2 mb-3"><Sparkles className="w-4 h-4 text-purple-600" /> AI Content Generator</Label>
+                        <div className="grid grid-cols-3 gap-2 mb-4">
+                          <Button variant="outline" onClick={() => generateContent('heartfelt letter')} disabled={generating}>
+                            <MessageCircle className="w-3 h-3 mr-2" /> Letter
+                          </Button>
+                          <Button variant="outline" onClick={() => generateContent('poem')} disabled={generating}>
+                            <Edit className="w-3 h-3 mr-2" /> Poem
+                          </Button>
+                          <Button variant="outline" onClick={() => generateContent('song lyrics')} disabled={generating}>
+                            <Music className="w-3 h-3 mr-2" /> Song Lyrics
+                          </Button>
+                        </div>
+                        
+                        {generatedContent && (
+                          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-purple-50 p-4 rounded-lg border border-purple-100 relative">
+                             <h4 className="font-semibold text-purple-900 mb-2">Generated Draft:</h4>
+                             <p className="whitespace-pre-wrap text-sm text-gray-800">{generatedContent}</p>
+                             <Button 
+                               size="sm" 
+                               variant="ghost" 
+                               className="absolute top-2 right-2 text-purple-400 hover:text-purple-700"
+                               onClick={() => navigator.clipboard.writeText(generatedContent)}
+                             >
+                               Copy
+                             </Button>
+                          </motion.div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </TabsContent>
               </div>
