@@ -18,7 +18,8 @@ const availableIcons = [
   'Music', 'Star', 'Lock', 'UserCog', 'Sparkles', 'Palette', 'Calendar',
   'MessageSquare', 'Zap', 'Award', 'Coffee', 'Smile', 'Sun', 'Moon',
   'Eye', 'Bookmark', 'HandMetal', 'PawPrint', 'Search', 'MousePointerClick',
-  'Cross', 'FileText', 'StickyNote', 'Tablet', 'HelpCircle', 'MessageCircle'
+  'Cross', 'FileText', 'StickyNote', 'Tablet', 'HelpCircle', 'MessageCircle', 
+  'MapPin', 'Briefcase'
 ];
 
 const defaultMenuItems = [
