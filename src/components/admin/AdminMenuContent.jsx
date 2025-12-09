@@ -254,16 +254,18 @@ export default function AdminMenuContent() {
               <CardDescription>Add, edit, and reorder menu items</CardDescription>
             </div>
             <div className="flex gap-2">
-              {menuItems.length === 0 && (
-                <Button 
-                  variant="outline" 
-                  onClick={() => initializeDefaultsMutation.mutate()}
-                  disabled={initializeDefaultsMutation.isPending}
-                >
-                  <RotateCcw className="w-4 h-4 mr-2" />
-                  Load Defaults
-                </Button>
-              )}
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  if (confirm('This will delete all current menu items and load the default structure. Continue?')) {
+                    initializeDefaultsMutation.mutate();
+                  }
+                }}
+                disabled={initializeDefaultsMutation.isPending}
+              >
+                <RotateCcw className="w-4 h-4 mr-2" />
+                {menuItems.length === 0 ? 'Load Defaults' : 'Reset to Defaults'}
+              </Button>
               {pendingChanges.length > 0 && (
                 <Button 
                   onClick={() => saveAllChangesMutation.mutate()}
