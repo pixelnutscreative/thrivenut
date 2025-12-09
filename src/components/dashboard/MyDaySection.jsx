@@ -109,7 +109,7 @@ export default function MyDaySection({
   const queryClient = useQueryClient();
   const today = format(new Date(), 'yyyy-MM-dd');
   const todayDayName = format(new Date(), 'EEEE');
-  const userEmail = preferences?.user_email;
+  const userEmail = (preferences?.user_email && typeof preferences.user_email === 'string') ? preferences.user_email : null;
   
   const [editingMeal, setEditingMeal] = useState(null);
   const [mealNoteInput, setMealNoteInput] = useState('');

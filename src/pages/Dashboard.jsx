@@ -339,7 +339,10 @@ export default function Dashboard() {
           selfCareLog={selfCareLog}
           onToggleTask={(taskId, value) => selfCareMutation.mutate({ taskId, value })}
           onUpdateMealNotes={(noteKey, value) => mealNotesMutation.mutate({ noteKey, value })}
-          preferences={{ ...preferences, user_email: user?.email }}
+          preferences={preferences ? { 
+            ...preferences, 
+            user_email: (user?.email && typeof user.email === 'string') ? user.email : preferences.user_email 
+          } : null}
           viewMode={preferences?.dashboard_view_mode || 'detailed'}
           showGoogleCalendar={preferences?.show_google_calendar || false}
           showCreatorCalendarEvents={preferences?.show_creator_calendar_events !== false}
