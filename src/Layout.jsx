@@ -146,6 +146,7 @@ export default function Layout({ children, currentPageName }) {
     { name: '── Creator Suite ──', isGroupHeader: true, color: 'text-pink-400', bgColor: 'bg-pink-500/10' },
     { name: 'Social Media Suite', icon: Share2, isSection: true, moduleId: 'tiktok', requiresTikTokAccess: true, subItems: [
       { name: 'Discover Creators', icon: Search, path: 'DiscoverCreators', highlight: true },
+      { name: 'Live Engagement', icon: Activity, path: 'LiveEngagement', highlight: true },
       { name: 'Creator Contacts', icon: Users, path: 'TikTokContacts' },
       { name: 'Social Engagement', icon: MousePointerClick, path: 'TikTokEngagement' },
       { name: 'Content Calendar', icon: Calendar, path: 'LiveSchedule' },

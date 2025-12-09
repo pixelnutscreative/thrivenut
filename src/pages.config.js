@@ -49,6 +49,7 @@ import BrainDump from './pages/BrainDump';
 import Household from './pages/Household';
 import Habits from './pages/Habits';
 import ActivityTracker from './pages/ActivityTracker';
+import LiveEngagement from './pages/LiveEngagement';
 import __Layout from './Layout.jsx';
 
 
@@ -104,6 +105,7 @@ export const PAGES = {
     "Household": Household,
     "Habits": Habits,
     "ActivityTracker": ActivityTracker,
+    "LiveEngagement": LiveEngagement,
 }
 
 export const pagesConfig = {
