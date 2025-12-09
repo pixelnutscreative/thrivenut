@@ -207,9 +207,9 @@ export default function Wellness() {
   });
 
   const updatePreferencesMutation = useMutation({
-    mutationFn: async (items) => {
+    mutationFn: async (data) => {
       if (preferences) {
-        return await base44.entities.UserPreferences.update(preferences.id, { items_to_eliminate: items });
+        return await base44.entities.UserPreferences.update(preferences.id, data);
       }
     },
     onSuccess: () => {
@@ -247,16 +247,7 @@ export default function Wellness() {
     }
   }, [preferences]);
 
-  const updatePreferencesMutation = useMutation({
-    mutationFn: async (data) => {
-      if (preferences) {
-        return await base44.entities.UserPreferences.update(preferences.id, data);
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['preferences'] });
-    }
-  });
+
 
   const handleDragEnd = (result) => {
     if (!result.destination) return;
@@ -380,7 +371,7 @@ export default function Wellness() {
             itemsToEliminate={preferences?.items_to_eliminate || []}
             eliminationGrades={selfCareLog?.elimination_grades || []}
             onUpdateGrades={(grades) => eliminationMutation.mutate(grades)}
-            onUpdateItems={(items) => updatePreferencesMutation.mutate(items)}
+            onUpdateItems={(items) => updatePreferencesMutation.mutate({ items_to_eliminate: items })}
             showItemManager={true}
           />
         </motion.div>
