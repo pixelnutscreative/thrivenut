@@ -200,8 +200,10 @@ export default function Layout({ children, currentPageName }) {
       .finally(() => setUserLoading(false));
   }, []);
 
-  // Get effective email (real user or impersonated)
-  const effectiveEmail = user?.email ? getEffectiveUserEmail(user.email) : null;
+  // Get effective email (real user or impersonated) - ALWAYS validate
+  const effectiveEmail = (user?.email && typeof user.email === 'string' && user.email.trim()) 
+    ? getEffectiveUserEmail(user.email) 
+    : null;
   const currentlyImpersonating = isImpersonating();
 
   const { data: preferences } = useQuery({
@@ -288,9 +290,11 @@ export default function Layout({ children, currentPageName }) {
   }, [menuConfig]);
   
   // IMPORTANT: isAdmin checks the REAL user email (not impersonated), so admin always sees admin menu
-  const realUserEmail = (user?.email && typeof user.email === 'string') ? user.email.toLowerCase() : '';
+  const realUserEmail = (user?.email && typeof user.email === 'string' && user.email.trim()) 
+    ? user.email.trim().toLowerCase() 
+    : '';
   const adminEmails = ['pixelnutscreative@gmail.com', 'pixel@thrivenut.app'];
-  const isAdmin = realUserEmail ? adminEmails.includes(realUserEmail) : false;
+  const isAdmin = realUserEmail && adminEmails.includes(realUserEmail);
   
   // hasTikTokAccess - admins ALWAYS have access
   const hasTikTokAccess = isAdmin || preferences?.tiktok_access_approved;

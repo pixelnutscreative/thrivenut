@@ -39,22 +39,25 @@ export default function ImpersonationBanner() {
 
 // Helper to get the current "user" identifier (real or impersonated)
 export function getEffectiveUserEmail(realUserEmail) {
-  // Always validate and ensure string before any operations
-  if (!realUserEmail || typeof realUserEmail !== 'string' || realUserEmail.trim() === '') {
+  // CRITICAL: Always validate and ensure string before any operations
+  if (!realUserEmail || typeof realUserEmail !== 'string' || !realUserEmail.trim()) {
+    console.warn('getEffectiveUserEmail called with invalid email:', realUserEmail);
     return null;
   }
   
   if (typeof window === 'undefined' || typeof sessionStorage === 'undefined') {
-    return realUserEmail;
+    return realUserEmail.trim();
   }
   
   try {
     const impersonating = sessionStorage.getItem('impersonating');
-    const effectiveValue = (impersonating && typeof impersonating === 'string' && impersonating.trim()) ? impersonating : realUserEmail;
-    // Final safety check before returning
-    return (effectiveValue && typeof effectiveValue === 'string') ? effectiveValue : null;
-  } catch {
-    return realUserEmail;
+    if (impersonating && typeof impersonating === 'string' && impersonating.trim()) {
+      return impersonating.trim();
+    }
+    return realUserEmail.trim();
+  } catch (error) {
+    console.error('Error in getEffectiveUserEmail:', error);
+    return realUserEmail.trim();
   }
 }
 

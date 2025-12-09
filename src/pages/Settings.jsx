@@ -75,8 +75,10 @@ export default function Settings() {
     });
   }, []);
 
-  // Get effective email (real user or impersonated)
-  const effectiveEmail = user?.email ? getEffectiveUserEmail(user.email) : null;
+  // Get effective email (real user or impersonated) - ALWAYS validate
+  const effectiveEmail = (user?.email && typeof user.email === 'string' && user.email.trim())
+    ? getEffectiveUserEmail(user.email)
+    : null;
   const currentlyImpersonating = isImpersonating();
 
   const { data: preferences, isLoading: prefsLoading } = useQuery({
