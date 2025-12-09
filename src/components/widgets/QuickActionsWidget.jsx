@@ -62,11 +62,18 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
+        // Fix for widget stuck at top - ensure it's not covering header
+        if (parsed.y < 80) {
+           parsed.y = window.innerHeight - 120;
+        }
         setPosition(parsed);
       } catch (e) {
-        // Reset if invalid
-        setPosition({ x: 0, y: 0 });
+        // Reset if invalid - default to bottom
+        setPosition({ x: 0, y: window.innerHeight - 120 });
       }
+    } else {
+      // Default to bottom for new users
+      setPosition({ x: 0, y: window.innerHeight - 120 });
     }
   }, []);
 
@@ -366,6 +373,15 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
           title="View saved notes"
         >
           <BookOpen className="w-4 h-4 text-gray-400 hover:text-white" />
+        </RouterLink>
+
+        {/* Settings */}
+        <RouterLink
+          to={createPageUrl('Settings')}
+          className="p-1.5 hover:bg-white/10 rounded-full transition-colors"
+          title="Widget Settings"
+        >
+          <Settings className="w-4 h-4 text-gray-400 hover:text-white" />
         </RouterLink>
         </div>
 
