@@ -22,58 +22,61 @@ const availableIcons = [
 ];
 
 const defaultMenuItems = [
-  // Core (no header)
-  { name: 'Dashboard', icon: 'LayoutDashboard', path: 'Dashboard', always_show: true, sort_order: 10 },
+  // Core
+  { name: "Pixel's Day", icon: 'LayoutDashboard', path: 'Dashboard', always_show: true, sort_order: 10 },
   { name: "Pixel's Place", icon: 'Sparkles', path: 'PixelsParadise', always_show: true, sort_order: 20 },
   
-  // INDIGO: Life & Organization
-  { name: '── Life & Organization ──', is_group_header: true, header_color: 'text-indigo-400', header_bg_color: 'bg-indigo-500/10', sort_order: 100 },
-  { name: 'Tasks', icon: 'FileText', path: 'Tasks', module_id: 'tasks', sort_order: 110 },
-  { name: 'Family Members', icon: 'Users', path: 'FamilyMembers', module_id: 'people', sort_order: 120 },
-  { name: 'Work Schedules', icon: 'Briefcase', path: 'WorkSchedules', always_show: true, sort_order: 130 },
-  { name: 'Cleaning Tasks', icon: 'Sparkles', path: 'CleaningTasks', always_show: true, sort_order: 140 },
-  { name: 'Care Reminders', icon: 'Bell', path: 'CareReminders', module_id: 'care_reminders', sort_order: 150 },
+  // TEAL: Goals + Growth
+  { name: '── Goals + Growth ──', is_group_header: true, header_color: 'text-teal-400', header_bg_color: 'bg-teal-500/10', sort_order: 100 },
+  { name: 'Quick Notes', icon: 'StickyNote', path: 'QuickNotes', module_id: 'quick_notes', sort_order: 110 },
+  { name: 'Tasks', icon: 'FileText', path: 'Tasks', module_id: 'tasks', sort_order: 120 },
+  { name: 'Habits', icon: 'Target', path: 'Habits', module_id: 'habits', sort_order: 130 },
+  { name: 'Goals', icon: 'Target', path: 'Goals', module_id: 'goals', sort_order: 140 },
+  { name: 'Vision Board', icon: 'Eye', path: 'VisionBoard', module_id: 'goals', sort_order: 150 },
+  { name: 'Journal', icon: 'BookOpen', path: 'Journal', module_id: 'journal', sort_order: 160 },
+  { name: 'Finance', icon: 'DollarSign', path: 'Finance', module_id: 'finance', sort_order: 170 },
   
-  // TEAL: Goals & Growth
-  { name: '── Goals & Growth ──', is_group_header: true, header_color: 'text-teal-400', header_bg_color: 'bg-teal-500/10', sort_order: 200 },
-  { name: 'Goals', icon: 'Target', path: 'Goals', module_id: 'goals', sort_order: 210 },
-  { name: 'Vision Board', icon: 'Eye', path: 'VisionBoard', module_id: 'goals', sort_order: 220 },
-  { name: 'Saved Motivations', icon: 'Bookmark', path: 'SavedMotivations', always_show: true, sort_order: 230 },
+  // ORANGE: Friends + Loved Ones
+  { name: '── Friends + Loved Ones ──', is_group_header: true, header_color: 'text-orange-400', header_bg_color: 'bg-orange-500/10', sort_order: 200 },
+  { name: 'Family Members', icon: 'Users', path: 'FamilyMembers', module_id: 'people', sort_order: 210 },
+  { name: 'My People', icon: 'Users', path: 'People', module_id: 'people', sort_order: 220 },
+  { name: 'Care Reminders', icon: 'Bell', path: 'CareReminders', module_id: 'care_reminders', sort_order: 230 },
+  { name: 'Pet Care', icon: 'PawPrint', path: 'PetCare', module_id: 'pets', sort_order: 240 },
   
   // PURPLE: Faith & Spiritual
   { name: '── Faith & Spiritual ──', is_group_header: true, header_color: 'text-purple-400', header_bg_color: 'bg-purple-500/10', sort_order: 300 },
-  { name: 'Prayer Requests', icon: 'Heart', path: 'PrayerRequests', requires_bible_believer: true, sort_order: 310 },
+  { name: 'Prayer Requests', icon: 'Heart', path: 'PrayerRequests', module_id: 'prayer', sort_order: 310 },
+  { name: 'Holy Hitmakers', icon: 'Music', path: 'HolyHitmakers', requires_bible_believer: true, sort_order: 320 },
+  { name: 'Bible Resources', icon: 'BookOpen', path: 'BibleResources', requires_bible_believer: true, sort_order: 330 },
+  
+  // GREEN: Mind + Body Health
+  { name: '── Mind + Body Health ──', is_group_header: true, header_color: 'text-green-400', header_bg_color: 'bg-green-500/10', sort_order: 400 },
+  { name: 'Mental Health', icon: 'Brain', path: 'NeurodivergentSettings', module_id: 'mental_health', sort_order: 410 },
+  { name: 'Daily Wellness', icon: 'Heart', path: 'Wellness', module_id: 'wellness', sort_order: 420 },
+  { name: 'Supplements', icon: 'Tablet', path: 'Supplements', module_id: 'supplements', sort_order: 430 },
+  { name: 'Medications', icon: 'Pill', path: 'Medications', module_id: 'medications', sort_order: 440 },
+  { name: 'Activity Tracker', icon: 'Activity', path: 'ActivityTracker', module_id: 'activity', sort_order: 450 },
   
   // PINK: Creator Suite
-  { name: '── Creator Suite ──', is_group_header: true, header_color: 'text-pink-400', header_bg_color: 'bg-pink-500/10', sort_order: 400 },
-  { name: 'Social Media Suite', icon: 'Share2', is_section: true, module_id: 'tiktok', requires_tiktok_access: true, sort_order: 410 },
-  { name: 'Discover Creators', icon: 'Search', path: 'DiscoverCreators', parent_section: 'Social Media Suite', highlight: true, sort_order: 411 },
-  { name: 'Creator Contacts', icon: 'Users', path: 'TikTokContacts', parent_section: 'Social Media Suite', sort_order: 412 },
-  { name: 'Social Engagement', icon: 'MousePointerClick', path: 'TikTokEngagement', parent_section: 'Social Media Suite', sort_order: 413 },
-  { name: 'Content Calendar', icon: 'Calendar', path: 'LiveSchedule', parent_section: 'Social Media Suite', sort_order: 414 },
-  { name: 'Sunny Songbird', icon: 'Sun', path: 'SongGenerator', parent_section: 'Social Media Suite', sort_order: 415 },
-  { name: 'Gift Gallery Gratitude', icon: 'Gift', path: 'WeeklyGifterGallery', parent_section: 'Social Media Suite', sort_order: 416 },
-  { name: 'Love Away Giveaways', icon: 'Gift', path: 'LoveAway', parent_section: 'Social Media Suite', requires_tiktok_access: true, sort_order: 417 },
-  { name: 'Pictionary Helper', icon: 'Palette', path: 'PictionaryHelper', parent_section: 'Social Media Suite', always_show: true, sort_order: 418 },
-  { name: 'Music & Songs', icon: 'Music', is_section: true, sort_order: 420 },
-  { name: 'Holy Hitmakers', icon: 'Cross', path: 'HolyHitmakers', parent_section: 'Music & Songs', sort_order: 421 },
-  { name: "Ping & Pong's Silly Songs", icon: 'Smile', external_url: 'https://sillysongs.pixelnutscreative.com', parent_section: 'Music & Songs', sort_order: 422 },
+  { name: '── Creator Suite ──', is_group_header: true, header_color: 'text-pink-400', header_bg_color: 'bg-pink-500/10', sort_order: 500 },
+  { name: 'Social Media Suite', icon: 'Share2', is_section: true, module_id: 'tiktok', requires_tiktok_access: true, sort_order: 510 },
+  { name: 'Discover Creators', icon: 'Search', path: 'DiscoverCreators', parent_section: 'Social Media Suite', highlight: true, sort_order: 511 },
+  { name: 'Creator Contacts', icon: 'Users', path: 'TikTokContacts', parent_section: 'Social Media Suite', sort_order: 512 },
+  { name: 'Social Engagement', icon: 'MousePointerClick', path: 'TikTokEngagement', parent_section: 'Social Media Suite', sort_order: 513 },
+  { name: 'Content Calendar', icon: 'Calendar', path: 'LiveSchedule', parent_section: 'Social Media Suite', sort_order: 514 },
+  { name: 'Sunny Songbird', icon: 'Sun', path: 'SongGenerator', parent_section: 'Social Media Suite', sort_order: 515 },
+  { name: 'Gift Gallery Gratitude', icon: 'Gift', path: 'WeeklyGifterGallery', parent_section: 'Social Media Suite', sort_order: 516 },
+  { name: 'Love Away Giveaways', icon: 'Gift', path: 'LoveAway', parent_section: 'Social Media Suite', sort_order: 517 },
+  { name: 'Pictionary Helper', icon: 'Palette', path: 'PictionaryHelper', parent_section: 'Social Media Suite', sort_order: 518 },
+  { name: 'Content Ideas', icon: 'Smile', path: 'SavedMotivations', module_id: 'motivations', sort_order: 520 },
+  { name: "Ping & Pong's Silly Songs", icon: 'Smile', external_url: 'https://sillysongs.pixelnutscreative.com', sort_order: 530 },
   
-  // GREEN: Wellness & Health
-  { name: '── Wellness & Health ──', is_group_header: true, header_color: 'text-green-400', header_bg_color: 'bg-green-500/10', sort_order: 500 },
-  { name: 'Daily Wellness', icon: 'Heart', path: 'Wellness', module_id: 'wellness', sort_order: 510 },
-  { name: 'Mental Health', icon: 'Brain', is_section: true, module_id: 'mental_health', sort_order: 520 },
-  { name: 'Mental Health Hub', icon: 'Brain', path: 'NeurodivergentSettings', parent_section: 'Mental Health', sort_order: 521 },
-  { name: 'Journal', icon: 'FileText', path: 'Journal', parent_section: 'Mental Health', module_id: 'journal', sort_order: 522 },
-  { name: 'Quick Notes', icon: 'StickyNote', path: 'QuickNotes', parent_section: 'Mental Health', sort_order: 523 },
-  { name: 'Supplements', icon: 'Tablet', path: 'Supplements', module_id: 'supplements', sort_order: 530 },
-  { name: 'Medications', icon: 'Pill', path: 'Medications', module_id: 'medications', sort_order: 540 },
-  { name: 'Pet Care', icon: 'PawPrint', path: 'PetCare', module_id: 'pets', sort_order: 550 },
-  
-  // Special items
-  { name: 'SuperFan Access', icon: 'Star', path: 'SuperFanAccess', show_when_no_tiktok_access: true, sort_order: 800 },
-  { name: 'Support', icon: 'HelpCircle', path: 'Support', always_show: true, sort_order: 900 },
-  { name: 'Admin Panel', icon: 'UserCog', path: 'Admin', admin_only: true, sort_order: 999 },
+  // GRAY: Support & Settings
+  { name: '── Support & Settings ──', is_group_header: true, header_color: 'text-gray-400', header_bg_color: 'bg-gray-500/10', sort_order: 800 },
+  { name: 'Support', icon: 'HelpCircle', path: 'Support', always_show: true, sort_order: 810 },
+  { name: 'Settings', icon: 'Settings', path: 'Settings', always_show: true, sort_order: 820 },
+  { name: 'Admin Panel', icon: 'UserCog', path: 'Admin', admin_only: true, sort_order: 900 },
+  { name: 'Community Map', icon: 'Share2', path: 'CommunityMap', admin_only: true, sort_order: 910 },
 ];
 
 export default function AdminMenuContent() {
