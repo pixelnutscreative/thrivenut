@@ -494,10 +494,10 @@ export default function Layout({ children, currentPageName }) {
         animate={{ x: 0 }}
         exit={{ x: '100%' }}
         transition={{ type: 'tween' }}
-        className="lg:hidden fixed inset-0 z-40 pt-16"
+        className="lg:hidden fixed inset-0 z-40 pt-16 flex flex-col"
         style={{ backgroundColor: menuColor }}
       >
-            <nav className="p-6 space-y-1 overflow-y-auto max-h-[calc(100vh-8rem)]">
+            <nav className="flex-1 p-6 space-y-1 overflow-y-auto">
               {navItems.map((item, index) => {
                 // Render group headers (collapsible)
                 if (item.isGroupHeader) {

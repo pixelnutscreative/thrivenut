@@ -1089,50 +1089,50 @@ export default function LiveSchedule() {
 
             {/* Live Types - Only show if type is 'live' */}
             {contentFormData.type === 'live' && (
-            <div className="space-y-2">
-              <Label>Type of Live (select all that apply)</Label>
-              <div className="grid grid-cols-4 gap-2">
-                {Object.entries(liveTypeConfig).map(([key, config]) => {
-                  const Icon = config.icon;
-                  const isSelected = contentFormData.live_types.includes(key);
-                  return (
-                    <div
-                      key={key}
-                      onClick={() => toggleContentLiveType(key)}
-                      className={`p-2 rounded-lg border-2 cursor-pointer transition-all text-xs text-center ${
-                        isSelected
-                          ? 'border-purple-500 bg-purple-50'
-                          : 'border-gray-200 hover:border-purple-300'
-                      }`}
-                    >
-                      <Icon className="w-4 h-4 mx-auto mb-1" />
-                      <span className="block truncate">{config.label}</span>
-                    </div>
-                  );
-                })}
+              <div className="space-y-2">
+                <Label>Type of Live (select all that apply)</Label>
+                <div className="grid grid-cols-4 gap-2">
+                  {Object.entries(liveTypeConfig).map(([key, config]) => {
+                    const Icon = config.icon;
+                    const isSelected = contentFormData.live_types.includes(key);
+                    return (
+                      <div
+                        key={key}
+                        onClick={() => toggleContentLiveType(key)}
+                        className={`p-2 rounded-lg border-2 cursor-pointer transition-all text-xs text-center ${
+                          isSelected
+                            ? 'border-purple-500 bg-purple-50'
+                            : 'border-gray-200 hover:border-purple-300'
+                        }`}
+                      >
+                        <Icon className="w-4 h-4 mx-auto mb-1" />
+                        <span className="block truncate">{config.label}</span>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
             )}
 
             {/* Platforms - Only show if type is 'live' */}
             {contentFormData.type === 'live' && (
-            <div className="space-y-2">
-              <Label>Streaming Platform(s)</Label>
-              <div className="flex flex-wrap gap-2">
-                {Object.entries(platformConfig).map(([key, config]) => {
-                  const isSelected = contentFormData.platforms.includes(key);
-                  return (
-                    <Badge
-                      key={key}
-                      onClick={() => togglePlatform(key)}
-                      className={`cursor-pointer px-3 py-1 ${isSelected ? config.color : 'bg-gray-100 text-gray-600'}`}
-                    >
-                      {config.label}
-                    </Badge>
-                  );
-                })}
+              <div className="space-y-2">
+                <Label>Streaming Platform(s)</Label>
+                <div className="flex flex-wrap gap-2">
+                  {Object.entries(platformConfig).map(([key, config]) => {
+                    const isSelected = contentFormData.platforms.includes(key);
+                    return (
+                      <Badge
+                        key={key}
+                        onClick={() => togglePlatform(key)}
+                        className={`cursor-pointer px-3 py-1 ${isSelected ? config.color : 'bg-gray-100 text-gray-600'}`}
+                      >
+                        {config.label}
+                      </Badge>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
             )}
 
             {/* Recurring toggle */}
