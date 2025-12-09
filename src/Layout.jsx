@@ -296,7 +296,7 @@ export default function Layout({ children, currentPageName }) {
   
   // hasTikTokAccess - admins ALWAYS have access
   const hasTikTokAccess = isAdmin || preferences?.tiktok_access_approved;
-  const isBibleBeliever = preferences?.is_bible_believer || preferences?.greeting_type === 'scripture';
+  const isBibleBeliever = preferences?.enable_bible_options !== false;
 
   // Filter nav items based on enabled modules (order comes from admin config)
   const getOrderedNavItems = () => {

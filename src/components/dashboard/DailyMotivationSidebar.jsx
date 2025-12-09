@@ -21,7 +21,7 @@ export default function DailyMotivationSidebar({
   struggles = [],
   improvements = [],
   customTopics = [],
-  isBibleBeliever = false
+  isBibleBeliever = true
 }) {
   const [motivations, setMotivations] = useState([]);
   const [loading, setLoading] = useState(true);
