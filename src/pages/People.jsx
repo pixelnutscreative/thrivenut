@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Plus, Trash2, Edit, Star, Phone, Search, 
-  Cake, Heart, Briefcase, Users, Building2
+  Cake, Heart, Briefcase, Users, Building2, ChevronDown, ChevronRight, UserPlus, Users2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, parseISO, differenceInDays } from 'date-fns';
@@ -20,6 +20,11 @@ import TikTokTabContent from '../components/contacts/TikTokTabContent';
 import PersonalTabContent from '../components/contacts/PersonalTabContent';
 import BusinessTabContent from '../components/contacts/BusinessTabContent';
 import { useTheme } from '../components/shared/useTheme';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+
+// Import Family Member logic/components if needed, or just redirect for now
+// For this merge, we'll fetch FamilyMembers here
 
 const defaultFormData = {
   real_name: '',
@@ -85,6 +90,12 @@ export default function People() {
   const { data: contacts = [] } = useQuery({
     queryKey: ['tiktokContacts', effectiveEmail],
     queryFn: () => base44.entities.TikTokContact.filter({ created_by: effectiveEmail }, '-created_date'),
+    enabled: !!effectiveEmail,
+  });
+
+  const { data: familyMembers = [] } = useQuery({
+    queryKey: ['familyMembers', effectiveEmail],
+    queryFn: () => base44.entities.FamilyMember.filter({ is_active: true, created_by: effectiveEmail }, 'name'),
     enabled: !!effectiveEmail,
   });
 
@@ -231,66 +242,185 @@ export default function People() {
 
   const { isDark, bgClass, textClass, cardBgClass, subtextClass } = useTheme();
 
-  // Filter to only show IRL contacts in My People
-  const irlContacts = contacts.filter(c => c.is_irl_contact);
+  // Deduplication Logic:
+  // If a TikTokContact (Friend/Lead) has the same name as a FamilyMember, 
+  // we consider the FamilyMember the primary record and hide the TikTokContact from the "Friend" list
+  // to avoid duplication in the UI.
+  const familyNames = familyMembers.map(f => f.name.toLowerCase());
+  
+  // Categorize Contacts
+  const familyContacts = familyMembers.filter(c => 
+    c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    c.nickname?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-  const filteredContacts = irlContacts
-    .filter(c => {
-      const matchesSearch = 
-        c.real_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.nickname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.display_name?.toLowerCase().includes(searchTerm.toLowerCase());
-      return matchesSearch;
-    })
-    .sort((a, b) => (b.is_favorite ? 1 : 0) - (a.is_favorite ? 1 : 0));
+  const friendsContacts = contacts.filter(c => {
+    // Only show if not in family list (by name match)
+    const isDuplicate = familyNames.includes(c.display_name?.toLowerCase()) || familyNames.includes(c.real_name?.toLowerCase());
+    if (isDuplicate) return false;
+
+    // Filter logic
+    const matchesSearch = 
+      c.real_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.nickname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.display_name?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Default to "Friends" if IRL and not business
+    const isBusiness = c.role?.includes('client') || c.role?.includes('lead') || c.businesses?.length > 0;
+    return matchesSearch && c.is_irl_contact && !isBusiness;
+  });
+
+  const businessContacts = contacts.filter(c => {
+    // Only show if not in family list
+    const isDuplicate = familyNames.includes(c.display_name?.toLowerCase()) || familyNames.includes(c.real_name?.toLowerCase());
+    if (isDuplicate) return false;
+
+    const matchesSearch = 
+      c.real_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.nickname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.display_name?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Business logic
+    const isBusiness = c.role?.includes('client') || c.role?.includes('lead') || c.businesses?.length > 0;
+    return matchesSearch && (c.is_irl_contact || c.is_service_professional) && isBusiness;
+  });
+
+  // State for collapsible sections
+  const [openSections, setOpenSections] = useState(['Family', 'Friends', 'Business']);
+
+  const toggleSection = (section) => {
+    setOpenSections(prev => 
+      prev.includes(section) ? prev.filter(s => s !== section) : [...prev, section]
+    );
+  };
+
+  const PeopleGrid = ({ items, type }) => (
+    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <AnimatePresence>
+        {items.map((contact, index) => {
+          if (type === 'family') {
+            // Render Family Card
+            return (
+              <motion.div
+                key={contact.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ delay: index * 0.05 }}
+              >
+                <Card className={`relative overflow-hidden ${cardBgClass} hover:shadow-md transition-shadow`}>
+                  <div className="h-2" style={{ backgroundColor: contact.favorite_color || '#FF69B4' }} />
+                  <div className="absolute top-4 right-3 flex items-center gap-1">
+                    <button onClick={() => window.location.href = '/FamilyMembers'} className={`p-1 ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} rounded`}>
+                      <Edit className={`w-4 h-4 ${isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'}`} />
+                    </button>
+                  </div>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      {contact.profile_image_url ? (
+                        <img src={contact.profile_image_url} alt={contact.name} className="w-12 h-12 rounded-full object-cover" />
+                      ) : (
+                        <div className="w-12 h-12 rounded-full flex items-center justify-center text-xl bg-purple-100 text-purple-600">
+                          {contact.name.charAt(0)}
+                        </div>
+                      )}
+                      <div>
+                        <h3 className={`font-bold ${textClass}`}>{contact.name}</h3>
+                        <p className={`text-sm ${subtextClass} capitalize`}>{contact.relationship}</p>
+                      </div>
+                    </div>
+                    {/* Tiny badges for quick info */}
+                    <div className="flex gap-2 mt-3">
+                        {contact.clothing_sizes?.top && <span className="text-[10px] px-2 py-1 bg-blue-50 text-blue-700 rounded-full">Sizes 👕</span>}
+                        {contact.food_profile?.likes && <span className="text-[10px] px-2 py-1 bg-green-50 text-green-700 rounded-full">Food 🥗</span>}
+                        {contact.wish_list?.length > 0 && <span className="text-[10px] px-2 py-1 bg-pink-50 text-pink-700 rounded-full">{contact.wish_list.length} Wishes 🎁</span>}
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            );
+          } else {
+            // Render Friend/Business Card (Existing Logic)
+            const displayName = contact.real_name || contact.nickname || contact.display_name || `@${contact.username}`;
+            return (
+              <motion.div
+                key={contact.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ delay: index * 0.05 }}
+              >
+                <Card className={`relative overflow-hidden ${contact.is_favorite ? 'ring-2 ring-amber-400' : ''} ${cardBgClass}`}>
+                  <div className="h-2" style={{ backgroundColor: contact.color || '#8B5CF6' }} />
+                  
+                  <div className="absolute top-4 right-3 flex items-center gap-1">
+                    <button onClick={() => handleEdit(contact)} className={`p-1 ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} rounded`}>
+                      <Edit className={`w-4 h-4 ${isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'}`} />
+                    </button>
+                    <button onClick={() => { if (confirm('Delete this contact?')) deleteMutation.mutate(contact.id); }} className={`p-1 ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} rounded`}>
+                      <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-500" />
+                    </button>
+                  </div>
+
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-4">
+                      {contact.image_url ? (
+                        <img src={contact.image_url} alt={displayName} className="w-12 h-12 rounded-full object-cover" />
+                      ) : (
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-white text-lg font-bold">
+                          {displayName?.charAt(0)}
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <h3 className={`font-bold text-base truncate ${textClass}`}>{displayName}</h3>
+                        {contact.username && (
+                          <p className="text-xs text-purple-600">@{contact.username}</p>
+                        )}
+                        {contact.phone && (
+                          <p className={`text-xs ${subtextClass} flex items-center gap-1 mt-1`}>
+                            <Phone className="w-3 h-3" /> {contact.phone}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            );
+          }
+        })}
+      </AnimatePresence>
+    </div>
+  );
 
   return (
     <div className={`min-h-screen ${bgClass} p-4 md:p-8`}>
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className={`text-3xl font-bold ${textClass}`}>My People (IRL)</h1>
-            <p className={`${subtextClass} mt-1`}>Real-life friends, family & the people you actually know</p>
+            <h1 className={`text-3xl font-bold ${textClass}`}>My People</h1>
+            <p className={`${subtextClass} mt-1`}>All your connections in one place</p>
           </div>
-          <Button onClick={() => setShowModal(true)} className="bg-gradient-to-r from-purple-600 to-pink-600">
-            <Plus className="w-4 h-4 mr-2" /> Add Person
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button className="bg-gradient-to-r from-purple-600 to-pink-600">
+                <Plus className="w-4 h-4 mr-2" /> Add Person
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => window.location.href = '/FamilyMembers'}>
+                <Users2 className="w-4 h-4 mr-2" />
+                Add Family Member (Detailed)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setShowModal(true)}>
+                <UserPlus className="w-4 h-4 mr-2" />
+                Add Friend/Contact (Simple)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
-
-        {/* Upcoming Birthdays Banner */}
-        {upcomingBirthdays.length > 0 && (
-          <Card className="bg-gradient-to-r from-pink-500 to-purple-500 text-white">
-            <CardContent className="p-4">
-              <h3 className="font-bold flex items-center gap-2 mb-3"><Cake className="w-5 h-5" /> Upcoming Birthdays</h3>
-              <div className="flex gap-4 overflow-x-auto pb-2">
-                {upcomingBirthdays.slice(0, 5).map(c => {
-                  const bday = parseISO(c.birthday);
-                  const today = new Date();
-                  const thisYearBday = new Date(today.getFullYear(), bday.getMonth(), bday.getDate());
-                  if (thisYearBday < today) thisYearBday.setFullYear(today.getFullYear() + 1);
-                  const daysUntil = differenceInDays(thisYearBday, today);
-                  const displayName = c.real_name || c.nickname || c.display_name || c.username;
-                  return (
-                    <div key={c.id} className="flex-shrink-0 bg-white/20 rounded-lg p-3 text-center min-w-[100px]">
-                      {c.image_url ? (
-                        <img src={c.image_url} alt={displayName} className="w-12 h-12 rounded-full mx-auto mb-2 object-cover" />
-                      ) : (
-                        <div className="w-12 h-12 rounded-full bg-white/30 mx-auto mb-2 flex items-center justify-center text-xl">
-                          {displayName?.charAt(0)}
-                        </div>
-                      )}
-                      <p className="font-semibold text-sm">{displayName}</p>
-                      <p className="text-xs opacity-80">
-                        {daysUntil === 0 ? '🎉 Today!' : `${daysUntil} days`}
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
         {/* Search */}
         <Card className={cardBgClass}>
@@ -298,7 +428,7 @@ export default function People() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
-                placeholder="Search by name, nickname, or username..."
+                placeholder="Search everyone..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className={`pl-10 ${isDark ? 'bg-gray-700 border-gray-600' : ''}`}
@@ -307,106 +437,69 @@ export default function People() {
           </CardContent>
         </Card>
 
-        {/* People Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <AnimatePresence>
-            {filteredContacts.map((contact, index) => {
-              const displayName = contact.real_name || contact.nickname || contact.display_name || `@${contact.username}`;
-              return (
-                <motion.div
-                  key={contact.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                >
-                  <Card className={`relative overflow-hidden ${contact.is_favorite ? 'ring-2 ring-amber-400' : ''} ${cardBgClass}`}>
-                    <div className="h-2" style={{ backgroundColor: contact.color || '#8B5CF6' }} />
-                    
-                    <div className="absolute top-4 right-3 flex items-center gap-1">
-                      <button onClick={() => handleEdit(contact)} className={`p-1 ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} rounded`}>
-                        <Edit className={`w-4 h-4 ${isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'}`} />
-                      </button>
-                      <button onClick={() => { if (confirm('Delete this contact?')) deleteMutation.mutate(contact.id); }} className={`p-1 ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} rounded`}>
-                        <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-500" />
-                      </button>
-                      <button onClick={() => toggleFavoriteMutation.mutate({ id: contact.id, isFavorite: contact.is_favorite })} className={`p-1 ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} rounded`}>
-                        <Star className={`w-4 h-4 ${contact.is_favorite ? 'fill-amber-400 text-amber-400' : 'text-gray-300'}`} />
-                      </button>
-                    </div>
+        {/* Collapsible Sections */}
+        <div className="space-y-4">
+          {/* Family Section */}
+          <Collapsible open={openSections.includes('Family')} onOpenChange={() => toggleSection('Family')}>
+            <div className="flex items-center justify-between mb-2">
+              <CollapsibleTrigger className="flex items-center gap-2 font-semibold text-lg text-gray-700 hover:text-purple-600 transition-colors">
+                {openSections.includes('Family') ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+                Family ({familyContacts.length})
+              </CollapsibleTrigger>
+            </div>
+            <CollapsibleContent>
+              {familyContacts.length > 0 ? (
+                <PeopleGrid items={familyContacts} type="family" />
+              ) : (
+                <div className="p-8 text-center text-gray-400 bg-white/50 rounded-lg border border-dashed">
+                  No family members found.
+                </div>
+              )}
+            </CollapsibleContent>
+          </Collapsible>
 
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-4">
-                        {contact.image_url ? (
-                          <img src={contact.image_url} alt={displayName} className="w-14 h-14 rounded-full object-cover" />
-                        ) : (
-                          <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-white text-xl font-bold">
-                            {displayName?.charAt(0)}
-                          </div>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <h3 className={`font-bold text-lg truncate ${textClass}`}>{displayName}</h3>
-                          {contact.nickname && contact.real_name && (
-                            <p className={`text-sm ${subtextClass}`}>"{contact.nickname}"</p>
-                          )}
-                          {contact.username && (
-                            <p className="text-sm text-purple-600">@{contact.username}</p>
-                          )}
-                          {contact.is_veteran && <span className="text-sm" title="Veteran">🇺🇸</span>}
-                        </div>
-                      </div>
+          <div className="h-px bg-gray-200" />
 
-                      <div className="mt-4 space-y-2 text-sm">
-                        {contact.birthday && (
-                          <p className={`flex items-center gap-2 ${subtextClass}`}>
-                            <Cake className="w-4 h-4 text-pink-500" />
-                            {format(parseISO(contact.birthday), 'MMMM d')}
-                          </p>
-                        )}
-                        {contact.occupation && (
-                          <p className={`flex items-center gap-2 ${subtextClass}`}>
-                            <Briefcase className="w-4 h-4" /> {contact.occupation}
-                          </p>
-                        )}
-                        {contact.phone && (
-                          <a href={`tel:${contact.phone}`} className="flex items-center gap-2 text-purple-600 hover:underline">
-                            <Phone className="w-4 h-4" /> {contact.phone}
-                          </a>
-                        )}
-                        {contact.businesses?.length > 0 && (
-                          <p className={`flex items-center gap-2 ${subtextClass}`}>
-                            <Building2 className="w-4 h-4" />
-                            {contact.businesses.length} business{contact.businesses.length > 1 ? 'es' : ''}
-                          </p>
-                        )}
-                      </div>
+          {/* Friends Section */}
+          <Collapsible open={openSections.includes('Friends')} onOpenChange={() => toggleSection('Friends')}>
+            <div className="flex items-center justify-between mb-2">
+              <CollapsibleTrigger className="flex items-center gap-2 font-semibold text-lg text-gray-700 hover:text-purple-600 transition-colors">
+                {openSections.includes('Friends') ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+                Friends & IRL ({friendsContacts.length})
+              </CollapsibleTrigger>
+            </div>
+            <CollapsibleContent>
+              {friendsContacts.length > 0 ? (
+                <PeopleGrid items={friendsContacts} type="friend" />
+              ) : (
+                <div className="p-8 text-center text-gray-400 bg-white/50 rounded-lg border border-dashed">
+                  No friends found.
+                </div>
+              )}
+            </CollapsibleContent>
+          </Collapsible>
 
-                      {contact.family_roles?.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-3">
-                          {contact.family_roles.slice(0, 3).map((role, i) => (
-                            <Badge key={i} variant="secondary" className="text-xs">{role}</Badge>
-                          ))}
-                          {contact.family_roles.length > 3 && (
-                            <Badge variant="secondary" className="text-xs">+{contact.family_roles.length - 3}</Badge>
-                          )}
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
+          <div className="h-px bg-gray-200" />
+
+          {/* Business Section */}
+          <Collapsible open={openSections.includes('Business')} onOpenChange={() => toggleSection('Business')}>
+            <div className="flex items-center justify-between mb-2">
+              <CollapsibleTrigger className="flex items-center gap-2 font-semibold text-lg text-gray-700 hover:text-purple-600 transition-colors">
+                {openSections.includes('Business') ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+                Business & Clients ({businessContacts.length})
+              </CollapsibleTrigger>
+            </div>
+            <CollapsibleContent>
+              {businessContacts.length > 0 ? (
+                <PeopleGrid items={businessContacts} type="friend" />
+              ) : (
+                <div className="p-8 text-center text-gray-400 bg-white/50 rounded-lg border border-dashed">
+                  No business contacts found.
+                </div>
+              )}
+            </CollapsibleContent>
+          </Collapsible>
         </div>
-
-        {irlContacts.length === 0 && (
-          <div className="text-center py-12">
-            <Users className={`w-12 h-12 ${isDark ? 'text-gray-600' : 'text-gray-300'} mx-auto mb-4`} />
-            <h3 className={`text-lg font-semibold ${subtextClass}`}>No people added yet</h3>
-            <p className={`${subtextClass} mb-4`}>Add friends, family, and connections!</p>
-            <Button onClick={() => setShowModal(true)}><Plus className="w-4 h-4 mr-2" /> Add Person</Button>
-          </div>
-        )}
       </div>
 
       {/* Add/Edit Modal - Same as TikTok Contacts but opens to Personal tab */}
