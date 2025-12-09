@@ -35,7 +35,6 @@ export default function Layout({ children, currentPageName }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [expandedSections, setExpandedSections] = useState(['Social Media Suite']); // Default expand
-  const [collapsedGroups, setCollapsedGroups] = useState([]);
   const [showAccessGate, setShowAccessGate] = useState(false);
   const [userLoading, setUserLoading] = useState(true);
 
@@ -175,13 +174,7 @@ export default function Layout({ children, currentPageName }) {
     );
   };
 
-  const toggleGroup = (groupName) => {
-    setCollapsedGroups(prev =>
-      prev.includes(groupName)
-        ? prev.filter(g => g !== groupName)
-        : [...prev, groupName]
-    );
-  };
+
 
   const isSubItemActive = (item) => {
     if (item.subItems) {
@@ -274,23 +267,15 @@ export default function Layout({ children, currentPageName }) {
               {menuStructure.map((item, index) => {
                 // Group Header
                 if (item.isGroupHeader) {
-                  const isCollapsed = collapsedGroups.includes(item.name);
                   return (
-                    <button
+                    <div
                       key={item.name}
-                      onClick={() => toggleGroup(item.name)}
-                      className={`w-full px-2 py-2 mt-4 mb-1 text-xs font-bold uppercase tracking-wider ${item.color} ${item.bgColor} rounded-lg flex items-center justify-between cursor-pointer hover:opacity-80`}
+                      className={`w-full px-2 py-2 mt-4 mb-1 text-xs font-bold uppercase tracking-wider ${item.color} ${item.bgColor} rounded-lg flex items-center justify-start`}
                     >
                       <span>{item.name.replace(/──/g, '').trim()}</span>
-                      {isCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                    </button>
+                    </div>
                   );
                 }
-
-                // Check Collapse
-                const currentGroupIndex = menuStructure.slice(0, index).reverse().findIndex(i => i.isGroupHeader);
-                const currentGroup = currentGroupIndex !== -1 ? menuStructure[index - currentGroupIndex - 1] : null;
-                if (currentGroup && collapsedGroups.includes(currentGroup.name)) return null;
 
                 // Check permissions/modules
                 if (item.adminOnly && !isAdmin) return null;
@@ -445,23 +430,15 @@ export default function Layout({ children, currentPageName }) {
             {menuStructure.map((item, index) => {
               // Group Header
               if (item.isGroupHeader) {
-                const isCollapsed = collapsedGroups.includes(item.name);
                 return (
-                  <button
+                  <div
                     key={item.name}
-                    onClick={() => toggleGroup(item.name)}
-                    className={`w-full px-2 py-2 mt-4 mb-1 text-xs font-bold uppercase tracking-wider ${item.color} ${item.bgColor} rounded-lg flex items-center justify-between cursor-pointer hover:opacity-80`}
+                    className={`w-full px-2 py-2 mt-4 mb-1 text-xs font-bold uppercase tracking-wider ${item.color} ${item.bgColor} rounded-lg flex items-center justify-start`}
                   >
                     <span>{item.name.replace(/──/g, '').trim()}</span>
-                    {isCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                  </button>
+                  </div>
                 );
               }
-
-              // Check Collapse
-              const currentGroupIndex = menuStructure.slice(0, index).reverse().findIndex(i => i.isGroupHeader);
-              const currentGroup = currentGroupIndex !== -1 ? menuStructure[index - currentGroupIndex - 1] : null;
-              if (currentGroup && collapsedGroups.includes(currentGroup.name)) return null;
 
               // Check permissions/modules
               if (item.adminOnly && !isAdmin) return null;
