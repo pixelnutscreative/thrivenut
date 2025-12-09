@@ -39,6 +39,7 @@ export default function SharedGoalCard({ goal, sharerEmail, sharerName, currentU
 
   const interactionMutation = useMutation({
     mutationFn: async (data) => {
+      if (!currentUser?.email) return;
       return await base44.entities.GoalInteraction.create({
         goal_id: goal.id,
         goal_title: goal.title,

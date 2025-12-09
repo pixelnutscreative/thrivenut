@@ -129,8 +129,9 @@ export default function NotionTaskPicker({ userEmail, onAddToDay }) {
     // Don't show tasks already scheduled for today in the picker
     if (task.scheduled_for_date === today) return false;
     
-    const matchesSearch = !searchQuery || 
-      task.title?.toLowerCase().includes(searchQuery.toLowerCase());
+    const searchLower = (searchQuery && typeof searchQuery === 'string') ? searchQuery.toLowerCase() : '';
+    const matchesSearch = !searchLower || 
+      (task.title && typeof task.title === 'string' && task.title.toLowerCase().includes(searchLower));
     const matchesCategory = categoryFilter === 'all' || task.category === categoryFilter;
     const matchesStatus = statusFilter === 'all' || task.status === statusFilter;
     
@@ -325,8 +326,8 @@ export default function NotionTaskPicker({ userEmail, onAddToDay }) {
                           {task.priority && (
                             <Badge 
                               className={`text-xs ${
-                                task.priority.toLowerCase().includes('high') ? 'bg-red-100 text-red-700' :
-                                task.priority.toLowerCase().includes('low') ? 'bg-green-100 text-green-700' :
+                                (task.priority && typeof task.priority === 'string' && task.priority.toLowerCase().includes('high')) ? 'bg-red-100 text-red-700' :
+                                (task.priority && typeof task.priority === 'string' && task.priority.toLowerCase().includes('low')) ? 'bg-green-100 text-green-700' :
                                 'bg-yellow-100 text-yellow-700'
                               }`}
                             >
