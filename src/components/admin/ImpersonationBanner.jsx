@@ -39,7 +39,7 @@ export default function ImpersonationBanner() {
 
 // Helper to get the current "user" identifier (real or impersonated)
 export function getEffectiveUserEmail(realUserEmail) {
-  if (typeof window === 'undefined' || typeof sessionStorage === 'undefined') {
+  if (!realUserEmail || typeof window === 'undefined' || typeof sessionStorage === 'undefined') {
     return realUserEmail;
   }
   try {
