@@ -17,6 +17,7 @@ import { createPageUrl } from '../../utils';
 const builtInActions = [
   { id: 'mood', label: 'Mood', icon: Smile, color: 'bg-pink-500' },
   { id: 'water', label: 'Water', icon: Droplet, color: 'bg-blue-500' },
+  { id: 'task', label: 'Task', icon: Check, color: 'bg-teal-500' },
   { id: 'food', label: 'Food', icon: Utensils, color: 'bg-orange-500' },
   { id: 'idea', label: 'Idea', icon: Lightbulb, color: 'bg-yellow-500' },
   { id: 'negative_thought', label: 'Reframe', icon: Cloud, color: 'bg-purple-500' },
@@ -37,7 +38,7 @@ const defaultMoodOptions = [
   { emoji: '😴', label: 'Tired', value: 'tired' },
 ];
 
-const iconMap = { Smile, Droplet, Utensils, Lightbulb, Cloud, StickyNote, Heart, Home, Music, Zap, Link, ExternalLink };
+const iconMap = { Smile, Droplet, Utensils, Lightbulb, Cloud, StickyNote, Heart, Home, Music, Zap, Link, ExternalLink, Check };
 
 export default function QuickActionsWidget({ preferences, primaryColor, accentColor }) {
   const queryClient = useQueryClient();
@@ -202,6 +203,8 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
   const handleAction = (actionId) => {
     if (actionId === 'water') {
       waterLogMutation.mutate();
+    } else if (actionId === 'task') {
+      window.location.href = createPageUrl('Tasks');
     } else {
       setActiveAction(actionId);
     }
@@ -402,35 +405,36 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
         {/* Scrollable Action buttons container */}
         <div 
           ref={scrollContainerRef}
-          className="flex items-center gap-1 overflow-x-auto scrollbar-hide"
+          className="flex items-center gap-1"
           style={{ 
+            overflowX: 'auto',
             scrollbarWidth: 'none',
             msOverflowStyle: 'none',
-            WebkitOverflowScrolling: 'touch'
+            maxWidth: isMobile ? 'calc(100vw - 200px)' : '300px'
           }}
         >
           {visibleActions.map((action) => {
             const Icon = action.icon;
             
             // Get count/display data for this action
-            let badge = null;
-            let badgeColor = 'bg-white text-gray-900';
+            let displayContent = null;
+            let showIcon = true;
             
             if (action.id === 'water') {
               const waterCount = todaysWater?.glasses || 0;
               if (waterCount > 0) {
-                badge = waterCount;
-                badgeColor = 'bg-blue-100 text-blue-900';
+                displayContent = waterCount;
+                showIcon = false;
               }
             } else if (action.id === 'mood') {
               if (latestMood) {
                 const moodEmoji = allMoodOptions.find(m => m.value === latestMood.mood)?.emoji || '😊';
-                badge = moodEmoji;
-                badgeColor = 'bg-transparent text-xl';
+                displayContent = moodEmoji;
+                showIcon = false;
               }
             } else if (noteCounts[action.id] > 0) {
-              badge = noteCounts[action.id];
-              badgeColor = 'bg-white/90 text-gray-900';
+              displayContent = noteCounts[action.id];
+              showIcon = false;
             }
             
             // Handle custom actions with page/external links
@@ -442,7 +446,7 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
                     href={action.external_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`w-9 h-9 flex-shrink-0 rounded-full ${action.color} flex items-center justify-center text-white hover:opacity-90 transition-all hover:scale-110 relative`}
+                    className={`w-9 h-9 flex-shrink-0 rounded-full ${action.color} flex items-center justify-center text-white hover:opacity-90 transition-all hover:scale-110`}
                     title={action.label}
                   >
                     <Icon className="w-4 h-4" />
@@ -454,7 +458,7 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
                   <RouterLink
                     key={action.id}
                     to={createPageUrl(action.page)}
-                    className={`w-9 h-9 flex-shrink-0 rounded-full ${action.color} flex items-center justify-center text-white hover:opacity-90 transition-all hover:scale-110 relative`}
+                    className={`w-9 h-9 flex-shrink-0 rounded-full ${action.color} flex items-center justify-center text-white hover:opacity-90 transition-all hover:scale-110`}
                     title={action.label}
                   >
                     <Icon className="w-4 h-4" />
@@ -472,29 +476,32 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
                 whileTap={{ scale: 0.95 }}
                 title={action.label}
               >
-                <Icon className="w-4 h-4" />
-                {badge !== null && (
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className={`absolute -top-1 -right-1 min-w-[16px] h-4 ${badgeColor} rounded-full flex items-center justify-center px-1 text-[10px] font-bold shadow-sm`}
-                  >
-                    {badge}
-                  </motion.div>
+                {showIcon ? (
+                  <Icon className="w-4 h-4" />
+                ) : (
+                  <span className="text-lg font-bold">
+                    {displayContent}
+                  </span>
                 )}
                 {action.id === 'water' && waterSuccess && (
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center"
+                    className="absolute inset-0 bg-green-500 rounded-full flex items-center justify-center"
                   >
-                    <Check className="w-3 h-3 text-white" />
+                    <Check className="w-4 h-4 text-white" />
                   </motion.div>
                 )}
               </motion.button>
             );
           })}
         </div>
+        
+        <style jsx>{`
+          div::-webkit-scrollbar {
+            display: none;
+          }
+        `}</style>
 
         {/* Scroll Right Button */}
         {visibleActions.length > 5 && (
@@ -611,7 +618,7 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
 
       {/* Note Input Popup */}
       <AnimatePresence>
-        {['food', 'idea', 'negative_thought', 'note', 'gratitude'].includes(activeAction) && (
+        {['food', 'idea', 'negative_thought', 'note', 'gratitude', 'task'].includes(activeAction) && (
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -629,6 +636,7 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
                 {activeAction === 'negative_thought' && '☁️ Reframe Thought'}
                 {activeAction === 'note' && '📝 Quick Note'}
                 {activeAction === 'gratitude' && '❤️ Gratitude'}
+                {activeAction === 'task' && '✅ Quick Task'}
               </h3>
               <button onClick={() => setActiveAction(null)} className="p-1 hover:bg-gray-100 rounded">
                 <X className="w-4 h-4" />
@@ -642,6 +650,7 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
                 activeAction === 'idea' ? 'What\'s your idea?' :
                 activeAction === 'negative_thought' ? 'What negative thought are you having?' :
                 activeAction === 'gratitude' ? 'What are you grateful for?' :
+                activeAction === 'task' ? 'What do you need to do?' :
                 'Write a quick note...'
               }
               className="min-h-[80px] mb-3"
