@@ -138,7 +138,7 @@ export default function Settings() {
     quick_actions: ['mood', 'water', 'food', 'note'],
     quick_actions_position: 'bottom',
     custom_quick_actions: [],
-    soundcloud_playlist_url: '',
+    soundcloud_playlist_url: 'https://soundcloud.com/pixel-nuts-creative/sets/tiktok-songs-based-on',
     soundcloud_player_position: 'hidden',
     custom_mood_options: [],
     top_mood_emojis: ['great', 'good', 'okay', 'low', 'anxious', 'sad', 'motivated']
@@ -196,7 +196,7 @@ export default function Settings() {
         quick_actions: preferences.quick_actions || ['mood', 'water', 'food', 'note'],
         quick_actions_position: preferences.quick_actions_position || 'bottom',
         custom_quick_actions: preferences.custom_quick_actions || [],
-        soundcloud_playlist_url: preferences.soundcloud_playlist_url || '',
+        soundcloud_playlist_url: preferences.soundcloud_playlist_url || 'https://soundcloud.com/pixel-nuts-creative/sets/tiktok-songs-based-on',
         soundcloud_player_position: preferences.soundcloud_player_position || 'hidden',
         custom_mood_options: preferences.custom_mood_options || [],
         top_mood_emojis: preferences.top_mood_emojis || ['great', 'good', 'okay', 'low', 'anxious', 'sad', 'motivated']
