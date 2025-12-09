@@ -16,6 +16,7 @@ const categories = [
   { id: 'visit', label: 'To Visit', emoji: '📍' },
   { id: 'listen', label: 'To Listen', emoji: '🎧' },
   { id: 'try', label: 'To Try', emoji: '🧪' },
+  { id: 'bucket_list', label: 'Bucket List', emoji: '🌠' },
   { id: 'other', label: 'Other', emoji: '📦' }
 ];
 

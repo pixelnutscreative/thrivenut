@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { 
   Plus, Search, ExternalLink, User, CheckCircle2, Circle, Trash2, 
-  Film, Book, Search as SearchIcon, ShoppingCart, RotateCcw, MapPin, Headphones, FlaskConical, Package
+  Film, Book, Search as SearchIcon, ShoppingCart, RotateCcw, MapPin, Headphones, FlaskConical, Package, Star
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../components/shared/useTheme';
@@ -23,6 +23,7 @@ const categories = [
   { id: 'visit', label: 'Visit', emoji: '📍', icon: MapPin, color: 'text-rose-600', bg: 'bg-rose-100', border: 'border-rose-200' },
   { id: 'listen', label: 'Listen', emoji: '🎧', icon: Headphones, color: 'text-indigo-600', bg: 'bg-indigo-100', border: 'border-indigo-200' },
   { id: 'try', label: 'Try', emoji: '🧪', icon: FlaskConical, color: 'text-cyan-600', bg: 'bg-cyan-100', border: 'border-cyan-200' },
+  { id: 'bucket_list', label: 'Bucket List', emoji: '🌠', icon: Star, color: 'text-yellow-600', bg: 'bg-yellow-100', border: 'border-yellow-200' },
   { id: 'other', label: 'Other', emoji: '📦', icon: Package, color: 'text-gray-600', bg: 'bg-gray-100', border: 'border-gray-200' }
 ];
 
