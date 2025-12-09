@@ -1112,8 +1112,6 @@ export default function LiveSchedule() {
                 })}
               </div>
             </div>
-
-            </div>
             )}
 
             {/* Platforms - Only show if type is 'live' */}
