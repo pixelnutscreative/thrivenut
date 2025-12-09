@@ -33,6 +33,7 @@ const categories = [
 export default function PrayerRequests() {
   const queryClient = useQueryClient();
   const { isDark, bgClass, textClass, cardBgClass, primaryColor, accentColor } = useTheme();
+  const [user, setUser] = useState(null);
   
   // Fetch Preferences to determine title
   const { data: preferences } = useQuery({
@@ -47,8 +48,6 @@ export default function PrayerRequests() {
   });
 
   const isBibleEnabled = preferences?.enable_bible_options !== false;
-
-  const [user, setUser] = useState(null);
   const [showNewRequest, setShowNewRequest] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [messageContent, setMessageContent] = useState('');
