@@ -869,6 +869,9 @@ export default function MyDaySection({
       onToggleTask('completed_care_reminders', updated);
     } else if (task.type === 'content') {
       contentGoalMutation.mutate({ field: task.field, index: task.index });
+    } else if (task.type === 'calendar') {
+      const taskId = `calendar_${task.id}`;
+      onToggleTask(taskId, !isTaskComplete(task));
     }
   };
 
@@ -1394,9 +1397,9 @@ export default function MyDaySection({
                                   rel="noopener noreferrer"
                                   onClick={(e) => e.stopPropagation()}
                                   className="p-2 hover:bg-gray-100 rounded-lg"
-                                  title={task.isCalendarEvent ? "View in Google Calendar" : "Open"}
+                                  title={task.isCalendarEvent ? "Edit in Google Calendar" : "Open"}
                                 >
-                                  {task.isCalendarEvent ? <ExternalLink className="w-4 h-4 text-blue-400" /> : <ExternalLink className="w-4 h-4 text-gray-400" />}
+                                  {task.isCalendarEvent ? <Pencil className="w-4 h-4 text-blue-400" /> : <ExternalLink className="w-4 h-4 text-gray-400" />}
                                 </a>
                               )}
 
