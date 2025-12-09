@@ -203,19 +203,19 @@ export default function Layout({ children, currentPageName }) {
   const [collapsedGroups, setCollapsedGroups] = useState([]);
 
   const toggleGroup = (groupId) => {
-    setCollapsedGroups(prev => 
-      prev.includes(groupId) 
-        ? prev.filter(id => id !== groupId)
-        : [...prev, groupId]
+    setCollapsedGroups(previousGroups => 
+      previousGroups.includes(groupId) 
+        ? previousGroups.filter(id => id !== groupId)
+        : [...previousGroups, groupId]
     );
   };
 
   // Logic to toggle expanded sections
   const toggleSection = (sectionName) => {
-    setExpandedSections(prev => 
-      prev.includes(sectionName) 
-        ? prev.filter(s => s !== sectionName)
-        : [...prev, sectionName]
+    setExpandedSections(previousSections => 
+      previousSections.includes(sectionName) 
+        ? previousSections.filter(s => s !== sectionName)
+        : [...previousSections, sectionName]
     );
   };
 
