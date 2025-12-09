@@ -29,7 +29,7 @@ export default function Dashboard() {
     const [loading, setLoading] = useState(true);
     const [collapsedSections, setCollapsedSections] = useState([]);
   
-  const { isDark, bgClass, textClass, cardBgClass, primaryColor } = useTheme();
+  const { bgClass, textClass, cardBgClass, primaryColor } = useTheme();
 
   // Get current week's Monday
   const getCurrentWeekStart = () => {
@@ -207,7 +207,7 @@ export default function Dashboard() {
   const isSectionCollapsed = (sectionId) => collapsedSections.includes(sectionId);
 
   return (
-    <div className={`min-h-screen ${bgClass} ${isDark ? 'text-gray-100' : ''} p-4 md:p-8`}>
+    <div className={`min-h-screen ${bgClass} p-4 md:p-8`}>
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Daily Motivation Banner - AT THE TOP */}
         <DailyMotivationBanner

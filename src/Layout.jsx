@@ -81,17 +81,9 @@ export default function Layout({ children, currentPageName }) {
   const enabledModules = preferences?.enabled_modules || ['tiktok', 'gifter', 'goals', 'tasks', 'wellness', 'supplements', 'medications', 'pets', 'care_reminders', 'people', 'journal', 'mental_health', 'finance', 'activity'];
 
   // --- THEME HANDLING ---
-  const [systemDark, setSystemDark] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
-  });
-
-  // Initial theme values
   const primaryColor = preferences?.primary_color || '#1fd2ea';
   const accentColor = preferences?.accent_color || '#bd84f5';
-  const themeType = preferences?.theme_type || 'light';
-  const isDark = themeType === 'dark' || (themeType === 'system' && systemDark);
-  const menuColor = preferences?.menu_color || (isDark ? '#2a2a30' : '#ffffff');
+  const menuColor = preferences?.menu_color || '#2a2a30';
 
   // Determine if menu text should be light or dark based on background luminance
   const isMenuDark = useMemo(() => {
@@ -203,9 +195,7 @@ export default function Layout({ children, currentPageName }) {
   };
 
   // --- STYLES ---
-  const bgClass = isDark 
-    ? 'bg-[#1f1f23] text-gray-100' 
-    : 'bg-gradient-to-br from-teal-50 via-purple-50 to-blue-50 text-gray-900';
+  const bgClass = 'bg-gradient-to-br from-teal-50 via-purple-50 to-blue-50 text-gray-900';
 
   const sidebarStyle = {
     backgroundColor: menuColor,
