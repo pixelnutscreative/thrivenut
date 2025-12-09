@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, Plus, Calendar, Trash2, Edit, Save, Gift, Shirt, Palette, Heart, X, ExternalLink, Camera, Sparkles, MessageCircle, Music, Utensils, Coffee, TriangleAlert } from 'lucide-react';
+import { Users, Plus, Calendar, Trash2, Edit, Save, Gift, Shirt, Palette, Heart, X, ExternalLink, Camera, Sparkles, MessageCircle, Music, Utensils, Coffee, TriangleAlert, User, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../components/shared/useTheme';
 import ImageUploader from '../components/settings/ImageUploader';
