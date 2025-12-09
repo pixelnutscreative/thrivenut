@@ -119,6 +119,7 @@ const defaultNavItems = [
   
   // INDIGO: Life & Organization
   { name: '── Life & Organization ──', isGroupHeader: true, color: 'text-indigo-400', bgColor: 'bg-indigo-500/10' },
+  { name: 'Finances', icon: iconMap.TrendingUp, path: 'Finance', moduleId: 'tasks' },
   { name: 'Tasks', icon: FileText, path: 'Tasks', moduleId: 'tasks' },
   { name: 'Family Members', icon: Users, path: 'FamilyMembers', moduleId: 'people' },
   { name: 'Work Schedules', icon: Briefcase, path: 'WorkSchedules', moduleId: 'work' },

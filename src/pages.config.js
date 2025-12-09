@@ -41,6 +41,7 @@ import LoveAway from './pages/LoveAway';
 import WorkSchedules from './pages/WorkSchedules';
 import CleaningTasks from './pages/CleaningTasks';
 import PictionaryHelper from './pages/PictionaryHelper';
+import Finance from './pages/Finance';
 import __Layout from './Layout.jsx';
 
 
@@ -88,6 +89,7 @@ export const PAGES = {
     "WorkSchedules": WorkSchedules,
     "CleaningTasks": CleaningTasks,
     "PictionaryHelper": PictionaryHelper,
+    "Finance": Finance,
 }
 
 export const pagesConfig = {
