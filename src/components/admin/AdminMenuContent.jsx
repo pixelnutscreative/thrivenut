@@ -22,34 +22,56 @@ const availableIcons = [
 ];
 
 const defaultMenuItems = [
-  { name: "Pixel's Place", icon: 'Sparkles', path: 'PixelsParadise', always_show: true, sort_order: 10 },
-  { name: 'Saved Motivations', icon: 'Bookmark', path: 'SavedMotivations', always_show: true, sort_order: 20 },
-  { name: 'Dashboard', icon: 'LayoutDashboard', path: 'Dashboard', always_show: true, sort_order: 30 },
-  { name: 'Social Media Suite', icon: 'Share2', is_section: true, module_id: 'tiktok', requires_tiktok_access: true, sort_order: 40 },
-  { name: 'Discover Creators', icon: 'Search', path: 'DiscoverCreators', parent_section: 'Social Media Suite', highlight: true, sort_order: 41 },
-  { name: 'Creator Contacts', icon: 'Users', path: 'TikTokContacts', parent_section: 'Social Media Suite', sort_order: 42 },
-  { name: 'Social Engagement', icon: 'MousePointerClick', path: 'TikTokEngagement', parent_section: 'Social Media Suite', sort_order: 43 },
-  { name: 'Content Calendar', icon: 'Calendar', path: 'LiveSchedule', parent_section: 'Social Media Suite', sort_order: 44 },
-  { name: 'Sunny Songbird', icon: 'Sun', path: 'SongGenerator', parent_section: 'Social Media Suite', sort_order: 45 },
-  { name: 'Gift Gallery Gratitude', icon: 'Gift', path: 'WeeklyGifterGallery', parent_section: 'Social Media Suite', sort_order: 46 },
-  { name: 'Music & Songs', icon: 'Music', is_section: true, sort_order: 50 },
-  { name: 'Holy Hitmakers', icon: 'Cross', path: 'HolyHitmakers', parent_section: 'Music & Songs', sort_order: 51 },
-  { name: "Ping & Pong's Silly Songs", icon: 'Smile', external_url: 'https://sillysongs.pixelnutscreative.com', parent_section: 'Music & Songs', sort_order: 52 },
-  { name: 'Goals', icon: 'Target', path: 'Goals', module_id: 'goals', sort_order: 60 },
-  { name: 'Vision Board', icon: 'Eye', path: 'VisionBoard', module_id: 'goals', sort_order: 61 },
-  { name: 'Prayer Requests', icon: 'HandMetal', path: 'PrayerRequests', requires_bible_believer: true, sort_order: 70 },
-  { name: 'Mental Health', icon: 'Brain', is_section: true, module_id: 'mental_health', sort_order: 80 },
-  { name: 'Mental Health Hub', icon: 'Brain', path: 'NeurodivergentSettings', parent_section: 'Mental Health', sort_order: 81 },
-  { name: 'Journal', icon: 'FileText', path: 'Journal', parent_section: 'Mental Health', module_id: 'journal', sort_order: 82 },
-  { name: 'Quick Notes', icon: 'StickyNote', path: 'QuickNotes', parent_section: 'Mental Health', sort_order: 83 },
-  { name: 'Wellness', icon: 'Heart', is_section: true, module_id: 'wellness', sort_order: 90 },
-  { name: 'Daily Wellness', icon: 'Heart', path: 'Wellness', parent_section: 'Wellness', sort_order: 91 },
-  { name: 'Supplements', icon: 'Tablet', path: 'Supplements', parent_section: 'Wellness', module_id: 'supplements', sort_order: 92 },
-  { name: 'Medications', icon: 'Pill', path: 'Medications', parent_section: 'Wellness', module_id: 'medications', sort_order: 93 },
-  { name: 'Pet Care', icon: 'PawPrint', path: 'PetCare', parent_section: 'Wellness', module_id: 'pets', sort_order: 94 },
-  { name: 'Care Reminders', icon: 'Bell', path: 'CareReminders', parent_section: 'Wellness', module_id: 'care_reminders', sort_order: 95 },
-  { name: 'My People (IRL)', icon: 'Users', path: 'People', module_id: 'people', sort_order: 100 },
-  { name: 'SuperFan Access', icon: 'Star', path: 'SuperFanAccess', show_when_no_tiktok_access: true, sort_order: 110 },
+  // Core Life (no header)
+  { name: 'Dashboard', icon: 'LayoutDashboard', path: 'Dashboard', always_show: true, sort_order: 10 },
+  { name: "Pixel's Place", icon: 'Sparkles', path: 'PixelsParadise', always_show: true, sort_order: 20 },
+  
+  // PURPLE: Faith & Purpose
+  { name: '── Faith & Purpose ──', is_group_header: true, header_color: 'text-purple-400', header_bg_color: 'bg-purple-500/10', sort_order: 100 },
+  { name: 'Goals', icon: 'Target', path: 'Goals', module_id: 'goals', sort_order: 110 },
+  { name: 'Vision Board', icon: 'Eye', path: 'VisionBoard', module_id: 'goals', sort_order: 120 },
+  { name: 'Saved Motivations', icon: 'Bookmark', path: 'SavedMotivations', always_show: true, sort_order: 130 },
+  { name: 'Prayer Requests', icon: 'Heart', path: 'PrayerRequests', requires_bible_believer: true, sort_order: 140 },
+  { name: 'Tasks', icon: 'FileText', path: 'Tasks', module_id: 'tasks', sort_order: 150 },
+  { name: 'Family Members', icon: 'Users', path: 'FamilyMembers', module_id: 'people', sort_order: 160 },
+  { name: 'Work Schedules', icon: 'Briefcase', path: 'WorkSchedules', always_show: true, sort_order: 170 },
+  { name: 'Cleaning Tasks', icon: 'Sparkles', path: 'CleaningTasks', always_show: true, sort_order: 180 },
+  
+  // PINK: Creator Life
+  { name: '── Creator Life ──', is_group_header: true, header_color: 'text-pink-400', header_bg_color: 'bg-pink-500/10', sort_order: 200 },
+  { name: 'Social Media Suite', icon: 'Share2', is_section: true, module_id: 'tiktok', requires_tiktok_access: true, sort_order: 210 },
+  { name: 'Discover Creators', icon: 'Search', path: 'DiscoverCreators', parent_section: 'Social Media Suite', highlight: true, sort_order: 211 },
+  { name: 'Creator Contacts', icon: 'Users', path: 'TikTokContacts', parent_section: 'Social Media Suite', sort_order: 212 },
+  { name: 'Social Engagement', icon: 'MousePointerClick', path: 'TikTokEngagement', parent_section: 'Social Media Suite', sort_order: 213 },
+  { name: 'Content Calendar', icon: 'Calendar', path: 'LiveSchedule', parent_section: 'Social Media Suite', sort_order: 214 },
+  { name: 'Sunny Songbird', icon: 'Sun', path: 'SongGenerator', parent_section: 'Social Media Suite', sort_order: 215 },
+  { name: 'Gift Gallery Gratitude', icon: 'Gift', path: 'WeeklyGifterGallery', parent_section: 'Social Media Suite', sort_order: 216 },
+  { name: 'Love Away Giveaways', icon: 'Gift', path: 'LoveAway', parent_section: 'Social Media Suite', requires_tiktok_access: true, sort_order: 217 },
+  { name: 'Pictionary Helper', icon: 'Palette', path: 'PictionaryHelper', parent_section: 'Social Media Suite', always_show: true, sort_order: 218 },
+  { name: 'Music & Songs', icon: 'Music', is_section: true, sort_order: 220 },
+  { name: 'Holy Hitmakers', icon: 'Cross', path: 'HolyHitmakers', parent_section: 'Music & Songs', sort_order: 221 },
+  { name: "Ping & Pong's Silly Songs", icon: 'Smile', external_url: 'https://sillysongs.pixelnutscreative.com', parent_section: 'Music & Songs', sort_order: 222 },
+  
+  // AMBER: Mental & Emotional
+  { name: '── Mental & Emotional ──', is_group_header: true, header_color: 'text-amber-400', header_bg_color: 'bg-amber-500/10', sort_order: 300 },
+  { name: 'Mental Health', icon: 'Brain', is_section: true, module_id: 'mental_health', sort_order: 310 },
+  { name: 'Mental Health Hub', icon: 'Brain', path: 'NeurodivergentSettings', parent_section: 'Mental Health', sort_order: 311 },
+  { name: 'Journal', icon: 'FileText', path: 'Journal', parent_section: 'Mental Health', module_id: 'journal', sort_order: 312 },
+  { name: 'Quick Notes', icon: 'StickyNote', path: 'QuickNotes', parent_section: 'Mental Health', sort_order: 313 },
+  
+  // GREEN: Health & Care
+  { name: '── Health & Care ──', is_group_header: true, header_color: 'text-green-400', header_bg_color: 'bg-green-500/10', sort_order: 400 },
+  { name: 'Daily Wellness', icon: 'Heart', path: 'Wellness', module_id: 'wellness', sort_order: 410 },
+  { name: 'Supplements', icon: 'Tablet', path: 'Supplements', module_id: 'supplements', sort_order: 420 },
+  { name: 'Medications', icon: 'Pill', path: 'Medications', module_id: 'medications', sort_order: 430 },
+  { name: 'Care Reminders', icon: 'Bell', path: 'CareReminders', module_id: 'care_reminders', sort_order: 440 },
+  { name: 'Pet Care', icon: 'PawPrint', path: 'PetCare', module_id: 'pets', sort_order: 450 },
+  
+  // BLUE: Fun & Tools (no longer "Connections" to avoid confusion)
+  { name: '── Fun & Tools ──', is_group_header: true, header_color: 'text-blue-400', header_bg_color: 'bg-blue-500/10', sort_order: 500 },
+  
+  // Special items
+  { name: 'SuperFan Access', icon: 'Star', path: 'SuperFanAccess', show_when_no_tiktok_access: true, sort_order: 800 },
   { name: 'Support', icon: 'HelpCircle', path: 'Support', always_show: true, sort_order: 900 },
   { name: 'Admin Panel', icon: 'UserCog', path: 'Admin', admin_only: true, sort_order: 999 },
 ];
@@ -65,6 +87,9 @@ export default function AdminMenuContent() {
     external_url: '',
     parent_section: '',
     is_section: false,
+    is_group_header: false,
+    header_color: 'text-purple-400',
+    header_bg_color: 'bg-purple-500/10',
     module_id: '',
     requires_tiktok_access: false,
     requires_bible_believer: false,
@@ -126,6 +151,9 @@ export default function AdminMenuContent() {
       external_url: '',
       parent_section: '',
       is_section: false,
+      is_group_header: false,
+      header_color: 'text-purple-400',
+      header_bg_color: 'bg-purple-500/10',
       module_id: '',
       requires_tiktok_access: false,
       requires_bible_believer: false,
@@ -148,6 +176,9 @@ export default function AdminMenuContent() {
       external_url: item.external_url || '',
       parent_section: item.parent_section || '',
       is_section: item.is_section || false,
+      is_group_header: item.is_group_header || false,
+      header_color: item.header_color || 'text-purple-400',
+      header_bg_color: item.header_bg_color || 'bg-purple-500/10',
       module_id: item.module_id || '',
       requires_tiktok_access: item.requires_tiktok_access || false,
       requires_bible_believer: item.requires_bible_believer || false,
@@ -409,8 +440,54 @@ export default function AdminMenuContent() {
                 <Switch checked={formData.is_section} onCheckedChange={(v) => setFormData({ ...formData, is_section: v })} />
               </div>
               <div className="flex items-center justify-between">
+                <Label>Is Group Header</Label>
+                <Switch checked={formData.is_group_header} onCheckedChange={(v) => setFormData({ ...formData, is_group_header: v })} />
+              </div>
+            </div>
+
+            {formData.is_group_header && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Header Text Color</Label>
+                  <Select value={formData.header_color} onValueChange={(v) => setFormData({ ...formData, header_color: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="text-purple-400">Purple</SelectItem>
+                      <SelectItem value="text-pink-400">Pink</SelectItem>
+                      <SelectItem value="text-amber-400">Amber</SelectItem>
+                      <SelectItem value="text-green-400">Green</SelectItem>
+                      <SelectItem value="text-blue-400">Blue</SelectItem>
+                      <SelectItem value="text-indigo-400">Indigo</SelectItem>
+                      <SelectItem value="text-teal-400">Teal</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Header Background</Label>
+                  <Select value={formData.header_bg_color} onValueChange={(v) => setFormData({ ...formData, header_bg_color: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="bg-purple-500/10">Purple</SelectItem>
+                      <SelectItem value="bg-pink-500/10">Pink</SelectItem>
+                      <SelectItem value="bg-amber-500/10">Amber</SelectItem>
+                      <SelectItem value="bg-green-500/10">Green</SelectItem>
+                      <SelectItem value="bg-blue-500/10">Blue</SelectItem>
+                      <SelectItem value="bg-indigo-500/10">Indigo</SelectItem>
+                      <SelectItem value="bg-teal-500/10">Teal</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex items-center justify-between">
                 <Label>Always Show</Label>
                 <Switch checked={formData.always_show} onCheckedChange={(v) => setFormData({ ...formData, always_show: v })} />
+              </div>
+              <div className="flex items-center justify-between">
+                <Label>Highlight</Label>
+                <Switch checked={formData.highlight} onCheckedChange={(v) => setFormData({ ...formData, highlight: v })} />
               </div>
             </div>
 
@@ -426,10 +503,6 @@ export default function AdminMenuContent() {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="flex items-center justify-between">
-                <Label>Highlight</Label>
-                <Switch checked={formData.highlight} onCheckedChange={(v) => setFormData({ ...formData, highlight: v })} />
-              </div>
               <div className="flex items-center justify-between">
                 <Label>Active</Label>
                 <Switch checked={formData.is_active} onCheckedChange={(v) => setFormData({ ...formData, is_active: v })} />
