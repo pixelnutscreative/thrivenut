@@ -774,7 +774,14 @@ export default function Settings() {
 
                       <div className="grid md:grid-cols-2 gap-6">
                         <div className="space-y-4">
-                          <h4 className="font-medium">Daily Prayers</h4>
+                          <h4 className="font-medium">Daily Habits</h4>
+                          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <span>Bible Reading</span>
+                            <Switch 
+                              checked={prefData.enable_daily_reading !== false}
+                              onCheckedChange={(checked) => setPrefData({ ...prefData, enable_daily_reading: checked })}
+                            />
+                          </div>
                           <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                             <span>Morning Prayer</span>
                             <Switch 

@@ -364,8 +364,13 @@ export default function MyDaySection({
     const tasks = [];
     
     // Core self-care tasks
-    if (preferences?.enable_bible_options !== false && preferences?.enable_morning_prayer) {
-      tasks.push({ id: 'bible_reading_morning', type: 'selfcare', label: 'Morning Prayer', icon: BookOpen, color: 'text-amber-600', timeOfDay: 'morning', order: 1, externalLink: 'https://www.bible.com/reading-plans' });
+    if (preferences?.enable_bible_options !== false) {
+      if (preferences?.enable_daily_reading !== false) {
+        tasks.push({ id: 'bible_reading_morning', type: 'selfcare', label: 'Morning Bible Reading', icon: BookOpen, color: 'text-amber-600', timeOfDay: 'morning', order: 1, externalLink: 'https://www.bible.com/reading-plans' });
+      }
+      if (preferences?.enable_morning_prayer) {
+        tasks.push({ id: 'prayer_morning', type: 'selfcare', label: 'War Room (Prayer)', icon: Heart, color: 'text-pink-600', timeOfDay: 'morning', order: 1.1, isLink: true, linkTo: 'PrayerRequests' });
+      }
     }
     tasks.push({ id: 'drank_water', type: 'selfcare', label: 'Drink water', sublabel: 'Start hydrated', icon: Droplet, color: 'text-sky-500', timeOfDay: 'morning', order: 2 });
     tasks.push({ id: 'shower_completed', type: 'selfcare', label: 'Take a shower', icon: ShowerHead, color: 'text-blue-500', timeOfDay: 'morning', order: 3 });
@@ -434,8 +439,13 @@ export default function MyDaySection({
     
     // Night tasks
     tasks.push({ id: 'brushed_teeth_night', type: 'selfcare', label: 'Brush teeth (PM)', icon: Sparkles, color: 'text-indigo-500', timeOfDay: 'night', order: 90 });
-    if (preferences?.enable_bible_options !== false && preferences?.enable_night_prayer) {
-      tasks.push({ id: 'bible_reading_night', type: 'selfcare', label: 'Night Prayer', icon: BookOpen, color: 'text-indigo-600', timeOfDay: 'night', order: 95, externalLink: 'https://www.bible.com/reading-plans' });
+    if (preferences?.enable_bible_options !== false) {
+      if (preferences?.enable_daily_reading !== false) {
+        tasks.push({ id: 'bible_reading_night', type: 'selfcare', label: 'Night Bible Reading', icon: BookOpen, color: 'text-indigo-600', timeOfDay: 'night', order: 95, externalLink: 'https://www.bible.com/reading-plans' });
+      }
+      if (preferences?.enable_night_prayer) {
+        tasks.push({ id: 'prayer_night', type: 'selfcare', label: 'War Room (Prayer)', icon: Heart, color: 'text-pink-600', timeOfDay: 'night', order: 95.1, isLink: true, linkTo: 'PrayerRequests' });
+      }
     }
 
     // Sleep log - first thing in morning (inline)

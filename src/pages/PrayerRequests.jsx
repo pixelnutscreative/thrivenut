@@ -374,7 +374,7 @@ export default function PrayerRequests() {
           <div>
             <h1 className={`text-3xl font-bold ${textClass} flex items-center gap-3`}>
               <Heart className="w-8 h-8 text-pink-500" />
-              Prayer Requests
+              War Room (Prayer Requests)
             </h1>
             <p className={isDark ? 'text-gray-400' : 'text-gray-600'}>
               Share your needs and lift up others in prayer
