@@ -39,13 +39,20 @@ export default function ImpersonationBanner() {
 
 // Helper to get the current "user" identifier (real or impersonated)
 export function getEffectiveUserEmail(realUserEmail) {
-  if (!realUserEmail || typeof realUserEmail !== 'string') return null;
+  // Always validate and ensure string before any operations
+  if (!realUserEmail || typeof realUserEmail !== 'string' || realUserEmail.trim() === '') {
+    return null;
+  }
+  
   if (typeof window === 'undefined' || typeof sessionStorage === 'undefined') {
     return realUserEmail;
   }
+  
   try {
     const impersonating = sessionStorage.getItem('impersonating');
-    return (impersonating && typeof impersonating === 'string') ? impersonating : realUserEmail;
+    const effectiveValue = (impersonating && typeof impersonating === 'string' && impersonating.trim()) ? impersonating : realUserEmail;
+    // Final safety check before returning
+    return (effectiveValue && typeof effectiveValue === 'string') ? effectiveValue : null;
   } catch {
     return realUserEmail;
   }
