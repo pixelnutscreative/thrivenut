@@ -115,28 +115,38 @@ export default function Goals() {
   // Fetch accepted goal sharing connections (for selecting who to share with on individual goals)
   const { data: sharingConnections = [] } = useQuery({
     queryKey: ['goalSharesSent', user?.email],
-    queryFn: () => base44.entities.GoalShare.filter({ sharer_email: user.email, status: 'accepted' }),
-    enabled: !!user,
+    queryFn: () => {
+      if (!user?.email) return [];
+      return base44.entities.GoalShare.filter({ sharer_email: user.email, status: 'accepted' });
+    },
+    enabled: !!user?.email,
   });
 
   // Shares I've sent
   const { data: sentShares = [] } = useQuery({
     queryKey: ['allSentShares', user?.email],
-    queryFn: () => base44.entities.GoalShare.filter({ sharer_email: user.email }),
-    enabled: !!user,
+    queryFn: () => {
+      if (!user?.email) return [];
+      return base44.entities.GoalShare.filter({ sharer_email: user.email });
+    },
+    enabled: !!user?.email,
   });
 
   // Shares I've received
   const { data: receivedShares = [] } = useQuery({
     queryKey: ['goalSharesReceived', user?.email],
-    queryFn: () => base44.entities.GoalShare.filter({ viewer_email: user.email }),
-    enabled: !!user,
+    queryFn: () => {
+      if (!user?.email) return [];
+      return base44.entities.GoalShare.filter({ viewer_email: user.email });
+    },
+    enabled: !!user?.email,
   });
 
   // Get shared goals for viewing
   const { data: viewableGoals = {} } = useQuery({
     queryKey: ['viewableGoals', receivedShares, user?.email],
     queryFn: async () => {
+      if (!user?.email) return {};
       const acceptedShares = receivedShares.filter(s => s.status === 'accepted');
       const goalsBySharer = {};
       for (const share of acceptedShares) {
@@ -151,7 +161,7 @@ export default function Goals() {
       }
       return goalsBySharer;
     },
-    enabled: receivedShares.length > 0 && !!user,
+    enabled: receivedShares.length > 0 && !!user?.email,
   });
 
   React.useEffect(() => {
@@ -163,17 +173,19 @@ export default function Goals() {
   const { data: goals } = useQuery({
     queryKey: ['goals', user?.email],
     queryFn: async () => {
+      if (!user?.email) return [];
       return await base44.entities.Goal.filter({ status: 'active', created_by: user.email }, '-created_date');
     },
-    enabled: !!user,
+    enabled: !!user?.email,
   });
 
   const { data: completedGoals } = useQuery({
     queryKey: ['completedGoals', user?.email],
     queryFn: async () => {
+      if (!user?.email) return [];
       return await base44.entities.Goal.filter({ status: 'completed', created_by: user.email }, '-end_date');
     },
-    enabled: !!user,
+    enabled: !!user?.email,
   });
 
   // Goal filters
@@ -285,12 +297,14 @@ export default function Goals() {
   // Sharing mutations
   const createShareMutation = useMutation({
     mutationFn: async (data) => {
-      const existingUsers = await base44.entities.User.filter({ email: data.viewer_email.toLowerCase() });
+      if (!user?.email || !data.viewer_email) return;
+      const viewerEmail = (typeof data.viewer_email === 'string') ? data.viewer_email.toLowerCase() : data.viewer_email;
+      const existingUsers = await base44.entities.User.filter({ email: viewerEmail });
       const userExists = existingUsers.length > 0;
       
       const share = await base44.entities.GoalShare.create({
         ...data,
-        viewer_email: data.viewer_email.toLowerCase(),
+        viewer_email: viewerEmail,
         sharer_email: user.email,
         sharer_name: user.full_name,
         status: 'pending'
@@ -969,7 +983,7 @@ export default function Goals() {
                     type="email"
                     placeholder="friend@example.com"
                     value={shareFormData.viewer_email}
-                    onChange={(e) => setShareFormData({ ...shareFormData, viewer_email: e.target.value.toLowerCase() })}
+                    onChange={(e) => setShareFormData({ ...shareFormData, viewer_email: (e.target.value && typeof e.target.value === 'string') ? e.target.value.toLowerCase() : e.target.value })}
                   />
                 </div>
                 <div className="space-y-2">

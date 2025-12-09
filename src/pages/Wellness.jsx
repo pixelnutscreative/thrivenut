@@ -36,12 +36,18 @@ export default function Wellness() {
 
   React.useEffect(() => {
     const loadUser = async () => {
-      const userData = await base44.auth.me();
-      setUser(userData);
-      
-      const prefs = await base44.entities.UserPreferences.filter({ user_email: userData.email });
-      if (prefs[0]) {
-        setPreferences(prefs[0]);
+      try {
+        const userData = await base44.auth.me();
+        setUser(userData);
+        
+        if (userData?.email) {
+          const prefs = await base44.entities.UserPreferences.filter({ user_email: userData.email });
+          if (prefs[0]) {
+            setPreferences(prefs[0]);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading user:', error);
       }
     };
     loadUser();
@@ -50,66 +56,72 @@ export default function Wellness() {
   const { data: todaysWater } = useQuery({
     queryKey: ['waterToday', today],
     queryFn: async () => {
+      if (!user?.email) return null;
       const logs = await base44.entities.WaterLog.filter({ 
         date: today,
-        created_by: user?.email 
+        created_by: user.email 
       });
       return logs[0] || null;
     },
-    enabled: !!user,
+    enabled: !!user?.email,
   });
 
   const { data: todaysMoods } = useQuery({
     queryKey: ['moodToday', today],
     queryFn: async () => {
+      if (!user?.email) return [];
       return await base44.entities.MoodLog.filter({ 
         date: today,
-        created_by: user?.email 
+        created_by: user.email 
       });
     },
-    enabled: !!user,
+    enabled: !!user?.email,
   });
 
   const { data: todaysSleep } = useQuery({
     queryKey: ['sleepToday', today],
     queryFn: async () => {
+      if (!user?.email) return null;
       const logs = await base44.entities.SleepLog.filter({ 
         date: today,
-        created_by: user?.email 
+        created_by: user.email 
       });
       return logs[0] || null;
     },
-    enabled: !!user,
+    enabled: !!user?.email,
   });
 
   const { data: selfCareLog } = useQuery({
     queryKey: ['selfCareToday', today],
     queryFn: async () => {
+      if (!user?.email) return null;
       const logs = await base44.entities.DailySelfCareLog.filter({ 
         date: today,
-        created_by: user?.email 
+        created_by: user.email 
       });
       return logs[0] || null;
     },
-    enabled: !!user,
+    enabled: !!user?.email,
   });
 
   const { data: medicationsCount } = useQuery({
     queryKey: ['medicationsCount'],
     queryFn: async () => {
-      const meds = await base44.entities.Medication.filter({ is_active: true, created_by: user?.email });
+      if (!user?.email) return 0;
+      const meds = await base44.entities.Medication.filter({ is_active: true, created_by: user.email });
       return meds?.length || 0;
     },
-    enabled: !!user,
+    enabled: !!user?.email,
   });
 
   const { data: supplementsCount } = useQuery({
     queryKey: ['supplementsCount'],
     queryFn: async () => {
-      const supps = await base44.entities.Supplement.filter({ is_active: true, created_by: user?.email });
+      if (!user?.email) return 0;
+      const supps = await base44.entities.Supplement.filter({ is_active: true, created_by: user.email });
       return supps?.length || 0;
     },
-    enabled: !!user,
+    enabled: !!user?.email,
   });
 
   const waterMutation = useMutation({

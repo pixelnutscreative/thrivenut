@@ -32,7 +32,7 @@ export default function Admin() {
     base44.auth.me().then(setUser).catch(() => {});
   }, []);
 
-  const isAdmin = ADMIN_EMAILS.includes(user?.email?.toLowerCase());
+  const isAdmin = (user?.email && typeof user.email === 'string') ? ADMIN_EMAILS.includes(user.email.toLowerCase()) : false;
 
   if (!isAdmin) {
     return (
