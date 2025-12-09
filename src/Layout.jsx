@@ -106,66 +106,109 @@ export default function Layout({ children, currentPageName }) {
     return isBibleBeliever ? 'Prayer Requests' : 'Send Light & Love';
   };
 
-  // --- MENU STRUCTURE (Hardcoded as requested) ---
-  const menuStructure = [
-    // Core
-    { name: getDashboardName(), icon: LayoutDashboard, path: 'Dashboard', alwaysShow: true },
-    { name: "Pixel's Place", icon: Sparkles, path: 'PixelsParadise', alwaysShow: true },
-
-    // Goals + Growth
-    { name: '── Goals + Growth ──', isGroupHeader: true, color: 'text-teal-400', bgColor: 'bg-teal-500/10' },
-    { name: 'Quick Notes', icon: StickyNote, path: 'QuickNotes', moduleId: 'quick_notes' },
-    { name: 'Tasks', icon: FileText, path: 'Tasks', moduleId: 'tasks' },
-    { name: 'Habits', icon: Target, path: 'Habits', moduleId: 'habits' },
-    { name: 'Goals', icon: Target, path: 'Goals', moduleId: 'goals' },
-    { name: 'Vision Board', icon: Eye, path: 'VisionBoard', moduleId: 'goals' },
-    { name: 'Journal', icon: BookOpen, path: 'Journal', moduleId: 'journal' },
-    { name: 'Finance', icon: Wallet, path: 'Finance', moduleId: 'finance' },
-
-    // Friends + Loved Ones
-    { name: '── Friends + Loved Ones ──', isGroupHeader: true, color: 'text-orange-400', bgColor: 'bg-orange-500/10' },
-    // { name: 'Family Members', icon: Users, path: 'FamilyMembers', moduleId: 'people' }, // Merged into My People
-    { name: 'My People', icon: Users, path: 'People', moduleId: 'people' },
-    { name: 'Care Reminders', icon: Bell, path: 'CareReminders', moduleId: 'care_reminders' },
-    { name: 'Pet Care', icon: PawPrint, path: 'PetCare', moduleId: 'pets' },
-
-    // Faith & Spiritual
-    { name: '── Faith & Spiritual ──', isGroupHeader: true, color: 'text-purple-400', bgColor: 'bg-purple-500/10' },
-    { name: getPrayerName(), icon: Heart, path: 'PrayerRequests', moduleId: 'prayer' },
-    { name: 'Holy Hitmakers', icon: Music, path: 'HolyHitmakers', requiresBibleBeliever: true },
-    { name: 'Bible Resources', icon: BookOpen, path: 'BibleResources', requiresBibleBeliever: true },
-
-    // Mind + Body Health
-    { name: '── Mind + Body Health ──', isGroupHeader: true, color: 'text-green-400', bgColor: 'bg-green-500/10' },
-    { name: 'Mental Health', icon: Brain, path: 'NeurodivergentSettings', moduleId: 'mental_health' },
-    { name: 'Daily Wellness', icon: Heart, path: 'Wellness', moduleId: 'wellness' },
-    { name: 'Supplements', icon: Tablet, path: 'Supplements', moduleId: 'supplements' },
-    { name: 'Medications', icon: Pill, path: 'Medications', moduleId: 'medications' },
-    { name: 'Activity Tracker', icon: Activity, path: 'ActivityTracker', moduleId: 'activity' },
-
-    // Creator Suite
-    { name: '── Creator Suite ──', isGroupHeader: true, color: 'text-pink-400', bgColor: 'bg-pink-500/10' },
-    { name: 'Social Media Suite', icon: Share2, isSection: true, moduleId: 'tiktok', requiresTikTokAccess: true, subItems: [
-      { name: 'Discover Creators', icon: Search, path: 'DiscoverCreators', highlight: true },
-      { name: 'Live Engagement', icon: Activity, path: 'LiveEngagement', highlight: true },
-      { name: 'Creator Contacts', icon: Users, path: 'TikTokContacts' },
-      { name: 'Social Engagement', icon: MousePointerClick, path: 'TikTokEngagement' },
-      { name: 'Content Calendar', icon: Calendar, path: 'LiveSchedule' },
-      { name: 'Sunny Songbird', icon: Sun, path: 'SongGenerator' },
-      { name: 'Gift Gallery Gratitude', icon: Gift, path: 'WeeklyGifterGallery' },
-      { name: 'Love Away Giveaways', icon: Gift, path: 'LoveAway' },
-      { name: 'Pictionary Helper', icon: Palette, path: 'PictionaryHelper' },
-    ]},
-    { name: 'Content Ideas', icon: Smile, path: 'SavedMotivations', moduleId: 'motivations' },
-    { name: "Ping & Pong's Silly Songs", icon: Smile, externalUrl: 'https://sillysongs.pixelnutscreative.com' },
-
-    // Support & Settings
-    { name: '── Support & Settings ──', isGroupHeader: true, color: 'text-gray-400', bgColor: 'bg-gray-500/10' },
-    { name: 'Support', icon: HelpCircle, path: 'Support', alwaysShow: true },
-    { name: 'Settings', icon: Settings, path: 'Settings', alwaysShow: true },
-    { name: 'Admin Panel', icon: UserCog, path: 'Admin', adminOnly: true },
-    { name: 'Community Map', icon: Share2, path: 'CommunityMap', adminOnly: true },
+  // --- MENU GROUPS (Collapsible) ---
+  const menuGroups = [
+    {
+      id: 'core',
+      items: [
+        { name: getDashboardName(), icon: LayoutDashboard, path: 'Dashboard', alwaysShow: true },
+        { name: "Pixel's Place", icon: Sparkles, path: 'PixelsParadise', alwaysShow: true },
+      ]
+    },
+    {
+      id: 'goals',
+      title: 'Goals + Growth',
+      color: 'text-purple-400',
+      bgColor: 'bg-purple-500/10',
+      items: [
+        { name: 'Quick Notes', icon: StickyNote, path: 'QuickNotes', moduleId: 'quick_notes' },
+        { name: 'Tasks', icon: FileText, path: 'Tasks', moduleId: 'tasks' },
+        { name: 'Habits', icon: Target, path: 'Habits', moduleId: 'habits' },
+        { name: 'Goals', icon: Target, path: 'Goals', moduleId: 'goals' },
+        { name: 'Vision Board', icon: Eye, path: 'VisionBoard', moduleId: 'goals' },
+        { name: 'Journal', icon: BookOpen, path: 'Journal', moduleId: 'journal' },
+        { name: 'Finance', icon: Wallet, path: 'Finance', moduleId: 'finance' },
+      ]
+    },
+    {
+      id: 'friends',
+      title: 'Friends + Loved Ones',
+      color: 'text-cyan-400', // Turquoise
+      bgColor: 'bg-cyan-500/10',
+      items: [
+        { name: 'My People', icon: Users, path: 'People', moduleId: 'people' },
+        { name: 'Care Reminders', icon: Bell, path: 'CareReminders', moduleId: 'care_reminders' },
+        { name: 'Pet Care', icon: PawPrint, path: 'PetCare', moduleId: 'pets' },
+      ]
+    },
+    {
+      id: 'faith',
+      title: 'Faith & Spiritual',
+      color: 'text-lime-400', // Lime Green
+      bgColor: 'bg-lime-500/10',
+      items: [
+        { name: getPrayerName(), icon: Heart, path: 'PrayerRequests', moduleId: 'prayer' },
+        { name: 'Holy Hitmakers', icon: Music, path: 'HolyHitmakers', requiresBibleBeliever: true },
+        { name: 'Bible Resources', icon: BookOpen, path: 'BibleResources', requiresBibleBeliever: true },
+      ]
+    },
+    {
+      id: 'health',
+      title: 'Mind + Body Health',
+      color: 'text-yellow-400', // Gold/Yellow
+      bgColor: 'bg-yellow-500/10',
+      items: [
+        { name: 'Mental Health', icon: Brain, path: 'NeurodivergentSettings', moduleId: 'mental_health' },
+        { name: 'Daily Wellness', icon: Heart, path: 'Wellness', moduleId: 'wellness' },
+        { name: 'Supplements', icon: Tablet, path: 'Supplements', moduleId: 'supplements' },
+        { name: 'Medications', icon: Pill, path: 'Medications', moduleId: 'medications' },
+        { name: 'Activity Tracker', icon: Activity, path: 'ActivityTracker', moduleId: 'activity' },
+      ]
+    },
+    {
+      id: 'creator',
+      title: 'Creator Suite',
+      color: 'text-orange-400', // Orange
+      bgColor: 'bg-orange-500/10',
+      items: [
+        { name: 'Social Media Suite', icon: Share2, isSection: true, moduleId: 'tiktok', requiresTikTokAccess: true, subItems: [
+          { name: 'Discover Creators', icon: Search, path: 'DiscoverCreators', highlight: true },
+          { name: 'Live Engagement', icon: Activity, path: 'LiveEngagement', highlight: true },
+          { name: 'Creator Contacts', icon: Users, path: 'TikTokContacts' },
+          { name: 'Social Engagement', icon: MousePointerClick, path: 'TikTokEngagement' },
+          { name: 'Content Calendar', icon: Calendar, path: 'LiveSchedule' },
+          { name: 'Sunny Songbird', icon: Sun, path: 'SongGenerator' },
+          { name: 'Gift Gallery Gratitude', icon: Gift, path: 'WeeklyGifterGallery' },
+          { name: 'Love Away Giveaways', icon: Gift, path: 'LoveAway' },
+          { name: 'Pictionary Helper', icon: Palette, path: 'PictionaryHelper' },
+        ]},
+        { name: 'Content Ideas', icon: Smile, path: 'SavedMotivations', moduleId: 'motivations' },
+        { name: "Ping & Pong's Silly Songs", icon: Smile, externalUrl: 'https://sillysongs.pixelnutscreative.com' },
+      ]
+    },
+    {
+      id: 'support',
+      title: 'Support & Settings',
+      color: 'text-pink-400', // Hot Pink
+      bgColor: 'bg-pink-500/10',
+      items: [
+        { name: 'Support', icon: HelpCircle, path: 'Support', alwaysShow: true },
+        { name: 'Settings', icon: Settings, path: 'Settings', alwaysShow: true },
+        { name: 'Admin Panel', icon: UserCog, path: 'Admin', adminOnly: true },
+        { name: 'Community Map', icon: Share2, path: 'CommunityMap', adminOnly: true },
+      ]
+    }
   ];
+
+  const [collapsedGroups, setCollapsedGroups] = useState([]);
+
+  const toggleGroup = (groupId) => {
+    setCollapsedGroups(prev => 
+      prev.includes(groupId) 
+        ? prev.filter(id => id !== groupId)
+        : [...prev, groupId]
+    );
+  };
 
   // Logic to toggle expanded sections
   const toggleSection = (sectionName) => {
@@ -266,117 +309,134 @@ export default function Layout({ children, currentPageName }) {
             style={{ backgroundColor: menuColor }}
           >
             <nav className="flex-1 p-6 space-y-1 overflow-y-auto">
-              {menuStructure.map((item, index) => {
-                // Group Header
-                if (item.isGroupHeader) {
-                  return (
-                    <div
-                      key={item.name}
-                      className={`w-full px-2 py-2 mt-4 mb-1 text-xs font-bold uppercase tracking-wider ${item.color} ${item.bgColor} rounded-lg flex items-center justify-start`}
-                    >
-                      <span>{item.name.replace(/──/g, '').trim()}</span>
-                    </div>
-                  );
-                }
-
-                // Check permissions/modules
-                if (item.adminOnly && !isAdmin) return null;
-                if (item.requiresBibleBeliever && !isBibleBeliever) return null;
-                if (item.moduleId && !enabledModules.includes(item.moduleId) && !item.alwaysShow) return null;
-
-                const Icon = item.icon;
-                const isActive = currentPageName === item.path;
-                const isExpanded = expandedSections.includes(item.name);
-                const hasActiveSubItem = isSubItemActive(item);
-
-                // Section (Dropdown)
-                if (item.isSection) {
-                  const isLocked = item.requiresTikTokAccess && !hasTikTokAccess;
-                  return (
-                    <div key={item.name}>
+              {menuGroups.map((group) => {
+                const isCollapsed = collapsedGroups.includes(group.id);
+                
+                return (
+                  <div key={group.id} className="mb-2">
+                    {group.title && (
                       <button
-                        onClick={() => isLocked ? setShowAccessGate(true) : toggleSection(item.name)}
-                        className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
-                          hasActiveSubItem ? menuActiveClass : `${menuTextClass} ${menuHoverClass}`
-                        }`}
+                        onClick={() => toggleGroup(group.id)}
+                        className={`w-full px-2 py-2 mt-4 mb-1 text-xs font-bold uppercase tracking-wider ${group.color} ${group.bgColor} rounded-lg flex items-center justify-between hover:opacity-80 transition-opacity`}
                       >
-                        <div className="flex items-center gap-3">
-                          <Icon className="w-5 h-5" />
-                          <span className="font-medium">{item.name}</span>
-                          {isLocked && <Lock className="w-3 h-3 text-amber-500" />}
-                        </div>
-                        {!isLocked && (isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />)}
+                        <span>{group.title}</span>
+                        {isCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                       </button>
-                      
-                      {isExpanded && !isLocked && (
-                        <div className="ml-4 mt-1 space-y-1">
-                          {item.subItems?.map(sub => (
-                            sub.externalUrl ? (
-                              <a
-                                key={sub.name}
-                                href={sub.externalUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={`flex items-center gap-3 px-4 py-2 rounded-xl text-sm ${menuTextClass} ${menuHoverClass}`}
-                              >
-                                <sub.icon className="w-4 h-4" />
-                                <span>{sub.name}</span>
-                                <span className="text-xs opacity-50">↗</span>
-                              </a>
-                            ) : (
+                    )}
+
+                    <AnimatePresence>
+                      {(!isCollapsed || !group.title) && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="overflow-hidden space-y-1"
+                        >
+                          {group.items.map((item) => {
+                            // Check permissions/modules
+                            if (item.adminOnly && !isAdmin) return null;
+                            if (item.requiresBibleBeliever && !isBibleBeliever) return null;
+                            if (item.moduleId && !enabledModules.includes(item.moduleId) && !item.alwaysShow) return null;
+
+                            const Icon = item.icon;
+                            const isActive = currentPageName === item.path;
+                            const isExpanded = expandedSections.includes(item.name);
+                            const hasActiveSubItem = isSubItemActive(item);
+
+                            // Section (Dropdown)
+                            if (item.isSection) {
+                              const isLocked = item.requiresTikTokAccess && !hasTikTokAccess;
+                              return (
+                                <div key={item.name}>
+                                  <button
+                                    onClick={() => isLocked ? setShowAccessGate(true) : toggleSection(item.name)}
+                                    className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
+                                      hasActiveSubItem ? menuActiveClass : `${menuTextClass} ${menuHoverClass}`
+                                    }`}
+                                  >
+                                    <div className="flex items-center gap-3">
+                                      <Icon className="w-5 h-5" />
+                                      <span className="font-medium">{item.name}</span>
+                                      {isLocked && <Lock className="w-3 h-3 text-amber-500" />}
+                                    </div>
+                                    {!isLocked && (isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />)}
+                                  </button>
+                                  
+                                  {isExpanded && !isLocked && (
+                                    <div className="ml-4 mt-1 space-y-1">
+                                      {item.subItems?.map(sub => (
+                                        sub.externalUrl ? (
+                                          <a
+                                            key={sub.name}
+                                            href={sub.externalUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className={`flex items-center gap-3 px-4 py-2 rounded-xl text-sm ${menuTextClass} ${menuHoverClass}`}
+                                          >
+                                            <sub.icon className="w-4 h-4" />
+                                            <span>{sub.name}</span>
+                                            <span className="text-xs opacity-50">↗</span>
+                                          </a>
+                                        ) : (
+                                          <Link
+                                            key={sub.path}
+                                            to={createPageUrl(sub.path)}
+                                            onClick={() => setMobileMenuOpen(false)}
+                                            className={`flex items-center gap-3 px-4 py-2 rounded-xl text-sm ${
+                                              currentPageName === sub.path 
+                                                ? (isMenuDark ? 'text-white bg-white/10' : 'text-teal-700 bg-teal-50')
+                                                : `${menuTextClass} ${menuHoverClass}`
+                                            }`}
+                                          >
+                                            <sub.icon className="w-4 h-4" />
+                                            <span>{sub.name}</span>
+                                          </Link>
+                                        )
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            }
+
+                            // Standard Link
+                            if (item.externalUrl) {
+                              return (
+                                <a
+                                  key={item.name}
+                                  href={item.externalUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${menuTextClass} ${menuHoverClass}`}
+                                >
+                                  <Icon className="w-5 h-5" />
+                                  <span className="font-medium">{item.name}</span>
+                                  <span className="text-xs opacity-50">↗</span>
+                                </a>
+                              );
+                            }
+
+                            return (
                               <Link
-                                key={sub.path}
-                                to={createPageUrl(sub.path)}
+                                key={item.path}
+                                to={createPageUrl(item.path)}
                                 onClick={() => setMobileMenuOpen(false)}
-                                className={`flex items-center gap-3 px-4 py-2 rounded-xl text-sm ${
-                                  currentPageName === sub.path 
-                                    ? (isMenuDark ? 'text-white bg-white/10' : 'text-teal-700 bg-teal-50')
+                                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                                  isActive 
+                                    ? 'text-white shadow-lg'
                                     : `${menuTextClass} ${menuHoverClass}`
                                 }`}
+                                style={isActive ? { background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` } : {}}
                               >
-                                <sub.icon className="w-4 h-4" />
-                                <span>{sub.name}</span>
+                                <Icon className="w-5 h-5" />
+                                <span className="font-medium">{item.name}</span>
                               </Link>
-                            )
-                          ))}
-                        </div>
+                            );
+                          })}
+                        </motion.div>
                       )}
-                    </div>
-                  );
-                }
-
-                // Standard Link
-                if (item.externalUrl) {
-                  return (
-                    <a
-                      key={item.name}
-                      href={item.externalUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${menuTextClass} ${menuHoverClass}`}
-                    >
-                      <Icon className="w-5 h-5" />
-                      <span className="font-medium">{item.name}</span>
-                      <span className="text-xs opacity-50">↗</span>
-                    </a>
-                  );
-                }
-
-                return (
-                  <Link
-                    key={item.path}
-                    to={createPageUrl(item.path)}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                      isActive 
-                        ? 'text-white shadow-lg'
-                        : `${menuTextClass} ${menuHoverClass}`
-                    }`}
-                    style={isActive ? { background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` } : {}}
-                  >
-                    <Icon className="w-5 h-5" />
-                    <span className="font-medium">{item.name}</span>
-                  </Link>
+                    </AnimatePresence>
+                  </div>
                 );
               })}
 
@@ -429,115 +489,132 @@ export default function Layout({ children, currentPageName }) {
           </div>
 
           <nav className="flex-1 space-y-1 overflow-y-auto custom-scrollbar">
-            {menuStructure.map((item, index) => {
-              // Group Header
-              if (item.isGroupHeader) {
-                return (
-                  <div
-                    key={item.name}
-                    className={`w-full px-2 py-2 mt-4 mb-1 text-xs font-bold uppercase tracking-wider ${item.color} ${item.bgColor} rounded-lg flex items-center justify-start`}
-                  >
-                    <span>{item.name.replace(/──/g, '').trim()}</span>
-                  </div>
-                );
-              }
-
-              // Check permissions/modules
-              if (item.adminOnly && !isAdmin) return null;
-              if (item.requiresBibleBeliever && !isBibleBeliever) return null;
-              if (item.moduleId && !enabledModules.includes(item.moduleId) && !item.alwaysShow) return null;
-
-              const Icon = item.icon;
-              const isActive = currentPageName === item.path;
-              const isExpanded = expandedSections.includes(item.name);
-              const hasActiveSubItem = isSubItemActive(item);
-
-              // Section (Dropdown)
-              if (item.isSection) {
-                const isLocked = item.requiresTikTokAccess && !hasTikTokAccess;
-                return (
-                  <div key={item.name}>
+            {menuGroups.map((group) => {
+              const isCollapsed = collapsedGroups.includes(group.id);
+              
+              return (
+                <div key={group.id} className="mb-2">
+                  {group.title && (
                     <button
-                      onClick={() => isLocked ? setShowAccessGate(true) : toggleSection(item.name)}
-                      className={`w-full flex items-center justify-between px-4 py-2 rounded-xl transition-all ${
-                        hasActiveSubItem ? menuActiveClass : `${menuTextClass} ${menuHoverClass}`
-                      }`}
+                      onClick={() => toggleGroup(group.id)}
+                      className={`w-full px-2 py-2 mt-4 mb-1 text-xs font-bold uppercase tracking-wider ${group.color} ${group.bgColor} rounded-lg flex items-center justify-between hover:opacity-80 transition-opacity`}
                     >
-                      <div className="flex items-center gap-3">
-                        <Icon className="w-5 h-5" />
-                        <span className="font-medium">{item.name}</span>
-                        {isLocked && <Lock className="w-3 h-3 text-amber-500" />}
-                      </div>
-                      {!isLocked && (isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />)}
+                      <span>{group.title}</span>
+                      {isCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                     </button>
-                    
-                    {isExpanded && !isLocked && (
-                      <div className="ml-4 mt-1 space-y-1">
-                        {item.subItems?.map(sub => (
-                          sub.externalUrl ? (
-                            <a
-                              key={sub.name}
-                              href={sub.externalUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className={`flex items-center gap-3 px-4 py-2 rounded-xl text-sm ${menuTextClass} ${menuHoverClass}`}
-                            >
-                              <sub.icon className="w-4 h-4" />
-                              <span>{sub.name}</span>
-                              <span className="text-xs opacity-50">↗</span>
-                            </a>
-                          ) : (
+                  )}
+
+                  <AnimatePresence>
+                    {(!isCollapsed || !group.title) && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden space-y-1"
+                      >
+                        {group.items.map((item) => {
+                          // Check permissions/modules
+                          if (item.adminOnly && !isAdmin) return null;
+                          if (item.requiresBibleBeliever && !isBibleBeliever) return null;
+                          if (item.moduleId && !enabledModules.includes(item.moduleId) && !item.alwaysShow) return null;
+
+                          const Icon = item.icon;
+                          const isActive = currentPageName === item.path;
+                          const isExpanded = expandedSections.includes(item.name);
+                          const hasActiveSubItem = isSubItemActive(item);
+
+                          // Section (Dropdown)
+                          if (item.isSection) {
+                            const isLocked = item.requiresTikTokAccess && !hasTikTokAccess;
+                            return (
+                              <div key={item.name}>
+                                <button
+                                  onClick={() => isLocked ? setShowAccessGate(true) : toggleSection(item.name)}
+                                  className={`w-full flex items-center justify-between px-4 py-2 rounded-xl transition-all ${
+                                    hasActiveSubItem ? menuActiveClass : `${menuTextClass} ${menuHoverClass}`
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <Icon className="w-5 h-5" />
+                                    <span className="font-medium">{item.name}</span>
+                                    {isLocked && <Lock className="w-3 h-3 text-amber-500" />}
+                                  </div>
+                                  {!isLocked && (isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />)}
+                                </button>
+                                
+                                {isExpanded && !isLocked && (
+                                  <div className="ml-4 mt-1 space-y-1">
+                                    {item.subItems?.map(sub => (
+                                      sub.externalUrl ? (
+                                        <a
+                                          key={sub.name}
+                                          href={sub.externalUrl}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className={`flex items-center gap-3 px-4 py-2 rounded-xl text-sm ${menuTextClass} ${menuHoverClass}`}
+                                        >
+                                          <sub.icon className="w-4 h-4" />
+                                          <span>{sub.name}</span>
+                                          <span className="text-xs opacity-50">↗</span>
+                                        </a>
+                                      ) : (
+                                        <Link
+                                          key={sub.path}
+                                          to={createPageUrl(sub.path)}
+                                          className={`flex items-center gap-3 px-4 py-2 rounded-xl text-sm ${
+                                            currentPageName === sub.path 
+                                              ? (isMenuDark ? 'text-white bg-white/10' : 'text-teal-700 bg-teal-50')
+                                              : `${menuTextClass} ${menuHoverClass}`
+                                          }`}
+                                        >
+                                          <sub.icon className="w-4 h-4" />
+                                          <span>{sub.name}</span>
+                                        </Link>
+                                      )
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          }
+
+                          // Standard Link
+                          if (item.externalUrl) {
+                            return (
+                              <a
+                                key={item.name}
+                                href={item.externalUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-all ${menuTextClass} ${menuHoverClass}`}
+                              >
+                                <Icon className="w-5 h-5" />
+                                <span className="font-medium">{item.name}</span>
+                                <span className="text-xs opacity-50">↗</span>
+                              </a>
+                            );
+                          }
+
+                          return (
                             <Link
-                              key={sub.path}
-                              to={createPageUrl(sub.path)}
-                              className={`flex items-center gap-3 px-4 py-2 rounded-xl text-sm ${
-                                currentPageName === sub.path 
-                                  ? (isMenuDark ? 'text-white bg-white/10' : 'text-teal-700 bg-teal-50')
+                              key={item.path}
+                              to={createPageUrl(item.path)}
+                              className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-all ${
+                                isActive 
+                                  ? 'text-white shadow-lg'
                                   : `${menuTextClass} ${menuHoverClass}`
                               }`}
+                              style={isActive ? { background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` } : {}}
                             >
-                              <sub.icon className="w-4 h-4" />
-                              <span>{sub.name}</span>
+                              <Icon className="w-5 h-5" />
+                              <span className="font-medium">{item.name}</span>
                             </Link>
-                          )
-                        ))}
-                      </div>
+                          );
+                        })}
+                      </motion.div>
                     )}
-                  </div>
-                );
-              }
-
-              // Standard Link
-              if (item.externalUrl) {
-                return (
-                  <a
-                    key={item.name}
-                    href={item.externalUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-all ${menuTextClass} ${menuHoverClass}`}
-                  >
-                    <Icon className="w-5 h-5" />
-                    <span className="font-medium">{item.name}</span>
-                    <span className="text-xs opacity-50">↗</span>
-                  </a>
-                );
-              }
-
-              return (
-                <Link
-                  key={item.path}
-                  to={createPageUrl(item.path)}
-                  className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-all ${
-                    isActive 
-                      ? 'text-white shadow-lg'
-                      : `${menuTextClass} ${menuHoverClass}`
-                  }`}
-                  style={isActive ? { background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` } : {}}
-                >
-                  <Icon className="w-5 h-5" />
-                  <span className="font-medium">{item.name}</span>
-                </Link>
+                  </AnimatePresence>
+                </div>
               );
             })}
           </nav>
