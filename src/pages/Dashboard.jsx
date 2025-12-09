@@ -47,12 +47,12 @@ export default function Dashboard() {
         setUser(userData);
 
         // Check if user is pre-approved and auto-grant TikTok access
-        if (userData?.email && typeof userData.email === 'string') {
+        if (userData?.email && typeof userData.email === 'string' && userData.email.trim()) {
           const prefs = await base44.entities.UserPreferences.filter({ user_email: userData.email }, '-updated_date');
           if (prefs[0] && !prefs[0].tiktok_access_approved) {
             try {
               const preApproved = await base44.entities.PreApprovedEmail.filter({ 
-                email: userData.email.toLowerCase(), 
+                email: userData.email.trim().toLowerCase(), 
                 is_active: true 
               });
               if (preApproved.length > 0) {
@@ -374,7 +374,7 @@ export default function Dashboard() {
         </Collapsible>
 
         {/* Notion Task Picker - Only for admin account */}
-        {user?.email && typeof user.email === 'string' && user.email.toLowerCase() === 'pixelnutscreative@gmail.com' && (
+        {user?.email && typeof user.email === 'string' && user.email.trim() && user.email.trim().toLowerCase() === 'pixelnutscreative@gmail.com' && (
           <Collapsible open={!isSectionCollapsed('notion-tasks')}>
             <CollapsibleTrigger 
               className="w-full flex items-center justify-between p-2 hover:bg-gray-100 rounded-lg transition-colors"
