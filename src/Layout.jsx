@@ -121,19 +121,19 @@ const defaultNavItems = [
   { name: '── Life & Organization ──', isGroupHeader: true, color: 'text-indigo-400', bgColor: 'bg-indigo-500/10' },
   { name: 'Tasks', icon: FileText, path: 'Tasks', moduleId: 'tasks' },
   { name: 'Family Members', icon: Users, path: 'FamilyMembers', moduleId: 'people' },
-  { name: 'Work Schedules', icon: Briefcase, path: 'WorkSchedules', alwaysShow: true },
-  { name: 'Cleaning Tasks', icon: Sparkles, path: 'CleaningTasks', alwaysShow: true },
+  { name: 'Work Schedules', icon: Briefcase, path: 'WorkSchedules', moduleId: 'work' },
+  { name: 'Cleaning Tasks', icon: Sparkles, path: 'CleaningTasks', moduleId: 'cleaning' },
   { name: 'Care Reminders', icon: Bell, path: 'CareReminders', moduleId: 'care_reminders' },
   
   // TEAL: Goals & Growth
   { name: '── Goals & Growth ──', isGroupHeader: true, color: 'text-teal-400', bgColor: 'bg-teal-500/10' },
   { name: 'Goals', icon: Target, path: 'Goals', moduleId: 'goals' },
   { name: 'Vision Board', icon: Eye, path: 'VisionBoard', moduleId: 'goals' },
-  { name: 'Saved Motivations', icon: Bookmark, path: 'SavedMotivations', alwaysShow: true },
+  { name: 'Saved Motivations', icon: Bookmark, path: 'SavedMotivations', moduleId: 'motivations' },
   
   // PURPLE: Faith & Spiritual
   { name: '── Faith & Spiritual ──', isGroupHeader: true, color: 'text-purple-400', bgColor: 'bg-purple-500/10' },
-  { name: 'Prayer Requests', icon: Heart, path: 'PrayerRequests', requiresBibleBeliever: true },
+  { name: 'Prayer Requests', icon: Heart, path: 'PrayerRequests', moduleId: 'prayer', requiresBibleBeliever: true },
   
   // PINK: Creator Suite
   { name: '── Creator Suite ──', isGroupHeader: true, color: 'text-pink-400', bgColor: 'bg-pink-500/10' },
@@ -158,7 +158,7 @@ const defaultNavItems = [
   { name: 'Mental Health', icon: Brain, isSection: true, moduleId: 'mental_health', subItems: [
     { name: 'Mental Health Hub', icon: Brain, path: 'NeurodivergentSettings' },
     { name: 'Journal', icon: FileText, path: 'Journal', moduleId: 'journal' },
-    { name: 'Quick Notes', icon: StickyNote, path: 'QuickNotes' },
+    { name: 'Quick Notes', icon: StickyNote, path: 'QuickNotes', moduleId: 'quick_notes' },
   ]},
   { name: 'Supplements', icon: Tablet, path: 'Supplements', moduleId: 'supplements' },
   { name: 'Medications', icon: Pill, path: 'Medications', moduleId: 'medications' },
