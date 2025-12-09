@@ -26,16 +26,16 @@ export default function QuickNotes() {
   const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
   const [activeTab, setActiveTab] = useState('all');
-  const { bgClass, textClass, cardBgClass, primaryColor, accentColor } = useTheme();
+  const { bgClass, textClass, cardBgClass, primaryColor, accentColor, effectiveEmail } = useTheme();
 
   React.useEffect(() => {
     base44.auth.me().then(setUser);
   }, []);
 
   const { data: notes = [], isLoading } = useQuery({
-    queryKey: ['quickNotes', user?.email],
-    queryFn: () => base44.entities.QuickNote.filter({ created_by: user.email }, '-created_date'),
-    enabled: !!user,
+    queryKey: ['quickNotes', effectiveEmail],
+    queryFn: () => base44.entities.QuickNote.filter({ created_by: effectiveEmail }, '-created_date'),
+    enabled: !!effectiveEmail,
   });
 
   const deleteMutation = useMutation({
