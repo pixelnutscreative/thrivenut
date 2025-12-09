@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { createPageUrl } from './utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
@@ -10,7 +10,7 @@ import {
   ChevronRight, Bell, Share2, Music, Star, Lock, UserCog, Sparkles, 
   Palette, Eye, Bookmark, HandMetal, PawPrint, Search, MousePointerClick, 
   Calendar, Sun, Cross, Smile, FileText, StickyNote, Tablet, HelpCircle, 
-  MessageCircle, Briefcase, DollarSign, Activity
+  MessageCircle, Briefcase, DollarSign, Activity, Wallet
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import TikTokAccessGate from './components/access/TikTokAccessGate';
@@ -31,9 +31,10 @@ const iconMap = {
 
 export default function Layout({ children, currentPageName }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
-  const [expandedSections, setExpandedSections] = useState([]);
+  const [expandedSections, setExpandedSections] = useState(['Social Media Suite']); // Default expand
   const [collapsedGroups, setCollapsedGroups] = useState([]);
   const [showAccessGate, setShowAccessGate] = useState(false);
   const [userLoading, setUserLoading] = useState(true);
@@ -79,13 +80,13 @@ export default function Layout({ children, currentPageName }) {
   const isBibleBeliever = preferences?.is_bible_believer !== false; // Default true if undefined
   const enabledModules = preferences?.enabled_modules || ['tiktok', 'gifter', 'goals', 'tasks', 'wellness', 'supplements', 'medications', 'pets', 'care_reminders', 'people', 'journal', 'mental_health', 'finance', 'activity'];
 
-  // --- THEME HANDLING (Fix for Flashing) ---
+  // --- THEME HANDLING ---
   const [systemDark, setSystemDark] = useState(() => {
     if (typeof window === 'undefined') return false;
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
 
-  // Initial theme values (fallback to preferences or defaults)
+  // Initial theme values
   const primaryColor = preferences?.primary_color || '#1fd2ea';
   const accentColor = preferences?.accent_color || '#bd84f5';
   const themeType = preferences?.theme_type || 'light';
@@ -94,15 +95,16 @@ export default function Layout({ children, currentPageName }) {
 
   // Determine if menu text should be light or dark based on background luminance
   const isMenuDark = useMemo(() => {
+    if (!menuColor) return isDark;
     const hex = menuColor.replace('#', '');
     const r = parseInt(hex.substr(0, 2), 16);
     const g = parseInt(hex.substr(2, 2), 16);
     const b = parseInt(hex.substr(4, 2), 16);
     const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
     return luminance < 0.5;
-  }, [menuColor]);
+  }, [menuColor, isDark]);
 
-  // --- MENU DEFINITION (Hardcoded User Request) ---
+  // --- DYNAMIC NAMES ---
   const getDashboardName = () => {
     const name = preferences?.nickname || user?.full_name?.split(' ')[0] || 'My';
     return `${name}'s Day`;
@@ -112,6 +114,7 @@ export default function Layout({ children, currentPageName }) {
     return isBibleBeliever ? 'Prayer Requests' : 'Send Light & Love';
   };
 
+  // --- MENU STRUCTURE (Hardcoded as requested) ---
   const menuStructure = [
     // Core
     { name: getDashboardName(), icon: LayoutDashboard, path: 'Dashboard', alwaysShow: true },
@@ -120,17 +123,17 @@ export default function Layout({ children, currentPageName }) {
     // Goals + Growth
     { name: '── Goals + Growth ──', isGroupHeader: true, color: 'text-teal-400', bgColor: 'bg-teal-500/10' },
     { name: 'Quick Notes', icon: StickyNote, path: 'QuickNotes', moduleId: 'quick_notes' },
-    { name: 'Tasks', icon: FileText, path: 'Tasks', moduleId: 'tasks' }, // Includes Cleaning/Household
-    { name: 'Habits', icon: iconMap.CheckCircle2 || Target, path: 'Habits', moduleId: 'habits' },
+    { name: 'Tasks', icon: FileText, path: 'Tasks', moduleId: 'tasks' },
+    { name: 'Habits', icon: Target, path: 'Habits', moduleId: 'habits' },
     { name: 'Goals', icon: Target, path: 'Goals', moduleId: 'goals' },
     { name: 'Vision Board', icon: Eye, path: 'VisionBoard', moduleId: 'goals' },
-    { name: 'Journal', icon: FileText, path: 'Journal', moduleId: 'journal' },
-    { name: 'Finance', icon: DollarSign, path: 'Finance', moduleId: 'finance' }, // Added Back
+    { name: 'Journal', icon: BookOpen, path: 'Journal', moduleId: 'journal' },
+    { name: 'Finance', icon: Wallet, path: 'Finance', moduleId: 'finance' },
 
     // Friends + Loved Ones
     { name: '── Friends + Loved Ones ──', isGroupHeader: true, color: 'text-orange-400', bgColor: 'bg-orange-500/10' },
     { name: 'Family Members', icon: Users, path: 'FamilyMembers', moduleId: 'people' },
-    { name: 'My People', icon: Users, path: 'People', moduleId: 'people' }, // Contacts added back
+    { name: 'My People', icon: Users, path: 'People', moduleId: 'people' },
     { name: 'Care Reminders', icon: Bell, path: 'CareReminders', moduleId: 'care_reminders' },
     { name: 'Pet Care', icon: PawPrint, path: 'PetCare', moduleId: 'pets' },
 
@@ -146,7 +149,7 @@ export default function Layout({ children, currentPageName }) {
     { name: 'Daily Wellness', icon: Heart, path: 'Wellness', moduleId: 'wellness' },
     { name: 'Supplements', icon: Tablet, path: 'Supplements', moduleId: 'supplements' },
     { name: 'Medications', icon: Pill, path: 'Medications', moduleId: 'medications' },
-    { name: 'Activity Tracker', icon: Activity, path: 'ActivityTracker', moduleId: 'activity' }, // Added Back
+    { name: 'Activity Tracker', icon: Activity, path: 'ActivityTracker', moduleId: 'activity' },
 
     // Creator Suite
     { name: '── Creator Suite ──', isGroupHeader: true, color: 'text-pink-400', bgColor: 'bg-pink-500/10' },
@@ -160,7 +163,7 @@ export default function Layout({ children, currentPageName }) {
       { name: 'Love Away Giveaways', icon: Gift, path: 'LoveAway' },
       { name: 'Pictionary Helper', icon: Palette, path: 'PictionaryHelper' },
     ]},
-    { name: 'Content Ideas', icon: iconMap.Lightbulb || Smile, path: 'SavedMotivations', moduleId: 'motivations' },
+    { name: 'Content Ideas', icon: Smile, path: 'SavedMotivations', moduleId: 'motivations' },
     { name: "Ping & Pong's Silly Songs", icon: Smile, externalUrl: 'https://sillysongs.pixelnutscreative.com' },
 
     // Support & Settings
@@ -168,7 +171,7 @@ export default function Layout({ children, currentPageName }) {
     { name: 'Support', icon: HelpCircle, path: 'Support', alwaysShow: true },
     { name: 'Settings', icon: Settings, path: 'Settings', alwaysShow: true },
     { name: 'Admin Panel', icon: UserCog, path: 'Admin', adminOnly: true },
-    { name: 'Community Map', icon: iconMap.Map || Share2, path: 'CommunityMap', adminOnly: true },
+    { name: 'Community Map', icon: Share2, path: 'CommunityMap', adminOnly: true },
   ];
 
   // Logic to toggle expanded sections
