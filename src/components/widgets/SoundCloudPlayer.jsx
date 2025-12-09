@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Music, ChevronDown, ChevronUp, X } from 'lucide-react';
+import { Music, ChevronDown, ChevronUp, X, Minus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function SoundCloudPlayer({ playlistUrl, isMenuDark, collapsed = false, onToggle }) {
@@ -35,6 +35,7 @@ export default function SoundCloudPlayer({ playlistUrl, isMenuDark, collapsed = 
         )}
       </button>
       
+      {/* We use standard conditional rendering here as this is in the menu and usually doesn't need background persistence when closed */}
       <AnimatePresence>
         {isExpanded && (
           <motion.div
@@ -59,7 +60,7 @@ export default function SoundCloudPlayer({ playlistUrl, isMenuDark, collapsed = 
   );
 }
 
-// Floating version of the player
+// Floating version of the player - PERSISTENT IFRAME
 export function FloatingSoundCloudPlayer({ playlistUrl, primaryColor, accentColor }) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -83,41 +84,38 @@ export function FloatingSoundCloudPlayer({ playlistUrl, primaryColor, accentColo
         <Music className="w-5 h-5" />
       </motion.button>
 
-      {/* Player Panel */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.9 }}
-            className="fixed bottom-20 left-6 z-50 bg-white rounded-2xl shadow-2xl overflow-hidden w-80"
-          >
-            <div className="flex items-center justify-between p-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white">
-              <div className="flex items-center gap-2">
-                <Music className="w-5 h-5" />
-                <span className="font-semibold">Music Player</span>
-              </div>
-              <button onClick={() => setIsOpen(false)} className="p-1 hover:bg-white/20 rounded">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <iframe
-              width="100%"
-              height="300"
-              scrolling="no"
-              frameBorder="no"
-              allow="autoplay"
-              src={getEmbedUrl(playlistUrl)}
-              className="border-0"
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Player Panel - Kept in DOM to maintain playback */}
+      <div
+        className={`fixed bottom-20 left-6 z-50 bg-white rounded-2xl shadow-2xl overflow-hidden w-80 transition-all duration-300 origin-bottom-left ${
+          isOpen 
+            ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto' 
+            : 'opacity-0 translate-y-10 scale-90 pointer-events-none'
+        }`}
+      >
+        <div className="flex items-center justify-between p-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white">
+          <div className="flex items-center gap-2">
+            <Music className="w-5 h-5" />
+            <span className="font-semibold">Music Player</span>
+          </div>
+          <button onClick={() => setIsOpen(false)} className="p-1 hover:bg-white/20 rounded">
+            <Minus className="w-4 h-4" />
+          </button>
+        </div>
+        <iframe
+          width="100%"
+          height="300"
+          scrolling="no"
+          frameBorder="no"
+          allow="autoplay"
+          src={getEmbedUrl(playlistUrl)}
+          className="border-0"
+        />
+      </div>
     </>
   );
 }
 
-// Mobile popup that slides up from bottom
+// Mobile popup that slides up from bottom - PERSISTENT IFRAME
 export function MobileSoundCloudPopup({ playlistUrl, primaryColor, accentColor }) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -130,66 +128,62 @@ export function MobileSoundCloudPopup({ playlistUrl, primaryColor, accentColor }
 
   return (
     <>
-      {/* Trigger Button - Bottom of Screen */}
+      {/* Trigger Button - Bottom Right */}
       <button
-        onClick={() => setIsOpen(true)}
+        onClick={() => setIsOpen(!isOpen)}
         className="lg:hidden fixed bottom-4 right-4 w-14 h-14 rounded-full shadow-lg flex items-center justify-center z-40"
         style={{ background: `linear-gradient(135deg, ${primaryColor}, ${accentColor})` }}
       >
         <Music className="w-6 h-6 text-white" />
       </button>
 
-      {/* Popup Player */}
+      {/* Backdrop */}
       <AnimatePresence>
         {isOpen && (
-          <>
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="lg:hidden fixed inset-0 bg-black/50 z-[60]"
-              onClick={() => setIsOpen(false)}
-            />
-            
-            {/* Player Popup */}
-            <motion.div
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="lg:hidden fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl z-[70] max-h-[50vh]"
-            >
-              {/* Handle Bar */}
-              <div className="flex items-center justify-between p-4 border-b">
-                <div className="flex items-center gap-2">
-                  <Music className="w-5 h-5" style={{ color: primaryColor }} />
-                  <h3 className="font-semibold text-gray-800">Now Playing</h3>
-                </div>
-                <button
-                  onClick={() => setIsOpen(false)}
-                  className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-                >
-                  <ChevronDown className="w-5 h-5 text-gray-600" />
-                </button>
-              </div>
-              
-              {/* Player */}
-              <div className="p-4">
-                <iframe 
-                  width="100%" 
-                  height="166" 
-                  scrolling="no" 
-                  frameBorder="no" 
-                  allow="autoplay"
-                  src={getEmbedUrl(playlistUrl)}
-                  className="rounded-lg"
-                />
-              </div>
-            </motion.div>
-          </>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="lg:hidden fixed inset-0 bg-black/50 z-[60]"
+            onClick={() => setIsOpen(false)}
+          />
         )}
       </AnimatePresence>
+      
+      {/* Player Popup - Kept in DOM */}
+      <div
+        className={`lg:hidden fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl z-[70] max-h-[50vh] transition-transform duration-300 ease-in-out ${
+          isOpen ? 'translate-y-0' : 'translate-y-[110%]'
+        }`}
+      >
+        {/* Handle Bar */}
+        <div className="flex items-center justify-between p-4 border-b">
+          <div className="flex items-center gap-2">
+            <Music className="w-5 h-5" style={{ color: primaryColor }} />
+            <h3 className="font-semibold text-gray-800">Now Playing</h3>
+          </div>
+          <button
+            onClick={() => setIsOpen(false)}
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors flex items-center gap-1 text-sm font-medium text-gray-600"
+          >
+            <ChevronDown className="w-5 h-5" />
+            Minimize
+          </button>
+        </div>
+        
+        {/* Player */}
+        <div className="p-4">
+          <iframe 
+            width="100%" 
+            height="166" 
+            scrolling="no" 
+            frameBorder="no" 
+            allow="autoplay"
+            src={getEmbedUrl(playlistUrl)}
+            className="rounded-lg"
+          />
+        </div>
+      </div>
     </>
   );
 }
