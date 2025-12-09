@@ -13,7 +13,7 @@ import { Plus, Sparkles, Clock, Users, Calendar, Trash2, SkipForward, Check, Ale
 import { format, parseISO, addDays, differenceInDays } from 'date-fns';
 import { useTheme } from '../components/shared/useTheme';
 
-export default function CleaningTasks() {
+export default function CleaningTasks({ embedded = false }) {
   const queryClient = useQueryClient();
   const { isDark, bgClass, primaryColor, textClass, cardBgClass } = useTheme();
   const [showDialog, setShowDialog] = useState(false);
@@ -148,6 +148,195 @@ export default function CleaningTasks() {
     yard: '🌳',
     other: '🏠'
   };
+
+  if (embedded) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="text-lg font-semibold text-gray-700">Task List</div>
+          <Dialog open={showDialog} onOpenChange={setShowDialog}>
+            <DialogTrigger asChild>
+              <Button size="sm" style={{ backgroundColor: primaryColor }}>
+                <Plus className="w-4 h-4 mr-2" />
+                Add Task
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Add Cleaning Task</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <Input
+                  placeholder="Task Name"
+                  value={formData.task_name}
+                  onChange={(e) => setFormData({ ...formData, task_name: e.target.value })}
+                />
+                <div className="grid grid-cols-2 gap-4">
+                  <Select value={formData.room} onValueChange={(v) => setFormData({ ...formData, room: v })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="kitchen">🍳 Kitchen</SelectItem>
+                      <SelectItem value="bathroom">🚿 Bathroom</SelectItem>
+                      <SelectItem value="bedroom">🛏️ Bedroom</SelectItem>
+                      <SelectItem value="living_room">🛋️ Living Room</SelectItem>
+                      <SelectItem value="dining_room">🍽️ Dining Room</SelectItem>
+                      <SelectItem value="laundry">🧺 Laundry</SelectItem>
+                      <SelectItem value="garage">🚗 Garage</SelectItem>
+                      <SelectItem value="yard">🌳 Yard</SelectItem>
+                      <SelectItem value="other">🏠 Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    type="number"
+                    placeholder="Minutes"
+                    value={formData.estimated_minutes}
+                    onChange={(e) => setFormData({ ...formData, estimated_minutes: parseInt(e.target.value) })}
+                  />
+                </div>
+                <Textarea
+                  placeholder="Description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  rows={3}
+                />
+                <div className="grid grid-cols-2 gap-4">
+                  <Select value={formData.frequency} onValueChange={(v) => setFormData({ ...formData, frequency: v })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="daily">Daily</SelectItem>
+                      <SelectItem value="weekly">Weekly</SelectItem>
+                      <SelectItem value="biweekly">Bi-weekly</SelectItem>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={formData.preferred_day} onValueChange={(v) => setFormData({ ...formData, preferred_day: v })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="any">Any Day</SelectItem>
+                      <SelectItem value="Monday">Monday</SelectItem>
+                      <SelectItem value="Tuesday">Tuesday</SelectItem>
+                      <SelectItem value="Wednesday">Wednesday</SelectItem>
+                      <SelectItem value="Thursday">Thursday</SelectItem>
+                      <SelectItem value="Friday">Friday</SelectItem>
+                      <SelectItem value="Saturday">Saturday</SelectItem>
+                      <SelectItem value="Sunday">Sunday</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Grace Period (days before auto-skip)</label>
+                  <Input
+                    type="number"
+                    value={formData.grace_period_days}
+                    onChange={(e) => setFormData({ ...formData, grace_period_days: parseInt(e.target.value) })}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">ADHD-friendly: Skip this many times before auto-moving to next cycle</p>
+                </div>
+                <Button onClick={() => createMutation.mutate(formData)} className="w-full" style={{ backgroundColor: primaryColor }}>
+                  Add Task
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        {/* Due Tasks */}
+        <Card className={cardBgClass}>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2" style={{ color: primaryColor }}>
+              <Sparkles className="w-5 h-5" />
+              Due Now ({dueTasks.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {dueTasks.length === 0 ? (
+              <p className="text-gray-500 text-center py-4">All caught up! 🎉</p>
+            ) : (
+              dueTasks.map(task => (
+                <div key={task.id} className="p-3 rounded-lg border flex items-start gap-3">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-2xl">{roomEmojis[task.room]}</span>
+                      <div>
+                        <h4 className="font-semibold">{task.task_name}</h4>
+                        <p className="text-sm text-gray-500 capitalize">{task.room.replace('_', ' ')}</p>
+                      </div>
+                    </div>
+                    {task.description && (
+                      <p className="text-sm text-gray-600 mb-2">{task.description}</p>
+                    )}
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variant="outline" className="text-xs">
+                        <Clock className="w-3 h-3 mr-1" />
+                        {task.estimated_minutes} min
+                      </Badge>
+                      <Badge variant="outline" className="text-xs capitalize">
+                        {task.frequency}
+                      </Badge>
+                      {task.skipped_count > 0 && (
+                        <Badge className="text-xs bg-orange-100 text-orange-700">
+                          <AlertCircle className="w-3 h-3 mr-1" />
+                          Skipped {task.skipped_count}x
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={() => handleComplete(task)} style={{ backgroundColor: primaryColor }}>
+                      <Check className="w-4 h-4 mr-1" />
+                      Done
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => handleSkip(task)}>
+                      <SkipForward className="w-4 h-4 mr-1" />
+                      Skip
+                    </Button>
+                  </div>
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Upcoming Tasks */}
+        {upcomingTasks.length > 0 && (
+          <Card className={cardBgClass}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-gray-600">
+                <Calendar className="w-5 h-5" />
+                Coming Up
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {upcomingTasks.map(task => (
+                <div key={task.id} className="p-3 rounded-lg border flex items-center justify-between opacity-60">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">{roomEmojis[task.room]}</span>
+                    <div>
+                      <h4 className="font-medium">{task.task_name}</h4>
+                      {task.last_completed && (
+                        <p className="text-xs text-gray-500">
+                          Last done {format(parseISO(task.last_completed), 'MMM d')}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <Button size="sm" variant="ghost" onClick={() => deleteMutation.mutate(task.id)} className="text-red-500">
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className={`min-h-screen ${bgClass} p-4 md:p-8`}>

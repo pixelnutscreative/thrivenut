@@ -78,7 +78,7 @@ const categoryIcons = {
   other: '✨'
 };
 
-export default function Goals() {
+export default function Goals({ defaultType = null }) {
   const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
   const urlParams = new URLSearchParams(window.location.search);
@@ -178,6 +178,10 @@ export default function Goals() {
 
   // Goal filters
   const [categoryFilter, setCategoryFilter] = useState('all');
+  // If defaultType is passed (e.g. 'habit' from Habits page), filter by it
+  // But wait, goal filtering logic below only filters by category and hidden.
+  // We should add type filtering.
+  
   const [hiddenGoals, setHiddenGoals] = useState(() => {
     const saved = localStorage.getItem('hiddenGoals');
     return saved ? JSON.parse(saved) : [];
@@ -196,6 +200,15 @@ export default function Goals() {
   const filteredGoals = (goals || []).filter(goal => {
     if (hiddenGoals.includes(goal.id)) return false;
     if (categoryFilter !== 'all' && goal.category !== categoryFilter) return false;
+    // Filter by type if defaultType is provided (e.g. only habits)
+    // Note: 'habit' is a goal_type in the schema, but not in the goalTypes array constant at top of file?
+    // Wait, let's check goalTypes constant.
+    // const goalTypes = [{id: 'project'}, {id: 'milestone'}, {id: 'learning'}, {id: 'preparation'}];
+    // It seems 'habit' is missing from the constant but present in the entity schema and usage.
+    // Let's assume if defaultType is passed, we filter by goal_type.
+    if (defaultType && goal.goal_type !== defaultType) return false;
+    // If NOT defaultType (regular Goals page), maybe we should exclude habits? 
+    // Or just show everything? Let's show everything for now unless specific filter requested.
     return true;
   });
 
