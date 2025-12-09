@@ -14,9 +14,9 @@ export default function ImpersonationBanner() {
   };
 
   // Extract username from identifier
-  const displayName = impersonating?.startsWith('managed_') 
+  const displayName = impersonating.startsWith('managed_') 
     ? `@${impersonating.replace('managed_', '').replace('@thrivenut.app', '')}`
-    : (impersonating || '');
+    : impersonating;
 
   return (
     <div className="fixed top-0 left-0 right-0 z-[100] bg-gradient-to-r from-amber-500 to-orange-500 text-white px-4 py-2 flex items-center justify-center gap-4 shadow-lg">
@@ -39,25 +39,14 @@ export default function ImpersonationBanner() {
 
 // Helper to get the current "user" identifier (real or impersonated)
 export function getEffectiveUserEmail(realUserEmail) {
-  // CRITICAL: Always validate and ensure string before any operations
-  if (!realUserEmail || typeof realUserEmail !== 'string' || !realUserEmail.trim()) {
-    console.warn('getEffectiveUserEmail called with invalid email:', realUserEmail);
-    return null;
-  }
-  
   if (typeof window === 'undefined' || typeof sessionStorage === 'undefined') {
-    return realUserEmail.trim();
+    return realUserEmail;
   }
-  
   try {
     const impersonating = sessionStorage.getItem('impersonating');
-    if (impersonating && typeof impersonating === 'string' && impersonating.trim()) {
-      return impersonating.trim();
-    }
-    return realUserEmail.trim();
-  } catch (error) {
-    console.error('Error in getEffectiveUserEmail:', error);
-    return realUserEmail.trim();
+    return impersonating || realUserEmail;
+  } catch {
+    return realUserEmail;
   }
 }
 

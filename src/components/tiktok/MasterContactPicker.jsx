@@ -18,10 +18,7 @@ export default function MasterContactPicker({
   const consolidatedContacts = React.useMemo(() => {
     const byUsername = {};
     masterContacts.forEach(contact => {
-      const rawUsername = contact.data?.username || contact.username || '';
-      const username = (rawUsername && typeof rawUsername === 'string') 
-        ? rawUsername.trim().toLowerCase().replace('@', '').trim() 
-        : '';
+      const username = (contact.data?.username || contact.username || '').toLowerCase().replace('@', '').trim();
       if (!username) return;
       
       const displayName = contact.data?.display_name || contact.display_name || '';
@@ -47,20 +44,15 @@ export default function MasterContactPicker({
   }, [masterContacts]);
 
   // Filter by search term
-  const searchLower = (searchTerm && typeof searchTerm === 'string') 
-    ? searchTerm.trim().toLowerCase().replace('@', '').trim() 
-    : '';
   const filteredContacts = consolidatedContacts.filter(c => 
-    (c.username && typeof c.username === 'string' && c.username.trim() && c.username.toLowerCase().includes(searchLower)) ||
-    (c.display_name && typeof c.display_name === 'string' && c.display_name.trim() && c.display_name.toLowerCase().includes(searchLower))
+    c.username.toLowerCase().includes(searchTerm.toLowerCase().replace('@', '')) ||
+    c.display_name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Check if search term is a new username not in the list
-  const cleanSearchTerm = (searchTerm && typeof searchTerm === 'string') 
-    ? searchTerm.trim().replace('@', '').trim().toLowerCase() 
-    : '';
+  const cleanSearchTerm = searchTerm.replace('@', '').trim().toLowerCase();
   const isNewUsername = cleanSearchTerm && !consolidatedContacts.some(
-    c => c.username && typeof c.username === 'string' && c.username.trim() && c.username.toLowerCase() === cleanSearchTerm
+    c => c.username.toLowerCase() === cleanSearchTerm
   );
 
   // Close dropdown when clicking outside

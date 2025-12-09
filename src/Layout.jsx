@@ -46,8 +46,7 @@ import {
   HelpCircle,
   MessageCircle,
   Briefcase,
-  MapPin,
-  Lightbulb
+  MapPin
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import TikTokAccessGate from './components/access/TikTokAccessGate';
@@ -80,7 +79,7 @@ const iconMap = {
   Pill, Gift, Brain, Home, ChevronDown, ChevronRight, Bell, Share2, Music, Star,
   Lock, UserCog, Sparkles, Eye, Bookmark, HandMetal, PawPrint, Search, 
   MousePointerClick, Calendar, Sun, Cross, Smile, FileText, StickyNote, 
-  Tablet, HelpCircle, MessageCircle, Briefcase, Palette, MapPin, Lightbulb
+  Tablet, HelpCircle, MessageCircle, Briefcase, Palette, MapPin
 };
 
 // Custom peanut icon component
@@ -132,17 +131,11 @@ const defaultNavItems = [
   { name: '── Goals & Growth ──', isGroupHeader: true, color: 'text-teal-400', bgColor: 'bg-teal-500/10' },
   { name: 'Goals', icon: Target, path: 'Goals', moduleId: 'goals' },
   { name: 'Vision Board', icon: Eye, path: 'VisionBoard', moduleId: 'goals' },
-  
-  // AMBER: Content Creation
-  { name: '── Content Creation ──', isGroupHeader: true, color: 'text-amber-400', bgColor: 'bg-amber-500/10' },
-  { name: 'Content Ideas', icon: Lightbulb, path: 'SavedMotivations', alwaysShow: true },
-  { name: "Ping & Pong's Silly Songs", icon: Smile, externalUrl: 'https://sillysongs.pixelnutscreative.com', alwaysShow: true },
+  { name: 'Saved Motivations', icon: Bookmark, path: 'SavedMotivations', alwaysShow: true },
   
   // PURPLE: Faith & Spiritual
   { name: '── Faith & Spiritual ──', isGroupHeader: true, color: 'text-purple-400', bgColor: 'bg-purple-500/10' },
   { name: 'Prayer Requests', icon: Heart, path: 'PrayerRequests', requiresBibleBeliever: true },
-  { name: 'Holy Hitmakers', icon: Cross, path: 'HolyHitmakers', alwaysShow: true },
-  { name: 'Bible Resources', icon: BookOpen, path: 'BibleResources', alwaysShow: true },
   
   // PINK: Creator Suite
   { name: '── Creator Suite ──', isGroupHeader: true, color: 'text-pink-400', bgColor: 'bg-pink-500/10' },
@@ -156,16 +149,19 @@ const defaultNavItems = [
     { name: 'Love Away Giveaways', icon: Gift, path: 'LoveAway' },
     { name: 'Pictionary Helper', icon: Palette, path: 'PictionaryHelper' },
   ]},
-  
-  // ROSE: Mental Health & Reflection
-  { name: '── Mental Health ──', isGroupHeader: true, color: 'text-rose-400', bgColor: 'bg-rose-500/10' },
-  { name: 'Mental Health Hub', icon: Brain, path: 'NeurodivergentSettings', moduleId: 'mental_health' },
-  { name: 'Journal', icon: FileText, path: 'Journal', moduleId: 'journal' },
-  { name: 'Quick Notes', icon: StickyNote, path: 'QuickNotes', alwaysShow: true },
+  { name: 'Music & Songs', icon: Music, isSection: true, subItems: [
+    { name: 'Holy Hitmakers', icon: Cross, path: 'HolyHitmakers' },
+    { name: "Ping & Pong's Silly Songs", icon: Smile, externalUrl: 'https://sillysongs.pixelnutscreative.com' },
+  ]},
   
   // GREEN: Wellness & Health
   { name: '── Wellness & Health ──', isGroupHeader: true, color: 'text-green-400', bgColor: 'bg-green-500/10' },
   { name: 'Daily Wellness', icon: Heart, path: 'Wellness', moduleId: 'wellness' },
+  { name: 'Mental Health', icon: Brain, isSection: true, moduleId: 'mental_health', subItems: [
+    { name: 'Mental Health Hub', icon: Brain, path: 'NeurodivergentSettings' },
+    { name: 'Journal', icon: FileText, path: 'Journal', moduleId: 'journal' },
+    { name: 'Quick Notes', icon: StickyNote, path: 'QuickNotes' },
+  ]},
   { name: 'Supplements', icon: Tablet, path: 'Supplements', moduleId: 'supplements' },
   { name: 'Medications', icon: Pill, path: 'Medications', moduleId: 'medications' },
   { name: 'Pet Care', icon: PawPrint, path: 'PetCare', moduleId: 'pets' },
@@ -200,16 +196,13 @@ export default function Layout({ children, currentPageName }) {
       .finally(() => setUserLoading(false));
   }, []);
 
-  // Get effective email (real user or impersonated) - ALWAYS validate
-  const effectiveEmail = (user?.email && typeof user.email === 'string' && user.email.trim()) 
-    ? getEffectiveUserEmail(user.email) 
-    : null;
+  // Get effective email (real user or impersonated)
+  const effectiveEmail = user?.email ? getEffectiveUserEmail(user.email) : null;
   const currentlyImpersonating = isImpersonating();
 
   const { data: preferences } = useQuery({
     queryKey: ['preferences', effectiveEmail],
     queryFn: async () => {
-      if (!effectiveEmail) return null;
       try {
         const prefs = await base44.entities.UserPreferences.filter({ user_email: effectiveEmail }, '-updated_date');
         return prefs[0] || null;
@@ -290,11 +283,9 @@ export default function Layout({ children, currentPageName }) {
   }, [menuConfig]);
   
   // IMPORTANT: isAdmin checks the REAL user email (not impersonated), so admin always sees admin menu
-  const realUserEmail = (user?.email && typeof user.email === 'string' && user.email.trim()) 
-    ? user.email.trim().toLowerCase() 
-    : '';
+  const realUserEmail = user?.email?.toLowerCase() || '';
   const adminEmails = ['pixelnutscreative@gmail.com', 'pixel@thrivenut.app'];
-  const isAdmin = realUserEmail && adminEmails.includes(realUserEmail);
+  const isAdmin = adminEmails.includes(realUserEmail);
   
   // hasTikTokAccess - admins ALWAYS have access
   const hasTikTokAccess = isAdmin || preferences?.tiktok_access_approved;

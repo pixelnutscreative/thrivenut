@@ -47,20 +47,18 @@ export default function Dashboard() {
         setUser(userData);
 
         // Check if user is pre-approved and auto-grant TikTok access
-        if (userData?.email && typeof userData.email === 'string' && userData.email.trim()) {
-          const prefs = await base44.entities.UserPreferences.filter({ user_email: userData.email }, '-updated_date');
-          if (prefs[0] && !prefs[0].tiktok_access_approved) {
-            try {
-              const preApproved = await base44.entities.PreApprovedEmail.filter({ 
-                email: userData.email.trim().toLowerCase(), 
-                is_active: true 
-              });
-              if (preApproved.length > 0) {
-                await base44.entities.UserPreferences.update(prefs[0].id, { tiktok_access_approved: true });
-              }
-            } catch (e) {
-              // Ignore - user may not have access to PreApprovedEmail entity
+        const prefs = await base44.entities.UserPreferences.filter({ user_email: userData.email }, '-updated_date');
+        if (prefs[0] && !prefs[0].tiktok_access_approved) {
+          try {
+            const preApproved = await base44.entities.PreApprovedEmail.filter({ 
+              email: userData.email.toLowerCase(), 
+              is_active: true 
+            });
+            if (preApproved.length > 0) {
+              await base44.entities.UserPreferences.update(prefs[0].id, { tiktok_access_approved: true });
             }
+          } catch (e) {
+            // Ignore - user may not have access to PreApprovedEmail entity
           }
         }
       } catch (error) {
@@ -74,18 +72,16 @@ export default function Dashboard() {
   const { data: preferences } = useQuery({
     queryKey: ['preferences', user?.email],
     queryFn: async () => {
-      if (!user?.email) return null;
       const prefs = await base44.entities.UserPreferences.filter({ user_email: user.email });
       return prefs[0] || null;
     },
-    enabled: !!user?.email,
+    enabled: !!user,
   });
 
   // Fetch or create content goal for current week (auto-generate from template)
   const { data: contentGoal } = useQuery({
     queryKey: ['contentGoal', getCurrentWeekStart()],
     queryFn: async () => {
-      if (!user?.email) return null;
       const weekStart = getCurrentWeekStart();
       const goals = await base44.entities.ContentGoal.filter({ 
         week_starting: weekStart,
@@ -114,63 +110,59 @@ export default function Dashboard() {
       
       return null;
     },
-    enabled: !!user?.email,
+    enabled: !!user,
   });
 
   const { data: todaysWater } = useQuery({
     queryKey: ['waterToday', format(new Date(), 'yyyy-MM-dd')],
     queryFn: async () => {
-      if (!user?.email) return null;
       const logs = await base44.entities.WaterLog.filter({ 
         date: format(new Date(), 'yyyy-MM-dd'),
         created_by: user.email 
       });
       return logs[0] || null;
     },
-    enabled: !!user?.email,
+    enabled: !!user,
   });
 
   const { data: todaysMoodLogs } = useQuery({
     queryKey: ['moodToday', format(new Date(), 'yyyy-MM-dd')],
     queryFn: async () => {
-      if (!user?.email) return [];
       const logs = await base44.entities.MoodLog.filter({ 
         date: format(new Date(), 'yyyy-MM-dd'),
         created_by: user.email 
       });
       return logs;
     },
-    enabled: !!user?.email,
+    enabled: !!user,
   });
 
   const { data: todaysJournal } = useQuery({
     queryKey: ['journalToday', format(new Date(), 'yyyy-MM-dd')],
     queryFn: async () => {
-      if (!user?.email) return null;
       const entries = await base44.entities.JournalEntry.filter({ 
         date: format(new Date(), 'yyyy-MM-dd'),
         created_by: user.email 
       });
       return entries[0] || null;
     },
-    enabled: !!user?.email,
+    enabled: !!user,
   });
 
   const { data: selfCareLog } = useQuery({
     queryKey: ['selfCareToday', format(new Date(), 'yyyy-MM-dd')],
     queryFn: async () => {
-      if (!user?.email) return null;
       const logs = await base44.entities.DailySelfCareLog.filter({ 
         date: format(new Date(), 'yyyy-MM-dd'),
         created_by: user.email 
       });
       return logs[0] || null;
     },
-    enabled: !!user?.email,
+    enabled: !!user,
   });
 
   // Get effective email for impersonation support
-  const effectiveEmail = (user?.email && typeof user.email === 'string') ? getEffectiveUserEmail(user.email) : null;
+  const effectiveEmail = user ? getEffectiveUserEmail(user.email) : null;
 
   const { data: tiktokContacts = [] } = useQuery({
     queryKey: ['tiktokContacts', effectiveEmail],
@@ -215,7 +207,6 @@ export default function Dashboard() {
   // Save schedule by type
   const saveScheduleMutation = useMutation({
     mutationFn: async ({ field, data }) => {
-      if (!user?.email) return;
       // Also update template
       const templates = await base44.entities.ContentScheduleTemplate.filter({ created_by: user.email });
       const templateUpdate = { [field]: data };
@@ -339,10 +330,7 @@ export default function Dashboard() {
           selfCareLog={selfCareLog}
           onToggleTask={(taskId, value) => selfCareMutation.mutate({ taskId, value })}
           onUpdateMealNotes={(noteKey, value) => mealNotesMutation.mutate({ noteKey, value })}
-          preferences={preferences ? { 
-            ...preferences, 
-            user_email: (user?.email && typeof user.email === 'string') ? user.email : preferences.user_email 
-          } : null}
+          preferences={{ ...preferences, user_email: user?.email }}
           viewMode={preferences?.dashboard_view_mode || 'detailed'}
           showGoogleCalendar={preferences?.show_google_calendar || false}
           showCreatorCalendarEvents={preferences?.show_creator_calendar_events !== false}
@@ -374,7 +362,7 @@ export default function Dashboard() {
         </Collapsible>
 
         {/* Notion Task Picker - Only for admin account */}
-        {user?.email && typeof user.email === 'string' && user.email.trim() && user.email.trim().toLowerCase() === 'pixelnutscreative@gmail.com' && (
+        {user?.email?.toLowerCase() === 'pixelnutscreative@gmail.com' && (
           <Collapsible open={!isSectionCollapsed('notion-tasks')}>
             <CollapsibleTrigger 
               className="w-full flex items-center justify-between p-2 hover:bg-gray-100 rounded-lg transition-colors"

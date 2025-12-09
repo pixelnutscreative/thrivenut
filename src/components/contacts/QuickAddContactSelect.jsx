@@ -32,9 +32,7 @@ export default function QuickAddContactSelect({
   const masterByUsername = useMemo(() => {
     const byUsername = {};
     masterContacts.forEach(c => {
-      const username = (c.username && typeof c.username === 'string' && c.username.trim()) 
-        ? c.username.trim().toLowerCase().replace('@', '').trim() 
-        : '';
+      const username = (c.username || '').toLowerCase().replace('@', '').trim();
       if (!username) return;
       if (!byUsername[username]) {
         byUsername[username] = c;
@@ -60,36 +58,25 @@ export default function QuickAddContactSelect({
   }, []);
 
   // Filter from user's contacts first
-  const searchLower = (searchTerm && typeof searchTerm === 'string' && searchTerm.trim()) 
-    ? searchTerm.trim().toLowerCase() 
-    : '';
   const filteredContacts = contacts.filter(c => 
-    (c.username && typeof c.username === 'string' && c.username.trim() && c.username.toLowerCase().includes(searchLower)) ||
-    (c.display_name && typeof c.display_name === 'string' && c.display_name.trim() && c.display_name.toLowerCase().includes(searchLower)) ||
-    (c.real_name && typeof c.real_name === 'string' && c.real_name.trim() && c.real_name.toLowerCase().includes(searchLower)) ||
-    (c.nickname && typeof c.nickname === 'string' && c.nickname.trim() && c.nickname.toLowerCase().includes(searchLower))
+    c.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    c.display_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    c.real_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    c.nickname?.toLowerCase().includes(searchTerm.toLowerCase())
   ).slice(0, 10);
 
   // Also search master database for suggestions
   const masterSuggestions = useMemo(() => {
-    if (!searchTerm || typeof searchTerm !== 'string' || searchTerm.length < 2) return [];
-    const term = searchTerm.trim().toLowerCase().replace('@', '').trim();
-    const existingUsernames = new Set(contacts.map(c => {
-      const u = c.username || '';
-      return (u && typeof u === 'string' && u.trim()) ? u.toLowerCase().replace('@', '').trim() : '';
-    }));
+    if (!searchTerm || searchTerm.length < 2) return [];
+    const term = searchTerm.toLowerCase().replace('@', '');
+    const existingUsernames = new Set(contacts.map(c => (c.username || '').toLowerCase().replace('@', '')));
     
     return Object.values(masterByUsername)
       .filter(c => {
-        const username = (c.username && typeof c.username === 'string' && c.username.trim()) 
-          ? c.username.toLowerCase() 
-          : '';
-        const displayName = (c.display_name && typeof c.display_name === 'string' && c.display_name.trim()) 
-          ? c.display_name.toLowerCase() 
-          : '';
+        const username = (c.username || '').toLowerCase();
         return !existingUsernames.has(username) && (
           username.includes(term) ||
-          displayName.includes(term)
+          (c.display_name || '').toLowerCase().includes(term)
         );
       })
       .slice(0, 5);

@@ -47,13 +47,24 @@ Deno.serve(async (req) => {
       const props = page.properties;
       
       // Extract title - Notion titles are in a specific format
+      // Try multiple approaches to find the title
       let title = 'Untitled';
       
-      // Notion databases ALWAYS have one 'title' property - find it
-      const titleProp = Object.entries(props).find(([key, value]) => value.type === 'title');
+      // First, try to find a property named "Name" or "Title" or "Task"
+      const commonTitleNames = ['Name', 'name', 'Title', 'title', 'Task', 'task', 'Item', 'item'];
+      for (const name of commonTitleNames) {
+        if (props[name] && props[name].type === 'title' && props[name].title?.length > 0) {
+          title = props[name].title.map(t => t.plain_text).join('');
+          break;
+        }
+      }
       
-      if (titleProp && titleProp[1].title && titleProp[1].title.length > 0) {
-        title = titleProp[1].title.map(t => t.plain_text).join('');
+      // Fallback: find any property of type 'title'
+      if (title === 'Untitled') {
+        const titleProp = Object.values(props).find(p => p.type === 'title');
+        if (titleProp && titleProp.title && titleProp.title.length > 0) {
+          title = titleProp.title.map(t => t.plain_text).join('');
+        }
       }
       
       // Extract other common properties

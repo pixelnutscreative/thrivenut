@@ -75,16 +75,13 @@ export default function Settings() {
     });
   }, []);
 
-  // Get effective email (real user or impersonated) - ALWAYS validate
-  const effectiveEmail = (user?.email && typeof user.email === 'string' && user.email.trim())
-    ? getEffectiveUserEmail(user.email)
-    : null;
+  // Get effective email (real user or impersonated)
+  const effectiveEmail = user ? getEffectiveUserEmail(user.email) : null;
   const currentlyImpersonating = isImpersonating();
 
   const { data: preferences, isLoading: prefsLoading } = useQuery({
     queryKey: ['preferences', effectiveEmail],
     queryFn: async () => {
-      if (!effectiveEmail) return null;
       const prefs = await base44.entities.UserPreferences.filter({ user_email: effectiveEmail }, '-updated_date');
       return prefs[0] || null;
     },

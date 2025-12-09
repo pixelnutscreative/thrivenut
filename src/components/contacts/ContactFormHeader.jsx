@@ -235,11 +235,7 @@ export default function ContactFormHeader({ formData, setFormData, onSave, isSav
             ))}
           {/* Custom clubs - sorted alphabetically - with lock icon for private */}
           {[...(formData.custom_clubs || [])]
-            .sort((a, b) => {
-              const clubA = (a && typeof a === 'string') ? a : '';
-              const clubB = (b && typeof b === 'string') ? b : '';
-              return clubA.localeCompare(clubB);
-            })
+            .sort((a, b) => a.localeCompare(b))
             .map((club, idx) => (
               <Badge
                 key={`custom-${idx}`}
@@ -310,11 +306,7 @@ export default function ContactFormHeader({ formData, setFormData, onSave, isSav
             {formData.custom_clubs?.length > 0 && (
               <div className="grid grid-cols-2 gap-1.5">
                 {[...(formData.custom_clubs || [])]
-                  .sort((a, b) => {
-                    const clubA = (a && typeof a === 'string') ? a : '';
-                    const clubB = (b && typeof b === 'string') ? b : '';
-                    return clubA.localeCompare(clubB);
-                  })
+                  .sort((a, b) => a.localeCompare(b))
                   .map((club, idx) => (
                     <div
                       key={`custom-${idx}`}
@@ -349,11 +341,7 @@ export default function ContactFormHeader({ formData, setFormData, onSave, isSav
                 <div className="grid grid-cols-2 gap-1.5">
                   {sharedClubs
                     .filter(c => c.is_approved)
-                    .sort((a, b) => {
-                      const nameA = (a.name && typeof a.name === 'string') ? a.name : '';
-                      const nameB = (b.name && typeof b.name === 'string') ? b.name : '';
-                      return nameA.localeCompare(nameB);
-                    })
+                    .sort((a, b) => a.name.localeCompare(b.name))
                     .map(club => {
                       const clubKey = `shared:${club.id}`;
                       const isActive = formData.clubs?.includes(clubKey);

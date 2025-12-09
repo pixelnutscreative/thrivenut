@@ -113,13 +113,8 @@ export default function People() {
 
   const addSharedClubMutation = useMutation({
     mutationFn: async (clubName) => {
-      const clubLower = (clubName && typeof clubName === 'string' && clubName.trim()) 
-        ? clubName.trim().toLowerCase() 
-        : '';
-      const existing = sharedClubs.find(c => 
-        c.name && typeof c.name === 'string' && c.name.trim() && c.name.toLowerCase() === clubLower
-      );
-      if (!existing && clubLower) {
+      const existing = sharedClubs.find(c => c.name.toLowerCase() === clubName.toLowerCase());
+      if (!existing) {
         await base44.entities.SharedClub.create({
           name: clubName,
           is_approved: false,
@@ -239,17 +234,13 @@ export default function People() {
   // Filter to only show IRL contacts in My People
   const irlContacts = contacts.filter(c => c.is_irl_contact);
 
-  const searchLower = (searchTerm && typeof searchTerm === 'string' && searchTerm.trim()) 
-    ? searchTerm.trim().toLowerCase() 
-    : '';
   const filteredContacts = irlContacts
     .filter(c => {
-      if (!searchLower) return true;
       const matchesSearch = 
-        (c.real_name && typeof c.real_name === 'string' && c.real_name.trim() && c.real_name.toLowerCase().includes(searchLower)) ||
-        (c.nickname && typeof c.nickname === 'string' && c.nickname.trim() && c.nickname.toLowerCase().includes(searchLower)) ||
-        (c.username && typeof c.username === 'string' && c.username.trim() && c.username.toLowerCase().includes(searchLower)) ||
-        (c.display_name && typeof c.display_name === 'string' && c.display_name.trim() && c.display_name.toLowerCase().includes(searchLower));
+        c.real_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        c.nickname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        c.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        c.display_name?.toLowerCase().includes(searchTerm.toLowerCase());
       return matchesSearch;
     })
     .sort((a, b) => (b.is_favorite ? 1 : 0) - (a.is_favorite ? 1 : 0));

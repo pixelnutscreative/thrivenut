@@ -244,31 +244,19 @@ function AddGifterEntry({ allContacts, gifts, week, ownerEmail, onSaved, isDark,
       phonetic: c.phonetic || c.data?.phonetic || ''
     }))
     .filter(c => c.username || c.display_name)
-    .sort((a, b) => {
-      const nameA = a.display_name || a.username || '';
-      const nameB = b.display_name || b.username || '';
-      const lowerA = (nameA && typeof nameA === 'string') ? nameA.toLowerCase() : '';
-      const lowerB = (nameB && typeof nameB === 'string') ? nameB.toLowerCase() : '';
-      return lowerA.localeCompare(lowerB);
-    });
+    .sort((a, b) => (a.display_name || a.username).toLowerCase().localeCompare((b.display_name || b.username).toLowerCase()));
 
   // Filter contacts
-  const searchLower = (usernameSearch && typeof usernameSearch === 'string' && usernameSearch.trim())
-    ? usernameSearch.trim().toLowerCase()
-    : '';
-  const filteredContacts = searchLower
+  const filteredContacts = usernameSearch.trim()
     ? normalizedContacts.filter(c => 
-        (c.username && typeof c.username === 'string' && c.username.trim() && c.username.toLowerCase().includes(searchLower)) ||
-        (c.display_name && typeof c.display_name === 'string' && c.display_name.trim() && c.display_name.toLowerCase().includes(searchLower))
+        c.username?.toLowerCase().includes(usernameSearch.toLowerCase()) ||
+        c.display_name?.toLowerCase().includes(usernameSearch.toLowerCase())
       )
     : normalizedContacts.slice(0, 20);
 
   // Filter gifts
-  const giftSearchLower = (giftSearch && typeof giftSearch === 'string' && giftSearch.trim())
-    ? giftSearch.trim().toLowerCase()
-    : '';
-  const filteredGifts = giftSearchLower
-    ? gifts.filter(g => g.name && typeof g.name === 'string' && g.name.trim() && g.name.toLowerCase().includes(giftSearchLower))
+  const filteredGifts = giftSearch.trim()
+    ? gifts.filter(g => g.name?.toLowerCase().includes(giftSearch.toLowerCase()))
     : gifts;
 
   const handleSelectContact = (contact) => {
@@ -396,11 +384,7 @@ function AddGifterEntry({ allContacts, gifts, week, ownerEmail, onSaved, isDark,
                   onValueChange={setUsernameSearch}
                 />
                 <CommandList className="max-h-64">
-                  {usernameSearch && typeof usernameSearch === 'string' && usernameSearch.trim() && !filteredContacts.find(c => {
-                    const cUsernameLower = (c.username && typeof c.username === 'string' && c.username.trim()) ? c.username.toLowerCase() : '';
-                    const searchLower = usernameSearch.trim().toLowerCase();
-                    return cUsernameLower === searchLower;
-                  }) && (
+                  {usernameSearch.trim() && !filteredContacts.find(c => c.username?.toLowerCase() === usernameSearch.toLowerCase()) && (
                     <CommandItem
                       onSelect={() => {
                         setFormData({

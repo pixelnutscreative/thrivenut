@@ -17,19 +17,12 @@ export default function SearchableContactSelect({
   // Sort contacts alphabetically by username
   const sortedContacts = [...contacts]
     .filter(c => c.id !== excludeId)
-    .sort((a, b) => {
-      const usernameA = (a.username && typeof a.username === 'string') ? a.username : '';
-      const usernameB = (b.username && typeof b.username === 'string') ? b.username : '';
-      return usernameA.localeCompare(usernameB);
-    });
+    .sort((a, b) => (a.username || '').localeCompare(b.username || ''));
 
   // Filter by search term
-  const searchLower = (searchTerm && typeof searchTerm === 'string' && searchTerm.trim()) 
-    ? searchTerm.trim().toLowerCase() 
-    : '';
   const filteredContacts = sortedContacts.filter(c => 
-    (c.username && typeof c.username === 'string' && c.username.trim() && c.username.toLowerCase().includes(searchLower)) ||
-    (c.display_name && typeof c.display_name === 'string' && c.display_name.trim() && c.display_name.toLowerCase().includes(searchLower))
+    c.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    c.display_name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Get selected contact

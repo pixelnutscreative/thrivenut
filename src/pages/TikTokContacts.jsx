@@ -168,7 +168,7 @@ export default function TikTokContacts() {
     base44.auth.me().then(setUser);
   }, []);
 
-  const effectiveEmail = (user?.email && typeof user.email === 'string') ? getEffectiveUserEmail(user.email) : null;
+  const effectiveEmail = user ? getEffectiveUserEmail(user.email) : null;
 
   const { data: contacts = [] } = useQuery({
     queryKey: ['tiktokContacts', effectiveEmail],
@@ -201,12 +201,8 @@ export default function TikTokContacts() {
 
   const addSharedClubMutation = useMutation({
     mutationFn: async (clubName) => {
-      if (!clubName || typeof clubName !== 'string' || !clubName.trim()) return;
       // Check if it already exists
-      const clubLower = clubName.trim().toLowerCase();
-      const existing = sharedClubs.find(c => 
-        c.name && typeof c.name === 'string' && c.name.trim() && c.name.trim().toLowerCase() === clubLower
-      );
+      const existing = sharedClubs.find(c => c.name.toLowerCase() === clubName.toLowerCase());
       if (!existing) {
         await base44.entities.SharedClub.create({
           name: clubName,
@@ -329,14 +325,11 @@ export default function TikTokContacts() {
 
   const filteredContacts = socialContacts
     .filter(c => {
-      const searchLower = (searchTerm && typeof searchTerm === 'string' && searchTerm.trim()) 
-        ? searchTerm.trim().toLowerCase() 
-        : '';
-      const matchesSearch = !searchLower || 
-        (c.username && typeof c.username === 'string' && c.username.trim() && c.username.trim().toLowerCase().includes(searchLower)) ||
-        (c.display_name && typeof c.display_name === 'string' && c.display_name.trim() && c.display_name.trim().toLowerCase().includes(searchLower)) ||
-        (c.real_name && typeof c.real_name === 'string' && c.real_name.trim() && c.real_name.trim().toLowerCase().includes(searchLower)) ||
-        (c.nickname && typeof c.nickname === 'string' && c.nickname.trim() && c.nickname.trim().toLowerCase().includes(searchLower));
+      const matchesSearch = 
+        c.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        c.display_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        c.real_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        c.nickname?.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesRole = filterRoles.length === 0 || filterRoles.some(role => c.role?.includes(role));
       const matchesVeteran = !filterVeterans || c.is_veteran;
       const matchesLiveType = !filterLiveType || c.live_stream_types?.includes(filterLiveType);

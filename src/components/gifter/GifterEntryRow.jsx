@@ -66,31 +66,19 @@ export default function GifterEntryRow({
       phonetic: c.phonetic || c.data?.phonetic || ''
     }))
     .filter(c => c.username)
-    .sort((a, b) => {
-      const nameA = a.display_name || a.username || '';
-      const nameB = b.display_name || b.username || '';
-      const lowerA = (nameA && typeof nameA === 'string') ? nameA.toLowerCase() : '';
-      const lowerB = (nameB && typeof nameB === 'string') ? nameB.toLowerCase() : '';
-      return lowerA.localeCompare(lowerB);
-    });
+    .sort((a, b) => (a.display_name || a.username).toLowerCase().localeCompare((b.display_name || b.username).toLowerCase()));
 
   // Filter contacts by search
-  const searchLower = (usernameSearch && typeof usernameSearch === 'string' && usernameSearch.trim()) 
-    ? usernameSearch.trim().toLowerCase() 
-    : '';
-  const filteredContacts = searchLower 
+  const filteredContacts = usernameSearch 
     ? normalizedContacts.filter(c => 
-        (c.username && typeof c.username === 'string' && c.username.trim() && c.username.toLowerCase().includes(searchLower)) ||
-        (c.display_name && typeof c.display_name === 'string' && c.display_name.trim() && c.display_name.toLowerCase().includes(searchLower))
+        c.username.toLowerCase().includes(usernameSearch.toLowerCase()) ||
+        c.display_name.toLowerCase().includes(usernameSearch.toLowerCase())
       )
     : normalizedContacts;
 
   // Filter gifts by search
-  const giftSearchLower = (giftSearch && typeof giftSearch === 'string' && giftSearch.trim()) 
-    ? giftSearch.trim().toLowerCase() 
-    : '';
-  const filteredGifts = giftSearchLower
-    ? gifts.filter(g => g.name && typeof g.name === 'string' && g.name.trim() && g.name.toLowerCase().includes(giftSearchLower))
+  const filteredGifts = giftSearch
+    ? gifts.filter(g => g.name?.toLowerCase().includes(giftSearch.toLowerCase()))
     : gifts;
 
   // Save mutation
@@ -101,15 +89,9 @@ export default function GifterEntryRow({
       
       if (data.username && !gifterId) {
         // Check if contact exists
-        const dataUsernameLower = (data.username && typeof data.username === 'string' && data.username.trim()) 
-          ? data.username.trim().toLowerCase() 
-          : '';
-        const existing = normalizedContacts.find(c => {
-          const cUsernameLower = (c.username && typeof c.username === 'string' && c.username.trim()) 
-            ? c.username.toLowerCase() 
-            : '';
-          return cUsernameLower === dataUsernameLower;
-        });
+        const existing = normalizedContacts.find(c => 
+          c.username.toLowerCase() === data.username.toLowerCase()
+        );
         
         if (existing) {
           gifterId = existing.id;

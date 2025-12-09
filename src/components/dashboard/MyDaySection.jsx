@@ -109,7 +109,7 @@ export default function MyDaySection({
   const queryClient = useQueryClient();
   const today = format(new Date(), 'yyyy-MM-dd');
   const todayDayName = format(new Date(), 'EEEE');
-  const userEmail = (preferences?.user_email && typeof preferences.user_email === 'string') ? preferences.user_email : null;
+  const userEmail = preferences?.user_email;
   
   const [editingMeal, setEditingMeal] = useState(null);
   const [mealNoteInput, setMealNoteInput] = useState('');
@@ -1579,7 +1579,7 @@ export default function MyDaySection({
       <div className="lg:col-span-1">
         <DailyMotivationSidebar
           greetingType={preferences?.greeting_type}
-          userName={(preferences?.user_email && typeof preferences.user_email === 'string') ? preferences.user_email.split('@')[0] : 'Friend'}
+          userName={preferences?.user_email?.split('@')[0] || 'Friend'}
           struggles={preferences?.mental_health_struggles || []}
           improvements={preferences?.improvement_goals || []}
           isBibleBeliever={preferences?.is_bible_believer}
