@@ -76,7 +76,8 @@ export default function Layout({ children, currentPageName }) {
   
   // Permissions
   const hasTikTokAccess = isAdmin || preferences?.tiktok_access_approved;
-  const isBibleBeliever = preferences?.is_bible_believer !== false; // Default true if undefined
+  // Determine if Bible features are enabled (default to true if undefined)
+  const isBibleBeliever = preferences?.enable_bible_options !== false;
   const enabledModules = preferences?.enabled_modules || ['tiktok', 'gifter', 'goals', 'tasks', 'wellness', 'supplements', 'medications', 'pets', 'care_reminders', 'people', 'journal', 'mental_health', 'finance', 'activity'];
 
   // --- THEME HANDLING ---

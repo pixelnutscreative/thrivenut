@@ -33,6 +33,21 @@ const categories = [
 export default function PrayerRequests() {
   const queryClient = useQueryClient();
   const { isDark, bgClass, textClass, cardBgClass, primaryColor, accentColor } = useTheme();
+  
+  // Fetch Preferences to determine title
+  const { data: preferences } = useQuery({
+    queryKey: ['preferences', user?.email],
+    queryFn: async () => {
+      const email = getEffectiveUserEmail(user?.email);
+      if (!email) return null;
+      const prefs = await base44.entities.UserPreferences.filter({ user_email: email }, '-updated_date');
+      return prefs[0] || null;
+    },
+    enabled: !!user?.email,
+  });
+
+  const isBibleEnabled = preferences?.enable_bible_options !== false;
+
   const [user, setUser] = useState(null);
   const [showNewRequest, setShowNewRequest] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
@@ -374,10 +389,12 @@ export default function PrayerRequests() {
           <div>
             <h1 className={`text-3xl font-bold ${textClass} flex items-center gap-3`}>
               <Heart className="w-8 h-8 text-pink-500" />
-              War Room (Prayer Requests)
+              {isBibleEnabled ? 'War Room (Prayer Requests)' : 'Love & Good Vibes'}
             </h1>
             <p className={isDark ? 'text-gray-400' : 'text-gray-600'}>
-              Share your needs and lift up others in prayer
+              {isBibleEnabled 
+                ? 'Share your needs and lift up others in prayer'
+                : 'Share your needs and send good vibes to others'}
             </p>
           </div>
           <Button
