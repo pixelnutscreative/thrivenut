@@ -76,6 +76,8 @@ export default function Dashboard() {
     enabled: !!user,
   });
 
+  const contentGoal = null; // Removed feature
+
 
 
   const { data: todaysWater } = useQuery({
