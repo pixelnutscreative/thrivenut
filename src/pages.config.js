@@ -43,6 +43,7 @@ import CleaningTasks from './pages/CleaningTasks';
 import PictionaryHelper from './pages/PictionaryHelper';
 import Finance from './pages/Finance';
 import MyLists from './pages/MyLists';
+import MyProfile from './pages/MyProfile';
 import __Layout from './Layout.jsx';
 
 
@@ -92,6 +93,7 @@ export const PAGES = {
     "PictionaryHelper": PictionaryHelper,
     "Finance": Finance,
     "MyLists": MyLists,
+    "MyProfile": MyProfile,
 }
 
 export const pagesConfig = {

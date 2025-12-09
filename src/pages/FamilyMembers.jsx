@@ -22,10 +22,14 @@ export default function FamilyMembers() {
   const [showForm, setShowForm] = useState(false);
   const [editingMember, setEditingMember] = useState(null);
   const [activeTab, setActiveTab] = useState('basic');
+  const [linkedProfile, setLinkedProfile] = useState(null);
+  const [suggestionMode, setSuggestionMode] = useState(false);
+  const [suggestionData, setSuggestionData] = useState({ item: '', link: '', notes: '' });
   
   const [formData, setFormData] = useState({
     name: '',
     nickname: '',
+    linked_user_email: '',
     relationship: 'child',
     age: '',
     profile_image_url: '',
@@ -75,6 +79,7 @@ export default function FamilyMembers() {
     setFormData({
       name: '',
       nickname: '',
+      linked_user_email: '',
       relationship: 'child',
       age: '',
       profile_image_url: '',
@@ -92,13 +97,34 @@ export default function FamilyMembers() {
     setEditingMember(null);
     setShowForm(false);
     setActiveTab('basic');
+    setLinkedProfile(null);
+    setSuggestionMode(false);
   };
 
-  const handleEdit = (member) => {
+  const handleEdit = async (member) => {
     setEditingMember(member);
+    
+    // Check for linked profile
+    let profileData = {};
+    let isLinked = false;
+    
+    if (member.linked_user_email) {
+      try {
+        const res = await base44.functions.invoke('profile', { action: 'get_profile', email: member.linked_user_email });
+        if (res.data.found && res.data.profile) {
+          profileData = res.data.profile;
+          isLinked = true;
+          setLinkedProfile(res.data.profile);
+        }
+      } catch (e) {
+        console.error("Failed to fetch linked profile", e);
+      }
+    }
+
     setFormData({
       name: member.name || '',
       nickname: member.nickname || '',
+      linked_user_email: member.linked_user_email || '',
       relationship: member.relationship || 'child',
       age: member.age || '',
       profile_image_url: member.profile_image_url || '',
@@ -107,11 +133,13 @@ export default function FamilyMembers() {
       checkin_frequency: member.checkin_frequency || 'weekly',
       checkin_day: member.checkin_day || 'Saturday',
       notes: member.notes || '',
-      clothing_sizes: member.clothing_sizes || { top: '', bottom: '', shoe: '', dress: '', ring: '', hat: '', other: '' },
-      interests: member.interests || '',
-      wish_list: member.wish_list || [],
-      beauty_profile: member.beauty_profile || { hair_color_preference: '', nail_polish_preference: '', makeup_notes: '', scent_notes: '' },
-      style_profile: member.style_profile || { vibe: '', favorite_brands: '', favorite_materials: '', disliked_materials: '' }
+      
+      // Use linked data if available, otherwise local
+      clothing_sizes: isLinked ? (profileData.clothing_sizes || {}) : (member.clothing_sizes || { top: '', bottom: '', shoe: '', dress: '', ring: '', hat: '', other: '' }),
+      interests: isLinked ? (profileData.interests || '') : (member.interests || ''),
+      wish_list: isLinked ? (profileData.wish_list || []) : (member.wish_list || []),
+      beauty_profile: isLinked ? (profileData.beauty_profile || {}) : (member.beauty_profile || { hair_color_preference: '', nail_polish_preference: '', makeup_notes: '', scent_notes: '' }),
+      style_profile: isLinked ? (profileData.style_profile || {}) : (member.style_profile || { vibe: '', favorite_brands: '', favorite_materials: '', disliked_materials: '' })
     });
     setShowForm(true);
   };
@@ -156,6 +184,25 @@ export default function FamilyMembers() {
     }));
   };
 
+  const sendSuggestion = useMutation({
+    mutationFn: async () => {
+      return await base44.functions.invoke('profile', { 
+        action: 'suggest', 
+        data: {
+          target_email: formData.linked_user_email,
+          suggestion_type: 'wish_list_item',
+          content: suggestionData,
+          message: 'Suggested from Family list'
+        }
+      });
+    },
+    onSuccess: () => {
+      setSuggestionMode(false);
+      setSuggestionData({ item: '', link: '', notes: '' });
+      alert("Suggestion sent!");
+    }
+  });
+
   const relationshipIcons = {
     child: '👶', spouse: '💑', parent: '👨‍👩', sibling: '👯',
     close_friend: '🤝', extended_family: '👨‍👩‍👧‍👦', other: '💙'
@@ -169,13 +216,23 @@ export default function FamilyMembers() {
             <Users className="w-8 h-8 text-purple-500" />
             <h1 className="text-3xl font-bold">Family & Friends</h1>
           </div>
-          <Button
-            onClick={() => { resetForm(); setShowForm(true); }}
-            className="bg-gradient-to-r from-purple-600 to-pink-600 text-white"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Person
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => window.location.href = '/MyProfile'}
+              className="border-purple-200 hover:bg-purple-50 text-purple-700"
+            >
+              <User className="w-4 h-4 mr-2" />
+              Manage My Profile
+            </Button>
+            <Button
+              onClick={() => { resetForm(); setShowForm(true); }}
+              className="bg-gradient-to-r from-purple-600 to-pink-600 text-white"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Person
+            </Button>
+          </div>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -279,6 +336,30 @@ export default function FamilyMembers() {
               <div className="mt-4 space-y-4">
                 {/* BASIC INFO TAB */}
                 <TabsContent value="basic" className="space-y-4">
+                  {linkedProfile ? (
+                    <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg mb-4 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-green-600" />
+                        <span className="text-sm text-blue-800">Linked to <strong>{formData.linked_user_email}</strong></span>
+                      </div>
+                      <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Read Only Mode</span>
+                    </div>
+                  ) : (
+                     <div className="mb-4">
+                       <Label>Link to App User (Email)</Label>
+                       <div className="flex gap-2">
+                         <Input 
+                           placeholder="email@example.com" 
+                           value={formData.linked_user_email} 
+                           onChange={(e) => setFormData({ ...formData, linked_user_email: e.target.value })} 
+                         />
+                         <p className="text-xs text-gray-500 mt-1">
+                           Link to their account to see their self-managed wishlist & sizes.
+                         </p>
+                       </div>
+                     </div>
+                  )}
+
                   <div className="flex gap-4">
                     <div className="flex-shrink-0">
                       <Label>Photo</Label>
@@ -369,15 +450,15 @@ export default function FamilyMembers() {
                 {/* SIZES & STYLE TAB */}
                 <TabsContent value="style" className="space-y-6">
                   <div className="space-y-4">
-                    <h3 className="font-semibold flex items-center gap-2 text-purple-600"><Shirt className="w-4 h-4" /> Clothing Sizes</h3>
+                    <h3 className="font-semibold flex items-center gap-2 text-purple-600"><Shirt className="w-4 h-4" /> Clothing Sizes {linkedProfile && <span className="text-xs font-normal text-gray-500">(Managed by them)</span>}</h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                      <div><Label className="text-xs">Top/Shirt</Label><Input value={formData.clothing_sizes?.top || ''} onChange={(e) => updateNested('clothing_sizes', 'top', e.target.value)} /></div>
-                      <div><Label className="text-xs">Bottom/Pant</Label><Input value={formData.clothing_sizes?.bottom || ''} onChange={(e) => updateNested('clothing_sizes', 'bottom', e.target.value)} /></div>
-                      <div><Label className="text-xs">Shoe</Label><Input value={formData.clothing_sizes?.shoe || ''} onChange={(e) => updateNested('clothing_sizes', 'shoe', e.target.value)} /></div>
-                      <div><Label className="text-xs">Dress/Suit</Label><Input value={formData.clothing_sizes?.dress || ''} onChange={(e) => updateNested('clothing_sizes', 'dress', e.target.value)} /></div>
-                      <div><Label className="text-xs">Ring</Label><Input value={formData.clothing_sizes?.ring || ''} onChange={(e) => updateNested('clothing_sizes', 'ring', e.target.value)} /></div>
-                      <div><Label className="text-xs">Hat</Label><Input value={formData.clothing_sizes?.hat || ''} onChange={(e) => updateNested('clothing_sizes', 'hat', e.target.value)} /></div>
-                      <div className="col-span-2"><Label className="text-xs">Other Notes</Label><Input value={formData.clothing_sizes?.other || ''} onChange={(e) => updateNested('clothing_sizes', 'other', e.target.value)} /></div>
+                      <div><Label className="text-xs">Top/Shirt</Label><Input disabled={!!linkedProfile} value={formData.clothing_sizes?.top || ''} onChange={(e) => updateNested('clothing_sizes', 'top', e.target.value)} /></div>
+                      <div><Label className="text-xs">Bottom/Pant</Label><Input disabled={!!linkedProfile} value={formData.clothing_sizes?.bottom || ''} onChange={(e) => updateNested('clothing_sizes', 'bottom', e.target.value)} /></div>
+                      <div><Label className="text-xs">Shoe</Label><Input disabled={!!linkedProfile} value={formData.clothing_sizes?.shoe || ''} onChange={(e) => updateNested('clothing_sizes', 'shoe', e.target.value)} /></div>
+                      <div><Label className="text-xs">Dress/Suit</Label><Input disabled={!!linkedProfile} value={formData.clothing_sizes?.dress || ''} onChange={(e) => updateNested('clothing_sizes', 'dress', e.target.value)} /></div>
+                      <div><Label className="text-xs">Ring</Label><Input disabled={!!linkedProfile} value={formData.clothing_sizes?.ring || ''} onChange={(e) => updateNested('clothing_sizes', 'ring', e.target.value)} /></div>
+                      <div><Label className="text-xs">Hat</Label><Input disabled={!!linkedProfile} value={formData.clothing_sizes?.hat || ''} onChange={(e) => updateNested('clothing_sizes', 'hat', e.target.value)} /></div>
+                      <div className="col-span-2"><Label className="text-xs">Other Notes</Label><Input disabled={!!linkedProfile} value={formData.clothing_sizes?.other || ''} onChange={(e) => updateNested('clothing_sizes', 'other', e.target.value)} /></div>
                     </div>
                   </div>
 
@@ -426,8 +507,23 @@ export default function FamilyMembers() {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <Label className="flex items-center gap-2"><Gift className="w-4 h-4 text-purple-500" /> Wish List / Gift Ideas</Label>
-                      <Button size="sm" variant="outline" onClick={addWishItem}><Plus className="w-3 h-3 mr-1" /> Add Item</Button>
+                      {!linkedProfile ? (
+                        <Button size="sm" variant="outline" onClick={addWishItem}><Plus className="w-3 h-3 mr-1" /> Add Item</Button>
+                      ) : (
+                        <Button size="sm" className="bg-purple-100 text-purple-700 hover:bg-purple-200" onClick={() => setSuggestionMode(!suggestionMode)}>
+                           Suggest Item
+                        </Button>
+                      )}
                     </div>
+
+                    {suggestionMode && (
+                      <div className="bg-purple-50 border border-purple-200 p-3 rounded-lg space-y-2 mb-4">
+                        <h4 className="text-sm font-semibold text-purple-800">Suggest an Item</h4>
+                        <Input placeholder="Item Name" value={suggestionData.item} onChange={(e) => setSuggestionData({...suggestionData, item: e.target.value})} />
+                        <Input placeholder="Link" value={suggestionData.link} onChange={(e) => setSuggestionData({...suggestionData, link: e.target.value})} />
+                        <Button size="sm" onClick={() => sendSuggestion.mutate()} disabled={!suggestionData.item}>Send Suggestion</Button>
+                      </div>
+                    )}
                     
                     {formData.wish_list?.length === 0 && (
                       <div className="text-center p-4 bg-gray-50 rounded-lg border border-dashed text-gray-400 text-sm">
@@ -440,6 +536,7 @@ export default function FamilyMembers() {
                         <div key={idx} className="flex gap-2 items-start bg-gray-50 p-2 rounded-lg">
                           <div className="grid gap-2 flex-1">
                             <Input 
+                              disabled={!!linkedProfile}
                               placeholder="Item Name" 
                               value={item.item} 
                               onChange={(e) => updateWishItem(idx, 'item', e.target.value)} 
@@ -449,6 +546,7 @@ export default function FamilyMembers() {
                               <div className="relative flex-1">
                                 <ExternalLink className="absolute left-2 top-2.5 w-4 h-4 text-gray-400" />
                                 <Input 
+                                  disabled={!!linkedProfile}
                                   placeholder="Link (http://...)" 
                                   value={item.link} 
                                   onChange={(e) => updateWishItem(idx, 'link', e.target.value)} 
@@ -456,6 +554,7 @@ export default function FamilyMembers() {
                                 />
                               </div>
                               <Input 
+                                disabled={!!linkedProfile}
                                 placeholder="Notes (Size, Color...)" 
                                 value={item.notes} 
                                 onChange={(e) => updateWishItem(idx, 'notes', e.target.value)} 
@@ -463,9 +562,11 @@ export default function FamilyMembers() {
                               />
                             </div>
                           </div>
-                          <Button size="icon" variant="ghost" onClick={() => removeWishItem(idx)} className="text-gray-400 hover:text-red-500">
-                            <X className="w-4 h-4" />
-                          </Button>
+                          {!linkedProfile && (
+                            <Button size="icon" variant="ghost" onClick={() => removeWishItem(idx)} className="text-gray-400 hover:text-red-500">
+                              <X className="w-4 h-4" />
+                            </Button>
+                          )}
                         </div>
                       ))}
                     </div>
