@@ -123,7 +123,7 @@ export default function Layout({ children, currentPageName }) {
 
     // Friends + Loved Ones
     { name: '── Friends + Loved Ones ──', isGroupHeader: true, color: 'text-orange-400', bgColor: 'bg-orange-500/10' },
-    { name: 'Family Members', icon: Users, path: 'FamilyMembers', moduleId: 'people' },
+    // { name: 'Family Members', icon: Users, path: 'FamilyMembers', moduleId: 'people' }, // Merged into My People
     { name: 'My People', icon: Users, path: 'People', moduleId: 'people' },
     { name: 'Care Reminders', icon: Bell, path: 'CareReminders', moduleId: 'care_reminders' },
     { name: 'Pet Care', icon: PawPrint, path: 'PetCare', moduleId: 'pets' },
