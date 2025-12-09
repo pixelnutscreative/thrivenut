@@ -47,18 +47,20 @@ export default function Dashboard() {
         setUser(userData);
 
         // Check if user is pre-approved and auto-grant TikTok access
-        const prefs = await base44.entities.UserPreferences.filter({ user_email: userData.email }, '-updated_date');
-        if (prefs[0] && !prefs[0].tiktok_access_approved) {
-          try {
-            const preApproved = await base44.entities.PreApprovedEmail.filter({ 
-              email: (userData.email && typeof userData.email === 'string') ? userData.email.toLowerCase() : '', 
-              is_active: true 
-            });
-            if (preApproved.length > 0) {
-              await base44.entities.UserPreferences.update(prefs[0].id, { tiktok_access_approved: true });
+        if (userData?.email && typeof userData.email === 'string') {
+          const prefs = await base44.entities.UserPreferences.filter({ user_email: userData.email }, '-updated_date');
+          if (prefs[0] && !prefs[0].tiktok_access_approved) {
+            try {
+              const preApproved = await base44.entities.PreApprovedEmail.filter({ 
+                email: userData.email.toLowerCase(), 
+                is_active: true 
+              });
+              if (preApproved.length > 0) {
+                await base44.entities.UserPreferences.update(prefs[0].id, { tiktok_access_approved: true });
+              }
+            } catch (e) {
+              // Ignore - user may not have access to PreApprovedEmail entity
             }
-          } catch (e) {
-            // Ignore - user may not have access to PreApprovedEmail entity
           }
         }
       } catch (error) {
@@ -72,16 +74,18 @@ export default function Dashboard() {
   const { data: preferences } = useQuery({
     queryKey: ['preferences', user?.email],
     queryFn: async () => {
+      if (!user?.email) return null;
       const prefs = await base44.entities.UserPreferences.filter({ user_email: user.email });
       return prefs[0] || null;
     },
-    enabled: !!user,
+    enabled: !!user?.email,
   });
 
   // Fetch or create content goal for current week (auto-generate from template)
   const { data: contentGoal } = useQuery({
     queryKey: ['contentGoal', getCurrentWeekStart()],
     queryFn: async () => {
+      if (!user?.email) return null;
       const weekStart = getCurrentWeekStart();
       const goals = await base44.entities.ContentGoal.filter({ 
         week_starting: weekStart,
@@ -110,59 +114,63 @@ export default function Dashboard() {
       
       return null;
     },
-    enabled: !!user,
+    enabled: !!user?.email,
   });
 
   const { data: todaysWater } = useQuery({
     queryKey: ['waterToday', format(new Date(), 'yyyy-MM-dd')],
     queryFn: async () => {
+      if (!user?.email) return null;
       const logs = await base44.entities.WaterLog.filter({ 
         date: format(new Date(), 'yyyy-MM-dd'),
         created_by: user.email 
       });
       return logs[0] || null;
     },
-    enabled: !!user,
+    enabled: !!user?.email,
   });
 
   const { data: todaysMoodLogs } = useQuery({
     queryKey: ['moodToday', format(new Date(), 'yyyy-MM-dd')],
     queryFn: async () => {
+      if (!user?.email) return [];
       const logs = await base44.entities.MoodLog.filter({ 
         date: format(new Date(), 'yyyy-MM-dd'),
         created_by: user.email 
       });
       return logs;
     },
-    enabled: !!user,
+    enabled: !!user?.email,
   });
 
   const { data: todaysJournal } = useQuery({
     queryKey: ['journalToday', format(new Date(), 'yyyy-MM-dd')],
     queryFn: async () => {
+      if (!user?.email) return null;
       const entries = await base44.entities.JournalEntry.filter({ 
         date: format(new Date(), 'yyyy-MM-dd'),
         created_by: user.email 
       });
       return entries[0] || null;
     },
-    enabled: !!user,
+    enabled: !!user?.email,
   });
 
   const { data: selfCareLog } = useQuery({
     queryKey: ['selfCareToday', format(new Date(), 'yyyy-MM-dd')],
     queryFn: async () => {
+      if (!user?.email) return null;
       const logs = await base44.entities.DailySelfCareLog.filter({ 
         date: format(new Date(), 'yyyy-MM-dd'),
         created_by: user.email 
       });
       return logs[0] || null;
     },
-    enabled: !!user,
+    enabled: !!user?.email,
   });
 
   // Get effective email for impersonation support
-  const effectiveEmail = user ? getEffectiveUserEmail(user.email) : null;
+  const effectiveEmail = (user?.email && typeof user.email === 'string') ? getEffectiveUserEmail(user.email) : null;
 
   const { data: tiktokContacts = [] } = useQuery({
     queryKey: ['tiktokContacts', effectiveEmail],
@@ -207,6 +215,7 @@ export default function Dashboard() {
   // Save schedule by type
   const saveScheduleMutation = useMutation({
     mutationFn: async ({ field, data }) => {
+      if (!user?.email) return;
       // Also update template
       const templates = await base44.entities.ContentScheduleTemplate.filter({ created_by: user.email });
       const templateUpdate = { [field]: data };
