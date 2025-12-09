@@ -288,7 +288,7 @@ export default function Layout({ children, currentPageName }) {
   }, [menuConfig]);
   
   // IMPORTANT: isAdmin checks the REAL user email (not impersonated), so admin always sees admin menu
-  const realUserEmail = user?.email ? user.email.toLowerCase() : '';
+  const realUserEmail = (user?.email && typeof user.email === 'string') ? user.email.toLowerCase() : '';
   const adminEmails = ['pixelnutscreative@gmail.com', 'pixel@thrivenut.app'];
   const isAdmin = realUserEmail ? adminEmails.includes(realUserEmail) : false;
   
