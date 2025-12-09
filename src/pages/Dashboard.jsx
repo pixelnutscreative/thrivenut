@@ -51,7 +51,7 @@ export default function Dashboard() {
         if (prefs[0] && !prefs[0].tiktok_access_approved) {
           try {
             const preApproved = await base44.entities.PreApprovedEmail.filter({ 
-              email: userData.email.toLowerCase(), 
+              email: (userData.email && typeof userData.email === 'string') ? userData.email.toLowerCase() : '', 
               is_active: true 
             });
             if (preApproved.length > 0) {
@@ -362,7 +362,7 @@ export default function Dashboard() {
         </Collapsible>
 
         {/* Notion Task Picker - Only for admin account */}
-        {user?.email?.toLowerCase() === 'pixelnutscreative@gmail.com' && (
+        {(user?.email && typeof user.email === 'string' && user.email.toLowerCase() === 'pixelnutscreative@gmail.com') && (
           <Collapsible open={!isSectionCollapsed('notion-tasks')}>
             <CollapsibleTrigger 
               className="w-full flex items-center justify-between p-2 hover:bg-gray-100 rounded-lg transition-colors"
