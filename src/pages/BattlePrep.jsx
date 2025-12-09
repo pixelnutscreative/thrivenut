@@ -1,0 +1,507 @@
+import React, { useState, useEffect } from 'react';
+import { base44 } from '@/api/base44Client';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
+import { format, addDays, isAfter, isBefore, parseISO } from 'date-fns';
+import { Swords, Shield, Zap, Skull, Wind, Users, Plus, Calendar, Clock, Trash2, Edit2, Save, CheckCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+
+export default function BattlePrep() {
+  const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState('inventory');
+  
+  // Inventory Form State
+  const [newItem, setNewItem] = useState({
+    contact_id: '',
+    contact_name: '',
+    type: 'Glove',
+    quantity: 1,
+    acquired_date: format(new Date(), 'yyyy-MM-dd')
+  });
+
+  // Battle Plan Form State
+  const [newPlan, setNewPlan] = useState({
+    opponent: '',
+    battle_date: '',
+    mist_strategy: 'No',
+    first_glove_assignee: '',
+    bonus_glove_assignee: '',
+    strategy_notes: ''
+  });
+
+  const [activeBattleId, setActiveBattleId] = useState(null);
+
+  // Fetch Contacts for dropdown
+  const { data: contacts = [] } = useQuery({
+    queryKey: ['tiktokContacts'],
+    queryFn: () => base44.entities.TikTokContact.list('display_name', 100),
+  });
+
+  // Fetch Power Ups
+  const { data: powerUps = [] } = useQuery({
+    queryKey: ['battlePowerUps'],
+    queryFn: () => base44.entities.BattlePowerUp.list('-acquired_date', 100),
+  });
+
+  // Fetch Battle Plans
+  const { data: battlePlans = [] } = useQuery({
+    queryKey: ['battlePlans'],
+    queryFn: () => base44.entities.BattlePlan.list('-battle_date', 20),
+  });
+
+  // Filter Active Power Ups (Not Expired)
+  const activePowerUps = powerUps.filter(item => {
+    if (item.is_used) return false;
+    const expires = addDays(parseISO(item.acquired_date), 5);
+    return isAfter(expires, new Date()); // Still valid
+  });
+
+  // Aggregated Inventory
+  const inventorySummary = activePowerUps.reduce((acc, item) => {
+    if (!acc[item.type]) acc[item.type] = 0;
+    acc[item.type] += item.quantity;
+    return acc;
+  }, {});
+
+  // Mutations
+  const createItemMutation = useMutation({
+    mutationFn: (data) => base44.entities.BattlePowerUp.create({
+        ...data,
+        expires_date: format(addDays(parseISO(data.acquired_date), 5), 'yyyy-MM-dd')
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['battlePowerUps'] });
+      setNewItem({ ...newItem, contact_id: '', contact_name: '', quantity: 1 });
+    }
+  });
+
+  const updateItemMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.BattlePowerUp.update(id, data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['battlePowerUps'] })
+  });
+
+  const deleteItemMutation = useMutation({
+    mutationFn: (id) => base44.entities.BattlePowerUp.delete(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['battlePowerUps'] })
+  });
+
+  const createPlanMutation = useMutation({
+    mutationFn: (data) => base44.entities.BattlePlan.create(data),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['battlePlans'] });
+      setActiveBattleId(data.id);
+      setNewPlan({ opponent: '', battle_date: '', mist_strategy: 'No', first_glove_assignee: '', bonus_glove_assignee: '', strategy_notes: '' });
+    }
+  });
+
+  const updatePlanMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.BattlePlan.update(id, data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['battlePlans'] })
+  });
+
+  const handleContactSelect = (contactId) => {
+    const contact = contacts.find(c => c.id === contactId);
+    setNewItem({
+      ...newItem,
+      contact_id: contactId,
+      contact_name: contact ? (contact.display_name || contact.username) : ''
+    });
+  };
+
+  const getIcon = (type) => {
+    switch(type) {
+      case 'Glove': return <Shield className="w-4 h-4 text-blue-500" />;
+      case 'Mist': return <Wind className="w-4 h-4 text-gray-500" />;
+      case 'Sniper': return <Crosshair className="w-4 h-4 text-red-500" />; // Need to import Crosshair
+      case 'Jet': return <Zap className="w-4 h-4 text-yellow-500" />;
+      default: return <Swords className="w-4 h-4" />;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 p-6">
+      <div className="max-w-6xl mx-auto space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2">
+              <Swords className="w-8 h-8 text-indigo-600" />
+              Battle Prep & Strategy
+            </h1>
+            <p className="text-slate-600">Manage inventory, track power-ups, and plan your victories.</p>
+          </div>
+        </div>
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2 lg:w-[400px]">
+            <TabsTrigger value="inventory">🎒 Inventory</TabsTrigger>
+            <TabsTrigger value="station">⚔️ Battle Station</TabsTrigger>
+          </TabsList>
+
+          {/* INVENTORY TAB */}
+          <TabsContent value="inventory" className="space-y-6">
+            {/* Add New Item */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Log Power-Up</CardTitle>
+                <CardDescription>Items expire 5 days after acquisition.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col md:flex-row gap-4 items-end">
+                  <div className="flex-1 space-y-2 w-full">
+                    <label className="text-sm font-medium">Who has it?</label>
+                    <Select value={newItem.contact_id} onValueChange={handleContactSelect}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Contact" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {contacts.map(c => (
+                          <SelectItem key={c.id} value={c.id}>{c.display_name || c.username}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="w-full md:w-40 space-y-2">
+                    <label className="text-sm font-medium">Type</label>
+                    <Select value={newItem.type} onValueChange={(v) => setNewItem({...newItem, type: v})}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Glove">🥊 Glove</SelectItem>
+                        <SelectItem value="Mist">🌫️ Mist</SelectItem>
+                        <SelectItem value="Sniper">🎯 Sniper</SelectItem>
+                        <SelectItem value="Jet">✈️ Jet</SelectItem>
+                        <SelectItem value="Sub">🌊 Sub</SelectItem>
+                        <SelectItem value="Other">❓ Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="w-full md:w-24 space-y-2">
+                    <label className="text-sm font-medium">Qty</label>
+                    <Input 
+                      type="number" 
+                      min="1" 
+                      value={newItem.quantity} 
+                      onChange={(e) => setNewItem({...newItem, quantity: parseInt(e.target.value) || 1})} 
+                    />
+                  </div>
+                  <div className="w-full md:w-40 space-y-2">
+                    <label className="text-sm font-medium">Acquired</label>
+                    <Input 
+                      type="date" 
+                      value={newItem.acquired_date} 
+                      onChange={(e) => setNewItem({...newItem, acquired_date: e.target.value})} 
+                    />
+                  </div>
+                  <Button 
+                    onClick={() => createItemMutation.mutate(newItem)}
+                    disabled={!newItem.contact_id}
+                    className="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700"
+                  >
+                    <Plus className="w-4 h-4 mr-2" /> Add
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Inventory List */}
+            <div className="grid gap-4">
+              <h3 className="font-semibold text-lg flex items-center gap-2">
+                Active Arsenal 
+                <Badge variant="secondary" className="ml-2">{activePowerUps.length} Items</Badge>
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {activePowerUps.map(item => {
+                  const expires = addDays(parseISO(item.acquired_date), 5);
+                  const daysLeft = Math.ceil((expires - new Date()) / (1000 * 60 * 60 * 24));
+                  
+                  return (
+                    <Card key={item.id} className="border-l-4 border-l-indigo-500">
+                      <CardContent className="p-4 flex justify-between items-start">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-bold text-lg">{item.contact_name}</span>
+                            <Badge variant="outline">{item.type}</Badge>
+                          </div>
+                          <div className="text-sm text-slate-500 space-y-1">
+                            <p>Quantity: <span className="font-semibold text-slate-900">{item.quantity}</span></p>
+                            <p className={daysLeft <= 1 ? "text-red-500 font-medium" : ""}>
+                              Expires in {daysLeft} days ({format(expires, 'MMM d')})
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <Button 
+                            size="sm" 
+                            variant="ghost"
+                            onClick={() => deleteItemMutation.mutate(item.id)}
+                            className="text-red-400 hover:text-red-600 hover:bg-red-50"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => updateItemMutation.mutate({ id: item.id, data: { quantity: Math.max(0, item.quantity - 1) } })}
+                            disabled={item.quantity <= 0}
+                          >
+                            -1
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+                {activePowerUps.length === 0 && (
+                  <div className="col-span-full p-8 text-center bg-white rounded-xl border border-dashed">
+                    <Shield className="w-12 h-12 mx-auto text-slate-300 mb-2" />
+                    <p className="text-slate-500">No active power-ups found. Log some gloves!</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* BATTLE STATION TAB */}
+          <TabsContent value="station" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              
+              {/* Left Col: Battle Plan */}
+              <div className="lg:col-span-2 space-y-6">
+                <Card className="bg-white shadow-lg border-indigo-100">
+                  <CardHeader className="bg-indigo-50/50 border-b border-indigo-100">
+                    <CardTitle className="text-indigo-900">Battle Strategy</CardTitle>
+                    <CardDescription>Plan your attack and defense</CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-6 space-y-6">
+                    {/* Battle Selector */}
+                    <div className="flex gap-4 items-end">
+                      <div className="flex-1">
+                        <label className="text-sm font-medium mb-1 block">Active Plan</label>
+                        <Select 
+                          value={activeBattleId || 'new'} 
+                          onValueChange={(v) => setActiveBattleId(v === 'new' ? null : v)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Create New Plan" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="new">+ Create New Plan</SelectItem>
+                            {battlePlans.map(plan => (
+                              <SelectItem key={plan.id} value={plan.id}>
+                                VS {plan.opponent} ({plan.battle_date ? format(parseISO(plan.battle_date), 'MMM d') : 'Unscheduled'})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      {activeBattleId && (
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setActiveBattleId(null)}
+                        >
+                          New
+                        </Button>
+                      )}
+                    </div>
+
+                    {/* Plan Form */}
+                    <div className="space-y-4 border-t pt-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Opponent</label>
+                          <Input 
+                            value={activeBattleId ? (battlePlans.find(p => p.id === activeBattleId)?.opponent || '') : newPlan.opponent}
+                            onChange={(e) => activeBattleId 
+                              ? updatePlanMutation.mutate({ id: activeBattleId, data: { opponent: e.target.value } })
+                              : setNewPlan({...newPlan, opponent: e.target.value})
+                            }
+                            placeholder="@username"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Date & Time</label>
+                          <Input 
+                            type="datetime-local"
+                            value={activeBattleId ? (battlePlans.find(p => p.id === activeBattleId)?.battle_date || '') : newPlan.battle_date}
+                            onChange={(e) => activeBattleId 
+                              ? updatePlanMutation.mutate({ id: activeBattleId, data: { battle_date: e.target.value } })
+                              : setNewPlan({...newPlan, battle_date: e.target.value})
+                            }
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Mist Strategy</label>
+                        <Select 
+                          value={activeBattleId ? (battlePlans.find(p => p.id === activeBattleId)?.mist_strategy || 'No') : newPlan.mist_strategy}
+                          onValueChange={(v) => activeBattleId 
+                            ? updatePlanMutation.mutate({ id: activeBattleId, data: { mist_strategy: v } })
+                            : setNewPlan({...newPlan, mist_strategy: v})
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="No">No Mist Planned</SelectItem>
+                            <SelectItem value="Yes">Use Mist</SelectItem>
+                            <SelectItem value="Agreed No Mist">🤝 Agreed No Mist</SelectItem>
+                            <SelectItem value="Mist on Bonus">🌫️ Mist on Bonus</SelectItem>
+                            <SelectItem value="Mist at End">🏁 Mist at End</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-blue-600">First Glove Assignment</label>
+                          <Input 
+                            placeholder="Who throws first?"
+                            value={activeBattleId ? (battlePlans.find(p => p.id === activeBattleId)?.first_glove_assignee || '') : newPlan.first_glove_assignee}
+                            onChange={(e) => activeBattleId 
+                              ? updatePlanMutation.mutate({ id: activeBattleId, data: { first_glove_assignee: e.target.value } })
+                              : setNewPlan({...newPlan, first_glove_assignee: e.target.value})
+                            }
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-purple-600">Bonus Glove Assignment</label>
+                          <Input 
+                            placeholder="Who covers bonus?"
+                            value={activeBattleId ? (battlePlans.find(p => p.id === activeBattleId)?.bonus_glove_assignee || '') : newPlan.bonus_glove_assignee}
+                            onChange={(e) => activeBattleId 
+                              ? updatePlanMutation.mutate({ id: activeBattleId, data: { bonus_glove_assignee: e.target.value } })
+                              : setNewPlan({...newPlan, bonus_glove_assignee: e.target.value})
+                            }
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Strategy Notes</label>
+                        <Textarea 
+                          placeholder="e.g., Throw all gloves at start, save snipers for last 30s..."
+                          rows={4}
+                          value={activeBattleId ? (battlePlans.find(p => p.id === activeBattleId)?.strategy_notes || '') : newPlan.strategy_notes}
+                          onChange={(e) => activeBattleId 
+                            ? updatePlanMutation.mutate({ id: activeBattleId, data: { strategy_notes: e.target.value } })
+                            : setNewPlan({...newPlan, strategy_notes: e.target.value})
+                          }
+                        />
+                      </div>
+
+                      {!activeBattleId && (
+                        <Button 
+                          onClick={() => createPlanMutation.mutate(newPlan)}
+                          disabled={!newPlan.opponent}
+                          className="w-full bg-indigo-600 hover:bg-indigo-700"
+                        >
+                          Create Battle Plan
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Right Col: Armory Summary */}
+              <div className="space-y-6">
+                <Card className="bg-slate-900 text-white border-none shadow-xl">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Shield className="w-5 h-5 text-blue-400" />
+                      Armory Status
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-slate-800 p-3 rounded-lg text-center">
+                        <p className="text-slate-400 text-xs uppercase tracking-wider">Gloves</p>
+                        <p className="text-3xl font-bold text-blue-400">{inventorySummary['Glove'] || 0}</p>
+                      </div>
+                      <div className="bg-slate-800 p-3 rounded-lg text-center">
+                        <p className="text-slate-400 text-xs uppercase tracking-wider">Mist</p>
+                        <p className="text-3xl font-bold text-gray-400">{inventorySummary['Mist'] || 0}</p>
+                      </div>
+                      <div className="bg-slate-800 p-3 rounded-lg text-center">
+                        <p className="text-slate-400 text-xs uppercase tracking-wider">Snipers</p>
+                        <p className="text-3xl font-bold text-red-400">{inventorySummary['Sniper'] || 0}</p>
+                      </div>
+                      <div className="bg-slate-800 p-3 rounded-lg text-center">
+                        <p className="text-slate-400 text-xs uppercase tracking-wider">Jets</p>
+                        <p className="text-3xl font-bold text-yellow-400">{inventorySummary['Jet'] || 0}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Who has Gloves?</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <div className="max-h-[400px] overflow-y-auto">
+                      {activePowerUps.filter(i => i.type === 'Glove').map((item, idx) => (
+                        <div key={idx} className="flex justify-between items-center p-3 border-b last:border-0 hover:bg-slate-50">
+                          <span className="font-medium">{item.contact_name}</span>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                              {item.quantity}
+                            </Badge>
+                            <Button 
+                              size="icon" 
+                              variant="ghost" 
+                              className="h-6 w-6"
+                              onClick={() => updateItemMutation.mutate({ id: item.id, data: { quantity: Math.max(0, item.quantity - 1) } })}
+                            >
+                              <span className="text-xs">-1</span>
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                      {activePowerUps.filter(i => i.type === 'Glove').length === 0 && (
+                        <p className="p-4 text-center text-slate-500 text-sm">No gloves in inventory.</p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+}
+
+// Missing Icon import component
+function Crosshair(props) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <line x1="22" x2="18" y1="12" y2="12" />
+      <line x1="6" x2="2" y1="12" y2="12" />
+      <line x1="12" x2="12" y1="6" y2="2" />
+      <line x1="12" x2="12" y1="22" y2="18" />
+    </svg>
+  );
+}

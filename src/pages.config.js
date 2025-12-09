@@ -50,6 +50,7 @@ import Household from './pages/Household';
 import Habits from './pages/Habits';
 import ActivityTracker from './pages/ActivityTracker';
 import LiveEngagement from './pages/LiveEngagement';
+import BattlePrep from './pages/BattlePrep';
 import __Layout from './Layout.jsx';
 
 
@@ -106,6 +107,7 @@ export const PAGES = {
     "Habits": Habits,
     "ActivityTracker": ActivityTracker,
     "LiveEngagement": LiveEngagement,
+    "BattlePrep": BattlePrep,
 }
 
 export const pagesConfig = {

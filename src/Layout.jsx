@@ -10,7 +10,7 @@ import {
   ChevronRight, Bell, Share2, Music, Star, Lock, UserCog, Sparkles, 
   Palette, Eye, Bookmark, HandMetal, PawPrint, Search, MousePointerClick, 
   Calendar, Sun, Cross, Smile, FileText, StickyNote, Tablet, HelpCircle, 
-  MessageCircle, Briefcase, DollarSign, Activity, Wallet
+  MessageCircle, Briefcase, DollarSign, Activity, Wallet, Swords
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import TikTokAccessGate from './components/access/TikTokAccessGate';
@@ -173,6 +173,7 @@ export default function Layout({ children, currentPageName }) {
       items: [
         { name: 'Social Media Suite', icon: Share2, isSection: true, moduleId: 'tiktok', requiresTikTokAccess: true, subItems: [
           { name: 'Discover Creators', icon: Search, path: 'DiscoverCreators', highlight: true },
+          { name: 'Battle Prep', icon: Swords, path: 'BattlePrep', highlight: true },
           { name: 'Live Engagement', icon: Activity, path: 'LiveEngagement', highlight: true },
           { name: 'Creator Contacts', icon: Users, path: 'TikTokContacts' },
           { name: 'Social Engagement', icon: MousePointerClick, path: 'TikTokEngagement' },
