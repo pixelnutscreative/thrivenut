@@ -18,6 +18,8 @@ import QuickPetCareCheck from '../components/wellness/QuickPetCareCheck';
 import QuickCareReminderCheck from '../components/wellness/QuickCareReminderCheck';
 import WaterCheckIns from '../components/wellness/WaterCheckIns';
 import FastingTracker from '../components/wellness/FastingTracker';
+import CycleTracker from '../components/wellness/CycleTracker';
+import NutritionTracker from '../components/wellness/NutritionTracker';
 import { useTheme } from '../components/shared/useTheme';
 
 const moodEmojis = {
@@ -321,11 +323,25 @@ export default function Wellness() {
           <QuickCareReminderCheck userEmail={user?.email} />
         </motion.div>
 
-        {/* Elimination Tracker */}
+        {/* Nutrition & Cycle Tracking Row */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.07 }}
+          className="grid md:grid-cols-2 gap-6"
+        >
+          {/* Nutrition Additions */}
+          <NutritionTracker userEmail={user?.email} />
+
+          {/* Cycle & Symptoms */}
+          <CycleTracker userEmail={user?.email} />
+        </motion.div>
+
+        {/* Elimination Tracker */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.08 }}
         >
           <EliminationTracker
             itemsToEliminate={preferences?.items_to_eliminate || []}

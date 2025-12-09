@@ -50,8 +50,23 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
   const [showAddMoodInput, setShowAddMoodInput] = useState(false);
   const [customMoodInput, setCustomMoodInput] = useState({ emoji: '', label: '' });
   const [musicMinimized, setMusicMinimized] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   
   const today = format(new Date(), 'yyyy-MM-dd');
+
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 1024;
+      setIsMobile(mobile);
+      // If mobile and no position set, default to top right under header
+      if (mobile) {
+        setPosition({ x: window.innerWidth - 60, y: 70 });
+      }
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   const userEmail = preferences?.user_email;
   const quickActions = preferences?.quick_actions || ['mood', 'water', 'food', 'note'];
   const customActions = preferences?.custom_quick_actions || [];
@@ -246,43 +261,48 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
   }, [isDragging]);
 
   if (!isOpen) {
-    return (
-      <motion.button
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        onClick={() => setIsOpen(true)}
-        className="fixed right-4 z-50 w-12 h-12 rounded-full shadow-lg flex items-center justify-center text-white"
-        style={{ 
-          top: '50%',
-          transform: 'translateY(-50%)',
-          background: `linear-gradient(135deg, ${primaryColor || '#1fd2ea'}, ${accentColor || '#bd84f5'})` 
-        }}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        <Zap className="w-5 h-5" />
-      </motion.button>
-    );
+  return (
+    <motion.button
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      onClick={() => setIsOpen(true)}
+      className="fixed z-50 w-12 h-12 rounded-full shadow-lg flex items-center justify-center text-white"
+      style={{ 
+        right: isMobile ? '16px' : '32px',
+        top: isMobile ? '70px' : '50%',
+        transform: isMobile ? 'none' : 'translateY(-50%)',
+        background: `linear-gradient(135deg, ${primaryColor || '#1fd2ea'}, ${accentColor || '#bd84f5'})` 
+      }}
+      whileHover={{ scale: 1.1 }}
+      whileTap={{ scale: 0.95 }}
+    >
+      <Zap className="w-5 h-5" />
+    </motion.button>
+  );
   }
 
   return (
-    <>
-      {/* Floating Draggable Bar */}
-      <motion.div
-        ref={dragRef}
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="fixed z-50 bg-gray-900/95 backdrop-blur-sm rounded-full px-2 py-1.5 shadow-2xl"
-        style={{
-          left: position.x || 'calc(50% - 150px)',
-          top: position.y || 16,
-          cursor: isDragging ? 'grabbing' : 'default',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '4px'
-        }}
-      >
+  <>
+    {/* Floating Draggable Bar */}
+    <motion.div
+      ref={dragRef}
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="fixed z-50 bg-gray-900/95 backdrop-blur-sm rounded-full px-2 py-1.5 shadow-2xl"
+      style={{
+        // On mobile, force stick to top right if user hasn't dragged it substantially
+        left: isMobile ? (position.x || 'auto') : (position.x || 'calc(50% - 150px)'),
+        right: isMobile && !position.x ? '10px' : 'auto', 
+        top: position.y || (isMobile ? 70 : 16),
+        cursor: isDragging ? 'grabbing' : 'default',
+        display: 'flex',
+        flexDirection: isMobile ? 'row' : 'column',
+        alignItems: 'center',
+        gap: '4px',
+        maxWidth: isMobile ? 'calc(100vw - 20px)' : 'auto',
+        overflowX: isMobile ? 'auto' : 'visible'
+      }}
+    >
         {/* Main action bar */}
         <div className="flex items-center gap-1">
         {/* Drag handle */}
