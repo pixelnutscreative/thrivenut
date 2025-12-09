@@ -117,25 +117,39 @@ const defaultNavItems = [
   { name: 'Dashboard', icon: LayoutDashboard, path: 'Dashboard', alwaysShow: true },
   { name: "Pixel's Place", icon: Sparkles, path: 'PixelsParadise', alwaysShow: true },
   
-  // INDIGO: Life & Organization
-  { name: '── Life & Organization ──', isGroupHeader: true, color: 'text-indigo-400', bgColor: 'bg-indigo-500/10' },
+  // INDIGO: Daily Life
+  { name: '── Daily Life ──', isGroupHeader: true, color: 'text-indigo-400', bgColor: 'bg-indigo-500/10' },
+  { name: 'Life & Organization', icon: iconMap.Bookmark, path: 'MyLists', moduleId: 'tasks' },
   { name: 'Finances', icon: iconMap.TrendingUp, path: 'Finance', moduleId: 'tasks' },
-  { name: 'Tasks', icon: FileText, path: 'Tasks', moduleId: 'tasks' },
-  { name: 'My Lists', icon: iconMap.Bookmark, path: 'MyLists', moduleId: 'tasks' },
-  { name: 'Family Members', icon: Users, path: 'FamilyMembers', moduleId: 'people' },
   { name: 'Work Schedules', icon: Briefcase, path: 'WorkSchedules', moduleId: 'work' },
   { name: 'Cleaning Tasks', icon: Sparkles, path: 'CleaningTasks', moduleId: 'cleaning' },
-  { name: 'Care Reminders', icon: Bell, path: 'CareReminders', moduleId: 'care_reminders' },
   
-  // TEAL: Goals & Growth
-  { name: '── Goals & Growth ──', isGroupHeader: true, color: 'text-teal-400', bgColor: 'bg-teal-500/10' },
+  // ORANGE: Family + People
+  { name: '── Family + People ──', isGroupHeader: true, color: 'text-orange-400', bgColor: 'bg-orange-500/10' },
+  { name: 'Family Members', icon: Users, path: 'FamilyMembers', moduleId: 'people' },
+  { name: 'Care Reminders', icon: Bell, path: 'CareReminders', moduleId: 'care_reminders' },
+  { name: 'Pet Care', icon: PawPrint, path: 'PetCare', moduleId: 'pets' },
+  
+  // TEAL: Goals + Growth
+  { name: '── Goals + Growth ──', isGroupHeader: true, color: 'text-teal-400', bgColor: 'bg-teal-500/10' },
+  { name: 'Tasks', icon: FileText, path: 'Tasks', moduleId: 'tasks' },
   { name: 'Goals', icon: Target, path: 'Goals', moduleId: 'goals' },
   { name: 'Vision Board', icon: Eye, path: 'VisionBoard', moduleId: 'goals' },
-  { name: 'Saved Motivations', icon: Bookmark, path: 'SavedMotivations', moduleId: 'motivations' },
+  { name: 'Journal', icon: FileText, path: 'Journal', moduleId: 'journal' },
+  { name: 'Quick Notes', icon: StickyNote, path: 'QuickNotes', moduleId: 'quick_notes' },
   
   // PURPLE: Faith & Spiritual
   { name: '── Faith & Spiritual ──', isGroupHeader: true, color: 'text-purple-400', bgColor: 'bg-purple-500/10' },
   { name: 'Prayer Requests', icon: Heart, path: 'PrayerRequests', moduleId: 'prayer', requiresBibleBeliever: true },
+  { name: 'Holy Hitmakers', icon: Music, path: 'HolyHitmakers', requiresBibleBeliever: true },
+  { name: 'Bible Resources', icon: BookOpen, path: 'BibleResources', requiresBibleBeliever: true },
+  
+  // GREEN: Mind + Body Health
+  { name: '── Mind + Body Health ──', isGroupHeader: true, color: 'text-green-400', bgColor: 'bg-green-500/10' },
+  { name: 'Mental Health', icon: Brain, path: 'NeurodivergentSettings', moduleId: 'mental_health' },
+  { name: 'Daily Wellness', icon: Heart, path: 'Wellness', moduleId: 'wellness' },
+  { name: 'Supplements', icon: Tablet, path: 'Supplements', moduleId: 'supplements' },
+  { name: 'Medications', icon: Pill, path: 'Medications', moduleId: 'medications' },
   
   // PINK: Creator Suite
   { name: '── Creator Suite ──', isGroupHeader: true, color: 'text-pink-400', bgColor: 'bg-pink-500/10' },
@@ -149,27 +163,16 @@ const defaultNavItems = [
     { name: 'Love Away Giveaways', icon: Gift, path: 'LoveAway' },
     { name: 'Pictionary Helper', icon: Palette, path: 'PictionaryHelper' },
   ]},
-  { name: 'Music & Songs', icon: Music, isSection: true, subItems: [
-    { name: 'Holy Hitmakers', icon: Cross, path: 'HolyHitmakers' },
-    { name: "Ping & Pong's Silly Songs", icon: Smile, externalUrl: 'https://sillysongs.pixelnutscreative.com' },
-  ]},
+  { name: 'Content Ideas', icon: iconMap.Lightbulb, path: 'SavedMotivations', moduleId: 'motivations' },
+  { name: "Ping & Pong's Silly Songs", icon: Smile, externalUrl: 'https://sillysongs.pixelnutscreative.com' },
   
-  // GREEN: Wellness & Health
-  { name: '── Wellness & Health ──', isGroupHeader: true, color: 'text-green-400', bgColor: 'bg-green-500/10' },
-  { name: 'Daily Wellness', icon: Heart, path: 'Wellness', moduleId: 'wellness' },
-  { name: 'Mental Health', icon: Brain, isSection: true, moduleId: 'mental_health', subItems: [
-    { name: 'Mental Health Hub', icon: Brain, path: 'NeurodivergentSettings' },
-    { name: 'Journal', icon: FileText, path: 'Journal', moduleId: 'journal' },
-    { name: 'Quick Notes', icon: StickyNote, path: 'QuickNotes', moduleId: 'quick_notes' },
-  ]},
-  { name: 'Supplements', icon: Tablet, path: 'Supplements', moduleId: 'supplements' },
-  { name: 'Medications', icon: Pill, path: 'Medications', moduleId: 'medications' },
-  { name: 'Pet Care', icon: PawPrint, path: 'PetCare', moduleId: 'pets' },
-  
-  // Special items
+  // GRAY: Support & Settings
+  { name: '── Support & Settings ──', isGroupHeader: true, color: 'text-gray-400', bgColor: 'bg-gray-500/10' },
   { name: 'SuperFan Access', icon: Star, path: 'SuperFanAccess', showWhenNoTikTokAccess: true },
   { name: 'Support', icon: HelpCircle, path: 'Support', alwaysShow: true },
+  { name: 'Settings', icon: Settings, path: 'Settings', alwaysShow: true },
   { name: 'Admin Panel', icon: UserCog, path: 'Admin', adminOnly: true },
+  { name: 'Community Map', icon: iconMap.Map, path: 'CommunityMap', adminOnly: true },
 ];
 
 export default function Layout({ children, currentPageName }) {
