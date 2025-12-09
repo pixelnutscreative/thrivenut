@@ -36,11 +36,13 @@ export default function MasterUsernameSearch({
     const byUsername = {};
     
     allContacts.forEach(contact => {
-      const username = (contact.username || '').toLowerCase().replace('@', '').trim();
+      const username = (contact.username && typeof contact.username === 'string') 
+        ? contact.username.trim().toLowerCase().replace('@', '').trim() 
+        : '';
       if (!username) return;
       
       // Skip excluded usernames
-      if (excludeUsernames.some(u => u?.toLowerCase().replace('@', '').trim() === username)) return;
+      if (excludeUsernames.some(u => u && typeof u === 'string' && u.trim() && u.trim().toLowerCase().replace('@', '').trim() === username)) return;
       
       const displayName = contact.display_name || '';
       const phonetic = contact.phonetic || '';
@@ -82,21 +84,25 @@ export default function MasterUsernameSearch({
 
   // Filter by search term
   const filteredContacts = React.useMemo(() => {
-    const term = searchTerm.toLowerCase().replace('@', '').trim();
+    const term = (searchTerm && typeof searchTerm === 'string') 
+      ? searchTerm.trim().toLowerCase().replace('@', '').trim() 
+      : '';
     if (!term) return consolidatedContacts.slice(0, 20);
     
     return consolidatedContacts.filter(c => 
-      c.username.toLowerCase().includes(term) ||
-      c.display_name?.toLowerCase().includes(term) ||
-      c.real_name?.toLowerCase().includes(term) ||
-      c.nickname?.toLowerCase().includes(term)
+      (c.username && typeof c.username === 'string' && c.username.trim() && c.username.toLowerCase().includes(term)) ||
+      (c.display_name && typeof c.display_name === 'string' && c.display_name.trim() && c.display_name.toLowerCase().includes(term)) ||
+      (c.real_name && typeof c.real_name === 'string' && c.real_name.trim() && c.real_name.toLowerCase().includes(term)) ||
+      (c.nickname && typeof c.nickname === 'string' && c.nickname.trim() && c.nickname.toLowerCase().includes(term))
     );
   }, [consolidatedContacts, searchTerm]);
 
   // Check if search term is a new username not in the database
-  const cleanSearchTerm = searchTerm.replace('@', '').trim().toLowerCase();
+  const cleanSearchTerm = (searchTerm && typeof searchTerm === 'string') 
+    ? searchTerm.trim().replace('@', '').trim().toLowerCase() 
+    : '';
   const isNewUsername = cleanSearchTerm && !consolidatedContacts.some(
-    c => c.username.toLowerCase() === cleanSearchTerm
+    c => c.username && typeof c.username === 'string' && c.username.trim() && c.username.toLowerCase() === cleanSearchTerm
   );
 
   // Close dropdown when clicking outside
@@ -235,14 +241,18 @@ export function useMasterContactLookup() {
   });
 
   const lookupByUsername = React.useCallback((username) => {
-    const cleanUsername = (username || '').toLowerCase().replace('@', '').trim();
+    const cleanUsername = (username && typeof username === 'string') 
+      ? username.trim().toLowerCase().replace('@', '').trim() 
+      : '';
     if (!cleanUsername) return null;
 
     // Find best match (prefer entries with more data)
     let bestMatch = null;
     
     for (const contact of allContacts) {
-      const contactUsername = (contact.username || '').toLowerCase().replace('@', '').trim();
+      const contactUsername = (contact.username && typeof contact.username === 'string') 
+        ? contact.username.trim().toLowerCase().replace('@', '').trim() 
+        : '';
       if (contactUsername === cleanUsername) {
         if (!bestMatch) {
           bestMatch = contact;
