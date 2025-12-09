@@ -113,23 +113,30 @@ const ReminderIcon = ({ className }) => (
 );
 
 const defaultNavItems = [
-  // Core Life (no header)
+  // Core (no header)
   { name: 'Dashboard', icon: LayoutDashboard, path: 'Dashboard', alwaysShow: true },
   { name: "Pixel's Place", icon: Sparkles, path: 'PixelsParadise', alwaysShow: true },
   
-  // PURPLE: Faith & Purpose
-  { name: '── Faith & Purpose ──', isGroupHeader: true, color: 'text-purple-400', bgColor: 'bg-purple-500/10' },
-  { name: 'Goals', icon: Target, path: 'Goals', moduleId: 'goals' },
-  { name: 'Vision Board', icon: Eye, path: 'VisionBoard', moduleId: 'goals' },
-  { name: 'Saved Motivations', icon: Bookmark, path: 'SavedMotivations', alwaysShow: true },
-  { name: 'Prayer Requests', icon: Heart, path: 'PrayerRequests', requiresBibleBeliever: true },
+  // INDIGO: Life & Organization
+  { name: '── Life & Organization ──', isGroupHeader: true, color: 'text-indigo-400', bgColor: 'bg-indigo-500/10' },
   { name: 'Tasks', icon: FileText, path: 'Tasks', moduleId: 'tasks' },
   { name: 'Family Members', icon: Users, path: 'FamilyMembers', moduleId: 'people' },
   { name: 'Work Schedules', icon: Briefcase, path: 'WorkSchedules', alwaysShow: true },
   { name: 'Cleaning Tasks', icon: Sparkles, path: 'CleaningTasks', alwaysShow: true },
+  { name: 'Care Reminders', icon: Bell, path: 'CareReminders', moduleId: 'care_reminders' },
   
-  // PINK: Creator Life
-  { name: '── Creator Life ──', isGroupHeader: true, color: 'text-pink-400', bgColor: 'bg-pink-500/10' },
+  // TEAL: Goals & Growth
+  { name: '── Goals & Growth ──', isGroupHeader: true, color: 'text-teal-400', bgColor: 'bg-teal-500/10' },
+  { name: 'Goals', icon: Target, path: 'Goals', moduleId: 'goals' },
+  { name: 'Vision Board', icon: Eye, path: 'VisionBoard', moduleId: 'goals' },
+  { name: 'Saved Motivations', icon: Bookmark, path: 'SavedMotivations', alwaysShow: true },
+  
+  // PURPLE: Faith & Spiritual
+  { name: '── Faith & Spiritual ──', isGroupHeader: true, color: 'text-purple-400', bgColor: 'bg-purple-500/10' },
+  { name: 'Prayer Requests', icon: Heart, path: 'PrayerRequests', requiresBibleBeliever: true },
+  
+  // PINK: Creator Suite
+  { name: '── Creator Suite ──', isGroupHeader: true, color: 'text-pink-400', bgColor: 'bg-pink-500/10' },
   { name: 'Social Media Suite', icon: Share2, isSection: true, moduleId: 'tiktok', requiresTikTokAccess: true, subItems: [
     { name: 'Discover Creators', icon: Search, path: 'DiscoverCreators', highlight: true },
     { name: 'Creator Contacts', icon: Users, path: 'TikTokContacts' },
@@ -145,20 +152,16 @@ const defaultNavItems = [
     { name: "Ping & Pong's Silly Songs", icon: Smile, externalUrl: 'https://sillysongs.pixelnutscreative.com' },
   ]},
   
-  // AMBER: Mental & Emotional
-  { name: '── Mental & Emotional ──', isGroupHeader: true, color: 'text-amber-400', bgColor: 'bg-amber-500/10' },
+  // GREEN: Wellness & Health
+  { name: '── Wellness & Health ──', isGroupHeader: true, color: 'text-green-400', bgColor: 'bg-green-500/10' },
+  { name: 'Daily Wellness', icon: Heart, path: 'Wellness', moduleId: 'wellness' },
   { name: 'Mental Health', icon: Brain, isSection: true, moduleId: 'mental_health', subItems: [
     { name: 'Mental Health Hub', icon: Brain, path: 'NeurodivergentSettings' },
     { name: 'Journal', icon: FileText, path: 'Journal', moduleId: 'journal' },
     { name: 'Quick Notes', icon: StickyNote, path: 'QuickNotes' },
   ]},
-  
-  // GREEN: Health & Care
-  { name: '── Health & Care ──', isGroupHeader: true, color: 'text-green-400', bgColor: 'bg-green-500/10' },
-  { name: 'Daily Wellness', icon: Heart, path: 'Wellness', moduleId: 'wellness' },
   { name: 'Supplements', icon: Tablet, path: 'Supplements', moduleId: 'supplements' },
   { name: 'Medications', icon: Pill, path: 'Medications', moduleId: 'medications' },
-  { name: 'Care Reminders', icon: Bell, path: 'CareReminders', moduleId: 'care_reminders' },
   { name: 'Pet Care', icon: PawPrint, path: 'PetCare', moduleId: 'pets' },
   
   // Special items
