@@ -94,6 +94,7 @@ export default function Settings() {
     accent_color: '#bd84f5',
     greeting_type: 'positive_quote',
     greeting_types: ['positive_quote'],
+    motivation_tone: 'uplifting',
     bible_version: 'NIV',
     default_landing_page: 'Dashboard',
     ai_tool_links: [],
@@ -152,6 +153,7 @@ export default function Settings() {
         accent_color: preferences.accent_color || '#bd84f5',
         greeting_type: preferences.greeting_type || 'positive_quote',
         greeting_types: preferences.greeting_types || [preferences.greeting_type || 'positive_quote'],
+        motivation_tone: preferences.motivation_tone || 'uplifting',
         bible_version: preferences.bible_version || 'NIV',
         default_landing_page: preferences.default_landing_page || 'Dashboard',
       ai_tool_links: preferences.ai_tool_links || [],
@@ -788,6 +790,34 @@ export default function Settings() {
                       </div>
                     );
                   })}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Motivation Tone</CardTitle>
+                  <CardDescription>Choose the personality of your daily messages</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Select
+                    value={formData.motivation_tone || 'uplifting'}
+                    onValueChange={(v) => setFormData({ ...formData, motivation_tone: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="uplifting">✨ Uplifting & Positive</SelectItem>
+                      <SelectItem value="hilarious">😂 Hilarious</SelectItem>
+                      <SelectItem value="witty">🧠 Witty</SelectItem>
+                      <SelectItem value="sarcastic">😏 Sarcastic</SelectItem>
+                      <SelectItem value="professional">👔 Professional</SelectItem>
+                      <SelectItem value="loving">❤️ Loving</SelectItem>
+                      <SelectItem value="caring">🤗 Caring</SelectItem>
+                      <SelectItem value="silly">🤪 Silly</SelectItem>
+                      <SelectItem value="tough_love">💪 Tough Love</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </CardContent>
               </Card>
 
