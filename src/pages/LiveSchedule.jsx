@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, Video, Calendar as CalendarIcon, Heart, Swords, Popcorn, ShoppingBag, CalendarPlus, Edit, FileText, Users, GraduationCap, Handshake, LayoutGrid, Camera, UserPlus, CalendarDays, Eye, EyeOff, Copy, Sparkles, Moon, Clock, Gift, MapPin, Link as LinkIcon, Star } from 'lucide-react';
+import { Plus, Trash2, Video, Calendar as CalendarIcon, Heart, Swords, Popcorn, ShoppingBag, CalendarPlus, Edit, FileText, Users, GraduationCap, Handshake, LayoutGrid, Camera, UserPlus, CalendarDays, Eye, EyeOff, Copy, Sparkles, Moon, Clock, Gift, MapPin, Link as LinkIcon, Star, MessageCircle, Send } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { motion } from 'framer-motion';
@@ -243,7 +243,7 @@ export default function LiveSchedule() {
   };
 
   const getMyContentForDay = (day) => {
-    return myContentItems.filter(item => item.day_of_week === day && item.type === 'live').sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+    return myContentItems.filter(item => item.day_of_week === day).sort((a, b) => (a.time || '').localeCompare(b.time || ''));
   };
 
   const createScheduleMutation = useMutation({
@@ -606,11 +606,34 @@ export default function LiveSchedule() {
               {showMyContent ? "Hide My Lives" : "Show My Lives"}
             </Button>
             <Button
-              onClick={() => setEditingContentItem({})}
+              onClick={() => {
+                setEditingContentItem({});
+                setContentFormData(prev => ({ ...prev, type: 'post', title: 'New Post' }));
+              }}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <Send className="w-4 h-4 mr-2" />
+              Add Post
+            </Button>
+            <Button
+              onClick={() => {
+                setEditingContentItem({});
+                setContentFormData(prev => ({ ...prev, type: 'engagement', title: 'Engagement Time' }));
+              }}
+              className="bg-teal-600 hover:bg-teal-700 text-white"
+            >
+              <MessageCircle className="w-4 h-4 mr-2" />
+              Add Engage
+            </Button>
+            <Button
+              onClick={() => {
+                setEditingContentItem({});
+                setContentFormData(prev => ({ ...prev, type: 'live', title: 'Live Stream' }));
+              }}
               className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600"
             >
-              <Plus className="w-4 h-4 mr-2" />
-              Add My Live
+              <Video className="w-4 h-4 mr-2" />
+              Add Live
             </Button>
             <div className="relative group">
               <Button
@@ -721,15 +744,32 @@ export default function LiveSchedule() {
                   <CardContent className="pt-3 space-y-2 max-h-96 overflow-y-auto">
                     {/* My Content Items */}
                     {showMyContent && getMyContentForDay(day).map((item) => {
-                      const liveConfig = liveTypeConfig[item.live_type] || liveTypeConfig.regular;
-                      const LiveIcon = liveConfig.icon;
+                      let itemIcon = Video;
+                      let itemLabel = 'Live';
+                      let itemColor = 'bg-purple-100 text-purple-700';
+                      
+                      if (item.type === 'live') {
+                        const liveConfig = liveTypeConfig[item.live_type] || liveTypeConfig.regular;
+                        itemIcon = liveConfig.icon;
+                        itemLabel = liveConfig.label;
+                        itemColor = liveConfig.color;
+                      } else if (item.type === 'post') {
+                        itemIcon = Send;
+                        itemLabel = 'Post';
+                        itemColor = 'bg-blue-100 text-blue-700';
+                      } else if (item.type === 'engagement') {
+                        itemIcon = MessageCircle;
+                        itemLabel = 'Engage';
+                        itemColor = 'bg-teal-100 text-teal-700';
+                      }
+
                       return (
                         <div key={`content-${item.id}`} className={`p-2 ${isDark ? 'bg-teal-900/30 border-teal-700' : 'bg-teal-50 border-teal-200'} border rounded-lg text-sm`}>
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                              <Badge className={`text-xs ${liveConfig.color}`}>
-                                <LiveIcon className="w-3 h-3 mr-1" />
-                                {liveConfig.label}
+                              <Badge className={`text-xs ${itemColor}`}>
+                                <itemIcon className="w-3 h-3 mr-1" />
+                                {itemLabel}
                               </Badge>
                               <span className={`text-xs ${subtextClass}`}>
                                 {item.time ? `${parseInt(item.time.split(':')[0]) % 12 || 12}:${item.time.split(':')[1]} ${parseInt(item.time.split(':')[0]) >= 12 ? 'PM' : 'AM'}` : ''}
@@ -1008,23 +1048,47 @@ export default function LiveSchedule() {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader className="bg-gradient-to-r from-purple-500 to-pink-500 -m-6 mb-4 p-4 rounded-t-lg">
             <DialogTitle className="text-white flex items-center gap-2">
-              <Video className="w-5 h-5" />
-              {editingContentItem?.id ? 'Edit My Live' : 'Add My Live'}
+              {contentFormData.type === 'live' ? <Video className="w-5 h-5" /> : 
+               contentFormData.type === 'post' ? <Send className="w-5 h-5" /> : 
+               <MessageCircle className="w-5 h-5" />}
+              {editingContentItem?.id 
+                ? `Edit My ${contentFormData.type === 'live' ? 'Live' : contentFormData.type === 'post' ? 'Post' : 'Engagement'}` 
+                : `Add My ${contentFormData.type === 'live' ? 'Live' : contentFormData.type === 'post' ? 'Post' : 'Engagement'}`}
             </DialogTitle>
           </DialogHeader>
           
           <div className="space-y-4">
+            {/* Content Type Selector (if adding new) */}
+            {!editingContentItem?.id && (
+              <div className="flex justify-center bg-gray-100 p-1 rounded-lg mb-4">
+                {['live', 'post', 'engagement'].map(t => (
+                  <button
+                    key={t}
+                    onClick={() => setContentFormData({ ...contentFormData, type: t })}
+                    className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-all ${
+                      contentFormData.type === t 
+                        ? 'bg-white shadow text-purple-600' 
+                        : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    {t.charAt(0).toUpperCase() + t.slice(1)}
+                  </button>
+                ))}
+              </div>
+            )}
+
             {/* Title */}
             <div className="space-y-2">
-              <Label>Title (optional)</Label>
+              <Label>Title</Label>
               <Input
-                placeholder="e.g., Morning Live, Battle Night"
+                placeholder={contentFormData.type === 'live' ? "e.g., Morning Live" : "e.g., New Video Drop"}
                 value={contentFormData.title}
                 onChange={(e) => setContentFormData({ ...contentFormData, title: e.target.value })}
               />
             </div>
 
-            {/* Live Types - Multi-select */}
+            {/* Live Types - Only show if type is 'live' */}
+            {contentFormData.type === 'live' && (
             <div className="space-y-2">
               <Label>Type of Live (select all that apply)</Label>
               <div className="grid grid-cols-4 gap-2">
@@ -1049,7 +1113,11 @@ export default function LiveSchedule() {
               </div>
             </div>
 
-            {/* Platforms - Multi-select */}
+            </div>
+            )}
+
+            {/* Platforms - Only show if type is 'live' */}
+            {contentFormData.type === 'live' && (
             <div className="space-y-2">
               <Label>Streaming Platform(s)</Label>
               <div className="flex flex-wrap gap-2">
@@ -1067,6 +1135,7 @@ export default function LiveSchedule() {
                 })}
               </div>
             </div>
+            )}
 
             {/* Recurring toggle */}
             <div
@@ -1121,100 +1190,105 @@ export default function LiveSchedule() {
               </div>
             )}
 
-            {/* In Person Event Details */}
-            {contentFormData.platforms.includes('in_person') && (
-              <div className="p-3 bg-green-50 border border-green-200 rounded-lg space-y-3">
-                <p className="font-medium text-green-800 flex items-center gap-2">
-                  <MapPin className="w-4 h-4" /> In-Person Event Location
-                </p>
-                <div className="grid grid-cols-2 gap-3">
-                  <Input
-                    placeholder="City"
-                    value={contentFormData.city}
-                    onChange={(e) => setContentFormData({ ...contentFormData, city: e.target.value })}
-                  />
-                  <Input
-                    placeholder="State"
-                    value={contentFormData.state}
-                    onChange={(e) => setContentFormData({ ...contentFormData, state: e.target.value })}
-                  />
+            {/* Live-Specific Options */}
+            {contentFormData.type === 'live' && (
+              <>
+                {/* In Person Event Details */}
+                {contentFormData.platforms.includes('in_person') && (
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg space-y-3">
+                    <p className="font-medium text-green-800 flex items-center gap-2">
+                      <MapPin className="w-4 h-4" /> In-Person Event Location
+                    </p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Input
+                        placeholder="City"
+                        value={contentFormData.city}
+                        onChange={(e) => setContentFormData({ ...contentFormData, city: e.target.value })}
+                      />
+                      <Input
+                        placeholder="State"
+                        value={contentFormData.state}
+                        onChange={(e) => setContentFormData({ ...contentFormData, state: e.target.value })}
+                      />
+                    </div>
+                    <Input
+                      placeholder="Address (optional)"
+                      value={contentFormData.address}
+                      onChange={(e) => setContentFormData({ ...contentFormData, address: e.target.value })}
+                    />
+                  </div>
+                )}
+
+                {/* Stream URL for Zoom/Other */}
+                {(contentFormData.platforms.includes('zoom') || contentFormData.platforms.includes('other')) && (
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <LinkIcon className="w-4 h-4" /> Stream/Meeting URL
+                    </Label>
+                    <Input
+                      placeholder="https://..."
+                      value={contentFormData.stream_url}
+                      onChange={(e) => setContentFormData({ ...contentFormData, stream_url: e.target.value })}
+                    />
+                  </div>
+                )}
+
+                {/* Audience */}
+                <div className="space-y-2">
+                  <Label>Audience</Label>
+                  <Select value={contentFormData.audience} onValueChange={(v) => setContentFormData({ ...contentFormData, audience: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all_ages">All Ages</SelectItem>
+                      <SelectItem value="18+">18+ Only</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-                <Input
-                  placeholder="Address (optional)"
-                  value={contentFormData.address}
-                  onChange={(e) => setContentFormData({ ...contentFormData, address: e.target.value })}
-                />
-              </div>
+
+                {/* Options Grid */}
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="flex items-center gap-2 p-2 border rounded-lg cursor-pointer hover:bg-purple-50">
+                    <Checkbox
+                      checked={contentFormData.has_giveaway}
+                      onCheckedChange={(c) => setContentFormData({ ...contentFormData, has_giveaway: c })}
+                    />
+                    <span className="text-sm">🎁 Has Giveaway</span>
+                  </label>
+                  <label className="flex items-center gap-2 p-2 border rounded-lg cursor-pointer hover:bg-purple-50">
+                    <Checkbox
+                      checked={contentFormData.must_be_present}
+                      onCheckedChange={(c) => setContentFormData({ ...contentFormData, must_be_present: c })}
+                    />
+                    <span className="text-sm">✋ Must Be Present</span>
+                  </label>
+                  <label className="flex items-center gap-2 p-2 border rounded-lg cursor-pointer hover:bg-purple-50">
+                    <Checkbox
+                      checked={contentFormData.requires_registration}
+                      onCheckedChange={(c) => setContentFormData({ ...contentFormData, requires_registration: c })}
+                    />
+                    <span className="text-sm">📝 Registration Required</span>
+                  </label>
+                  <label className="flex items-center gap-2 p-2 border rounded-lg cursor-pointer hover:bg-purple-50">
+                    <Checkbox
+                      checked={contentFormData.superfan_only}
+                      onCheckedChange={(c) => setContentFormData({ ...contentFormData, superfan_only: c })}
+                    />
+                    <span className="text-sm">⭐ SuperFan Only</span>
+                  </label>
+                </div>
+
+                <label className="flex items-center gap-2 cursor-pointer p-3 border rounded-lg hover:bg-purple-50">
+                  <Checkbox
+                    checked={contentFormData.share_to_directory}
+                    onCheckedChange={(c) => setContentFormData({ ...contentFormData, share_to_directory: c })}
+                  />
+                  <div>
+                    <span className="text-sm font-medium">📢 Share to Discover Creators</span>
+                    <p className="text-xs text-gray-500">Let others see your live schedule</p>
+                  </div>
+                </label>
+              </>
             )}
-
-            {/* Stream URL for Zoom/Other */}
-            {(contentFormData.platforms.includes('zoom') || contentFormData.platforms.includes('other')) && (
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <LinkIcon className="w-4 h-4" /> Stream/Meeting URL
-                </Label>
-                <Input
-                  placeholder="https://..."
-                  value={contentFormData.stream_url}
-                  onChange={(e) => setContentFormData({ ...contentFormData, stream_url: e.target.value })}
-                />
-              </div>
-            )}
-
-            {/* Audience */}
-            <div className="space-y-2">
-              <Label>Audience</Label>
-              <Select value={contentFormData.audience} onValueChange={(v) => setContentFormData({ ...contentFormData, audience: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all_ages">All Ages</SelectItem>
-                  <SelectItem value="18+">18+ Only</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Options Grid */}
-            <div className="grid grid-cols-2 gap-2">
-              <label className="flex items-center gap-2 p-2 border rounded-lg cursor-pointer hover:bg-purple-50">
-                <Checkbox
-                  checked={contentFormData.has_giveaway}
-                  onCheckedChange={(c) => setContentFormData({ ...contentFormData, has_giveaway: c })}
-                />
-                <span className="text-sm">🎁 Has Giveaway</span>
-              </label>
-              <label className="flex items-center gap-2 p-2 border rounded-lg cursor-pointer hover:bg-purple-50">
-                <Checkbox
-                  checked={contentFormData.must_be_present}
-                  onCheckedChange={(c) => setContentFormData({ ...contentFormData, must_be_present: c })}
-                />
-                <span className="text-sm">✋ Must Be Present</span>
-              </label>
-              <label className="flex items-center gap-2 p-2 border rounded-lg cursor-pointer hover:bg-purple-50">
-                <Checkbox
-                  checked={contentFormData.requires_registration}
-                  onCheckedChange={(c) => setContentFormData({ ...contentFormData, requires_registration: c })}
-                />
-                <span className="text-sm">📝 Registration Required</span>
-              </label>
-              <label className="flex items-center gap-2 p-2 border rounded-lg cursor-pointer hover:bg-purple-50">
-                <Checkbox
-                  checked={contentFormData.superfan_only}
-                  onCheckedChange={(c) => setContentFormData({ ...contentFormData, superfan_only: c })}
-                />
-                <span className="text-sm">⭐ SuperFan Only</span>
-              </label>
-            </div>
-
-            <label className="flex items-center gap-2 cursor-pointer p-3 border rounded-lg hover:bg-purple-50">
-              <Checkbox
-                checked={contentFormData.share_to_directory}
-                onCheckedChange={(c) => setContentFormData({ ...contentFormData, share_to_directory: c })}
-              />
-              <div>
-                <span className="text-sm font-medium">📢 Share to Discover Creators</span>
-                <p className="text-xs text-gray-500">Let others see your live schedule</p>
-              </div>
-            </label>
 
             {/* Blessing Bus note */}
             {contentFormData.live_types.includes('blessing_bus') && (
@@ -1229,7 +1303,7 @@ export default function LiveSchedule() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditingContentItem(null)}>Cancel</Button>
             <Button onClick={handleSaveContent} className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
-              {editingContentItem?.id ? 'Update' : 'Add My Live'}
+              {editingContentItem?.id ? 'Update' : 'Add to Schedule'}
             </Button>
           </DialogFooter>
         </DialogContent>

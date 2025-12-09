@@ -177,14 +177,10 @@ export default function MyDaySection({
     enabled: !!userEmail,
   });
 
-  // Fetch content goals for today
-  const { data: contentGoal } = useQuery({
-    queryKey: ['contentGoal', userEmail],
-    queryFn: async () => {
-      const weekStart = format(new Date(new Date().setDate(new Date().getDate() - new Date().getDay() + 1)), 'yyyy-MM-dd');
-      const goals = await base44.entities.ContentGoal.filter({ week_starting: weekStart, created_by: userEmail });
-      return goals[0] || null;
-    },
+  // Fetch content calendar items (recurring schedule)
+  const { data: contentCalendarItems = [] } = useQuery({
+    queryKey: ['contentCalendarItems', userEmail],
+    queryFn: () => base44.entities.ContentCalendarItem.filter({ created_by: userEmail }),
     enabled: !!userEmail,
   });
 
@@ -361,15 +357,7 @@ export default function MyDaySection({
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['petActivityLogs'] }),
   });
 
-  const contentGoalMutation = useMutation({
-    mutationFn: async ({ field, index }) => {
-      if (!contentGoal) return;
-      const items = [...(contentGoal[field] || [])];
-      items[index] = { ...items[index], completed: !items[index].completed };
-      return base44.entities.ContentGoal.update(contentGoal.id, { [field]: items });
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['contentGoal'] }),
-  });
+
 
   // Build unified task list
   const allTasks = useMemo(() => {
@@ -549,78 +537,56 @@ export default function MyDaySection({
       });
     });
 
-    // Content goals for today
-    if (contentGoal) {
-      // Helper to check if schedule applies to today
-      const isScheduledForToday = (schedule) => {
-        // Check new days array format first
-        if (schedule.days && schedule.days.length > 0) {
-          return schedule.days.includes(todayDayName);
-        }
-        // Fallback to old single day format
-        return schedule.day_of_week === todayDayName;
-      };
+    // Content Calendar Items (Posts, Lives, Engagement)
+    contentCalendarItems.forEach(item => {
+      // Check if scheduled for today
+      let isToday = false;
+      if (item.is_recurring !== false) {
+        isToday = item.day_of_week === todayDayName;
+      } else {
+        isToday = item.specific_date === today;
+      }
 
-      // Scheduled posts
-      (contentGoal.scheduled_posts || []).forEach((post, idx) => {
-        if (isScheduledForToday(post)) {
-          const timeOfDay = getTimeOfDayFromTimeString(post.time);
-          tasks.push({
-            id: `content_post_${idx}_${todayDayName}`,
-            type: 'content',
-            field: 'scheduled_posts',
-            index: idx,
-            label: post.title || 'Create content',
-            sublabel: `📱 Post @ ${post.time}`,
-            icon: Video,
-            color: 'text-blue-500',
-            timeOfDay,
-            order: getOrderFromTimeString(post.time),
-            completed: post.completed,
-          });
-        }
-      });
+      if (isToday) {
+        const timeOfDay = getTimeOfDayFromTimeString(item.time);
+        
+        let icon = Video;
+        let color = 'text-blue-500';
+        let label = item.title;
+        let sublabel = '';
 
-      // Scheduled lives
-      (contentGoal.scheduled_lives || []).forEach((live, idx) => {
-        if (isScheduledForToday(live)) {
-          const timeOfDay = getTimeOfDayFromTimeString(live.time);
-          tasks.push({
-            id: `content_live_${idx}_${todayDayName}`,
-            type: 'content',
-            field: 'scheduled_lives',
-            index: idx,
-            label: live.title || 'Go LIVE',
-            sublabel: `🔴 Live @ ${live.time}`,
-            icon: Video,
-            color: 'text-red-500',
-            timeOfDay,
-            order: getOrderFromTimeString(live.time),
-            completed: live.completed,
-          });
+        if (item.type === 'live') {
+          icon = Video;
+          color = 'text-red-500';
+          label = item.title || 'Go LIVE';
+          sublabel = `🔴 Live @ ${item.time}`;
+        } else if (item.type === 'engagement') {
+          icon = Users;
+          color = 'text-teal-500';
+          label = item.title || 'Engagement Time';
+          sublabel = `💬 Engage @ ${item.time}`;
+        } else {
+          // Post
+          icon = Video; // Or another icon
+          color = 'text-blue-500';
+          label = item.title || 'Create/Post Content';
+          sublabel = `📱 Post @ ${item.time}`;
         }
-      });
 
-      // Scheduled engagement
-      (contentGoal.scheduled_engagement || []).forEach((eng, idx) => {
-        if (isScheduledForToday(eng)) {
-          const timeOfDay = getTimeOfDayFromTimeString(eng.time);
-          tasks.push({
-            id: `content_engagement_${idx}_${todayDayName}`,
-            type: 'content',
-            field: 'scheduled_engagement',
-            index: idx,
-            label: 'Engage on besties\' posts',
-            sublabel: `💬 @ ${eng.time}`,
-            icon: Users,
-            color: 'text-teal-500',
-            timeOfDay,
-            order: getOrderFromTimeString(eng.time),
-            completed: eng.completed,
-          });
-        }
-      });
-    }
+        tasks.push({
+          id: `content_${item.id}`,
+          type: 'content',
+          contentId: item.id,
+          label,
+          sublabel,
+          icon,
+          color,
+          timeOfDay,
+          order: getOrderFromTimeString(item.time),
+          // Completion tracked via selfCareLog
+        });
+      }
+    });
 
     // Live schedules to visit today
     liveSchedules.filter(s => s.recurring_days?.includes(todayDayName)).forEach(schedule => {
@@ -702,7 +668,7 @@ export default function MyDaySection({
       if (timeCompare !== 0) return timeCompare;
       return (a.order || 50) - (b.order || 50);
     });
-  }, [medications, supplements, pets, careReminders, contentGoal, liveSchedules, goals, preferences, todayDayName, mealLabels, localTaskOrder, googleCalendarData, engagementContacts, creatorCalendarContacts, today]);
+  }, [medications, supplements, pets, careReminders, contentCalendarItems, liveSchedules, goals, preferences, todayDayName, mealLabels, localTaskOrder, googleCalendarData, engagementContacts, creatorCalendarContacts, today]);
 
   // Helper functions
   function parseTimeString(timeStr) {
@@ -799,7 +765,7 @@ export default function MyDaySection({
       return selfCareLog?.completed_care_reminders?.includes(task.reminderId);
     }
     if (task.type === 'content') {
-      return task.completed;
+      return selfCareLog?.[task.id];
     }
     if (task.type === 'visit_live') {
       return selfCareLog?.[`visited_${task.scheduleId}`];
@@ -868,7 +834,7 @@ export default function MyDaySection({
         : [...current, task.reminderId];
       onToggleTask('completed_care_reminders', updated);
     } else if (task.type === 'content') {
-      contentGoalMutation.mutate({ field: task.field, index: task.index });
+      onToggleTask(task.id, !isTaskComplete(task));
     } else if (task.type === 'calendar') {
       const taskId = `calendar_${task.id}`;
       onToggleTask(taskId, !isTaskComplete(task));

@@ -12,10 +12,8 @@ import { Loader2, LogOut, ChevronDown, ChevronRight, Settings, Calendar, Eye, Ey
 import QuickStats from '../components/dashboard/QuickStats';
 import MyDaySection from '../components/dashboard/MyDaySection';
 import DailyMotivationBanner from '../components/dashboard/DailyMotivationBanner';
-import WeeklyGoalCard from '../components/tiktok/WeeklyGoalCard';
-import PostScheduleModal from '../components/tiktok/PostScheduleModal';
-import LiveScheduleModal from '../components/tiktok/LiveScheduleModal';
-import EngagementScheduleModal from '../components/tiktok/EngagementScheduleModal';
+// Weekly content schedule removed per user request
+// Content management moved to Content Calendar page
 import SpecialEventsCard from '../components/dashboard/SpecialEventsCard';
 import SubscribedEventsSection from '../components/dashboard/SubscribedEventsSection';
 import NotionTaskPicker from '../components/dashboard/NotionTaskPicker';
@@ -27,9 +25,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
-  const [showPostsModal, setShowPostsModal] = useState(false);
-    const [showLivesModal, setShowLivesModal] = useState(false);
-    const [showEngagementModal, setShowEngagementModal] = useState(false);
+
     const [loading, setLoading] = useState(true);
     const [collapsedSections, setCollapsedSections] = useState([]);
   
@@ -80,40 +76,7 @@ export default function Dashboard() {
     enabled: !!user,
   });
 
-  // Fetch or create content goal for current week (auto-generate from template)
-  const { data: contentGoal } = useQuery({
-    queryKey: ['contentGoal', getCurrentWeekStart()],
-    queryFn: async () => {
-      const weekStart = getCurrentWeekStart();
-      const goals = await base44.entities.ContentGoal.filter({ 
-        week_starting: weekStart,
-        created_by: user.email 
-      });
-      
-      if (goals[0]) return goals[0];
-      
-      // No goal for this week - check for a template
-      const templates = await base44.entities.ContentScheduleTemplate.filter({ 
-        created_by: user.email 
-      });
-      
-      if (templates[0]) {
-        // Create new week's goal from template (reset completed status)
-        const template = templates[0];
-        const newGoal = await base44.entities.ContentGoal.create({
-          week_starting: weekStart,
-          scheduled_posts: (template.scheduled_posts || []).map(p => ({ ...p, completed: false })),
-          scheduled_lives: (template.scheduled_lives || []).map(l => ({ ...l, completed: false })),
-          scheduled_engagement: (template.scheduled_engagement || []).map(e => ({ ...e, completed: false })),
-          notes: template.notes || ''
-        });
-        return newGoal;
-      }
-      
-      return null;
-    },
-    enabled: !!user,
-  });
+
 
   const { data: todaysWater } = useQuery({
     queryKey: ['waterToday', format(new Date(), 'yyyy-MM-dd')],
@@ -206,70 +169,7 @@ export default function Dashboard() {
     },
   });
 
-  // Save schedule by type
-  const saveScheduleMutation = useMutation({
-    mutationFn: async ({ field, data }) => {
-      // Also update template
-      const templates = await base44.entities.ContentScheduleTemplate.filter({ created_by: user.email });
-      const templateUpdate = { [field]: data };
-      
-      if (templates[0]) {
-        await base44.entities.ContentScheduleTemplate.update(templates[0].id, templateUpdate);
-      } else {
-        await base44.entities.ContentScheduleTemplate.create(templateUpdate);
-      }
-      
-      // Update current week's goal
-      if (contentGoal) {
-        return await base44.entities.ContentGoal.update(contentGoal.id, { [field]: data });
-      } else {
-        return await base44.entities.ContentGoal.create({
-          week_starting: getCurrentWeekStart(),
-          [field]: data
-        });
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contentGoal'] });
-      setShowPostsModal(false);
-      setShowLivesModal(false);
-      setShowEngagementModal(false);
-    },
-  });
 
-  const incrementGoalMutation = useMutation({
-    mutationFn: async (field) => {
-      const updateData = {
-        [`${field}_completed`]: contentGoal[`${field}_completed`] + 1
-      };
-      return await base44.entities.ContentGoal.update(contentGoal.id, updateData);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contentGoal'] });
-    },
-  });
-
-  // Toggle day completion for a schedule item
-  const toggleDayCompleteMutation = useMutation({
-    mutationFn: async ({ field, index, day }) => {
-      if (!contentGoal) return;
-      const schedules = [...(contentGoal[field] || [])];
-      const schedule = { ...schedules[index] };
-      const completedDays = schedule.completed_days || [];
-      
-      if (completedDays.includes(day)) {
-        schedule.completed_days = completedDays.filter(d => d !== day);
-      } else {
-        schedule.completed_days = [...completedDays, day];
-      }
-      
-      schedules[index] = schedule;
-      return await base44.entities.ContentGoal.update(contentGoal.id, { [field]: schedules });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contentGoal'] });
-    },
-  });
 
   // Toggle Google Calendar
   const toggleGoogleCalendarMutation = useMutation({
@@ -380,25 +280,7 @@ export default function Dashboard() {
           </Collapsible>
         )}
 
-        {/* Weekly Content Schedule */}
-        <Collapsible open={!isSectionCollapsed('weekly-schedule')}>
-          <CollapsibleTrigger 
-            className="w-full flex items-center justify-between p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            onClick={() => toggleSectionCollapse('weekly-schedule')}
-          >
-            <span className="text-sm font-medium text-gray-600">Weekly Content Schedule</span>
-            {isSectionCollapsed('weekly-schedule') ? <ChevronRight className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <WeeklyGoalCard
-              goal={contentGoal}
-              onEditPosts={() => setShowPostsModal(true)}
-              onEditLives={() => setShowLivesModal(true)}
-              onEditEngagement={() => setShowEngagementModal(true)}
-              onToggleDayComplete={(field, index, day) => toggleDayCompleteMutation.mutate({ field, index, day })}
-            />
-          </CollapsibleContent>
-        </Collapsible>
+
 
         {/* Quick action buttons */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -441,26 +323,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <PostScheduleModal
-        isOpen={showPostsModal}
-        onClose={() => setShowPostsModal(false)}
-        posts={contentGoal?.scheduled_posts || []}
-        onSave={(data) => saveScheduleMutation.mutate({ field: 'scheduled_posts', data })}
-      />
-      
-      <LiveScheduleModal
-        isOpen={showLivesModal}
-        onClose={() => setShowLivesModal(false)}
-        lives={contentGoal?.scheduled_lives || []}
-        onSave={(data) => saveScheduleMutation.mutate({ field: 'scheduled_lives', data })}
-      />
-      
-      <EngagementScheduleModal
-        isOpen={showEngagementModal}
-        onClose={() => setShowEngagementModal(false)}
-        engagements={contentGoal?.scheduled_engagement || []}
-        onSave={(data) => saveScheduleMutation.mutate({ field: 'scheduled_engagement', data })}
-      />
+
     </div>
   );
 }
