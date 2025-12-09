@@ -290,30 +290,35 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
       animate={{ opacity: 1, scale: 1 }}
       className="fixed z-50 bg-gray-900/95 backdrop-blur-sm rounded-full px-2 py-1.5 shadow-2xl"
       style={{
-        // On mobile, force stick to top right if user hasn't dragged it substantially
-        left: isMobile ? (position.x || 'auto') : (position.x || 'calc(50% - 150px)'),
-        right: isMobile && !position.x ? '10px' : 'auto', 
-        top: position.y || (isMobile ? 70 : 16),
+        // On mobile, dock to top below header
+        left: isMobile ? 0 : (position.x || 'calc(50% - 150px)'),
+        right: isMobile ? 0 : 'auto',
+        top: isMobile ? '56px' : (position.y || 16), // 56px matches mobile header height
+        width: isMobile ? '100%' : 'auto',
         cursor: isDragging ? 'grabbing' : 'default',
         display: 'flex',
         flexDirection: isMobile ? 'row' : 'column',
+        justifyContent: isMobile ? 'center' : 'flex-start',
         alignItems: 'center',
         gap: '4px',
-        maxWidth: isMobile ? 'calc(100vw - 20px)' : 'auto',
-        overflowX: isMobile ? 'auto' : 'visible'
+        maxWidth: '100%',
+        overflowX: isMobile ? 'auto' : 'visible',
+        borderRadius: isMobile ? '0 0 12px 12px' : '9999px',
       }}
     >
         {/* Main action bar */}
         <div className="flex items-center gap-1">
-        {/* Drag handle */}
-        <button
-          onMouseDown={handleDragStart}
-          onTouchStart={handleDragStart}
-          className="p-1.5 cursor-grab active:cursor-grabbing hover:bg-white/10 rounded-full transition-colors"
-          title="Drag to move"
-        >
-          <GripHorizontal className="w-4 h-4 text-gray-400" />
-        </button>
+        {/* Drag handle - Desktop only */}
+        {!isMobile && (
+          <button
+            onMouseDown={handleDragStart}
+            onTouchStart={handleDragStart}
+            className="p-1.5 cursor-grab active:cursor-grabbing hover:bg-white/10 rounded-full transition-colors"
+            title="Drag to move"
+          >
+            <GripHorizontal className="w-4 h-4 text-gray-400" />
+          </button>
+        )}
 
         {/* Close button */}
         <button

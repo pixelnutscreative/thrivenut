@@ -895,8 +895,8 @@ export default function Layout({ children, currentPageName }) {
         </div>
       </div>
 
-      {/* Mobile Main Content */}
-              <div className="lg:hidden pt-16">
+      {/* Mobile Main Content - Add extra padding if quick actions are enabled to prevent overlap */}
+              <div className={`lg:hidden pt-16 ${user && preferences?.quick_actions?.length > 0 ? 'pt-32' : ''}`}>
                 {children}
               </div>
 
