@@ -234,6 +234,38 @@ export default function Wellness() {
     notes: todaysSleep?.notes || ''
   });
 
+  const [showSleepSettings, setShowSleepSettings] = useState(false);
+  const [bedtimes, setBedtimes] = useState({});
+  const [nightRoutine, setNightRoutine] = useState([]);
+  
+  // Update state when preferences load
+  React.useEffect(() => {
+    if (preferences) {
+      setBedtimes(preferences.sleep_schedule || {});
+      setNightRoutine(preferences.night_routine_order || ['bible_reading', 'journaling', 'medications', 'supplements', 'prayer', 'hygiene']);
+    }
+  }, [preferences]);
+
+  const updatePreferencesMutation = useMutation({
+    mutationFn: async (data) => {
+      if (preferences) {
+        return await base44.entities.UserPreferences.update(preferences.id, data);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['preferences'] });
+    }
+  });
+
+  const handleDragEnd = (result) => {
+    if (!result.destination) return;
+    const items = Array.from(nightRoutine);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+    setNightRoutine(items);
+    updatePreferencesMutation.mutate({ night_routine_order: items });
+  };
+
   const waterPercentage = todaysWater ? (todaysWater.glasses / todaysWater.goal_glasses) * 100 : 0;
 
   const formatTime = (isoString) => {
@@ -470,62 +502,159 @@ export default function Wellness() {
           </Card>
         </motion.div>
 
-        {/* Sleep Tracker */}
+        {/* Sleep Tracker & Night Routine */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
           <Card className={`shadow-lg border-0 ${isDark ? 'bg-gradient-to-br from-purple-900/30 to-indigo-900/30' : 'bg-gradient-to-br from-purple-50 to-indigo-50'}`}>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className={`flex items-center gap-2 text-2xl ${textClass}`}>
                 <Moon className="w-7 h-7 text-purple-500" />
-                Sleep Log
+                Sleep & Night Routine
               </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className={`text-sm font-medium ${textClass}`}>Hours of Sleep</label>
-                  <Input
-                    type="number"
-                    step="0.5"
-                    min="0"
-                    max="24"
-                    value={sleepForm.hours}
-                    onChange={(e) => setSleepForm({...sleepForm, hours: parseFloat(e.target.value)})}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className={`text-sm font-medium ${textClass}`}>Sleep Quality</label>
-                  <Select value={sleepForm.quality} onValueChange={(val) => setSleepForm({...sleepForm, quality: val})}>
-                    <SelectTrigger className={isDark ? 'bg-gray-700 border-gray-600' : ''}>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="excellent">Excellent</SelectItem>
-                      <SelectItem value="good">Good</SelectItem>
-                      <SelectItem value="fair">Fair</SelectItem>
-                      <SelectItem value="poor">Poor</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <Textarea
-                placeholder="Notes about your sleep... (optional)"
-                value={sleepForm.notes}
-                onChange={(e) => setSleepForm({...sleepForm, notes: e.target.value})}
-                rows={2}
-              />
-
-              <Button 
-                onClick={() => sleepMutation.mutate(sleepForm)}
-                className="w-full bg-purple-500 hover:bg-purple-600"
-              >
-                {todaysSleep ? 'Update Sleep Log' : 'Log Sleep'}
+              <Button variant="ghost" size="sm" onClick={() => setShowSleepSettings(!showSleepSettings)}>
+                <Settings className={`w-5 h-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
               </Button>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              
+              {showSleepSettings ? (
+                <div className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-300">
+                  <div className={`p-4 rounded-xl ${isDark ? 'bg-gray-800/50' : 'bg-white/60'}`}>
+                    <h4 className={`font-semibold mb-3 flex items-center gap-2 ${textClass}`}>
+                      <Clock className="w-4 h-4" /> Target Bedtimes
+                    </h4>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(day => (
+                        <div key={day}>
+                          <label className={`text-xs font-medium block mb-1 ${subtextClass}`}>{day.slice(0, 3)}</label>
+                          <Input 
+                            type="time" 
+                            value={bedtimes[day] || ''}
+                            onChange={(e) => {
+                              const newTimes = { ...bedtimes, [day]: e.target.value };
+                              setBedtimes(newTimes);
+                              updatePreferencesMutation.mutate({ sleep_schedule: newTimes });
+                            }}
+                            className="h-8 text-xs"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className={`p-4 rounded-xl ${isDark ? 'bg-gray-800/50' : 'bg-white/60'}`}>
+                    <h4 className={`font-semibold mb-2 flex items-center gap-2 ${textClass}`}>
+                      <List className="w-4 h-4" /> Night Routine Order
+                    </h4>
+                    <p className={`text-xs ${subtextClass} mb-3`}>Drag to reorder your evening tasks</p>
+                    
+                    <DragDropContext onDragEnd={handleDragEnd}>
+                      <Droppable droppableId="night-routine">
+                        {(provided) => (
+                          <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-2">
+                            {nightRoutine.map((item, index) => (
+                              <Draggable key={item} draggableId={item} index={index}>
+                                {(provided) => (
+                                  <div
+                                    ref={provided.innerRef}
+                                    {...provided.draggableProps}
+                                    {...provided.dragHandleProps}
+                                    className={`p-3 rounded-lg border flex items-center gap-3 shadow-sm ${isDark ? 'bg-gray-700 border-gray-600' : 'bg-white border-purple-100'}`}
+                                  >
+                                    <div className="text-gray-400 cursor-grab active:cursor-grabbing">
+                                      <List className="w-4 h-4" />
+                                    </div>
+                                    <span className={`capitalize flex-1 ${textClass}`}>{item.replace('_', ' ')}</span>
+                                  </div>
+                                )}
+                              </Draggable>
+                            ))}
+                            {provided.placeholder}
+                          </div>
+                        )}
+                      </Droppable>
+                    </DragDropContext>
+                  </div>
+                  
+                  <Button variant="outline" size="sm" onClick={() => setShowSleepSettings(false)} className="w-full">
+                    Done
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  {/* Today's Target */}
+                  <div className={`flex items-center justify-between text-sm px-4 py-3 rounded-xl ${isDark ? 'bg-indigo-900/40 text-indigo-300' : 'bg-indigo-50 text-indigo-700'}`}>
+                    <span className="flex items-center gap-2"><Clock className="w-4 h-4" /> Tonight's Target:</span>
+                    <span className="font-bold text-lg">{bedtimes[format(new Date(), 'EEEE')] || 'Not set'}</span>
+                  </div>
+
+                  {/* Night Routine Checklist Preview */}
+                  <div className="space-y-3">
+                    <h4 className={`font-medium text-sm ${subtextClass}`}>Evening Routine</h4>
+                    <div className="space-y-2">
+                      {nightRoutine.map((item, i) => (
+                        <div key={item} className={`flex items-center gap-3 text-sm p-2 rounded-lg ${isDark ? 'bg-gray-800/30' : 'bg-white/40'}`}>
+                          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${isDark ? 'bg-indigo-900 text-indigo-300' : 'bg-indigo-100 text-indigo-600'}`}>
+                            {i + 1}
+                          </div>
+                          <span className={`capitalize ${textClass}`}>{item.replace('_', ' ')}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Log Sleep Form */}
+                  <div className={`border-t pt-4 ${isDark ? 'border-gray-700' : 'border-indigo-100'}`}>
+                    <h4 className={`font-medium text-sm mb-3 ${subtextClass}`}>Log Sleep</h4>
+                    <div className="grid md:grid-cols-2 gap-4 mb-4">
+                      <div className="space-y-2">
+                        <label className={`text-xs font-medium ${textClass}`}>Hours</label>
+                        <Input
+                          type="number"
+                          step="0.5"
+                          min="0"
+                          max="24"
+                          value={sleepForm.hours}
+                          onChange={(e) => setSleepForm({...sleepForm, hours: parseFloat(e.target.value)})}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className={`text-xs font-medium ${textClass}`}>Quality</label>
+                        <Select value={sleepForm.quality} onValueChange={(val) => setSleepForm({...sleepForm, quality: val})}>
+                          <SelectTrigger className={isDark ? 'bg-gray-700 border-gray-600' : ''}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="excellent">Excellent</SelectItem>
+                            <SelectItem value="good">Good</SelectItem>
+                            <SelectItem value="fair">Fair</SelectItem>
+                            <SelectItem value="poor">Poor</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <Textarea
+                      placeholder="Notes about your sleep... (optional)"
+                      value={sleepForm.notes}
+                      onChange={(e) => setSleepForm({...sleepForm, notes: e.target.value})}
+                      rows={2}
+                      className="mb-4"
+                    />
+
+                    <Button 
+                      onClick={() => sleepMutation.mutate(sleepForm)}
+                      className="w-full bg-purple-500 hover:bg-purple-600"
+                    >
+                      {todaysSleep ? 'Update Sleep Log' : 'Log Sleep'}
+                    </Button>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
         </motion.div>
