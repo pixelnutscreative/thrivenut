@@ -460,7 +460,7 @@ export default function Layout({ children, currentPageName }) {
         >
           <ImpersonationBanner />
       {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 backdrop-blur-sm border-b px-4 py-3" style={sidebarStyle}>
+      <div className={`lg:hidden fixed top-0 left-0 right-0 z-50 backdrop-blur-sm border-b px-4 py-3 ${menuTextClass}`} style={sidebarStyle}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <img 
@@ -473,11 +473,12 @@ export default function Layout({ children, currentPageName }) {
                                                                   </h1>
           </div>
           <div className="flex items-center gap-2">
-            {user && <NotificationBell userEmail={effectiveEmail} isDark={isDark} />}
+            {user && <NotificationBell userEmail={effectiveEmail} isDark={isMenuDark} />}
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className={menuTextClass}
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </Button>
@@ -541,10 +542,10 @@ export default function Layout({ children, currentPageName }) {
                                                 }}
                                                 className={`flex-1 flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
                                                   isModuleDisabled 
-                                                    ? (isDark ? 'text-gray-500' : 'text-gray-400')
+                                                    ? (isMenuDark ? 'text-gray-500' : 'text-gray-400')
                                                     : hasActiveSubItem 
-                                                      ? (isDark ? 'bg-gray-700 text-teal-400' : 'bg-teal-50 text-teal-700')
-                                                      : (isDark ? 'text-gray-300 hover:bg-gray-700/50' : 'text-gray-700 hover:bg-teal-50')
+                                                      ? menuActiveClass
+                                                      : `${menuTextClass} ${menuHoverClass}`
                                                 }`}
                                               >
                                                 <div className="flex items-center gap-3">
@@ -577,12 +578,12 @@ export default function Layout({ children, currentPageName }) {
                                                   // Render dividers differently
                                                   if (subItem.isDivider) {
                                                     return (
-                                                      <div key={subItem.name} className={`px-2 py-1 text-xs font-semibold ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                                                      <div key={subItem.name} className={`px-2 py-1 text-xs font-semibold ${isMenuDark ? 'text-gray-500' : 'text-gray-400'}`}>
                                                         {subItem.name}
                                                       </div>
                                                     );
                                                   }
-                                                  
+
                                                   // Handle external URLs
                                                   if (subItem.externalUrl) {
                                                     return (
@@ -592,7 +593,7 @@ export default function Layout({ children, currentPageName }) {
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                         onClick={() => setMobileMenuOpen(false)}
-                                                        className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-all text-sm ${isDark ? 'text-gray-400 hover:bg-gray-700/50' : 'text-gray-600 hover:bg-teal-50'}`}
+                                                        className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-all text-sm ${isMenuDark ? 'text-gray-400 hover:bg-white/10' : 'text-gray-600 hover:bg-teal-50'}`}
                                                       >
                                                         <SubIcon className="w-4 h-4" />
                                                         <span>{subItem.name}</span>
@@ -609,7 +610,7 @@ export default function Layout({ children, currentPageName }) {
                                                       className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-all text-sm ${
                                                         subIsActive
                                                           ? 'text-white shadow-lg'
-                                                          : (isDark ? 'text-gray-400 hover:bg-gray-700/50' : 'text-gray-600 hover:bg-teal-50')
+                                                          : (isMenuDark ? 'text-gray-400 hover:bg-white/10' : 'text-gray-600 hover:bg-teal-50')
                                                       }`}
                                                       style={subIsActive ? { background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` } : {}}
                                                     >
@@ -632,7 +633,7 @@ export default function Layout({ children, currentPageName }) {
                                           className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                                             isActive
                                               ? 'text-white shadow-lg'
-                                              : (isDark ? 'text-gray-300 hover:bg-gray-700/50' : 'text-gray-700 hover:bg-teal-50')
+                                              : `${menuTextClass} ${menuHoverClass}`
                                           }`}
                                           style={isActive ? { background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` } : {}}
                                         >
@@ -643,11 +644,11 @@ export default function Layout({ children, currentPageName }) {
                                     })}
               
               {user && (
-                  <div className={`pt-6 mt-6 border-t ${isDark ? 'border-gray-700' : ''}`}>
+                  <div className={`pt-6 mt-6 border-t ${menuBorderClass}`}>
                     <Link
                       to={createPageUrl('Settings')}
                       onClick={() => setMobileMenuOpen(false)}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all mb-3 ${isDark ? 'text-gray-300 hover:bg-gray-700/50' : 'text-gray-700 hover:bg-teal-50'}`}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all mb-3 ${menuTextClass} ${menuHoverClass}`}
                     >
                       {preferences?.profile_image_url ? (
                         <img 
@@ -656,7 +657,7 @@ export default function Layout({ children, currentPageName }) {
                           className="w-8 h-8 rounded-full object-cover"
                         />
                       ) : (
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isMenuDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
                           <Settings className="w-4 h-4 text-gray-500" />
                         </div>
                       )}
@@ -666,7 +667,7 @@ export default function Layout({ children, currentPageName }) {
                       onClick={handleLogout}
                       variant="outline"
                       size="sm"
-                      className={`w-full ${isDark ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'text-gray-700 border-gray-300 hover:bg-gray-100'}`}
+                      className={`w-full ${isMenuDark ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'text-gray-700 border-gray-300 hover:bg-gray-100'}`}
                     >
                       <LogOut className="w-4 h-4 mr-2" />
                       Sign Out
