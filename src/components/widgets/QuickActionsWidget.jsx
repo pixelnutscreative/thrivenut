@@ -369,40 +369,7 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
         </RouterLink>
         </div>
 
-        {/* SoundCloud Player - Below toolbar, minimizable */}
-        {preferences?.soundcloud_playlist_url && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            className="w-80 bg-gray-900/95 backdrop-blur-sm rounded-lg overflow-hidden shadow-lg mt-1"
-          >
-            <div className="flex items-center justify-between px-2 py-1 border-b border-gray-700">
-              <span className="text-xs text-gray-400">🎵 Now Playing</span>
-              <button
-                onClick={() => setMusicMinimized(!musicMinimized)}
-                className="p-1 hover:bg-white/10 rounded transition-colors"
-                title={musicMinimized ? 'Expand player' : 'Minimize player'}
-              >
-                {musicMinimized ? (
-                  <ChevronDown className="w-3 h-3 text-gray-400" />
-                ) : (
-                  <ChevronRight className="w-3 h-3 text-gray-400" />
-                )}
-              </button>
-            </div>
-            {!musicMinimized && (
-              <iframe 
-                width="100%" 
-                height="200" 
-                scrolling="no" 
-                frameBorder="no" 
-                allow="autoplay" 
-                src={`https://w.soundcloud.com/player/?url=${encodeURIComponent(preferences.soundcloud_playlist_url)}&color=%23ff5500&auto_play=false&hide_related=false&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=false`}
-                className="rounded-lg"
-              />
-            )}
-          </motion.div>
-        )}
+        {/* SoundCloud Player - Removed from here, use dedicated player setting */}
       </motion.div>
 
       {/* Mood Selector Popup */}
