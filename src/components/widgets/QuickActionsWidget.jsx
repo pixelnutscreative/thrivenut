@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Plus } from 'lucide-react';
 import { 
   Zap, Droplet, Smile, Utensils, Lightbulb, Cloud, StickyNote, 
-  X, Check, Settings, Music, Heart, Home, Link, ExternalLink, GripHorizontal, BookOpen, Loader2, ChevronDown, ChevronRight
+  X, Check, Settings, Music, Heart, Home, Link, ExternalLink, GripHorizontal, BookOpen, Loader2, ChevronDown, ChevronRight, ChevronLeft
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
@@ -51,6 +51,8 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
   const [customMoodInput, setCustomMoodInput] = useState({ emoji: '', label: '' });
   const [musicMinimized, setMusicMinimized] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [scrollPosition, setScrollPosition] = useState(0);
+  const scrollContainerRef = useRef(null);
   
   const today = format(new Date(), 'yyyy-MM-dd');
 
@@ -70,6 +72,43 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
   const userEmail = preferences?.user_email;
   const quickActions = preferences?.quick_actions || ['mood', 'water', 'food', 'note'];
   const customActions = preferences?.custom_quick_actions || [];
+
+  // Fetch today's data for displaying counts
+  const { data: todaysWater } = useQuery({
+    queryKey: ['waterToday', today, userEmail],
+    queryFn: async () => {
+      const logs = await base44.entities.WaterLog.filter({ date: today, created_by: userEmail });
+      return logs[0] || null;
+    },
+    enabled: !!userEmail,
+  });
+
+  const { data: todaysMoodLogs = [] } = useQuery({
+    queryKey: ['moodToday', today, userEmail],
+    queryFn: async () => {
+      return await base44.entities.MoodLog.filter({ date: today, created_by: userEmail });
+    },
+    enabled: !!userEmail,
+  });
+
+  const { data: todaysNotes = [] } = useQuery({
+    queryKey: ['quickNotesToday', today, userEmail],
+    queryFn: async () => {
+      return await base44.entities.QuickNote.filter({ date: today, created_by: userEmail });
+    },
+    enabled: !!userEmail,
+  });
+
+  // Calculate counts by type
+  const noteCounts = {
+    food: todaysNotes.filter(n => n.type === 'food').length,
+    idea: todaysNotes.filter(n => n.type === 'idea').length,
+    gratitude: todaysNotes.filter(n => n.type === 'gratitude').length,
+    note: todaysNotes.filter(n => n.type === 'note').length,
+    negative_thought: todaysNotes.filter(n => n.type === 'negative_thought').length,
+  };
+
+  const latestMood = todaysMoodLogs.length > 0 ? todaysMoodLogs[todaysMoodLogs.length - 1] : null;
 
   // Load saved position from localStorage
   useEffect(() => {
@@ -114,6 +153,7 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['waterLog'] });
       queryClient.invalidateQueries({ queryKey: ['waterToday'] });
+      queryClient.invalidateQueries({ queryKey: ['waterToday', today, userEmail] });
       setWaterSuccess(true);
       setTimeout(() => setWaterSuccess(false), 2000);
       setActiveAction(null);
@@ -130,6 +170,8 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['moodLog'] });
+      queryClient.invalidateQueries({ queryKey: ['moodToday'] });
+      queryClient.invalidateQueries({ queryKey: ['moodToday', today, userEmail] });
       setActiveAction(null);
     }
   });
@@ -150,6 +192,8 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quickNotes'] });
+      queryClient.invalidateQueries({ queryKey: ['quickNotesToday'] });
+      queryClient.invalidateQueries({ queryKey: ['quickNotesToday', today, userEmail] });
       setActiveAction(null);
       setNoteContent('');
     }
@@ -210,6 +254,19 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
   };
 
   const visibleActions = getVisibleActions();
+
+  // Scroll handling for action carousel
+  const scrollLeft = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ left: -200, behavior: 'smooth' });
+    }
+  };
+
+  const scrollRight = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ left: 200, behavior: 'smooth' });
+    }
+  };
 
   // Handle drag
   const handleDragStart = (e) => {
@@ -331,62 +388,124 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
         {/* Divider */}
         <div className="h-6 w-px bg-gray-600 mx-1" />
 
-        {/* Action buttons */}
-        {visibleActions.map((action) => {
-          const Icon = action.icon;
-          
-          // Handle custom actions with page/external links
-          if (action.isCustom) {
-            if (action.external_url) {
-              return (
-                <a
-                  key={action.id}
-                  href={action.external_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`w-9 h-9 rounded-full ${action.color} flex items-center justify-center text-white hover:opacity-90 transition-all hover:scale-110`}
-                  title={action.label}
-                >
-                  <Icon className="w-4 h-4" />
-                </a>
-              );
-            }
-            if (action.page) {
-              return (
-                <RouterLink
-                  key={action.id}
-                  to={createPageUrl(action.page)}
-                  className={`w-9 h-9 rounded-full ${action.color} flex items-center justify-center text-white hover:opacity-90 transition-all hover:scale-110`}
-                  title={action.label}
-                >
-                  <Icon className="w-4 h-4" />
-                </RouterLink>
-              );
-            }
-          }
+        {/* Scroll Left Button */}
+        {visibleActions.length > 5 && (
+          <button
+            onClick={scrollLeft}
+            className="p-1.5 hover:bg-white/10 rounded-full transition-colors flex-shrink-0"
+            title="Scroll left"
+          >
+            <ChevronLeft className="w-4 h-4 text-gray-400" />
+          </button>
+        )}
 
-          return (
-            <motion.button
-              key={action.id}
-              onClick={() => handleAction(action.id)}
-              className={`w-9 h-9 rounded-full ${action.color} flex items-center justify-center text-white hover:opacity-90 transition-all relative`}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              title={action.label}
-            >
-              <Icon className="w-4 h-4" />
-              {action.id === 'water' && waterSuccess && (
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center"
-                >
-                  <Check className="w-3 h-3 text-white" />
-                </motion.div>
-              )}
-            </motion.button>
-          );
-        })}
+        {/* Scrollable Action buttons container */}
+        <div 
+          ref={scrollContainerRef}
+          className="flex items-center gap-1 overflow-x-auto scrollbar-hide"
+          style={{ 
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+            WebkitOverflowScrolling: 'touch'
+          }}
+        >
+          {visibleActions.map((action) => {
+            const Icon = action.icon;
+            
+            // Get count/display data for this action
+            let badge = null;
+            let badgeColor = 'bg-white text-gray-900';
+            
+            if (action.id === 'water') {
+              const waterCount = todaysWater?.glasses || 0;
+              if (waterCount > 0) {
+                badge = waterCount;
+                badgeColor = 'bg-blue-100 text-blue-900';
+              }
+            } else if (action.id === 'mood') {
+              if (latestMood) {
+                const moodEmoji = allMoodOptions.find(m => m.value === latestMood.mood)?.emoji || '😊';
+                badge = moodEmoji;
+                badgeColor = 'bg-transparent text-xl';
+              }
+            } else if (noteCounts[action.id] > 0) {
+              badge = noteCounts[action.id];
+              badgeColor = 'bg-white/90 text-gray-900';
+            }
+            
+            // Handle custom actions with page/external links
+            if (action.isCustom) {
+              if (action.external_url) {
+                return (
+                  <a
+                    key={action.id}
+                    href={action.external_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`w-9 h-9 flex-shrink-0 rounded-full ${action.color} flex items-center justify-center text-white hover:opacity-90 transition-all hover:scale-110 relative`}
+                    title={action.label}
+                  >
+                    <Icon className="w-4 h-4" />
+                  </a>
+                );
+              }
+              if (action.page) {
+                return (
+                  <RouterLink
+                    key={action.id}
+                    to={createPageUrl(action.page)}
+                    className={`w-9 h-9 flex-shrink-0 rounded-full ${action.color} flex items-center justify-center text-white hover:opacity-90 transition-all hover:scale-110 relative`}
+                    title={action.label}
+                  >
+                    <Icon className="w-4 h-4" />
+                  </RouterLink>
+                );
+              }
+            }
+
+            return (
+              <motion.button
+                key={action.id}
+                onClick={() => handleAction(action.id)}
+                className={`w-9 h-9 flex-shrink-0 rounded-full ${action.color} flex items-center justify-center text-white hover:opacity-90 transition-all relative`}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+                title={action.label}
+              >
+                <Icon className="w-4 h-4" />
+                {badge !== null && (
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className={`absolute -top-1 -right-1 min-w-[16px] h-4 ${badgeColor} rounded-full flex items-center justify-center px-1 text-[10px] font-bold shadow-sm`}
+                  >
+                    {badge}
+                  </motion.div>
+                )}
+                {action.id === 'water' && waterSuccess && (
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center"
+                  >
+                    <Check className="w-3 h-3 text-white" />
+                  </motion.div>
+                )}
+              </motion.button>
+            );
+          })}
+        </div>
+
+        {/* Scroll Right Button */}
+        {visibleActions.length > 5 && (
+          <button
+            onClick={scrollRight}
+            className="p-1.5 hover:bg-white/10 rounded-full transition-colors flex-shrink-0"
+            title="Scroll right"
+          >
+            <ChevronRight className="w-4 h-4 text-gray-400" />
+          </button>
+        )}
 
         {/* Divider */}
         <div className="h-6 w-px bg-gray-600 mx-1" />

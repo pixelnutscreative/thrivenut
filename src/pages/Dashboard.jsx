@@ -9,7 +9,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Loader2, LogOut, ChevronDown, ChevronRight, Settings, Calendar, Eye, EyeOff } from 'lucide-react';
-import QuickStats from '../components/dashboard/QuickStats';
+
 import MyDaySection from '../components/dashboard/MyDaySection';
 import DailyMotivationBanner from '../components/dashboard/DailyMotivationBanner';
 // Weekly content schedule removed per user request
@@ -248,24 +248,6 @@ export default function Dashboard() {
           }}
         />
 
-        <Collapsible open={!isSectionCollapsed('quick-stats')}>
-          <CollapsibleTrigger 
-            className="w-full flex items-center justify-between p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            onClick={() => toggleSectionCollapse('quick-stats')}
-          >
-            <span className="text-sm font-medium text-gray-600">Quick Stats</span>
-            {isSectionCollapsed('quick-stats') ? <ChevronRight className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <QuickStats
-              contentGoal={contentGoal}
-              waterToday={todaysWater}
-              todaysMood={latestMood}
-              journalToday={todaysJournal}
-            />
-          </CollapsibleContent>
-        </Collapsible>
-
         {/* Notion Task Picker - Only for admin account */}
         {user?.email?.toLowerCase() === 'pixelnutscreative@gmail.com' && (
           <Collapsible open={!isSectionCollapsed('notion-tasks')}>
@@ -281,48 +263,6 @@ export default function Dashboard() {
             </CollapsibleContent>
           </Collapsible>
         )}
-
-
-
-        {/* Quick action buttons */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Button 
-            className="h-20 bg-gradient-to-br from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white shadow-lg"
-            onClick={() => navigate(createPageUrl('Wellness'))}
-          >
-            <div className="text-center">
-              <div className="text-2xl mb-1">💧</div>
-              <div className="font-semibold">Log Water</div>
-            </div>
-          </Button>
-          <Button 
-            className="h-20 bg-gradient-to-br from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white shadow-lg"
-            onClick={() => navigate(createPageUrl('Wellness'))}
-          >
-            <div className="text-center">
-              <div className="text-2xl mb-1">😊</div>
-              <div className="font-semibold">Log Mood</div>
-            </div>
-          </Button>
-          <Button 
-            className="h-20 bg-gradient-to-br from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg"
-            onClick={() => navigate(createPageUrl('Journal'))}
-          >
-            <div className="text-center">
-              <div className="text-2xl mb-1">📖</div>
-              <div className="font-semibold">Journal</div>
-            </div>
-          </Button>
-          <Button 
-            className="h-20 bg-gradient-to-br from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-lg"
-            onClick={() => navigate(createPageUrl('Goals'))}
-          >
-            <div className="text-center">
-              <div className="text-2xl mb-1">🎯</div>
-              <div className="font-semibold">My Goals</div>
-            </div>
-          </Button>
-        </div>
       </div>
 
 
