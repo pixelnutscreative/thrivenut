@@ -87,14 +87,14 @@ export default function Layout({ children, currentPageName }) {
 
   // Determine if menu text should be light or dark based on background luminance
   const isMenuDark = useMemo(() => {
-    if (!menuColor) return isDark;
+    if (!menuColor) return true;
     const hex = menuColor.replace('#', '');
     const r = parseInt(hex.substr(0, 2), 16);
     const g = parseInt(hex.substr(2, 2), 16);
     const b = parseInt(hex.substr(4, 2), 16);
     const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
     return luminance < 0.5;
-  }, [menuColor, isDark]);
+  }, [menuColor]);
 
   // --- DYNAMIC NAMES ---
   const getDashboardName = () => {
