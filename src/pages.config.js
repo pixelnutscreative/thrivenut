@@ -42,6 +42,7 @@ import WorkSchedules from './pages/WorkSchedules';
 import CleaningTasks from './pages/CleaningTasks';
 import PictionaryHelper from './pages/PictionaryHelper';
 import Finance from './pages/Finance';
+import MyLists from './pages/MyLists';
 import __Layout from './Layout.jsx';
 
 
@@ -90,6 +91,7 @@ export const PAGES = {
     "CleaningTasks": CleaningTasks,
     "PictionaryHelper": PictionaryHelper,
     "Finance": Finance,
+    "MyLists": MyLists,
 }
 
 export const pagesConfig = {
