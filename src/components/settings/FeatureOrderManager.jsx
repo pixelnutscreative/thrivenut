@@ -4,16 +4,16 @@ import { Switch } from '@/components/ui/switch';
 import { Eye, EyeOff } from 'lucide-react';
 
 const allFeatures = [
-  { id: 'tiktok', name: 'Social Media Suite', description: 'Content calendar, engagement & creator contacts', requiresTikTokAccess: true, isSection: true },
+  { id: 'tiktok', name: 'Social Media Suite', description: 'Content calendar, engagement & creator contacts', requiresTikTokAccess: true },
   { id: 'gifter', name: 'Gift Gallery & Songs', description: 'Track gifters & generate thank-you songs', requiresTikTokAccess: true },
-  { id: 'music_songs', name: 'Music & Songs', description: 'Holy Hitmakers and silly songs', isSection: true },
   { id: 'goals', name: 'Personal Goals', description: 'Goal tracking for all areas of life' },
   { id: 'tasks', name: 'Tasks & Brain Dump', description: 'Daily to-dos and quick idea capture' },
   { id: 'journal', name: 'Daily Journal', description: 'Reflections and AI reframing' },
+  { id: 'quick_notes', name: 'Quick Notes', description: 'Ideas, gratitudes & captured thoughts' },
   { id: 'wellness', name: 'Wellness Tracker', description: 'Water, sleep, mood & self-care' },
   { id: 'supplements', name: 'Supplements & Vitamins', description: 'Track daily supplements' },
   { id: 'medications', name: 'Medications', description: 'Medication tracking' },
-  { id: 'mental_health', name: 'Mental Health Hub', description: 'Mental health support tools', isSection: true },
+  { id: 'mental_health', name: 'Mental Health', description: 'Mental health support tools' },
   { id: 'people', name: 'My People', description: 'Personal contacts & birthdays' },
   { id: 'pets', name: 'Pet Care', description: 'Pet schedules & activities' },
   { id: 'care_reminders', name: 'Care Reminders', description: 'Reminders for caregiving' },
@@ -53,10 +53,7 @@ export default function FeatureOrderManager({ enabledModules, onChange }) {
                 </div>
                 
                 <div className="flex-1">
-                  <p className="font-medium text-sm">
-                    {feature.name}
-                    {feature.isSection && <span className="ml-2 text-xs text-purple-600">(Section)</span>}
-                  </p>
+                  <p className="font-medium text-sm">{feature.name}</p>
                   <p className="text-xs text-gray-500">{feature.description}</p>
                 </div>
 

@@ -18,8 +18,7 @@ const availableIcons = [
   'Music', 'Star', 'Lock', 'UserCog', 'Sparkles', 'Palette', 'Calendar',
   'MessageSquare', 'Zap', 'Award', 'Coffee', 'Smile', 'Sun', 'Moon',
   'Eye', 'Bookmark', 'HandMetal', 'PawPrint', 'Search', 'MousePointerClick',
-  'Cross', 'FileText', 'StickyNote', 'Tablet', 'HelpCircle', 'MessageCircle', 
-  'MapPin', 'Briefcase'
+  'Cross', 'FileText', 'StickyNote', 'Tablet', 'HelpCircle', 'MessageCircle'
 ];
 
 const defaultMenuItems = [
@@ -70,10 +69,6 @@ const defaultMenuItems = [
   { name: 'Supplements', icon: 'Tablet', path: 'Supplements', module_id: 'supplements', sort_order: 530 },
   { name: 'Medications', icon: 'Pill', path: 'Medications', module_id: 'medications', sort_order: 540 },
   { name: 'Pet Care', icon: 'PawPrint', path: 'PetCare', module_id: 'pets', sort_order: 550 },
-  
-  // BLUE: Community & Connections
-  { name: '── Community ──', is_group_header: true, header_color: 'text-blue-400', header_bg_color: 'bg-blue-500/10', sort_order: 600 },
-  { name: 'Community Map', icon: 'MapPin', path: 'CommunityMap', always_show: true, sort_order: 610 },
   
   // Special items
   { name: 'SuperFan Access', icon: 'Star', path: 'SuperFanAccess', show_when_no_tiktok_access: true, sort_order: 800 },
