@@ -126,7 +126,6 @@ const defaultNavItems = [
   { name: '── Life + Organization ──', isGroupHeader: true, color: 'text-indigo-400', bgColor: 'bg-indigo-500/10' },
   { name: 'Brain Dump', icon: iconMap.Brain, path: 'BrainDump', moduleId: 'brain_dump' },
   { name: 'Work Schedules', icon: Briefcase, path: 'WorkSchedules', moduleId: 'work' },
-  { name: 'Household', icon: iconMap.Home, path: 'Household', moduleId: 'household' },
 
   // ORANGE: Friends + Loved Ones
   { name: '── Friends + Loved Ones ──', isGroupHeader: true, color: 'text-orange-400', bgColor: 'bg-orange-500/10' },
@@ -134,9 +133,10 @@ const defaultNavItems = [
   { name: 'Care Reminders', icon: Bell, path: 'CareReminders', moduleId: 'care_reminders' },
   { name: 'Pet Care', icon: PawPrint, path: 'PetCare', moduleId: 'pets' },
 
-  // TEAL: Goals + Growth
-  { name: '── Goals + Growth ──', isGroupHeader: true, color: 'text-teal-400', bgColor: 'bg-teal-500/10' },
+  // TEAL: Tasks + Growth
+  { name: '── Tasks + Growth ──', isGroupHeader: true, color: 'text-teal-400', bgColor: 'bg-teal-500/10' },
   { name: 'Tasks', icon: FileText, path: 'Tasks', moduleId: 'tasks' },
+  { name: 'Household', icon: iconMap.Home, path: 'Household', moduleId: 'household' },
   { name: 'Habits', icon: iconMap.CheckCircle2 || iconMap.Target, path: 'Habits', moduleId: 'habits' },
   { name: 'Goals', icon: Target, path: 'Goals', moduleId: 'goals' },
   { name: 'Vision Board', icon: Eye, path: 'VisionBoard', moduleId: 'goals' },
@@ -153,6 +153,7 @@ const defaultNavItems = [
   { name: '── Mind + Body Health ──', isGroupHeader: true, color: 'text-green-400', bgColor: 'bg-green-500/10' },
   { name: 'Mental Health', icon: Brain, path: 'NeurodivergentSettings', moduleId: 'mental_health' },
   { name: 'Daily Wellness', icon: Heart, path: 'Wellness', moduleId: 'wellness' },
+  { name: 'Activity Tracker', icon: iconMap.TrendingUp, path: 'ActivityTracker', moduleId: 'activity' },
   { name: 'Supplements', icon: Tablet, path: 'Supplements', moduleId: 'supplements' },
   { name: 'Medications', icon: Pill, path: 'Medications', moduleId: 'medications' },
 

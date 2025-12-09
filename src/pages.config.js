@@ -48,6 +48,7 @@ import BibleResources from './pages/BibleResources';
 import BrainDump from './pages/BrainDump';
 import Household from './pages/Household';
 import Habits from './pages/Habits';
+import ActivityTracker from './pages/ActivityTracker';
 import __Layout from './Layout.jsx';
 
 
@@ -102,6 +103,7 @@ export const PAGES = {
     "BrainDump": BrainDump,
     "Household": Household,
     "Habits": Habits,
+    "ActivityTracker": ActivityTracker,
 }
 
 export const pagesConfig = {
