@@ -4,23 +4,35 @@ import { Switch } from '@/components/ui/switch';
 import { Eye, EyeOff } from 'lucide-react';
 
 const allFeatures = [
-  { id: 'tiktok', name: 'Social Media Suite', description: 'Content calendar, engagement & creator contacts', requiresTikTokAccess: true },
-  { id: 'gifter', name: 'Gift Gallery & Songs', description: 'Track gifters & generate thank-you songs', requiresTikTokAccess: true },
-  { id: 'goals', name: 'Personal Goals', description: 'Goal tracking for all areas of life' },
-  { id: 'tasks', name: 'Tasks & Brain Dump', description: 'Daily to-dos and quick idea capture' },
+  // Life + Organization
+  { id: 'brain_dump', name: 'Brain Dump', description: 'Get ideas out of your head' },
   { id: 'work', name: 'Work Schedules', description: 'Track work hours and shifts' },
-  { id: 'cleaning', name: 'Cleaning Tasks', description: 'Household chores and schedules' },
-  { id: 'journal', name: 'Daily Journal', description: 'Reflections and AI reframing' },
-  { id: 'quick_notes', name: 'Quick Notes', description: 'Ideas, gratitudes & captured thoughts' },
-  { id: 'motivations', name: 'Saved Motivations', description: 'Collection of favorite quotes and verses' },
-  { id: 'prayer', name: 'Prayer Requests', description: 'Prayer list and spiritual tracking' },
-  { id: 'wellness', name: 'Wellness Tracker', description: 'Water, sleep, mood & self-care' },
-  { id: 'supplements', name: 'Supplements & Vitamins', description: 'Track daily supplements' },
-  { id: 'medications', name: 'Medications', description: 'Medication tracking' },
-  { id: 'mental_health', name: 'Mental Health', description: 'Mental health support tools' },
-  { id: 'people', name: 'My People', description: 'Personal contacts & birthdays' },
-  { id: 'pets', name: 'Pet Care', description: 'Pet schedules & activities' },
+  { id: 'household', name: 'Household', description: 'Cleaning tasks and household rules' },
+  
+  // Friends + Loved Ones
+  { id: 'people', name: 'Family Members', description: 'Track family details and sizes' },
   { id: 'care_reminders', name: 'Care Reminders', description: 'Reminders for caregiving' },
+  { id: 'pets', name: 'Pet Care', description: 'Pet schedules & activities' },
+  
+  // Goals + Growth
+  { id: 'tasks', name: 'Tasks', description: 'Daily to-do lists' },
+  { id: 'habits', name: 'Habits', description: 'Daily habit tracking' },
+  { id: 'goals', name: 'Goals', description: 'Long-term goal tracking' },
+  { id: 'journal', name: 'Journal', description: 'Daily reflections and AI reframing' },
+  { id: 'quick_notes', name: 'Quick Notes', description: 'Simple note taking' },
+  
+  // Faith & Spiritual
+  { id: 'prayer', name: 'Prayer Requests', description: 'Prayer list and spiritual tracking' },
+  
+  // Mind + Body Health
+  { id: 'mental_health', name: 'Mental Health', description: 'Mental health support tools' },
+  { id: 'wellness', name: 'Daily Wellness', description: 'Water, sleep, mood & self-care' },
+  { id: 'supplements', name: 'Supplements', description: 'Track daily supplements' },
+  { id: 'medications', name: 'Medications', description: 'Medication tracking' },
+  
+  // Creator Suite
+  { id: 'tiktok', name: 'Social Media Suite', description: 'Content calendar, engagement & creator contacts', requiresTikTokAccess: true },
+  { id: 'motivations', name: 'Content Ideas', description: 'Saved ideas and inspirations' },
 ];
 
 export default function FeatureOrderManager({ enabledModules, onChange }) {
