@@ -283,17 +283,20 @@ export default function Layout({ children, currentPageName }) {
           highlight: item.highlight,
         };
         topLevel.push(navItem);
-        }
-        });
+      }
+    });
 
-        // Attach sub-items to sections
-        return topLevel.map(item => {
-        if (item.isSection && sections[item.name]) {
+    // Safeguard: If configuration produces no top-level items, fallback to defaults
+    if (topLevel.length === 0) return defaultNavItems;
+
+    // Attach sub-items to sections
+    return topLevel.map(item => {
+      if (item.isSection && sections[item.name]) {
         return { ...item, subItems: sections[item.name] };
-        }
-        return item;
-        });
-        }, [menuConfig]);
+      }
+      return item;
+    });
+  }, [menuConfig]);
 
         // Helper to update dynamic names
         const updateDynamicNames = (items) => {
