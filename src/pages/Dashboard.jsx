@@ -316,6 +316,7 @@ export default function Dashboard() {
           isBibleBeliever={preferences?.is_bible_believer || preferences?.greeting_type === 'scripture'}
           userEmail={user?.email}
           bibleVersion={preferences?.bible_version || 'NIV'}
+          motivationTone={preferences?.motivation_tone || 'uplifting'}
         />
 
         {/* Special Events - Birthdays & Sobriety Anniversaries from Contacts */}
