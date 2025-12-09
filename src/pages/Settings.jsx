@@ -23,6 +23,7 @@ import SoundCloudSettings from '../components/settings/SoundCloudSettings';
 import MoodEmojiSettings from '../components/settings/MoodEmojiSettings';
 import { getEffectiveUserEmail, isImpersonating } from '../components/admin/ImpersonationBanner';
 import { useTheme } from '../components/shared/useTheme';
+import { useLocation } from 'react-router-dom';
 
 
 
@@ -53,10 +54,26 @@ const accessibilityModes = [
 
 export default function Settings() {
   const queryClient = useQueryClient();
+  const location = useLocation();
   const [user, setUser] = useState(null);
   const [saveMessage, setSaveMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [expandedSections, setExpandedSections] = useState(['profile']);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const section = params.get('section');
+    if (section) {
+      setExpandedSections([section]);
+      // Scroll to section after a brief delay to allow rendering
+      setTimeout(() => {
+        const element = document.querySelector(`[data-section="${section}"]`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 500);
+    }
+  }, [location.search]);
 
   const toggleSection = (section) => {
     setExpandedSections(prev => 

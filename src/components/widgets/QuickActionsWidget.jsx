@@ -377,7 +377,7 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
 
         {/* Settings */}
         <RouterLink
-          to={createPageUrl('Settings')}
+          to={`${createPageUrl('Settings')}?section=widgets`}
           className="p-1.5 hover:bg-white/10 rounded-full transition-colors"
           title="Widget Settings"
         >
