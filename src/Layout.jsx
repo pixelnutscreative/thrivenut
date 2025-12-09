@@ -625,7 +625,7 @@ export default function Layout({ children, currentPageName }) {
                                       return (
                                         <Link
                                           key={item.name}
-                                          to={createPageUrl(item.path)}
+                                          to={createPageUrl(item.path || '')}
                                           onClick={() => setMobileMenuOpen(false)}
                                           className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                                             isActive
@@ -829,7 +829,7 @@ export default function Layout({ children, currentPageName }) {
                                   return (
                                     <Link
                                       key={item.name}
-                                      to={createPageUrl(item.path)}
+                                      to={createPageUrl(item.path || '')}
                                       className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-all ${
                                         isActive
                                           ? 'text-white shadow-lg'
