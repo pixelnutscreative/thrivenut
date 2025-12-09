@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuSeparator, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Switch } from '@/components/ui/switch';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
@@ -128,6 +129,7 @@ export default function TikTokContacts() {
   const [filterRoles, setFilterRoles] = useState([]);
   const [formTab, setFormTab] = useState('tiktok');
   const [filterGifters, setFilterGifters] = useState(false);
+  const [hidePrivateInfo, setHidePrivateInfo] = useState(false);
   const defaultFormTab = 'tiktok'; // TikTok Contacts opens to TikTok tab
   
   // Quick add contact function for dropdowns - now accepts master data for auto-fill
@@ -552,6 +554,15 @@ export default function TikTokContacts() {
               <Plus className="w-4 h-4 md:mr-2" />
               <span className="hidden sm:inline">Add Contact</span>
             </Button>
+            
+            <div className="flex items-center gap-2 border-l pl-2 ml-2">
+              <span className="text-xs text-gray-500 hidden sm:inline">Privacy Mode</span>
+              <Switch 
+                checked={hidePrivateInfo} 
+                onCheckedChange={setHidePrivateInfo}
+                title="Hide Phone/Email"
+              />
+            </div>
           </div>
         </div>
 
@@ -880,6 +891,7 @@ export default function TikTokContacts() {
                 <PersonalTabContent
                   formData={formData}
                   setFormData={setFormData}
+                  hidePrivateInfo={hidePrivateInfo}
                 />
               </TabsContent>
 
@@ -887,6 +899,7 @@ export default function TikTokContacts() {
                 <BusinessTabContent
                   formData={formData}
                   setFormData={setFormData}
+                  hidePrivateInfo={hidePrivateInfo}
                 />
               </TabsContent>
             </Tabs>
