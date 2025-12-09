@@ -25,7 +25,9 @@ export default function MasterContactDatabase() {
     base44.auth.me().then(setUser).catch(() => {});
   }, []);
 
-  const isAdmin = user?.email?.toLowerCase() === 'pixelnutscreative@gmail.com';
+  const isAdmin = (user?.email && typeof user.email === 'string' && user.email.trim()) 
+    ? user.email.trim().toLowerCase() === 'pixelnutscreative@gmail.com'
+    : false;
 
   // Load ALL contacts from ALL users
   const { data: allContacts = [], isLoading } = useQuery({
@@ -38,7 +40,10 @@ export default function MasterContactDatabase() {
     const byUsername = {};
     
     allContacts.forEach(contact => {
-      const username = (contact.data?.username || contact.username || '').toLowerCase().replace('@', '').trim();
+      const rawUsername = contact.data?.username || contact.username || '';
+      const username = (rawUsername && typeof rawUsername === 'string' && rawUsername.trim()) 
+        ? rawUsername.trim().toLowerCase().replace('@', '').trim() 
+        : '';
       if (!username) return;
       
       const displayName = contact.data?.display_name || contact.display_name || '';
@@ -85,10 +90,13 @@ export default function MasterContactDatabase() {
   }, [allContacts]);
 
   // Filter by search
+  const searchLower = (searchTerm && typeof searchTerm === 'string' && searchTerm.trim()) 
+    ? searchTerm.trim().toLowerCase() 
+    : '';
   const filteredContacts = consolidatedContacts.filter(c => 
-    c.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.display_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.phonetic?.toLowerCase().includes(searchTerm.toLowerCase())
+    (c.username && typeof c.username === 'string' && c.username.trim() && c.username.toLowerCase().includes(searchLower)) ||
+    (c.display_name && typeof c.display_name === 'string' && c.display_name.trim() && c.display_name.toLowerCase().includes(searchLower)) ||
+    (c.phonetic && typeof c.phonetic === 'string' && c.phonetic.trim() && c.phonetic.toLowerCase().includes(searchLower))
   );
 
   // Check if current user can edit a contact
@@ -102,9 +110,15 @@ export default function MasterContactDatabase() {
   const updateMutation = useMutation({
     mutationFn: async ({ originalUsername, data }) => {
       // Find all contacts with this username and update ONLY the shared fields
+      const origUsernameLower = (originalUsername && typeof originalUsername === 'string' && originalUsername.trim()) 
+        ? originalUsername.trim().toLowerCase() 
+        : '';
       const contactsToUpdate = allContacts.filter(c => {
-        const cUsername = (c.data?.username || c.username || '').toLowerCase().replace('@', '').trim();
-        return cUsername === originalUsername.toLowerCase();
+        const rawCUsername = c.data?.username || c.username || '';
+        const cUsername = (rawCUsername && typeof rawCUsername === 'string' && rawCUsername.trim()) 
+          ? rawCUsername.trim().toLowerCase().replace('@', '').trim() 
+          : '';
+        return cUsername === origUsernameLower;
       });
       
       // Only update the shared fields, leave private data (phone, email, notes, etc.) untouched
@@ -124,9 +138,15 @@ export default function MasterContactDatabase() {
       // Mark this contact as saved temporarily
       queryClient.setQueryData(['masterContacts'], (old) => {
         if (!old) return old;
+        const origUsernameLower = (variables.originalUsername && typeof variables.originalUsername === 'string' && variables.originalUsername.trim()) 
+          ? variables.originalUsername.trim().toLowerCase() 
+          : '';
         return old.map(c => {
-          const cUsername = (c.data?.username || c.username || '').toLowerCase().replace('@', '').trim();
-          if (cUsername === variables.originalUsername.toLowerCase()) {
+          const rawCUsername = c.data?.username || c.username || '';
+          const cUsername = (rawCUsername && typeof rawCUsername === 'string' && rawCUsername.trim()) 
+            ? rawCUsername.trim().toLowerCase().replace('@', '').trim() 
+            : '';
+          if (cUsername === origUsernameLower) {
             return { ...c, _saved: true };
           }
           return c;
@@ -172,9 +192,15 @@ export default function MasterContactDatabase() {
   // Delete mutation - deletes ALL contacts with this username across all users (admin only)
   const deleteMutation = useMutation({
     mutationFn: async (username) => {
+      const usernameLower = (username && typeof username === 'string' && username.trim()) 
+        ? username.trim().toLowerCase() 
+        : '';
       const contactsToDelete = allContacts.filter(c => {
-        const cUsername = (c.data?.username || c.username || '').toLowerCase().replace('@', '').trim();
-        return cUsername === username.toLowerCase();
+        const rawCUsername = c.data?.username || c.username || '';
+        const cUsername = (rawCUsername && typeof rawCUsername === 'string' && rawCUsername.trim()) 
+          ? rawCUsername.trim().toLowerCase().replace('@', '').trim() 
+          : '';
+        return cUsername === usernameLower;
       });
       
       const promises = contactsToDelete.map(contact => 
