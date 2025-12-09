@@ -17,7 +17,7 @@ const serviceTypes = [
   { value: 'other', label: 'Other' }
 ];
 
-export default function BusinessTabContent({ formData, setFormData }) {
+export default function BusinessTabContent({ formData, setFormData, hidePrivateInfo }) {
   const businesses = formData.businesses || [];
 
   const handleAddBusiness = () => {
@@ -116,6 +116,7 @@ export default function BusinessTabContent({ formData, setFormData }) {
                   business={business}
                   onUpdate={(updated) => handleUpdateBusiness(index, updated)}
                   onDelete={() => handleDeleteBusiness(index)}
+                  hidePrivateInfo={hidePrivateInfo}
                 />
               ))}
             </div>

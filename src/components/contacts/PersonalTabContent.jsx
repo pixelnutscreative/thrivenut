@@ -39,7 +39,7 @@ const defaultSocialPlatforms = [
   { key: 'pinterest', label: 'Pinterest', icon: null },
 ];
 
-export default function PersonalTabContent({ formData, setFormData }) {
+export default function PersonalTabContent({ formData, setFormData, hidePrivateInfo }) {
   const [showSocialPicker, setShowSocialPicker] = useState(false);
   const [customSocialName, setCustomSocialName] = useState('');
   const [customSocialValue, setCustomSocialValue] = useState('');
@@ -90,7 +90,7 @@ export default function PersonalTabContent({ formData, setFormData }) {
         <div className="space-y-1">
           <Label className="text-xs">Phone</Label>
           <Input
-            type="tel"
+            type={hidePrivateInfo ? "password" : "tel"}
             placeholder="(555) 123-4567"
             value={formData.phone || ''}
             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -99,7 +99,7 @@ export default function PersonalTabContent({ formData, setFormData }) {
         <div className="space-y-1">
           <Label className="text-xs">Email</Label>
           <Input
-            type="email"
+            type={hidePrivateInfo ? "password" : "email"}
             placeholder="email@example.com"
             value={formData.email || ''}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}

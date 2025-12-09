@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Trash2, Building2, Phone, Mail, Globe, Pencil, Check, X, Instagram, Facebook, Linkedin, Twitter, Youtube } from 'lucide-react';
 import NotesWithHistory from './NotesWithHistory';
 
-export default function BusinessCard({ business, onUpdate, onDelete }) {
+export default function BusinessCard({ business, onUpdate, onDelete, hidePrivateInfo }) {
   const [isEditing, setIsEditing] = useState(!business.business_name);
   const [editData, setEditData] = useState(business);
 
@@ -63,6 +63,7 @@ export default function BusinessCard({ business, onUpdate, onDelete }) {
             <div className="space-y-1">
               <Label className="text-xs">Phone</Label>
               <Input
+                type={hidePrivateInfo ? "password" : "text"}
                 placeholder="Business phone"
                 value={editData.business_phone || ''}
                 onChange={(e) => setEditData({ ...editData, business_phone: e.target.value })}
@@ -71,7 +72,7 @@ export default function BusinessCard({ business, onUpdate, onDelete }) {
             <div className="space-y-1">
               <Label className="text-xs">Email</Label>
               <Input
-                type="email"
+                type={hidePrivateInfo ? "password" : "email"}
                 placeholder="Business email"
                 value={editData.business_email || ''}
                 onChange={(e) => setEditData({ ...editData, business_email: e.target.value })}
@@ -127,17 +128,25 @@ export default function BusinessCard({ business, onUpdate, onDelete }) {
               {business.business_phone && (
                 <div className="flex items-center gap-2">
                   <Phone className="w-3 h-3" />
-                  <a href={`tel:${business.business_phone}`} className="hover:text-purple-600">
-                    {business.business_phone}
-                  </a>
+                  {hidePrivateInfo ? (
+                    <span className="text-gray-400">••••••••••</span>
+                  ) : (
+                    <a href={`tel:${business.business_phone}`} className="hover:text-purple-600">
+                      {business.business_phone}
+                    </a>
+                  )}
                 </div>
               )}
               {business.business_email && (
                 <div className="flex items-center gap-2">
                   <Mail className="w-3 h-3" />
-                  <a href={`mailto:${business.business_email}`} className="hover:text-purple-600">
-                    {business.business_email}
-                  </a>
+                  {hidePrivateInfo ? (
+                    <span className="text-gray-400">••••••••••</span>
+                  ) : (
+                    <a href={`mailto:${business.business_email}`} className="hover:text-purple-600">
+                      {business.business_email}
+                    </a>
+                  )}
                 </div>
               )}
               {business.business_website && (
