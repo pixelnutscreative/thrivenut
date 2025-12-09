@@ -70,6 +70,10 @@ const defaultMenuItems = [
   { name: 'Medications', icon: 'Pill', path: 'Medications', module_id: 'medications', sort_order: 540 },
   { name: 'Pet Care', icon: 'PawPrint', path: 'PetCare', module_id: 'pets', sort_order: 550 },
   
+  // BLUE: Community & Connections
+  { name: '── Community ──', is_group_header: true, header_color: 'text-blue-400', header_bg_color: 'bg-blue-500/10', sort_order: 600 },
+  { name: 'Community Map', icon: 'MapPin', path: 'CommunityMap', always_show: true, sort_order: 610 },
+  
   // Special items
   { name: 'SuperFan Access', icon: 'Star', path: 'SuperFanAccess', show_when_no_tiktok_access: true, sort_order: 800 },
   { name: 'Support', icon: 'HelpCircle', path: 'Support', always_show: true, sort_order: 900 },

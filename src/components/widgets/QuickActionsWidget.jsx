@@ -369,8 +369,8 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
         </RouterLink>
         </div>
 
-        {/* SoundCloud Player - Below toolbar, minimizable */}
-        {preferences?.soundcloud_playlist_url && (
+        {/* SoundCloud Player - Below toolbar, minimizable - only show if position is 'floating' */}
+        {preferences?.soundcloud_playlist_url && preferences?.soundcloud_player_position === 'floating' && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}

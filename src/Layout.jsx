@@ -45,7 +45,8 @@ import {
   Tablet,
   HelpCircle,
   MessageCircle,
-  Briefcase
+  Briefcase,
+  MapPin
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import TikTokAccessGate from './components/access/TikTokAccessGate';
@@ -69,6 +70,7 @@ const moduleNavMap = {
   people: ['My People'],
   journal: ['Journal'],
   mental_health: ['Mental Health'],
+  music_songs: ['Music & Songs'],
 };
 
 // Icon mapping for dynamic menu
@@ -77,7 +79,7 @@ const iconMap = {
   Pill, Gift, Brain, Home, ChevronDown, ChevronRight, Bell, Share2, Music, Star,
   Lock, UserCog, Sparkles, Eye, Bookmark, HandMetal, PawPrint, Search, 
   MousePointerClick, Calendar, Sun, Cross, Smile, FileText, StickyNote, 
-  Tablet, HelpCircle, MessageCircle, Briefcase, Palette
+  Tablet, HelpCircle, MessageCircle, Briefcase, Palette, MapPin
 };
 
 // Custom peanut icon component
@@ -163,6 +165,10 @@ const defaultNavItems = [
   { name: 'Supplements', icon: Tablet, path: 'Supplements', moduleId: 'supplements' },
   { name: 'Medications', icon: Pill, path: 'Medications', moduleId: 'medications' },
   { name: 'Pet Care', icon: PawPrint, path: 'PetCare', moduleId: 'pets' },
+  
+  // BLUE: Community
+  { name: '── Community ──', isGroupHeader: true, color: 'text-blue-400', bgColor: 'bg-blue-500/10' },
+  { name: 'Community Map', icon: MapPin, path: 'CommunityMap', alwaysShow: true },
   
   // Special items
   { name: 'SuperFan Access', icon: Star, path: 'SuperFanAccess', showWhenNoTikTokAccess: true },
