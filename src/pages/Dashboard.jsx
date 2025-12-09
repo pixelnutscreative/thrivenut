@@ -47,18 +47,20 @@ export default function Dashboard() {
         setUser(userData);
 
         // Check if user is pre-approved and auto-grant TikTok access
-        const prefs = await base44.entities.UserPreferences.filter({ user_email: userData.email }, '-updated_date');
-        if (prefs[0] && !prefs[0].tiktok_access_approved) {
-          try {
-            const preApproved = await base44.entities.PreApprovedEmail.filter({ 
-              email: userData.email.toLowerCase(), 
-              is_active: true 
-            });
-            if (preApproved.length > 0) {
-              await base44.entities.UserPreferences.update(prefs[0].id, { tiktok_access_approved: true });
+        if (userData?.email) {
+          const prefs = await base44.entities.UserPreferences.filter({ user_email: userData.email }, '-updated_date');
+          if (prefs[0] && !prefs[0].tiktok_access_approved) {
+            try {
+              const preApproved = await base44.entities.PreApprovedEmail.filter({ 
+                email: userData.email.toLowerCase(), 
+                is_active: true 
+              });
+              if (preApproved.length > 0) {
+                await base44.entities.UserPreferences.update(prefs[0].id, { tiktok_access_approved: true });
+              }
+            } catch (e) {
+              // Ignore - user may not have access to PreApprovedEmail entity
             }
-          } catch (e) {
-            // Ignore - user may not have access to PreApprovedEmail entity
           }
         }
       } catch (error) {
