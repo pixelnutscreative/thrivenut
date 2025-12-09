@@ -207,6 +207,7 @@ export default function Layout({ children, currentPageName }) {
   const { data: preferences } = useQuery({
     queryKey: ['preferences', effectiveEmail],
     queryFn: async () => {
+      if (!effectiveEmail) return null;
       try {
         const prefs = await base44.entities.UserPreferences.filter({ user_email: effectiveEmail }, '-updated_date');
         return prefs[0] || null;
@@ -287,9 +288,9 @@ export default function Layout({ children, currentPageName }) {
   }, [menuConfig]);
   
   // IMPORTANT: isAdmin checks the REAL user email (not impersonated), so admin always sees admin menu
-  const realUserEmail = user?.email?.toLowerCase() || '';
+  const realUserEmail = (user?.email || '').toLowerCase();
   const adminEmails = ['pixelnutscreative@gmail.com', 'pixel@thrivenut.app'];
-  const isAdmin = adminEmails.includes(realUserEmail);
+  const isAdmin = realUserEmail ? adminEmails.includes(realUserEmail) : false;
   
   // hasTikTokAccess - admins ALWAYS have access
   const hasTikTokAccess = isAdmin || preferences?.tiktok_access_approved;
