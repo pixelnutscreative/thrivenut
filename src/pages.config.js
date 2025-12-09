@@ -44,6 +44,7 @@ import PictionaryHelper from './pages/PictionaryHelper';
 import Finance from './pages/Finance';
 import MyLists from './pages/MyLists';
 import MyProfile from './pages/MyProfile';
+import BibleResources from './pages/BibleResources';
 import __Layout from './Layout.jsx';
 
 
@@ -94,6 +95,7 @@ export const PAGES = {
     "Finance": Finance,
     "MyLists": MyLists,
     "MyProfile": MyProfile,
+    "BibleResources": BibleResources,
 }
 
 export const pagesConfig = {
