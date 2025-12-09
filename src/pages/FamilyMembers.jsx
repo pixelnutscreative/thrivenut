@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, Plus, Calendar, Trash2, Edit, Save, Gift, Shirt, Palette, Heart, X, ExternalLink, Camera, Sparkles, MessageCircle, Music } from 'lucide-react';
+import { Users, Plus, Calendar, Trash2, Edit, Save, Gift, Shirt, Palette, Heart, X, ExternalLink, Camera, Sparkles, MessageCircle, Music, Utensils, Coffee, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../components/shared/useTheme';
 import ImageUploader from '../components/settings/ImageUploader';
@@ -45,6 +45,7 @@ export default function FamilyMembers() {
     wish_list: [],
     beauty_profile: { hair_color_preference: '', nail_polish_preference: '', makeup_notes: '', scent_notes: '' },
     style_profile: { vibe: '', favorite_brands: '', favorite_materials: '', disliked_materials: '' },
+    food_profile: { likes: '', dislikes: '', allergies: [], dietary_restrictions: [], coffee_order: '', cocktail_order: '', notes: '' },
     memorable_moments: []
   });
 
@@ -96,6 +97,7 @@ export default function FamilyMembers() {
       wish_list: [],
       beauty_profile: { hair_color_preference: '', nail_polish_preference: '', makeup_notes: '', scent_notes: '' },
       style_profile: { vibe: '', favorite_brands: '', favorite_materials: '', disliked_materials: '' },
+      food_profile: { likes: '', dislikes: '', allergies: [], dietary_restrictions: [], coffee_order: '', cocktail_order: '', notes: '' },
       memorable_moments: []
     });
     setEditingMember(null);
@@ -145,6 +147,7 @@ export default function FamilyMembers() {
       wish_list: isLinked ? (profileData.wish_list || []) : (member.wish_list || []),
       beauty_profile: isLinked ? (profileData.beauty_profile || {}) : (member.beauty_profile || { hair_color_preference: '', nail_polish_preference: '', makeup_notes: '', scent_notes: '' }),
       style_profile: isLinked ? (profileData.style_profile || {}) : (member.style_profile || { vibe: '', favorite_brands: '', favorite_materials: '', disliked_materials: '' }),
+      food_profile: member.food_profile || { likes: '', dislikes: '', allergies: [], dietary_restrictions: [], coffee_order: '', cocktail_order: '', notes: '' },
       memorable_moments: member.memorable_moments || []
     });
     setShowForm(true);
@@ -377,6 +380,7 @@ export default function FamilyMembers() {
               <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="basic">Basic Info</TabsTrigger>
                 <TabsTrigger value="style">Sizes & Style</TabsTrigger>
+                <TabsTrigger value="food">Food & Favorites</TabsTrigger>
                 <TabsTrigger value="wishes">Interests & Wishes</TabsTrigger>
                 <TabsTrigger value="moments">Moments</TabsTrigger>
               </TabsList>
@@ -536,6 +540,83 @@ export default function FamilyMembers() {
                     <div className="grid md:grid-cols-2 gap-4">
                       <div><Label>Loves Materials</Label><Input placeholder="e.g. Cotton, Silk, Linen" value={formData.style_profile?.favorite_materials || ''} onChange={(e) => updateNested('style_profile', 'favorite_materials', e.target.value)} /></div>
                       <div><Label>Hates Materials</Label><Input placeholder="e.g. Wool (itchy!), Polyester" value={formData.style_profile?.disliked_materials || ''} onChange={(e) => updateNested('style_profile', 'disliked_materials', e.target.value)} /></div>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                {/* FOOD & FAVORITES TAB */}
+                <TabsContent value="food" className="space-y-6">
+                  <div className="bg-orange-50 border border-orange-200 p-4 rounded-lg space-y-4">
+                    <h3 className="font-semibold flex items-center gap-2 text-orange-700">
+                      <AlertTriangle className="w-4 h-4" /> Allergies & Restrictions
+                    </h3>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <Label>Allergies (comma separated)</Label>
+                        <Input 
+                          placeholder="Peanuts, Shellfish, Dairy..." 
+                          value={(formData.food_profile?.allergies || []).join(', ')} 
+                          onChange={(e) => updateNested('food_profile', 'allergies', e.target.value.split(',').map(s => s.trim()))} 
+                        />
+                      </div>
+                      <div>
+                        <Label>Dietary Restrictions (comma separated)</Label>
+                        <Input 
+                          placeholder="Vegan, Gluten Free, Keto..." 
+                          value={(formData.food_profile?.dietary_restrictions || []).join(', ')} 
+                          onChange={(e) => updateNested('food_profile', 'dietary_restrictions', e.target.value.split(',').map(s => s.trim()))} 
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h3 className="font-semibold flex items-center gap-2 text-green-700">
+                      <Utensils className="w-4 h-4" /> Preferences
+                    </h3>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <Label>Likes / Favorites</Label>
+                        <Textarea 
+                          placeholder="Italian food, Sushi, Chocolate chip cookies..." 
+                          value={formData.food_profile?.likes || ''} 
+                          onChange={(e) => updateNested('food_profile', 'likes', e.target.value)}
+                          rows={3}
+                        />
+                      </div>
+                      <div>
+                        <Label>Dislikes / Hates</Label>
+                        <Textarea 
+                          placeholder="Mushrooms, Cilantro, Spicy food..." 
+                          value={formData.food_profile?.dislikes || ''} 
+                          onChange={(e) => updateNested('food_profile', 'dislikes', e.target.value)}
+                          rows={3}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h3 className="font-semibold flex items-center gap-2 text-amber-700">
+                      <Coffee className="w-4 h-4" /> Drink Orders
+                    </h3>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <Label>Coffee / Tea Order</Label>
+                        <Input 
+                          placeholder="Iced Oat Latte with 2 pumps vanilla" 
+                          value={formData.food_profile?.coffee_order || ''} 
+                          onChange={(e) => updateNested('food_profile', 'coffee_order', e.target.value)} 
+                        />
+                      </div>
+                      <div>
+                        <Label>Cocktail / Drink Order</Label>
+                        <Input 
+                          placeholder="Spicy Margarita, Diet Coke" 
+                          value={formData.food_profile?.cocktail_order || ''} 
+                          onChange={(e) => updateNested('food_profile', 'cocktail_order', e.target.value)} 
+                        />
+                      </div>
                     </div>
                   </div>
                 </TabsContent>
