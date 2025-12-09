@@ -247,7 +247,7 @@ export default function Layout({ children, currentPageName }) {
         sections[item.parent_section].push({
           name: item.name,
           icon: iconMap[item.icon] || Star,
-          path: item.path,
+          path: item.path || '',
           externalUrl: item.external_url,
           moduleId: item.module_id,
           highlight: item.highlight,
@@ -257,7 +257,7 @@ export default function Layout({ children, currentPageName }) {
         const navItem = {
           name: item.name,
           icon: iconMap[item.icon] || Star,
-          path: item.path,
+          path: item.path || '',
           externalUrl: item.external_url,
           moduleId: item.module_id,
           isSection: item.is_section,
