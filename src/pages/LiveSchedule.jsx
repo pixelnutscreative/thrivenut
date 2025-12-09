@@ -243,7 +243,11 @@ export default function LiveSchedule() {
   };
 
   const getMyContentForDay = (day) => {
-    return myContentItems.filter(item => item.day_of_week === day && item.type === 'live').sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+    return myContentItems.filter(item => item.day_of_week === day && item.type === 'live').sort((a, b) => {
+      const timeA = (a.time && typeof a.time === 'string') ? a.time : '';
+      const timeB = (b.time && typeof b.time === 'string') ? b.time : '';
+      return timeA.localeCompare(timeB);
+    });
   };
 
   const createScheduleMutation = useMutation({

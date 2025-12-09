@@ -87,10 +87,10 @@ export default function DiscoverCreators() {
 
   // Search results
   const searchResults = React.useMemo(() => {
-    if (!searchQuery.trim() || !searchAttempted) return [];
-    const cleanQuery = searchQuery.replace('@', '').trim().toLowerCase();
+    if (!searchQuery || typeof searchQuery !== 'string' || !searchQuery.trim() || !searchAttempted) return [];
+    const cleanQuery = searchQuery.trim().replace('@', '').trim().toLowerCase();
     return directoryCreators.filter(c => 
-      c.tiktok_username.toLowerCase().includes(cleanQuery)
+      c.tiktok_username && typeof c.tiktok_username === 'string' && c.tiktok_username.trim() && c.tiktok_username.toLowerCase().includes(cleanQuery)
     );
   }, [directoryCreators, searchQuery, searchAttempted]);
 
