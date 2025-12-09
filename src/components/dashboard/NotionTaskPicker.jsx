@@ -325,8 +325,8 @@ export default function NotionTaskPicker({ userEmail, onAddToDay }) {
                           {task.priority && (
                             <Badge 
                               className={`text-xs ${
-                                task.priority.toLowerCase().includes('high') ? 'bg-red-100 text-red-700' :
-                                task.priority.toLowerCase().includes('low') ? 'bg-green-100 text-green-700' :
+                                task.priority?.toLowerCase?.().includes('high') ? 'bg-red-100 text-red-700' :
+                                task.priority?.toLowerCase?.().includes('low') ? 'bg-green-100 text-green-700' :
                                 'bg-yellow-100 text-yellow-700'
                               }`}
                             >
