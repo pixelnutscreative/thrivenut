@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Loader2, Save, User, Palette, Eye, Layers, MessageSquare, Clock, Share2, Music, Sparkles, ChevronDown, ChevronRight, MessageCircle, Plus, Trash2, Users, LayoutDashboard, Zap, BookOpen, Shirt, Gift, Heart, MapPin, Flag, Activity } from 'lucide-react';
+import { Loader2, Save, User, Palette, Eye, Layers, MessageSquare, Clock, Share2, Music, Sparkles, ChevronDown, ChevronRight, MessageCircle, Plus, Trash2, Users, LayoutDashboard, Zap, BookOpen, Shirt, Gift, Heart, MapPin, Flag, Activity, Briefcase } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
