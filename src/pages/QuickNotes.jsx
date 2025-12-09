@@ -17,16 +17,16 @@ const noteTypeConfig = {
   idea: { icon: Lightbulb, label: 'Ideas', color: 'bg-yellow-100 text-yellow-800', emoji: '💡' },
   negative_thought: { icon: Cloud, label: 'Reframes', color: 'bg-purple-100 text-purple-800', emoji: '☁️' },
   gratitude: { icon: Heart, label: 'Gratitude', color: 'bg-red-100 text-red-800', emoji: '❤️' },
-  food_log: { icon: Utensils, label: 'Food Log', color: 'bg-orange-100 text-orange-800', emoji: '🍽️' },
+  food: { icon: Utensils, label: 'Food Log', color: 'bg-orange-100 text-orange-800', emoji: '🍽️' },
   note: { icon: StickyNote, label: 'Notes', color: 'bg-green-100 text-green-800', emoji: '📝' },
-  reminder: { icon: Clock, label: 'Reminders', color: 'bg-blue-100 text-blue-800', emoji: '⏰' },
+  task: { icon: Check, label: 'Tasks', color: 'bg-teal-100 text-teal-800', emoji: '✅' },
 };
 
 export default function QuickNotes() {
   const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
   const [activeTab, setActiveTab] = useState('all');
-  const { isDark, bgClass, textClass, cardBgClass, primaryColor, accentColor } = useTheme();
+  const { bgClass, textClass, cardBgClass, primaryColor, accentColor } = useTheme();
 
   React.useEffect(() => {
     base44.auth.me().then(setUser);
@@ -74,7 +74,7 @@ export default function QuickNotes() {
   }
 
   return (
-    <div className={`min-h-screen ${bgClass} ${isDark ? 'text-gray-100' : ''} p-4 md:p-8`}>
+    <div className={`min-h-screen ${bgClass} p-4 md:p-8`}>
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <div>
@@ -84,8 +84,8 @@ export default function QuickNotes() {
           >
             📝 My Quick Notes
           </h1>
-          <p className={isDark ? 'text-gray-400' : 'text-gray-600'}>
-            All your ideas, gratitudes, and captured thoughts
+          <p className="text-gray-600">
+            All your ideas, gratitudes, tasks, and captured thoughts
           </p>
         </div>
 
@@ -115,8 +115,8 @@ export default function QuickNotes() {
                 <CardContent className="p-12 text-center">
                   <StickyNote className="w-16 h-16 mx-auto mb-4 text-gray-300" />
                   <h3 className={`text-xl font-semibold mb-2 ${textClass}`}>No notes yet</h3>
-                  <p className={isDark ? 'text-gray-400' : 'text-gray-600'}>
-                    Use the quick actions bar to capture ideas, gratitudes, and more!
+                  <p className="text-gray-600">
+                    Use the quick actions bar to capture ideas, gratitudes, tasks, and more!
                   </p>
                 </CardContent>
               </Card>
@@ -155,7 +155,7 @@ export default function QuickNotes() {
                                         <Badge className={`${config.color} border-0 text-xs`}>
                                           {config.label}
                                         </Badge>
-                                        <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                                        <span className="text-xs text-gray-400">
                                           {format(new Date(note.created_date), 'h:mm a')}
                                         </span>
                                         {note.is_processed && (
