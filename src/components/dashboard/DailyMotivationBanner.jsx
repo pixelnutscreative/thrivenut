@@ -29,7 +29,8 @@ export default function DailyMotivationBanner({
   goals = [],
   isBibleBeliever = false,
   userEmail,
-  bibleVersion = 'NIV'
+  bibleVersion = 'NIV',
+  motivationTone = 'uplifting'
 }) {
   const queryClient = useQueryClient();
   const scrollRef = useRef(null);
@@ -81,10 +82,11 @@ export default function DailyMotivationBanner({
 ${contextParts.length > 0 ? contextParts.join('. ') + '.' : ''}
 
 Requirements:
+- Tone: ${motivationTone}
 - Very short (1-2 sentences max)
 - Relevant to ${getTimeSlotLabel().toLowerCase()} time of day
 ${contextParts.length > 0 ? '- Specifically address the focus area mentioned above' : ''}
-- Uplifting and actionable
+- Actionable (if applicable)
 - DO NOT include any person's name - make it universal so it can be shared as a quote/post on social media
 - Use generic language like "you", "we", or no pronouns at all
 
