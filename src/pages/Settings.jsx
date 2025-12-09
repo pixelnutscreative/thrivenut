@@ -279,6 +279,16 @@ export default function Settings() {
           <div className="flex-1 space-y-4">
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
+                <Label>Nickname</Label>
+                <Input 
+                  placeholder="What should we call you?" 
+                  value={prefData.nickname || ''} 
+                  onChange={(e) => setPrefData({ ...prefData, nickname: e.target.value })} 
+                />
+                <p className="text-xs text-gray-500">Used for your personalized dashboard (e.g. "Pixel's Day")</p>
+              </div>
+
+              <div className="space-y-2">
                 <Label>Favorite Color</Label>
                 <div className="flex gap-2">
                   <Input 
@@ -586,7 +596,7 @@ export default function Settings() {
             </CollapsibleContent>
           </Collapsible>
 
-          {/* 4. FEATURES */}
+          {/* 4. FEATURES (Reordered) */}
           <Collapsible open={expandedSections.includes('features')} onOpenChange={() => toggleSection('features')}>
             <CollapsibleTrigger className="w-full">
               <Card className={`cursor-pointer transition-all ${expandedSections.includes('features') ? 'ring-2 ring-purple-300' : 'hover:shadow-md'}`}>
@@ -608,6 +618,8 @@ export default function Settings() {
               <Card><CardContent className="pt-6"><FeatureOrderManager enabledModules={prefData.enabled_modules} onChange={(updates) => setPrefData({ ...prefData, ...updates })} /></CardContent></Card>
             </CollapsibleContent>
           </Collapsible>
+
+          {/* 4. FEATURES (Moved to match new nav order) */}
 
           {/* 5. DASHBOARD */}
           <Collapsible open={expandedSections.includes('dashboard')} onOpenChange={() => toggleSection('dashboard')}>

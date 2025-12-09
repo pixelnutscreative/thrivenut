@@ -112,45 +112,50 @@ const ReminderIcon = ({ className }) => (
   </svg>
 );
 
+// Dynamic dashboard name calculation
+const getDashboardName = (user, prefs) => {
+  const name = prefs?.nickname || user?.full_name?.split(' ')[0] || 'My';
+  return `${name}'s Day`;
+};
+
 const defaultNavItems = [
   // Core (no header)
-  { name: 'Dashboard', icon: LayoutDashboard, path: 'Dashboard', alwaysShow: true },
-  { name: "Pixel's Place", icon: Sparkles, path: 'PixelsParadise', alwaysShow: true },
-  
-  // INDIGO: Daily Life
-  { name: '── Daily Life ──', isGroupHeader: true, color: 'text-indigo-400', bgColor: 'bg-indigo-500/10' },
-  { name: 'Life & Organization', icon: iconMap.Bookmark, path: 'MyLists', moduleId: 'tasks' },
-  { name: 'Finances', icon: iconMap.TrendingUp, path: 'Finance', moduleId: 'tasks' },
+  { name: 'My Day', icon: LayoutDashboard, path: 'Dashboard', alwaysShow: true, isDynamic: true },
+
+  // INDIGO: Life + Organization
+  { name: '── Life + Organization ──', isGroupHeader: true, color: 'text-indigo-400', bgColor: 'bg-indigo-500/10' },
+  { name: 'Brain Dump', icon: iconMap.Brain, path: 'BrainDump', moduleId: 'brain_dump' },
   { name: 'Work Schedules', icon: Briefcase, path: 'WorkSchedules', moduleId: 'work' },
-  { name: 'Cleaning Tasks', icon: Sparkles, path: 'CleaningTasks', moduleId: 'cleaning' },
-  
-  // ORANGE: Family + People
-  { name: '── Family + People ──', isGroupHeader: true, color: 'text-orange-400', bgColor: 'bg-orange-500/10' },
+  { name: 'Household', icon: iconMap.Home, path: 'Household', moduleId: 'household' },
+
+  // ORANGE: Friends + Loved Ones
+  { name: '── Friends + Loved Ones ──', isGroupHeader: true, color: 'text-orange-400', bgColor: 'bg-orange-500/10' },
   { name: 'Family Members', icon: Users, path: 'FamilyMembers', moduleId: 'people' },
   { name: 'Care Reminders', icon: Bell, path: 'CareReminders', moduleId: 'care_reminders' },
   { name: 'Pet Care', icon: PawPrint, path: 'PetCare', moduleId: 'pets' },
-  
+
   // TEAL: Goals + Growth
   { name: '── Goals + Growth ──', isGroupHeader: true, color: 'text-teal-400', bgColor: 'bg-teal-500/10' },
   { name: 'Tasks', icon: FileText, path: 'Tasks', moduleId: 'tasks' },
+  { name: 'Habits', icon: iconMap.CheckCircle2 || iconMap.Target, path: 'Habits', moduleId: 'habits' },
   { name: 'Goals', icon: Target, path: 'Goals', moduleId: 'goals' },
   { name: 'Vision Board', icon: Eye, path: 'VisionBoard', moduleId: 'goals' },
   { name: 'Journal', icon: FileText, path: 'Journal', moduleId: 'journal' },
   { name: 'Quick Notes', icon: StickyNote, path: 'QuickNotes', moduleId: 'quick_notes' },
-  
+
   // PURPLE: Faith & Spiritual
   { name: '── Faith & Spiritual ──', isGroupHeader: true, color: 'text-purple-400', bgColor: 'bg-purple-500/10' },
   { name: 'Prayer Requests', icon: Heart, path: 'PrayerRequests', moduleId: 'prayer', requiresBibleBeliever: true },
   { name: 'Holy Hitmakers', icon: Music, path: 'HolyHitmakers', requiresBibleBeliever: true },
   { name: 'Bible Resources', icon: BookOpen, path: 'BibleResources', requiresBibleBeliever: true },
-  
+
   // GREEN: Mind + Body Health
   { name: '── Mind + Body Health ──', isGroupHeader: true, color: 'text-green-400', bgColor: 'bg-green-500/10' },
   { name: 'Mental Health', icon: Brain, path: 'NeurodivergentSettings', moduleId: 'mental_health' },
   { name: 'Daily Wellness', icon: Heart, path: 'Wellness', moduleId: 'wellness' },
   { name: 'Supplements', icon: Tablet, path: 'Supplements', moduleId: 'supplements' },
   { name: 'Medications', icon: Pill, path: 'Medications', moduleId: 'medications' },
-  
+
   // PINK: Creator Suite
   { name: '── Creator Suite ──', isGroupHeader: true, color: 'text-pink-400', bgColor: 'bg-pink-500/10' },
   { name: 'Social Media Suite', icon: Share2, isSection: true, moduleId: 'tiktok', requiresTikTokAccess: true, subItems: [
@@ -165,10 +170,10 @@ const defaultNavItems = [
   ]},
   { name: 'Content Ideas', icon: iconMap.Lightbulb, path: 'SavedMotivations', moduleId: 'motivations' },
   { name: "Ping & Pong's Silly Songs", icon: Smile, externalUrl: 'https://sillysongs.pixelnutscreative.com' },
-  
+
   // GRAY: Support & Settings
   { name: '── Support & Settings ──', isGroupHeader: true, color: 'text-gray-400', bgColor: 'bg-gray-500/10' },
-  { name: 'SuperFan Access', icon: Star, path: 'SuperFanAccess', showWhenNoTikTokAccess: true },
+  { name: "Pixel's Place", icon: Sparkles, path: 'PixelsParadise', alwaysShow: true },
   { name: 'Support', icon: HelpCircle, path: 'Support', alwaysShow: true },
   { name: 'Settings', icon: Settings, path: 'Settings', alwaysShow: true },
   { name: 'Admin Panel', icon: UserCog, path: 'Admin', adminOnly: true },
@@ -277,17 +282,40 @@ export default function Layout({ children, currentPageName }) {
           highlight: item.highlight,
         };
         topLevel.push(navItem);
-      }
-    });
-    
-    // Attach sub-items to sections
-    return topLevel.map(item => {
-      if (item.isSection && sections[item.name]) {
+        }
+        });
+
+        // Attach sub-items to sections
+        return topLevel.map(item => {
+        if (item.isSection && sections[item.name]) {
         return { ...item, subItems: sections[item.name] };
-      }
-      return item;
-    });
-  }, [menuConfig]);
+        }
+        return item;
+        });
+        }, [menuConfig]);
+
+        // Helper to update dynamic names
+        const updateDynamicNames = (items) => {
+        return items.map(item => {
+        if (item.isDynamic && item.path === 'Dashboard') {
+        return { ...item, name: getDashboardName(user, preferences) };
+        }
+        if (item.subItems) {
+        return { ...item, subItems: updateDynamicNames(item.subItems) };
+        }
+        return item;
+        });
+        };
+
+        const navItemsWithDynamicNames = useMemo(() => {
+        // If we are using defaults (no menuConfig or empty), we need to apply dynamic naming
+        if (!menuConfig || menuConfig.length === 0) {
+        return updateDynamicNames(defaultNavItems);
+        }
+        // If using menuConfig, we assume titles are static unless we add logic there too, 
+        // but user asked to change "Dashboard", which is usually default.
+        return updateDynamicNames(allNavItems);
+        }, [allNavItems, user, preferences]);
   
   // IMPORTANT: isAdmin checks the REAL user email (not impersonated), so admin always sees admin menu
   const realUserEmail = user?.email ? user.email.toLowerCase() : '';
@@ -301,7 +329,7 @@ export default function Layout({ children, currentPageName }) {
   // Filter nav items based on enabled modules (order comes from admin config)
   const getOrderedNavItems = () => {
     // Filter based on enabled modules - but SHOW TikTok items always (gated by popup)
-    let filtered = allNavItems.filter(item => {
+    let filtered = navItemsWithDynamicNames.filter(item => {
       if (item.alwaysShow) return true;
       // Admin only items
       if (item.adminOnly) return isAdmin;
