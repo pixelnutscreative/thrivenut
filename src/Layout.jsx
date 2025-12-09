@@ -177,7 +177,7 @@ export default function Layout({ children, currentPageName }) {
   const [expandedSections, setExpandedSections] = useState([]);
   const [collapsedGroups, setCollapsedGroups] = useState(() => {
     // Default collapsed groups based on menu config
-    return ['── Faith & Purpose ──', '── Creator Life ──', '── Mental & Emotional ──', '── Health & Care ──', '── Connections ──'];
+    return [];
   });
   const [showAccessGate, setShowAccessGate] = useState(false);
 
@@ -494,13 +494,11 @@ export default function Layout({ children, currentPageName }) {
                   return (
                     <button
                       key={item.name}
-                      onClick={() => item.isCollapsible && toggleGroup(item.name)}
-                      className={`w-full px-2 py-2 mt-4 mb-1 text-xs font-bold uppercase tracking-wider ${item.color} ${item.bgColor} rounded-lg flex items-center justify-between ${item.isCollapsible ? 'cursor-pointer hover:opacity-80' : ''}`}
+                      onClick={() => toggleGroup(item.name)}
+                      className={`w-full px-2 py-2 mt-4 mb-1 text-xs font-bold uppercase tracking-wider ${item.color} ${item.bgColor} rounded-lg flex items-center justify-between cursor-pointer hover:opacity-80`}
                     >
                       <span>{item.name.replace(/──/g, '').trim()}</span>
-                      {item.isCollapsible && (
-                        isCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />
-                      )}
+                      {isCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                     </button>
                   );
                 }
@@ -508,7 +506,7 @@ export default function Layout({ children, currentPageName }) {
                 // Skip items in collapsed groups
                 const currentGroupIndex = navItems.slice(0, index).reverse().findIndex(i => i.isGroupHeader);
                 const currentGroup = currentGroupIndex !== -1 ? navItems[index - currentGroupIndex - 1] : null;
-                if (currentGroup?.isCollapsible && collapsedGroups.includes(currentGroup.name)) {
+                if (currentGroup && collapsedGroups.includes(currentGroup.name)) {
                   return null;
                 }
 
@@ -694,18 +692,28 @@ export default function Layout({ children, currentPageName }) {
               </div>
 
               <nav className="flex-1 space-y-1 overflow-y-auto">
-              {navItems.map((item) => {
-              // Render group headers
-              if (item.isGroupHeader) {
-                return (
-                  <div 
-                    key={item.name} 
-                    className={`px-2 py-2 mt-4 mb-1 text-xs font-bold uppercase tracking-wider ${item.color} ${item.bgColor} rounded-lg`}
-                  >
-                    {item.name.replace(/──/g, '').trim()}
-                  </div>
-                );
-              }
+              {navItems.map((item, index) => {
+                // Render group headers (collapsible)
+                if (item.isGroupHeader) {
+                  const isCollapsed = collapsedGroups.includes(item.name);
+                  return (
+                    <button
+                      key={item.name}
+                      onClick={() => toggleGroup(item.name)}
+                      className={`w-full px-2 py-2 mt-4 mb-1 text-xs font-bold uppercase tracking-wider ${item.color} ${item.bgColor} rounded-lg flex items-center justify-between cursor-pointer hover:opacity-80`}
+                    >
+                      <span>{item.name.replace(/──/g, '').trim()}</span>
+                      {isCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                    </button>
+                  );
+                }
+
+                // Skip items in collapsed groups
+                const currentGroupIndex = navItems.slice(0, index).reverse().findIndex(i => i.isGroupHeader);
+                const currentGroup = currentGroupIndex !== -1 ? navItems[index - currentGroupIndex - 1] : null;
+                if (currentGroup && collapsedGroups.includes(currentGroup.name)) {
+                  return null;
+                }
 
               const Icon = item.icon;
               const isActive = currentPageName === item.path;
