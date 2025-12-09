@@ -199,7 +199,7 @@ export default function Layout({ children, currentPageName }) {
 
   const sidebarStyle = {
     backgroundColor: menuColor,
-    borderColor: isDark ? '#374151' : '#e5e7eb'
+    borderColor: '#e5e7eb'
   };
 
   const menuTextClass = isMenuDark ? 'text-gray-100' : 'text-gray-800';
