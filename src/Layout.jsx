@@ -113,10 +113,10 @@ const ReminderIcon = ({ className }) => (
 );
 
 const defaultNavItems = [
-  // Core Life (no header shown)
+  // Core Life (no header)
   { name: 'Dashboard', icon: LayoutDashboard, path: 'Dashboard', alwaysShow: true },
   { name: "Pixel's Place", icon: Sparkles, path: 'PixelsParadise', alwaysShow: true },
-
+  
   // PURPLE: Faith & Purpose
   { name: '── Faith & Purpose ──', isGroupHeader: true, color: 'text-purple-400', bgColor: 'bg-purple-500/10' },
   { name: 'Goals', icon: Target, path: 'Goals', moduleId: 'goals' },
@@ -129,45 +129,40 @@ const defaultNavItems = [
   { name: 'Cleaning Tasks', icon: Sparkles, path: 'CleaningTasks', alwaysShow: true },
   
   // PINK: Creator Life
-  { name: '── Creator Life ──', isGroupHeader: true, color: 'text-pink-400', bgColor: 'bg-pink-500/10', isCollapsible: true, defaultCollapsed: false },
-  { name: 'Social Media Suite', icon: Share2, isSection: true, moduleId: 'tiktok', requiresTikTokAccess: true, groupColor: 'pink', subItems: [
+  { name: '── Creator Life ──', isGroupHeader: true, color: 'text-pink-400', bgColor: 'bg-pink-500/10' },
+  { name: 'Social Media Suite', icon: Share2, isSection: true, moduleId: 'tiktok', requiresTikTokAccess: true, subItems: [
     { name: 'Discover Creators', icon: Search, path: 'DiscoverCreators', highlight: true },
     { name: 'Creator Contacts', icon: Users, path: 'TikTokContacts' },
     { name: 'Social Engagement', icon: MousePointerClick, path: 'TikTokEngagement' },
     { name: 'Content Calendar', icon: Calendar, path: 'LiveSchedule' },
     { name: 'Sunny Songbird', icon: Sun, path: 'SongGenerator' },
     { name: 'Gift Gallery Gratitude', icon: Gift, path: 'WeeklyGifterGallery' },
+    { name: 'Love Away Giveaways', icon: Gift, path: 'LoveAway' },
+    { name: 'Pictionary Helper', icon: Palette, path: 'PictionaryHelper' },
   ]},
-  { name: 'Music & Songs', icon: Music, isSection: true, groupColor: 'pink', subItems: [
+  { name: 'Music & Songs', icon: Music, isSection: true, subItems: [
     { name: 'Holy Hitmakers', icon: Cross, path: 'HolyHitmakers' },
     { name: "Ping & Pong's Silly Songs", icon: Smile, externalUrl: 'https://sillysongs.pixelnutscreative.com' },
   ]},
   
-  // GOLD: Mental & Emotional
-  { name: '── Mental & Emotional ──', isGroupHeader: true, color: 'text-amber-400', bgColor: 'bg-amber-500/10', isCollapsible: true, defaultCollapsed: false },
-  { name: 'Mental Health', icon: Brain, isSection: true, moduleId: 'mental_health', groupColor: 'amber', subItems: [
+  // AMBER: Mental & Emotional
+  { name: '── Mental & Emotional ──', isGroupHeader: true, color: 'text-amber-400', bgColor: 'bg-amber-500/10' },
+  { name: 'Mental Health', icon: Brain, isSection: true, moduleId: 'mental_health', subItems: [
     { name: 'Mental Health Hub', icon: Brain, path: 'NeurodivergentSettings' },
     { name: 'Journal', icon: FileText, path: 'Journal', moduleId: 'journal' },
-    { name: 'Quick Notes', icon: StickyNote, path: 'QuickNotes', moduleId: 'quick_notes' },
+    { name: 'Quick Notes', icon: StickyNote, path: 'QuickNotes' },
   ]},
   
   // GREEN: Health & Care
-  { name: '── Health & Care ──', isGroupHeader: true, color: 'text-green-400', bgColor: 'bg-green-500/10', isCollapsible: true, defaultCollapsed: false },
-  { name: 'Daily Wellness', icon: Heart, path: 'Wellness', moduleId: 'wellness', groupColor: 'green' },
-  { name: 'Supplements', icon: Tablet, path: 'Supplements', moduleId: 'supplements', groupColor: 'green' },
-  { name: 'Medications', icon: Pill, path: 'Medications', moduleId: 'medications', groupColor: 'green' },
-  { name: 'Care Reminders', icon: Bell, path: 'CareReminders', moduleId: 'care_reminders', groupColor: 'green' },
-  { name: 'Pet Care', icon: PawPrint, path: 'PetCare', moduleId: 'pets', groupColor: 'green' },
-  
-  // BLUE: Connections & Fun
-  { name: '── Fun & Tools ──', isGroupHeader: true, color: 'text-blue-400', bgColor: 'bg-blue-500/10', isCollapsible: true, defaultCollapsed: false },
-  { name: 'Love Away Giveaways', icon: Gift, path: 'LoveAway', requiresTikTokAccess: true, groupColor: 'blue' },
-  { name: 'Pictionary Helper', icon: Palette, path: 'PictionaryHelper', alwaysShow: true, groupColor: 'blue' },
+  { name: '── Health & Care ──', isGroupHeader: true, color: 'text-green-400', bgColor: 'bg-green-500/10' },
+  { name: 'Daily Wellness', icon: Heart, path: 'Wellness', moduleId: 'wellness' },
+  { name: 'Supplements', icon: Tablet, path: 'Supplements', moduleId: 'supplements' },
+  { name: 'Medications', icon: Pill, path: 'Medications', moduleId: 'medications' },
+  { name: 'Care Reminders', icon: Bell, path: 'CareReminders', moduleId: 'care_reminders' },
+  { name: 'Pet Care', icon: PawPrint, path: 'PetCare', moduleId: 'pets' },
   
   // Special items
   { name: 'SuperFan Access', icon: Star, path: 'SuperFanAccess', showWhenNoTikTokAccess: true },
-  
-  // System items (at bottom)
   { name: 'Support', icon: HelpCircle, path: 'Support', alwaysShow: true },
   { name: 'Admin Panel', icon: UserCog, path: 'Admin', adminOnly: true },
 ];
