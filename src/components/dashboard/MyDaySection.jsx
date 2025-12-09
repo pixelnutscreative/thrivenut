@@ -13,7 +13,7 @@ import {
   ChevronDown, ChevronUp, PawPrint, Bell, Clock, Video, Users, 
   MessageSquare, SkipForward, ArrowRight, Loader2,
   Bed, Smile, NotebookPen, GripVertical, ExternalLink, Target, Columns,
-  Calendar, History, Settings, Eye, EyeOff, CalendarDays
+  Calendar, History, Settings, Eye, EyeOff, CalendarDays, Trash2
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -1394,9 +1394,22 @@ export default function MyDaySection({
                                   rel="noopener noreferrer"
                                   onClick={(e) => e.stopPropagation()}
                                   className="p-2 hover:bg-gray-100 rounded-lg"
-                                  title={task.isCalendarEvent ? "Edit in Google Calendar" : "Open"}
+                                  title={task.isCalendarEvent ? "View in Google Calendar" : "Open"}
                                 >
-                                  {task.isCalendarEvent ? <Pencil className="w-4 h-4 text-blue-400" /> : <ExternalLink className="w-4 h-4 text-gray-400" />}
+                                  {task.isCalendarEvent ? <ExternalLink className="w-4 h-4 text-blue-400" /> : <ExternalLink className="w-4 h-4 text-gray-400" />}
+                                </a>
+                              )}
+
+                              {task.isCalendarEvent && task.externalLink && (
+                                <a
+                                  href={task.externalLink}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="p-2 hover:bg-red-50 rounded-lg"
+                                  title="Delete from Google Calendar"
+                                >
+                                  <Trash2 className="w-4 h-4 text-red-400" />
                                 </a>
                               )}
                               

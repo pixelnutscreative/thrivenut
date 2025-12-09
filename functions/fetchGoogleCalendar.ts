@@ -97,10 +97,18 @@ Deno.serve(async (req) => {
     
     // Combine all events from all calendars
     const allEvents = [];
+    const seenEventIds = new Set();
 
     // Flatten and transform all events
     allCalendarEvents.forEach(calendarData => {
       calendarData.items.forEach(event => {
+        // Skip cancelled events
+        if (event.status === 'cancelled') return;
+        
+        // Skip duplicates based on ID
+        if (seenEventIds.has(event.id)) return;
+        
+        seenEventIds.add(event.id);
         allEvents.push({
           ...event,
           calendarName: calendarData.calendarName,
