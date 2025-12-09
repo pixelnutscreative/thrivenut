@@ -4,35 +4,37 @@ import { Switch } from '@/components/ui/switch';
 import { Eye, EyeOff } from 'lucide-react';
 
 const allFeatures = [
-  // Life + Organization
-  { id: 'brain_dump', name: 'Brain Dump', description: 'Get ideas out of your head' },
-  { id: 'work', name: 'Work Schedules', description: 'Track work hours and shifts' },
-  { id: 'household', name: 'Household', description: 'Cleaning tasks and household rules' },
-  
-  // Friends + Loved Ones
-  { id: 'people', name: 'Family Members', description: 'Track family details and sizes' },
-  { id: 'care_reminders', name: 'Care Reminders', description: 'Reminders for caregiving' },
-  { id: 'pets', name: 'Pet Care', description: 'Pet schedules & activities' },
-  
   // Goals + Growth
-  { id: 'tasks', name: 'Tasks', description: 'Daily to-do lists' },
+  { id: 'quick_notes', name: 'Quick Notes', description: 'Simple note taking' },
+  { id: 'tasks', name: 'Tasks', description: 'Daily to-do lists & cleaning tasks' },
   { id: 'habits', name: 'Habits', description: 'Daily habit tracking' },
   { id: 'goals', name: 'Goals', description: 'Long-term goal tracking' },
   { id: 'journal', name: 'Journal', description: 'Daily reflections and AI reframing' },
-  { id: 'quick_notes', name: 'Quick Notes', description: 'Simple note taking' },
+  { id: 'finance', name: 'Finance', description: 'Track subscriptions and expenses' },
+  { id: 'brain_dump', name: 'Brain Dump', description: 'Get ideas out of your head' },
+
+  // Friends + Loved Ones
+  { id: 'people', name: 'Family & People', description: 'Track family details and contacts' },
+  { id: 'care_reminders', name: 'Care Reminders', description: 'Reminders for caregiving' },
+  { id: 'pets', name: 'Pet Care', description: 'Pet schedules & activities' },
   
   // Faith & Spiritual
-  { id: 'prayer', name: 'Prayer Requests', description: 'Prayer list and spiritual tracking' },
+  { id: 'prayer', name: 'Prayer / Light & Love', description: 'Spiritual requests and tracking' },
   
   // Mind + Body Health
   { id: 'mental_health', name: 'Mental Health', description: 'Mental health support tools' },
   { id: 'wellness', name: 'Daily Wellness', description: 'Water, sleep, mood & self-care' },
   { id: 'supplements', name: 'Supplements', description: 'Track daily supplements' },
   { id: 'medications', name: 'Medications', description: 'Medication tracking' },
+  { id: 'activity', name: 'Activity Tracker', description: 'Log workouts and activity' },
   
   // Creator Suite
   { id: 'tiktok', name: 'Social Media Suite', description: 'Content calendar, engagement & creator contacts', requiresTikTokAccess: true },
   { id: 'motivations', name: 'Content Ideas', description: 'Saved ideas and inspirations' },
+  
+  // Other
+  { id: 'work', name: 'Work Schedules', description: 'Track work hours and shifts (moved to Profile)' },
+  { id: 'household', name: 'Household', description: 'Legacy cleaning tasks (now in Tasks)' },
 ];
 
 export default function FeatureOrderManager({ enabledModules, onChange }) {

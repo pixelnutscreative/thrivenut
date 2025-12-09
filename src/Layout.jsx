@@ -119,33 +119,30 @@ const getDashboardName = (user, prefs) => {
 };
 
 const defaultNavItems = [
-  // Core (no header)
+  // Core
   { name: 'My Day', icon: LayoutDashboard, path: 'Dashboard', alwaysShow: true, isDynamic: true },
+  { name: "Pixel's Place", icon: Sparkles, path: 'PixelsParadise', alwaysShow: true },
 
-  // INDIGO: Life + Organization
-  { name: '── Life + Organization ──', isGroupHeader: true, color: 'text-indigo-400', bgColor: 'bg-indigo-500/10' },
-  { name: 'Brain Dump', icon: iconMap.Brain, path: 'BrainDump', moduleId: 'brain_dump' },
-  { name: 'Work Schedules', icon: Briefcase, path: 'WorkSchedules', moduleId: 'work' },
-
-  // ORANGE: Friends + Loved Ones
-  { name: '── Friends + Loved Ones ──', isGroupHeader: true, color: 'text-orange-400', bgColor: 'bg-orange-500/10' },
-  { name: 'Family Members', icon: Users, path: 'FamilyMembers', moduleId: 'people' },
-  { name: 'Care Reminders', icon: Bell, path: 'CareReminders', moduleId: 'care_reminders' },
-  { name: 'Pet Care', icon: PawPrint, path: 'PetCare', moduleId: 'pets' },
-
-  // TEAL: Tasks + Growth
-  { name: '── Tasks + Growth ──', isGroupHeader: true, color: 'text-teal-400', bgColor: 'bg-teal-500/10' },
+  // TEAL: Goals + Growth
+  { name: '── Goals + Growth ──', isGroupHeader: true, color: 'text-teal-400', bgColor: 'bg-teal-500/10' },
+  { name: 'Quick Notes', icon: StickyNote, path: 'QuickNotes', moduleId: 'quick_notes' },
   { name: 'Tasks', icon: FileText, path: 'Tasks', moduleId: 'tasks' },
-  { name: 'Household', icon: iconMap.Home, path: 'Household', moduleId: 'household' },
   { name: 'Habits', icon: iconMap.CheckCircle2 || iconMap.Target, path: 'Habits', moduleId: 'habits' },
   { name: 'Goals', icon: Target, path: 'Goals', moduleId: 'goals' },
   { name: 'Vision Board', icon: Eye, path: 'VisionBoard', moduleId: 'goals' },
   { name: 'Journal', icon: FileText, path: 'Journal', moduleId: 'journal' },
-  { name: 'Quick Notes', icon: StickyNote, path: 'QuickNotes', moduleId: 'quick_notes' },
+  { name: 'Finance', icon: iconMap.DollarSign || iconMap.TrendingUp, path: 'Finance', moduleId: 'finance' },
+
+  // ORANGE: Friends + Loved Ones
+  { name: '── Friends + Loved Ones ──', isGroupHeader: true, color: 'text-orange-400', bgColor: 'bg-orange-500/10' },
+  { name: 'Family Members', icon: Users, path: 'FamilyMembers', moduleId: 'people' },
+  { name: 'My People', icon: Users, path: 'People', moduleId: 'people' },
+  { name: 'Care Reminders', icon: Bell, path: 'CareReminders', moduleId: 'care_reminders' },
+  { name: 'Pet Care', icon: PawPrint, path: 'PetCare', moduleId: 'pets' },
 
   // PURPLE: Faith & Spiritual
   { name: '── Faith & Spiritual ──', isGroupHeader: true, color: 'text-purple-400', bgColor: 'bg-purple-500/10' },
-  { name: 'Prayer Requests', icon: Heart, path: 'PrayerRequests', moduleId: 'prayer', requiresBibleBeliever: true },
+  { name: 'Prayer Requests', icon: Heart, path: 'PrayerRequests', moduleId: 'prayer', isDynamicName: true },
   { name: 'Holy Hitmakers', icon: Music, path: 'HolyHitmakers', requiresBibleBeliever: true },
   { name: 'Bible Resources', icon: BookOpen, path: 'BibleResources', requiresBibleBeliever: true },
 
@@ -153,9 +150,9 @@ const defaultNavItems = [
   { name: '── Mind + Body Health ──', isGroupHeader: true, color: 'text-green-400', bgColor: 'bg-green-500/10' },
   { name: 'Mental Health', icon: Brain, path: 'NeurodivergentSettings', moduleId: 'mental_health' },
   { name: 'Daily Wellness', icon: Heart, path: 'Wellness', moduleId: 'wellness' },
-  { name: 'Activity Tracker', icon: iconMap.TrendingUp, path: 'ActivityTracker', moduleId: 'activity' },
   { name: 'Supplements', icon: Tablet, path: 'Supplements', moduleId: 'supplements' },
   { name: 'Medications', icon: Pill, path: 'Medications', moduleId: 'medications' },
+  { name: 'Activity Tracker', icon: iconMap.TrendingUp, path: 'ActivityTracker', moduleId: 'activity' },
 
   // PINK: Creator Suite
   { name: '── Creator Suite ──', isGroupHeader: true, color: 'text-pink-400', bgColor: 'bg-pink-500/10' },
@@ -174,7 +171,6 @@ const defaultNavItems = [
 
   // GRAY: Support & Settings
   { name: '── Support & Settings ──', isGroupHeader: true, color: 'text-gray-400', bgColor: 'bg-gray-500/10' },
-  { name: "Pixel's Place", icon: Sparkles, path: 'PixelsParadise', alwaysShow: true },
   { name: 'Support', icon: HelpCircle, path: 'Support', alwaysShow: true },
   { name: 'Settings', icon: Settings, path: 'Settings', alwaysShow: true },
   { name: 'Admin Panel', icon: UserCog, path: 'Admin', adminOnly: true },
@@ -300,15 +296,19 @@ export default function Layout({ children, currentPageName }) {
 
         // Helper to update dynamic names
         const updateDynamicNames = (items) => {
-        return items.map(item => {
-        if (item.isDynamic && item.path === 'Dashboard') {
-        return { ...item, name: getDashboardName(user, preferences) };
-        }
-        if (item.subItems) {
-        return { ...item, subItems: updateDynamicNames(item.subItems) };
-        }
-        return item;
-        });
+          return items.map(item => {
+            if (item.isDynamic && item.path === 'Dashboard') {
+              return { ...item, name: getDashboardName(user, preferences) };
+            }
+            if (item.isDynamicName && item.path === 'PrayerRequests') {
+              const isBeliever = preferences?.is_bible_believer !== false; // Default to true if not set
+              return { ...item, name: isBeliever ? 'Prayer Requests' : 'Send Light & Love' };
+            }
+            if (item.subItems) {
+              return { ...item, subItems: updateDynamicNames(item.subItems) };
+            }
+            return item;
+          });
         };
 
         const navItemsWithDynamicNames = useMemo(() => {

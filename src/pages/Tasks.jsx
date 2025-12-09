@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Check, X, Calendar, ChevronRight, ArrowRight, Trash2, Lightbulb, Filter, Zap, User, Camera } from 'lucide-react';
 import { format, parseISO, isToday, isBefore, startOfDay } from 'date-fns';
 import { useTheme } from '../components/shared/useTheme';
+import CleaningTasks from './CleaningTasks';
 
 const categoryOptions = [
   { value: 'Work', emoji: '💼' },
@@ -285,10 +286,15 @@ export default function Tasks() {
         </div>
 
         <Tabs defaultValue="tasks" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="tasks">My Tasks ({filteredTasks.length})</TabsTrigger>
+            <TabsTrigger value="cleaning">Household</TabsTrigger>
             <TabsTrigger value="braindump">Brain Dump ({brainDumps.length})</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="cleaning" className="space-y-4">
+            <CleaningTasks embedded />
+          </TabsContent>
 
           <TabsContent value="braindump" className="space-y-4">
             {/* Brain Dump Section */}

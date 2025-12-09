@@ -538,7 +538,7 @@ export default function Settings() {
                     </div>
                     <div className="text-left">
                       <CardTitle className="text-lg">Profile</CardTitle>
-                      <CardDescription>Personal details, sizes, favorites, and wishlist</CardDescription>
+                      <CardDescription>Personal details, work schedule, sizes, and wishlist</CardDescription>
                     </div>
                   </div>
                   {expandedSections.includes('profile') ? <ChevronDown className="w-5 h-5 text-gray-500" /> : <ChevronRight className="w-5 h-5 text-gray-500" />}
@@ -547,6 +547,18 @@ export default function Settings() {
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-4">
               {renderProfileSection()}
+              {/* Work Schedule Link */}
+              <Card className="mt-4">
+                <CardContent className="pt-6 flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold flex items-center gap-2"><Briefcase className="w-4 h-4" /> Work Schedule</h3>
+                    <p className="text-sm text-gray-500">Manage your shifts and work hours</p>
+                  </div>
+                  <Button variant="outline" onClick={() => window.location.href = '/WorkSchedules'}>
+                    Manage Schedule
+                  </Button>
+                </CardContent>
+              </Card>
             </CollapsibleContent>
           </Collapsible>
 
