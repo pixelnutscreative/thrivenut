@@ -45,6 +45,9 @@ import Finance from './pages/Finance';
 import MyLists from './pages/MyLists';
 import MyProfile from './pages/MyProfile';
 import BibleResources from './pages/BibleResources';
+import BrainDump from './pages/BrainDump';
+import Household from './pages/Household';
+import Habits from './pages/Habits';
 import __Layout from './Layout.jsx';
 
 
@@ -96,6 +99,9 @@ export const PAGES = {
     "MyLists": MyLists,
     "MyProfile": MyProfile,
     "BibleResources": BibleResources,
+    "BrainDump": BrainDump,
+    "Household": Household,
+    "Habits": Habits,
 }
 
 export const pagesConfig = {
