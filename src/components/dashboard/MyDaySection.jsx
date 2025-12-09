@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
+import { useTheme } from '../shared/useTheme';
 import { format } from 'date-fns';
 import DailyMotivationSidebar from './DailyMotivationSidebar';
 import CarryoverTasksModal from './CarryoverTasksModal';
