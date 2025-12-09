@@ -269,7 +269,7 @@ export default function FamilyMembers() {
           <div className="flex gap-2">
             <Button
               variant="outline"
-              onClick={() => window.location.href = '/MyProfile'}
+              onClick={() => window.location.href = '/Settings?section=profile'}
               className="border-purple-200 hover:bg-purple-50 text-purple-700"
             >
               <User className="w-4 h-4 mr-2" />
