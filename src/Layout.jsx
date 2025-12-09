@@ -602,7 +602,7 @@ export default function Layout({ children, currentPageName }) {
                                                   return (
                                                     <Link
                                                       key={subItem.path}
-                                                      to={createPageUrl(subItem.path)}
+                                                      to={createPageUrl(subItem.path || '')}
                                                       onClick={() => setMobileMenuOpen(false)}
                                                       className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-all text-sm ${
                                                         subIsActive
@@ -805,7 +805,7 @@ export default function Layout({ children, currentPageName }) {
                                               return (
                                                     <Link
                                                       key={subItem.path}
-                                                      to={createPageUrl(subItem.path)}
+                                                      to={createPageUrl(subItem.path || '')}
                                                       className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-all text-sm ${
                                                         subIsActive
                                                           ? 'text-white shadow-lg'
