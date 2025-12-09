@@ -37,11 +37,12 @@ export function useTheme() {
   }, []);
 
   const effectiveEmail = useMemo(() => {
-    if (!user?.email) return null;
+    if (!user || !user.email) return null;
     try {
-      return getEffectiveUserEmail(user.email);
+      const email = getEffectiveUserEmail(user.email);
+      return email || null;
     } catch {
-      return user.email;
+      return user.email || null;
     }
   }, [user]);
 

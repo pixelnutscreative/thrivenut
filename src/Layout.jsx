@@ -191,7 +191,14 @@ export default function Layout({ children, currentPageName }) {
   }, []);
 
   // Get effective email (real user or impersonated)
-  const effectiveEmail = user?.email ? getEffectiveUserEmail(user.email) : null;
+  const effectiveEmail = useMemo(() => {
+    if (!user || !user.email) return null;
+    try {
+      return getEffectiveUserEmail(user.email) || null;
+    } catch {
+      return null;
+    }
+  }, [user]);
   const currentlyImpersonating = isImpersonating();
 
   const { data: preferences } = useQuery({
