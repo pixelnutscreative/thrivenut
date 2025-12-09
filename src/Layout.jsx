@@ -114,19 +114,19 @@ const ReminderIcon = ({ className }) => (
 
 const defaultNavItems = [
   // Core Life (no header shown)
-  { name: 'Dashboard', icon: LayoutDashboard, path: 'Dashboard', alwaysShow: true, groupColor: 'teal' },
-  { name: "Pixel's Place", icon: Sparkles, path: 'PixelsParadise', alwaysShow: true, groupColor: 'teal' },
-  
+  { name: 'Dashboard', icon: LayoutDashboard, path: 'Dashboard', alwaysShow: true },
+  { name: "Pixel's Place", icon: Sparkles, path: 'PixelsParadise', alwaysShow: true },
+
   // PURPLE: Faith & Purpose
-  { name: '── Faith & Purpose ──', isGroupHeader: true, color: 'text-purple-400', bgColor: 'bg-purple-500/10', isCollapsible: true, defaultCollapsed: false },
-  { name: 'Goals', icon: Target, path: 'Goals', moduleId: 'goals', groupColor: 'purple' },
-  { name: 'Vision Board', icon: Eye, path: 'VisionBoard', moduleId: 'goals', groupColor: 'purple' },
-  { name: 'Saved Motivations', icon: Bookmark, path: 'SavedMotivations', alwaysShow: true, groupColor: 'purple' },
-  { name: 'Prayer Requests', icon: Heart, path: 'PrayerRequests', requiresBibleBeliever: true, groupColor: 'purple' },
-  { name: 'Tasks', icon: FileText, path: 'Tasks', moduleId: 'tasks', groupColor: 'purple' },
-  { name: 'Family Members', icon: Users, path: 'FamilyMembers', moduleId: 'people', groupColor: 'purple' },
-  { name: 'Work Schedules', icon: Briefcase, path: 'WorkSchedules', alwaysShow: true, groupColor: 'purple' },
-  { name: 'Cleaning Tasks', icon: Sparkles, path: 'CleaningTasks', alwaysShow: true, groupColor: 'purple' },
+  { name: '── Faith & Purpose ──', isGroupHeader: true, color: 'text-purple-400', bgColor: 'bg-purple-500/10' },
+  { name: 'Goals', icon: Target, path: 'Goals', moduleId: 'goals' },
+  { name: 'Vision Board', icon: Eye, path: 'VisionBoard', moduleId: 'goals' },
+  { name: 'Saved Motivations', icon: Bookmark, path: 'SavedMotivations', alwaysShow: true },
+  { name: 'Prayer Requests', icon: Heart, path: 'PrayerRequests', requiresBibleBeliever: true },
+  { name: 'Tasks', icon: FileText, path: 'Tasks', moduleId: 'tasks' },
+  { name: 'Family Members', icon: Users, path: 'FamilyMembers', moduleId: 'people' },
+  { name: 'Work Schedules', icon: Briefcase, path: 'WorkSchedules', alwaysShow: true },
+  { name: 'Cleaning Tasks', icon: Sparkles, path: 'CleaningTasks', alwaysShow: true },
   
   // PINK: Creator Life
   { name: '── Creator Life ──', isGroupHeader: true, color: 'text-pink-400', bgColor: 'bg-pink-500/10', isCollapsible: true, defaultCollapsed: false },
@@ -212,13 +212,14 @@ export default function Layout({ children, currentPageName }) {
   const enabledModules = preferences?.enabled_modules || ['tiktok', 'gifter', 'goals', 'tasks', 'wellness', 'supplements', 'medications', 'pets', 'care_reminders', 'people', 'journal', 'mental_health'];
   
   // Fetch admin menu config
-  const { data: menuConfig = [] } = useQuery({
+  const { data: menuConfig = [], isLoading: menuLoading } = useQuery({
     queryKey: ['menuConfig'],
     queryFn: async () => {
       try {
         const items = await base44.entities.MenuConfig.filter({ is_active: true }, 'sort_order');
         return items;
-      } catch {
+      } catch (error) {
+        console.error('Error loading menu config:', error);
         return [];
       }
     },
@@ -227,7 +228,8 @@ export default function Layout({ children, currentPageName }) {
 
   // Build nav items from database config or use defaults
   const allNavItems = React.useMemo(() => {
-    if (menuConfig.length === 0) return defaultNavItems;
+    // Always use defaults if no config exists
+    if (!menuConfig || menuConfig.length === 0) return defaultNavItems;
     
     // Group items by parent_section
     const sections = {};
