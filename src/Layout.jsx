@@ -258,7 +258,12 @@ export default function Layout({ children, currentPageName }) {
     return null;
   }
 
-  const soundcloudUrl = preferences?.soundcloud_playlist_url || '';
+  // Determine music URL based on active service
+  const activeService = preferences?.active_music_service || 'soundcloud';
+  const soundcloudUrl = activeService === 'spotify' 
+    ? (preferences?.spotify_playlist_url || '') 
+    : (preferences?.soundcloud_playlist_url || '');
+    
   const soundcloudPosition = preferences?.soundcloud_player_position || 'hidden';
 
   return (

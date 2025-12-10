@@ -1,20 +1,49 @@
 import React, { useState } from 'react';
-import { Music, ChevronDown, ChevronUp, X, Minus } from 'lucide-react';
+import { Music, ChevronDown, ChevronUp, Minus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function SoundCloudPlayer({ playlistUrl, isMenuDark, collapsed = false, onToggle }) {
+// Helper to determine service and URL
+const getEmbedDetails = (url, service) => {
+  if (!url) return null;
+
+  // Auto-detect if service not explicitly consistent or generic
+  const isSpotify = url.includes('spotify.com');
+  const isSoundCloud = url.includes('soundcloud.com');
+
+  if (isSpotify) {
+    // Convert standard Spotify URL to Embed URL
+    // e.g. https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M -> https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M
+    let embedSrc = url;
+    if (!url.includes('/embed/')) {
+      embedSrc = url.replace('open.spotify.com/', 'open.spotify.com/embed/');
+    }
+    // Remove parameters usually to be safe, though spotify handles them
+    return {
+      type: 'spotify',
+      src: embedSrc,
+      height: 152, // Standard compact spotify height
+      allow: "autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+    };
+  } else {
+    // Default to SoundCloud
+    const encodedUrl = encodeURIComponent(url);
+    const src = `https://w.soundcloud.com/player/?url=${encodedUrl}&color=%23bd84f5&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=false`;
+    return {
+      type: 'soundcloud',
+      src,
+      height: 166,
+      allow: "autoplay"
+    };
+  }
+};
+
+export default function SoundCloudPlayer({ playlistUrl, isMenuDark, collapsed = false }) {
   const [isExpanded, setIsExpanded] = useState(!collapsed);
 
   if (!playlistUrl) return null;
 
-  // Extract the playlist/track URL and create embed URL
-  const getEmbedUrl = (url) => {
-    // Handle various SoundCloud URL formats
-    const encodedUrl = encodeURIComponent(url);
-    return `https://w.soundcloud.com/player/?url=${encodedUrl}&color=%23bd84f5&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=false`;
-  };
-
-  const embedUrl = getEmbedUrl(playlistUrl);
+  const embedDetails = getEmbedDetails(playlistUrl);
+  if (!embedDetails) return null;
 
   return (
     <div className={`rounded-lg overflow-hidden ${isMenuDark ? 'bg-gray-800/50' : 'bg-gray-100'}`}>
@@ -35,7 +64,6 @@ export default function SoundCloudPlayer({ playlistUrl, isMenuDark, collapsed = 
         )}
       </button>
       
-      {/* We use standard conditional rendering here as this is in the menu and usually doesn't need background persistence when closed */}
       <AnimatePresence>
         {isExpanded && (
           <motion.div
@@ -46,12 +74,13 @@ export default function SoundCloudPlayer({ playlistUrl, isMenuDark, collapsed = 
           >
             <iframe
               width="100%"
-              height="166"
+              height={embedDetails.height}
               scrolling="no"
-              frameBorder="no"
-              allow="autoplay"
-              src={embedUrl}
+              frameBorder="0"
+              allow={embedDetails.allow}
+              src={embedDetails.src}
               className="border-0"
+              loading="lazy"
             />
           </motion.div>
         )}
@@ -65,11 +94,8 @@ export function FloatingSoundCloudPlayer({ playlistUrl, primaryColor, accentColo
   const [isOpen, setIsOpen] = useState(false);
 
   if (!playlistUrl) return null;
-
-  const getEmbedUrl = (url) => {
-    const encodedUrl = encodeURIComponent(url);
-    return `https://w.soundcloud.com/player/?url=${encodedUrl}&color=%23bd84f5&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=false`;
-  };
+  const embedDetails = getEmbedDetails(playlistUrl);
+  if (!embedDetails) return null;
 
   return (
     <>
@@ -101,15 +127,17 @@ export function FloatingSoundCloudPlayer({ playlistUrl, primaryColor, accentColo
             <Minus className="w-4 h-4" />
           </button>
         </div>
-        <iframe
-          width="100%"
-          height="300"
-          scrolling="no"
-          frameBorder="no"
-          allow="autoplay"
-          src={getEmbedUrl(playlistUrl)}
-          className="border-0"
-        />
+        <div className={embedDetails.type === 'spotify' ? 'p-2' : ''}>
+          <iframe
+            width="100%"
+            height={embedDetails.type === 'spotify' ? 380 : 300} // Taller for floating/playlist view
+            scrolling="no"
+            frameBorder="0"
+            allow={embedDetails.allow}
+            src={embedDetails.src}
+            className="border-0"
+          />
+        </div>
       </div>
     </>
   );
@@ -120,11 +148,8 @@ export function MobileSoundCloudPopup({ playlistUrl, primaryColor, accentColor }
   const [isOpen, setIsOpen] = useState(false);
 
   if (!playlistUrl) return null;
-
-  const getEmbedUrl = (url) => {
-    const encodedUrl = encodeURIComponent(url);
-    return `https://w.soundcloud.com/player/?url=${encodedUrl}&color=%23bd84f5&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=false`;
-  };
+  const embedDetails = getEmbedDetails(playlistUrl);
+  if (!embedDetails) return null;
 
   return (
     <>
@@ -175,11 +200,11 @@ export function MobileSoundCloudPopup({ playlistUrl, primaryColor, accentColor }
         <div className="p-4">
           <iframe 
             width="100%" 
-            height="166" 
+            height={embedDetails.height} 
             scrolling="no" 
-            frameBorder="no" 
-            allow="autoplay"
-            src={getEmbedUrl(playlistUrl)}
+            frameBorder="0" 
+            allow={embedDetails.allow}
+            src={embedDetails.src}
             className="rounded-lg"
           />
         </div>
