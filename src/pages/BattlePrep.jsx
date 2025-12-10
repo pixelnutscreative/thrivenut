@@ -164,6 +164,36 @@ export default function BattlePrep() {
     }
   };
 
+  const generateAlertScript = () => {
+    if (!activePlan || atRiskItems.length === 0) return '';
+    
+    const battleTime = format(parseISO(activePlan.battle_date), 'h:mm a');
+    
+    // Group by user to avoid duplicate mentions
+    const userItems = {};
+    atRiskItems.forEach(item => {
+      const contact = contacts.find(c => c.id === item.contact_id);
+      const handle = contact?.username ? `@${contact.username}` : item.contact_name;
+      
+      if (!userItems[handle]) userItems[handle] = [];
+      userItems[handle].push(`${item.quantity} ${item.type}`);
+    });
+
+    const mentions = Object.entries(userItems).map(([handle, items]) => {
+      return `${handle} (${items.join(', ')})`;
+    }).join(' ');
+
+    return `🚨 BATTLE ALERT! 🚨\n\nWe need you for the battle at ${battleTime}!\n\n${mentions}\n\nYour power-ups are expiring! Use them or lose them! ⚔️🔥`;
+  };
+
+  const [scriptCopied, setScriptCopied] = useState(false);
+  const handleCopyScript = () => {
+    const script = generateAlertScript();
+    navigator.clipboard.writeText(script);
+    setScriptCopied(true);
+    setTimeout(() => setScriptCopied(false), 2000);
+  };
+
   const getIcon = (type) => {
     switch(type) {
       case 'Glove': return <Shield className="w-4 h-4 text-blue-500" />;
@@ -410,6 +440,18 @@ export default function BattlePrep() {
                                 Reach out to these people ASAP to use them or swap!
                               </p>
                             </div>
+                          </div>
+
+                          <div className="pl-8">
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              onClick={handleCopyScript}
+                              className="bg-white border-amber-300 text-amber-800 hover:bg-amber-100 w-full justify-start"
+                            >
+                              {scriptCopied ? <CheckCircle className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+                              {scriptCopied ? 'Script Copied!' : 'Copy TikTok Shoutout Script'}
+                            </Button>
                           </div>
                           
                           <div className="grid gap-2 pl-8">
