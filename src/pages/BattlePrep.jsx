@@ -376,7 +376,7 @@ export default function BattlePrep() {
                             <SelectItem value="new">+ Create New Plan</SelectItem>
                             {battlePlans.map(plan => (
                               <SelectItem key={plan.id} value={plan.id}>
-                                VS {plan.opponent} ({plan.battle_date ? format(parseISO(plan.battle_date), 'MMM d') : 'Unscheduled'})
+                                VS {plan.opponent} ({plan.battle_date ? format(parseISO(plan.battle_date), 'MMM d h:mm a') : 'Unscheduled'})
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -391,6 +391,56 @@ export default function BattlePrep() {
                         </Button>
                       )}
                     </div>
+
+                    {/* At Risk Items Warning */}
+                    <AnimatePresence>
+                      {activeBattleId && atRiskItems.length > 0 && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-3"
+                        >
+                          <div className="flex items-start gap-3">
+                            <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5" />
+                            <div>
+                              <h4 className="font-semibold text-amber-800">At-Risk Inventory!</h4>
+                              <p className="text-sm text-amber-700">
+                                The following items will expire before the battle ends (Battle Time + 1hr buffer).
+                                Reach out to these people ASAP to use them or swap!
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <div className="grid gap-2 pl-8">
+                            {atRiskItems.map(item => (
+                              <div key={item.id} className="flex items-center justify-between bg-white/50 p-2 rounded text-sm">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-bold">{item.contact_name}</span>
+                                  <Badge variant="outline" className="border-amber-300 text-amber-800 bg-amber-50">
+                                    {item.quantity} {item.type}
+                                  </Badge>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs text-red-600 font-medium">
+                                    Expires: {format(parseISO(item.expires_at || item.acquired_date), 'MMM d h:mm a')}
+                                  </span>
+                                  <a 
+                                    href={`https://www.tiktok.com/@${item.contact_name}`}
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="p-1 hover:bg-amber-100 rounded text-amber-700"
+                                    title="Contact on TikTok"
+                                  >
+                                    <MessageCircle className="w-4 h-4" />
+                                  </a>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
 
                     {/* Plan Form */}
                     <div className="space-y-4 border-t pt-4">
