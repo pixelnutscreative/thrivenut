@@ -426,7 +426,7 @@ export default function BattlePrep() {
                                     Expires: {format(parseISO(item.expires_at || item.acquired_date), 'MMM d h:mm a')}
                                   </span>
                                   <a 
-                                    href={`https://www.tiktok.com/@${item.contact_name}`}
+                                    href={`https://www.tiktok.com/@${contacts.find(c => c.id === item.contact_id)?.username || item.contact_name}`}
                                     target="_blank" 
                                     rel="noopener noreferrer"
                                     className="p-1 hover:bg-amber-100 rounded text-amber-700"
