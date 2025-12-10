@@ -248,7 +248,7 @@ export default function Layout({ children, currentPageName }) {
   const menuBorderClass = isMenuDark ? 'border-gray-600' : 'border-gray-200';
 
   // Public/Auth Check
-  const publicPages = ['Onboarding', 'Home', 'Pricing', 'SubscriptionSuccess'];
+  const publicPages = ['Onboarding', 'Home', 'Pricing', 'SubscriptionSuccess', 'BattleInventoryShared'];
   if (publicPages.includes(currentPageName)) {
     return children;
   }

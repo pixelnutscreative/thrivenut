@@ -15,7 +15,8 @@ import {
 } from 'lucide-react';
 import QuickAddContactSelect from './QuickAddContactSelect';
 import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { format, addDays, parseISO, isAfter } from 'date-fns';
 
 // Battle inventory icons
 const battleInventoryItems = [
@@ -66,6 +67,121 @@ const defaultLiveTypes = [
   'Q&A', 'Religious', 'Sleep', 'Storytime', 'Talk Show', 'Teaching', 'Unboxing'
 ];
 
+function ContactInventoryDisplay({ contactId }) {
+  const { data: activePowerUps = [] } = useQuery({
+    queryKey: ['battlePowerUps', contactId],
+    queryFn: async () => {
+      if (!contactId) return [];
+      const items = await base44.entities.BattlePowerUp.filter({ contact_id: contactId });
+      return items.filter(item => {
+        if (item.is_used) return false;
+        const expires = addDays(parseISO(item.acquired_date), 5);
+        return isAfter(expires, new Date());
+      });
+    },
+    enabled: !!contactId
+  });
+
+  const summary = activePowerUps.reduce((acc, item) => {
+    if (!acc[item.type]) acc[item.type] = 0;
+    acc[item.type] += item.quantity;
+    return acc;
+  }, {});
+
+  if (activePowerUps.length === 0) {
+    return <div className="text-center text-xs text-red-400 py-1">No active items</div>;
+  }
+
+  const icons = {
+    'Glove': '🥊',
+    'Mist': '🌫️',
+    'Sniper': '🎯',
+    'Jet': '✈️',
+    'Sub': '🌊',
+    'Other': '❓'
+  };
+
+  return (
+    <div className="grid grid-cols-3 gap-1">
+      {Object.entries(summary).map(([type, count]) => (
+        <div key={type} className="text-center bg-white/50 rounded p-1">
+          <span className="text-xs mr-1">{icons[type] || '❓'}</span>
+          <span className="text-xs font-bold">{count}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function QuickInventoryAdd({ contactId, contactName }) {
+  const queryClient = useQueryClient();
+  const [isOpen, setIsOpen] = useState(false);
+  const [type, setType] = useState('Glove');
+  const [qty, setQty] = useState(1);
+
+  const addMutation = useMutation({
+    mutationFn: async () => {
+      await base44.entities.BattlePowerUp.create({
+        contact_id: contactId,
+        contact_name: contactName,
+        type,
+        quantity: qty,
+        acquired_date: format(new Date(), 'yyyy-MM-dd'),
+        expires_date: format(addDays(new Date(), 5), 'yyyy-MM-dd')
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['battlePowerUps'] });
+      setIsOpen(false);
+      setQty(1);
+    }
+  });
+
+  if (!contactId) return null;
+
+  return (
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <PopoverTrigger asChild>
+        <Button size="sm" variant="outline" className="h-5 text-[10px] px-2 bg-white border-red-200 text-red-600 hover:bg-red-50">
+          <Plus className="w-3 h-3 mr-1" /> Add
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-48 p-2">
+        <div className="space-y-2">
+          <h4 className="text-xs font-semibold text-gray-700">Add Power-Up</h4>
+          <Select value={type} onValueChange={setType}>
+            <SelectTrigger className="h-7 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Glove">🥊 Glove</SelectItem>
+              <SelectItem value="Mist">🌫️ Mist</SelectItem>
+              <SelectItem value="Sniper">🎯 Sniper</SelectItem>
+              <SelectItem value="Jet">✈️ Jet</SelectItem>
+              <SelectItem value="Sub">🌊 Sub</SelectItem>
+            </SelectContent>
+          </Select>
+          <Input 
+            type="number" 
+            min="1" 
+            value={qty} 
+            onChange={(e) => setQty(parseInt(e.target.value) || 1)}
+            className="h-7 text-xs" 
+          />
+          <Button 
+            size="sm" 
+            className="w-full h-7 text-xs bg-red-600 hover:bg-red-700"
+            onClick={() => addMutation.mutate()}
+            disabled={addMutation.isPending}
+          >
+            {addMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Save'}
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 export default function TikTokTabContent({ 
   formData, 
   setFormData, 
@@ -91,6 +207,21 @@ export default function TikTokTabContent({
     queryKey: ['masterTikTokContacts'],
     queryFn: () => base44.entities.TikTokContact.list('username', 5000),
     staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: activePowerUps = [] } = useQuery({
+    queryKey: ['battlePowerUps', editingContactId],
+    queryFn: async () => {
+      if (!editingContactId) return [];
+      const items = await base44.entities.BattlePowerUp.filter({ contact_id: editingContactId });
+      // Client-side filter for expiration
+      return items.filter(item => {
+        if (item.is_used) return false;
+        const expires = addDays(parseISO(item.acquired_date), 5);
+        return isAfter(expires, new Date());
+      });
+    },
+    enabled: !!editingContactId
   });
 
   const toggleRole = (role) => {
@@ -419,22 +550,15 @@ export default function TikTokTabContent({
             </div>
             
             {(formData.role?.includes('loves_to_battle') || formData.role?.includes('battle_sniper')) && (
-              <div className="p-2 bg-red-100 rounded border border-red-300 space-y-1">
-                <span className="text-[10px] font-semibold text-red-700">Inventory</span>
-                <div className="grid grid-cols-5 gap-1">
-                  {battleInventoryItems.map(item => (
-                    <div key={item.key} className="text-center">
-                      <span className="text-sm">{item.icon}</span>
-                      <Input
-                        type="number"
-                        min="0"
-                        value={formData.battle_inventory?.[item.key] || 0}
-                        onChange={(e) => updateBattleInventory(item.key, e.target.value)}
-                        className="h-6 text-[10px] text-center p-0"
-                      />
-                    </div>
-                  ))}
+              <div className="p-2 bg-red-100 rounded border border-red-300 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-semibold text-red-700">Live Inventory (Active)</span>
+                  <QuickInventoryAdd 
+                    contactId={editingContactId} 
+                    contactName={formData.display_name || formData.username} 
+                  />
                 </div>
+                <ContactInventoryDisplay contactId={editingContactId} />
               </div>
             )}
           </div>

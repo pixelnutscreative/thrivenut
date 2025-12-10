@@ -135,6 +135,17 @@ export default function BattlePrep() {
             </h1>
             <p className="text-slate-600">Manage inventory, track power-ups, and plan your victories.</p>
           </div>
+          <Button 
+            variant="outline"
+            onClick={() => {
+              const url = `${window.location.origin}/BattleInventoryShared`;
+              navigator.clipboard.writeText(url);
+              alert('Link copied! Share with your MODs.');
+            }}
+          >
+            <Shield className="w-4 h-4 mr-2" />
+            Share Inventory Link
+          </Button>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
