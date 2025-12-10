@@ -8,8 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { format, addDays, isAfter, isBefore, parseISO } from 'date-fns';
-import { Swords, Shield, Zap, Skull, Wind, Users, Plus, Calendar, Clock, Trash2, Edit2, Save, CheckCircle } from 'lucide-react';
+import { Swords, Shield, Zap, Skull, Wind, Users, Plus, Calendar, Clock, Trash2, Edit2, Save, CheckCircle, Copy, Link as LinkIcon, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function BattlePrep() {
@@ -36,6 +37,10 @@ export default function BattlePrep() {
   });
 
   const [activeBattleId, setActiveBattleId] = useState(null);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [modUsername, setModUsername] = useState('');
+  const [generatedLink, setGeneratedLink] = useState('');
+  const [shareLoading, setShareLoading] = useState(false);
 
   // Fetch Contacts for dropdown
   const { data: contacts = [] } = useQuery({
@@ -114,6 +119,24 @@ export default function BattlePrep() {
     });
   };
 
+  const handleGenerateLink = async () => {
+    if (!modUsername.trim()) return;
+    setShareLoading(true);
+    try {
+      const res = await base44.functions.invoke('sharedInventory', { 
+        action: 'create_link', 
+        mod_username: modUsername.replace('@', '').trim() 
+      });
+      const token = res.data.token;
+      const url = `${window.location.origin}/BattleInventoryShared?token=${token}`;
+      setGeneratedLink(url);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setShareLoading(false);
+    }
+  };
+
   const getIcon = (type) => {
     switch(type) {
       case 'Glove': return <Shield className="w-4 h-4 text-blue-500" />;
@@ -138,13 +161,14 @@ export default function BattlePrep() {
           <Button 
             variant="outline"
             onClick={() => {
-              const url = `${window.location.origin}/BattleInventoryShared`;
-              navigator.clipboard.writeText(url);
-              alert('Link copied! Share with your MODs.');
+              setModUsername('');
+              setGeneratedLink('');
+              setShowShareModal(true);
             }}
+            className="bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100"
           >
-            <Shield className="w-4 h-4 mr-2" />
-            Share Inventory Link
+            <Users className="w-4 h-4 mr-2" />
+            Share with Mod
           </Button>
         </div>
 
@@ -489,6 +513,69 @@ export default function BattlePrep() {
           </TabsContent>
         </Tabs>
       </div>
+
+      <Dialog open={showShareModal} onOpenChange={setShowShareModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Share Inventory Access</DialogTitle>
+            <DialogDescription>
+              Create a secure link for your Mod to manage your battle inventory.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Mod's TikTok Username</label>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">@</span>
+                  <Input 
+                    value={modUsername} 
+                    onChange={(e) => setModUsername(e.target.value)} 
+                    placeholder="username"
+                    className="pl-7"
+                  />
+                </div>
+                <Button 
+                  onClick={handleGenerateLink} 
+                  disabled={!modUsername.trim() || shareLoading}
+                  className="bg-indigo-600 hover:bg-indigo-700"
+                >
+                  {shareLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Generate'}
+                </Button>
+              </div>
+            </div>
+
+            {generatedLink && (
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-4 bg-green-50 border border-green-200 rounded-lg space-y-3"
+              >
+                <div className="flex items-center gap-2 text-green-800 font-medium">
+                  <CheckCircle className="w-4 h-4" />
+                  Link Created!
+                </div>
+                <div className="flex gap-2">
+                  <Input value={generatedLink} readOnly className="bg-white text-xs font-mono" />
+                  <Button 
+                    size="icon" 
+                    variant="outline"
+                    onClick={() => {
+                      navigator.clipboard.writeText(generatedLink);
+                      // Visual feedback could be added here
+                    }}
+                  >
+                    <Copy className="w-4 h-4" />
+                  </Button>
+                </div>
+                <p className="text-xs text-green-700">
+                  Share this unique link with @{modUsername}. They can view and update your inventory without logging in.
+                </p>
+              </motion.div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
