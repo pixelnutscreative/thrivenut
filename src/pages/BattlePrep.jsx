@@ -23,7 +23,8 @@ export default function BattlePrep() {
     contact_name: '',
     type: 'Glove',
     quantity: 1,
-    acquired_date: format(new Date(), 'yyyy-MM-dd')
+    acquired_date: format(new Date(), 'yyyy-MM-dd'),
+    acquired_time: '12:00'
   });
 
   // Battle Plan Form State
@@ -63,7 +64,14 @@ export default function BattlePrep() {
   // Filter Active Power Ups (Not Expired)
   const activePowerUps = powerUps.filter(item => {
     if (item.is_used) return false;
-    const expires = addDays(parseISO(item.acquired_date), 5);
+    // Calculate expiration based on date AND time if available
+    let expires;
+    if (item.expires_at) {
+      expires = parseISO(item.expires_at);
+    } else {
+      // Fallback for old items
+      expires = addDays(parseISO(item.acquired_date), 5);
+    }
     return isAfter(expires, new Date()); // Still valid
   });
 
@@ -76,10 +84,17 @@ export default function BattlePrep() {
 
   // Mutations
   const createItemMutation = useMutation({
-    mutationFn: (data) => base44.entities.BattlePowerUp.create({
+    mutationFn: (data) => {
+      const dateTimeString = `${data.acquired_date}T${data.acquired_time || '12:00'}:00`;
+      const acquisitionDate = new Date(dateTimeString);
+      const expirationDate = addDays(acquisitionDate, 5);
+      
+      return base44.entities.BattlePowerUp.create({
         ...data,
-        expires_date: format(addDays(parseISO(data.acquired_date), 5), 'yyyy-MM-dd')
-    }),
+        expires_at: expirationDate.toISOString(),
+        expires_date: format(expirationDate, 'yyyy-MM-dd')
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['battlePowerUps'] });
       setNewItem({ ...newItem, contact_id: '', contact_name: '', quantity: 1 });
@@ -226,11 +241,29 @@ export default function BattlePrep() {
                   </div>
                   <div className="w-full md:w-40 space-y-2">
                     <label className="text-sm font-medium">Acquired</label>
-                    <Input 
-                      type="date" 
-                      value={newItem.acquired_date} 
-                      onChange={(e) => setNewItem({...newItem, acquired_date: e.target.value})} 
-                    />
+                    <div className="flex gap-1">
+                      <Input 
+                        type="date" 
+                        value={newItem.acquired_date} 
+                        onChange={(e) => setNewItem({...newItem, acquired_date: e.target.value})} 
+                        className="w-full"
+                      />
+                    </div>
+                  </div>
+                  <div className="w-full md:w-24 space-y-2">
+                    <label className="text-sm font-medium">Time</label>
+                    <Select 
+                      value={newItem.acquired_time} 
+                      onValueChange={(v) => setNewItem({...newItem, acquired_time: v})}
+                    >
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 24 }).map((_, i) => {
+                          const hour = i.toString().padStart(2, '0');
+                          return <SelectItem key={hour} value={`${hour}:00`}>{hour}:00</SelectItem>;
+                        })}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <Button 
                     onClick={() => createItemMutation.mutate(newItem)}
@@ -252,8 +285,10 @@ export default function BattlePrep() {
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {activePowerUps.map(item => {
-                  const expires = addDays(parseISO(item.acquired_date), 5);
-                  const daysLeft = Math.ceil((expires - new Date()) / (1000 * 60 * 60 * 24));
+                  const expires = item.expires_at ? parseISO(item.expires_at) : addDays(parseISO(item.acquired_date), 5);
+                  const now = new Date();
+                  const hoursLeft = Math.max(0, Math.ceil((expires - now) / (1000 * 60 * 60)));
+                  const daysLeft = Math.ceil(hoursLeft / 24);
                   
                   return (
                     <Card key={item.id} className="border-l-4 border-l-indigo-500">
@@ -266,7 +301,7 @@ export default function BattlePrep() {
                           <div className="text-sm text-slate-500 space-y-1">
                             <p>Quantity: <span className="font-semibold text-slate-900">{item.quantity}</span></p>
                             <p className={daysLeft <= 1 ? "text-red-500 font-medium" : ""}>
-                              Expires in {daysLeft} days ({format(expires, 'MMM d')})
+                              Expires in {daysLeft > 1 ? `${daysLeft} days` : `${hoursLeft} hours`} ({format(expires, 'MMM d HH:mm')})
                             </p>
                           </div>
                         </div>
