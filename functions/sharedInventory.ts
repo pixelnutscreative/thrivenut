@@ -48,7 +48,12 @@ Deno.serve(async (req) => {
             // Filter active power ups
             const activePowerUps = powerUps.filter(item => {
                 if (item.is_used) return false;
-                const expires = addDays(parseISO(item.acquired_date), 5);
+                let expires;
+                if (item.expires_at) {
+                    expires = new Date(item.expires_at);
+                } else {
+                    expires = addDays(parseISO(item.acquired_date), 5);
+                }
                 return isAfter(expires, new Date());
             });
 

@@ -21,7 +21,8 @@ export default function BattleInventoryShared() {
     contact_name: '',
     type: 'Glove',
     quantity: 1,
-    acquired_date: format(new Date(), 'yyyy-MM-dd')
+    acquired_date: format(new Date(), 'yyyy-MM-dd'),
+    acquired_time: '12:00'
   });
 
   const [successMsg, setSuccessMsg] = useState('');
@@ -57,9 +58,14 @@ export default function BattleInventoryShared() {
     if (!token) return;
     setIsSubmitting(true);
     try {
+      const dateTimeString = `${newItem.acquired_date}T${newItem.acquired_time || '12:00'}:00`;
+      const acquisitionDate = new Date(dateTimeString);
+      const expirationDate = addDays(acquisitionDate, 5);
+
       const payload = {
         ...newItem,
-        expires_date: format(addDays(parseISO(newItem.acquired_date), 5), 'yyyy-MM-dd')
+        expires_at: expirationDate.toISOString(),
+        expires_date: format(expirationDate, 'yyyy-MM-dd')
       };
       
       const res = await base44.functions.invoke('sharedInventory', { 
@@ -177,13 +183,27 @@ export default function BattleInventoryShared() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Acquired Date</label>
-              <Input 
-                type="date" 
-                value={newItem.acquired_date} 
-                onChange={(e) => setNewItem({...newItem, acquired_date: e.target.value})} 
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Acquired Date</label>
+                <Input 
+                  type="date" 
+                  value={newItem.acquired_date} 
+                  onChange={(e) => setNewItem({...newItem, acquired_date: e.target.value})} 
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Time</label>
+                <Select value={newItem.acquired_time} onValueChange={(v) => setNewItem({...newItem, acquired_time: v})}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 24 }).map((_, i) => {
+                      const hour = i.toString().padStart(2, '0');
+                      return <SelectItem key={hour} value={`${hour}:00`}>{hour}:00</SelectItem>;
+                    })}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <AnimatePresence>
