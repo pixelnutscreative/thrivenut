@@ -9,8 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { format, addDays, isAfter, isBefore, parseISO } from 'date-fns';
-import { Swords, Shield, Zap, Skull, Wind, Users, Plus, Calendar, Clock, Trash2, Edit2, Save, CheckCircle, Copy, Link as LinkIcon, Loader2 } from 'lucide-react';
+import { format, addDays, addHours, isAfter, isBefore, parseISO } from 'date-fns';
+import { Swords, Shield, Zap, Skull, Wind, Users, Plus, Calendar, Clock, Trash2, Edit2, Save, CheckCircle, Copy, Link as LinkIcon, Loader2, AlertTriangle, MessageCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function BattlePrep() {
@@ -73,6 +73,18 @@ export default function BattlePrep() {
       expires = addDays(parseISO(item.acquired_date), 5);
     }
     return isAfter(expires, new Date()); // Still valid
+  });
+
+  // Battle Deadline Logic
+  const activePlan = activeBattleId ? battlePlans.find(p => p.id === activeBattleId) : null;
+  const battleDeadline = activePlan?.battle_date ? addHours(parseISO(activePlan.battle_date), 1) : null;
+
+  // Identify items that will expire before the battle (plus buffer)
+  const atRiskItems = activePowerUps.filter(item => {
+    if (!battleDeadline) return false;
+    const expires = item.expires_at ? parseISO(item.expires_at) : addDays(parseISO(item.acquired_date), 5);
+    // It's at risk if it expires BEFORE the battle deadline
+    return isBefore(expires, battleDeadline);
   });
 
   // Aggregated Inventory
