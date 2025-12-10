@@ -14,7 +14,9 @@ import { BookOpen, Calendar, Sparkles, Brain, Shield, ChevronDown, ChevronUp } f
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import AIReframingCard from '../components/journal/AIReframingCard';
+import EncryptionModal from '../components/journal/EncryptionModal';
 import { useTheme } from '../components/shared/useTheme';
+import CryptoJS from 'crypto-js';
 
 const moodTags = [
   { value: 'grateful', label: 'Grateful', emoji: '🙏', color: 'bg-green-100 text-green-800' },
@@ -44,13 +46,18 @@ export default function Journal() {
   const [showAIReframe, setShowAIReframe] = useState(false);
   const [expandedEntries, setExpandedEntries] = useState({});
   
+  const [showEncryptionModal, setShowEncryptionModal] = useState(false);
+  const [decryptedContent, setDecryptedContent] = useState({}); // { id: content }
+  const [unlockingId, setUnlockingId] = useState(null);
+
   const [formData, setFormData] = useState({
     date: format(new Date(), 'yyyy-MM-dd'),
     title: '',
     content: '',
     mood_tag: 'reflective',
     entry_type: 'general',
-    ai_reframe_enabled: false
+    ai_reframe_enabled: false,
+    is_encrypted: false
   });
 
   React.useEffect(() => {
@@ -107,7 +114,38 @@ export default function Journal() {
 
   const handleSubmit = () => {
     if (!formData.content.trim()) return;
-    createEntryMutation.mutate(formData);
+    
+    if (formData.is_encrypted) {
+      setShowEncryptionModal(true);
+    } else {
+      createEntryMutation.mutate(formData);
+    }
+  };
+
+  const handleEncryptionComplete = (key) => {
+    const encryptedContent = CryptoJS.AES.encrypt(formData.content, key).toString();
+    createEntryMutation.mutate({
+      ...formData,
+      content: encryptedContent,
+      is_encrypted: true
+    });
+  };
+
+  const handleUnlockEntry = (key) => {
+    try {
+      const entry = entries.find(e => e.id === unlockingId);
+      if (!entry) return;
+      
+      const bytes = CryptoJS.AES.decrypt(entry.content, key);
+      const originalText = bytes.toString(CryptoJS.enc.Utf8);
+      
+      if (!originalText) throw new Error('Invalid key');
+      
+      setDecryptedContent(prev => ({ ...prev, [unlockingId]: originalText }));
+      setUnlockingId(null);
+    } catch (e) {
+      alert('Incorrect key. Unable to decrypt.');
+    }
   };
 
   const handleSaveAISuggestions = (suggestions) => {
@@ -248,8 +286,25 @@ export default function Journal() {
                 />
               </div>
 
-              {/* AI Reframe Toggle */}
-              {preferences?.enable_ai_journaling !== false && (
+              {/* Encryption Toggle */}
+              <div className={`flex items-center justify-between p-4 ${isDark ? 'bg-slate-800' : 'bg-slate-100'} rounded-lg`}>
+                <div className="flex items-center gap-3">
+                  <Shield className={`w-5 h-5 ${isDark ? 'text-slate-400' : 'text-slate-600'}`} />
+                  <div>
+                    <Label className={`font-medium ${textClass}`}>Encrypt Entry</Label>
+                    <p className={`text-sm ${subtextClass}`}>
+                      Lock with a private key. Only you can read this.
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  checked={formData.is_encrypted}
+                  onCheckedChange={(c) => setFormData(prev => ({ ...prev, is_encrypted: c, ai_reframe_enabled: !c && prev.ai_reframe_enabled }))}
+                />
+              </div>
+
+              {/* AI Reframe Toggle (Disabled if Encrypted) */}
+              {preferences?.enable_ai_journaling !== false && !formData.is_encrypted && (
                 <div className={`flex items-center justify-between p-4 ${isDark ? 'bg-indigo-900/30' : 'bg-indigo-50'} rounded-lg`}>
                   <div className="flex items-center gap-3">
                     <Brain className={`w-5 h-5 ${isDark ? 'text-indigo-400' : 'text-indigo-600'}`} />
@@ -340,9 +395,46 @@ export default function Journal() {
                             )}
                           </div>
                         </div>
-                        <p className={`${isDark ? 'text-gray-300' : 'text-gray-700'} whitespace-pre-wrap leading-relaxed`}>
-                          {entry.content}
-                        </p>
+                        {entry.is_encrypted ? (
+                          decryptedContent[entry.id] ? (
+                            <div className="relative">
+                              <p className={`${isDark ? 'text-gray-300' : 'text-gray-700'} whitespace-pre-wrap leading-relaxed`}>
+                                {decryptedContent[entry.id]}
+                              </p>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="absolute -top-8 right-0 text-xs text-gray-400"
+                                onClick={() => setDecryptedContent(prev => {
+                                  const next = {...prev};
+                                  delete next[entry.id];
+                                  return next;
+                                })}
+                              >
+                                Lock
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center justify-center p-8 bg-gray-50/50 rounded-lg border-2 border-dashed border-gray-200">
+                              <Shield className="w-8 h-8 text-gray-400 mb-2" />
+                              <p className="text-sm text-gray-500 mb-3">This entry is encrypted.</p>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => {
+                                  setUnlockingId(entry.id);
+                                  setShowEncryptionModal(true);
+                                }}
+                              >
+                                Unlock to Read
+                              </Button>
+                            </div>
+                          )
+                        ) : (
+                          <p className={`${isDark ? 'text-gray-300' : 'text-gray-700'} whitespace-pre-wrap leading-relaxed`}>
+                            {entry.content}
+                          </p>
+                        )}
 
                         {/* Show AI suggestions if they exist */}
                         {hasAISuggestions && (
@@ -395,6 +487,17 @@ export default function Journal() {
           )}
         </div>
       </div>
+
+      <EncryptionModal 
+        isOpen={showEncryptionModal}
+        onClose={() => {
+          setShowEncryptionModal(false);
+          setUnlockingId(null);
+        }}
+        onEncrypt={handleEncryptionComplete}
+        onUnlock={handleUnlockEntry}
+        isSettingKey={!unlockingId}
+      />
     </div>
   );
 }

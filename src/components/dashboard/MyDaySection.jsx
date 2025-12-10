@@ -116,6 +116,7 @@ export default function MyDaySection({
   const [expandedSections, setExpandedSections] = useState(['morning', 'midday', 'afternoon', 'evening', 'night', 'anytime']);
   const [localViewMode, setLocalViewMode] = useState('compact'); // Default to compact
   const [skippedTasks, setSkippedTasks] = useState([]);
+  const [showAddEventModal, setShowAddEventModal] = useState(false);
   const [isReordering, setIsReordering] = useState(false);
   const [localTaskOrder, setLocalTaskOrder] = useState(preferences?.my_day_task_order || []);
   const [sleepForm, setSleepForm] = useState({ hours: '', quality: '' });
@@ -1590,6 +1591,12 @@ export default function MyDaySection({
       <TaskHistoryModal
         isOpen={showHistoryModal}
         onClose={() => setShowHistoryModal(false)}
+        userEmail={userEmail}
+      />
+
+      <AddManualEventModal
+        isOpen={showAddEventModal}
+        onClose={() => setShowAddEventModal(false)}
         userEmail={userEmail}
       />
     </div>
