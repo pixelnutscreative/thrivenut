@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { format, addDays, addHours, isAfter, isBefore, parseISO } from 'date-fns';
-import { Swords, Shield, Zap, Skull, Wind, Users, Plus, Calendar, Clock, Trash2, Edit2, Save, CheckCircle, Copy, Link as LinkIcon, Loader2, AlertTriangle, MessageCircle } from 'lucide-react';
+import { Swords, Shield, Zap, Skull, Wind, Users, Plus, Clock, Trash2, Edit2, Save, CheckCircle, Copy, Link as LinkIcon, Loader2, AlertTriangle, MessageCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function BattlePrep() {
