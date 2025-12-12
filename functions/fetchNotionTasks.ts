@@ -47,7 +47,6 @@ Deno.serve(async (req) => {
       const props = page.properties;
       
       // Extract title - Notion titles are in a specific format
-      // Try multiple approaches to find the title
       let title = 'Untitled';
       
       // First, try to find a property named "Name" or "Title" or "Task"
@@ -67,7 +66,7 @@ Deno.serve(async (req) => {
         }
       }
       
-      // Extract other common properties
+      // Extract other properties to check for rich_text "Title" field
       const extractProperty = (prop) => {
         if (!prop) return null;
         switch (prop.type) {
@@ -90,6 +89,18 @@ Deno.serve(async (req) => {
           simplifiedProps[key] = extractProperty(value);
         }
       }
+      
+      // If title is still a task ID (like T045), try to get it from properties.Title
+      if (title.match(/^T\d+$/) && simplifiedProps['Title']) {
+        title = simplifiedProps['Title'];
+      }
+      
+      // Also try "Original Task" as fallback
+      if (title.match(/^T\d+$/) && simplifiedProps['Original Task']) {
+        title = simplifiedProps['Original Task'];
+      }
+      
+
       
       // Handle category - could be string or array
       let category = simplifiedProps['Category'] || simplifiedProps['category'] || null;
