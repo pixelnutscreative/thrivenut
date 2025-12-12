@@ -1384,10 +1384,87 @@ export default function MyDaySection({
     <Card className="shadow-lg border-0 bg-gradient-to-br from-teal-400 via-blue-400 to-purple-500">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
-            <CardTitle className="flex items-center gap-2 text-white">
-              <Sun className="w-6 h-6" />
-              My Day
-            </CardTitle>
+          <CardTitle className="flex items-center gap-2 text-white">
+            <Sun className="w-6 h-6" />
+            My Day
+          </CardTitle>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button 
+              variant="ghost"
+              size="sm" 
+              onClick={() => setLocalViewMode('compact')} 
+              className="h-7 text-xs text-white hover:bg-white/20"
+            >
+              <Grid3X3 className="w-3 h-3 mr-1" /> Compact
+            </Button>
+            {preferences?.google_calendar_connected && onToggleGoogleCalendar && (
+              <button
+                onClick={() => onToggleGoogleCalendar(!showGoogleCalendar)}
+                className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors ${
+                  showGoogleCalendar ? 'bg-white/30 text-white' : 'bg-white/10 text-white/70'
+                }`}
+                title="Toggle Your Google Calendar"
+              >
+                <Calendar className="w-3 h-3" />
+                {showGoogleCalendar ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+              </button>
+            )}
+            <a
+              href="https://pixelnutscreative.com/calendar"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 px-2 py-1 rounded text-xs bg-white/20 text-white hover:bg-white/30 transition-colors"
+              title="Subscribe to Pixel Nuts Events"
+            >
+              <CalendarDays className="w-3 h-3" />
+              <span>Pixel Events</span>
+            </a>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowAddEventModal(true)}
+              className="text-white hover:bg-white/20 h-7 text-xs"
+            >
+              <Plus className="w-3 h-3 mr-1" /> Add Event
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setShowHistoryModal(true)} 
+              className="h-7 text-xs text-white hover:bg-white/20"
+              title="View task history"
+            >
+              <History className="w-3 h-3" />
+            </Button>
+            <Button 
+              variant="ghost"
+              size="sm" 
+              onClick={() => setLayoutMode(layoutMode === 'two-column' ? 'single' : 'two-column')} 
+              className="h-7 text-xs text-white hover:bg-white/20"
+            >
+              <Columns className="w-3 h-3 mr-1" /> {layoutMode === 'two-column' ? '2-Col' : '1-Col'}
+            </Button>
+            {isReordering ? (
+              <Button size="sm" onClick={saveTaskOrder} className="bg-white text-teal-600 hover:bg-white/90 h-7 text-xs">
+                <Check className="w-3 h-3 mr-1" /> Done
+              </Button>
+            ) : (
+              <Button variant="ghost" size="sm" onClick={() => {
+                setLocalTaskOrder(allTasks.map(t => t.id));
+                setIsReordering(true);
+              }} className="h-7 text-xs text-white hover:bg-white/20">
+                <GripVertical className="w-3 h-3 mr-1" /> Reorder
+              </Button>
+            )}
+            <Badge 
+              className="bg-white/20 text-white border-white/30"
+            >
+              {completedCount}/{totalCount} • {progressPercent}%
+            </Badge>
+          </div>
+        </div>
+
+        <CompactGoalsScroll userEmail={preferences?.user_email} />
             <div className="flex items-center gap-2 flex-wrap">
               <Button 
                 variant="ghost"
