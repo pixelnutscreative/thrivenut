@@ -18,6 +18,7 @@ import SpecialEventsCard from '../components/dashboard/SpecialEventsCard';
 import SubscribedEventsSection from '../components/dashboard/SubscribedEventsSection';
 import NotionTaskPicker from '../components/dashboard/NotionTaskPicker';
 import UrgentEventsCard from '../components/dashboard/UrgentEventsCard';
+import CalendarIntegrationCard from '../components/dashboard/CalendarIntegrationCard';
 import { format, startOfWeek, addDays } from 'date-fns';
 import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
 import { useTheme } from '../components/shared/useTheme';
@@ -254,6 +255,16 @@ export default function Dashboard() {
 
         {/* Urgent Events - Battles, Training, Important Events */}
         <UrgentEventsCard events={urgentEvents} publicCalendarEvents={todaysPublicEvents} />
+
+        {/* Calendar Integration - Google Calendar & Pixel Nuts Events */}
+        {(!preferences?.google_calendar_connected) && (
+          <CalendarIntegrationCard 
+            onConnectGoogleCalendar={async () => {
+              // Handle Google Calendar connection
+              window.location.href = createPageUrl('Settings') + '?section=google_calendar';
+            }}
+          />
+        )}
 
         {/* Special Events - Birthdays & Sobriety Anniversaries from Contacts */}
         <SpecialEventsCard contacts={tiktokContacts} />
