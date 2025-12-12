@@ -51,7 +51,8 @@ const bibleVersions = [
   { id: 'NLT', name: 'NLT (New Living Translation)' },
   { id: 'NASB', name: 'NASB (New American Standard)' },
   { id: 'KJV', name: 'KJV (King James Version)' },
-  { id: 'AMP', name: 'AMP (Amplified Bible)' }
+  { id: 'AMP', name: 'AMP (Amplified Bible)' },
+  { id: 'custom', name: 'Custom Translation' }
 ];
 
 export default function Settings() {
@@ -639,6 +640,14 @@ export default function Settings() {
                           {bibleVersions.map(v => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}
                         </SelectContent>
                       </Select>
+                      {prefData.bible_version === 'custom' && (
+                        <Input
+                          placeholder="Enter your Bible translation name (e.g., 'The Message')"
+                          value={prefData.custom_bible_translation || ''}
+                          onChange={(e) => setPrefData({ ...prefData, custom_bible_translation: e.target.value })}
+                          className="mt-2"
+                        />
+                      )}
                       <p className="text-xs text-gray-500">Only accurate, approved translations available.</p>
                     </div>
 
@@ -646,10 +655,17 @@ export default function Settings() {
                       <div className="space-y-4">
                         <h4 className="font-medium">Daily Habits</h4>
                         <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                          <span>Bible Reading</span>
+                          <span>Morning Bible Reading</span>
                           <Switch 
-                            checked={prefData.enable_daily_reading !== false}
-                            onCheckedChange={(checked) => setPrefData({ ...prefData, enable_daily_reading: checked })}
+                            checked={prefData.enable_morning_reading !== false}
+                            onCheckedChange={(checked) => setPrefData({ ...prefData, enable_morning_reading: checked })}
+                          />
+                        </div>
+                        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <span>Night Bible Reading</span>
+                          <Switch 
+                            checked={prefData.enable_night_reading}
+                            onCheckedChange={(checked) => setPrefData({ ...prefData, enable_night_reading: checked })}
                           />
                         </div>
                         <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
@@ -669,8 +685,8 @@ export default function Settings() {
                       </div>
 
                       <div className="space-y-4">
-                        <h4 className="font-medium">Reading Plans</h4>
-                        <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-xl">
+                        <h4 className="font-medium">Reading Plans & Audio</h4>
+                        <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-xl space-y-2">
                           <p className="text-sm text-indigo-800 mb-3">
                             Follow a structured reading plan on Bible.com (YouVersion) to stay on track.
                           </p>
@@ -682,6 +698,20 @@ export default function Settings() {
                           >
                             <BookOpen className="w-4 h-4 mr-2" />
                             Browse Reading Plans
+                          </a>
+                        </div>
+                        <div className="p-4 bg-purple-50 border border-purple-100 rounded-xl">
+                          <p className="text-sm text-purple-800 mb-3">
+                            Listen to the Bible being read aloud
+                          </p>
+                          <a 
+                            href="https://www.bible.com/audio-bible" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm font-medium transition-colors"
+                          >
+                            <BookOpen className="w-4 h-4 mr-2" />
+                            Listen to Audio Bible
                           </a>
                         </div>
                       </div>
