@@ -1087,8 +1087,7 @@ export default function MyDaySection({
                 );
               })}
             </div>
-          </div>
-        </CardContent>
+          </CardContent>
         </Card>
 
         {/* Compact Detail Modal */}
@@ -1192,9 +1191,8 @@ export default function MyDaySection({
   const scheduledTasks = allTasks.filter(t => t.timeOfDay !== 'anytime');
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-      {/* Main task card - takes 3 columns on large screens */}
-      <Card className="shadow-lg border-0 bg-gradient-to-br from-teal-400 via-blue-400 to-purple-500 lg:col-span-3">
+    <>
+      <Card className="shadow-lg border-0 bg-gradient-to-br from-teal-400 via-blue-400 to-purple-500">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
             <CardTitle className="flex items-center gap-2 text-white">
@@ -1283,7 +1281,6 @@ export default function MyDaySection({
 
           {/* Compact Goals Scroll */}
           <CompactGoalsScroll userEmail={preferences?.user_email} />
-          
         </CardHeader>
         <CardContent className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl">
           {/* Progress bar */}
@@ -1341,9 +1338,44 @@ export default function MyDaySection({
               </div>
             </Link>
           )}
-        
-          <div className="flex flex-wrap gap-2">
-        {manualEvents.length > 0 && (
+        </CardContent>
+      </Card>
+      
+      {/* Motivation sidebar - takes 1 column on large screens */}
+      <div className="lg:col-span-1">
+        <DailyMotivationSidebar
+          greetingType={preferences?.greeting_type}
+          userName={preferences?.user_email?.split('@')[0] || 'Friend'}
+          struggles={preferences?.mental_health_struggles || []}
+          improvements={preferences?.improvement_goals || []}
+          isBibleBeliever={preferences?.is_bible_believer}
+        />
+      </div>
+
+      {/* Carryover Tasks Modal */}
+      <CarryoverTasksModal
+        isOpen={showCarryoverModal}
+        onClose={() => setShowCarryoverModal(false)}
+        carryoverTasks={carryoverTasks}
+        userEmail={userEmail}
+      />
+
+      {/* Task History Modal */}
+      <TaskHistoryModal
+        isOpen={showHistoryModal}
+        onClose={() => setShowHistoryModal(false)}
+        userEmail={userEmail}
+      />
+
+      <AddManualEventModal
+        isOpen={showAddEventModal}
+        onClose={() => setShowAddEventModal(false)}
+        userEmail={userEmail}
+      />
+    </div>
+  );
+}
+
           <div className="mb-6 space-y-3">
             <h3 className="text-sm font-bold text-amber-700 uppercase tracking-wider flex items-center gap-2">
               <AlertTriangle className="w-4 h-4" />
@@ -1782,17 +1814,6 @@ export default function MyDaySection({
         )}
       </CardContent>
     </Card>
-      
-      {/* Motivation sidebar - takes 1 column on large screens */}
-      <div className="lg:col-span-1">
-        <DailyMotivationSidebar
-          greetingType={preferences?.greeting_type}
-          userName={preferences?.user_email?.split('@')[0] || 'Friend'}
-          struggles={preferences?.mental_health_struggles || []}
-          improvements={preferences?.improvement_goals || []}
-          isBibleBeliever={preferences?.is_bible_believer}
-        />
-      </div>
 
       {/* Carryover Tasks Modal */}
       <CarryoverTasksModal
@@ -1814,6 +1835,6 @@ export default function MyDaySection({
         onClose={() => setShowAddEventModal(false)}
         userEmail={userEmail}
       />
-    </div>
+    </>
   );
 }
