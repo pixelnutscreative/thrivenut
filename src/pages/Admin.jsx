@@ -21,6 +21,7 @@ import DuplicateContactMerger from '../components/admin/DuplicateContactMerger';
 import AdminPreApprovedEmailsContent from '../components/admin/AdminPreApprovedEmailsContent';
 import AdminMenuContent from '../components/admin/AdminMenuContent';
 import AdminPixelsPlaceContent from '../components/admin/AdminPixelsPlaceContent';
+import AdminAIToolsContent from '../components/admin/AdminAIToolsContent';
 
 const ADMIN_EMAILS = ['pixelnutscreative@gmail.com', 'pixel@thrivenut.app'];
 
@@ -142,6 +143,10 @@ export default function Admin() {
                   <Sparkles className="w-4 h-4" />
                   <span className="hidden sm:inline">Pixel's Place</span>
                 </TabsTrigger>
+                <TabsTrigger value="aitools" className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4" />
+                  <span className="hidden sm:inline">AI Tools</span>
+                </TabsTrigger>
                 <TabsTrigger value="settings" className="flex items-center gap-2">
                   <Settings className="w-4 h-4" />
                   <span className="hidden sm:inline">Settings</span>
@@ -204,6 +209,10 @@ export default function Admin() {
 
           <TabsContent value="pixelsplace" className="mt-6">
             <AdminPixelsPlaceContent />
+          </TabsContent>
+
+          <TabsContent value="aitools" className="mt-6">
+            <AdminAIToolsContent />
           </TabsContent>
 
           <TabsContent value="settings" className="mt-6">

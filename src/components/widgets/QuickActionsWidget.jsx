@@ -250,10 +250,18 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
   // Get all visible actions (built-in + custom) - no limit
   const getVisibleActions = () => {
     const actions = [];
+    const overrides = preferences?.action_overrides || {};
+    
     quickActions.forEach(id => {
       const builtIn = builtInActions.find(a => a.id === id);
       if (builtIn) {
-        actions.push(builtIn);
+        // Apply overrides for label and color
+        const override = overrides[id] || {};
+        actions.push({
+          ...builtIn,
+          label: override.label || builtIn.label,
+          color: override.color || builtIn.color
+        });
       } else {
         const custom = customActions.find(a => a.id === id);
         if (custom) {
