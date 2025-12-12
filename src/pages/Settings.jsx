@@ -186,36 +186,14 @@ export default function Settings() {
     },
   });
 
-  // Auto-save with debounce
-  const debouncedSavePrefs = useCallback(
-    debounce((data) => {
-      if (preferences || Object.keys(data).length > 1) {
-        updatePreferencesMutation.mutate(data);
-      }
-    }, 1500),
-    [preferences]
-  );
-
-  const debouncedSaveProfile = useCallback(
-    debounce((data) => {
-      if (userProfile || Object.keys(data).length > 1) {
-        updateUserProfileMutation.mutate(data);
-      }
-    }, 1500),
-    [userProfile]
-  );
-
-  useEffect(() => {
-    if (Object.keys(prefData).length > 0 && preferences) {
-      debouncedSavePrefs(prefData);
+  const handleSave = () => {
+    if (Object.keys(prefData).length > 0) {
+      updatePreferencesMutation.mutate(prefData);
     }
-  }, [prefData]);
-
-  useEffect(() => {
-    if (Object.keys(profileData).length > 1 && userProfile) {
-      debouncedSaveProfile(profileData);
+    if (Object.keys(profileData).length > 1) {
+      updateUserProfileMutation.mutate(profileData);
     }
-  }, [profileData]);
+  };
 
   const updateProfileNested = (category, field, value) => {
     setProfileData(prev => ({
@@ -295,23 +273,36 @@ export default function Settings() {
           </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); navigate(`#${v}`); }} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-9 mb-6">
-            <TabsTrigger value="profile"><User className="w-4 h-4 mr-2 hidden sm:block" />Profile</TabsTrigger>
-            <TabsTrigger value="social"><Share2 className="w-4 h-4 mr-2 hidden sm:block" />Social</TabsTrigger>
-            <TabsTrigger value="appearance"><Palette className="w-4 h-4 mr-2 hidden sm:block" />Theme</TabsTrigger>
-            <TabsTrigger value="features"><Layers className="w-4 h-4 mr-2 hidden sm:block" />Features</TabsTrigger>
-            <TabsTrigger value="dashboard"><Sparkles className="w-4 h-4 mr-2 hidden sm:block" />Dashboard</TabsTrigger>
-            <TabsTrigger value="preferences"><MessageSquare className="w-4 h-4 mr-2 hidden sm:block" />Prefs</TabsTrigger>
-            <TabsTrigger value="connections"><Zap className="w-4 h-4 mr-2 hidden sm:block" />Connect</TabsTrigger>
-            <TabsTrigger value="widgets"><Zap className="w-4 h-4 mr-2 hidden sm:block" />Widgets</TabsTrigger>
-            <TabsTrigger value="bible"><BookOpen className="w-4 h-4 mr-2 hidden sm:block" />Bible</TabsTrigger>
+        <Tabs value={activeTab} onValueChange={(v) => { 
+          handleSave(); 
+          setActiveTab(v); 
+          navigate(`#${v}`); 
+        }} className="w-full">
+          <TabsList className="flex flex-wrap gap-1 mb-6 bg-transparent justify-start">
+            <TabsTrigger value="profile" title="Profile"><User className="w-4 h-4" /></TabsTrigger>
+            <TabsTrigger value="social" title="Social Links"><Share2 className="w-4 h-4" /></TabsTrigger>
+            <TabsTrigger value="appearance" title="Theme & Colors"><Palette className="w-4 h-4" /></TabsTrigger>
+            <TabsTrigger value="features" title="Features"><Layers className="w-4 h-4" /></TabsTrigger>
+            <TabsTrigger value="dashboard" title="Dashboard Setup"><Sparkles className="w-4 h-4" /></TabsTrigger>
+            <TabsTrigger value="preferences" title="Preferences"><MessageSquare className="w-4 h-4" /></TabsTrigger>
+            <TabsTrigger value="connections" title="AI Connections"><Zap className="w-4 h-4" /></TabsTrigger>
+            <TabsTrigger value="widgets" title="Widgets"><Zap className="w-4 h-4" /></TabsTrigger>
+            <TabsTrigger value="bible" title="Bible Settings"><BookOpen className="w-4 h-4" /></TabsTrigger>
           </TabsList>
 
           {/* PROFILE TAB */}
           <TabsContent value="profile">
             <Card>
-              <CardContent className="space-y-6 pt-6">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle>Profile</CardTitle>
+                  <Button onClick={handleSave} disabled={updatePreferencesMutation.isPending || updateUserProfileMutation.isPending}>
+                    <Save className="w-4 h-4 mr-2" />
+                    {updatePreferencesMutation.isPending || updateUserProfileMutation.isPending ? 'Saving...' : 'Save'}
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
                 <div className="flex gap-4">
                   <div className="flex-shrink-0">
                     <ImageUploader
@@ -462,7 +453,16 @@ export default function Settings() {
           {/* SOCIAL TAB */}
           <TabsContent value="social">
             <Card>
-              <CardContent className="pt-6 space-y-6">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle>Social Media</CardTitle>
+                  <Button onClick={handleSave} disabled={updatePreferencesMutation.isPending || updateUserProfileMutation.isPending}>
+                    <Save className="w-4 h-4 mr-2" />
+                    {updatePreferencesMutation.isPending || updateUserProfileMutation.isPending ? 'Saving...' : 'Save'}
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
                 <div className="flex items-center justify-between mb-2">
                   <Label className="text-base font-semibold">Social Media Profiles</Label>
                   <div className="flex items-center gap-2">
@@ -517,16 +517,44 @@ export default function Settings() {
 
           {/* APPEARANCE TAB */}
           <TabsContent value="appearance">
-            <Card><CardContent className="pt-6"><ThemeSelector themeData={prefData} onChange={(data) => setPrefData({ ...prefData, ...data })} /></CardContent></Card>
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle>Theme & Colors</CardTitle>
+                  <Button onClick={handleSave} disabled={updatePreferencesMutation.isPending}>
+                    <Save className="w-4 h-4 mr-2" />
+                    {updatePreferencesMutation.isPending ? 'Saving...' : 'Save'}
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent><ThemeSelector themeData={prefData} onChange={(data) => setPrefData({ ...prefData, ...data })} /></CardContent>
+            </Card>
           </TabsContent>
 
           {/* FEATURES TAB */}
           <TabsContent value="features">
-            <Card><CardContent className="pt-6"><FeatureOrderManager enabledModules={prefData.enabled_modules} onChange={(updates) => setPrefData({ ...prefData, ...updates })} /></CardContent></Card>
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle>Features</CardTitle>
+                  <Button onClick={handleSave} disabled={updatePreferencesMutation.isPending}>
+                    <Save className="w-4 h-4 mr-2" />
+                    {updatePreferencesMutation.isPending ? 'Saving...' : 'Save'}
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent><FeatureOrderManager enabledModules={prefData.enabled_modules} onChange={(updates) => setPrefData({ ...prefData, ...updates })} /></CardContent>
+            </Card>
           </TabsContent>
 
           {/* DASHBOARD TAB */}
           <TabsContent value="dashboard">
+            <div className="flex justify-end mb-4">
+              <Button onClick={handleSave} disabled={updatePreferencesMutation.isPending}>
+                <Save className="w-4 h-4 mr-2" />
+                {updatePreferencesMutation.isPending ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </div>
             <Card className="mb-4">
               <CardHeader>
                 <CardTitle className="text-base">Daily Greeting Types</CardTitle>
@@ -566,6 +594,12 @@ export default function Settings() {
 
           {/* PREFERENCES TAB */}
           <TabsContent value="preferences">
+            <div className="flex justify-end mb-4">
+              <Button onClick={handleSave} disabled={updatePreferencesMutation.isPending}>
+                <Save className="w-4 h-4 mr-2" />
+                {updatePreferencesMutation.isPending ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </div>
             <Card className="mb-4">
               <CardContent className="pt-6">
                 <Label className="mb-2 block">Timezone</Label>
@@ -594,6 +628,12 @@ export default function Settings() {
 
           {/* CONNECTIONS TAB */}
           <TabsContent value="connections" id="connections">
+            <div className="flex justify-end mb-4">
+              <Button onClick={handleSave} disabled={updatePreferencesMutation.isPending}>
+                <Save className="w-4 h-4 mr-2" />
+                {updatePreferencesMutation.isPending ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </div>
             <Card>
               <CardHeader>
                 <CardTitle>AI Platform Connection</CardTitle>
@@ -666,6 +706,12 @@ export default function Settings() {
 
           {/* WIDGETS TAB */}
           <TabsContent value="widgets" id="widgets">
+            <div className="flex justify-end mb-4">
+              <Button onClick={handleSave} disabled={updatePreferencesMutation.isPending}>
+                <Save className="w-4 h-4 mr-2" />
+                {updatePreferencesMutation.isPending ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </div>
             <div className="space-y-4">
               <QuickActionsSettings formData={prefData} setFormData={setPrefData} />
               <MoodEmojiSettings formData={prefData} setFormData={setPrefData} />
@@ -675,6 +721,12 @@ export default function Settings() {
 
           {/* BIBLE TAB */}
           <TabsContent value="bible">
+            <div className="flex justify-end mb-4">
+              <Button onClick={handleSave} disabled={updatePreferencesMutation.isPending}>
+                <Save className="w-4 h-4 mr-2" />
+                {updatePreferencesMutation.isPending ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </div>
             <Card>
               <CardContent className="pt-6 space-y-6">
                 <div className="flex items-center justify-between">
@@ -778,7 +830,7 @@ export default function Settings() {
           </TabsContent>
         </Tabs>
 
-        <p className="text-xs text-center text-gray-500 mt-6">Changes auto-save as you type</p>
+
       </div>
     </div>
   );

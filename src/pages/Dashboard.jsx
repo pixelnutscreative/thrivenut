@@ -264,6 +264,15 @@ export default function Dashboard() {
           motivationTone={preferences?.motivation_tone || 'uplifting'}
         />
 
+        {/* Active Goals Section */}
+        <DashboardGoalsSection userEmail={effectiveEmail} />
+
+        {/* Tasks Section */}
+        <DashboardTasksSection 
+          userEmail={effectiveEmail} 
+          viewMode={preferences?.dashboard_view_mode || 'detailed'}
+        />
+
         {/* Urgent Events - Battles, Training, Important Events */}
         <UrgentEventsCard 
           events={urgentEvents} 
