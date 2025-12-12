@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Plus } from 'lucide-react';
 import { 
   Zap, Droplet, Smile, Utensils, Lightbulb, Cloud, StickyNote, 
-  X, Check, Settings, Music, Heart, Home, Link, ExternalLink, GripHorizontal, BookOpen, Loader2, ChevronDown, ChevronRight, ChevronLeft, Calendar as CalendarIcon, CheckCircle
+  X, Check, Settings, Music, Heart, Home, Link, ExternalLink, GripHorizontal, BookOpen, Loader2, ChevronDown, ChevronRight, ChevronLeft, Calendar as CalendarIcon, CheckCircle, Sun, Sunrise, Sunset
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
@@ -87,6 +87,7 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
       return logs[0] || null;
     },
     enabled: !!userEmail,
+    refetchInterval: 10000, // Refetch every 10 seconds
   });
 
   const { data: todaysMoodLogs = [] } = useQuery({
@@ -95,6 +96,7 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
       return await base44.entities.MoodLog.filter({ date: today, created_by: userEmail });
     },
     enabled: !!userEmail,
+    refetchInterval: 10000,
   });
 
   const { data: todaysNotes = [] } = useQuery({
@@ -103,6 +105,7 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
       return await base44.entities.QuickNote.filter({ date: today, created_by: userEmail });
     },
     enabled: !!userEmail,
+    refetchInterval: 10000,
   });
 
   // Calculate counts by type
@@ -426,15 +429,23 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
         >
           {visibleActions.map((action) => {
             const Icon = action.icon;
-            
+
             // Get count/display data for this action
             let displayContent = null;
             let showIcon = true;
-            
+            let mealTimeIcon = null;
+
             if (action.id === 'water') {
               const waterCount = todaysWater?.glasses || 0;
               if (waterCount > 0) {
-                displayContent = waterCount;
+                displayContent = (
+                  <div className="relative">
+                    <Droplet className="w-4 h-4 text-white fill-white" />
+                    <span className="absolute -top-1 -right-1 text-[10px] font-bold text-white bg-blue-600 rounded-full w-3 h-3 flex items-center justify-center">
+                      {waterCount}
+                    </span>
+                  </div>
+                );
                 showIcon = false;
               }
             } else if (action.id === 'mood') {
@@ -442,6 +453,39 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
                 const moodEmoji = allMoodOptions.find(m => m.value === latestMood.mood)?.emoji || '😊';
                 displayContent = moodEmoji;
                 showIcon = false;
+              }
+            } else if (action.id === 'food') {
+              // Determine meal time based on current hour and what's been logged
+              const now = new Date();
+              const hour = now.getHours();
+              const foodNotes = todaysNotes.filter(n => n.type === 'food');
+
+              // Meal time logic: breakfast (5-11), lunch (11-16), dinner (16-23)
+              let currentMeal = 'breakfast';
+              if (hour >= 11 && hour < 16) currentMeal = 'lunch';
+              else if (hour >= 16) currentMeal = 'dinner';
+
+              // Check if current meal already logged
+              const mealLogged = foodNotes.some(note => {
+                const noteTime = new Date(note.created_date).getHours();
+                if (currentMeal === 'breakfast' && noteTime >= 5 && noteTime < 11) return true;
+                if (currentMeal === 'lunch' && noteTime >= 11 && noteTime < 16) return true;
+                if (currentMeal === 'dinner' && noteTime >= 16) return true;
+                return false;
+              });
+
+              if (mealLogged) {
+                displayContent = foodNotes.length;
+                showIcon = false;
+              } else {
+                // Show meal time indicator
+                if (currentMeal === 'breakfast') {
+                  mealTimeIcon = <Sunrise className="absolute inset-0 w-9 h-9 text-orange-300 opacity-30" />;
+                } else if (currentMeal === 'lunch') {
+                  mealTimeIcon = <Sun className="absolute inset-0 w-9 h-9 text-yellow-300 opacity-30" />;
+                } else {
+                  mealTimeIcon = <Sunset className="absolute inset-0 w-9 h-9 text-purple-300 opacity-30" />;
+                }
               }
             } else if (noteCounts[action.id] > 0) {
               displayContent = noteCounts[action.id];
@@ -482,15 +526,16 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
               <motion.button
                 key={action.id}
                 onClick={() => handleAction(action.id)}
-                className={`w-9 h-9 flex-shrink-0 rounded-full ${action.color} flex items-center justify-center text-white hover:opacity-90 transition-all relative`}
+                className={`w-9 h-9 flex-shrink-0 rounded-full ${action.color} flex items-center justify-center text-white hover:opacity-90 transition-all relative overflow-hidden`}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
                 title={action.label}
               >
+                {mealTimeIcon}
                 {showIcon ? (
-                  <Icon className="w-4 h-4" />
+                  <Icon className="w-4 h-4 relative z-10" />
                 ) : (
-                  <span className="text-lg font-bold">
+                  <span className="text-lg font-bold relative z-10">
                     {displayContent}
                   </span>
                 )}
@@ -498,7 +543,7 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="absolute inset-0 bg-green-500 rounded-full flex items-center justify-center"
+                    className="absolute inset-0 bg-green-500 rounded-full flex items-center justify-center z-20"
                   >
                     <Check className="w-4 h-4 text-white" />
                   </motion.div>
@@ -538,13 +583,13 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
         </RouterLink>
 
         {/* Settings */}
-        <RouterLink
-          to={`${createPageUrl('Settings')}?section=widgets`}
+        <button
+          onClick={() => window.location.href = `${createPageUrl('Settings')}#widgets`}
           className="p-1.5 hover:bg-white/10 rounded-full transition-colors"
           title="Widget Settings"
         >
           <Settings className="w-4 h-4 text-gray-300 hover:text-white" />
-        </RouterLink>
+        </button>
         </div>
 
         {/* SoundCloud Player - Removed from here, use dedicated player setting */}

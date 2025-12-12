@@ -12,6 +12,7 @@ import {
   Music, Link, Home, Check as CheckCircle, Calendar as CalendarIcon
 } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import { useTheme } from '../shared/useTheme';
 
 const builtInActions = [
   { id: 'mood', label: 'Mood', icon: 'Smile', color: 'bg-pink-500' },
@@ -50,6 +51,7 @@ export default function QuickActionsSettings({ formData, setFormData }) {
   const [showAddCustom, setShowAddCustom] = useState(false);
   const [newAction, setNewAction] = useState({ label: '', icon: 'Home', page: '', external_url: '', color: 'bg-teal-500' });
   const [editingAction, setEditingAction] = useState(null);
+  const { primaryColor, accentColor } = useTheme();
 
   const quickActions = formData.quick_actions || ['mood', 'water', 'food', 'note'];
   const customActions = formData.custom_quick_actions || [];
@@ -96,6 +98,16 @@ export default function QuickActionsSettings({ formData, setFormData }) {
     setEditingAction(null);
   };
 
+  const handleDragEnd = (result) => {
+    if (!result.destination) return;
+    
+    const items = Array.from(quickActions);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+    
+    setFormData({ ...formData, quick_actions: items });
+  };
+
   const getIconComponent = (iconName) => {
     const icons = { Smile, Droplet, Utensils, Lightbulb, Cloud, StickyNote, Heart, Home, Music, Zap, Link, ExternalLink, Check: CheckCircle, Calendar: CalendarIcon };
     return icons[iconName] || Zap;
@@ -103,11 +115,64 @@ export default function QuickActionsSettings({ formData, setFormData }) {
 
   return (
     <div className="space-y-6">
+      {/* Reorder Actions */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Quick Actions Order</CardTitle>
+          <CardDescription>Drag to reorder your quick action buttons</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <Droppable droppableId="quick-actions">
+              {(provided) => (
+                <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-2">
+                  {quickActions.map((actionId, index) => {
+                    const builtIn = builtInActions.find(a => a.id === actionId);
+                    const custom = customActions.find(a => a.id === actionId);
+                    const action = builtIn || custom;
+                    if (!action) return null;
+                    
+                    const Icon = getIconComponent(action.icon);
+                    
+                    return (
+                      <Draggable key={actionId} draggableId={actionId} index={index}>
+                        {(provided, snapshot) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-all ${
+                              snapshot.isDragging 
+                                ? 'border-purple-400 shadow-lg bg-white' 
+                                : 'border-gray-200 bg-gray-50 hover:border-purple-300'
+                            }`}
+                          >
+                            <GripVertical className="w-4 h-4 text-gray-400" />
+                            <div className={`w-8 h-8 rounded-lg ${action.color} flex items-center justify-center`}>
+                              <Icon className="w-4 h-4 text-white" />
+                            </div>
+                            <span className="font-medium flex-1">{action.label}</span>
+                            {custom && (
+                              <span className="text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded">Custom</span>
+                            )}
+                          </div>
+                        )}
+                      </Draggable>
+                    );
+                  })}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </DragDropContext>
+        </CardContent>
+      </Card>
+
       {/* Built-in Actions */}
       <Card>
         <CardHeader>
           <CardTitle>Built-in Quick Actions</CardTitle>
-          <CardDescription>Toggle up to 7 actions for your quick bar</CardDescription>
+          <CardDescription>Toggle actions to add/remove from your bar</CardDescription>
         </CardHeader>
         <CardContent className="space-y-2">
           {builtInActions.map(action => {
