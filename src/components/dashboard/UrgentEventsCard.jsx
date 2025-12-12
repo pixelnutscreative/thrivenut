@@ -3,9 +3,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { AlertTriangle, Calendar, Clock, ExternalLink, Swords, Video, Users, GraduationCap, Zap, Settings } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AlertTriangle, Calendar, Clock, ExternalLink, Swords, Video, Users, GraduationCap, Zap, Settings, Edit } from 'lucide-react';
 import { format, parseISO, isToday, isTomorrow } from 'date-fns';
 import { motion } from 'framer-motion';
+import { base44 } from '@/api/base44Client';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 const platformIcons = {
   TikTok: Video,
@@ -63,14 +69,32 @@ const colorSchemes = {
   }
 };
 
-export default function UrgentEventsCard({ events, publicCalendarEvents, alertColor = 'red', onColorChange }) {
+export default function UrgentEventsCard({ events, publicCalendarEvents, alertColor = 'red', onColorChange, userEmail }) {
+  const queryClient = useQueryClient();
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [customColor, setCustomColor] = useState({ type: 'solid', solid: '#ef4444', gradientStart: '#ef4444', gradientEnd: '#dc2626' });
   const [editingEvent, setEditingEvent] = useState(null);
   
   if (!events || events.length === 0) return null;
 
-  const colors = colorSchemes[alertColor] || colorSchemes.red;
+  // Check if alertColor is custom (hex/gradient)
+  const isCustomColor = alertColor && (alertColor.startsWith('#') || alertColor.startsWith('linear-gradient'));
+  const colors = isCustomColor ? {
+    border: 'border-gray-400',
+    bg: 'from-gray-50 via-white to-gray-50',
+    header: alertColor.startsWith('linear-gradient') ? alertColor.replace('linear-gradient', 'linear-gradient(to right,') : `linear-gradient(to right, ${alertColor}, ${alertColor})`,
+    itemBorder: 'border-gray-200'
+  } : (colorSchemes[alertColor] || colorSchemes.red);
+
+  const updateEventMutation = useMutation({
+    mutationFn: async (data) => {
+      return await base44.entities.ExternalEvent.update(data.id, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['urgentEvents'] });
+      setEditingEvent(null);
+    },
+  });
 
   return (
     <motion.div
@@ -79,7 +103,11 @@ export default function UrgentEventsCard({ events, publicCalendarEvents, alertCo
       className="mb-6"
     >
       <Card className={`border-4 ${colors.border} shadow-2xl bg-gradient-to-r ${colors.bg}`}>
-        <CardHeader className={`bg-gradient-to-r ${colors.header} text-white pb-3`}>
+        <CardHeader 
+          className="text-white pb-3"
+          style={isCustomColor ? { background: colors.header } : {}}
+          {...(!isCustomColor && { className: `bg-gradient-to-r ${colors.header} text-white pb-3` })}
+        >
           <CardTitle className="flex items-center justify-between text-xl">
             <div className="flex items-center gap-2">
               <AlertTriangle className="w-6 h-6 animate-pulse" />
@@ -159,16 +187,26 @@ export default function UrgentEventsCard({ events, publicCalendarEvents, alertCo
                     </div>
                   </div>
 
-                  {event.link && (
+                  <div className="flex gap-2 flex-shrink-0">
                     <Button
+                      variant="ghost"
                       size="sm"
-                      onClick={() => window.open(event.link, '_blank')}
-                      className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 flex-shrink-0"
+                      onClick={() => setEditingEvent(event)}
+                      className="h-8 w-8 p-0"
                     >
-                      <ExternalLink className="w-4 h-4 mr-1" />
-                      Join
+                      <Edit className="w-4 h-4" />
                     </Button>
-                  )}
+                    {event.link && (
+                      <Button
+                        size="sm"
+                        onClick={() => window.open(event.link, '_blank')}
+                        className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                      >
+                        <ExternalLink className="w-4 h-4 mr-1" />
+                        Join
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </motion.div>
             );
@@ -219,28 +257,218 @@ export default function UrgentEventsCard({ events, publicCalendarEvents, alertCo
           <DialogHeader>
             <DialogTitle>Urgent Alert Color</DialogTitle>
           </DialogHeader>
-          <div className="py-4">
-            <p className="text-sm text-gray-600 mb-4">Choose the color for your urgent events card</p>
-            <div className="grid grid-cols-3 gap-3">
-              {Object.keys(colorSchemes).map(color => (
-                <button
-                  key={color}
-                  onClick={() => {
-                    onColorChange(color);
-                    setShowColorPicker(false);
-                  }}
-                  className={`p-4 rounded-lg border-2 transition-all ${
-                    alertColor === color 
-                      ? `${colorSchemes[color].border} bg-gradient-to-r ${colorSchemes[color].bg}` 
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
+          <div className="py-4 space-y-6">
+            <div>
+              <p className="text-sm text-gray-600 mb-4">Preset Colors</p>
+              <div className="grid grid-cols-3 gap-3">
+                {Object.keys(colorSchemes).map(color => (
+                  <button
+                    key={color}
+                    onClick={() => {
+                      onColorChange(color);
+                      setShowColorPicker(false);
+                    }}
+                    className={`p-4 rounded-lg border-2 transition-all ${
+                      alertColor === color 
+                        ? `${colorSchemes[color].border} bg-gradient-to-r ${colorSchemes[color].bg}` 
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className={`w-12 h-12 mx-auto rounded-lg bg-gradient-to-r ${colorSchemes[color].header} mb-2`}></div>
+                    <p className="text-xs font-medium text-center capitalize">{color}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Custom Color Section */}
+            <div className="border-t pt-4 space-y-3">
+              <Label className="font-semibold">Custom Color</Label>
+              
+              {/* Type Toggle */}
+              <div className="flex gap-2">
+                <Button
+                  variant={customColor.type === 'solid' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setCustomColor({ ...customColor, type: 'solid' })}
                 >
-                  <div className={`w-12 h-12 mx-auto rounded-lg bg-gradient-to-r ${colorSchemes[color].header} mb-2`}></div>
-                  <p className="text-xs font-medium text-center capitalize">{color}</p>
-                </button>
-              ))}
+                  Solid
+                </Button>
+                <Button
+                  variant={customColor.type === 'gradient' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setCustomColor({ ...customColor, type: 'gradient' })}
+                >
+                  Gradient
+                </Button>
+              </div>
+
+              {customColor.type === 'solid' ? (
+                <div className="flex gap-2 items-center">
+                  <Input
+                    type="color"
+                    value={customColor.solid}
+                    onChange={(e) => setCustomColor({ ...customColor, solid: e.target.value })}
+                    className="w-16 h-10 p-1"
+                  />
+                  <Input
+                    value={customColor.solid}
+                    onChange={(e) => setCustomColor({ ...customColor, solid: e.target.value })}
+                    placeholder="#ef4444"
+                  />
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex gap-2 items-center">
+                    <Label className="w-16 text-xs">Start:</Label>
+                    <Input
+                      type="color"
+                      value={customColor.gradientStart}
+                      onChange={(e) => setCustomColor({ ...customColor, gradientStart: e.target.value })}
+                      className="w-16 h-10 p-1"
+                    />
+                    <Input
+                      value={customColor.gradientStart}
+                      onChange={(e) => setCustomColor({ ...customColor, gradientStart: e.target.value })}
+                      placeholder="#ef4444"
+                    />
+                  </div>
+                  <div className="flex gap-2 items-center">
+                    <Label className="w-16 text-xs">End:</Label>
+                    <Input
+                      type="color"
+                      value={customColor.gradientEnd}
+                      onChange={(e) => setCustomColor({ ...customColor, gradientEnd: e.target.value })}
+                      className="w-16 h-10 p-1"
+                    />
+                    <Input
+                      value={customColor.gradientEnd}
+                      onChange={(e) => setCustomColor({ ...customColor, gradientEnd: e.target.value })}
+                      placeholder="#dc2626"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Preview */}
+              <div 
+                className="h-16 rounded-lg flex items-center justify-center text-white font-bold"
+                style={{ 
+                  background: customColor.type === 'solid' 
+                    ? customColor.solid 
+                    : `linear-gradient(135deg, ${customColor.gradientStart}, ${customColor.gradientEnd})`
+                }}
+              >
+                Preview
+              </div>
+
+              <Button
+                onClick={() => {
+                  const colorValue = customColor.type === 'solid'
+                    ? customColor.solid
+                    : `linear-gradient(135deg, ${customColor.gradientStart}, ${customColor.gradientEnd})`;
+                  onColorChange(colorValue);
+                  setShowColorPicker(false);
+                }}
+                className="w-full"
+              >
+                Apply Custom Color
+              </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Event Dialog */}
+      <Dialog open={!!editingEvent} onOpenChange={() => setEditingEvent(null)}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit Event</DialogTitle>
+          </DialogHeader>
+          {editingEvent && (
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>Event Title</Label>
+                <Input
+                  value={editingEvent.title}
+                  onChange={(e) => setEditingEvent({ ...editingEvent, title: e.target.value })}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Date</Label>
+                  <Input
+                    type="date"
+                    value={editingEvent.date}
+                    onChange={(e) => setEditingEvent({ ...editingEvent, date: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Time (24h format)</Label>
+                  <Input
+                    type="time"
+                    value={editingEvent.time}
+                    onChange={(e) => setEditingEvent({ ...editingEvent, time: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Platform</Label>
+                <Select 
+                  value={editingEvent.platform}
+                  onValueChange={(v) => setEditingEvent({ ...editingEvent, platform: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="TikTok">TikTok</SelectItem>
+                    <SelectItem value="Instagram">Instagram</SelectItem>
+                    <SelectItem value="Discord">Discord</SelectItem>
+                    <SelectItem value="YouTube">YouTube</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Host Username</Label>
+                <Input
+                  value={editingEvent.host_username}
+                  onChange={(e) => setEditingEvent({ ...editingEvent, host_username: e.target.value })}
+                  placeholder="@username"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Link (optional)</Label>
+                <Input
+                  value={editingEvent.link || ''}
+                  onChange={(e) => setEditingEvent({ ...editingEvent, link: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Notes (optional)</Label>
+                <Textarea
+                  value={editingEvent.notes || ''}
+                  onChange={(e) => setEditingEvent({ ...editingEvent, notes: e.target.value })}
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => updateEventMutation.mutate(editingEvent)}
+                  disabled={updateEventMutation.isPending}
+                  className="flex-1"
+                >
+                  Save Changes
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setEditingEvent(null)}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </motion.div>
