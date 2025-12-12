@@ -169,6 +169,17 @@ export default function Dashboard() {
     return eventDate === today || eventDate === tomorrow;
   });
 
+  const updatePreferencesMutation = useMutation({
+    mutationFn: async (data) => {
+      if (preferences?.id) {
+        return await base44.entities.UserPreferences.update(preferences.id, data);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['preferences'] });
+    },
+  });
+
   const selfCareMutation = useMutation({
     mutationFn: async ({ taskId, value }) => {
       const today = format(new Date(), 'yyyy-MM-dd');
@@ -254,7 +265,14 @@ export default function Dashboard() {
         />
 
         {/* Urgent Events - Battles, Training, Important Events */}
-        <UrgentEventsCard events={urgentEvents} publicCalendarEvents={todaysPublicEvents} />
+        <UrgentEventsCard 
+          events={urgentEvents} 
+          publicCalendarEvents={todaysPublicEvents}
+          alertColor={preferences?.urgent_alert_color || 'red'}
+          onColorChange={(color) => {
+            updatePreferencesMutation.mutate({ urgent_alert_color: color });
+          }}
+        />
 
         {/* Calendar Integration - Google Calendar & Pixel Nuts Events */}
         {(!preferences?.google_calendar_connected) && (
