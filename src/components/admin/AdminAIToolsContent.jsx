@@ -9,8 +9,9 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Trash2, Edit, Image, Users, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Edit, Image, Users, Loader2, Upload } from 'lucide-react';
 import { motion } from 'framer-motion';
+import ImageUploader from '../settings/ImageUploader';
 
 export default function AdminAIToolsContent() {
   const queryClient = useQueryClient();
@@ -22,6 +23,8 @@ export default function AdminAIToolsContent() {
     pixels_toolbox_url: '',
     lets_go_nuts_url: '',
     icon_emoji: '',
+    icon_url: '',
+    is_general_tool: false,
     sort_order: 100
   });
   const [newUser, setNewUser] = useState({ user_email: '', platform: 'lets_go_nuts' });
@@ -43,7 +46,7 @@ export default function AdminAIToolsContent() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['aiToolLinks'] });
       setShowAddTool(false);
-      setNewTool({ tool_name: '', pixels_toolbox_url: '', lets_go_nuts_url: '', icon_emoji: '', sort_order: 100 });
+      setNewTool({ tool_name: '', pixels_toolbox_url: '', lets_go_nuts_url: '', icon_emoji: '', icon_url: '', is_general_tool: false, sort_order: 100 });
     },
   });
 
@@ -108,15 +111,30 @@ export default function AdminAIToolsContent() {
                 <div className="space-y-3">
                   {aiTools.map(tool => (
                     <div key={tool.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border">
-                      {tool.icon_emoji && <span className="text-2xl">{tool.icon_emoji}</span>}
+                      {tool.icon_url ? (
+                        <img src={tool.icon_url} alt={tool.tool_name} className="w-8 h-8 rounded object-cover" />
+                      ) : tool.icon_emoji ? (
+                        <span className="text-2xl">{tool.icon_emoji}</span>
+                      ) : (
+                        <Image className="w-6 h-6 text-gray-400" />
+                      )}
                       <div className="flex-1">
                         <p className="font-medium">{tool.tool_name}</p>
+                        {tool.is_general_tool && (
+                          <Badge variant="outline" className="text-xs mt-1">General Tool</Badge>
+                        )}
                         <div className="text-xs text-gray-500 mt-1 space-y-1">
-                          {tool.pixels_toolbox_url && (
-                            <p>Pixel's: {tool.pixels_toolbox_url}</p>
-                          )}
-                          {tool.lets_go_nuts_url && (
-                            <p>Let's Go: {tool.lets_go_nuts_url}</p>
+                          {tool.is_general_tool ? (
+                            <p>URL: {tool.pixels_toolbox_url || tool.lets_go_nuts_url}</p>
+                          ) : (
+                            <>
+                              {tool.pixels_toolbox_url && (
+                                <p>Pixel's: {tool.pixels_toolbox_url}</p>
+                              )}
+                              {tool.lets_go_nuts_url && (
+                                <p>Let's Go: {tool.lets_go_nuts_url}</p>
+                              )}
+                            </>
                           )}
                         </div>
                       </div>
@@ -225,28 +243,59 @@ export default function AdminAIToolsContent() {
                 />
               </div>
             </div>
+            
             <div className="space-y-2">
-              <Label>Pixel's AI Toolbox URL</Label>
+              <Label>Or Upload Custom Icon</Label>
+              <ImageUploader
+                label=""
+                currentImage={editingTool?.icon_url || newTool.icon_url}
+                onImageChange={(url) => editingTool
+                  ? setEditingTool({ ...editingTool, icon_url: url })
+                  : setNewTool({ ...newTool, icon_url: url })
+                }
+                size="small"
+              />
+            </div>
+
+            <div className="flex items-center gap-2 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+              <input
+                type="checkbox"
+                checked={editingTool?.is_general_tool || newTool.is_general_tool}
+                onChange={(e) => editingTool
+                  ? setEditingTool({ ...editingTool, is_general_tool: e.target.checked })
+                  : setNewTool({ ...newTool, is_general_tool: e.target.checked })
+                }
+                className="w-4 h-4"
+              />
+              <div>
+                <p className="font-medium text-purple-800 text-sm">General AI Tool (ChatGPT, Nano Banana)</p>
+                <p className="text-xs text-purple-600">Same URL for both platforms - only fill Pixel's URL field</p>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>{(editingTool?.is_general_tool || newTool.is_general_tool) ? 'Tool URL' : "Pixel's AI Toolbox URL"}</Label>
               <Input
                 value={editingTool?.pixels_toolbox_url || newTool.pixels_toolbox_url}
                 onChange={(e) => editingTool 
                   ? setEditingTool({ ...editingTool, pixels_toolbox_url: e.target.value })
                   : setNewTool({ ...newTool, pixels_toolbox_url: e.target.value })
                 }
-                placeholder="https://ai.thenutsandbots.com/..."
+                placeholder="https://..."
               />
             </div>
-            <div className="space-y-2">
-              <Label>Let's Go Nuts URL</Label>
-              <Input
-                value={editingTool?.lets_go_nuts_url || newTool.lets_go_nuts_url}
-                onChange={(e) => editingTool 
-                  ? setEditingTool({ ...editingTool, lets_go_nuts_url: e.target.value })
-                  : setNewTool({ ...newTool, lets_go_nuts_url: e.target.value })
-                }
-                placeholder="https://create.letsgonuts.ai/..."
-              />
-            </div>
+            {!(editingTool?.is_general_tool || newTool.is_general_tool) && (
+              <div className="space-y-2">
+                <Label>Let's Go Nuts URL</Label>
+                <Input
+                  value={editingTool?.lets_go_nuts_url || newTool.lets_go_nuts_url}
+                  onChange={(e) => editingTool 
+                    ? setEditingTool({ ...editingTool, lets_go_nuts_url: e.target.value })
+                    : setNewTool({ ...newTool, lets_go_nuts_url: e.target.value })
+                  }
+                  placeholder="https://create.letsgonuts.ai/..."
+                />
+              </div>
+            )}
             <div className="space-y-2">
               <Label>Sort Order</Label>
               <Input
