@@ -296,13 +296,14 @@ export default function Settings() {
         </div>
 
         <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); navigate(`#${v}`); }} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8 mb-6">
+          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-9 mb-6">
             <TabsTrigger value="profile"><User className="w-4 h-4 mr-2 hidden sm:block" />Profile</TabsTrigger>
             <TabsTrigger value="social"><Share2 className="w-4 h-4 mr-2 hidden sm:block" />Social</TabsTrigger>
             <TabsTrigger value="appearance"><Palette className="w-4 h-4 mr-2 hidden sm:block" />Theme</TabsTrigger>
             <TabsTrigger value="features"><Layers className="w-4 h-4 mr-2 hidden sm:block" />Features</TabsTrigger>
             <TabsTrigger value="dashboard"><Sparkles className="w-4 h-4 mr-2 hidden sm:block" />Dashboard</TabsTrigger>
             <TabsTrigger value="preferences"><MessageSquare className="w-4 h-4 mr-2 hidden sm:block" />Prefs</TabsTrigger>
+            <TabsTrigger value="connections"><Zap className="w-4 h-4 mr-2 hidden sm:block" />Connect</TabsTrigger>
             <TabsTrigger value="widgets"><Zap className="w-4 h-4 mr-2 hidden sm:block" />Widgets</TabsTrigger>
             <TabsTrigger value="bible"><BookOpen className="w-4 h-4 mr-2 hidden sm:block" />Bible</TabsTrigger>
           </TabsList>
@@ -605,6 +606,51 @@ export default function Settings() {
                     ))}
                   </SelectContent>
                 </Select>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* CONNECTIONS TAB */}
+          <TabsContent value="connections" id="connections">
+            <Card>
+              <CardHeader>
+                <CardTitle>AI Platform Connection</CardTitle>
+                <CardDescription>Select which AI platform you're subscribed to for personalized tool links</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Your AI Platform</Label>
+                  <p className="text-sm text-gray-500 mb-3">This determines which tool links you'll see when creating content</p>
+                  
+                  {/* Platform detection status */}
+                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-200 mb-4">
+                    <p className="text-sm text-blue-800">
+                      ℹ️ Your platform is automatically detected based on your subscription. If it's incorrect, contact admin to update it.
+                    </p>
+                  </div>
+
+                  {/* Quick links */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <a 
+                      href="https://ai.thenutsandbots.com" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="p-4 border-2 border-purple-200 rounded-lg hover:border-purple-400 hover:bg-purple-50 transition-colors text-center"
+                    >
+                      <Sparkles className="w-8 h-8 mx-auto mb-2 text-purple-600" />
+                      <p className="font-medium text-sm">Pixel's AI Toolbox</p>
+                    </a>
+                    <a 
+                      href="https://create.letsgonuts.ai" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="p-4 border-2 border-teal-200 rounded-lg hover:border-teal-400 hover:bg-teal-50 transition-colors text-center"
+                    >
+                      <Zap className="w-8 h-8 mx-auto mb-2 text-teal-600" />
+                      <p className="font-medium text-sm">Let's Go Nuts</p>
+                    </a>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

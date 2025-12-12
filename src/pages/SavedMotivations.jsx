@@ -40,12 +40,24 @@ export default function SavedMotivations() {
     enabled: !!effectiveEmail,
   });
 
-  const aiTools = preferences?.ai_tool_links?.length > 0 
-    ? preferences.ai_tool_links 
-    : [
-        { name: "Let's Go Nuts", url: 'https://create.letsgonuts.ai' },
-        { name: "Pixel's AI Toolbox", url: 'https://ai.thenutsandbots.com' },
-      ];
+  // Fetch AI tool links
+  const { data: aiToolLinks = [] } = useQuery({
+    queryKey: ['aiToolLinks'],
+    queryFn: () => base44.entities.AIToolLink.filter({ is_active: true }, 'sort_order'),
+    enabled: !!effectiveEmail,
+  });
+
+  // Detect user's AI platform
+  const { data: platformUser } = useQuery({
+    queryKey: ['platformUser', effectiveEmail],
+    queryFn: async () => {
+      const users = await base44.entities.AIPlatformUser.filter({ user_email: effectiveEmail });
+      return users[0] || null;
+    },
+    enabled: !!effectiveEmail,
+  });
+
+  const userPlatform = platformUser?.platform || 'lets_go_nuts';
 
   const categories = [...new Set(motivations.map(m => m.category || 'Uncategorized'))];
 
@@ -109,10 +121,18 @@ Each prompt should be:
     setGeneratingPrompts(null);
   };
 
-  const copyToClipboard = (text, id) => {
+  const copyToClipboard = (text, id, openAITool = false) => {
     navigator.clipboard.writeText(text);
     setCopied(id);
     setTimeout(() => setCopied(null), 2000);
+
+    // If user wants to open AI tool, redirect based on their platform
+    if (openAITool) {
+      const toolUrl = userPlatform === 'pixels_toolbox' 
+        ? 'https://ai.thenutsandbots.com'
+        : 'https://create.letsgonuts.ai';
+      window.open(toolUrl, '_blank');
+    }
   };
 
   return (
@@ -154,30 +174,64 @@ Each prompt should be:
           ))}
         </div>
 
-        {/* AI Tools */}
-        <Card className="bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between flex-wrap gap-3">
+        {/* AI Platform Badge */}
+        <Card className="bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200">
+          <CardContent className="p-3">
+            <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <Wand2 className="w-5 h-5 text-purple-600" />
-                <span className="font-medium text-purple-800">Create Images with AI:</span>
+                <Sparkles className="w-4 h-4 text-indigo-600" />
+                <span className="text-sm font-medium text-indigo-800">
+                  Your AI Platform: <strong>{userPlatform === 'pixels_toolbox' ? "Pixel's AI Toolbox" : "Let's Go Nuts"}</strong>
+                </span>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {aiTools.map((tool, idx) => (
-                  <a 
-                    key={idx} 
-                    href={tool.url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                  >
-                    <Button variant="outline" size="sm" className="border-purple-300 text-purple-700 hover:bg-purple-100">
-                      {tool.name}
-                      <ExternalLink className="w-3 h-3 ml-1" />
-                    </Button>
-                  </a>
-                ))}
-              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => window.location.href = '/Settings#connections'}
+                className="text-xs h-7"
+              >
+                Change
+              </Button>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* AI Image Tools */}
+        <Card className="bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Image className="w-5 h-5 text-purple-600" />
+              AI Image Generators
+            </CardTitle>
+            <CardDescription>Click to open in your AI platform</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+              {aiToolLinks.map(tool => {
+                const url = userPlatform === 'pixels_toolbox' 
+                  ? tool.pixels_toolbox_url 
+                  : tool.lets_go_nuts_url;
+                
+                if (!url) return null;
+
+                return (
+                  <a
+                    key={tool.id}
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex flex-col items-center gap-1 p-3 rounded-lg border-2 border-purple-200 bg-white hover:border-purple-400 hover:bg-purple-50 transition-colors"
+                  >
+                    {tool.icon_emoji && <span className="text-2xl">{tool.icon_emoji}</span>}
+                    <span className="text-xs text-center font-medium text-purple-700">{tool.tool_name}</span>
+                    <ExternalLink className="w-3 h-3 text-purple-400" />
+                  </a>
+                );
+              })}
+            </div>
+            {aiToolLinks.length === 0 && (
+              <p className="text-sm text-gray-500 text-center py-4">No AI tools configured yet. Admin can add them.</p>
+            )}
           </CardContent>
         </Card>
 
@@ -215,13 +269,17 @@ Each prompt should be:
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => copyToClipboard(motivation.content, motivation.id)}
-                            className="h-7 w-7 p-0"
+                            onClick={() => copyToClipboard(motivation.content, motivation.id, true)}
+                            className="h-7 px-2"
+                            title="Copy & Open AI Tool"
                           >
                             {copied === motivation.id ? (
                               <Check className="w-4 h-4 text-green-500" />
                             ) : (
-                              <Copy className="w-4 h-4 text-gray-400" />
+                              <>
+                                <Copy className="w-4 h-4 text-gray-400" />
+                                <ExternalLink className="w-3 h-3 ml-1 text-purple-400" />
+                              </>
                             )}
                           </Button>
                           <Button

@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Zap, Droplet, Smile, Utensils, Lightbulb, Cloud, StickyNote, Heart,
-  Plus, Trash2, GripVertical, ExternalLink, ArrowDown, ArrowUp, ArrowLeft, ArrowRight,
+  Plus, Trash2, GripVertical, ExternalLink, Settings as SettingsIcon,
   Music, Link, Home, Check as CheckCircle, Calendar as CalendarIcon
 } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
@@ -33,18 +33,14 @@ const iconOptions = [
   { value: 'Zap', icon: Zap },
   { value: 'Link', icon: Link },
   { value: 'ExternalLink', icon: ExternalLink },
+  { value: 'Smile', icon: Smile },
+  { value: 'Check', icon: CheckCircle },
 ];
 
 const colorOptions = [
   'bg-pink-500', 'bg-blue-500', 'bg-orange-500', 'bg-yellow-500', 
-  'bg-purple-500', 'bg-green-500', 'bg-red-500', 'bg-teal-500', 'bg-indigo-500'
-];
-
-const positionOptions = [
-  { value: 'bottom', label: 'Bottom Center', icon: ArrowUp, description: 'Bar at bottom of screen' },
-  { value: 'top', label: 'Top Center', icon: ArrowDown, description: 'Bar at top of screen' },
-  { value: 'left', label: 'Left Side', icon: ArrowRight, description: 'Vertical bar on left' },
-  { value: 'right', label: 'Right Side', icon: ArrowLeft, description: 'Vertical bar on right' },
+  'bg-purple-500', 'bg-green-500', 'bg-red-500', 'bg-teal-500', 'bg-indigo-500',
+  'bg-cyan-500', 'bg-lime-500', 'bg-amber-500'
 ];
 
 export default function QuickActionsSettings({ formData, setFormData }) {
@@ -55,9 +51,8 @@ export default function QuickActionsSettings({ formData, setFormData }) {
 
   const quickActions = formData.quick_actions || ['mood', 'water', 'food', 'note'];
   const customActions = formData.custom_quick_actions || [];
-  const position = formData.quick_actions_position || 'bottom';
 
-  const handleToggleBuiltIn = (actionId) => {
+  const handleToggleAction = (actionId) => {
     const newActions = quickActions.includes(actionId)
       ? quickActions.filter(a => a !== actionId)
       : [...quickActions, actionId];
@@ -86,15 +81,30 @@ export default function QuickActionsSettings({ formData, setFormData }) {
   };
 
   const handleEditAction = (action) => {
-    setEditingAction(action);
+    setEditingAction({ ...action });
   };
 
   const handleSaveEdit = () => {
     if (!editingAction) return;
-    const updatedCustom = customActions.map(a => 
-      a.id === editingAction.id ? editingAction : a
-    );
-    setFormData({ ...formData, custom_quick_actions: updatedCustom });
+    
+    // Check if it's a built-in or custom action
+    const isBuiltIn = builtInActions.find(a => a.id === editingAction.id);
+    
+    if (isBuiltIn) {
+      // For built-in, we store overrides in a new field
+      const overrides = formData.action_overrides || {};
+      overrides[editingAction.id] = {
+        label: editingAction.label,
+        color: editingAction.color
+      };
+      setFormData({ ...formData, action_overrides: overrides });
+    } else {
+      // For custom, update normally
+      const updatedCustom = customActions.map(a => 
+        a.id === editingAction.id ? editingAction : a
+      );
+      setFormData({ ...formData, custom_quick_actions: updatedCustom });
+    }
     setEditingAction(null);
   };
 
@@ -113,13 +123,31 @@ export default function QuickActionsSettings({ formData, setFormData }) {
     return icons[iconName] || Zap;
   };
 
+  const getActionDisplay = (actionId) => {
+    const builtIn = builtInActions.find(a => a.id === actionId);
+    const custom = customActions.find(a => a.id === actionId);
+    const action = builtIn || custom;
+    
+    if (!action) return null;
+    
+    // Apply overrides for built-in actions
+    const overrides = formData.action_overrides?.[actionId] || {};
+    
+    return {
+      ...action,
+      label: overrides.label || action.label,
+      color: overrides.color || action.color,
+      isBuiltIn: !!builtIn
+    };
+  };
+
   return (
     <div className="space-y-6">
-      {/* Reorder Actions */}
+      {/* Unified Actions List */}
       <Card>
         <CardHeader>
-          <CardTitle>Quick Actions Order</CardTitle>
-          <CardDescription>Drag to reorder your quick action buttons</CardDescription>
+          <CardTitle>Quick Actions</CardTitle>
+          <CardDescription>Drag to reorder, toggle to enable/disable, click gear to customize</CardDescription>
         </CardHeader>
         <CardContent>
           <DragDropContext onDragEnd={handleDragEnd}>
@@ -127,12 +155,11 @@ export default function QuickActionsSettings({ formData, setFormData }) {
               {(provided) => (
                 <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-2">
                   {quickActions.map((actionId, index) => {
-                    const builtIn = builtInActions.find(a => a.id === actionId);
-                    const custom = customActions.find(a => a.id === actionId);
-                    const action = builtIn || custom;
+                    const action = getActionDisplay(actionId);
                     if (!action) return null;
                     
                     const Icon = getIconComponent(action.icon);
+                    const isEnabled = quickActions.includes(actionId);
                     
                     return (
                       <Draggable key={actionId} draggableId={actionId} index={index}>
@@ -148,12 +175,40 @@ export default function QuickActionsSettings({ formData, setFormData }) {
                             }`}
                           >
                             <GripVertical className="w-4 h-4 text-gray-400" />
+                            <Checkbox 
+                              checked={isEnabled}
+                              onCheckedChange={() => handleToggleAction(actionId)}
+                            />
                             <div className={`w-8 h-8 rounded-lg ${action.color} flex items-center justify-center`}>
                               <Icon className="w-4 h-4 text-white" />
                             </div>
                             <span className="font-medium flex-1">{action.label}</span>
-                            {custom && (
+                            {!action.isBuiltIn && (
                               <span className="text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded">Custom</span>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditAction(action);
+                              }}
+                              className="h-7 w-7 p-0"
+                            >
+                              <SettingsIcon className="w-4 h-4 text-gray-400" />
+                            </Button>
+                            {!action.isBuiltIn && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRemoveCustomAction(action.id);
+                                }}
+                                className="h-7 w-7 p-0 text-red-400 hover:text-red-600"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
                             )}
                           </div>
                         )}
@@ -165,198 +220,138 @@ export default function QuickActionsSettings({ formData, setFormData }) {
               )}
             </Droppable>
           </DragDropContext>
-        </CardContent>
-      </Card>
 
-      {/* Built-in Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Built-in Quick Actions</CardTitle>
-          <CardDescription>Toggle actions to add/remove from your bar</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {builtInActions.map(action => {
-            const Icon = getIconComponent(action.icon);
-            const isEnabled = quickActions.includes(action.id);
-            return (
-              <div
-                key={action.id}
-                onClick={() => handleToggleBuiltIn(action.id)}
-                className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
-                  isEnabled ? 'bg-purple-50 border-2 border-purple-300' : 'bg-gray-50 border-2 border-transparent hover:border-gray-200'
-                }`}
-              >
-                <Checkbox checked={isEnabled} />
-                <div className={`w-8 h-8 rounded-lg ${action.color} flex items-center justify-center`}>
-                  <Icon className="w-4 h-4 text-white" />
-                </div>
-                <span className="font-medium">{action.label}</span>
-              </div>
-            );
-          })}
-        </CardContent>
-      </Card>
-
-      {/* Custom Actions */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Custom Quick Actions</CardTitle>
-              <CardDescription>Add shortcuts to pages or external links</CardDescription>
-            </div>
-            <Dialog open={showAddCustom} onOpenChange={setShowAddCustom}>
-              <DialogTrigger asChild>
-                <Button size="sm" className="gap-1">
-                  <Plus className="w-4 h-4" />
-                  Add Custom
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Add Custom Quick Action</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Label</Label>
-                    <Input
-                      value={newAction.label}
-                      onChange={(e) => setNewAction({ ...newAction, label: e.target.value })}
-                      placeholder="e.g., My Playlist"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Icon</Label>
-                    <div className="flex gap-2 flex-wrap">
-                      {iconOptions.map(opt => {
-                        const Icon = opt.icon;
-                        return (
-                          <button
-                            key={opt.value}
-                            type="button"
-                            onClick={() => setNewAction({ ...newAction, icon: opt.value })}
-                            className={`p-2 rounded-lg border-2 ${
-                              newAction.icon === opt.value ? 'border-purple-500 bg-purple-50' : 'border-gray-200'
-                            }`}
-                          >
-                            <Icon className="w-5 h-5" />
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Color</Label>
-                    <div className="flex gap-2 flex-wrap">
-                      {colorOptions.map(color => (
-                        <button
-                          key={color}
-                          type="button"
-                          onClick={() => setNewAction({ ...newAction, color })}
-                          className={`w-8 h-8 rounded-lg ${color} ${
-                            newAction.color === color ? 'ring-2 ring-offset-2 ring-purple-500' : ''
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Link to Page (optional)</Label>
-                    <Select 
-                      value={newAction.page} 
-                      onValueChange={(v) => setNewAction({ ...newAction, page: v, external_url: '' })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a page" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={null}>None</SelectItem>
-                        <SelectItem value="Dashboard">Dashboard</SelectItem>
-                        <SelectItem value="Goals">Goals</SelectItem>
-                        <SelectItem value="Journal">Journal</SelectItem>
-                        <SelectItem value="Wellness">Wellness</SelectItem>
-                        <SelectItem value="PrayerRequests">Prayer Requests</SelectItem>
-                        <SelectItem value="PixelsParadise">Pixel's Place</SelectItem>
-                        <SelectItem value="SongGenerator">Sunny Songbird</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Or External URL</Label>
-                    <Input
-                      value={newAction.external_url}
-                      onChange={(e) => setNewAction({ ...newAction, external_url: e.target.value, page: '' })}
-                      placeholder="https://..."
-                    />
-                  </div>
-                  <Button onClick={handleAddCustomAction} className="w-full" disabled={!newAction.label}>
-                    Add Action
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {customActions.length === 0 ? (
-            <p className="text-sm text-gray-500 text-center py-4">No custom actions yet</p>
-          ) : (
-            <div className="space-y-2">
-              {customActions.map(action => {
+          {/* Add more actions */}
+          <div className="mt-4 pt-4 border-t">
+            <p className="text-sm text-gray-600 mb-3">Add More Actions:</p>
+            <div className="grid grid-cols-2 gap-2">
+              {builtInActions.filter(a => !quickActions.includes(a.id)).map(action => {
                 const Icon = getIconComponent(action.icon);
-                const isEnabled = quickActions.includes(action.id);
                 return (
-                  <div
+                  <button
                     key={action.id}
-                    className={`flex items-center gap-3 p-3 rounded-lg bg-gray-50 border-2 ${
-                      isEnabled ? 'border-purple-300' : 'border-transparent'
-                    }`}
+                    onClick={() => handleToggleAction(action.id)}
+                    className="flex items-center gap-2 p-2 rounded-lg border-2 border-dashed border-gray-300 hover:border-purple-400 hover:bg-purple-50 transition-colors"
                   >
-                    <Checkbox 
-                      checked={isEnabled}
-                      onCheckedChange={(checked) => {
-                        const newActions = checked
-                          ? [...quickActions, action.id]
-                          : quickActions.filter(a => a !== action.id);
-                        setFormData({ ...formData, quick_actions: newActions });
-                      }}
-                    />
-                    <div 
-                      className={`w-8 h-8 rounded-lg ${action.color} flex items-center justify-center cursor-pointer hover:opacity-80`}
-                      onClick={(e) => { e.stopPropagation(); handleEditAction(action); }}
-                      title="Click to change color"
-                    >
-                      <Icon className="w-4 h-4 text-white" />
+                    <div className={`w-6 h-6 rounded ${action.color} flex items-center justify-center`}>
+                      <Icon className="w-3 h-3 text-white" />
                     </div>
-                    <div className="flex-1">
-                      <span className="font-medium">{action.label}</span>
-                      {action.page && <span className="text-xs text-gray-500 ml-2">→ {action.page}</span>}
-                      {action.external_url && <span className="text-xs text-gray-500 ml-2">↗ External</span>}
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleRemoveCustomAction(action.id)}
-                      className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
+                    <span className="text-sm">{action.label}</span>
+                  </button>
                 );
               })}
+              <Dialog open={showAddCustom} onOpenChange={setShowAddCustom}>
+                <DialogTrigger asChild>
+                  <button className="flex items-center justify-center gap-2 p-2 rounded-lg border-2 border-dashed border-purple-300 hover:border-purple-500 hover:bg-purple-50 transition-colors">
+                    <Plus className="w-4 h-4 text-purple-600" />
+                    <span className="text-sm text-purple-600 font-medium">Custom</span>
+                  </button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Add Custom Quick Action</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label>Label</Label>
+                      <Input
+                        value={newAction.label}
+                        onChange={(e) => setNewAction({ ...newAction, label: e.target.value })}
+                        placeholder="e.g., My Playlist"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Icon</Label>
+                      <div className="flex gap-2 flex-wrap">
+                        {iconOptions.map(opt => {
+                          const Icon = opt.icon;
+                          return (
+                            <button
+                              key={opt.value}
+                              type="button"
+                              onClick={() => setNewAction({ ...newAction, icon: opt.value })}
+                              className={`p-2 rounded-lg border-2 ${
+                                newAction.icon === opt.value ? 'border-purple-500 bg-purple-50' : 'border-gray-200'
+                              }`}
+                            >
+                              <Icon className="w-5 h-5" />
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Color</Label>
+                      <div className="flex gap-2 flex-wrap">
+                        {colorOptions.map(color => (
+                          <button
+                            key={color}
+                            type="button"
+                            onClick={() => setNewAction({ ...newAction, color })}
+                            className={`w-8 h-8 rounded-lg ${color} ${
+                              newAction.color === color ? 'ring-2 ring-offset-2 ring-purple-500' : ''
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Link to Page (optional)</Label>
+                      <Select 
+                        value={newAction.page || ''} 
+                        onValueChange={(v) => setNewAction({ ...newAction, page: v, external_url: '' })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a page" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={null}>None</SelectItem>
+                          <SelectItem value="Dashboard">Dashboard</SelectItem>
+                          <SelectItem value="Goals">Goals</SelectItem>
+                          <SelectItem value="Journal">Journal</SelectItem>
+                          <SelectItem value="Wellness">Wellness</SelectItem>
+                          <SelectItem value="Tasks">Tasks</SelectItem>
+                          <SelectItem value="SavedMotivations">Content Ideas</SelectItem>
+                          <SelectItem value="PrayerRequests">Prayer Requests</SelectItem>
+                          <SelectItem value="PixelsParadise">Pixel's Place</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Or External URL</Label>
+                      <Input
+                        value={newAction.external_url}
+                        onChange={(e) => setNewAction({ ...newAction, external_url: e.target.value, page: '' })}
+                        placeholder="https://..."
+                      />
+                    </div>
+                    <Button onClick={handleAddCustomAction} className="w-full" disabled={!newAction.label}>
+                      Add Action
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
-          )}
+          </div>
         </CardContent>
       </Card>
 
-      {/* Edit Action Color Dialog */}
+      {/* Edit Action Dialog */}
       <Dialog open={!!editingAction} onOpenChange={() => setEditingAction(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit {editingAction?.label}</DialogTitle>
+            <DialogTitle>Edit Quick Action</DialogTitle>
           </DialogHeader>
           {editingAction && (
             <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>Label</Label>
+                <Input
+                  value={editingAction.label}
+                  onChange={(e) => setEditingAction({ ...editingAction, label: e.target.value })}
+                  placeholder="Action name"
+                />
+              </div>
               <div className="space-y-2">
                 <Label>Color</Label>
                 <div className="flex gap-2 flex-wrap">
@@ -372,6 +367,60 @@ export default function QuickActionsSettings({ formData, setFormData }) {
                   ))}
                 </div>
               </div>
+              {!editingAction.isBuiltIn && (
+                <>
+                  <div className="space-y-2">
+                    <Label>Icon</Label>
+                    <div className="flex gap-2 flex-wrap">
+                      {iconOptions.map(opt => {
+                        const Icon = opt.icon;
+                        return (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => setEditingAction({ ...editingAction, icon: opt.value })}
+                            className={`p-2 rounded-lg border-2 ${
+                              editingAction.icon === opt.value ? 'border-purple-500 bg-purple-50' : 'border-gray-200'
+                            }`}
+                          >
+                            <Icon className="w-5 h-5" />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Link to Page</Label>
+                    <Select 
+                      value={editingAction.page || ''} 
+                      onValueChange={(v) => setEditingAction({ ...editingAction, page: v, external_url: '' })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a page" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={null}>None</SelectItem>
+                        <SelectItem value="Dashboard">Dashboard</SelectItem>
+                        <SelectItem value="Goals">Goals</SelectItem>
+                        <SelectItem value="Journal">Journal</SelectItem>
+                        <SelectItem value="Wellness">Wellness</SelectItem>
+                        <SelectItem value="Tasks">Tasks</SelectItem>
+                        <SelectItem value="SavedMotivations">Content Ideas</SelectItem>
+                        <SelectItem value="PrayerRequests">Prayer Requests</SelectItem>
+                        <SelectItem value="PixelsParadise">Pixel's Place</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Or External URL</Label>
+                    <Input
+                      value={editingAction.external_url || ''}
+                      onChange={(e) => setEditingAction({ ...editingAction, external_url: e.target.value, page: '' })}
+                      placeholder="https://..."
+                    />
+                  </div>
+                </>
+              )}
               <Button onClick={handleSaveEdit} className="w-full">Save Changes</Button>
             </div>
           )}
