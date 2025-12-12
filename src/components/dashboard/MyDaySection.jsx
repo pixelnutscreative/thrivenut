@@ -1182,11 +1182,30 @@ export default function MyDaySection({
             </motion.div>
           )}
         </AnimatePresence>
+
+        <CarryoverTasksModal
+          isOpen={showCarryoverModal}
+          onClose={() => setShowCarryoverModal(false)}
+          carryoverTasks={carryoverTasks}
+          userEmail={userEmail}
+        />
+
+        <TaskHistoryModal
+          isOpen={showHistoryModal}
+          onClose={() => setShowHistoryModal(false)}
+          userEmail={userEmail}
+        />
+
+        <AddManualEventModal
+          isOpen={showAddEventModal}
+          onClose={() => setShowAddEventModal(false)}
+          userEmail={userEmail}
+        />
       </>
     );
   }
 
-  // Separate tasks into variable/anytime vs scheduled/timed
+  // Detailed view - separate tasks into variable/anytime vs scheduled/timed
   const variableTasks = allTasks.filter(t => t.timeOfDay === 'anytime');
   const scheduledTasks = allTasks.filter(t => t.timeOfDay !== 'anytime');
 
