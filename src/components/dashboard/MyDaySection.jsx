@@ -1379,9 +1379,17 @@ export default function MyDaySection({
         userEmail={userEmail}
       />
     </>
-  );
-}
-          <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
+    );
+    }
+
+    // Detailed view
+    const variableTasks = allTasks.filter(t => t.timeOfDay === 'anytime');
+
+    return (
+    <>
+    <Card className="shadow-lg border-0 bg-gradient-to-br from-teal-400 via-blue-400 to-purple-500">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
             <CardTitle className="flex items-center gap-2 text-white">
               <Sun className="w-6 h-6" />
               My Day
