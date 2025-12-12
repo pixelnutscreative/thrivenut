@@ -31,6 +31,7 @@ function OnboardingModal({ isOpen, user, onComplete }) {
     show_on_map: false,
     skip_location: false,
     user_timezone: 'America/New_York',
+    time_format: '12h',
     favorite_color: '#1fd2ea',
     greeting_types: ['positive_quote'],
     mental_health_struggles: [],
@@ -44,6 +45,7 @@ function OnboardingModal({ isOpen, user, onComplete }) {
       const prefsData = {
         onboarding_completed: true,
         user_timezone: data.user_timezone,
+        time_format: data.time_format,
         greeting_types: data.greeting_types,
         greeting_type: data.greeting_types[0],
         mental_health_struggles: data.mental_health_struggles,
@@ -190,6 +192,18 @@ function OnboardingModal({ isOpen, user, onComplete }) {
                 value={data.user_timezone} 
                 onChange={(v) => setData({ ...data, user_timezone: v })} 
               />
+              <div className="space-y-2 mt-4">
+                <Label>Time Format</Label>
+                <Select value={data.time_format} onValueChange={(v) => setData({ ...data, time_format: v })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="12h">12-hour (2:30 PM)</SelectItem>
+                    <SelectItem value="24h">24-hour / Military (14:30)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           )}
 

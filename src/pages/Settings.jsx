@@ -601,9 +601,23 @@ export default function Settings() {
               </Button>
             </div>
             <Card className="mb-4">
-              <CardContent className="pt-6">
-                <Label className="mb-2 block">Timezone</Label>
-                <TimezoneSelector value={prefData.user_timezone} onChange={(val) => setPrefData({ ...prefData, user_timezone: val })} />
+              <CardContent className="pt-6 space-y-4">
+                <div>
+                  <Label className="mb-2 block">Timezone</Label>
+                  <TimezoneSelector value={prefData.user_timezone} onChange={(val) => setPrefData({ ...prefData, user_timezone: val })} />
+                </div>
+                <div>
+                  <Label className="mb-2 block">Time Format</Label>
+                  <Select value={prefData.time_format || '12h'} onValueChange={(v) => setPrefData({ ...prefData, time_format: v })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="12h">12-hour (AM/PM) - Example: 2:30 PM</SelectItem>
+                      <SelectItem value="24h">24-hour (Military) - Example: 14:30</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </CardContent>
             </Card>
             <Card>
