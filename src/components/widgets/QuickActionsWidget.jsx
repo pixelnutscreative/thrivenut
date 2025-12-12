@@ -73,6 +73,7 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
   const userEmail = preferences?.user_email;
   const quickActions = preferences?.quick_actions || ['mood', 'water', 'food', 'note'];
   const customActions = preferences?.custom_quick_actions || [];
+  const [isDocked, setIsDocked] = useState(true); // Desktop docked by default
 
   // Fetch today's data for displaying counts
   const { data: todaysWater } = useQuery({
@@ -235,10 +236,10 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
   const allMoodOptions = [...defaultMoodOptions, ...customMoods];
   const moodOptions = allMoodOptions.filter(m => topMoodValues.includes(m.value));
 
-  // Get all visible actions (built-in + custom) - limit to 7
+  // Get all visible actions (built-in + custom) - no limit
   const getVisibleActions = () => {
     const actions = [];
-    quickActions.slice(0, 7).forEach(id => {
+    quickActions.forEach(id => {
       const builtIn = builtInActions.find(a => a.id === id);
       if (builtIn) {
         actions.push(builtIn);
@@ -321,62 +322,64 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
   }, [isDragging]);
 
   if (!isOpen) {
-  return (
-    <motion.button
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
-      onClick={() => setIsOpen(true)}
-      className="fixed z-50 w-12 h-12 rounded-full shadow-lg flex items-center justify-center text-white"
-      style={{ 
-        right: isMobile ? '16px' : '32px',
-        top: isMobile ? '70px' : '50%',
-        transform: isMobile ? 'none' : 'translateY(-50%)',
-        background: `linear-gradient(135deg, ${primaryColor || '#1fd2ea'}, ${accentColor || '#bd84f5'})` 
-      }}
-      whileHover={{ scale: 1.1 }}
-      whileTap={{ scale: 0.95 }}
-    >
-      <Zap className="w-5 h-5" />
-    </motion.button>
-  );
-  }
+        return (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            onClick={() => setIsOpen(true)}
+            className="fixed z-50 w-12 h-12 rounded-full shadow-lg flex items-center justify-center text-white"
+            style={{ 
+              right: '16px',
+              top: isMobile ? '70px' : '80px',
+              background: `linear-gradient(135deg, ${primaryColor || '#1fd2ea'}, ${accentColor || '#bd84f5'})` 
+            }}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <Zap className="w-5 h-5" />
+          </motion.button>
+        );
+        }
 
   return (
   <>
-    {/* Floating Draggable Bar */}
+    {/* Floating/Docked Bar */}
     <motion.div
       ref={dragRef}
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="fixed z-50 bg-gray-900/95 backdrop-blur-sm rounded-full px-2 py-1.5 shadow-2xl"
+      className="fixed z-50 backdrop-blur-sm rounded-full px-2 py-1.5 shadow-2xl"
       style={{
-        // On mobile, dock to top below header
-        left: isMobile ? 0 : (position.x || 'calc(50% - 150px)'),
-        right: isMobile ? 0 : 'auto',
-        top: isMobile ? '56px' : (position.y || 16), // 56px matches mobile header height
-        width: isMobile ? '100%' : 'auto',
-        cursor: isDragging ? 'grabbing' : 'default',
+        // Docked to top below header on both mobile and desktop
+        left: (isMobile || isDocked) ? 0 : (position.x || 'calc(50% - 150px)'),
+        right: (isMobile || isDocked) ? 0 : 'auto',
+        top: (isMobile || isDocked) ? '56px' : (position.y || 80),
+        width: (isMobile || isDocked) ? '100%' : 'auto',
+        cursor: (!isMobile && !isDocked && isDragging) ? 'grabbing' : 'default',
         display: 'flex',
-        flexDirection: isMobile ? 'row' : 'column',
-        justifyContent: isMobile ? 'center' : 'flex-start',
+        flexDirection: 'row',
+        justifyContent: 'center',
         alignItems: 'center',
         gap: '4px',
         maxWidth: '100%',
-        overflowX: isMobile ? 'auto' : 'visible',
-        borderRadius: isMobile ? '0 0 12px 12px' : '9999px',
+        overflowX: 'auto',
+        borderRadius: (isMobile || isDocked) ? '0 0 12px 12px' : '9999px',
+        backgroundColor: 'rgba(75, 85, 99, 0.95)', // Lighter gray (gray-600)
       }}
     >
         {/* Main action bar */}
         <div className="flex items-center gap-1">
-        {/* Drag handle - Desktop only */}
+        {/* Pin/Unpin button - Desktop only */}
         {!isMobile && (
           <button
-            onMouseDown={handleDragStart}
-            onTouchStart={handleDragStart}
-            className="p-1.5 cursor-grab active:cursor-grabbing hover:bg-white/10 rounded-full transition-colors"
-            title="Drag to move"
+            onClick={() => setIsDocked(!isDocked)}
+            onMouseDown={(e) => isDocked ? null : handleDragStart(e)}
+            onTouchStart={(e) => isDocked ? null : handleDragStart(e)}
+            className="p-1.5 hover:bg-white/10 rounded-full transition-colors"
+            style={{ cursor: isDocked ? 'pointer' : 'grab' }}
+            title={isDocked ? "Detach to drag" : "Drag to move"}
           >
-            <GripHorizontal className="w-4 h-4 text-gray-400" />
+            {isDocked ? <GripHorizontal className="w-4 h-4 text-gray-300" /> : <GripHorizontal className="w-4 h-4 text-gray-400" />}
           </button>
         )}
 
@@ -385,20 +388,20 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
           onClick={() => setIsOpen(false)}
           className="p-1.5 hover:bg-white/10 rounded-full transition-colors"
         >
-          <X className="w-4 h-4 text-gray-400" />
+          <X className="w-4 h-4 text-gray-300" />
         </button>
 
         {/* Divider */}
         <div className="h-6 w-px bg-gray-600 mx-1" />
 
         {/* Scroll Left Button */}
-        {visibleActions.length > 5 && (
+        {visibleActions.length > 7 && (
           <button
             onClick={scrollLeft}
             className="p-1.5 hover:bg-white/10 rounded-full transition-colors flex-shrink-0"
             title="Scroll left"
           >
-            <ChevronLeft className="w-4 h-4 text-gray-400" />
+            <ChevronLeft className="w-4 h-4 text-gray-300" />
           </button>
         )}
 
@@ -504,13 +507,13 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
         `}</style>
 
         {/* Scroll Right Button */}
-        {visibleActions.length > 5 && (
+        {visibleActions.length > 7 && (
           <button
             onClick={scrollRight}
             className="p-1.5 hover:bg-white/10 rounded-full transition-colors flex-shrink-0"
             title="Scroll right"
           >
-            <ChevronRight className="w-4 h-4 text-gray-400" />
+            <ChevronRight className="w-4 h-4 text-gray-300" />
           </button>
         )}
 
@@ -523,7 +526,7 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
           className="p-1.5 hover:bg-white/10 rounded-full transition-colors"
           title="View saved notes"
         >
-          <BookOpen className="w-4 h-4 text-gray-400 hover:text-white" />
+          <BookOpen className="w-4 h-4 text-gray-300 hover:text-white" />
         </RouterLink>
 
         {/* Settings */}
@@ -532,7 +535,7 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
           className="p-1.5 hover:bg-white/10 rounded-full transition-colors"
           title="Widget Settings"
         >
-          <Settings className="w-4 h-4 text-gray-400 hover:text-white" />
+          <Settings className="w-4 h-4 text-gray-300 hover:text-white" />
         </RouterLink>
         </div>
 
