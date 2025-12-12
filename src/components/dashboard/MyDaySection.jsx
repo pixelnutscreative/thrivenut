@@ -1359,19 +1359,7 @@ export default function MyDaySection({
           )}
         </CardContent>
       </Card>
-      
-      {/* Motivation sidebar - takes 1 column on large screens */}
-      <div className="lg:col-span-1">
-        <DailyMotivationSidebar
-          greetingType={preferences?.greeting_type}
-          userName={preferences?.user_email?.split('@')[0] || 'Friend'}
-          struggles={preferences?.mental_health_struggles || []}
-          improvements={preferences?.improvement_goals || []}
-          isBibleBeliever={preferences?.is_bible_believer}
-        />
-      </div>
 
-      {/* Carryover Tasks Modal */}
       <CarryoverTasksModal
         isOpen={showCarryoverModal}
         onClose={() => setShowCarryoverModal(false)}
@@ -1379,7 +1367,6 @@ export default function MyDaySection({
         userEmail={userEmail}
       />
 
-      {/* Task History Modal */}
       <TaskHistoryModal
         isOpen={showHistoryModal}
         onClose={() => setShowHistoryModal(false)}
@@ -1394,12 +1381,6 @@ export default function MyDaySection({
     </>
   );
 }
-
-// Detailed view rendering
-return (
-  <>
-    <Card className="shadow-lg border-0 bg-gradient-to-br from-teal-400 via-blue-400 to-purple-500">
-        <CardHeader className="pb-3">
           <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
             <CardTitle className="flex items-center gap-2 text-white">
               <Sun className="w-6 h-6" />
