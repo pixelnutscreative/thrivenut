@@ -481,7 +481,7 @@ export default function Settings() {
   );
 
   return (
-    <div className={`min-h-screen ${bgClass} p-4 md:p-8`}>
+    <div className={`min-h-screen ${bgClass} p-4 md:p-8 pb-32`}>
       <div className="max-w-5xl mx-auto space-y-6">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <h1 className="text-3xl font-bold text-gray-800">Settings</h1>
@@ -721,7 +721,14 @@ export default function Settings() {
                   <Select value={prefData.default_landing_page} onValueChange={(v) => setPrefData({ ...prefData, default_landing_page: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {pageOptions.map(page => <SelectItem key={page.id} value={page.id}>{page.name}</SelectItem>)}
+                      {pageOptions.map(page => (
+                        <SelectItem key={page.id} value={page.id}>
+                          {page.id === 'Dashboard' 
+                            ? (prefData.nickname ? `${prefData.nickname}'s Day` : "My Day")
+                            : page.name
+                          }
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </CardContent>
