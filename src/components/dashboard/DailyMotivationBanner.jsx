@@ -60,25 +60,35 @@ export default function DailyMotivationBanner({
     
     const types = greetingTypes.length > 0 ? greetingTypes : ['positive_quote'];
     
-    // Pick ONE random type from the user's selected types
-    const randomType = types[Math.floor(Math.random() * types.length)];
+    // Generate one motivation for EACH selected type
+    const newMotivations = [];
     
-    // Pick ONE random struggle/goal to focus on
-    const contextParts = [];
-    if (struggles.length > 0) {
-      const randomStruggle = struggles[Math.floor(Math.random() * struggles.length)];
-      contextParts.push(`Focus on this struggle: ${randomStruggle}`);
-    } else if (goals.length > 0) {
-      const randomGoal = goals[Math.floor(Math.random() * goals.length)];
-      contextParts.push(`Focus on this goal: ${randomGoal}`);
-    }
+    // If Bible is enabled, always put scripture first
+    const sortedTypes = isBibleBeliever && types.includes('scripture')
+      ? ['scripture', ...types.filter(t => t !== 'scripture')]
+      : types;
+    
+    for (const type of sortedTypes) {
+      // Pick ONE random struggle/goal to focus on
+      const contextParts = [];
+      if (struggles.length > 0) {
+        const randomStruggle = struggles[Math.floor(Math.random() * struggles.length)];
+        contextParts.push(`Focus on this struggle: ${randomStruggle}`);
+      } else if (goals.length > 0) {
+        const randomGoal = goals[Math.floor(Math.random() * goals.length)];
+        contextParts.push(`Focus on this goal: ${randomGoal}`);
+      }
 
-    const contentType = randomType === 'scripture' ? `${bibleVersion} Bible verses with brief application` : 
-                        randomType === 'affirmation' ? 'personal affirmations (use "I am", "I can", etc.)' :
-                        randomType === 'motivational' ? 'motivational quotes from famous leaders' : 
-                        'positive, uplifting quotes';
+      const contentType = type === 'scripture' ? `${bibleVersion} Bible verses with brief application` : 
+                          type === 'affirmation' ? 'personal affirmations (use "I am", "I can", etc.)' :
+                          type === 'motivational' ? 'motivational quotes from famous leaders' : 
+                          'positive, uplifting quotes';
 
-    const prompt = `Generate 1 short ${contentType} for the ${getTimeSlotLabel().toLowerCase()} hours.
+      const bibleAlignedNote = isBibleBeliever 
+        ? '\n- CRITICAL: Content must align with Biblical principles. NO channeling, witchcraft, New Age spirituality, spirit communication, mediums, or anything conflicting with the Bible. Focus on Biblical principles, godly wisdom, and Christ-centered encouragement.'
+        : '';
+
+      const prompt = `Generate 1 short ${contentType} for the ${getTimeSlotLabel().toLowerCase()} hours.
 ${contextParts.length > 0 ? contextParts.join('. ') + '.' : ''}
 
 Requirements:
@@ -88,36 +98,38 @@ Requirements:
 ${contextParts.length > 0 ? '- Specifically address the focus area mentioned above' : ''}
 - Actionable (if applicable)
 - DO NOT include any person's name - make it universal so it can be shared as a quote/post on social media
-- Use generic language like "you", "we", or no pronouns at all
+- Use generic language like "you", "we", or no pronouns at all${bibleAlignedNote}
 
-${randomType === 'scripture' ? `Include the Bible reference (book chapter:verse) from the ${bibleVersion} translation.` : ''}`;
+${type === 'scripture' ? `Include the Bible reference (book chapter:verse) from the ${bibleVersion} translation.` : ''}`;
 
-    try {
-      const result = await base44.integrations.Core.InvokeLLM({
-        prompt,
-        response_json_schema: {
-          type: "object",
-          properties: {
-            text: { type: "string" },
-            reference: { type: "string" }
+      try {
+        const result = await base44.integrations.Core.InvokeLLM({
+          prompt,
+          response_json_schema: {
+            type: "object",
+            properties: {
+              text: { type: "string" },
+              reference: { type: "string" }
+            }
           }
-        }
-      });
-      
-      setMotivations([{
-        text: result.text,
-        reference: result.reference || '',
-        type: randomType
-      }]);
-    } catch (error) {
-      console.error('Failed to generate motivation:', error);
-      setMotivations([{
-        text: "You're doing amazing. Keep going!",
-        reference: '',
-        type: randomType
-      }]);
+        });
+        
+        newMotivations.push({
+          text: result.text,
+          reference: result.reference || '',
+          type: type
+        });
+      } catch (error) {
+        console.error('Failed to generate motivation:', error);
+        newMotivations.push({
+          text: "You're doing amazing. Keep going!",
+          reference: '',
+          type: type
+        });
+      }
     }
     
+    setMotivations(newMotivations);
     setCurrentIndex(0);
     setLoading(false);
   };
@@ -191,28 +203,70 @@ ${randomType === 'scripture' ? `Include the Bible reference (book chapter:verse)
           </div>
         </div>
 
-        {/* Compact Motivation Content */}
-        <div className="relative">
-          <AnimatePresence mode="wait">
-            {currentMotivation && (
-              <motion.div
-                key={currentIndex}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-              >
-                <p className="text-sm font-medium leading-snug">
-                  {loading ? '...' : `"${currentMotivation.text}"`}
-                </p>
-                {currentMotivation.reference && (
-                  <p className="text-white/70 text-xs mt-0.5 italic">
-                    — {currentMotivation.reference}
+        {/* Compact Motivation Content with Navigation */}
+        <div className="relative flex items-center gap-2">
+          {motivations.length > 1 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => scroll('left')}
+              disabled={currentIndex === 0}
+              className="text-white hover:bg-white/20 h-6 w-6 p-0 flex-shrink-0"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+          )}
+          
+          <div className="flex-1">
+            <AnimatePresence mode="wait">
+              {currentMotivation && (
+                <motion.div
+                  key={currentIndex}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <p className="text-sm font-medium leading-snug">
+                    {loading ? '...' : `"${currentMotivation.text}"`}
                   </p>
-                )}
-              </motion.div>
-            )}
-          </AnimatePresence>
+                  {currentMotivation.reference && (
+                    <p className="text-white/70 text-xs mt-0.5 italic">
+                      — {currentMotivation.reference}
+                    </p>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+          
+          {motivations.length > 1 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => scroll('right')}
+              disabled={currentIndex === motivations.length - 1}
+              className="text-white hover:bg-white/20 h-6 w-6 p-0 flex-shrink-0"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          )}
         </div>
+        
+        {/* Type indicator dots */}
+        {motivations.length > 1 && (
+          <div className="flex items-center justify-center gap-1 mt-2">
+            {motivations.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setCurrentIndex(idx)}
+                className={`w-1.5 h-1.5 rounded-full transition-all ${
+                  idx === currentIndex ? 'bg-white w-4' : 'bg-white/40'
+                }`}
+              />
+            ))}
+          </div>
+        )}
 
 
       </div>

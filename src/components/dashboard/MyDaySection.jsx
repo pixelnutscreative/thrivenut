@@ -395,7 +395,7 @@ export default function MyDaySection({
     
     // Core self-care tasks
     if (preferences?.enable_bible_options !== false) {
-      if (preferences?.enable_daily_reading !== false) {
+      if (preferences?.enable_morning_reading !== false && preferences?.enable_daily_reading !== false) {
         tasks.push({ id: 'bible_reading_morning', type: 'selfcare', label: 'Morning Bible Reading', icon: BookOpen, color: 'text-amber-600', timeOfDay: 'morning', order: 1, externalLink: 'https://www.bible.com/reading-plans' });
       }
       if (preferences?.enable_morning_prayer) {
@@ -470,7 +470,7 @@ export default function MyDaySection({
     // Night tasks
     tasks.push({ id: 'brushed_teeth_night', type: 'selfcare', label: 'Brush teeth (PM)', icon: Sparkles, color: 'text-indigo-500', timeOfDay: 'night', order: 90 });
     if (preferences?.enable_bible_options !== false) {
-      if (preferences?.enable_daily_reading !== false) {
+      if (preferences?.enable_night_reading) {
         tasks.push({ id: 'bible_reading_night', type: 'selfcare', label: 'Night Bible Reading', icon: BookOpen, color: 'text-indigo-600', timeOfDay: 'night', order: 95, externalLink: 'https://www.bible.com/reading-plans' });
       }
       if (preferences?.enable_night_prayer) {
