@@ -618,16 +618,27 @@ export default function Settings() {
                 <CardDescription>Select which AI platform you're subscribed to for personalized tool links</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
+                {!prefData.ai_platform && (
+                  <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                    <p className="text-sm text-amber-800 font-medium mb-3">
+                      🎨 You don't have AI tools selected yet! Choose a platform below to get started.
+                    </p>
+                  </div>
+                )}
+
                 <div className="space-y-4">
                   <div>
                     <Label className="text-base font-semibold">Choose Your AI Platform</Label>
                     <p className="text-sm text-gray-500 mt-1 mb-3">This determines which tool links you'll see when creating content</p>
                     <Select 
-                      value={prefData.ai_platform || 'lets_go_nuts'} 
-                      onValueChange={(v) => setPrefData({ ...prefData, ai_platform: v })}
+                      value={prefData.ai_platform || ''} 
+                      onValueChange={(v) => {
+                        setPrefData({ ...prefData, ai_platform: v });
+                        updatePreferencesMutation.mutate({ ai_platform: v });
+                      }}
                     >
                       <SelectTrigger className="max-w-sm">
-                        <SelectValue />
+                        <SelectValue placeholder="Select your platform..." />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="lets_go_nuts">Let's Go Nuts</SelectItem>
