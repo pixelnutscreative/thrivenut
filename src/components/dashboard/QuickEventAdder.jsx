@@ -107,12 +107,13 @@ export default function QuickEventAdder({ isOpen, onClose, userEmail }) {
               />
             </div>
             <div className="space-y-2">
-              <Label>Time *</Label>
+              <Label>Time * (Your local time)</Label>
               <Input
                 type="time"
                 value={formData.time}
                 onChange={(e) => setFormData({ ...formData, time: e.target.value })}
               />
+              <p className="text-xs text-gray-500">Time will display in your timezone</p>
             </div>
           </div>
 

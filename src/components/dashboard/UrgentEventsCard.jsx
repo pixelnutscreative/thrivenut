@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, Calendar, Clock, ExternalLink, Swords, Video, Users, GraduationCap, Zap } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AlertTriangle, Calendar, Clock, ExternalLink, Swords, Video, Users, GraduationCap, Zap, Settings } from 'lucide-react';
 import { format, parseISO, isToday, isTomorrow } from 'date-fns';
 import { motion } from 'framer-motion';
 
@@ -23,8 +24,51 @@ const eventTypeDetector = (title, notes) => {
   return { icon: Calendar, color: 'from-amber-500 to-orange-600', label: 'Event' };
 };
 
-export default function UrgentEventsCard({ events, publicCalendarEvents }) {
+const colorSchemes = {
+  red: {
+    border: 'border-red-500',
+    bg: 'from-red-50 via-orange-50 to-amber-50',
+    header: 'from-red-600 to-rose-600',
+    itemBorder: 'border-red-200'
+  },
+  orange: {
+    border: 'border-orange-500',
+    bg: 'from-orange-50 via-amber-50 to-yellow-50',
+    header: 'from-orange-600 to-amber-600',
+    itemBorder: 'border-orange-200'
+  },
+  pink: {
+    border: 'border-pink-500',
+    bg: 'from-pink-50 via-rose-50 to-purple-50',
+    header: 'from-pink-600 to-rose-600',
+    itemBorder: 'border-pink-200'
+  },
+  purple: {
+    border: 'border-purple-500',
+    bg: 'from-purple-50 via-violet-50 to-indigo-50',
+    header: 'from-purple-600 to-violet-600',
+    itemBorder: 'border-purple-200'
+  },
+  amber: {
+    border: 'border-amber-500',
+    bg: 'from-amber-50 via-yellow-50 to-orange-50',
+    header: 'from-amber-600 to-yellow-600',
+    itemBorder: 'border-amber-200'
+  },
+  rose: {
+    border: 'border-rose-500',
+    bg: 'from-rose-50 via-pink-50 to-red-50',
+    header: 'from-rose-600 to-pink-600',
+    itemBorder: 'border-rose-200'
+  }
+};
+
+export default function UrgentEventsCard({ events, publicCalendarEvents, alertColor = 'red', onColorChange }) {
+  const [showColorPicker, setShowColorPicker] = useState(false);
+  
   if (!events || events.length === 0) return null;
+
+  const colors = colorSchemes[alertColor] || colorSchemes.red;
 
   return (
     <motion.div
@@ -32,11 +76,21 @@ export default function UrgentEventsCard({ events, publicCalendarEvents }) {
       animate={{ opacity: 1, y: 0 }}
       className="mb-6"
     >
-      <Card className="border-4 border-red-500 shadow-2xl bg-gradient-to-r from-red-50 via-orange-50 to-amber-50">
-        <CardHeader className="bg-gradient-to-r from-red-600 to-rose-600 text-white pb-3">
-          <CardTitle className="flex items-center gap-2 text-xl">
-            <AlertTriangle className="w-6 h-6 animate-pulse" />
-            🔥 Today's Important Events - DO NOT MISS!
+      <Card className={`border-4 ${colors.border} shadow-2xl bg-gradient-to-r ${colors.bg}`}>
+        <CardHeader className={`bg-gradient-to-r ${colors.header} text-white pb-3`}>
+          <CardTitle className="flex items-center justify-between text-xl">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-6 h-6 animate-pulse" />
+              🔥 Today's Important Events - DO NOT MISS!
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowColorPicker(true)}
+              className="h-8 w-8 p-0 hover:bg-white/20"
+            >
+              <Settings className="w-4 h-4" />
+            </Button>
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-4 space-y-3">
@@ -54,7 +108,7 @@ export default function UrgentEventsCard({ events, publicCalendarEvents }) {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: idx * 0.1 }}
-                className="p-4 bg-white rounded-xl border-2 border-red-200 shadow-md hover:shadow-lg transition-all"
+                className={`p-4 bg-white rounded-xl border-2 ${colors.itemBorder} shadow-md hover:shadow-lg transition-all`}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-start gap-3 flex-1">
@@ -156,6 +210,37 @@ export default function UrgentEventsCard({ events, publicCalendarEvents }) {
           )}
         </CardContent>
       </Card>
+
+      {/* Color Picker Dialog */}
+      <Dialog open={showColorPicker} onOpenChange={setShowColorPicker}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Urgent Alert Color</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-gray-600 mb-4">Choose the color for your urgent events card</p>
+            <div className="grid grid-cols-3 gap-3">
+              {Object.keys(colorSchemes).map(color => (
+                <button
+                  key={color}
+                  onClick={() => {
+                    onColorChange(color);
+                    setShowColorPicker(false);
+                  }}
+                  className={`p-4 rounded-lg border-2 transition-all ${
+                    alertColor === color 
+                      ? `${colorSchemes[color].border} bg-gradient-to-r ${colorSchemes[color].bg}` 
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <div className={`w-12 h-12 mx-auto rounded-lg bg-gradient-to-r ${colorSchemes[color].header} mb-2`}></div>
+                  <p className="text-xs font-medium text-center capitalize">{color}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }
