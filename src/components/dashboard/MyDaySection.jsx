@@ -1205,13 +1205,7 @@ export default function MyDaySection({
     );
   }
 
-  // Detailed view - separate tasks into variable/anytime vs scheduled/timed
-  const variableTasks = allTasks.filter(t => t.timeOfDay === 'anytime');
-  const scheduledTasks = allTasks.filter(t => t.timeOfDay !== 'anytime');
 
-  return (
-    <>
-      <Card className="shadow-lg border-0 bg-gradient-to-br from-teal-400 via-blue-400 to-purple-500">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
             <CardTitle className="flex items-center gap-2 text-white">
