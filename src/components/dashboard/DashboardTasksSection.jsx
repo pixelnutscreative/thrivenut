@@ -217,7 +217,7 @@ export default function DashboardTasksSection({ userEmail, viewMode = 'detailed'
             </Link>
           </CardContent>
         </CollapsibleContent>
-      </Card>
-    </>
-  );
-}
+        </Card>
+        </Collapsible>
+        );
+        }
