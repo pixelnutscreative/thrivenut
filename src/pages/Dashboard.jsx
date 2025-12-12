@@ -264,15 +264,6 @@ export default function Dashboard() {
           motivationTone={preferences?.motivation_tone || 'uplifting'}
         />
 
-        {/* Active Goals Section */}
-        <DashboardGoalsSection userEmail={effectiveEmail} />
-
-        {/* Tasks Section */}
-        <DashboardTasksSection 
-          userEmail={effectiveEmail} 
-          viewMode={preferences?.dashboard_view_mode || 'detailed'}
-        />
-
         {/* Urgent Events - Battles, Training, Important Events */}
         <UrgentEventsCard 
           events={urgentEvents} 
@@ -282,6 +273,33 @@ export default function Dashboard() {
             updatePreferencesMutation.mutate({ urgent_alert_color: color });
           }}
           userEmail={effectiveEmail}
+        />
+
+        {/* My Day Section - All daily tasks unified with Goals Scroll */}
+        <MyDaySection
+          selfCareLog={selfCareLog}
+          onToggleTask={(taskId, value) => selfCareMutation.mutate({ taskId, value })}
+          onUpdateMealNotes={(noteKey, value) => mealNotesMutation.mutate({ noteKey, value })}
+          preferences={{ ...preferences, user_email: user?.email }}
+          viewMode={preferences?.dashboard_view_mode || 'detailed'}
+          showGoogleCalendar={preferences?.show_google_calendar || false}
+          showCreatorCalendarEvents={preferences?.show_creator_calendar_events !== false}
+          onToggleGoogleCalendar={(checked) => toggleGoogleCalendarMutation.mutate(checked)}
+          onToggleCreatorCalendar={async (checked) => {
+            if (preferences?.id) {
+              await base44.entities.UserPreferences.update(preferences.id, { show_creator_calendar_events: checked });
+              queryClient.invalidateQueries({ queryKey: ['preferences'] });
+            }
+          }}
+        />
+
+        {/* Active Goals Section - Full Card View */}
+        <DashboardGoalsSection userEmail={effectiveEmail} />
+
+        {/* Tasks Section */}
+        <DashboardTasksSection 
+          userEmail={effectiveEmail} 
+          viewMode={preferences?.dashboard_view_mode || 'detailed'}
         />
 
         {/* Calendar Integration - Google Calendar & Pixel Nuts Events */}
@@ -301,24 +319,6 @@ export default function Dashboard() {
         <SubscribedEventsSection 
           userEmail={user?.email}
           primaryColor={primaryColor}
-        />
-
-        {/* My Day Section - All daily tasks unified */}
-        <MyDaySection
-          selfCareLog={selfCareLog}
-          onToggleTask={(taskId, value) => selfCareMutation.mutate({ taskId, value })}
-          onUpdateMealNotes={(noteKey, value) => mealNotesMutation.mutate({ noteKey, value })}
-          preferences={{ ...preferences, user_email: user?.email }}
-          viewMode={preferences?.dashboard_view_mode || 'detailed'}
-          showGoogleCalendar={preferences?.show_google_calendar || false}
-          showCreatorCalendarEvents={preferences?.show_creator_calendar_events !== false}
-          onToggleGoogleCalendar={(checked) => toggleGoogleCalendarMutation.mutate(checked)}
-          onToggleCreatorCalendar={async (checked) => {
-            if (preferences?.id) {
-              await base44.entities.UserPreferences.update(preferences.id, { show_creator_calendar_events: checked });
-              queryClient.invalidateQueries({ queryKey: ['preferences'] });
-            }
-          }}
         />
 
         {/* Notion Task Picker - Only for admin account */}
