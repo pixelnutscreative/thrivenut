@@ -1372,48 +1372,193 @@ export default function MyDaySection({
         onClose={() => setShowAddEventModal(false)}
         userEmail={userEmail}
       />
-    </div>
+    </>
   );
 }
 
-          <div className="mb-6 space-y-3">
-            <h3 className="text-sm font-bold text-amber-700 uppercase tracking-wider flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4" />
-              Urgent Events
-            </h3>
-            <div className="grid gap-3">
-              {manualEvents.map(event => (
-                <div key={event.id} className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-center justify-between shadow-sm">
-                  <div className="flex items-center gap-4">
-                    <div className="flex flex-col items-center justify-center w-12 h-12 bg-white rounded-lg border border-amber-100">
-                      <span className="text-xs font-bold text-amber-700">{event.time}</span>
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-amber-900">{event.title}</h4>
-                      <div className="flex items-center gap-2 text-xs text-amber-700/80">
-                        <span>@{event.host_username}</span>
-                        <span>•</span>
-                        <span>{event.platform}</span>
-                      </div>
-                    </div>
-                  </div>
-                  {event.link && (
-                    <a 
-                      href={event.link} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="p-2 bg-white rounded-full text-amber-600 hover:text-amber-800 hover:bg-amber-100 transition-colors"
-                    >
-                      <ExternalLink className="w-5 h-5" />
-                    </a>
-                  )}
-                </div>
-              ))}
+  // Detailed view rendering continues below
+  return (
+    <>
+      <Card className="shadow-lg border-0 bg-gradient-to-br from-teal-400 via-blue-400 to-purple-500">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
+            <CardTitle className="flex items-center gap-2 text-white">
+              <Sun className="w-6 h-6" />
+              My Day
+            </CardTitle>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Button 
+                variant="ghost"
+                size="sm" 
+                onClick={() => setLocalViewMode(localViewMode === 'compact' ? 'detailed' : 'compact')} 
+                className="h-7 text-xs text-white hover:bg-white/20"
+              >
+                {localViewMode === 'compact' ? <List className="w-3 h-3 mr-1" /> : <Grid3X3 className="w-3 h-3 mr-1" />}
+                {localViewMode === 'compact' ? 'Detailed' : 'Compact'}
+              </Button>
+              {preferences?.google_calendar_connected && onToggleGoogleCalendar && (
+                <button
+                  onClick={() => onToggleGoogleCalendar(!showGoogleCalendar)}
+                  className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors ${
+                    showGoogleCalendar ? 'bg-white/30 text-white' : 'bg-white/10 text-white/70'
+                  }`}
+                  title="Toggle Your Google Calendar"
+                >
+                  <Calendar className="w-3 h-3" />
+                  {showGoogleCalendar ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                </button>
+              )}
+              <a
+                href="https://pixelnutscreative.com/calendar"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 px-2 py-1 rounded text-xs bg-white/20 text-white hover:bg-white/30 transition-colors"
+                title="Subscribe to Pixel Nuts Events"
+              >
+                <CalendarDays className="w-3 h-3" />
+                <span>Pixel Events</span>
+              </a>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowAddEventModal(true)}
+                className="text-white hover:bg-white/20 h-7 text-xs"
+              >
+                <Plus className="w-3 h-3 mr-1" /> Add Event
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setShowHistoryModal(true)} 
+                className="h-7 text-xs text-white hover:bg-white/20"
+                title="View task history"
+              >
+                <History className="w-3 h-3" />
+              </Button>
+              <Button 
+                variant="ghost"
+                size="sm" 
+                onClick={() => setLayoutMode(layoutMode === 'two-column' ? 'single' : 'two-column')} 
+                className="h-7 text-xs text-white hover:bg-white/20"
+              >
+                <Columns className="w-3 h-3 mr-1" /> {layoutMode === 'two-column' ? '2-Col' : '1-Col'}
+              </Button>
+              {isReordering ? (
+                <Button size="sm" onClick={saveTaskOrder} className="bg-white text-teal-600 hover:bg-white/90 h-7 text-xs">
+                  <Check className="w-3 h-3 mr-1" /> Done
+                </Button>
+              ) : (
+                <Button variant="ghost" size="sm" onClick={() => {
+                  setLocalTaskOrder(allTasks.map(t => t.id));
+                  setIsReordering(true);
+                }} className="h-7 text-xs text-white hover:bg-white/20">
+                  <GripVertical className="w-3 h-3 mr-1" /> Reorder
+                </Button>
+              )}
+              <Badge 
+                className="bg-white/20 text-white border-white/30"
+              >
+                {completedCount}/{totalCount} • {progressPercent}%
+              </Badge>
             </div>
           </div>
-        )}
 
-        {layoutMode === 'two-column' ? (
+          <CompactGoalsScroll userEmail={preferences?.user_email} />
+        </CardHeader>
+        <CardContent className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl">
+          <div className="w-full bg-white/50 rounded-full h-2 mb-3">
+            <motion.div 
+              className="bg-gradient-to-r from-teal-600 to-green-500 h-2 rounded-full"
+              initial={{ width: 0 }}
+              animate={{ width: `${progressPercent}%` }}
+              transition={{ duration: 0.5 }}
+            />
+          </div>
+
+          {medications.length > 0 && (
+            <Link to={createPageUrl('Medications')} className="block">
+              <div className="flex items-center gap-2 mt-2 text-sm hover:bg-white/50 rounded p-1 transition-colors cursor-pointer">
+                <Pill className="w-4 h-4 text-pink-500" />
+                <span className={allMedsTaken ? 'text-green-600' : 'text-gray-500'}>
+                  Medications: {allMedsTaken ? '✓ All taken' : `${medicationLogs.reduce((sum, l) => sum + (l.doses_taken?.length || 0), 0)} doses logged`}
+                </span>
+                <ExternalLink className="w-3 h-3 text-gray-400" />
+              </div>
+            </Link>
+          )}
+          {supplements.length > 0 && (
+            <Link to={createPageUrl('Supplements')} className="block">
+              <div className="flex items-center gap-2 text-sm hover:bg-white/50 rounded p-1 transition-colors cursor-pointer">
+                <Pill className="w-4 h-4 text-amber-500" />
+                <span className={allSuppsTaken ? 'text-green-600' : 'text-gray-500'}>
+                  Supplements: {allSuppsTaken ? '✓ All taken' : `${supplementLogs.reduce((sum, l) => sum + (l.doses_taken?.length || 0), 0)} doses logged`}
+                </span>
+                <ExternalLink className="w-3 h-3 text-gray-400" />
+              </div>
+            </Link>
+          )}
+          {pets.length > 0 && (
+            <Link to={createPageUrl('PetCare')} className="block">
+              <div className="flex items-center gap-2 text-sm hover:bg-white/50 rounded p-1 transition-colors cursor-pointer">
+                <PawPrint className="w-4 h-4 text-orange-500" />
+                <span className="text-gray-500">
+                  Pet Care: {petLogs.reduce((sum, l) => sum + (l.completed_tasks?.length || 0), 0)} tasks done
+                </span>
+                <ExternalLink className="w-3 h-3 text-gray-400" />
+              </div>
+            </Link>
+          )}
+          {careReminders.length > 0 && (
+            <Link to={createPageUrl('CareReminders')} className="block">
+              <div className="flex items-center gap-2 text-sm hover:bg-white/50 rounded p-1 transition-colors cursor-pointer">
+                <Bell className="w-4 h-4 text-purple-500" />
+                <span className="text-gray-500">
+                  Care Reminders: {(selfCareLog?.completed_care_reminders || []).length}/{careReminders.length} done
+                </span>
+                <ExternalLink className="w-3 h-3 text-gray-400" />
+              </div>
+            </Link>
+          )}
+
+          {manualEvents.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-white/30">
+              <h3 className="text-sm font-bold text-amber-700 uppercase tracking-wider flex items-center gap-2 mb-3">
+                <AlertTriangle className="w-4 h-4" />
+                Urgent Events
+              </h3>
+              <div className="grid gap-3">
+                {manualEvents.map(event => (
+                  <div key={event.id} className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-center justify-between shadow-sm">
+                    <div className="flex items-center gap-4">
+                      <div className="flex flex-col items-center justify-center w-12 h-12 bg-white rounded-lg border border-amber-100">
+                        <span className="text-xs font-bold text-amber-700">{event.time}</span>
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-amber-900">{event.title}</h4>
+                        <div className="flex items-center gap-2 text-xs text-amber-700/80">
+                          <span>@{event.host_username}</span>
+                          <span>•</span>
+                          <span>{event.platform}</span>
+                        </div>
+                      </div>
+                    </div>
+                    {event.link && (
+                      <a 
+                        href={event.link} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="p-2 bg-white rounded-full text-amber-600 hover:text-amber-800 hover:bg-amber-100 transition-colors"
+                      >
+                        <ExternalLink className="w-5 h-5" />
+                      </a>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {layoutMode === 'two-column' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Left column: Variable/As-Needed tasks */}
             <div className="space-y-2">
