@@ -39,16 +39,13 @@ export default function DailyMotivationBanner({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [savedId, setSavedId] = useState(null);
 
-  // Current time slot
-  const currentHour = new Date().getHours();
-  const getTimeSlotLabel = () => {
-    if (currentHour < 6) return 'Early Hours';
-    if (currentHour < 9) return 'Morning';
-    if (currentHour < 12) return 'Mid-Morning';
-    if (currentHour < 15) return 'Afternoon';
-    if (currentHour < 18) return 'Late Afternoon';
-    if (currentHour < 21) return 'Evening';
-    return 'Night';
+  // Season and month context for relevant content
+  const getSeasonContext = () => {
+    const month = new Date().getMonth();
+    const season = month >= 2 && month <= 4 ? 'spring' :
+                   month >= 5 && month <= 7 ? 'summer' :
+                   month >= 8 && month <= 10 ? 'fall' : 'winter';
+    return season;
   };
 
   useEffect(() => {
@@ -79,28 +76,37 @@ export default function DailyMotivationBanner({
         contextParts.push(`Focus on this goal: ${randomGoal}`);
       }
 
-      const contentType = type === 'scripture' ? `${bibleVersion} Bible verses with brief application` : 
-                          type === 'affirmation' ? 'personal affirmations (use "I am", "I can", etc.)' :
-                          type === 'motivational' ? 'motivational quotes from famous leaders' : 
-                          'positive, uplifting quotes';
+      const contentType = type === 'scripture' ? `accurate ${bibleVersion} Bible verse (EXACT wording, no paraphrasing)` : 
+                          type === 'affirmation' ? 'personal biblical affirmation (use "I am", "I can", etc.)' :
+                          type === 'motivational' ? 'motivational message' : 
+                          'positive, uplifting quote';
 
       const bibleAlignedNote = isBibleBeliever 
         ? '\n- CRITICAL: Content must align with Biblical principles. NO channeling, witchcraft, New Age spirituality, spirit communication, mediums, or anything conflicting with the Bible. Focus on Biblical principles, godly wisdom, and Christ-centered encouragement.'
         : '';
 
-      const prompt = `Generate 1 short ${contentType} for the ${getTimeSlotLabel().toLowerCase()} hours.
+      const season = getSeasonContext();
+      const seasonNote = `We're in ${season} season - you can optionally make content seasonally relevant if natural, but it's not required.`;
+
+      const prompt = `Generate 1 short ${contentType}.
 ${contextParts.length > 0 ? contextParts.join('. ') + '.' : ''}
 
 Requirements:
 - Tone: ${motivationTone}
-- Very short (1-2 sentences max)
-- Relevant to ${getTimeSlotLabel().toLowerCase()} time of day
+- Very short (1-2 sentences max for quotes/affirmations)
 ${contextParts.length > 0 ? '- Specifically address the focus area mentioned above' : ''}
 - Actionable (if applicable)
+- DO NOT mention time of day (morning, evening, etc.) unless the scripture itself mentions it
 - DO NOT include any person's name - make it universal so it can be shared as a quote/post on social media
-- Use generic language like "you", "we", or no pronouns at all${bibleAlignedNote}
+- Use generic language like "you", "we", or no pronouns at all
+- ${seasonNote}${bibleAlignedNote}
 
-${type === 'scripture' ? `Include the Bible reference (book chapter:verse) from the ${bibleVersion} translation.` : ''}`;
+${type === 'scripture' 
+  ? `CRITICAL: Provide the EXACT scripture text word-for-word from ${bibleVersion}. Include the Bible reference (book chapter:verse).` 
+  : type === 'motivational' 
+    ? `If inspired by a scripture, you can mention it in the reference field with "Inspired by [Book Chapter:Verse]" but the main text should be your own motivational message, not the actual scripture.`
+    : ''
+}`;
 
       try {
         const result = await base44.integrations.Core.InvokeLLM({
