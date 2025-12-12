@@ -26,6 +26,7 @@ import CarryoverTasksModal from './CarryoverTasksModal';
 import TaskHistoryModal from './TaskHistoryModal';
 import TaskOptionsMenu from './TaskOptionsMenu';
 import AddManualEventModal from './AddManualEventModal';
+import CompactGoalsScroll from './CompactGoalsScroll';
 
 // Time category mapping to time slots
 const timeSlotOrder = {
@@ -1042,25 +1043,28 @@ export default function MyDaySection({
   if (localViewMode === 'compact') {
     return (
       <>
-        <Card className="shadow-lg border-0 bg-gradient-to-br from-teal-50 to-cyan-50">
+        <Card className="shadow-lg border-0 bg-gradient-to-br from-teal-400 via-blue-400 to-purple-500">
           <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <Sun className="w-6 h-6 text-amber-500" />
+            <div className="flex items-center justify-between mb-3">
+              <CardTitle className="flex items-center gap-2 text-white">
+                <Sun className="w-6 h-6" />
                 My Day
               </CardTitle>
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" onClick={() => setLocalViewMode('detailed')} className="h-8">
+                <Button variant="ghost" size="sm" onClick={() => setLocalViewMode('detailed')} className="h-8 text-white hover:bg-white/20">
                   <List className="w-4 h-4 mr-1" /> Detailed
                 </Button>
                 <Badge variant={completedCount === totalCount ? "default" : "secondary"} 
-                       className={completedCount === totalCount ? "bg-green-500" : ""}>
+                       className={completedCount === totalCount ? "bg-white text-teal-600" : "bg-white/20 text-white"}>
                   {progressPercent}%
                 </Badge>
               </div>
             </div>
+
+            {/* Compact Goals Scroll */}
+            <CompactGoalsScroll userEmail={preferences?.user_email} />
           </CardHeader>
-          <CardContent>
+          <CardContent className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl">
             <div className="flex flex-wrap gap-2">
               {allTasks.filter(t => !skippedTasks.includes(t.id)).map((task) => {
                 const Icon = task.icon;
@@ -1189,30 +1193,30 @@ export default function MyDaySection({
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
       {/* Main task card - takes 3 columns on large screens */}
-      <Card className="shadow-lg border-0 bg-gradient-to-br from-teal-50 to-cyan-50 lg:col-span-3">
-        <CardHeader>
-          <div className="flex items-center justify-between flex-wrap gap-2">
-            <CardTitle className="flex items-center gap-2">
-              <Sun className="w-6 h-6 text-amber-500" />
+      <Card className="shadow-lg border-0 bg-gradient-to-br from-teal-400 via-blue-400 to-purple-500 lg:col-span-3">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
+            <CardTitle className="flex items-center gap-2 text-white">
+              <Sun className="w-6 h-6" />
               My Day
             </CardTitle>
             <div className="flex items-center gap-2 flex-wrap">
               {/* View mode toggle */}
               <Button 
-                variant={localViewMode === 'compact' ? 'default' : 'outline'} 
+                variant="ghost"
                 size="sm" 
                 onClick={() => setLocalViewMode(localViewMode === 'compact' ? 'detailed' : 'compact')} 
-                className="h-7 text-xs"
+                className="h-7 text-xs text-white hover:bg-white/20"
               >
-                {localViewMode === 'compact' ? <Grid3X3 className="w-3 h-3 mr-1" /> : <List className="w-3 h-3 mr-1" />}
-                {localViewMode === 'compact' ? 'Compact' : 'Detailed'}
+                {localViewMode === 'compact' ? <List className="w-3 h-3 mr-1" /> : <Grid3X3 className="w-3 h-3 mr-1" />}
+                {localViewMode === 'compact' ? 'Detailed' : 'Compact'}
               </Button>
               {/* Calendar toggles - inline */}
               {preferences?.google_calendar_connected && onToggleGoogleCalendar && (
                 <button
                   onClick={() => onToggleGoogleCalendar(!showGoogleCalendar)}
                   className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors ${
-                    showGoogleCalendar ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'
+                    showGoogleCalendar ? 'bg-white/30 text-white' : 'bg-white/10 text-white/70'
                   }`}
                   title="Toggle Your Google Calendar"
                 >
@@ -1225,17 +1229,17 @@ export default function MyDaySection({
                 href="https://pixelnutscreative.com/calendar"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1 px-2 py-1 rounded text-xs bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors"
+                className="flex items-center gap-1 px-2 py-1 rounded text-xs bg-white/20 text-white hover:bg-white/30 transition-colors"
                 title="Subscribe to Pixel Nuts Events"
               >
                 <CalendarDays className="w-3 h-3" />
                 <span>Pixel Events</span>
               </a>
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
                 onClick={() => setShowAddEventModal(true)}
-                className="bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 h-7 text-xs"
+                className="text-white hover:bg-white/20 h-7 text-xs"
               >
                 <Plus className="w-3 h-3 mr-1" /> Add Event
               </Button>
@@ -1243,45 +1247,48 @@ export default function MyDaySection({
                 variant="ghost" 
                 size="sm" 
                 onClick={() => setShowHistoryModal(true)} 
-                className="h-7 text-xs"
+                className="h-7 text-xs text-white hover:bg-white/20"
                 title="View task history"
               >
                 <History className="w-3 h-3" />
               </Button>
               <Button 
-                variant={layoutMode === 'two-column' ? 'default' : 'outline'} 
+                variant="ghost"
                 size="sm" 
                 onClick={() => setLayoutMode(layoutMode === 'two-column' ? 'single' : 'two-column')} 
-                className="h-7 text-xs"
+                className="h-7 text-xs text-white hover:bg-white/20"
               >
                 <Columns className="w-3 h-3 mr-1" /> {layoutMode === 'two-column' ? '2-Col' : '1-Col'}
               </Button>
               {isReordering ? (
-                <Button size="sm" onClick={saveTaskOrder} className="bg-green-500 hover:bg-green-600 h-7 text-xs">
+                <Button size="sm" onClick={saveTaskOrder} className="bg-white text-teal-600 hover:bg-white/90 h-7 text-xs">
                   <Check className="w-3 h-3 mr-1" /> Done
                 </Button>
               ) : (
                 <Button variant="ghost" size="sm" onClick={() => {
                   setLocalTaskOrder(allTasks.map(t => t.id));
                   setIsReordering(true);
-                }} className="h-7 text-xs">
+                }} className="h-7 text-xs text-white hover:bg-white/20">
                   <GripVertical className="w-3 h-3 mr-1" /> Reorder
                 </Button>
               )}
-              <Button variant="ghost" size="sm" onClick={() => setLocalViewMode('compact')} className="h-7 text-xs">
-                <Grid3X3 className="w-3 h-3 mr-1" /> Compact
-              </Button>
-              <Badge variant={completedCount === totalCount ? "default" : "secondary"} 
-                     className={completedCount === totalCount ? "bg-green-500" : ""}>
+              <Badge 
+                className="bg-white/20 text-white border-white/30"
+              >
                 {completedCount}/{totalCount} • {progressPercent}%
               </Badge>
             </div>
           </div>
+
+          {/* Compact Goals Scroll */}
+          <CompactGoalsScroll userEmail={preferences?.user_email} />
           
+        </CardHeader>
+        <CardContent className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl">
           {/* Progress bar */}
-          <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+          <div className="w-full bg-white/50 rounded-full h-2 mb-3">
             <motion.div 
-              className="bg-gradient-to-r from-teal-500 to-green-500 h-2 rounded-full"
+              className="bg-gradient-to-r from-teal-600 to-green-500 h-2 rounded-full"
               initial={{ width: 0 }}
               animate={{ width: `${progressPercent}%` }}
               transition={{ duration: 0.5 }}
@@ -1333,10 +1340,8 @@ export default function MyDaySection({
               </div>
             </Link>
           )}
-        </CardHeader>
-      
-      <CardContent>
-        {/* Manual Urgent Events Section */}
+        
+          <div className="flex flex-wrap gap-2">
         {manualEvents.length > 0 && (
           <div className="mb-6 space-y-3">
             <h3 className="text-sm font-bold text-amber-700 uppercase tracking-wider flex items-center gap-2">
