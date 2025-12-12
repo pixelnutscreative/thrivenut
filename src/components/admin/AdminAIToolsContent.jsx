@@ -20,6 +20,7 @@ export default function AdminAIToolsContent() {
   const [editingTool, setEditingTool] = useState(null);
   const [newTool, setNewTool] = useState({
     tool_name: '',
+    app_id: '',
     pixels_toolbox_url: '',
     lets_go_nuts_url: '',
     icon_emoji: '',
@@ -46,7 +47,7 @@ export default function AdminAIToolsContent() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['aiToolLinks'] });
       setShowAddTool(false);
-      setNewTool({ tool_name: '', pixels_toolbox_url: '', lets_go_nuts_url: '', icon_emoji: '', icon_url: '', is_general_tool: false, sort_order: 100 });
+      setNewTool({ tool_name: '', app_id: '', pixels_toolbox_url: '', lets_go_nuts_url: '', icon_emoji: '', icon_url: '', is_general_tool: false, sort_order: 100 });
     },
   });
 
@@ -126,6 +127,8 @@ export default function AdminAIToolsContent() {
                         <div className="text-xs text-gray-500 mt-1 space-y-1">
                           {tool.is_general_tool ? (
                             <p>URL: {tool.pixels_toolbox_url || tool.lets_go_nuts_url}</p>
+                          ) : tool.app_id ? (
+                            <p>App ID: {tool.app_id}</p>
                           ) : (
                             <>
                               {tool.pixels_toolbox_url && (
@@ -269,32 +272,70 @@ export default function AdminAIToolsContent() {
               />
               <div>
                 <p className="font-medium text-purple-800 text-sm">General AI Tool (ChatGPT, Nano Banana)</p>
-                <p className="text-xs text-purple-600">Same URL for both platforms - only fill Pixel's URL field</p>
+                <p className="text-xs text-purple-600">Uses custom URL instead of App ID</p>
               </div>
             </div>
-            <div className="space-y-2">
-              <Label>{(editingTool?.is_general_tool || newTool.is_general_tool) ? 'Tool URL' : "Pixel's AI Toolbox URL"}</Label>
-              <Input
-                value={editingTool?.pixels_toolbox_url || newTool.pixels_toolbox_url}
-                onChange={(e) => editingTool 
-                  ? setEditingTool({ ...editingTool, pixels_toolbox_url: e.target.value })
-                  : setNewTool({ ...newTool, pixels_toolbox_url: e.target.value })
-                }
-                placeholder="https://..."
-              />
-            </div>
+
             {!(editingTool?.is_general_tool || newTool.is_general_tool) && (
               <div className="space-y-2">
-                <Label>Let's Go Nuts URL</Label>
+                <Label>App ID (Easy Mode! 🎉)</Label>
                 <Input
-                  value={editingTool?.lets_go_nuts_url || newTool.lets_go_nuts_url}
+                  value={editingTool?.app_id || newTool.app_id}
                   onChange={(e) => editingTool 
-                    ? setEditingTool({ ...editingTool, lets_go_nuts_url: e.target.value })
-                    : setNewTool({ ...newTool, lets_go_nuts_url: e.target.value })
+                    ? setEditingTool({ ...editingTool, app_id: e.target.value })
+                    : setNewTool({ ...newTool, app_id: e.target.value })
                   }
-                  placeholder="https://create.letsgonuts.ai/..."
+                  placeholder="67cd0dd73abc87a85c9cbfea"
+                />
+                <p className="text-xs text-gray-500">
+                  ✨ Just paste the App ID from the URL and we'll auto-generate both platform URLs!
+                </p>
+              </div>
+            )}
+            {(editingTool?.is_general_tool || newTool.is_general_tool) && (
+              <div className="space-y-2">
+                <Label>Tool URL</Label>
+                <Input
+                  value={editingTool?.pixels_toolbox_url || newTool.pixels_toolbox_url}
+                  onChange={(e) => editingTool 
+                    ? setEditingTool({ ...editingTool, pixels_toolbox_url: e.target.value })
+                    : setNewTool({ ...newTool, pixels_toolbox_url: e.target.value })
+                  }
+                  placeholder="https://..."
                 />
               </div>
+            )}
+
+            {!(editingTool?.is_general_tool || newTool.is_general_tool) && (
+              <details className="mt-4">
+                <summary className="text-sm text-gray-600 cursor-pointer hover:text-gray-800">
+                  Advanced: Override URLs manually
+                </summary>
+                <div className="space-y-2 mt-3 pl-4 border-l-2 border-gray-200">
+                  <div className="space-y-2">
+                    <Label>Custom Pixel's AI Toolbox URL (optional)</Label>
+                    <Input
+                      value={editingTool?.pixels_toolbox_url || newTool.pixels_toolbox_url}
+                      onChange={(e) => editingTool 
+                        ? setEditingTool({ ...editingTool, pixels_toolbox_url: e.target.value })
+                        : setNewTool({ ...newTool, pixels_toolbox_url: e.target.value })
+                      }
+                      placeholder="Leave empty to use App ID"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Custom Let's Go Nuts URL (optional)</Label>
+                    <Input
+                      value={editingTool?.lets_go_nuts_url || newTool.lets_go_nuts_url}
+                      onChange={(e) => editingTool 
+                        ? setEditingTool({ ...editingTool, lets_go_nuts_url: e.target.value })
+                        : setNewTool({ ...newTool, lets_go_nuts_url: e.target.value })
+                      }
+                      placeholder="Leave empty to use App ID"
+                    />
+                  </div>
+                </div>
+              </details>
             )}
             <div className="space-y-2">
               <Label>Sort Order</Label>

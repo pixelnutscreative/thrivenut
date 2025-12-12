@@ -149,7 +149,14 @@ Each prompt should be:
     let url = '';
     if (tool.is_general_tool) {
       url = tool.pixels_toolbox_url || tool.lets_go_nuts_url;
+    } else if (tool.app_id) {
+      // Auto-generate URL from App ID
+      const baseUrl = userPlatform === 'pixels_toolbox' 
+        ? 'https://ai.thenutsandbots.com/apps/custom-api/'
+        : 'https://create.letsgonuts.ai/apps/custom-api/';
+      url = baseUrl + tool.app_id;
     } else {
+      // Fallback to custom URLs
       url = userPlatform === 'pixels_toolbox' ? tool.pixels_toolbox_url : tool.lets_go_nuts_url;
     }
 
@@ -399,9 +406,18 @@ Each prompt should be:
                                           <p className="text-xs font-semibold text-gray-500 mb-2 px-2">Copy & Open In:</p>
                                           <div className="space-y-1 max-h-64 overflow-y-auto">
                                             {aiToolLinks.map(tool => {
-                                              const url = tool.is_general_tool 
-                                                ? (tool.pixels_toolbox_url || tool.lets_go_nuts_url)
-                                                : (userPlatform === 'pixels_toolbox' ? tool.pixels_toolbox_url : tool.lets_go_nuts_url);
+                                              // Generate URL
+                                              let url = '';
+                                              if (tool.is_general_tool) {
+                                                url = tool.pixels_toolbox_url || tool.lets_go_nuts_url;
+                                              } else if (tool.app_id) {
+                                                const baseUrl = userPlatform === 'pixels_toolbox'
+                                                  ? 'https://ai.thenutsandbots.com/apps/custom-api/'
+                                                  : 'https://create.letsgonuts.ai/apps/custom-api/';
+                                                url = baseUrl + tool.app_id;
+                                              } else {
+                                                url = userPlatform === 'pixels_toolbox' ? tool.pixels_toolbox_url : tool.lets_go_nuts_url;
+                                              }
                                               
                                               if (!url) return null;
 
