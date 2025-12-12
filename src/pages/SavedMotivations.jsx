@@ -57,7 +57,8 @@ export default function SavedMotivations() {
     enabled: !!effectiveEmail,
   });
 
-  const userPlatform = platformUser?.platform || 'lets_go_nuts';
+  // Priority: user self-selection > admin assignment > default to lets_go_nuts
+  const userPlatform = preferences?.ai_platform || platformUser?.platform || 'lets_go_nuts';
 
   const categories = [...new Set(motivations.map(m => m.category || 'Uncategorized'))];
 
