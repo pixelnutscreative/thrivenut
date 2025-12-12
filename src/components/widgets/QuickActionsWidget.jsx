@@ -7,17 +7,19 @@ import { Input } from '@/components/ui/input';
 import { Plus } from 'lucide-react';
 import { 
   Zap, Droplet, Smile, Utensils, Lightbulb, Cloud, StickyNote, 
-  X, Check, Settings, Music, Heart, Home, Link, ExternalLink, GripHorizontal, BookOpen, Loader2, ChevronDown, ChevronRight, ChevronLeft
+  X, Check, Settings, Music, Heart, Home, Link, ExternalLink, GripHorizontal, BookOpen, Loader2, ChevronDown, ChevronRight, ChevronLeft, Calendar as CalendarIcon, CheckCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { Link as RouterLink } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
+import QuickEventAdder from '../dashboard/QuickEventAdder';
 
 const builtInActions = [
   { id: 'mood', label: 'Mood', icon: Smile, color: 'bg-pink-500' },
   { id: 'water', label: 'Water', icon: Droplet, color: 'bg-cyan-500' },
-  { id: 'task', label: 'Task', icon: Check, color: 'bg-teal-500' },
+  { id: 'task', label: 'Task', icon: CheckCircle, color: 'bg-teal-500' },
+  { id: 'event', label: 'Event', icon: CalendarIcon, color: 'bg-orange-500' },
   { id: 'food', label: 'Food', icon: Utensils, color: 'bg-green-500' },
   { id: 'idea', label: 'Idea', icon: Lightbulb, color: 'bg-yellow-500' },
   { id: 'negative_thought', label: 'Reframe', icon: Cloud, color: 'bg-gray-500' },
@@ -38,7 +40,7 @@ const defaultMoodOptions = [
   { emoji: '😴', label: 'Tired', value: 'tired' },
 ];
 
-const iconMap = { Smile, Droplet, Utensils, Lightbulb, Cloud, StickyNote, Heart, Home, Music, Zap, Link, ExternalLink, Check };
+const iconMap = { Smile, Droplet, Utensils, Lightbulb, Cloud, StickyNote, Heart, Home, Music, Zap, Link, ExternalLink, Check, CheckCircle, Calendar: CalendarIcon };
 
 export default function QuickActionsWidget({ preferences, primaryColor, accentColor }) {
   const queryClient = useQueryClient();
@@ -55,6 +57,7 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
   const [scrollPosition, setScrollPosition] = useState(0);
   const scrollContainerRef = useRef(null);
   const [moodNote, setMoodNote] = useState('');
+  const [showQuickEventDialog, setShowQuickEventDialog] = useState(false);
   
   const today = format(new Date(), 'yyyy-MM-dd');
 
@@ -209,6 +212,8 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
       waterLogMutation.mutate();
     } else if (actionId === 'task') {
       window.location.href = createPageUrl('Tasks');
+    } else if (actionId === 'event') {
+      setShowQuickEventDialog(true);
     } else {
       setActiveAction(actionId);
     }
@@ -702,6 +707,13 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
           </motion.div>
         )}
       </AnimatePresence>
-    </>
-  );
-}
+
+      {/* Quick Event Dialog */}
+      <QuickEventAdder 
+        isOpen={showQuickEventDialog}
+        onClose={() => setShowQuickEventDialog(false)}
+        userEmail={userEmail}
+      />
+      </>
+      );
+      }

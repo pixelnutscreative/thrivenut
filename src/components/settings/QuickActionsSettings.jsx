@@ -9,17 +9,19 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Zap, Droplet, Smile, Utensils, Lightbulb, Cloud, StickyNote, Heart,
   Plus, Trash2, GripVertical, ExternalLink, ArrowDown, ArrowUp, ArrowLeft, ArrowRight,
-  Music, Link, Home
+  Music, Link, Home, Check as CheckCircle, Calendar as CalendarIcon
 } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
 const builtInActions = [
   { id: 'mood', label: 'Mood', icon: 'Smile', color: 'bg-pink-500' },
   { id: 'water', label: 'Water', icon: 'Droplet', color: 'bg-blue-500' },
-  { id: 'food', label: 'Food', icon: 'Utensils', color: 'bg-orange-500' },
+  { id: 'task', label: 'Quick Task', icon: 'Check', color: 'bg-teal-500' },
+  { id: 'event', label: 'Add Event', icon: 'Calendar', color: 'bg-orange-500' },
+  { id: 'food', label: 'Food', icon: 'Utensils', color: 'bg-green-500' },
   { id: 'idea', label: 'Idea', icon: 'Lightbulb', color: 'bg-yellow-500' },
   { id: 'negative_thought', label: 'Reframe', icon: 'Cloud', color: 'bg-purple-500' },
-  { id: 'note', label: 'Note', icon: 'StickyNote', color: 'bg-green-500' },
+  { id: 'note', label: 'Note', icon: 'StickyNote', color: 'bg-lime-500' },
   { id: 'gratitude', label: 'Gratitude', icon: 'Heart', color: 'bg-red-500' },
 ];
 
@@ -47,6 +49,7 @@ const positionOptions = [
 export default function QuickActionsSettings({ formData, setFormData }) {
   const [showAddCustom, setShowAddCustom] = useState(false);
   const [newAction, setNewAction] = useState({ label: '', icon: 'Home', page: '', external_url: '', color: 'bg-teal-500' });
+  const [editingAction, setEditingAction] = useState(null);
 
   const quickActions = formData.quick_actions || ['mood', 'water', 'food', 'note'];
   const customActions = formData.custom_quick_actions || [];
@@ -80,8 +83,21 @@ export default function QuickActionsSettings({ formData, setFormData }) {
     });
   };
 
+  const handleEditAction = (action) => {
+    setEditingAction(action);
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingAction) return;
+    const updatedCustom = customActions.map(a => 
+      a.id === editingAction.id ? editingAction : a
+    );
+    setFormData({ ...formData, custom_quick_actions: updatedCustom });
+    setEditingAction(null);
+  };
+
   const getIconComponent = (iconName) => {
-    const icons = { Smile, Droplet, Utensils, Lightbulb, Cloud, StickyNote, Heart, Home, Music, Zap, Link, ExternalLink };
+    const icons = { Smile, Droplet, Utensils, Lightbulb, Cloud, StickyNote, Heart, Home, Music, Zap, Link, ExternalLink, Check: CheckCircle, Calendar: CalendarIcon };
     return icons[iconName] || Zap;
   };
 
@@ -240,7 +256,11 @@ export default function QuickActionsSettings({ formData, setFormData }) {
                         setFormData({ ...formData, quick_actions: newActions });
                       }}
                     />
-                    <div className={`w-8 h-8 rounded-lg ${action.color} flex items-center justify-center`}>
+                    <div 
+                      className={`w-8 h-8 rounded-lg ${action.color} flex items-center justify-center cursor-pointer hover:opacity-80`}
+                      onClick={(e) => { e.stopPropagation(); handleEditAction(action); }}
+                      title="Click to change color"
+                    >
                       <Icon className="w-4 h-4 text-white" />
                     </div>
                     <div className="flex-1">
@@ -263,6 +283,35 @@ export default function QuickActionsSettings({ formData, setFormData }) {
           )}
         </CardContent>
       </Card>
+
+      {/* Edit Action Color Dialog */}
+      <Dialog open={!!editingAction} onOpenChange={() => setEditingAction(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit {editingAction?.label}</DialogTitle>
+          </DialogHeader>
+          {editingAction && (
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>Color</Label>
+                <div className="flex gap-2 flex-wrap">
+                  {colorOptions.map(color => (
+                    <button
+                      key={color}
+                      type="button"
+                      onClick={() => setEditingAction({ ...editingAction, color })}
+                      className={`w-10 h-10 rounded-lg ${color} ${
+                        editingAction.color === color ? 'ring-2 ring-offset-2 ring-purple-500' : ''
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+              <Button onClick={handleSaveEdit} className="w-full">Save Changes</Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

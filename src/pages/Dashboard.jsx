@@ -17,7 +17,8 @@ import DailyMotivationBanner from '../components/dashboard/DailyMotivationBanner
 import SpecialEventsCard from '../components/dashboard/SpecialEventsCard';
 import SubscribedEventsSection from '../components/dashboard/SubscribedEventsSection';
 import NotionTaskPicker from '../components/dashboard/NotionTaskPicker';
-import { format, startOfWeek } from 'date-fns';
+import UrgentEventsCard from '../components/dashboard/UrgentEventsCard';
+import { format, startOfWeek, addDays } from 'date-fns';
 import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
 import { useTheme } from '../components/shared/useTheme';
 
@@ -137,6 +138,36 @@ export default function Dashboard() {
     enabled: !!effectiveEmail,
   });
 
+  // Fetch urgent events for today
+  const { data: urgentEvents = [] } = useQuery({
+    queryKey: ['urgentEvents', effectiveEmail],
+    queryFn: async () => {
+      const today = format(new Date(), 'yyyy-MM-dd');
+      const tomorrow = format(addDays(new Date(), 1), 'yyyy-MM-dd');
+      const events = await base44.entities.ExternalEvent.filter({ created_by: effectiveEmail });
+      return events.filter(e => e.is_urgent && (e.date === today || e.date === tomorrow));
+    },
+    enabled: !!effectiveEmail,
+  });
+
+  // Fetch public calendar events
+  const { data: publicCalendarData } = useQuery({
+    queryKey: ['publicCalendar'],
+    queryFn: async () => {
+      const response = await base44.functions.invoke('fetchPublicCalendar');
+      return response.data;
+    },
+    enabled: !!user,
+    staleTime: 1000 * 60 * 30, // Cache for 30 minutes
+  });
+
+  const todaysPublicEvents = (publicCalendarData?.events || []).filter(event => {
+    const eventDate = event.start.split(' ')[0];
+    const today = format(new Date(), 'yyyy-MM-dd');
+    const tomorrow = format(addDays(new Date(), 1), 'yyyy-MM-dd');
+    return eventDate === today || eventDate === tomorrow;
+  });
+
   const selfCareMutation = useMutation({
     mutationFn: async ({ taskId, value }) => {
       const today = format(new Date(), 'yyyy-MM-dd');
@@ -220,6 +251,9 @@ export default function Dashboard() {
           bibleVersion={preferences?.bible_version || 'NIV'}
           motivationTone={preferences?.motivation_tone || 'uplifting'}
         />
+
+        {/* Urgent Events - Battles, Training, Important Events */}
+        <UrgentEventsCard events={urgentEvents} publicCalendarEvents={todaysPublicEvents} />
 
         {/* Special Events - Birthdays & Sobriety Anniversaries from Contacts */}
         <SpecialEventsCard contacts={tiktokContacts} />
