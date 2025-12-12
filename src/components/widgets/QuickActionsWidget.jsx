@@ -413,7 +413,7 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
             overflowX: 'auto',
             scrollbarWidth: 'none',
             msOverflowStyle: 'none',
-            maxWidth: isMobile ? 'calc(100vw - 200px)' : '300px'
+            maxWidth: (isMobile || isDocked) ? 'calc(100vw - 200px)' : '600px'
           }}
         >
           {visibleActions.map((action) => {
