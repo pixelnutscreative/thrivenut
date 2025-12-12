@@ -12,13 +12,13 @@ import { Loader2, LogOut, ChevronDown, ChevronRight, Settings, Calendar, Eye, Ey
 
 import MyDaySection from '../components/dashboard/MyDaySection';
 import DailyMotivationBanner from '../components/dashboard/DailyMotivationBanner';
-// Weekly content schedule removed per user request
-// Content management moved to Content Calendar page
 import SpecialEventsCard from '../components/dashboard/SpecialEventsCard';
 import SubscribedEventsSection from '../components/dashboard/SubscribedEventsSection';
 import NotionTaskPicker from '../components/dashboard/NotionTaskPicker';
 import UrgentEventsCard from '../components/dashboard/UrgentEventsCard';
 import CalendarIntegrationCard from '../components/dashboard/CalendarIntegrationCard';
+import DashboardGoalsSection from '../components/dashboard/DashboardGoalsSection';
+import DashboardTasksSection from '../components/dashboard/DashboardTasksSection';
 import { format, startOfWeek, addDays } from 'date-fns';
 import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
 import { useTheme } from '../components/shared/useTheme';
