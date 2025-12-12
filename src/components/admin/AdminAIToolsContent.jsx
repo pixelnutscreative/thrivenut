@@ -18,6 +18,7 @@ export default function AdminAIToolsContent() {
   const [showAddTool, setShowAddTool] = useState(false);
   const [showAddUser, setShowAddUser] = useState(false);
   const [editingTool, setEditingTool] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
   const [newTool, setNewTool] = useState({
     tool_name: '',
     app_id: '',
@@ -30,6 +31,11 @@ export default function AdminAIToolsContent() {
   });
   const [newUser, setNewUser] = useState({ user_email: '', platform: 'lets_go_nuts' });
 
+  // Fetch current user
+  React.useEffect(() => {
+    base44.auth.me().then(user => setCurrentUser(user)).catch(() => {});
+  }, []);
+
   // Fetch AI tool links
   const { data: aiTools = [], isLoading: toolsLoading } = useQuery({
     queryKey: ['aiToolLinks'],
@@ -41,6 +47,12 @@ export default function AdminAIToolsContent() {
     queryKey: ['platformUsers'],
     queryFn: () => base44.entities.AIPlatformUser.list('-created_date'),
   });
+
+  // Check if current user already has a platform assignment
+  const currentUserAssignment = React.useMemo(() => {
+    if (!currentUser?.email || !platformUsers) return null;
+    return platformUsers.find(u => u.user_email?.toLowerCase() === currentUser.email.toLowerCase());
+  }, [currentUser, platformUsers]);
 
   const createToolMutation = useMutation({
     mutationFn: (data) => base44.entities.AIToolLink.create(data),
@@ -174,7 +186,15 @@ export default function AdminAIToolsContent() {
                   <Users className="w-5 h-5" />
                   Platform Assignments
                 </CardTitle>
-                <Button onClick={() => setShowAddUser(true)} size="sm">
+                <Button onClick={() => {
+                  // Pre-populate with current user's email if not already assigned
+                  if (currentUser?.email && !currentUserAssignment) {
+                    setNewUser({ user_email: currentUser.email, platform: 'lets_go_nuts' });
+                  } else {
+                    setNewUser({ user_email: '', platform: 'lets_go_nuts' });
+                  }
+                  setShowAddUser(true);
+                }} size="sm">
                   <Plus className="w-4 h-4 mr-2" />
                   Add User
                 </Button>
@@ -381,6 +401,11 @@ export default function AdminAIToolsContent() {
                 onChange={(e) => setNewUser({ ...newUser, user_email: e.target.value })}
                 placeholder="user@example.com"
               />
+              {currentUser?.email && newUser.user_email === currentUser.email && !currentUserAssignment && (
+                <p className="text-xs text-purple-600">
+                  ℹ️ Pre-populated with your email. You can change it if needed.
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label>AI Platform</Label>
