@@ -1087,7 +1087,8 @@ export default function MyDaySection({
                 );
               })}
             </div>
-          </CardContent>
+          </div>
+        </CardContent>
         </Card>
 
         {/* Compact Detail Modal */}
