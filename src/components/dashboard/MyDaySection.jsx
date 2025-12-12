@@ -127,6 +127,9 @@ export default function MyDaySection({
   const [showAddEventModal, setShowAddEventModal] = useState(false);
   const [collapsedSections, setCollapsedSections] = useState(preferences?.dashboard_collapsed_sections || []);
   const [pausedTasks, setPausedTasks] = useState({}); // { taskId: resumeDate }
+  const [compactDetailModal, setCompactDetailModal] = useState(null);
+  const [compactModalNote, setCompactModalNote] = useState('');
+  const [compactSleepForm, setCompactSleepForm] = useState({ hours: '', quality: '' });
   
   const mealLabels = getMealLabels(preferences?.gender);
   const displayMode = preferences?.completed_tasks_display || 'show_checked';
@@ -849,6 +852,19 @@ export default function MyDaySection({
   };
 
   const handleToggleTask = (task) => {
+    // For compact view, check if task needs details
+    if (localViewMode === 'compact') {
+      const mealTasks = ['breakfast_completed', 'lunch_completed', 'dinner_completed'];
+      const needsDetail = mealTasks.includes(task.id) || task.type === 'sleep';
+      
+      if (needsDetail) {
+        setCompactDetailModal(task);
+        setCompactModalNote('');
+        setCompactSleepForm({ hours: '', quality: '' });
+        return;
+      }
+    }
+
     if (task.type === 'sleep') {
       if (!todaysSleep) {
         setShowSleepForm(true);
@@ -876,6 +892,31 @@ export default function MyDaySection({
       const taskId = `calendar_${task.id}`;
       onToggleTask(taskId, !isTaskComplete(task));
     }
+  };
+
+  const handleCompactDetailSubmit = async () => {
+    const task = compactDetailModal;
+    if (!task) return;
+
+    // Handle meal logging
+    if (['breakfast_completed', 'lunch_completed', 'dinner_completed'].includes(task.id)) {
+      const noteKey = getMealNoteKey(task.id);
+      await onUpdateMealNotes(noteKey, compactModalNote);
+      await onToggleTask(task.id, true);
+    } 
+    // Handle sleep logging
+    else if (task.type === 'sleep') {
+      if (compactSleepForm.hours && compactSleepForm.quality) {
+        await sleepMutation.mutateAsync({ 
+          hours: parseFloat(compactSleepForm.hours), 
+          quality: compactSleepForm.quality 
+        });
+      }
+    }
+
+    setCompactDetailModal(null);
+    setCompactModalNote('');
+    setCompactSleepForm({ hours: '', quality: '' });
   };
 
   const handleSkipTask = (taskId) => {
@@ -1000,49 +1041,144 @@ export default function MyDaySection({
 
   if (localViewMode === 'compact') {
     return (
-      <Card className="shadow-lg border-0 bg-gradient-to-br from-teal-50 to-cyan-50">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Sun className="w-6 h-6 text-amber-500" />
-              My Day
-            </CardTitle>
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" onClick={() => setLocalViewMode('detailed')} className="h-8">
-                <List className="w-4 h-4 mr-1" /> Detailed
-              </Button>
-              <Badge variant={completedCount === totalCount ? "default" : "secondary"} 
-                     className={completedCount === totalCount ? "bg-green-500" : ""}>
-                {progressPercent}%
-              </Badge>
+      <>
+        <Card className="shadow-lg border-0 bg-gradient-to-br from-teal-50 to-cyan-50">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Sun className="w-6 h-6 text-amber-500" />
+                My Day
+              </CardTitle>
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" onClick={() => setLocalViewMode('detailed')} className="h-8">
+                  <List className="w-4 h-4 mr-1" /> Detailed
+                </Button>
+                <Badge variant={completedCount === totalCount ? "default" : "secondary"} 
+                       className={completedCount === totalCount ? "bg-green-500" : ""}>
+                  {progressPercent}%
+                </Badge>
+              </div>
             </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-2">
-            {allTasks.filter(t => !skippedTasks.includes(t.id)).map((task) => {
-              const Icon = task.icon;
-              const isComplete = isTaskComplete(task);
-              if (displayMode === 'hide' && isComplete) return null;
-              
-              return (
-                <button
-                  key={task.id}
-                  onClick={() => handleToggleTask(task)}
-                  className={`p-2.5 rounded-xl border-2 transition-all ${
-                    isComplete 
-                      ? 'border-green-400 bg-green-100' 
-                      : 'border-gray-200 bg-white hover:border-teal-300'
-                  }`}
-                  title={task.label}
-                >
-                  <Icon className={`w-5 h-5 ${isComplete ? 'text-green-500' : task.color}`} />
-                </button>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {allTasks.filter(t => !skippedTasks.includes(t.id)).map((task) => {
+                const Icon = task.icon;
+                const isComplete = isTaskComplete(task);
+                if (displayMode === 'hide' && isComplete) return null;
+                
+                return (
+                  <button
+                    key={task.id}
+                    onClick={() => handleToggleTask(task)}
+                    className={`p-2.5 rounded-xl border-2 transition-all ${
+                      isComplete 
+                        ? 'border-green-400 bg-green-100' 
+                        : 'border-gray-200 bg-white hover:border-teal-300'
+                    }`}
+                    title={task.label}
+                  >
+                    <Icon className={`w-5 h-5 ${isComplete ? 'text-green-500' : task.color}`} />
+                  </button>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Compact Detail Modal */}
+        <AnimatePresence>
+          {compactDetailModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+              onClick={() => setCompactDetailModal(null)}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-white rounded-xl shadow-xl p-6 max-w-md w-full"
+              >
+                <h3 className="text-lg font-semibold mb-4">
+                  {compactDetailModal.id === 'breakfast_completed' && '🍳 What did you have for breakfast?'}
+                  {compactDetailModal.id === 'lunch_completed' && '🍽️ What did you have for lunch?'}
+                  {compactDetailModal.id === 'dinner_completed' && '🍕 What did you have for dinner?'}
+                  {compactDetailModal.type === 'sleep' && '😴 How did you sleep?'}
+                </h3>
+                
+                {['breakfast_completed', 'lunch_completed', 'dinner_completed'].includes(compactDetailModal.id) && (
+                  <Input
+                    value={compactModalNote}
+                    onChange={(e) => setCompactModalNote(e.target.value)}
+                    placeholder="What did you eat?"
+                    className="mb-4"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleCompactDetailSubmit();
+                      if (e.key === 'Escape') setCompactDetailModal(null);
+                    }}
+                  />
+                )}
+
+                {compactDetailModal.type === 'sleep' && (
+                  <div className="space-y-3 mb-4">
+                    <div>
+                      <Label className="text-xs text-gray-500 mb-1 block">Hours</Label>
+                      <Input
+                        type="number"
+                        step="0.5"
+                        min="0"
+                        max="24"
+                        placeholder="7.5"
+                        value={compactSleepForm.hours}
+                        onChange={(e) => setCompactSleepForm({...compactSleepForm, hours: e.target.value})}
+                        autoFocus
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-gray-500 mb-1 block">Quality</Label>
+                      <Select 
+                        value={compactSleepForm.quality} 
+                        onValueChange={(v) => setCompactSleepForm({...compactSleepForm, quality: v})}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="How was it?" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="excellent">😴 Excellent</SelectItem>
+                          <SelectItem value="good">🙂 Good</SelectItem>
+                          <SelectItem value="fair">😐 Fair</SelectItem>
+                          <SelectItem value="poor">😫 Poor</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex gap-2 justify-end">
+                  <Button variant="outline" onClick={() => setCompactDetailModal(null)}>
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={handleCompactDetailSubmit}
+                    disabled={
+                      (compactDetailModal.type === 'sleep' && (!compactSleepForm.hours || !compactSleepForm.quality)) ||
+                      (['breakfast_completed', 'lunch_completed', 'dinner_completed'].includes(compactDetailModal.id) && !compactModalNote.trim())
+                    }
+                    className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white"
+                  >
+                    Save
+                  </Button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </>
     );
   }
 
