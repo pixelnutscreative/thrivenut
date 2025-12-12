@@ -65,6 +65,8 @@ const colorSchemes = {
 
 export default function UrgentEventsCard({ events, publicCalendarEvents, alertColor = 'red', onColorChange }) {
   const [showColorPicker, setShowColorPicker] = useState(false);
+  const [customColor, setCustomColor] = useState({ type: 'solid', solid: '#ef4444', gradientStart: '#ef4444', gradientEnd: '#dc2626' });
+  const [editingEvent, setEditingEvent] = useState(null);
   
   if (!events || events.length === 0) return null;
 

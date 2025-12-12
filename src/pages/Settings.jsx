@@ -312,104 +312,86 @@ export default function Settings() {
           <TabsContent value="profile">
             <Card>
               <CardContent className="space-y-6 pt-6">
-                <div className="flex gap-6 flex-col md:flex-row">
+                <div className="flex gap-4">
                   <div className="flex-shrink-0">
                     <ImageUploader
-                      label="Profile Photo"
+                      label=""
                       currentImage={prefData.profile_image_url}
                       onImageChange={(url) => setPrefData({ ...prefData, profile_image_url: url })}
                       aspectRatio="square"
                       size="small"
                     />
                   </div>
-                  <div className="flex-1 space-y-4">
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Nickname</Label>
+                  <div className="flex-1 grid md:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Nickname</Label>
+                      <Input 
+                        placeholder="What should we call you?" 
+                        value={prefData.nickname || ''} 
+                        onChange={(e) => setPrefData({ ...prefData, nickname: e.target.value })}
+                        className="h-9"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Favorite Color</Label>
+                      <div className="flex gap-2">
                         <Input 
-                          placeholder="What should we call you?" 
-                          value={prefData.nickname || ''} 
-                          onChange={(e) => setPrefData({ ...prefData, nickname: e.target.value })} 
+                          type="color" 
+                          value={profileData.favorite_color || '#000000'} 
+                          onChange={(e) => setProfileData({ ...profileData, favorite_color: e.target.value })} 
+                          className="w-10 h-9 p-1"
                         />
-                        <p className="text-xs text-gray-500">Used for your personalized dashboard (e.g. "Pixel's Day")</p>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Favorite Color</Label>
-                        <div className="flex gap-2">
-                          <Input 
-                            type="color" 
-                            value={profileData.favorite_color || '#000000'} 
-                            onChange={(e) => setProfileData({ ...profileData, favorite_color: e.target.value })} 
-                            className="w-12 h-10 p-1"
-                          />
-                          <Input 
-                            value={profileData.favorite_color || ''} 
-                            onChange={(e) => setProfileData({ ...profileData, favorite_color: e.target.value })} 
-                            placeholder="#000000"
-                          />
-                        </div>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Switch 
-                            checked={profileData.privacy_settings?.share_color}
-                            onCheckedChange={(checked) => updateProfileNested('privacy_settings', 'share_color', checked)}
-                          />
-                          <span className="text-xs text-gray-500">Share publicly</span>
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Location (City, State)</Label>
-                        <div className="flex gap-2">
-                          <Input 
-                            placeholder="City" 
-                            value={prefData.location_city || ''} 
-                            onChange={(e) => setPrefData({ ...prefData, location_city: e.target.value })} 
-                          />
-                          <Input 
-                            placeholder="State" 
-                            value={prefData.location_state || ''} 
-                            onChange={(e) => setPrefData({ ...prefData, location_state: e.target.value })} 
-                          />
-                        </div>
+                        <Input 
+                          value={profileData.favorite_color || ''} 
+                          onChange={(e) => setProfileData({ ...profileData, favorite_color: e.target.value })} 
+                          placeholder="#000000"
+                          className="h-9"
+                        />
                       </div>
                     </div>
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Recovery Date (Optional)</Label>
+                    <div className="space-y-1 md:col-span-2">
+                      <Label className="text-xs">Location</Label>
+                      <div className="flex gap-2">
                         <Input 
-                          type="date" 
-                          value={profileData.recovery_date || ''} 
-                          onChange={(e) => setProfileData({ ...profileData, recovery_date: e.target.value })} 
+                          placeholder="City" 
+                          value={prefData.location_city || ''} 
+                          onChange={(e) => setPrefData({ ...prefData, location_city: e.target.value })}
+                          className="h-9"
                         />
-                        <div className="flex items-center gap-2 mt-1">
-                          <Switch 
-                            checked={profileData.privacy_settings?.share_recovery}
-                            onCheckedChange={(checked) => updateProfileNested('privacy_settings', 'share_recovery', checked)}
-                          />
-                          <span className="text-xs text-gray-500">Share publicly</span>
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Military Branch</Label>
-                        <Select 
-                          value={profileData.military_branch || ''} 
-                          onValueChange={(v) => setProfileData({ ...profileData, military_branch: v })}
-                        >
-                          <SelectTrigger><SelectValue placeholder="Select Branch" /></SelectTrigger>
-                          <SelectContent>
-                            {['Army', 'Navy', 'Air Force', 'Marines', 'Coast Guard', 'Space Force', 'National Guard', 'Other'].map(b => (
-                              <SelectItem key={b} value={b}>{b}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Switch 
-                            checked={profileData.privacy_settings?.share_military}
-                            onCheckedChange={(checked) => updateProfileNested('privacy_settings', 'share_military', checked)}
-                          />
-                          <span className="text-xs text-gray-500">Share publicly</span>
-                        </div>
+                        <Input 
+                          placeholder="State" 
+                          value={prefData.location_state || ''} 
+                          onChange={(e) => setPrefData({ ...prefData, location_state: e.target.value })}
+                          className="h-9"
+                        />
                       </div>
                     </div>
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-3 pt-3 border-t">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Recovery Date (Optional)</Label>
+                    <Input 
+                      type="date" 
+                      value={profileData.recovery_date || ''} 
+                      onChange={(e) => setProfileData({ ...profileData, recovery_date: e.target.value })}
+                      className="h-9"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Military Branch</Label>
+                    <Select 
+                      value={profileData.military_branch || ''} 
+                      onValueChange={(v) => setProfileData({ ...profileData, military_branch: v })}
+                    >
+                      <SelectTrigger className="h-9"><SelectValue placeholder="Select Branch" /></SelectTrigger>
+                      <SelectContent>
+                        {['Army', 'Navy', 'Air Force', 'Marines', 'Coast Guard', 'Space Force', 'National Guard', 'Other'].map(b => (
+                          <SelectItem key={b} value={b}>{b}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 

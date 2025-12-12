@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Sparkles, BookOpen, RefreshCw, ChevronLeft, ChevronRight, Heart, Bookmark, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { createPageUrl } from '../../utils';
 
 const greetingTypeLabels = {
   scripture: { label: 'Scripture', icon: BookOpen, color: 'bg-purple-100 text-purple-700' },
@@ -180,20 +181,29 @@ ${type === 'scripture'
               </Badge>
             )}
             {currentMotivation && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => saveMotivationMutation.mutate(currentMotivation)}
-                disabled={saveMotivationMutation.isPending || savedId === currentMotivation.text}
-                className="text-white/80 hover:text-white hover:bg-white/20 h-6 px-2 text-xs"
-              >
-                {savedId === currentMotivation.text ? (
-                  <Check className="w-3 h-3 mr-1" />
-                ) : (
-                  <Heart className="w-3 h-3 mr-1" />
-                )}
-                {savedId === currentMotivation.text ? 'Saved' : 'Save'}
-              </Button>
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => saveMotivationMutation.mutate(currentMotivation)}
+                  disabled={saveMotivationMutation.isPending || savedId === currentMotivation.text}
+                  className="text-white/80 hover:text-white hover:bg-white/20 h-6 px-2 text-xs"
+                >
+                  {savedId === currentMotivation.text ? (
+                    <Check className="w-3 h-3 mr-1" />
+                  ) : (
+                    <Heart className="w-3 h-3 mr-1" />
+                  )}
+                  {savedId === currentMotivation.text ? 'Saved' : 'Save'}
+                </Button>
+                <a
+                  href={createPageUrl ? createPageUrl('SavedMotivations') : '/SavedMotivations'}
+                  className="text-white/80 hover:text-white hover:bg-white/20 h-6 px-2 text-xs rounded flex items-center transition-colors"
+                >
+                  <Bookmark className="w-3 h-3 mr-1" />
+                  View Saved
+                </a>
+              </>
             )}
           </div>
           <div className="flex items-center gap-2">

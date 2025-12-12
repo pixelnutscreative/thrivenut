@@ -272,6 +272,7 @@ export default function Dashboard() {
           onColorChange={(color) => {
             updatePreferencesMutation.mutate({ urgent_alert_color: color });
           }}
+          userEmail={effectiveEmail}
         />
 
         {/* Calendar Integration - Google Calendar & Pixel Nuts Events */}
