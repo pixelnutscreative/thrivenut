@@ -54,6 +54,7 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
   const [isMobile, setIsMobile] = useState(false);
   const [scrollPosition, setScrollPosition] = useState(0);
   const scrollContainerRef = useRef(null);
+  const [moodNote, setMoodNote] = useState('');
   
   const today = format(new Date(), 'yyyy-MM-dd');
 
@@ -163,11 +164,12 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
   });
 
   const moodLogMutation = useMutation({
-    mutationFn: async (mood) => {
+    mutationFn: async ({ mood, note }) => {
       return base44.entities.MoodLog.create({ 
         date: today, 
         mood,
-        time: format(new Date(), 'HH:mm')
+        time: format(new Date(), 'HH:mm'),
+        note: note || undefined
       });
     },
     onSuccess: () => {
@@ -175,6 +177,7 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
       queryClient.invalidateQueries({ queryKey: ['moodToday'] });
       queryClient.invalidateQueries({ queryKey: ['moodToday', today, userEmail] });
       setActiveAction(null);
+      setMoodNote('');
     }
   });
 
@@ -220,7 +223,7 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
   };
 
   const handleMoodSelect = (mood) => {
-    moodLogMutation.mutate(mood);
+    moodLogMutation.mutate({ mood, note: moodNote });
   };
 
   const handleAddCustomMood = () => {
@@ -549,24 +552,25 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="fixed z-[60] bg-white rounded-2xl shadow-2xl p-4"
+            className="fixed z-[60] bg-white rounded-2xl shadow-2xl p-4 max-w-sm"
             style={{ 
               right: '80px',
-              top: (position.y || 16)
+              top: (position.y || 80)
             }}
           >
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-semibold text-gray-800">How are you feeling?</h3>
-              <button onClick={() => setActiveAction(null)} className="p-1 hover:bg-gray-100 rounded">
+              <button onClick={() => { setActiveAction(null); setMoodNote(''); }} className="p-1 hover:bg-gray-100 rounded">
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 mb-3">
               {moodOptions.map((mood) => (
                 <button
                   key={mood.value}
                   onClick={() => handleMoodSelect(mood.value)}
                   className="flex flex-col items-center gap-1 p-3 rounded-xl hover:bg-gray-100 transition-colors"
+                  disabled={moodLogMutation.isPending}
                 >
                   <span className="text-2xl">{mood.emoji}</span>
                   <span className="text-xs text-gray-600">{mood.label}</span>
@@ -614,10 +618,28 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
                   </div>
                 </div>
               )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              </div>
+
+              {/* Optional mood note */}
+              <div className="border-t pt-3 mt-3">
+              <label className="text-xs text-gray-600 mb-1 block">Why? (optional)</label>
+              <Input
+                placeholder="e.g., Had a great call, stressful meeting..."
+                value={moodNote}
+                onChange={(e) => setMoodNote(e.target.value)}
+                className="text-sm"
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    setActiveAction(null);
+                    setMoodNote('');
+                  }
+                }}
+              />
+              <p className="text-xs text-gray-400 mt-1">Press any mood emoji above to log</p>
+              </div>
+              </motion.div>
+              )}
+              </AnimatePresence>
 
       {/* Note Input Popup */}
       <AnimatePresence>

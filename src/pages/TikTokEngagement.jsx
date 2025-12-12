@@ -294,26 +294,53 @@ export default function TikTokEngagement() {
     const hasAnyChecks = checkedCount > 0;
 
     const toggleAccountEngaged = (accountKey) => {
-      const newState = {
-        ...prev,
-        [contact.id]: {
-          ...(prev[contact.id] || {}),
-          [accountKey]: !(prev[contact.id]?.[accountKey])
-        }
-      };
-      
-      setJustEngaged(prev => newState);
-      
-      // Check if ALL accounts are now checked after this toggle
-      const allChecked = isFullyEngaged(contact);
-      if (allChecked) {
-        // Save to database when ALL are checked
-        markEngagedMutation.mutate({ 
-          id: contact.id, 
-          currentHistory: contact.engagement_history, 
-          isLegacy: contact._isLegacy 
-        });
-      }
+      setJustEngaged(prev => {
+        const newState = {
+          ...prev,
+          [contact.id]: {
+            ...(prev[contact.id] || {}),
+            [accountKey]: !(prev[contact.id]?.[accountKey])
+          }
+        };
+        
+        // Check if ALL accounts are now checked after this toggle
+        setTimeout(() => {
+          // Calculate total accounts
+          let totalAccounts = 0;
+          let checkedAccounts = 0;
+          
+          if (contact.username) {
+            totalAccounts++;
+            if (newState[contact.id]?.primary) checkedAccounts++;
+          }
+          
+          const otherAccounts = contact.other_tiktok_accounts || [];
+          for (let i = 0; i < otherAccounts.length; i++) {
+            totalAccounts++;
+            if (newState[contact.id]?.[`tiktok_${i}`]) checkedAccounts++;
+          }
+          
+          if (contact.social_engagement) {
+            for (const [platform, enabled] of Object.entries(contact.social_engagement)) {
+              if (enabled && contact.social_links?.[platform]) {
+                totalAccounts++;
+                if (newState[contact.id]?.[`social_${platform}`]) checkedAccounts++;
+              }
+            }
+          }
+          
+          // If ALL are checked, save to database
+          if (totalAccounts > 0 && checkedAccounts === totalAccounts) {
+            markEngagedMutation.mutate({ 
+              id: contact.id, 
+              currentHistory: contact.engagement_history, 
+              isLegacy: contact._isLegacy 
+            });
+          }
+        }, 50);
+        
+        return newState;
+      });
     };
 
     return (
@@ -427,17 +454,22 @@ export default function TikTokEngagement() {
               {/* Primary TikTok account */}
               {contact.username && (
                 <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => {
-                      toggleAccountEngaged('primary');
-                    }}
-                    className={`h-9 w-9 flex-shrink-0 transition-all duration-300 ${engaged.primary ? 'bg-green-500 border-green-500' : 'border-green-300 hover:bg-green-50'}`}
-                    title="Mark as engaged"
+                  <motion.div
+                    animate={engaged.primary ? { scale: [1, 1.2, 1] } : {}}
+                    transition={{ duration: 0.4 }}
                   >
-                    <Check className={`w-4 h-4 ${engaged.primary ? 'text-white' : 'text-green-600'}`} />
-                  </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => {
+                        toggleAccountEngaged('primary');
+                      }}
+                      className={`h-9 w-9 flex-shrink-0 transition-all duration-300 ${engaged.primary ? 'bg-teal-500 border-teal-500 shadow-lg shadow-teal-500/50' : 'border-green-300 hover:bg-green-50'}`}
+                      title="Mark as engaged"
+                    >
+                      <Check className={`w-4 h-4 ${engaged.primary ? 'text-white' : 'text-green-600'}`} />
+                    </Button>
+                  </motion.div>
                   <Button 
                     onClick={() => openTikTok(contact.username)} 
                     className="flex-1 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 h-9 text-sm overflow-hidden"
@@ -454,15 +486,20 @@ export default function TikTokEngagement() {
                 const isAccountEngaged = engaged[`tiktok_${idx}`];
                 return (
                   <div key={`tiktok-${idx}`} className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => toggleAccountEngaged(`tiktok_${idx}`)}
-                      className={`h-9 w-9 flex-shrink-0 transition-all duration-300 ${isAccountEngaged ? 'bg-green-500 border-green-500' : 'border-gray-200 hover:bg-green-50'}`}
-                      title="Mark as engaged"
+                    <motion.div
+                      animate={isAccountEngaged ? { scale: [1, 1.2, 1] } : {}}
+                      transition={{ duration: 0.4 }}
                     >
-                      <Check className={`w-4 h-4 ${isAccountEngaged ? 'text-white' : 'text-gray-300'}`} />
-                    </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => toggleAccountEngaged(`tiktok_${idx}`)}
+                        className={`h-9 w-9 flex-shrink-0 transition-all duration-300 ${isAccountEngaged ? 'bg-teal-500 border-teal-500 shadow-lg shadow-teal-500/50' : 'border-gray-200 hover:bg-green-50'}`}
+                        title="Mark as engaged"
+                      >
+                        <Check className={`w-4 h-4 ${isAccountEngaged ? 'text-white' : 'text-gray-300'}`} />
+                      </Button>
+                    </motion.div>
                     <Button 
                       onClick={() => openTikTok(account.username)} 
                       variant="outline"
@@ -516,15 +553,20 @@ export default function TikTokEngagement() {
 
                   return (
                     <div key={`social-${platform}`} className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => toggleAccountEngaged(`social_${platform}`)}
-                        className={`h-9 w-9 flex-shrink-0 transition-all duration-300 ${isAccountEngaged ? 'bg-green-500 border-green-500' : 'border-gray-200 hover:bg-green-50'}`}
-                        title="Mark as engaged"
+                      <motion.div
+                        animate={isAccountEngaged ? { scale: [1, 1.2, 1] } : {}}
+                        transition={{ duration: 0.4 }}
                       >
-                        <Check className={`w-4 h-4 ${isAccountEngaged ? 'text-white' : 'text-gray-300'}`} />
-                      </Button>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => toggleAccountEngaged(`social_${platform}`)}
+                          className={`h-9 w-9 flex-shrink-0 transition-all duration-300 ${isAccountEngaged ? 'bg-teal-500 border-teal-500 shadow-lg shadow-teal-500/50' : 'border-gray-200 hover:bg-green-50'}`}
+                          title="Mark as engaged"
+                        >
+                          <Check className={`w-4 h-4 ${isAccountEngaged ? 'text-white' : 'text-gray-300'}`} />
+                        </Button>
+                      </motion.div>
                       <Button 
                         onClick={() => window.open(getUrl(), '_blank')} 
                         className={`flex-1 h-9 text-sm overflow-hidden ${colorClass}`}
