@@ -461,47 +461,90 @@ export default function Layout({ children, currentPageName }) {
               })}
 
               {user && (
-              <div className={`pt-6 mt-6 border-t ${menuBorderClass}`}>
-                <div className="flex items-center justify-between gap-2 mb-4 px-2">
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <div className="flex-1 min-w-0">
-                      <p className={`text-sm font-medium truncate ${menuTextClass}`}>{preferences?.nickname || user.full_name || user.email}</p>
-                      <p className={`text-xs truncate ${menuSubtextClass}`}>{user.email}</p>
-                    </div>
-                  </div>
-                  <img 
-                    src={preferences?.profile_image_url || `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'%3E%3C/path%3E%3Ccircle cx='12' cy='7' r='4'%3E%3C/circle%3E%3C/svg%3E`} 
-                    alt="Profile" 
-                    className="w-10 h-10 rounded-full object-cover border-2 border-gray-300 flex-shrink-0"
-                  />
-                </div>
+                <div className={`pt-6 mt-6 border-t ${menuBorderClass}`}>
+                  <button
+                    onClick={() => {
+                      const accounts = JSON.parse(localStorage.getItem('savedAccounts') || '[]');
+                      const currentEmail = user.email;
 
-                <div className="space-y-2">
-                  <Button
-                    onClick={handleLogout}
-                    size="sm"
-                    className={`w-full justify-start ${isMenuDark ? 'bg-gray-700 text-gray-100 hover:bg-gray-600' : 'bg-gray-800 text-white hover:bg-gray-700'}`}
-                  >
-                    <LogOut className="w-4 h-4 mr-2" /> Log Out
-                  </Button>
+                      let message = 'ACCOUNT MANAGER\n\n';
+                      if (accounts.length > 0) {
+                        message += 'Saved Accounts:\n';
+                        accounts.forEach((acc, idx) => {
+                          const isCurrent = acc.email === currentEmail;
+                          message += `${idx + 1}. ${acc.email}${isCurrent ? ' (current)' : ''}\n`;
+                        });
+                        message += '\n';
+                      }
 
-                  {isAdmin && (
-                    <Button
-                      onClick={() => {
-                        const email = prompt('Enter user email to manage:');
-                        if (email) {
-                          sessionStorage.setItem('impersonating', email);
-                          window.location.reload();
+                      message += 'Options:\n';
+                      message += '1. Add this account to saved list\n';
+                      message += '2. Switch to different account\n';
+                      message += '3. Remove saved account\n';
+                      message += '4. Cancel\n\n';
+                      message += 'Enter number:';
+
+                      const choice = prompt(message);
+
+                      if (choice === '1') {
+                        const exists = accounts.find(a => a.email === currentEmail);
+                        if (!exists) {
+                          accounts.push({ email: currentEmail, name: user.full_name });
+                          localStorage.setItem('savedAccounts', JSON.stringify(accounts));
+                          alert('Account saved! You can now switch between accounts easily.');
+                        } else {
+                          alert('This account is already saved.');
                         }
-                      }}
-                      variant="outline"
+                      } else if (choice === '2') {
+                        if (accounts.length === 0) {
+                          alert('No saved accounts. Add accounts first!');
+                          return;
+                        }
+                        const accountsList = accounts.map((acc, idx) => `${idx + 1}. ${acc.email}`).join('\n');
+                        const selection = prompt(`Select account:\n${accountsList}\n\nEnter number:`);
+                        const selectedIdx = parseInt(selection) - 1;
+                        if (selectedIdx >= 0 && selectedIdx < accounts.length) {
+                          base44.auth.logout(createPageUrl('Home') + '?email=' + accounts[selectedIdx].email);
+                        }
+                      } else if (choice === '3') {
+                        if (accounts.length === 0) {
+                          alert('No saved accounts to remove.');
+                          return;
+                        }
+                        const accountsList = accounts.map((acc, idx) => `${idx + 1}. ${acc.email}`).join('\n');
+                        const selection = prompt(`Remove account:\n${accountsList}\n\nEnter number:`);
+                        const selectedIdx = parseInt(selection) - 1;
+                        if (selectedIdx >= 0 && selectedIdx < accounts.length) {
+                          accounts.splice(selectedIdx, 1);
+                          localStorage.setItem('savedAccounts', JSON.stringify(accounts));
+                          alert('Account removed from saved list.');
+                        }
+                      }
+                    }}
+                    className={`w-full flex items-center justify-between gap-2 mb-4 px-2 py-2 rounded-lg ${menuHoverClass}`}
+                  >
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-sm font-medium truncate ${menuTextClass}`}>{preferences?.nickname || user.full_name || user.email}</p>
+                        <p className={`text-xs truncate ${menuSubtextClass}`}>{user.email}</p>
+                      </div>
+                    </div>
+                    <img 
+                      src={preferences?.profile_image_url || `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'%3E%3C/path%3E%3Ccircle cx='12' cy='7' r='4'%3E%3C/circle%3E%3C/svg%3E`} 
+                      alt="Profile" 
+                      className="w-10 h-10 rounded-full object-cover border-2 border-gray-300 flex-shrink-0"
+                    />
+                  </button>
+
+                  <div className="space-y-2">
+                    <Button
+                      onClick={handleLogout}
                       size="sm"
-                      className={`w-full justify-start ${isMenuDark ? 'border-gray-600 text-gray-100 hover:bg-gray-700 hover:text-white' : 'text-gray-800 border-gray-300 hover:bg-gray-100'}`}
+                      className={`w-full justify-start ${isMenuDark ? 'bg-gray-700 text-gray-100 hover:bg-gray-600' : 'bg-gray-800 text-white hover:bg-gray-700'}`}
                     >
-                      <UserCog className="w-4 h-4 mr-2" /> Switch Account
+                      <LogOut className="w-4 h-4 mr-2" /> Log Out
                     </Button>
-                  )}
-                </div>
+                  </div>
 
                   {soundcloudPosition === 'menu' && soundcloudUrl && (
                     <div className="mt-4 pt-4 border-t" style={{ borderColor: menuBorderClass }}>
@@ -671,47 +714,90 @@ export default function Layout({ children, currentPageName }) {
 
           {/* Footer & SoundCloud */}
           {user && (
-            <div className={`pt-6 mt-6 border-t ${menuBorderClass}`}>
-              <div className="flex items-center justify-between gap-2 mb-4 px-2">
-                <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-medium truncate ${menuTextClass}`}>{preferences?.nickname || user.full_name || user.email}</p>
-                    <p className={`text-xs truncate ${menuSubtextClass}`}>{user.email}</p>
-                  </div>
+          <div className={`pt-6 mt-6 border-t ${menuBorderClass}`}>
+            <button
+              onClick={() => {
+                const accounts = JSON.parse(localStorage.getItem('savedAccounts') || '[]');
+                const currentEmail = user.email;
+
+                let message = 'ACCOUNT MANAGER\n\n';
+                if (accounts.length > 0) {
+                  message += 'Saved Accounts:\n';
+                  accounts.forEach((acc, idx) => {
+                    const isCurrent = acc.email === currentEmail;
+                    message += `${idx + 1}. ${acc.email}${isCurrent ? ' (current)' : ''}\n`;
+                  });
+                  message += '\n';
+                }
+
+                message += 'Options:\n';
+                message += '1. Add this account to saved list\n';
+                message += '2. Switch to different account\n';
+                message += '3. Remove saved account\n';
+                message += '4. Cancel\n\n';
+                message += 'Enter number:';
+
+                const choice = prompt(message);
+
+                if (choice === '1') {
+                  const exists = accounts.find(a => a.email === currentEmail);
+                  if (!exists) {
+                    accounts.push({ email: currentEmail, name: user.full_name });
+                    localStorage.setItem('savedAccounts', JSON.stringify(accounts));
+                    alert('Account saved! You can now switch between accounts easily.');
+                  } else {
+                    alert('This account is already saved.');
+                  }
+                } else if (choice === '2') {
+                  if (accounts.length === 0) {
+                    alert('No saved accounts. Add accounts first!');
+                    return;
+                  }
+                  const accountsList = accounts.map((acc, idx) => `${idx + 1}. ${acc.email}`).join('\n');
+                  const selection = prompt(`Select account:\n${accountsList}\n\nEnter number:`);
+                  const selectedIdx = parseInt(selection) - 1;
+                  if (selectedIdx >= 0 && selectedIdx < accounts.length) {
+                    base44.auth.logout(createPageUrl('Home') + '?email=' + accounts[selectedIdx].email);
+                  }
+                } else if (choice === '3') {
+                  if (accounts.length === 0) {
+                    alert('No saved accounts to remove.');
+                    return;
+                  }
+                  const accountsList = accounts.map((acc, idx) => `${idx + 1}. ${acc.email}`).join('\n');
+                  const selection = prompt(`Remove account:\n${accountsList}\n\nEnter number:`);
+                  const selectedIdx = parseInt(selection) - 1;
+                  if (selectedIdx >= 0 && selectedIdx < accounts.length) {
+                    accounts.splice(selectedIdx, 1);
+                    localStorage.setItem('savedAccounts', JSON.stringify(accounts));
+                    alert('Account removed from saved list.');
+                  }
+                }
+              }}
+              className={`w-full flex items-center justify-between gap-2 mb-4 px-2 py-2 rounded-lg ${menuHoverClass}`}
+            >
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <div className="flex-1 min-w-0">
+                  <p className={`text-sm font-medium truncate ${menuTextClass}`}>{preferences?.nickname || user.full_name || user.email}</p>
+                  <p className={`text-xs truncate ${menuSubtextClass}`}>{user.email}</p>
                 </div>
-                <img 
-                  src={preferences?.profile_image_url || `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'%3E%3C/path%3E%3Ccircle cx='12' cy='7' r='4'%3E%3C/circle%3E%3C/svg%3E`} 
-                  alt="Profile" 
-                  className="w-10 h-10 rounded-full object-cover border-2 border-gray-300 flex-shrink-0"
-                />
               </div>
+              <img 
+                src={preferences?.profile_image_url || `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'%3E%3C/path%3E%3Ccircle cx='12' cy='7' r='4'%3E%3C/circle%3E%3C/svg%3E`} 
+                alt="Profile" 
+                className="w-10 h-10 rounded-full object-cover border-2 border-gray-300 flex-shrink-0"
+              />
+            </button>
 
-              <div className="space-y-2">
-                <Button
-                  onClick={handleLogout}
-                  size="sm"
-                  className={`w-full justify-start ${isMenuDark ? 'bg-gray-700 text-gray-100 hover:bg-gray-600' : 'bg-gray-800 text-white hover:bg-gray-700'}`}
-                >
-                  <LogOut className="w-4 h-4 mr-2" /> Log Out
-                </Button>
-
-                {isAdmin && (
-                  <Button
-                    onClick={() => {
-                      const email = prompt('Enter user email to manage:');
-                      if (email) {
-                        sessionStorage.setItem('impersonating', email);
-                        window.location.reload();
-                      }
-                    }}
-                    variant="outline"
-                    size="sm"
-                    className={`w-full justify-start ${isMenuDark ? 'border-gray-600 text-gray-100 hover:bg-gray-700 hover:text-white' : 'text-gray-800 border-gray-300 hover:bg-gray-100'}`}
-                  >
-                    <UserCog className="w-4 h-4 mr-2" /> Switch Account
-                  </Button>
-                )}
-              </div>
+            <div className="space-y-2">
+              <Button
+                onClick={handleLogout}
+                size="sm"
+                className={`w-full justify-start ${isMenuDark ? 'bg-gray-700 text-gray-100 hover:bg-gray-600' : 'bg-gray-800 text-white hover:bg-gray-700'}`}
+              >
+                <LogOut className="w-4 h-4 mr-2" /> Log Out
+              </Button>
+            </div>
 
               {soundcloudPosition === 'menu' && soundcloudUrl && (
                 <div className="mt-4 pt-4 border-t" style={{ borderColor: menuBorderClass }}>
@@ -723,13 +809,13 @@ export default function Layout({ children, currentPageName }) {
         </div>
 
         {/* Main Content Area */}
-        <div className="ml-72 flex-1">
+        <div className="ml-72 flex-1" style={{ paddingTop: '80px' }}>
           {children}
         </div>
         </div>
 
         {/* Mobile Main Content */}
-        <div className="lg:hidden">
+        <div className="lg:hidden" style={{ paddingTop: '140px' }}>
         {children}
         </div>
 
