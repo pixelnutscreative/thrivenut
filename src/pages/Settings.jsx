@@ -969,6 +969,33 @@ export default function Settings() {
                   </p>
                 </div>
 
+                {/* Legacy HTML Migration Notice */}
+                {prefData.custom_homepage_html && (!prefData.custom_homepages || prefData.custom_homepages.length === 0) && (
+                  <div className="p-4 bg-amber-50 border-2 border-amber-200 rounded-lg">
+                    <p className="text-sm text-amber-800 mb-3">
+                      ✨ You have HTML in the old format. Click below to migrate it to the new system (supports multiple homepages!)
+                    </p>
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        const migratedHomepage = {
+                          id: Date.now().toString(),
+                          name: 'My Homepage',
+                          html: prefData.custom_homepage_html,
+                          is_default: true
+                        };
+                        setPrefData({
+                          ...prefData,
+                          custom_homepages: [migratedHomepage],
+                          active_homepage_id: migratedHomepage.id
+                        });
+                      }}
+                    >
+                      Migrate to New Format
+                    </Button>
+                  </div>
+                )}
+
                 {/* List of Custom Homepages */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
@@ -979,7 +1006,7 @@ export default function Settings() {
                         const newHomepage = {
                           id: Date.now().toString(),
                           name: 'New Homepage',
-                          html: '',
+                          html: prefData.custom_homepage_html && (!prefData.custom_homepages || prefData.custom_homepages.length === 0) ? prefData.custom_homepage_html : '',
                           is_default: (prefData.custom_homepages || []).length === 0
                         };
                         setPrefData({
