@@ -282,16 +282,46 @@ export default function Settings() {
           navigate(`#${v}`); 
         }} className="w-full">
           <TabsList className="flex flex-wrap gap-1 mb-6 bg-transparent justify-start">
-            <TabsTrigger value="profile" title="Profile"><User className="w-4 h-4" /></TabsTrigger>
-            <TabsTrigger value="social" title="Social Links"><Share2 className="w-4 h-4" /></TabsTrigger>
-            <TabsTrigger value="appearance" title="Theme & Colors"><Palette className="w-4 h-4" /></TabsTrigger>
-            <TabsTrigger value="features" title="Features"><Layers className="w-4 h-4" /></TabsTrigger>
-            <TabsTrigger value="dashboard" title="Dashboard Setup"><Sparkles className="w-4 h-4" /></TabsTrigger>
-            <TabsTrigger value="preferences" title="Preferences"><MessageSquare className="w-4 h-4" /></TabsTrigger>
-            <TabsTrigger value="connections" title="AI Connections"><Zap className="w-4 h-4" /></TabsTrigger>
-            <TabsTrigger value="widgets" title="Widgets"><Zap className="w-4 h-4" /></TabsTrigger>
-            <TabsTrigger value="bible" title="Bible Settings"><BookOpen className="w-4 h-4" /></TabsTrigger>
-            <TabsTrigger value="homepage" title="Custom Homepage"><Sparkles className="w-4 h-4" /></TabsTrigger>
+            <TabsTrigger value="profile" title="Profile">
+              <User className="w-4 h-4" />
+              <span className="hidden md:inline ml-2">Profile</span>
+            </TabsTrigger>
+            <TabsTrigger value="social" title="Social Links">
+              <Share2 className="w-4 h-4" />
+              <span className="hidden md:inline ml-2">Social</span>
+            </TabsTrigger>
+            <TabsTrigger value="appearance" title="Theme & Colors">
+              <Palette className="w-4 h-4" />
+              <span className="hidden md:inline ml-2">Theme</span>
+            </TabsTrigger>
+            <TabsTrigger value="features" title="Features">
+              <Layers className="w-4 h-4" />
+              <span className="hidden md:inline ml-2">Features</span>
+            </TabsTrigger>
+            <TabsTrigger value="dashboard" title="Dashboard Setup">
+              <Sparkles className="w-4 h-4" />
+              <span className="hidden md:inline ml-2">Dashboard</span>
+            </TabsTrigger>
+            <TabsTrigger value="preferences" title="Preferences">
+              <MessageSquare className="w-4 h-4" />
+              <span className="hidden md:inline ml-2">Preferences</span>
+            </TabsTrigger>
+            <TabsTrigger value="connections" title="AI Connections">
+              <Zap className="w-4 h-4" />
+              <span className="hidden md:inline ml-2">AI Tools</span>
+            </TabsTrigger>
+            <TabsTrigger value="widgets" title="Widgets">
+              <Zap className="w-4 h-4" />
+              <span className="hidden md:inline ml-2">Widgets</span>
+            </TabsTrigger>
+            <TabsTrigger value="bible" title="Bible Settings">
+              <BookOpen className="w-4 h-4" />
+              <span className="hidden md:inline ml-2">Bible</span>
+            </TabsTrigger>
+            <TabsTrigger value="homepage" title="Custom Homepage">
+              <Code className="w-4 h-4" />
+              <span className="hidden md:inline ml-2">Homepage</span>
+            </TabsTrigger>
             </TabsList>
 
           {/* PROFILE TAB */}
