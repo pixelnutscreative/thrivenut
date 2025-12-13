@@ -92,12 +92,18 @@ export default function PrayerRequests() {
     enabled: isBibleEnabled !== undefined,
   });
 
-  // Fetch my prayer requests
+  // Fetch my prayer requests (including anonymous ones)
   const { data: myRequests = [] } = useQuery({
     queryKey: ['myPrayerRequests', effectiveEmail],
     queryFn: () => base44.entities.PrayerRequest.filter({ created_by: effectiveEmail }, '-created_date'),
     enabled: !!effectiveEmail,
   });
+
+  // Filter anonymous requests for display
+  const [showAnonymous, setShowAnonymous] = useState(false);
+  const filteredMyRequests = showAnonymous 
+    ? myRequests 
+    : myRequests.filter(r => !r.is_anonymous);
 
   // Fetch interactions for selected request
   const { data: interactions = [] } = useQuery({
@@ -476,12 +482,30 @@ export default function PrayerRequests() {
           </TabsContent>
 
           <TabsContent value="mine" className="space-y-4 mt-4">
-            {myRequests.filter(r => !r.is_closed && !r.is_answered).length === 0 ? (
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm text-gray-600">
+                {filteredMyRequests.filter(r => !r.is_closed && !r.is_answered).length} active request{filteredMyRequests.filter(r => !r.is_closed && !r.is_answered).length !== 1 ? 's' : ''}
+              </p>
+              {myRequests.some(r => r.is_anonymous) && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowAnonymous(!showAnonymous)}
+                  className="text-xs"
+                >
+                  {showAnonymous ? 'Hide Anonymous' : 'Show Anonymous'}
+                </Button>
+              )}
+            </div>
+
+            {filteredMyRequests.filter(r => !r.is_closed && !r.is_answered).length === 0 ? (
               <Card className={cardBgClass}>
                 <CardContent className="p-8 text-center">
                   <Heart className="w-12 h-12 text-pink-300 mx-auto mb-4" />
                   <p className={isDark ? 'text-gray-400' : 'text-gray-500'}>
-                    You don't have any active prayer requests.
+                    {myRequests.some(r => r.is_anonymous && !r.is_closed && !r.is_answered)
+                      ? 'No visible requests. Click "Show Anonymous" to see your private requests.'
+                      : "You don't have any active prayer requests."}
                   </p>
                   <Button
                     onClick={() => setShowNewRequest(true)}
@@ -493,7 +517,7 @@ export default function PrayerRequests() {
                 </CardContent>
               </Card>
             ) : (
-              myRequests.filter(r => !r.is_closed && !r.is_answered).map(request => (
+              filteredMyRequests.filter(r => !r.is_closed && !r.is_answered).map(request => (
                 <PrayerCard key={request.id} request={request} showPrayButton={false} showActions={true} />
               ))
             )}

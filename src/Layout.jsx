@@ -201,7 +201,7 @@ export default function Layout({ children, currentPageName }) {
     }
   ];
 
-  const [collapsedGroups, setCollapsedGroups] = useState([]);
+  const [collapsedGroups, setCollapsedGroups] = useState(['goals', 'friends', 'faith', 'health', 'creator', 'support']);
 
   const toggleGroup = (groupId) => {
     setCollapsedGroups(previousGroups => 
@@ -628,24 +628,11 @@ export default function Layout({ children, currentPageName }) {
           {/* Footer & SoundCloud */}
           {user && (
             <div className={`pt-6 mt-6 border-t ${menuBorderClass}`}>
-              <Link
-                to={createPageUrl('Settings')}
-                className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-all mb-3 ${menuTextClass} ${menuHoverClass}`}
-              >
-                {preferences?.profile_image_url ? (
-                  <img src={preferences.profile_image_url} alt="Profile" className="w-8 h-8 rounded-full object-cover" />
-                ) : (
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isMenuDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
-                    <Settings className="w-4 h-4 text-gray-500" />
-                  </div>
-                )}
-                <span className="font-medium flex-1">Settings</span>
-              </Link>
               <Button
                 onClick={handleLogout}
                 variant="outline"
                 size="sm"
-                className={`w-full ${isMenuDark ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'text-gray-700 border-gray-300 hover:bg-gray-100'}`}
+                className={`w-full ${isMenuDark ? 'border-gray-600 text-gray-100 hover:bg-gray-700 hover:text-white' : 'text-gray-800 border-gray-300 hover:bg-gray-100'}`}
               >
                 <LogOut className="w-4 h-4 mr-2" /> Sign Out
               </Button>
