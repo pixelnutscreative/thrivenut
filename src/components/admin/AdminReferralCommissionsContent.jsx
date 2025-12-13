@@ -7,11 +7,19 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Plus, Gift, DollarSign, Check } from 'lucide-react';
+import { Loader2, Plus, Gift, DollarSign, Check, Trash2 } from 'lucide-react';
+import AdminCouponQueueContent from './AdminCouponQueueContent';
 
 export default function AdminReferralCommissionsContent() {
   const queryClient = useQueryClient();
-  const [newCoupon, setNewCoupon] = useState('');
+  const [showAddPurchase, setShowAddPurchase] = useState(false);
+  const [newPurchase, setNewPurchase] = useState({
+    buyerEmail: '',
+    referredByUserId: '',
+    productType: 'pixels_ai_toolbox',
+    purchaseAmount: 333,
+    externalPurchase: true
+  });
 
   // Fetch all AI tool purchases
   const { data: purchases = [], isLoading } = useQuery({
@@ -19,24 +27,21 @@ export default function AdminReferralCommissionsContent() {
     queryFn: () => base44.entities.AIToolPurchase.list('-created_date', 100)
   });
 
-  // Fetch available coupons
-  const { data: coupons = [] } = useQuery({
-    queryKey: ['availableCoupons'],
-    queryFn: async () => {
-      // You'll store these in a simple entity or preferences
-      // For now, placeholder
-      return [];
-    }
-  });
-
-  const addCouponMutation = useMutation({
-    mutationFn: async (code) => {
-      // Store coupon in a CouponQueue entity or similar
-      return { success: true };
+  const addPurchaseMutation = useMutation({
+    mutationFn: async (data) => {
+      const response = await base44.functions.invoke('recordAIPurchase', data);
+      return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['availableCoupons'] });
-      setNewCoupon('');
+      queryClient.invalidateQueries({ queryKey: ['aiToolPurchases'] });
+      setShowAddPurchase(false);
+      setNewPurchase({
+        buyerEmail: '',
+        referredByUserId: '',
+        productType: 'pixels_ai_toolbox',
+        purchaseAmount: 333,
+        externalPurchase: true
+      });
     }
   });
 
@@ -63,35 +68,82 @@ export default function AdminReferralCommissionsContent() {
 
   return (
     <div className="space-y-4">
-      {/* Add Coupon Codes */}
+      {/* Coupon Queue */}
+      <AdminCouponQueueContent />
+
+      {/* Add Purchase Manually */}
       <Card>
         <CardHeader>
-          <CardTitle>Pre-populate Coupon Codes</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex gap-2">
-            <Input
-              placeholder="Paste 11-char coupon code"
-              value={newCoupon}
-              onChange={(e) => setNewCoupon(e.target.value.toUpperCase())}
-              maxLength={11}
-              className="font-mono"
-            />
-            <Button 
-              onClick={() => addCouponMutation.mutate(newCoupon)}
-              disabled={newCoupon.length !== 11}
-            >
-              <Plus className="w-4 h-4 mr-2" /> Add to Queue
+          <div className="flex items-center justify-between">
+            <CardTitle>Record External Purchase</CardTitle>
+            <Button size="sm" onClick={() => setShowAddPurchase(!showAddPurchase)}>
+              <Plus className="w-4 h-4 mr-2" /> Add Purchase
             </Button>
           </div>
-          <p className="text-xs text-gray-500">Coupons in queue: {coupons.length}</p>
+        </CardHeader>
+        <CardContent>
+          {showAddPurchase && (
+            <div className="p-4 bg-purple-50 border-2 border-purple-300 rounded-lg space-y-3 mb-4">
+              <div className="grid md:grid-cols-2 gap-3">
+                <div>
+                  <Label>Buyer Email</Label>
+                  <Input
+                    value={newPurchase.buyerEmail}
+                    onChange={(e) => setNewPurchase({ ...newPurchase, buyerEmail: e.target.value })}
+                    placeholder="buyer@example.com"
+                  />
+                </div>
+                <div>
+                  <Label>Referred By (Email)</Label>
+                  <Input
+                    value={newPurchase.referredByUserId}
+                    onChange={(e) => setNewPurchase({ ...newPurchase, referredByUserId: e.target.value })}
+                    placeholder="referrer@example.com"
+                  />
+                </div>
+                <div>
+                  <Label>Product</Label>
+                  <select
+                    value={newPurchase.productType}
+                    onChange={(e) => setNewPurchase({ 
+                      ...newPurchase, 
+                      productType: e.target.value,
+                      purchaseAmount: e.target.value === 'pixels_ai_toolbox' ? 333 : 297
+                    })}
+                    className="w-full p-2 border rounded"
+                  >
+                    <option value="pixels_ai_toolbox">Pixel's AI Toolbox ($333/yr)</option>
+                    <option value="nuts_and_bots">Nuts & Bots ($297/yr)</option>
+                    <option value="nuts_and_bots_plus_ai">Nuts & Bots + AI ($333/yr)</option>
+                  </select>
+                </div>
+                <div>
+                  <Label>Purchase Amount</Label>
+                  <Input
+                    type="number"
+                    value={newPurchase.purchaseAmount}
+                    onChange={(e) => setNewPurchase({ ...newPurchase, purchaseAmount: parseFloat(e.target.value) })}
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setShowAddPurchase(false)}>Cancel</Button>
+                <Button 
+                  onClick={() => addPurchaseMutation.mutate(newPurchase)}
+                  disabled={!newPurchase.buyerEmail || addPurchaseMutation.isPending}
+                >
+                  <Check className="w-4 h-4 mr-2" /> Record Purchase
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
       {/* Purchase Tracking */}
       <Card>
         <CardHeader>
-          <CardTitle>AI Tool Purchase Tracking</CardTitle>
+          <CardTitle>AI Tool Purchase History</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">

@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
-import { Shield, Star, UserCog, Users, Gift, Settings, Palette, Clock, MessageSquare, ListTodo, Squirrel, FolderOpen, Merge, Mail, Menu, Sparkles } from 'lucide-react';
+import { Shield, Star, UserCog, Users, Gift, Settings, Palette, Clock, MessageSquare, ListTodo, Squirrel, FolderOpen, Merge, Mail, Menu, Sparkles, DollarSign, Award } from 'lucide-react';
 
 // Import the individual admin components/pages as content
 import AdminSuperFanContent from '../components/admin/AdminSuperFanContent';
@@ -22,6 +22,8 @@ import AdminPreApprovedEmailsContent from '../components/admin/AdminPreApprovedE
 import AdminMenuContent from '../components/admin/AdminMenuContent';
 import AdminPixelsPlaceContent from '../components/admin/AdminPixelsPlaceContent';
 import AdminAIToolsContent from '../components/admin/AdminAIToolsContent';
+import AdminReferralRewardsContent from '../components/admin/AdminReferralRewardsContent';
+import AdminReferralCommissionsContent from '../components/admin/AdminReferralCommissionsContent';
 
 const ADMIN_EMAILS = ['pixelnutscreative@gmail.com', 'pixel@thrivenut.app'];
 
@@ -153,6 +155,21 @@ export default function Admin() {
                 </TabsTrigger>
               </TabsList>
             </div>
+
+            {/* Row 5: Referral System */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-semibold text-gray-500 uppercase w-20">Referrals</span>
+              <TabsList className="flex gap-1">
+                <TabsTrigger value="rewards" className="flex items-center gap-2">
+                  <Award className="w-4 h-4" />
+                  <span className="hidden sm:inline">Thrive Rewards</span>
+                </TabsTrigger>
+                <TabsTrigger value="commissions" className="flex items-center gap-2">
+                  <DollarSign className="w-4 h-4" />
+                  <span className="hidden sm:inline">AI Commissions</span>
+                </TabsTrigger>
+              </TabsList>
+            </div>
           </div>
 
           <TabsContent value="emails" className="mt-6">
@@ -217,6 +234,14 @@ export default function Admin() {
 
           <TabsContent value="settings" className="mt-6">
             <AdminSettingsContent />
+          </TabsContent>
+
+          <TabsContent value="rewards" className="mt-6">
+            <AdminReferralRewardsContent />
+          </TabsContent>
+
+          <TabsContent value="commissions" className="mt-6">
+            <AdminReferralCommissionsContent />
           </TabsContent>
         </Tabs>
       </div>
