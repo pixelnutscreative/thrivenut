@@ -63,6 +63,7 @@ import BatchMode from './pages/BatchMode';
 import CampaignTimeline from './pages/CampaignTimeline';
 import SalesTracking from './pages/SalesTracking';
 import PromotedOffers from './pages/PromotedOffers';
+import CreatorDashboard from './pages/CreatorDashboard';
 import __Layout from './Layout.jsx';
 
 
@@ -132,6 +133,7 @@ export const PAGES = {
     "CampaignTimeline": CampaignTimeline,
     "SalesTracking": SalesTracking,
     "PromotedOffers": PromotedOffers,
+    "CreatorDashboard": CreatorDashboard,
 }
 
 export const pagesConfig = {
