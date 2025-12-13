@@ -171,21 +171,25 @@ export default function Layout({ children, currentPageName }) {
       color: 'text-orange-400', // Orange
       bgColor: 'bg-orange-500/10',
       items: [
-        { name: 'Social Media Suite', icon: Share2, isSection: true, moduleId: 'tiktok', requiresTikTokAccess: true, subItems: [
-          { name: 'Discover Creators', icon: Search, path: 'DiscoverCreators', highlight: true },
-          { name: 'Battle Prep', icon: Swords, path: 'BattlePrep', highlight: true },
-          { name: 'Live Engagement', icon: Activity, path: 'LiveEngagement', highlight: true },
-          { name: 'Creator Contacts', icon: Users, path: 'TikTokContacts' },
-          { name: 'Social Engagement', icon: MousePointerClick, path: 'TikTokEngagement' },
-          { name: 'Content Calendar', icon: Calendar, path: 'LiveSchedule' },
+        { name: 'Creator Command Center', icon: Target, path: 'CreatorDashboard', highlight: true },
+        { name: 'Content Ideas', icon: Lightbulb, path: 'SavedMotivations', moduleId: 'motivations' },
+        { name: 'Content Marketplace', icon: Briefcase, path: 'ContentMarketplace', highlight: true },
+        { name: 'Create AI Music', icon: Music, isSection: true, subItems: [
           { name: 'Sunny Songbird', icon: Sun, path: 'SongGenerator' },
+          { name: "Ping & Pong's Silly Songs", icon: Smile, externalUrl: 'https://sillysongs.pixelnutscreative.com' },
+          { name: 'Holy Hitmakers', icon: Music, path: 'HolyHitmakers', requiresBibleBeliever: true },
+        ]},
+        { name: 'Social Media Suite', icon: Share2, isSection: true, moduleId: 'tiktok', requiresTikTokAccess: true, subItems: [
+          { name: 'Social Engagement', icon: MousePointerClick, path: 'TikTokEngagement' },
+          { name: 'Creator Contacts', icon: Users, path: 'TikTokContacts' },
+          { name: 'Content Calendar', icon: Calendar, path: 'LiveSchedule' },
+          { name: 'Discover Creators', icon: Search, path: 'DiscoverCreators' },
+          { name: 'Battle Prep', icon: Swords, path: 'BattlePrep' },
+          { name: 'Live Engagement', icon: Activity, path: 'LiveEngagement' },
           { name: 'Gift Gallery Gratitude', icon: Gift, path: 'WeeklyGifterGallery' },
           { name: 'Love Away Giveaways', icon: Gift, path: 'LoveAway' },
           { name: 'Pictionary Helper', icon: Palette, path: 'PictionaryHelper' },
         ]},
-        { name: 'Hire a Creator', icon: Briefcase, path: 'ContentMarketplace', highlight: true },
-        { name: 'Content Ideas', icon: Smile, path: 'SavedMotivations', moduleId: 'motivations' },
-        { name: "Ping & Pong's Silly Songs", icon: Smile, externalUrl: 'https://sillysongs.pixelnutscreative.com' },
       ]
     },
     {
@@ -218,6 +222,11 @@ export default function Layout({ children, currentPageName }) {
         ? previousSections.filter(s => s !== sectionName)
         : [...previousSections, sectionName]
     );
+    
+    // Scroll to top when opening Social Media Suite
+    if (sectionName === 'Social Media Suite' && !expandedSections.includes(sectionName)) {
+      setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100);
+    }
   };
 
 
