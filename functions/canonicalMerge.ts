@@ -56,13 +56,27 @@ Deno.serve(async (req) => {
 
       if (!dryRun) {
         // 3. Update canonical record with approved values
-        await base44.asServiceRole.entities.TikTokContact.update(canonicalRecord.id, {
+        // Only update the specific fields we need, preserve everything else
+        const updateData = {
           tiktok_username: username,
           display_name: canonical_display_name,
           phonetic_spelling: canonical_phonetic_spelling,
           _migration_status: 'canonical_merged',
           _migration_source: 'canonical_merge_function'
-        });
+        };
+        
+        // Preserve existing nested objects
+        if (canonicalRecord.other_tiktok_accounts) {
+          updateData.other_tiktok_accounts = canonicalRecord.other_tiktok_accounts;
+        }
+        if (canonicalRecord.social_links) {
+          updateData.social_links = canonicalRecord.social_links;
+        }
+        if (canonicalRecord.battle_inventory) {
+          updateData.battle_inventory = canonicalRecord.battle_inventory;
+        }
+        
+        await base44.asServiceRole.entities.TikTokContact.update(canonicalRecord.id, updateData);
       }
 
       // 4. Find and update all foreign key references
@@ -127,12 +141,25 @@ Deno.serve(async (req) => {
       const archivedIds = [];
       for (const duplicate of duplicatesToArchive) {
         if (!dryRun) {
-          await base44.asServiceRole.entities.TikTokContact.update(duplicate.id, {
+          const archiveData = {
             _migration_status: 'archived_duplicate',
             _canonical_id: canonicalRecord.id,
             username: `ARCHIVED_${duplicate.username || duplicate.tiktok_username}`,
             tiktok_username: `ARCHIVED_${duplicate.username || duplicate.tiktok_username}`
-          });
+          };
+          
+          // Preserve all nested objects
+          if (duplicate.other_tiktok_accounts) {
+            archiveData.other_tiktok_accounts = duplicate.other_tiktok_accounts;
+          }
+          if (duplicate.social_links) {
+            archiveData.social_links = duplicate.social_links;
+          }
+          if (duplicate.battle_inventory) {
+            archiveData.battle_inventory = duplicate.battle_inventory;
+          }
+          
+          await base44.asServiceRole.entities.TikTokContact.update(duplicate.id, archiveData);
         }
         archivedIds.push(duplicate.id);
       }
