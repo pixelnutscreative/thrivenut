@@ -79,6 +79,12 @@ function OnboardingModal({ isOpen, user, onComplete }) {
         await base44.entities.UserProfile.create(profileData);
       }
 
+      // Initialize referral code with referral tracking
+      const referralCode = sessionStorage.getItem('referral_code');
+      await base44.functions.invoke('initializeReferralCode', { 
+        referral_code: referralCode 
+      }).catch(() => {});
+
       localStorage.setItem(`onboarding_completed_${user.email}`, 'true');
     },
     onSuccess: () => {
