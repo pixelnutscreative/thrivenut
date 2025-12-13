@@ -646,29 +646,7 @@ export default function MyDaySection({
       });
     });
 
-    // Active goals - add to anytime section or with specific time if set
-    goals.forEach(goal => {
-      // For habit goals with daily frequency, show them
-      const isDaily = goal.goal_type === 'habit' && goal.frequency === 'daily';
-      // For other goals, always show as a reminder
-      
-      if (isDaily || goal.goal_type !== 'habit') {
-        tasks.push({
-          id: `goal_${goal.id}`,
-          type: 'goal',
-          goalId: goal.id,
-          label: goal.title,
-          sublabel: `🎯 ${goal.category} goal${goal.target_value ? ` • ${goal.current_value || 0}/${goal.target_value}` : ''}`,
-          icon: Target,
-          color: 'text-purple-500',
-          timeOfDay: 'anytime',
-          order: 20,
-          isLink: true,
-          linkTo: 'Goals',
-          canSkip: true,
-        });
-      }
-    });
+    // Goals removed from My Day - they show in Active Goals section below
 
     // Google Calendar events
     if (googleCalendarData?.events && preferences?.show_google_calendar) {
@@ -1062,8 +1040,7 @@ export default function MyDaySection({
               </div>
             </div>
 
-            {/* Compact Goals Scroll */}
-            <CompactGoalsScroll userEmail={preferences?.user_email} />
+            {/* Goals removed from here - showing in Active Goals section below */}
           </CardHeader>
           <CardContent className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl">
             <div className="flex flex-wrap gap-2">
@@ -1230,7 +1207,7 @@ export default function MyDaySection({
               </Badge>
             </div>
           </div>
-          <CompactGoalsScroll userEmail={preferences?.user_email} />
+          {/* Goals removed from here - showing in Active Goals section below */}
         </CardHeader>
         <CardContent className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl space-y-3">
           {Object.keys(timeLabels).map(timeSlot => {
