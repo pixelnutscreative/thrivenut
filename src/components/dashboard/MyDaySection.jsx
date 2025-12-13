@@ -1378,14 +1378,10 @@ export default function MyDaySection({
         userEmail={userEmail}
       />
     </>
-    );
-    }
+  );
+}
 
-    // Detailed view
-    const variableTasks = allTasks.filter(t => t.timeOfDay === 'anytime');
-
-    return (
-    <>
+// Detailed view code removed - everything is in compact mode now
     <Card className="shadow-lg border-0 bg-gradient-to-br from-teal-400 via-blue-400 to-purple-500">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
