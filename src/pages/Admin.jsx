@@ -22,7 +22,7 @@ import AdminPreApprovedEmailsContent from '../components/admin/AdminPreApprovedE
 import AdminMenuContent from '../components/admin/AdminMenuContent';
 import AdminPixelsPlaceContent from '../components/admin/AdminPixelsPlaceContent';
 import AdminAIToolsContent from '../components/admin/AdminAIToolsContent';
-import AdminReferralRewardsContent from '../components/admin/AdminReferralRewardsContent';
+import AdminReferralSystem from '../components/admin/AdminReferralSystem';
 import AdminReferralCommissionsContent from '../components/admin/AdminReferralCommissionsContent';
 import AdminNotificationsContent from '../components/admin/AdminNotificationsContent';
 import AdminAnnouncementsContent from '../components/admin/AdminAnnouncementsContent';

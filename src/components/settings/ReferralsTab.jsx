@@ -64,6 +64,15 @@ export default function ReferralsTab({ userEmail, primaryColor, accentColor }) {
     queryFn: () => base44.entities.ThriveReferralReward.filter({ is_active: true }, 'level')
   });
 
+  // Fetch points config
+  const { data: pointsConfig = [] } = useQuery({
+    queryKey: ['pointsConfig'],
+    queryFn: () => base44.entities.ReferralPointsConfig.filter({})
+  });
+
+  const pointsPerSignup = pointsConfig.find(c => c.config_key === 'points_per_signup')?.points_value || 1;
+  const pointsPerUpgrade = pointsConfig.find(c => c.config_key === 'points_per_upgrade')?.points_value || 5;
+
   const links = referralData?.links || [];
   const totalStats = links.reduce((acc, link) => ({
     clicks: acc.clicks + (link.stats?.clicks || 0),
@@ -154,7 +163,7 @@ export default function ReferralsTab({ userEmail, primaryColor, accentColor }) {
     );
   }
 
-  const totalPoints = (totalStats.signups * 10) + (totalStats.upgrades * 50);
+  const totalPoints = (totalStats.signups * pointsPerSignup) + (totalStats.upgrades * pointsPerUpgrade);
   const couponProgress = (commissionData?.verifiedPurchaseCount || 0) % 4;
   const couponsUnlocked = Math.floor((commissionData?.verifiedPurchaseCount || 0) / 4);
 
@@ -329,8 +338,8 @@ export default function ReferralsTab({ userEmail, primaryColor, accentColor }) {
             </h3>
             <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
               <li>Share your link with friends, family, or followers</li>
-              <li><strong>FREE sign-ups</strong> earn you points</li>
-              <li><strong>Social Add-on upgrades</strong> ($77/year) earn you MORE points</li>
+              <li><strong>FREE sign-ups</strong> earn you {pointsPerSignup} point{pointsPerSignup !== 1 ? 's' : ''} each</li>
+              <li><strong>Social Add-on upgrades</strong> ($77/year) earn you {pointsPerUpgrade} point{pointsPerUpgrade !== 1 ? 's' : ''} each</li>
               <li>Redeem points for rewards like free months, shoutouts, featured spots & more!</li>
             </ul>
           </div>
@@ -341,11 +350,8 @@ export default function ReferralsTab({ userEmail, primaryColor, accentColor }) {
               <h3 className="font-semibold mb-3">🎯 Reward Progress</h3>
               <div className="space-y-2">
                 {rewardLevels.map(level => {
-                  const signupsNeeded = level.thrive_signups_required || 0;
-                  const upgradesNeeded = level.social_suite_upgrades_required || 0;
-                  const hasEnoughSignups = totalStats.signups >= signupsNeeded;
-                  const hasEnoughUpgrades = totalStats.upgrades >= upgradesNeeded;
-                  const unlocked = hasEnoughSignups && hasEnoughUpgrades;
+                  const pointsNeeded = level.points_required || 0;
+                  const unlocked = totalPoints >= pointsNeeded;
 
                   return (
                     <div key={level.id} className={`p-3 rounded-lg border-2 ${unlocked ? 'border-green-400 bg-green-50' : 'border-gray-200 bg-gray-50'}`}>
@@ -357,29 +363,14 @@ export default function ReferralsTab({ userEmail, primaryColor, accentColor }) {
                         {unlocked && <Badge className="bg-green-500">Unlocked!</Badge>}
                       </div>
                       <p className="text-xs text-gray-600 mb-2">{level.reward_description}</p>
-                      <div className="space-y-1">
-                        {signupsNeeded > 0 && (
-                          <div className="flex items-center gap-2 text-xs">
-                            <div className="flex-1 bg-gray-200 rounded-full h-2">
-                              <div 
-                                className="bg-teal-500 h-2 rounded-full transition-all"
-                                style={{ width: `${Math.min((totalStats.signups / signupsNeeded) * 100, 100)}%` }}
-                              />
-                            </div>
-                            <span className="font-mono">{totalStats.signups}/{signupsNeeded} signups</span>
-                          </div>
-                        )}
-                        {upgradesNeeded > 0 && (
-                          <div className="flex items-center gap-2 text-xs">
-                            <div className="flex-1 bg-gray-200 rounded-full h-2">
-                              <div 
-                                className="bg-purple-500 h-2 rounded-full transition-all"
-                                style={{ width: `${Math.min((totalStats.upgrades / upgradesNeeded) * 100, 100)}%` }}
-                              />
-                            </div>
-                            <span className="font-mono">{totalStats.upgrades}/{upgradesNeeded} upgrades</span>
-                          </div>
-                        )}
+                      <div className="flex items-center gap-2 text-xs">
+                        <div className="flex-1 bg-gray-200 rounded-full h-2">
+                          <div 
+                            className="bg-gradient-to-r from-teal-500 to-purple-500 h-2 rounded-full transition-all"
+                            style={{ width: `${Math.min((totalPoints / pointsNeeded) * 100, 100)}%` }}
+                          />
+                        </div>
+                        <span className="font-mono font-semibold">{totalPoints}/{pointsNeeded} pts</span>
                       </div>
                     </div>
                   );

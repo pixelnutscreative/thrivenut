@@ -524,7 +524,7 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
 
         {/* Settings */}
         <button
-          onClick={() => navigate('/Settings#widgets')}
+          onClick={() => window.location.href = createPageUrl('Settings') + '#widgets'}
           className="p-1.5 hover:bg-white/10 rounded-full transition-colors"
           title="Widget Settings"
         >
