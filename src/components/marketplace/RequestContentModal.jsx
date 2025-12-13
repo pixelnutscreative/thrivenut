@@ -19,7 +19,20 @@ const requestTypeLabels = {
   greenscreen_background: 'Greenscreen Background',
   greenscreen_title: 'Greenscreen Title',
   nutpal: 'NutPal Character',
+  engagement_live_song: 'Engagement Live Song',
+  gift_gallery_song: 'Gift Gallery Thank You Song',
+  thank_you_song: 'General Thank You Song',
+  custom_song: 'Custom Song (Choose Type)',
+  logo: 'Logo Design ($111)',
   other: 'Other'
+};
+
+const songTypes = {
+  hype: 'Hype/Energetic',
+  chill: 'Chill/Relaxed',
+  emotional: 'Emotional/Heartfelt',
+  funny: 'Funny/Comedic',
+  epic: 'Epic/Dramatic'
 };
 
 export default function RequestContentModal({ isOpen, onClose, userEmail, primaryColor, accentColor }) {
@@ -28,11 +41,15 @@ export default function RequestContentModal({ isOpen, onClose, userEmail, primar
     title: '',
     description: '',
     request_type: '',
+    song_type: '',
     budget: 0,
-    duration_hours: 24,
-    reference_images: []
+    duration_days: 7,
+    reference_images: [],
+    coupon_code: ''
   });
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [couponError, setCouponError] = useState('');
 
   // Fetch pricing
   const { data: pricingOptions = [] } = useQuery({
@@ -40,22 +57,134 @@ export default function RequestContentModal({ isOpen, onClose, userEmail, primar
     queryFn: () => base44.entities.ContentRequestPricing.filter({ is_active: true }),
   });
 
+  // Fetch user's available coupons
+  const { data: userCoupons = [] } = useQuery({
+    queryKey: ['userCoupons', userEmail],
+    queryFn: async () => {
+      return await base44.entities.CouponCode.filter({
+        assigned_to_email: userEmail,
+        is_used: false,
+        status: 'assigned'
+      });
+    },
+    enabled: !!userEmail && isOpen,
+  });
+
+  const calculateFinalPrice = () => {
+    let basePrice = parseFloat(formData.budget) || 0;
+    
+    // Apply rush multiplier
+    const days = parseInt(formData.duration_days) || 7;
+    let rushMultiplier = 1;
+    if (days === 1) rushMultiplier = 2; // 2x for 1 day
+    else if (days <= 3) rushMultiplier = 1.5; // 1.5x for 2-3 days
+    
+    const priceWithRush = basePrice * rushMultiplier;
+    
+    // Apply coupon discount
+    let discount = 0;
+    if (appliedCoupon) {
+      if (appliedCoupon.discount_type === 'percentage') {
+        discount = priceWithRush * (appliedCoupon.credit_amount / 100);
+      } else {
+        discount = appliedCoupon.credit_amount;
+      }
+      
+      // Check minimum purchase
+      if (appliedCoupon.minimum_purchase && basePrice < appliedCoupon.minimum_purchase) {
+        discount = 0;
+      }
+    }
+    
+    const finalPrice = Math.max(0, priceWithRush - discount);
+    
+    return { basePrice, rushMultiplier, priceWithRush, discount, finalPrice };
+  };
+
+  const verifyCoupon = async () => {
+    if (!formData.coupon_code) {
+      setCouponError('Please enter a coupon code');
+      return;
+    }
+    
+    try {
+      const coupons = await base44.entities.CouponCode.filter({
+        code: formData.coupon_code.toUpperCase(),
+        status: 'assigned',
+        is_used: false
+      });
+      
+      if (coupons.length === 0) {
+        setCouponError('Invalid or expired coupon code');
+        setAppliedCoupon(null);
+        return;
+      }
+      
+      const coupon = coupons[0];
+      
+      // Check if assigned to this user
+      if (coupon.assigned_to_email && coupon.assigned_to_email !== userEmail) {
+        setCouponError('This coupon is not assigned to you');
+        setAppliedCoupon(null);
+        return;
+      }
+      
+      // Check expiration
+      if (coupon.expiration_date && new Date(coupon.expiration_date) < new Date()) {
+        setCouponError('This coupon has expired');
+        setAppliedCoupon(null);
+        return;
+      }
+      
+      setAppliedCoupon(coupon);
+      setCouponError('');
+    } catch (error) {
+      setCouponError('Error verifying coupon');
+      setAppliedCoupon(null);
+    }
+  };
+
   const createRequestMutation = useMutation({
     mutationFn: async (data) => {
       // Calculate deadline
       const deadline = new Date();
-      deadline.setHours(deadline.getHours() + data.duration_hours);
+      deadline.setDate(deadline.getDate() + data.duration_days);
       
-      return await base44.entities.ContentRequest.create({
+      const pricing = calculateFinalPrice();
+      
+      const requestData = {
         ...data,
         deadline: deadline.toISOString(),
         requester_email: userEmail,
-        payment_status: 'pending' // Will be updated after Stripe payment
-      });
+        payment_status: 'pending',
+        rush_multiplier: pricing.rushMultiplier,
+        discount_amount: pricing.discount,
+        final_price: pricing.finalPrice
+      };
+      
+      // Mark coupon as used
+      if (appliedCoupon) {
+        requestData.coupon_code = appliedCoupon.code;
+        await base44.entities.CouponCode.update(appliedCoupon.id, {
+          is_used: true,
+          used_date: new Date().toISOString(),
+          status: 'used',
+          used_on_request_id: 'pending' // Will update with request ID after creation
+        });
+      }
+      
+      return await base44.entities.ContentRequest.create(requestData);
     },
-    onSuccess: () => {
+    onSuccess: async (request) => {
+      // Update coupon with actual request ID
+      if (appliedCoupon) {
+        await base44.entities.CouponCode.update(appliedCoupon.id, {
+          used_on_request_id: request.id
+        });
+      }
       queryClient.invalidateQueries({ queryKey: ['openContentRequests'] });
       queryClient.invalidateQueries({ queryKey: ['myContentRequests'] });
+      queryClient.invalidateQueries({ queryKey: ['userCoupons'] });
       onClose();
       resetForm();
     },
@@ -91,11 +220,17 @@ export default function RequestContentModal({ isOpen, onClose, userEmail, primar
     setFormData({
       ...formData,
       request_type: type,
-      budget: pricing?.base_price || 0
+      budget: pricing?.base_price || 0,
+      song_type: '' // Reset song type when changing request type
     });
   };
 
   const handleSubmit = () => {
+    // Validate song type for custom songs
+    if (formData.request_type === 'custom_song' && !formData.song_type) {
+      return;
+    }
+    
     // TODO: Integrate Stripe payment here before creating request
     createRequestMutation.mutate(formData);
   };
@@ -105,10 +240,14 @@ export default function RequestContentModal({ isOpen, onClose, userEmail, primar
       title: '',
       description: '',
       request_type: '',
+      song_type: '',
       budget: 0,
-      duration_hours: 24,
-      reference_images: []
+      duration_days: 7,
+      reference_images: [],
+      coupon_code: ''
     });
+    setAppliedCoupon(null);
+    setCouponError('');
   };
 
   return (
@@ -161,34 +300,127 @@ export default function RequestContentModal({ isOpen, onClose, userEmail, primar
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          {formData.request_type === 'custom_song' && (
             <div>
-              <Label>Budget</Label>
-              <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <Input
-                  type="number"
-                  step="1"
-                  min="1"
-                  value={formData.budget}
-                  onChange={(e) => setFormData({ ...formData, budget: parseFloat(e.target.value) })}
-                  className="pl-8"
-                />
-              </div>
+              <Label>Song Type *</Label>
+              <Select value={formData.song_type} onValueChange={(v) => setFormData({ ...formData, song_type: v })}>
+                <SelectTrigger><SelectValue placeholder="Choose song style..." /></SelectTrigger>
+                <SelectContent>
+                  {Object.entries(songTypes).map(([key, label]) => (
+                    <SelectItem key={key} value={key}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
+          )}
 
-            <div>
-              <Label>Duration (hours)</Label>
+          <div>
+            <Label>Your Budget ($)</Label>
+            <div className="relative">
+              <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
                 type="number"
+                step="1"
                 min="1"
-                max="720"
-                value={formData.duration_hours}
-                onChange={(e) => setFormData({ ...formData, duration_hours: parseInt(e.target.value) })}
+                value={formData.budget}
+                onChange={(e) => setFormData({ ...formData, budget: parseFloat(e.target.value) })}
+                className="pl-8"
+                placeholder="Enter amount you want to pay"
               />
-              <p className="text-xs text-gray-500 mt-1">1 hour to 30 days (720 hours)</p>
             </div>
+            <p className="text-xs text-purple-600 mt-1">
+              💡 Tip: Paying more than minimum encourages creators to submit their best work!
+            </p>
           </div>
+
+          <div>
+            <Label>Deadline</Label>
+            <Select value={String(formData.duration_days)} onValueChange={(v) => setFormData({ ...formData, duration_days: parseInt(v) })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">1 Day (Rush - 2x price) ⚡</SelectItem>
+                <SelectItem value="2">2 Days (Rush - 1.5x price) 🔥</SelectItem>
+                <SelectItem value="3">3 Days (Rush - 1.5x price) 🔥</SelectItem>
+                <SelectItem value="7">1 Week (Standard)</SelectItem>
+                <SelectItem value="14">2 Weeks</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Coupon Code */}
+          <div>
+            <Label>Coupon Code (Optional)</Label>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Enter code"
+                value={formData.coupon_code}
+                onChange={(e) => {
+                  setFormData({ ...formData, coupon_code: e.target.value.toUpperCase() });
+                  setCouponError('');
+                  setAppliedCoupon(null);
+                }}
+              />
+              <Button type="button" variant="outline" onClick={verifyCoupon}>
+                Apply
+              </Button>
+            </div>
+            {couponError && <p className="text-xs text-red-500 mt-1">{couponError}</p>}
+            {appliedCoupon && (
+              <p className="text-xs text-green-600 mt-1">
+                ✓ Coupon applied: ${appliedCoupon.credit_amount} {appliedCoupon.discount_type === 'percentage' ? '%' : ''} off
+              </p>
+            )}
+            {userCoupons.length > 0 && !appliedCoupon && (
+              <div className="mt-2 p-2 bg-purple-50 rounded text-xs">
+                <p className="font-medium text-purple-800 mb-1">Your coupons:</p>
+                <div className="space-y-1">
+                  {userCoupons.map(c => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => {
+                        setFormData({ ...formData, coupon_code: c.code });
+                        setAppliedCoupon(c);
+                        setCouponError('');
+                      }}
+                      className="block text-purple-600 hover:underline"
+                    >
+                      {c.code} - ${c.credit_amount} off
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Price Summary */}
+          {formData.budget > 0 && (
+            <div className="p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg border border-purple-200 space-y-2 text-sm">
+              <h4 className="font-semibold text-purple-900">Price Breakdown</h4>
+              <div className="space-y-1">
+                <div className="flex justify-between">
+                  <span>Base Price:</span>
+                  <span>${calculateFinalPrice().basePrice.toFixed(2)}</span>
+                </div>
+                {calculateFinalPrice().rushMultiplier > 1 && (
+                  <div className="flex justify-between text-orange-600 font-medium">
+                    <span>Rush Fee ({calculateFinalPrice().rushMultiplier}x):</span>
+                    <span>+${(calculateFinalPrice().priceWithRush - calculateFinalPrice().basePrice).toFixed(2)}</span>
+                  </div>
+                )}
+                {appliedCoupon && calculateFinalPrice().discount > 0 && (
+                  <div className="flex justify-between text-green-600 font-medium">
+                    <span>Coupon Discount:</span>
+                    <span>-${calculateFinalPrice().discount.toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between font-bold text-lg pt-2 border-t border-purple-300 text-purple-900">
+                  <span>Total:</span>
+                  <span>${calculateFinalPrice().finalPrice.toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div>
             <Label>Reference Images (Optional)</Label>
@@ -233,11 +465,16 @@ export default function RequestContentModal({ isOpen, onClose, userEmail, primar
 
           <Button
             onClick={handleSubmit}
-            disabled={createRequestMutation.isPending || !formData.title || !formData.request_type}
+            disabled={
+              createRequestMutation.isPending || 
+              !formData.title || 
+              !formData.request_type ||
+              (formData.request_type === 'custom_song' && !formData.song_type)
+            }
             className="w-full text-white"
             style={{ background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` }}
           >
-            {createRequestMutation.isPending ? 'Creating...' : `Pay $${formData.budget} & Post Request`}
+            {createRequestMutation.isPending ? 'Creating...' : `Pay $${calculateFinalPrice().finalPrice.toFixed(2)} & Post Request`}
           </Button>
         </div>
       </DialogContent>

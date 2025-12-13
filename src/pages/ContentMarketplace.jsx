@@ -176,7 +176,7 @@ export default function ContentMarketplace() {
                       <div className="flex items-center gap-4 text-sm text-gray-500">
                         <span className="flex items-center gap-1">
                           <Clock className="w-4 h-4" />
-                          {request.duration_hours}h
+                          {request.duration_days || Math.floor(request.duration_hours / 24) || 1}d
                         </span>
                         <Badge variant="secondary" className="text-xs">
                           {request.request_type?.replace(/_/g, ' ')}
