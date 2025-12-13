@@ -57,6 +57,7 @@ import WaterHistory from './pages/WaterHistory';
 import MyEvents from './pages/MyEvents';
 import ContentMarketplace from './pages/ContentMarketplace';
 import PromotionEngine from './pages/PromotionEngine';
+import ContentCards from './pages/ContentCards';
 import __Layout from './Layout.jsx';
 
 
@@ -120,6 +121,7 @@ export const PAGES = {
     "MyEvents": MyEvents,
     "ContentMarketplace": ContentMarketplace,
     "PromotionEngine": PromotionEngine,
+    "ContentCards": ContentCards,
 }
 
 export const pagesConfig = {

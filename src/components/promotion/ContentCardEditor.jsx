@@ -1,0 +1,335 @@
+import React, { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
+import { ArrowLeft, Save, Lock, Unlock, CheckCircle } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import PlatformOutputTabs from './PlatformOutputTabs';
+import AssetsPanel from './AssetsPanel';
+import WorkflowChecklist from './WorkflowChecklist';
+import ScriptDrawer from './ScriptDrawer';
+import OutcomeTracker from './OutcomeTracker';
+
+export default function ContentCardEditor({ card, onClose, userEmail }) {
+  const queryClient = useQueryClient();
+  const [formData, setFormData] = useState({
+    title: '',
+    brand_id: '',
+    campaign_id: '',
+    content_type: 'video',
+    intent: 'grow',
+    status: 'idea',
+    owner: userEmail,
+    assigned_va: '',
+    script_approved: false,
+    assets_locked: false,
+    edit_locked: false,
+    outcome_result: '',
+    outcome_notes: '',
+    reuse_toggle: false
+  });
+  const [scriptDrawerOpen, setScriptDrawerOpen] = useState(false);
+
+  useEffect(() => {
+    if (card) {
+      setFormData(card);
+    }
+  }, [card]);
+
+  const { data: brands = [] } = useQuery({
+    queryKey: ['brands'],
+    queryFn: () => base44.entities.Brand.list('name'),
+  });
+
+  const { data: campaigns = [] } = useQuery({
+    queryKey: ['campaigns'],
+    queryFn: () => base44.entities.PromotionCampaign.list('-created_date'),
+  });
+
+  const { data: workflowSteps = [] } = useQuery({
+    queryKey: ['workflowSteps'],
+    queryFn: () => base44.entities.WorkflowStep.list('order'),
+  });
+
+  const saveMutation = useMutation({
+    mutationFn: async (data) => {
+      if (card) {
+        return await base44.entities.ContentCard.update(card.id, data);
+      } else {
+        return await base44.entities.ContentCard.create(data);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contentCards'] });
+      onClose();
+    },
+  });
+
+  const handleSave = () => {
+    saveMutation.mutate(formData);
+  };
+
+  const isLocked = formData.edit_locked;
+  const canEdit = !isLocked; // VAs would need additional permission check
+
+  const filteredCampaigns = campaigns.filter(c => c.brand_id === formData.brand_id);
+  const currentStep = workflowSteps.find(s => s.name === 'Strategy & Script') || workflowSteps[0];
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-purple-50 to-blue-50 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" onClick={onClose}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-800">
+                {card ? 'Edit Content Card' : 'New Content Card'}
+              </h1>
+              {card && (
+                <div className="flex items-center gap-2 mt-1">
+                  {formData.script_approved && <Badge variant="outline" className="text-xs">✓ Script Approved</Badge>}
+                  {formData.assets_locked && <Badge variant="outline" className="text-xs">🔒 Assets Locked</Badge>}
+                  {formData.edit_locked && <Badge variant="destructive" className="text-xs">🔒 Edit Locked</Badge>}
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {card && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setScriptDrawerOpen(!scriptDrawerOpen)}
+              >
+                {scriptDrawerOpen ? 'Close' : 'Open'} Script
+              </Button>
+            )}
+            <Button onClick={handleSave} disabled={saveMutation.isPending || !formData.title || !formData.brand_id}>
+              <Save className="w-4 h-4 mr-2" />
+              {saveMutation.isPending ? 'Saving...' : 'Save'}
+            </Button>
+          </div>
+        </div>
+
+        <div className="grid lg:grid-cols-3 gap-6">
+          {/* Left Column - Main Form */}
+          <div className="lg:col-span-2 space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Content Details</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>Title *</Label>
+                  <Input
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    placeholder="Content card title..."
+                    disabled={isLocked}
+                  />
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <Label>Brand *</Label>
+                    <Select
+                      value={formData.brand_id}
+                      onValueChange={(v) => setFormData({ ...formData, brand_id: v, campaign_id: '' })}
+                      disabled={isLocked}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select brand..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {brands.map(brand => (
+                          <SelectItem key={brand.id} value={brand.id}>{brand.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label>Campaign (Optional)</Label>
+                    <Select
+                      value={formData.campaign_id}
+                      onValueChange={(v) => setFormData({ ...formData, campaign_id: v })}
+                      disabled={isLocked || !formData.brand_id}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select campaign..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={null}>None</SelectItem>
+                        {filteredCampaigns.map(campaign => (
+                          <SelectItem key={campaign.id} value={campaign.id}>{campaign.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <Label>Content Type *</Label>
+                    <Select
+                      value={formData.content_type}
+                      onValueChange={(v) => setFormData({ ...formData, content_type: v })}
+                      disabled={isLocked}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="video">Video</SelectItem>
+                        <SelectItem value="post">Post</SelectItem>
+                        <SelectItem value="email">Email</SelectItem>
+                        <SelectItem value="sms">SMS</SelectItem>
+                        <SelectItem value="live">Live</SelectItem>
+                        <SelectItem value="blog">Blog</SelectItem>
+                        <SelectItem value="promo">Promo</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label>Intent *</Label>
+                    <Select
+                      value={formData.intent}
+                      onValueChange={(v) => setFormData({ ...formData, intent: v })}
+                      disabled={isLocked}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="grow">Grow</SelectItem>
+                        <SelectItem value="sell">Sell</SelectItem>
+                        <SelectItem value="remind">Remind</SelectItem>
+                        <SelectItem value="nurture">Nurture</SelectItem>
+                        <SelectItem value="authority">Authority</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <Label>Status</Label>
+                    <Select
+                      value={formData.status}
+                      onValueChange={(v) => setFormData({ ...formData, status: v })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="idea">Idea</SelectItem>
+                        <SelectItem value="in_progress">In Progress</SelectItem>
+                        <SelectItem value="ready">Ready</SelectItem>
+                        <SelectItem value="scheduled">Scheduled</SelectItem>
+                        <SelectItem value="posted">Posted</SelectItem>
+                        <SelectItem value="follow_up">Follow-up</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label>Assigned VA</Label>
+                    <Input
+                      value={formData.assigned_va}
+                      onChange={(e) => setFormData({ ...formData, assigned_va: e.target.value })}
+                      placeholder="VA email..."
+                      disabled={isLocked}
+                    />
+                  </div>
+                </div>
+
+                {/* Lock States */}
+                <div className="grid grid-cols-3 gap-4 pt-4 border-t">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm">Script Approved</Label>
+                    <Switch
+                      checked={formData.script_approved}
+                      onCheckedChange={(checked) => setFormData({ ...formData, script_approved: checked })}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm">Assets Locked</Label>
+                    <Switch
+                      checked={formData.assets_locked}
+                      onCheckedChange={(checked) => setFormData({ ...formData, assets_locked: checked })}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm">Edit Locked</Label>
+                    <Switch
+                      checked={formData.edit_locked}
+                      onCheckedChange={(checked) => setFormData({ ...formData, edit_locked: checked })}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Platform Outputs */}
+            {card && (
+              <PlatformOutputTabs
+                contentCardId={card.id}
+                contentType={formData.content_type}
+                isLocked={isLocked}
+              />
+            )}
+
+            {/* Outcome Tracking - Only show after posted */}
+            {card && (formData.status === 'posted' || formData.status === 'follow_up') && (
+              <OutcomeTracker
+                formData={formData}
+                setFormData={setFormData}
+                isLocked={isLocked}
+              />
+            )}
+          </div>
+
+          {/* Right Column - Workflow & Assets */}
+          <div className="space-y-6">
+            {card && currentStep && (
+              <WorkflowChecklist
+                contentCardId={card.id}
+                workflowStep={currentStep}
+                contentType={formData.content_type}
+                selectedPlatform="all"
+              />
+            )}
+
+            {card && (
+              <AssetsPanel
+                contentCardId={card.id}
+                isLocked={formData.assets_locked}
+              />
+            )}
+          </div>
+        </div>
+
+        {/* Script Drawer */}
+        {card && (
+          <ScriptDrawer
+            contentCardId={card.id}
+            isOpen={scriptDrawerOpen}
+            onClose={() => setScriptDrawerOpen(false)}
+            isLocked={!formData.script_approved}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
