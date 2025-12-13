@@ -35,6 +35,12 @@ const iconOptions = [
   { value: 'ExternalLink', icon: ExternalLink },
   { value: 'Smile', icon: Smile },
   { value: 'Check', icon: CheckCircle },
+  { value: 'Droplet', icon: Droplet },
+  { value: 'Utensils', icon: Utensils },
+  { value: 'Lightbulb', icon: Lightbulb },
+  { value: 'Cloud', icon: Cloud },
+  { value: 'StickyNote', icon: StickyNote },
+  { value: 'Calendar', icon: CalendarIcon },
 ];
 
 const colorOptions = [
@@ -282,7 +288,7 @@ export default function QuickActionsSettings({ formData, setFormData }) {
                     </div>
                     <div className="space-y-2">
                       <Label>Color</Label>
-                      <div className="flex gap-2 flex-wrap">
+                      <div className="flex gap-2 flex-wrap mb-2">
                         {colorOptions.map(color => (
                           <button
                             key={color}
@@ -293,6 +299,20 @@ export default function QuickActionsSettings({ formData, setFormData }) {
                             }`}
                           />
                         ))}
+                      </div>
+                      <div className="flex gap-2 items-center">
+                        <Label className="text-xs">Custom:</Label>
+                        <Input
+                          type="color"
+                          onChange={(e) => setNewAction({ ...newAction, color: e.target.value })}
+                          className="w-12 h-8 p-1"
+                        />
+                        <Input
+                          placeholder="#hex or Tailwind class"
+                          value={newAction.color}
+                          onChange={(e) => setNewAction({ ...newAction, color: e.target.value })}
+                          className="flex-1"
+                        />
                       </div>
                     </div>
                     <div className="space-y-2">
@@ -354,7 +374,7 @@ export default function QuickActionsSettings({ formData, setFormData }) {
               </div>
               <div className="space-y-2">
                 <Label>Color</Label>
-                <div className="flex gap-2 flex-wrap">
+                <div className="flex gap-2 flex-wrap mb-2">
                   {colorOptions.map(color => (
                     <button
                       key={color}
@@ -365,6 +385,20 @@ export default function QuickActionsSettings({ formData, setFormData }) {
                       }`}
                     />
                   ))}
+                </div>
+                <div className="flex gap-2 items-center">
+                  <Label className="text-xs">Custom:</Label>
+                  <Input
+                    type="color"
+                    onChange={(e) => setEditingAction({ ...editingAction, color: e.target.value })}
+                    className="w-12 h-8 p-1"
+                  />
+                  <Input
+                    placeholder="#hex or Tailwind class"
+                    value={editingAction.color}
+                    onChange={(e) => setEditingAction({ ...editingAction, color: e.target.value })}
+                    className="flex-1"
+                  />
                 </div>
               </div>
               {!editingAction.isBuiltIn && (
