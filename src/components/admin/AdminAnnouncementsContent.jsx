@@ -43,15 +43,18 @@ export default function AdminAnnouncementsContent() {
   const [scheduleDay, setScheduleDay] = useState('');
   const [scheduleTime, setScheduleTime] = useState('');
 
-  // Load Google Font for preview
+  // Load all Google Fonts for dropdown and preview
   useEffect(() => {
-    if (formData.google_font) {
-      const link = document.createElement('link');
-      link.href = `https://fonts.googleapis.com/css2?family=${formData.google_font.replace(/ /g, '+')}:wght@400;700;900&display=swap`;
-      link.rel = 'stylesheet';
+    const fontFamilies = GOOGLE_FONTS.map(font => font.replace(/ /g, '+')).join('&family=');
+    const link = document.createElement('link');
+    link.href = `https://fonts.googleapis.com/css2?family=${fontFamilies}&display=swap`;
+    link.rel = 'stylesheet';
+    link.id = 'google-fonts-all';
+    
+    if (!document.getElementById('google-fonts-all')) {
       document.head.appendChild(link);
     }
-  }, [formData.google_font]);
+  }, []);
 
   const { data: bars = [] } = useQuery({
     queryKey: ['announcementBars'],
