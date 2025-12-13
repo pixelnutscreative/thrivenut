@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Settings, FileText, CheckSquare, Wrench } from 'lucide-react';
+import { Settings, FileText, CheckSquare, Wrench, Share2 } from 'lucide-react';
 import AdminCampaignTypesContent from '../components/admin/AdminCampaignTypesContent';
 import AdminWorkflowStepsContent from '../components/admin/AdminWorkflowStepsContent';
 import AdminChecklistsContent from '../components/admin/AdminChecklistsContent';
 import AdminToolsContent from '../components/admin/AdminToolsContent';
+import AdminPlatformsContent from '../components/admin/AdminPlatformsContent';
 
 export default function PromotionEngine() {
   const [activeTab, setActiveTab] = useState('campaign-types');
@@ -20,10 +21,14 @@ export default function PromotionEngine() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid grid-cols-4 w-full mb-6">
+          <TabsList className="grid grid-cols-5 w-full mb-6">
             <TabsTrigger value="campaign-types">
               <Settings className="w-4 h-4 mr-2" />
               Campaign Types
+            </TabsTrigger>
+            <TabsTrigger value="platforms">
+              <Share2 className="w-4 h-4 mr-2" />
+              Platforms
             </TabsTrigger>
             <TabsTrigger value="workflow-steps">
               <FileText className="w-4 h-4 mr-2" />
@@ -41,6 +46,10 @@ export default function PromotionEngine() {
 
           <TabsContent value="campaign-types">
             <AdminCampaignTypesContent />
+          </TabsContent>
+
+          <TabsContent value="platforms">
+            <AdminPlatformsContent />
           </TabsContent>
 
           <TabsContent value="workflow-steps">
