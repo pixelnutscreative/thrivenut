@@ -161,7 +161,9 @@ export default function PixelsParadise() {
   const [selectedPlan, setSelectedPlan] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showLiveReminders, setShowLiveReminders] = useState(false);
+  const [showAIClassModal, setShowAIClassModal] = useState(false);
   const [user, setUser] = useState(null);
+  const [preferences, setPreferences] = useState(null);
   const [reminderFormData, setReminderFormData] = useState({
     email: '',
     phone: '',
@@ -174,7 +176,12 @@ export default function PixelsParadise() {
 
   useEffect(() => {
     base44.auth.isAuthenticated().then(setIsAuthenticated).catch(() => {});
-    base44.auth.me().then(setUser).catch(() => {});
+    base44.auth.me().then(async (userData) => {
+      setUser(userData);
+      // Fetch preferences
+      const prefs = await base44.entities.UserPreferences.filter({ user_email: userData.email });
+      if (prefs[0]) setPreferences(prefs[0]);
+    }).catch(() => {});
   }, []);
 
   // Fetch custom categories
@@ -275,13 +282,13 @@ export default function PixelsParadise() {
         )}
 
         {/* Header with Live Reminder Bell */}
-        <div className="flex items-start justify-between">
+        <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-4">
           <div className="flex-1 text-center space-y-4">
-            <h1 className="text-4xl font-bold bg-clip-text text-transparent flex items-center justify-center gap-3" style={gradientTextStyle}>
-              <Sparkles className="w-10 h-10" style={{ color: primaryColor }} />
+            <h1 className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent flex items-center justify-center gap-2 md:gap-3" style={gradientTextStyle}>
+              <Sparkles className="w-8 md:w-10 h-8 md:h-10" style={{ color: primaryColor }} />
               Pixel's Place
             </h1>
-            <p className={`${subtextClass} max-w-2xl mx-auto`}>
+            <p className={`${subtextClass} max-w-2xl mx-auto text-sm md:text-base px-4`}>
               Your one-stop shop for all things Pixel Nuts Creative! Links, programs, tools, subscriptions, affiliate goodies, 
               free trainings, and everything else I've hoarded like a digital squirrel. 🐿️
             </p>
@@ -290,11 +297,11 @@ export default function PixelsParadise() {
           {/* Big Bell */}
           <button
             onClick={() => setShowLiveReminders(true)}
-            className="flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-105 transition-all"
+            className="flex-shrink-0 w-12 md:w-14 h-12 md:h-14 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-105 transition-all"
             style={gradientStyle}
             title="Get Live Reminders"
           >
-            <Bell className="w-7 h-7 text-white" />
+            <Bell className="w-6 md:w-7 h-6 md:h-7 text-white" />
           </button>
         </div>
 
@@ -348,24 +355,24 @@ export default function PixelsParadise() {
         {/* ===== PIXEL'S AI TOOLBOX + NUTS & BOTS ===== */}
         <div className="rounded-2xl p-6 md:p-8 text-white shadow-2xl space-y-6" style={gradientStyle}>
           {/* AI Toolbox */}
-          <div className="flex flex-col md:flex-row items-center gap-6">
+          <div className="flex flex-col md:flex-row items-center gap-4 md:gap-6">
             <div className="flex-shrink-0">
-              <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center">
-                <Zap className="w-10 h-10 text-yellow-300" />
+              <div className="w-16 md:w-20 h-16 md:h-20 bg-white/20 rounded-2xl flex items-center justify-center">
+                <Zap className="w-8 md:w-10 h-8 md:h-10 text-yellow-300" />
               </div>
             </div>
             <div className="flex-1 text-center md:text-left">
-              <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
-                <Crown className="w-6 h-6 text-yellow-300" />
-                <h2 className="text-2xl md:text-3xl font-bold">Pixel's AI Toolbox</h2>
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-2">
+                <Crown className="w-5 md:w-6 h-5 md:h-6 text-yellow-300" />
+                <h2 className="text-xl md:text-2xl lg:text-3xl font-bold">Pixel's AI Toolbox</h2>
               </div>
-              <p className="text-white/90 mb-4">
+              <p className="text-white/90 mb-4 text-sm md:text-base">
                 The ultimate collection of AI tools, templates, prompts, and pure creative chaos. 
                 Everything I use to create content that makes people say "wait, HOW did you do that?!" 🤯
               </p>
-              <div className="flex flex-col sm:flex-row gap-3 items-center justify-center md:justify-start">
+              <div className="flex flex-col gap-3">
                 <Select value={selectedPlan} onValueChange={handlePlanSelect}>
-                  <SelectTrigger className="w-full sm:w-72 bg-white/20 border-white/30 text-white">
+                  <SelectTrigger className="w-full bg-white/20 border-white/30 text-white">
                     <SelectValue placeholder="Get access now..." />
                   </SelectTrigger>
                   <SelectContent>
@@ -376,40 +383,42 @@ export default function PixelsParadise() {
                     ))}
                   </SelectContent>
                 </Select>
-                <span className="text-white/70 text-sm">← Pick one and let's GO!</span>
+                <span className="text-white/70 text-xs md:text-sm text-center md:text-left">Pick one and let's GO! ⬆️</span>
               </div>
             </div>
           </div>
           
           {/* WANT IT ALL - Nuts + Bots inside the box */}
-          <div className="bg-white/15 backdrop-blur rounded-xl p-5 border border-white/20">
+          <div className="bg-white/15 backdrop-blur rounded-xl p-4 md:p-5 border border-white/20">
             <div className="flex flex-col md:flex-row items-center gap-4">
               <div className="flex-shrink-0">
-                <div className="w-14 h-14 bg-white/30 rounded-xl flex items-center justify-center">
-                  <Bot className="w-7 h-7 text-white" />
+                <div className="w-12 md:w-14 h-12 md:h-14 bg-white/30 rounded-xl flex items-center justify-center">
+                  <Bot className="w-6 md:w-7 h-6 md:h-7 text-white" />
                 </div>
               </div>
               <div className="flex-1 text-center md:text-left">
-                <h3 className="text-xl font-bold flex items-center justify-center md:justify-start gap-2">
+                <h3 className="text-lg md:text-xl font-bold flex flex-wrap items-center justify-center md:justify-start gap-2">
                   🚀 WANT IT ALL? Get The Nuts + Bots
                 </h3>
-                <p className="text-white/90 text-sm mt-1">
+                <p className="text-white/90 text-xs md:text-sm mt-1">
                   All the tools you need to run your business - CRM, funnels, automations, AND Pixel's AI Toolbox included!
                 </p>
-                <div className="flex flex-wrap items-center gap-3 mt-3 justify-center md:justify-start">
+                <div className="flex flex-col sm:flex-row flex-wrap items-center gap-2 md:gap-3 mt-3 justify-center md:justify-start">
                   <Button
                     onClick={() => window.open('https://thenutsandbots.com/pricing', '_blank')}
-                    className="bg-white/30 hover:bg-white/40 text-white"
+                    className="bg-white/30 hover:bg-white/40 text-white w-full sm:w-auto"
+                    size="sm"
                   >
                     See Pricing
                   </Button>
                   <Button
                     variant="outline"
                     onClick={() => window.open('https://api.leadconnectorhq.com/widget/booking/kYlIpWiW6Cl1hulku154', '_blank')}
-                    className="border-white/50 text-white hover:bg-white/20"
+                    className="border-white/50 text-white hover:bg-white/20 w-full sm:w-auto"
+                    size="sm"
                   >
-                    <Clock className="w-4 h-4 mr-2" />
-                    Book Your First Session
+                    <Clock className="w-3 h-3 mr-1" />
+                    Book Session
                   </Button>
                 </div>
                 <p className="text-white/70 text-xs mt-2 text-center md:text-left">
@@ -422,10 +431,10 @@ export default function PixelsParadise() {
 
 
 
-        {/* ===== PIXEL'S CREATIVE SHOP ===== */}
-        <div className={`pt-4 border-t ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+        {/* ===== PIXEL'S CREATIVE SHOP - TEMPORARILY HIDDEN ===== */}
+        {/* <div className={`pt-4 border-t ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
           <ShopSection isDark={isDark} primaryColor={primaryColor} accentColor={accentColor} />
-        </div>
+        </div> */}
 
 
 
@@ -538,7 +547,7 @@ export default function PixelsParadise() {
                 : `linear-gradient(135deg, ${primaryColor}10, ${accentColor}10)`,
               borderColor: `${primaryColor}40`
             }}
-            onClick={() => window.open('https://pixelnutscreative.com/aiclass', '_blank')}
+            onClick={() => setShowAIClassModal(true)}
           >
             <CardContent className="p-4 flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={gradientStyle}>
@@ -660,6 +669,140 @@ export default function PixelsParadise() {
               <ExternalLink className="w-4 h-4" />
               Follow @pixelnutscreative on TikTok
             </a>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* AI Class Modal */}
+      <Dialog open={showAIClassModal} onOpenChange={setShowAIClassModal}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="-m-6 mb-4 p-6 rounded-t-lg bg-gradient-to-r from-cyan-400 to-blue-500">
+            <DialogTitle className="text-white text-2xl font-bold text-center">
+              🎨 AI CLASS IS FREE!
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            <div className="text-center space-y-2">
+              <h2 className="text-3xl font-bold text-gray-800">📅 AI Class Schedule</h2>
+              <p className="text-gray-600">
+                You'll get reminder texts before each session so you never miss your spot.<br />
+                When you're done, you can opt out of reminders with one tap — easy.
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="p-4 bg-gray-800 text-white rounded-lg text-center">
+                <div className="text-2xl mb-2">✅</div>
+                <p className="font-semibold">Weekdays – 3 PM PST</p>
+              </div>
+              <div className="p-4 bg-gray-800 text-white rounded-lg text-center">
+                <div className="text-2xl mb-2">✅</div>
+                <p className="font-semibold">Tuesday + Thursday – 8 AM PST</p>
+              </div>
+            </div>
+
+            <div className="text-center space-y-2">
+              <h3 className="text-xl font-bold text-gray-800">Choose your reminder style...</h3>
+              <p className="text-gray-600">US gets text. Everyone else gets email + WhatsApp. Easy.</p>
+            </div>
+
+            {/* US vs Outside US Forms */}
+            {preferences?.country ? (
+              <div>
+                {preferences.country === 'USA' ? (
+                  <div>
+                    <h4 className="text-center font-semibold mb-3 text-gray-700">🇺🇸 I'm in the US (Text Reminders)</h4>
+                    <div 
+                      dangerouslySetInnerHTML={{
+                        __html: `
+                          <iframe
+                            src="https://api.leadconnectorhq.com/widget/form/Ubgdqzxz5vZsDuqMB5ZW"
+                            style="width:100%;height:680px;border:none;border-radius:4px"
+                            id="inline-Ubgdqzxz5vZsDuqMB5ZW" 
+                            data-layout="{'id':'INLINE'}"
+                            data-trigger-type="alwaysShow"
+                            data-trigger-value=""
+                            data-activation-type="alwaysActivated"
+                            data-activation-value=""
+                            data-deactivation-type="neverDeactivate"
+                            data-deactivation-value=""
+                            data-form-name="Ai Class Text Reminders"
+                            data-height="680"
+                            data-layout-iframe-id="inline-Ubgdqzxz5vZsDuqMB5ZW"
+                            data-form-id="Ubgdqzxz5vZsDuqMB5ZW"
+                            title="Ai Class Text Reminders"
+                          ></iframe>
+                          <script src="https://link.msgsndr.com/js/form_embed.js"></script>
+                        `
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div>
+                    <h4 className="text-center font-semibold mb-3 text-gray-700">🌍 I'm Outside the US (Email Reminders)</h4>
+                    <div 
+                      dangerouslySetInnerHTML={{
+                        __html: `
+                          <iframe
+                            src="https://api.leadconnectorhq.com/widget/form/IDaFPswHrAAqpJNfn2i2"
+                            style="width:100%;height:617px;border:none;border-radius:4px"
+                            id="inline-IDaFPswHrAAqpJNfn2i2" 
+                            data-layout="{'id':'INLINE'}"
+                            data-trigger-type="alwaysShow"
+                            data-trigger-value=""
+                            data-activation-type="alwaysActivated"
+                            data-activation-value=""
+                            data-deactivation-type="neverDeactivate"
+                            data-deactivation-value=""
+                            data-form-name="Ai Class Reminders - Email"
+                            data-height="617"
+                            data-layout-iframe-id="inline-IDaFPswHrAAqpJNfn2i2"
+                            data-form-id="IDaFPswHrAAqpJNfn2i2"
+                            title="Ai Class Reminders - Email"
+                          ></iframe>
+                          <script src="https://link.msgsndr.com/js/form_embed.js"></script>
+                        `
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <p className="text-center text-sm text-gray-600">Where are you located?</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <Button
+                    onClick={() => {
+                      // Show US form
+                      const tempPrefs = { ...preferences, country: 'USA' };
+                      setPreferences(tempPrefs);
+                    }}
+                    className="bg-white text-gray-800 border-2 border-gray-300 hover:bg-gray-50 h-auto py-6"
+                  >
+                    <div className="text-center">
+                      <div className="text-4xl mb-2">🇺🇸</div>
+                      <p className="font-semibold">I'm in the US</p>
+                      <p className="text-xs text-gray-500">(Text Reminders)</p>
+                    </div>
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      // Show outside US form
+                      const tempPrefs = { ...preferences, country: 'International' };
+                      setPreferences(tempPrefs);
+                    }}
+                    className="bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:opacity-90 h-auto py-6"
+                  >
+                    <div className="text-center">
+                      <div className="text-4xl mb-2">🌍</div>
+                      <p className="font-semibold">I'm Outside the US</p>
+                      <p className="text-xs text-white/80">(Email Reminders)</p>
+                    </div>
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>

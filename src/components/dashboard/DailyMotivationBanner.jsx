@@ -105,7 +105,7 @@ ${contextParts.length > 0 ? '- Specifically address the focus area mentioned abo
 ${type === 'scripture' 
   ? `CRITICAL: Provide the EXACT scripture text word-for-word from ${bibleVersion}. Include the Bible reference (book chapter:verse).` 
   : type === 'motivational' || type === 'positive_quote' || type === 'affirmation'
-    ? `IMPORTANT: You may use Biblical principles and wisdom, but DO NOT include explicit scripture references unless you're absolutely sure they enhance the message. The "scripture" type is specifically for that. For these other types, focus on the core principle or wisdom itself without always citing chapter and verse. Leave the reference field empty or use "Inspired by Biblical principles" if it's heavily scripture-based.`
+    ? `IMPORTANT: You may use Biblical principles and wisdom as inspiration, but DO NOT include ANY scripture references in the reference field unless the quote IS an actual scripture. For motivational/quote/affirmation types, if they are based on Biblical wisdom, leave the reference field BLANK. Only populate reference if it's an actual Bible verse citation.`
     : ''
 }`;
 
@@ -247,9 +247,17 @@ ${type === 'scripture'
                     {loading ? '...' : `"${currentMotivation.text}"`}
                   </p>
                   {currentMotivation.reference && (
-                    <p className="text-white/70 text-xs mt-0.5 italic">
-                      — {currentMotivation.reference}
-                    </p>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        alert(currentMotivation.reference);
+                      }}
+                      className="text-white/70 hover:text-white text-xs mt-1 flex items-center gap-1 transition-colors"
+                      title="View Scripture Reference"
+                    >
+                      <BookOpen className="w-3 h-3" />
+                      <span className="italic">Scripture Reference</span>
+                    </button>
                   )}
                 </motion.div>
               )}
