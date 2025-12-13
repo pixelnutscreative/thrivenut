@@ -48,6 +48,9 @@ export default function AdminAnnouncementsContent() {
     queryFn: () => base44.entities.AnnouncementBar.list('-display_order'),
   });
 
+  // Show all bars in admin, sorted by priority
+  const allBars = [...bars].sort((a, b) => (b.display_order || 0) - (a.display_order || 0));
+
   const createMutation = useMutation({
     mutationFn: (data) => editingBar 
       ? base44.entities.AnnouncementBar.update(editingBar.id, data)
@@ -129,7 +132,7 @@ export default function AdminAnnouncementsContent() {
       </div>
 
       <div className="grid gap-4">
-        {bars.map(bar => (
+        {allBars.map(bar => (
           <Card key={bar.id}>
             <CardContent className="pt-6">
               <div className="flex items-start justify-between mb-4">

@@ -776,13 +776,13 @@ export default function Layout({ children, currentPageName }) {
         </div>
 
         {/* Main Content Area */}
-        <div className={`ml-72 flex-1 ${user && preferences?.quick_actions?.length > 0 ? 'pt-[52px]' : ''}`}>
+        <div className="ml-72 flex-1">
           {children}
         </div>
         </div>
 
         {/* Mobile Main Content */}
-        <div className={`lg:hidden ${user && preferences?.quick_actions?.length > 0 ? 'pt-[108px]' : 'pt-16'}`}>
+        <div className="lg:hidden">
         {children}
         </div>
 

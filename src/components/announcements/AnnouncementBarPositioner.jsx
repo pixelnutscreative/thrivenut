@@ -2,28 +2,47 @@ import { useEffect } from 'react';
 
 export default function AnnouncementBarPositioner() {
   useEffect(() => {
-    const adjustQuickActionsPosition = () => {
+    const adjustPositions = () => {
+      const isMobile = window.innerWidth < 1024;
       const announcementBar = document.querySelector('[data-announcement-bar]');
-      const quickActions = document.querySelector('.announcement-aware');
+      const quickActions = document.querySelector('#quick-actions-bar');
+      const mainContent = document.querySelectorAll('.ml-72, .lg\\:hidden');
       
-      if (announcementBar && quickActions) {
+      let topOffset = isMobile ? 56 : 0;
+      
+      // Position quick actions below announcement bar if it exists
+      if (announcementBar) {
         const barHeight = announcementBar.offsetHeight;
-        quickActions.style.top = `${barHeight}px`;
+        topOffset += barHeight;
+        
+        if (quickActions) {
+          quickActions.style.top = `${topOffset}px`;
+          topOffset += quickActions.offsetHeight;
+        }
       } else if (quickActions) {
-        const isMobile = window.innerWidth < 1024;
-        quickActions.style.top = isMobile ? '56px' : '0';
+        quickActions.style.top = isMobile ? '56px' : '0px';
+        topOffset += quickActions.offsetHeight;
       }
+      
+      // Adjust main content padding
+      mainContent.forEach(el => {
+        if (el.classList.contains('ml-72')) {
+          // Desktop
+          el.style.paddingTop = announcementBar || quickActions ? `${topOffset}px` : '0px';
+        } else {
+          // Mobile
+          el.style.paddingTop = `${topOffset}px`;
+        }
+      });
     };
 
-    // Adjust on mount and when window resizes
-    adjustQuickActionsPosition();
-    window.addEventListener('resize', adjustQuickActionsPosition);
+    adjustPositions();
+    window.addEventListener('resize', adjustPositions);
     
-    // Check periodically in case announcement bar appears/disappears
-    const interval = setInterval(adjustQuickActionsPosition, 1000);
+    const interval = setInterval(adjustPositions, 500);
 
     return () => {
-      window.removeEventListener('resize', adjustQuickActionsPosition);
+      window.removeEventListener('resize', adjustPositions);
       clearInterval(interval);
     };
   }, []);

@@ -84,7 +84,7 @@ export default function AnnouncementBar() {
   return (
     <div
       data-announcement-bar
-      className="fixed z-[45] overflow-hidden"
+      className="fixed z-50 overflow-hidden"
       style={{
         ...backgroundStyle,
         fontFamily: activeBar.google_font || 'inherit',

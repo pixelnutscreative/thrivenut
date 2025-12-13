@@ -297,7 +297,8 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="fixed z-40 backdrop-blur-sm px-2 py-1.5 shadow-2xl announcement-aware"
+      className="fixed z-40 backdrop-blur-sm px-2 py-1.5 shadow-2xl"
+      id="quick-actions-bar"
       style={{
         left: isMobile ? 0 : '288px',
         right: 0,
