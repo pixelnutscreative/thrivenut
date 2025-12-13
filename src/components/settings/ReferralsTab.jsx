@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Share2, Copy, Gift, DollarSign, Award, Sparkles, Check, AlertTriangle } from 'lucide-react';
+import { Loader2, Share2, Copy, Gift, DollarSign, Award, Sparkles, Check, AlertTriangle, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function ReferralsTab({ userEmail, primaryColor, accentColor }) {
