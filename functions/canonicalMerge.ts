@@ -56,8 +56,8 @@ Deno.serve(async (req) => {
 
       if (!dryRun) {
         // 3. Update canonical record with approved values
+        // Only send essential fields to avoid nested object validation errors
         await base44.asServiceRole.entities.TikTokContact.update(canonicalRecord.id, {
-          tiktok_username: username,
           display_name: canonical_display_name,
           phonetic_spelling: canonical_phonetic_spelling,
           _migration_status: 'canonical_merged',
@@ -127,11 +127,10 @@ Deno.serve(async (req) => {
       const archivedIds = [];
       for (const duplicate of duplicatesToArchive) {
         if (!dryRun) {
+          // Only send essential fields to avoid nested object validation errors
           await base44.asServiceRole.entities.TikTokContact.update(duplicate.id, {
             _migration_status: 'archived_duplicate',
-            _canonical_id: canonicalRecord.id,
-            username: `ARCHIVED_${duplicate.username || duplicate.tiktok_username}`,
-            tiktok_username: `ARCHIVED_${duplicate.username || duplicate.tiktok_username}`
+            _canonical_id: canonicalRecord.id
           });
         }
         archivedIds.push(duplicate.id);
