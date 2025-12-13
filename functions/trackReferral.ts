@@ -9,9 +9,9 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Referral code required' }, { status: 400 });
     }
 
-    // Find referral link
+    // Find referral link (case-insensitive)
     const links = await base44.asServiceRole.entities.ReferralLink.filter({ 
-      referral_code: referralCode.toUpperCase(),
+      referral_code: referralCode.toLowerCase(),
       is_active: true
     });
 
@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
 
     // Log activity
     await base44.asServiceRole.entities.ReferralActivity.create({
-      referral_code: referralCode.toUpperCase(),
+      referral_code: referralCode.toLowerCase(),
       referrer_email: referralLink.user_email,
       referred_email: email || null,
       activity_type: activityType, // 'click', 'signup', 'upgrade'
