@@ -83,8 +83,11 @@ export default function ReferralsTab({ userEmail, primaryColor, accentColor }) {
     }
   });
 
-  const handleCopyLink = () => {
-    const link = `https://thrivenut.app?ref=${customCode}`;
+  const [trackingId, setTrackingId] = useState('');
+
+  const handleCopyLink = (withTracking = false) => {
+    const baseLink = `https://thrive.pixelnutscreative.com?ref=${customCode}`;
+    const link = withTracking && trackingId ? `${baseLink}-${trackingId}` : baseLink;
     navigator.clipboard.writeText(link);
     setCopySuccess(true);
     setTimeout(() => setCopySuccess(false), 2000);
@@ -186,11 +189,11 @@ export default function ReferralsTab({ userEmail, primaryColor, accentColor }) {
             <Label>Your Share Link</Label>
             <div className="flex gap-2">
               <Input
-                value={`https://thrivenut.app?ref=${customCode}`}
+                value={`https://thrive.pixelnutscreative.com?ref=${customCode}`}
                 readOnly
                 className="bg-gray-50 font-mono text-sm"
               />
-              <Button onClick={handleCopyLink}>
+              <Button onClick={() => handleCopyLink(false)}>
                 {copySuccess ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
               </Button>
             </div>
@@ -206,6 +209,37 @@ export default function ReferralsTab({ userEmail, primaryColor, accentColor }) {
                 </motion.p>
               )}
             </AnimatePresence>
+          </div>
+
+          {/* Tracking Identifier */}
+          <div className="space-y-2 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+            <Label className="text-sm font-semibold">📊 Track Link Source (Optional)</Label>
+            <p className="text-xs text-gray-600 mb-2">
+              Add a tracking ID to see which posts/platforms perform best
+            </p>
+            <div className="flex gap-2">
+              <Input
+                value={trackingId}
+                onChange={(e) => setTrackingId(e.target.value.toLowerCase().replace(/\s+/g, ''))}
+                placeholder="e.g., tiktokpost1, facebookprofile"
+                className="text-sm font-mono"
+              />
+              <Button 
+                onClick={() => handleCopyLink(true)}
+                disabled={!trackingId.trim()}
+                size="sm"
+              >
+                Copy
+              </Button>
+            </div>
+            {trackingId && (
+              <p className="text-xs text-purple-600 font-mono mt-1">
+                ?ref={customCode}-{trackingId}
+              </p>
+            )}
+            <p className="text-xs text-gray-500 mt-2">
+              Examples: tiktokpost1, facebookprofile, instastory, emailsignature
+            </p>
           </div>
 
           {/* How it Works */}
