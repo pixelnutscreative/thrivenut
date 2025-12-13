@@ -227,8 +227,8 @@ export default function Home() {
               onClick={handleLogin}
               className="bg-gradient-to-r from-teal-500 to-purple-500 hover:from-teal-600 hover:to-purple-600"
             >
-              <LogIn className="w-4 h-4 mr-2" />
-              Sign In / Sign Up
+              <Sparkles className="w-4 h-4 mr-2" />
+              Get Started Free
             </Button>
           )}
         </div>
