@@ -200,7 +200,6 @@ export default function Layout({ children, currentPageName }) {
       bgColor: 'bg-pink-500/10',
       items: [
         { name: 'Support', icon: HelpCircle, path: 'Support', alwaysShow: true },
-        { name: 'Notifications', icon: Bell, path: 'NotificationHistory', alwaysShow: true },
         { name: 'Admin Panel', icon: UserCog, path: 'Admin', adminOnly: true },
         { name: 'Community Map', icon: Share2, path: 'CommunityMap', adminOnly: true },
       ]
@@ -507,16 +506,26 @@ export default function Layout({ children, currentPageName }) {
                     </div>
                   )}
 
-                  {/* Regular Sign Out for non-admin users */}
+                  {/* Regular User Actions */}
                   {!isAdmin && (
-                    <Button
-                      onClick={handleLogout}
-                      variant="outline"
-                      size="sm"
-                      className={`w-full ${isMenuDark ? 'border-gray-600 text-gray-100 hover:bg-gray-700 hover:text-white' : 'text-gray-800 border-gray-300 hover:bg-gray-100'}`}
-                    >
-                      <LogOut className="w-4 h-4 mr-2" /> Sign Out
-                    </Button>
+                    <div className="space-y-2">
+                      <Button
+                        onClick={() => window.location.href = createPageUrl('Settings')}
+                        variant="outline"
+                        size="sm"
+                        className={`w-full ${isMenuDark ? 'border-gray-600 text-gray-100 hover:bg-gray-700 hover:text-white' : 'text-gray-800 border-gray-300 hover:bg-gray-100'}`}
+                      >
+                        <Settings className="w-4 h-4 mr-2" /> Settings
+                      </Button>
+                      <Button
+                        onClick={handleLogout}
+                        variant="outline"
+                        size="sm"
+                        className={`w-full ${isMenuDark ? 'border-gray-600 text-gray-100 hover:bg-gray-700 hover:text-white' : 'text-gray-800 border-gray-300 hover:bg-gray-100'}`}
+                      >
+                        <LogOut className="w-4 h-4 mr-2" /> Sign Out
+                      </Button>
+                    </div>
                   )}
 
                   {soundcloudPosition === 'menu' && soundcloudUrl && (
@@ -734,16 +743,26 @@ export default function Layout({ children, currentPageName }) {
                 </div>
               )}
 
-              {/* Regular Sign Out for non-admin users */}
+              {/* Regular User Actions */}
               {!isAdmin && (
-                <Button
-                  onClick={handleLogout}
-                  variant="outline"
-                  size="sm"
-                  className={`w-full ${isMenuDark ? 'border-gray-600 text-gray-100 hover:bg-gray-700 hover:text-white' : 'text-gray-800 border-gray-300 hover:bg-gray-100'}`}
-                >
-                  <LogOut className="w-4 h-4 mr-2" /> Sign Out
-                </Button>
+                <div className="space-y-2">
+                  <Button
+                    onClick={() => window.location.href = createPageUrl('Settings')}
+                    variant="outline"
+                    size="sm"
+                    className={`w-full ${isMenuDark ? 'border-gray-600 text-gray-100 hover:bg-gray-700 hover:text-white' : 'text-gray-800 border-gray-300 hover:bg-gray-100'}`}
+                  >
+                    <Settings className="w-4 h-4 mr-2" /> Settings
+                  </Button>
+                  <Button
+                    onClick={handleLogout}
+                    variant="outline"
+                    size="sm"
+                    className={`w-full ${isMenuDark ? 'border-gray-600 text-gray-100 hover:bg-gray-700 hover:text-white' : 'text-gray-800 border-gray-300 hover:bg-gray-100'}`}
+                  >
+                    <LogOut className="w-4 h-4 mr-2" /> Sign Out
+                  </Button>
+                </div>
               )}
 
               {soundcloudPosition === 'menu' && soundcloudUrl && (
