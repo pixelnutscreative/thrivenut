@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -6,8 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Share2, Copy, Gift, DollarSign, Award, Sparkles, Check, AlertTriangle, Plus, Trash2, Edit } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Loader2, Share2, Copy, Gift, DollarSign, Award, Sparkles, AlertTriangle, Plus } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 export default function ReferralsTab({ userEmail, primaryColor, accentColor }) {
   const queryClient = useQueryClient();
