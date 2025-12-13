@@ -22,6 +22,18 @@ export default function AdminAIToolsContent() {
   const [editingUser, setEditingUser] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [showContactPicker, setShowContactPicker] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filters, setFilters] = useState({
+    platform: 'all',
+    has_digital_twin: 'all',
+    has_nuts_and_bots: 'all',
+    has_thrive: 'all',
+    is_overdue: 'all',
+    includes_social_access: 'all'
+  });
+  const [contactSearch, setContactSearch] = useState('');
+  const [showCreateContact, setShowCreateContact] = useState(false);
+  const [newContactUsername, setNewContactUsername] = useState('');
   const [newTool, setNewTool] = useState({
     tool_name: '',
     app_id: '',
@@ -58,6 +70,12 @@ export default function AdminAIToolsContent() {
   const { data: platformUsers = [], isLoading: usersLoading } = useQuery({
     queryKey: ['platformUsers'],
     queryFn: () => base44.entities.AIPlatformUser.list('-created_date'),
+  });
+
+  // Fetch all Thrive user preferences to check who has signed up
+  const { data: thriveUsers = [] } = useQuery({
+    queryKey: ['thriveUsers'],
+    queryFn: () => base44.entities.UserPreferences.list(),
   });
 
   // Fetch TikTok contacts for linking
@@ -130,6 +148,96 @@ export default function AdminAIToolsContent() {
     if (!platformUser.tiktok_contact_id) return null;
     return tiktokContacts.find(c => c.id === platformUser.tiktok_contact_id);
   };
+
+  const hasThriveAccount = (userEmail) => {
+    return thriveUsers.some(u => u.user_email?.toLowerCase() === userEmail?.toLowerCase());
+  };
+
+  const isOverdue = (user) => {
+    if (!user.renewal_date) return false;
+    const renewalDate = new Date(user.renewal_date);
+    const today = new Date();
+    return renewalDate < today;
+  };
+
+  // Filter platform users
+  const filteredUsers = React.useMemo(() => {
+    let filtered = [...platformUsers];
+
+    // Search query
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(user => 
+        user.user_name?.toLowerCase().includes(query) ||
+        user.user_email?.toLowerCase().includes(query) ||
+        getLinkedContact(user)?.username?.toLowerCase().includes(query)
+      );
+    }
+
+    // Platform filter
+    if (filters.platform !== 'all') {
+      filtered = filtered.filter(u => u.platform === filters.platform);
+    }
+
+    // Digital twin filter
+    if (filters.has_digital_twin !== 'all') {
+      const shouldHave = filters.has_digital_twin === 'yes';
+      filtered = filtered.filter(u => !!u.has_digital_twin === shouldHave);
+    }
+
+    // Nuts & Bots filter
+    if (filters.has_nuts_and_bots !== 'all') {
+      const shouldHave = filters.has_nuts_and_bots === 'yes';
+      filtered = filtered.filter(u => !!u.has_nuts_and_bots === shouldHave);
+    }
+
+    // Social access filter
+    if (filters.includes_social_access !== 'all') {
+      const shouldHave = filters.includes_social_access === 'yes';
+      filtered = filtered.filter(u => !!u.includes_social_access === shouldHave);
+    }
+
+    // Thrive account filter
+    if (filters.has_thrive !== 'all') {
+      const shouldHave = filters.has_thrive === 'yes';
+      filtered = filtered.filter(u => hasThriveAccount(u.user_email) === shouldHave);
+    }
+
+    // Overdue filter
+    if (filters.is_overdue !== 'all') {
+      const shouldBeOverdue = filters.is_overdue === 'yes';
+      filtered = filtered.filter(u => isOverdue(u) === shouldBeOverdue);
+    }
+
+    return filtered;
+  }, [platformUsers, searchQuery, filters, thriveUsers, tiktokContacts]);
+
+  // Filter contacts for search
+  const filteredContacts = React.useMemo(() => {
+    if (!contactSearch) return tiktokContacts;
+    const query = contactSearch.toLowerCase();
+    return tiktokContacts.filter(c => 
+      c.username?.toLowerCase().includes(query) ||
+      c.display_name?.toLowerCase().includes(query) ||
+      c.real_name?.toLowerCase().includes(query)
+    );
+  }, [tiktokContacts, contactSearch]);
+
+  const createContactMutation = useMutation({
+    mutationFn: (data) => base44.entities.TikTokContact.create(data),
+    onSuccess: (newContact) => {
+      queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] });
+      // Auto-select the newly created contact
+      if (editingUser) {
+        setEditingUser({ ...editingUser, tiktok_contact_id: newContact.id });
+      } else {
+        setNewUser({ ...newUser, tiktok_contact_id: newContact.id });
+      }
+      setShowCreateContact(false);
+      setNewContactUsername('');
+      setContactSearch('');
+    }
+  });
 
   return (
     <div className="space-y-6">
@@ -225,7 +333,7 @@ export default function AdminAIToolsContent() {
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
                   <Users className="w-5 h-5" />
-                  Platform Assignments ({platformUsers.length})
+                  Platform Assignments ({filteredUsers.length} of {platformUsers.length})
                 </CardTitle>
                 <div className="flex gap-2">
                   <Button 
@@ -264,15 +372,113 @@ export default function AdminAIToolsContent() {
               </div>
             </CardHeader>
             <CardContent>
+              {/* Search and Filters */}
+              <div className="space-y-4 mb-6 p-4 bg-gray-50 rounded-lg border">
+                <Input
+                  placeholder="Search by name, email, or @username..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full"
+                />
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
+                  <Select value={filters.platform} onValueChange={(v) => setFilters({ ...filters, platform: v })}>
+                    <SelectTrigger className="text-xs">
+                      <SelectValue placeholder="Platform" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Platforms</SelectItem>
+                      <SelectItem value="pixels_toolbox">Pixel's Toolbox</SelectItem>
+                      <SelectItem value="lets_go_nuts">Let's Go Nuts</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={filters.has_digital_twin} onValueChange={(v) => setFilters({ ...filters, has_digital_twin: v })}>
+                    <SelectTrigger className="text-xs">
+                      <SelectValue placeholder="Digital Twin" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All (Twin)</SelectItem>
+                      <SelectItem value="yes">Has Twin ✓</SelectItem>
+                      <SelectItem value="no">No Twin</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={filters.has_nuts_and_bots} onValueChange={(v) => setFilters({ ...filters, has_nuts_and_bots: v })}>
+                    <SelectTrigger className="text-xs">
+                      <SelectValue placeholder="Nuts & Bots" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All (N&B)</SelectItem>
+                      <SelectItem value="yes">Has N&B ✓</SelectItem>
+                      <SelectItem value="no">No N&B</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={filters.includes_social_access} onValueChange={(v) => setFilters({ ...filters, includes_social_access: v })}>
+                    <SelectTrigger className="text-xs">
+                      <SelectValue placeholder="Social" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All (Social)</SelectItem>
+                      <SelectItem value="yes">Has Social ✓</SelectItem>
+                      <SelectItem value="no">No Social</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={filters.has_thrive} onValueChange={(v) => setFilters({ ...filters, has_thrive: v })}>
+                    <SelectTrigger className="text-xs">
+                      <SelectValue placeholder="Thrive" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All (Thrive)</SelectItem>
+                      <SelectItem value="yes">On Thrive ✓</SelectItem>
+                      <SelectItem value="no">Not on Thrive</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={filters.is_overdue} onValueChange={(v) => setFilters({ ...filters, is_overdue: v })}>
+                    <SelectTrigger className="text-xs">
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="yes">Overdue ⚠️</SelectItem>
+                      <SelectItem value="no">Current</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {(searchQuery || Object.values(filters).some(f => f !== 'all')) && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => {
+                      setSearchQuery('');
+                      setFilters({
+                        platform: 'all',
+                        has_digital_twin: 'all',
+                        has_nuts_and_bots: 'all',
+                        has_thrive: 'all',
+                        is_overdue: 'all',
+                        includes_social_access: 'all'
+                      });
+                    }}
+                  >
+                    Clear Filters
+                  </Button>
+                )}
+              </div>
+
               {usersLoading ? (
                 <div className="text-center py-8">
                   <Loader2 className="w-6 h-6 animate-spin mx-auto text-purple-600" />
                 </div>
-              ) : platformUsers.length === 0 ? (
-                <p className="text-center text-gray-500 py-8">No platform assignments yet</p>
+              ) : filteredUsers.length === 0 ? (
+                <p className="text-center text-gray-500 py-8">
+                  {platformUsers.length === 0 ? 'No platform assignments yet' : 'No users match your filters'}
+                </p>
               ) : (
                 <div className="space-y-2">
-                  {platformUsers.map(user => {
+                  {filteredUsers.map(user => {
                     const linkedContact = getLinkedContact(user);
                     return (
                       <div key={user.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
@@ -283,6 +489,16 @@ export default function AdminAIToolsContent() {
                               <Badge variant="outline" className="text-xs">
                                 <LinkIcon className="w-3 h-3 mr-1" />
                                 @{linkedContact.username}
+                              </Badge>
+                            )}
+                            {hasThriveAccount(user.user_email) && (
+                              <Badge className="text-xs bg-green-100 text-green-800">
+                                Thrive ✓
+                              </Badge>
+                            )}
+                            {isOverdue(user) && (
+                              <Badge className="text-xs bg-orange-100 text-orange-800">
+                                Overdue ⚠️
                               </Badge>
                             )}
                           </div>
@@ -624,27 +840,52 @@ export default function AdminAIToolsContent() {
 
             <div className="space-y-2">
               <Label>Link to Creator Contact (Optional)</Label>
-              <Select
-                value={editingUser?.tiktok_contact_id || newUser.tiktok_contact_id || 'none'}
-                onValueChange={(v) => {
-                  const value = v === 'none' ? '' : v;
-                  editingUser 
-                    ? setEditingUser({ ...editingUser, tiktok_contact_id: value })
-                    : setNewUser({ ...newUser, tiktok_contact_id: value });
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a contact..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">No contact linked</SelectItem>
-                  {tiktokContacts.map(contact => (
-                    <SelectItem key={contact.id} value={contact.id}>
-                      @{contact.username} {contact.display_name ? `(${contact.display_name})` : ''}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="space-y-2">
+                <Input
+                  placeholder="Search contacts by @username or name..."
+                  value={contactSearch}
+                  onChange={(e) => setContactSearch(e.target.value)}
+                />
+                <Select
+                  value={editingUser?.tiktok_contact_id || newUser.tiktok_contact_id || 'none'}
+                  onValueChange={(v) => {
+                    const value = v === 'none' ? '' : v;
+                    editingUser 
+                      ? setEditingUser({ ...editingUser, tiktok_contact_id: value })
+                      : setNewUser({ ...newUser, tiktok_contact_id: value });
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a contact..." />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-60">
+                    <SelectItem value="none">No contact linked</SelectItem>
+                    {filteredContacts.length === 0 && contactSearch ? (
+                      <div className="p-2 text-sm text-gray-500">No contacts found</div>
+                    ) : (
+                      filteredContacts.map(contact => (
+                        <SelectItem key={contact.id} value={contact.id}>
+                          @{contact.username} {contact.display_name ? `(${contact.display_name})` : contact.real_name ? `(${contact.real_name})` : ''}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+                {contactSearch && filteredContacts.length === 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setNewContactUsername(contactSearch.replace('@', ''));
+                      setShowCreateContact(true);
+                    }}
+                    className="w-full"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create contact: @{contactSearch.replace('@', '')}
+                  </Button>
+                )}
+              </div>
               <p className="text-xs text-gray-500">
                 Link this platform user to their creator contact card
               </p>
@@ -662,6 +903,56 @@ export default function AdminAIToolsContent() {
               disabled={!(editingUser?.user_email || newUser.user_email) || createPlatformUserMutation.isPending || updatePlatformUserMutation.isPending}
             >
               {editingUser ? 'Save Changes' : 'Add User'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create New Contact Dialog */}
+      <Dialog open={showCreateContact} onOpenChange={setShowCreateContact}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New Creator Contact</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>TikTok Username</Label>
+              <Input
+                value={newContactUsername}
+                onChange={(e) => setNewContactUsername(e.target.value.replace('@', ''))}
+                placeholder="username (without @)"
+              />
+            </div>
+            <p className="text-sm text-gray-600">
+              This will create a basic contact card that you can fill out later in Creator Contacts.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setShowCreateContact(false);
+              setNewContactUsername('');
+            }}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (newContactUsername.trim()) {
+                  createContactMutation.mutate({
+                    username: newContactUsername.trim(),
+                    created_by: currentUser?.email
+                  });
+                }
+              }}
+              disabled={!newContactUsername.trim() || createContactMutation.isPending}
+            >
+              {createContactMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                'Create Contact'
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
