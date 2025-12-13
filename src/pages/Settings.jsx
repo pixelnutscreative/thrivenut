@@ -282,45 +282,45 @@ export default function Settings() {
           navigate(`#${v}`); 
         }} className="w-full">
           <TabsList className="flex flex-wrap gap-1 mb-6 bg-transparent justify-start">
-            <TabsTrigger value="profile" title="Profile">
+            <TabsTrigger value="profile">
               <User className="w-4 h-4" />
-              <span className="hidden md:inline ml-2">Profile</span>
+              <span className="hidden lg:inline ml-2">Profile</span>
             </TabsTrigger>
-            <TabsTrigger value="social" title="Social Links">
+            <TabsTrigger value="social">
               <Share2 className="w-4 h-4" />
-              <span className="hidden md:inline ml-2">Social</span>
+              <span className="hidden lg:inline ml-2">Social</span>
             </TabsTrigger>
-            <TabsTrigger value="appearance" title="Theme & Colors">
+            <TabsTrigger value="appearance">
               <Palette className="w-4 h-4" />
-              <span className="hidden md:inline ml-2">Theme</span>
+              <span className="hidden lg:inline ml-2">Theme</span>
             </TabsTrigger>
-            <TabsTrigger value="features" title="Features">
+            <TabsTrigger value="features">
               <Layers className="w-4 h-4" />
-              <span className="hidden md:inline ml-2">Features</span>
+              <span className="hidden lg:inline ml-2">Features</span>
             </TabsTrigger>
-            <TabsTrigger value="dashboard" title="Dashboard Setup">
+            <TabsTrigger value="dashboard">
               <Sparkles className="w-4 h-4" />
-              <span className="hidden md:inline ml-2">Dashboard</span>
+              <span className="hidden lg:inline ml-2">Dashboard</span>
             </TabsTrigger>
-            <TabsTrigger value="preferences" title="Preferences">
+            <TabsTrigger value="preferences">
               <MessageSquare className="w-4 h-4" />
-              <span className="hidden md:inline ml-2">Preferences</span>
+              <span className="hidden lg:inline ml-2">Preferences</span>
             </TabsTrigger>
-            <TabsTrigger value="connections" title="AI Connections">
+            <TabsTrigger value="connections">
               <Zap className="w-4 h-4" />
-              <span className="hidden md:inline ml-2">AI Tools</span>
+              <span className="hidden lg:inline ml-2">AI Tools</span>
             </TabsTrigger>
-            <TabsTrigger value="widgets" title="Widgets">
+            <TabsTrigger value="widgets">
               <Zap className="w-4 h-4" />
-              <span className="hidden md:inline ml-2">Widgets</span>
+              <span className="hidden lg:inline ml-2">Widgets</span>
             </TabsTrigger>
-            <TabsTrigger value="bible" title="Bible Settings">
+            <TabsTrigger value="bible">
               <BookOpen className="w-4 h-4" />
-              <span className="hidden md:inline ml-2">Bible</span>
+              <span className="hidden lg:inline ml-2">Bible</span>
             </TabsTrigger>
-            <TabsTrigger value="homepage" title="Custom Homepage">
+            <TabsTrigger value="homepage" className="bg-gradient-to-r from-purple-100 to-pink-100 border-2 border-purple-400 font-semibold">
               <Code className="w-4 h-4" />
-              <span className="hidden md:inline ml-2">Homepage</span>
+              <span className="hidden lg:inline ml-2">🎨 Custom Homepage</span>
             </TabsTrigger>
             </TabsList>
 
