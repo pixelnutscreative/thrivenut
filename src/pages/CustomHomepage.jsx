@@ -32,6 +32,11 @@ export default function CustomHomepage() {
     enabled: !!effectiveEmail,
   });
 
+  // Get active homepage - prefer new array format, fall back to legacy single HTML
+  const activeHomepage = preferences?.custom_homepages?.find(
+    h => h.id === preferences?.active_homepage_id
+  ) || preferences?.custom_homepages?.[0];
+
   const { data: selfCareLog } = useQuery({
     queryKey: ['selfCareLog', today, effectiveEmail],
     queryFn: async () => {
@@ -78,7 +83,7 @@ export default function CustomHomepage() {
     );
   }
 
-  const customHtml = preferences?.custom_homepage_html;
+  const customHtml = activeHomepage?.html || preferences?.custom_homepage_html;
 
   if (!customHtml || !customHtml.trim()) {
     return (
