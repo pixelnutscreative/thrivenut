@@ -60,6 +60,7 @@ import PromotionEngine from './pages/PromotionEngine';
 import ContentCards from './pages/ContentCards';
 import ContentCalendar from './pages/ContentCalendar';
 import BatchMode from './pages/BatchMode';
+import CampaignTimeline from './pages/CampaignTimeline';
 import __Layout from './Layout.jsx';
 
 
@@ -126,6 +127,7 @@ export const PAGES = {
     "ContentCards": ContentCards,
     "ContentCalendar": ContentCalendar,
     "BatchMode": BatchMode,
+    "CampaignTimeline": CampaignTimeline,
 }
 
 export const pagesConfig = {
