@@ -179,6 +179,7 @@ export default function Layout({ children, currentPageName }) {
           { name: 'Social Engagement', icon: MousePointerClick, path: 'TikTokEngagement' },
           { name: 'Content Calendar', icon: Calendar, path: 'LiveSchedule' },
           { name: 'Sunny Songbird', icon: Sun, path: 'SongGenerator' },
+          { name: 'Hire a Creator', icon: Briefcase, path: 'ContentMarketplace', highlight: true },
           { name: 'Gift Gallery Gratitude', icon: Gift, path: 'WeeklyGifterGallery' },
           { name: 'Love Away Giveaways', icon: Gift, path: 'LoveAway' },
           { name: 'Pictionary Helper', icon: Palette, path: 'PictionaryHelper' },
@@ -447,14 +448,63 @@ export default function Layout({ children, currentPageName }) {
 
               {user && (
                 <div className={`pt-6 mt-6 border-t ${menuBorderClass}`}>
-                  <Button
-                    onClick={handleLogout}
-                    variant="outline"
-                    size="sm"
-                    className={`w-full ${isMenuDark ? 'border-gray-600 text-gray-100 hover:bg-gray-700 hover:text-white' : 'text-gray-800 border-gray-300 hover:bg-gray-100'}`}
-                  >
-                    <LogOut className="w-4 h-4 mr-2" /> Sign Out
-                  </Button>
+                  {/* Admin Quick Actions - Only for admin users */}
+                  {isAdmin && (
+                    <div className="grid grid-cols-4 gap-2 mb-4">
+                      <Button
+                        onClick={() => window.location.href = createPageUrl('Support')}
+                        variant="ghost"
+                        size="sm"
+                        className={`flex flex-col items-center gap-1 h-auto py-2 ${menuTextClass} ${menuHoverClass}`}
+                        title="Support"
+                      >
+                        <HelpCircle className="w-5 h-5" />
+                        <span className="text-xs">Support</span>
+                      </Button>
+                      <Button
+                        onClick={() => window.location.href = createPageUrl('Settings')}
+                        variant="ghost"
+                        size="sm"
+                        className={`flex flex-col items-center gap-1 h-auto py-2 ${menuTextClass} ${menuHoverClass}`}
+                        title="Settings"
+                      >
+                        <Settings className="w-5 h-5" />
+                        <span className="text-xs">Settings</span>
+                      </Button>
+                      <Button
+                        onClick={() => window.location.href = createPageUrl('Admin')}
+                        variant="ghost"
+                        size="sm"
+                        className={`flex flex-col items-center gap-1 h-auto py-2 ${menuTextClass} ${menuHoverClass}`}
+                        title="Admin Panel"
+                      >
+                        <UserCog className="w-5 h-5" />
+                        <span className="text-xs">Admin</span>
+                      </Button>
+                      <Button
+                        onClick={handleLogout}
+                        variant="ghost"
+                        size="sm"
+                        className={`flex flex-col items-center gap-1 h-auto py-2 ${menuTextClass} ${menuHoverClass}`}
+                        title="Sign Out"
+                      >
+                        <LogOut className="w-5 h-5" />
+                        <span className="text-xs">Sign Out</span>
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Regular Sign Out for non-admin users */}
+                  {!isAdmin && (
+                    <Button
+                      onClick={handleLogout}
+                      variant="outline"
+                      size="sm"
+                      className={`w-full ${isMenuDark ? 'border-gray-600 text-gray-100 hover:bg-gray-700 hover:text-white' : 'text-gray-800 border-gray-300 hover:bg-gray-100'}`}
+                    >
+                      <LogOut className="w-4 h-4 mr-2" /> Sign Out
+                    </Button>
+                  )}
 
                   {soundcloudPosition === 'menu' && soundcloudUrl && (
                     <div className="mt-4 pt-4 border-t" style={{ borderColor: menuBorderClass }}>
@@ -625,14 +675,63 @@ export default function Layout({ children, currentPageName }) {
           {/* Footer & SoundCloud */}
           {user && (
             <div className={`pt-6 mt-6 border-t ${menuBorderClass}`}>
-              <Button
-                onClick={handleLogout}
-                variant="outline"
-                size="sm"
-                className={`w-full ${isMenuDark ? 'border-gray-600 text-gray-100 hover:bg-gray-700 hover:text-white' : 'text-gray-800 border-gray-300 hover:bg-gray-100'}`}
-              >
-                <LogOut className="w-4 h-4 mr-2" /> Sign Out
-              </Button>
+              {/* Admin Quick Actions - Only for admin users */}
+              {isAdmin && (
+                <div className="grid grid-cols-4 gap-2 mb-4">
+                  <Button
+                    onClick={() => window.location.href = createPageUrl('Support')}
+                    variant="ghost"
+                    size="sm"
+                    className={`flex flex-col items-center gap-1 h-auto py-2 ${menuTextClass} ${menuHoverClass}`}
+                    title="Support"
+                  >
+                    <HelpCircle className="w-5 h-5" />
+                    <span className="text-xs">Support</span>
+                  </Button>
+                  <Button
+                    onClick={() => window.location.href = createPageUrl('Settings')}
+                    variant="ghost"
+                    size="sm"
+                    className={`flex flex-col items-center gap-1 h-auto py-2 ${menuTextClass} ${menuHoverClass}`}
+                    title="Settings"
+                  >
+                    <Settings className="w-5 h-5" />
+                    <span className="text-xs">Settings</span>
+                  </Button>
+                  <Button
+                    onClick={() => window.location.href = createPageUrl('Admin')}
+                    variant="ghost"
+                    size="sm"
+                    className={`flex flex-col items-center gap-1 h-auto py-2 ${menuTextClass} ${menuHoverClass}`}
+                    title="Admin Panel"
+                  >
+                    <UserCog className="w-5 h-5" />
+                    <span className="text-xs">Admin</span>
+                  </Button>
+                  <Button
+                    onClick={handleLogout}
+                    variant="ghost"
+                    size="sm"
+                    className={`flex flex-col items-center gap-1 h-auto py-2 ${menuTextClass} ${menuHoverClass}`}
+                    title="Sign Out"
+                  >
+                    <LogOut className="w-5 h-5" />
+                    <span className="text-xs">Sign Out</span>
+                  </Button>
+                </div>
+              )}
+
+              {/* Regular Sign Out for non-admin users */}
+              {!isAdmin && (
+                <Button
+                  onClick={handleLogout}
+                  variant="outline"
+                  size="sm"
+                  className={`w-full ${isMenuDark ? 'border-gray-600 text-gray-100 hover:bg-gray-700 hover:text-white' : 'text-gray-800 border-gray-300 hover:bg-gray-100'}`}
+                >
+                  <LogOut className="w-4 h-4 mr-2" /> Sign Out
+                </Button>
+              )}
 
               {soundcloudPosition === 'menu' && soundcloudUrl && (
                 <div className="mt-4 pt-4 border-t" style={{ borderColor: menuBorderClass }}>

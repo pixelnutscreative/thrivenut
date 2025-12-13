@@ -55,6 +55,7 @@ import BattleInventoryShared from './pages/BattleInventoryShared';
 import CustomHomepage from './pages/CustomHomepage';
 import WaterHistory from './pages/WaterHistory';
 import MyEvents from './pages/MyEvents';
+import ContentMarketplace from './pages/ContentMarketplace';
 import __Layout from './Layout.jsx';
 
 
@@ -116,6 +117,7 @@ export const PAGES = {
     "CustomHomepage": CustomHomepage,
     "WaterHistory": WaterHistory,
     "MyEvents": MyEvents,
+    "ContentMarketplace": ContentMarketplace,
 }
 
 export const pagesConfig = {
