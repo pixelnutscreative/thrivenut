@@ -200,6 +200,7 @@ export default function Layout({ children, currentPageName }) {
       color: 'text-pink-400', // Hot Pink
       bgColor: 'bg-pink-500/10',
       items: [
+        { name: 'Settings', icon: Settings, path: 'Settings', alwaysShow: true },
         { name: 'Support', icon: HelpCircle, path: 'Support', alwaysShow: true },
         { name: 'Admin Panel', icon: UserCog, path: 'Admin', adminOnly: true },
         { name: 'Community Map', icon: Share2, path: 'CommunityMap', adminOnly: true },
@@ -460,74 +461,46 @@ export default function Layout({ children, currentPageName }) {
               })}
 
               {user && (
-                <div className={`pt-6 mt-6 border-t ${menuBorderClass}`}>
-                  {/* Admin Quick Actions - Only for admin users */}
-                  {isAdmin && (
-                    <div className="grid grid-cols-4 gap-2 mb-4">
-                      <Button
-                        onClick={() => window.location.href = createPageUrl('Support')}
-                        variant="ghost"
-                        size="sm"
-                        className={`flex flex-col items-center gap-1 h-auto py-2 ${menuTextClass} ${menuHoverClass}`}
-                        title="Support"
-                      >
-                        <HelpCircle className="w-5 h-5" />
-                        <span className="text-xs">Support</span>
-                      </Button>
-                      <Button
-                        onClick={() => window.location.href = createPageUrl('Settings')}
-                        variant="ghost"
-                        size="sm"
-                        className={`flex flex-col items-center gap-1 h-auto py-2 ${menuTextClass} ${menuHoverClass}`}
-                        title="Settings"
-                      >
-                        <Settings className="w-5 h-5" />
-                        <span className="text-xs">Settings</span>
-                      </Button>
-                      <Button
-                        onClick={() => window.location.href = createPageUrl('Admin')}
-                        variant="ghost"
-                        size="sm"
-                        className={`flex flex-col items-center gap-1 h-auto py-2 ${menuTextClass} ${menuHoverClass}`}
-                        title="Admin Panel"
-                      >
-                        <UserCog className="w-5 h-5" />
-                        <span className="text-xs">Admin</span>
-                      </Button>
-                      <Button
-                        onClick={handleLogout}
-                        variant="ghost"
-                        size="sm"
-                        className={`flex flex-col items-center gap-1 h-auto py-2 ${menuTextClass} ${menuHoverClass}`}
-                        title="Sign Out"
-                      >
-                        <LogOut className="w-5 h-5" />
-                        <span className="text-xs">Sign Out</span>
-                      </Button>
-                    </div>
-                  )}
+              <div className={`pt-6 mt-6 border-t ${menuBorderClass}`}>
+                <div className="flex items-center gap-3 mb-4 px-2">
+                  <img 
+                    src={preferences?.profile_image_url || 'https://via.placeholder.com/40'} 
+                    alt="Profile" 
+                    className="w-10 h-10 rounded-full object-cover border-2 border-gray-300"
+                  />
+                  <div className="flex-1">
+                    <p className={`text-sm font-medium ${menuTextClass}`}>{user.full_name || user.email}</p>
+                    <p className={`text-xs ${menuSubtextClass}`}>{user.email}</p>
+                  </div>
+                </div>
 
-                  {/* Regular User Actions */}
-                  {!isAdmin && (
-                    <div className="space-y-2">
-                      <Button
-                        onClick={() => window.location.href = createPageUrl('Settings')}
-                        variant="outline"
-                        size="sm"
-                        className={`w-full ${isMenuDark ? 'border-gray-600 text-gray-100 hover:bg-gray-700 hover:text-white' : 'text-gray-800 border-gray-300 hover:bg-gray-100'}`}
-                      >
-                        <Settings className="w-4 h-4 mr-2" /> Settings
-                      </Button>
-                      <Button
-                        onClick={handleLogout}
-                        variant="outline"
-                        size="sm"
-                        className={`w-full ${isMenuDark ? 'border-gray-600 text-gray-100 hover:bg-gray-700 hover:text-white' : 'text-gray-800 border-gray-300 hover:bg-gray-100'}`}
-                      >
-                        <LogOut className="w-4 h-4 mr-2" /> Sign Out
-                      </Button>
-                    </div>
+                <div className="space-y-2">
+                  <Button
+                    onClick={handleLogout}
+                    variant="outline"
+                    size="sm"
+                    className={`w-full justify-start ${isMenuDark ? 'border-gray-600 text-gray-100 hover:bg-gray-700 hover:text-white' : 'text-gray-800 border-gray-300 hover:bg-gray-100'}`}
+                  >
+                    <LogOut className="w-4 h-4 mr-2" /> Log Out
+                  </Button>
+
+                  {isAdmin && (
+                    <Button
+                      onClick={() => {
+                        const email = prompt('Enter user email to manage:');
+                        if (email) {
+                          sessionStorage.setItem('impersonating', email);
+                          window.location.reload();
+                        }
+                      }}
+                      variant="outline"
+                      size="sm"
+                      className={`w-full justify-start ${isMenuDark ? 'border-gray-600 text-gray-100 hover:bg-gray-700 hover:text-white' : 'text-gray-800 border-gray-300 hover:bg-gray-100'}`}
+                    >
+                      <UserCog className="w-4 h-4 mr-2" /> Switch Account
+                    </Button>
                   )}
+                </div>
 
                   {soundcloudPosition === 'menu' && soundcloudUrl && (
                     <div className="mt-4 pt-4 border-t" style={{ borderColor: menuBorderClass }}>
@@ -698,73 +671,45 @@ export default function Layout({ children, currentPageName }) {
           {/* Footer & SoundCloud */}
           {user && (
             <div className={`pt-6 mt-6 border-t ${menuBorderClass}`}>
-              {/* Admin Quick Actions - Only for admin users */}
-              {isAdmin && (
-                <div className="grid grid-cols-4 gap-2 mb-4">
-                  <Button
-                    onClick={() => window.location.href = createPageUrl('Support')}
-                    variant="ghost"
-                    size="sm"
-                    className={`flex flex-col items-center gap-1 h-auto py-2 ${menuTextClass} ${menuHoverClass}`}
-                    title="Support"
-                  >
-                    <HelpCircle className="w-5 h-5" />
-                    <span className="text-xs">Support</span>
-                  </Button>
-                  <Button
-                    onClick={() => window.location.href = createPageUrl('Settings')}
-                    variant="ghost"
-                    size="sm"
-                    className={`flex flex-col items-center gap-1 h-auto py-2 ${menuTextClass} ${menuHoverClass}`}
-                    title="Settings"
-                  >
-                    <Settings className="w-5 h-5" />
-                    <span className="text-xs">Settings</span>
-                  </Button>
-                  <Button
-                    onClick={() => window.location.href = createPageUrl('Admin')}
-                    variant="ghost"
-                    size="sm"
-                    className={`flex flex-col items-center gap-1 h-auto py-2 ${menuTextClass} ${menuHoverClass}`}
-                    title="Admin Panel"
-                  >
-                    <UserCog className="w-5 h-5" />
-                    <span className="text-xs">Admin</span>
-                  </Button>
-                  <Button
-                    onClick={handleLogout}
-                    variant="ghost"
-                    size="sm"
-                    className={`flex flex-col items-center gap-1 h-auto py-2 ${menuTextClass} ${menuHoverClass}`}
-                    title="Sign Out"
-                  >
-                    <LogOut className="w-5 h-5" />
-                    <span className="text-xs">Sign Out</span>
-                  </Button>
+              <div className="flex items-center gap-3 mb-4 px-2">
+                <img 
+                  src={preferences?.profile_image_url || 'https://via.placeholder.com/40'} 
+                  alt="Profile" 
+                  className="w-10 h-10 rounded-full object-cover border-2 border-gray-300"
+                />
+                <div className="flex-1 min-w-0">
+                  <p className={`text-sm font-medium truncate ${menuTextClass}`}>{user.full_name || user.email}</p>
+                  <p className={`text-xs truncate ${menuSubtextClass}`}>{user.email}</p>
                 </div>
-              )}
+              </div>
 
-              {/* Regular User Actions */}
-              {!isAdmin && (
-                <div className="space-y-2">
+              <div className="space-y-2">
+                <Button
+                  onClick={handleLogout}
+                  variant="outline"
+                  size="sm"
+                  className={`w-full justify-start ${isMenuDark ? 'border-gray-600 text-gray-100 hover:bg-gray-700 hover:text-white' : 'text-gray-800 border-gray-300 hover:bg-gray-100'}`}
+                >
+                  <LogOut className="w-4 h-4 mr-2" /> Log Out
+                </Button>
+
+                {isAdmin && (
                   <Button
-                    onClick={() => window.location.href = createPageUrl('Settings')}
+                    onClick={() => {
+                      const email = prompt('Enter user email to manage:');
+                      if (email) {
+                        sessionStorage.setItem('impersonating', email);
+                        window.location.reload();
+                      }
+                    }}
                     variant="outline"
                     size="sm"
-                    className={`w-full ${isMenuDark ? 'border-gray-600 text-gray-100 hover:bg-gray-700 hover:text-white' : 'text-gray-800 border-gray-300 hover:bg-gray-100'}`}
+                    className={`w-full justify-start ${isMenuDark ? 'border-gray-600 text-gray-100 hover:bg-gray-700 hover:text-white' : 'text-gray-800 border-gray-300 hover:bg-gray-100'}`}
                   >
-                    <Settings className="w-4 h-4 mr-2" /> Settings
+                    <UserCog className="w-4 h-4 mr-2" /> Switch Account
                   </Button>
-                  <Button
-                    onClick={handleLogout}
-                    variant="outline"
-                    size="sm"
-                    className={`w-full ${isMenuDark ? 'border-gray-600 text-gray-100 hover:bg-gray-700 hover:text-white' : 'text-gray-800 border-gray-300 hover:bg-gray-100'}`}
-                  >
-                    <LogOut className="w-4 h-4 mr-2" /> Sign Out
-                  </Button>
-                </div>
-              )}
+                )}
+              </div>
 
               {soundcloudPosition === 'menu' && soundcloudUrl && (
                 <div className="mt-4 pt-4 border-t" style={{ borderColor: menuBorderClass }}>

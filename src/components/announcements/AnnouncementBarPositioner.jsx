@@ -29,10 +29,10 @@ export default function AnnouncementBarPositioner() {
       
       // Apply padding to main content
       if (desktopContent) {
-        desktopContent.style.paddingTop = `${desktopOffset}px`;
+        desktopContent.style.paddingTop = `${desktopOffset + 20}px`;
       }
       if (mobileContent) {
-        mobileContent.style.paddingTop = `${mobileOffset}px`;
+        mobileContent.style.paddingTop = `${mobileOffset + 20}px`;
       }
     };
 
