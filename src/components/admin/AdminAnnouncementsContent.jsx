@@ -343,13 +343,22 @@ export default function AdminAnnouncementsContent() {
               />
             </div>
 
-            <Button
-              onClick={() => createMutation.mutate(formData)}
-              disabled={!formData.name || !formData.message}
-              className="w-full"
-            >
-              {editingBar ? 'Update' : 'Create'} Announcement Bar
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={resetForm}
+                variant="outline"
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => createMutation.mutate(formData)}
+                disabled={!formData.name || !formData.message || createMutation.isPending}
+                className="flex-1"
+              >
+                {createMutation.isPending ? 'Saving...' : editingBar ? 'Save Changes' : 'Create Announcement'}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
