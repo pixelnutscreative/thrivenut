@@ -38,6 +38,7 @@ export default function AdminAIToolsContent() {
     platform: 'lets_go_nuts', 
     subscription_tier: '',
     has_nuts_and_bots: false,
+    has_digital_twin: false,
     includes_social_access: false,
     tiktok_contact_id: ''
   });
@@ -300,6 +301,11 @@ export default function AdminAIToolsContent() {
                             {user.has_nuts_and_bots && (
                               <Badge className="text-xs bg-purple-100 text-purple-800">
                                 Nuts & Bots ✓
+                              </Badge>
+                            )}
+                            {user.has_digital_twin && (
+                              <Badge className="text-xs bg-blue-100 text-blue-800">
+                                Digital Twin ✓
                               </Badge>
                             )}
                             {user.includes_social_access && (
@@ -586,7 +592,21 @@ export default function AdminAIToolsContent() {
                   }
                 />
               </div>
-              
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="font-medium text-blue-800">Has Digital Twin</Label>
+                  <p className="text-xs text-blue-600 mt-1">User created a digital twin in AI tools</p>
+                </div>
+                <Switch
+                  checked={editingUser?.has_digital_twin || newUser.has_digital_twin}
+                  onCheckedChange={(checked) => editingUser 
+                    ? setEditingUser({ ...editingUser, has_digital_twin: checked })
+                    : setNewUser({ ...newUser, has_digital_twin: checked })
+                  }
+                />
+              </div>
+
               <div className="flex items-center justify-between">
                 <div>
                   <Label className="font-medium text-teal-800">Includes Social Media Suite</Label>
