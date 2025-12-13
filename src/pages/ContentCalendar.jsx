@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { ChevronLeft, ChevronRight, Filter } from 'lucide-react';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek, addDays } from 'date-fns';
 import { useTheme } from '../components/shared/useTheme';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
@@ -25,6 +25,7 @@ export default function ContentCalendar() {
   const navigate = useNavigate();
   const { bgClass, primaryColor, accentColor } = useTheme();
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [viewMode, setViewMode] = useState('month'); // 'month' or 'week'
   const [filterPlatform, setFilterPlatform] = useState('all');
   const [filterBrand, setFilterBrand] = useState('all');
   const [filterCampaign, setFilterCampaign] = useState('all');
@@ -87,11 +88,21 @@ export default function ContentCalendar() {
     );
   };
 
+  const isOverdue = (output) => {
+    const card = getCard(output.id);
+    if (!card || card.status === 'posted') return false;
+    return new Date(output.schedule_datetime) < new Date();
+  };
+
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   const calendarStart = startOfWeek(monthStart);
   const calendarEnd = endOfWeek(monthEnd);
   const calendarDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
+  
+  // Next 7 days view
+  const today = new Date();
+  const next7Days = eachDayOfInterval({ start: today, end: addDays(today, 6) });
 
   const handlePrevMonth = () => setCurrentDate(subMonths(currentDate, 1));
   const handleNextMonth = () => setCurrentDate(addMonths(currentDate, 1));
@@ -113,13 +124,33 @@ export default function ContentCalendar() {
             <p className="text-sm text-gray-600 mt-1">View scheduled platform outputs</p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={handlePrevMonth}>
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            <Button variant="outline" onClick={handleToday}>Today</Button>
-            <Button variant="outline" onClick={handleNextMonth}>
-              <ChevronRight className="w-4 h-4" />
-            </Button>
+            <div className="flex items-center border rounded-lg overflow-hidden">
+              <Button
+                variant={viewMode === 'month' ? 'default' : 'ghost'}
+                onClick={() => setViewMode('month')}
+                className="rounded-none"
+              >
+                Month
+              </Button>
+              <Button
+                variant={viewMode === 'week' ? 'default' : 'ghost'}
+                onClick={() => setViewMode('week')}
+                className="rounded-none"
+              >
+                Next 7 Days
+              </Button>
+            </div>
+            {viewMode === 'month' && (
+              <>
+                <Button variant="outline" onClick={handlePrevMonth}>
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <Button variant="outline" onClick={handleToday}>Today</Button>
+                <Button variant="outline" onClick={handleNextMonth}>
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </>
+            )}
           </div>
         </div>
 
@@ -179,68 +210,134 @@ export default function ContentCalendar() {
         </Card>
 
         {/* Calendar Grid */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl text-center">
-              {format(currentDate, 'MMMM yyyy')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {/* Weekday Headers */}
-            <div className="grid grid-cols-7 gap-2 mb-2">
-              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                <div key={day} className="text-center font-semibold text-sm text-gray-600 py-2">
-                  {day}
-                </div>
-              ))}
-            </div>
-
-            {/* Calendar Days */}
-            <div className="grid grid-cols-7 gap-2">
-              {calendarDays.map(day => {
-                const outputs = getOutputsForDate(day);
-                const isCurrentMonth = isSameMonth(day, currentDate);
-                const isToday = isSameDay(day, new Date());
-
-                return (
-                  <div
-                    key={day.toString()}
-                    className={`min-h-[120px] p-2 border rounded-lg ${
-                      isCurrentMonth ? 'bg-white' : 'bg-gray-50'
-                    } ${isToday ? 'border-2 border-purple-500' : 'border-gray-200'}`}
-                  >
-                    <div className="text-sm font-medium text-gray-700 mb-1">
-                      {format(day, 'd')}
-                    </div>
-                    <div className="space-y-1">
-                      {outputs.map(output => {
-                        const card = getCard(output.id);
-                        if (!card) return null;
-                        const brandColor = getBrandColor(card);
-                        return (
-                          <div
-                            key={output.id}
-                            onClick={() => handleOutputClick(output)}
-                            className="text-xs p-1.5 rounded cursor-pointer hover:opacity-80 transition-opacity"
-                            style={{ backgroundColor: brandColor + '20', borderLeft: `3px solid ${brandColor}` }}
-                          >
-                            <div className="flex items-center gap-1 mb-0.5">
-                              <span>{platformIcons[output.platform] || '📱'}</span>
-                              <span className="font-medium truncate">{card.title}</span>
-                            </div>
-                            <div className="text-[10px] text-gray-600">
-                              {format(new Date(output.schedule_datetime), 'h:mm a')}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
+        {viewMode === 'month' ? (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-2xl text-center">
+                {format(currentDate, 'MMMM yyyy')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {/* Weekday Headers */}
+              <div className="grid grid-cols-7 gap-2 mb-2">
+                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                  <div key={day} className="text-center font-semibold text-sm text-gray-600 py-2">
+                    {day}
                   </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
+                ))}
+              </div>
+
+              {/* Calendar Days */}
+              <div className="grid grid-cols-7 gap-2">
+                {calendarDays.map(day => {
+                  const outputs = getOutputsForDate(day);
+                  const isCurrentMonth = isSameMonth(day, currentDate);
+                  const isToday = isSameDay(day, new Date());
+
+                  return (
+                    <div
+                      key={day.toString()}
+                      className={`min-h-[120px] p-2 border rounded-lg ${
+                        isCurrentMonth ? 'bg-white' : 'bg-gray-50'
+                      } ${isToday ? 'border-2 border-purple-500' : 'border-gray-200'}`}
+                    >
+                      <div className="text-sm font-medium text-gray-700 mb-1">
+                        {format(day, 'd')}
+                      </div>
+                      <div className="space-y-1">
+                        {outputs.map(output => {
+                          const card = getCard(output.id);
+                          if (!card) return null;
+                          const brandColor = getBrandColor(card);
+                          const outputIsOverdue = isOverdue(output);
+                          return (
+                            <div
+                              key={output.id}
+                              onClick={() => handleOutputClick(output)}
+                              className={`text-xs p-1.5 rounded cursor-pointer hover:opacity-80 transition-opacity ${
+                                outputIsOverdue ? 'ring-2 ring-red-500' : ''
+                              }`}
+                              style={{ backgroundColor: brandColor + '20', borderLeft: `3px solid ${brandColor}` }}
+                            >
+                              <div className="flex items-center gap-1 mb-0.5">
+                                {outputIsOverdue && <span className="text-red-600 font-bold">⚠️</span>}
+                                <span>{platformIcons[output.platform] || '📱'}</span>
+                                <span className="font-medium truncate">{card.title}</span>
+                              </div>
+                              <div className={`text-[10px] ${outputIsOverdue ? 'text-red-600 font-semibold' : 'text-gray-600'}`}>
+                                {format(new Date(output.schedule_datetime), 'h:mm a')}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-2xl">Next 7 Days</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {next7Days.map(day => {
+                  const outputs = getOutputsForDate(day);
+                  const isToday = isSameDay(day, new Date());
+                  
+                  return (
+                    <div key={day.toString()} className={`p-4 border rounded-lg ${isToday ? 'border-2 border-purple-500 bg-purple-50' : 'border-gray-200 bg-white'}`}>
+                      <h3 className="font-semibold text-lg mb-3">
+                        {format(day, 'EEEE, MMMM d')}
+                        {isToday && <Badge className="ml-2 bg-purple-600">Today</Badge>}
+                      </h3>
+                      {outputs.length === 0 ? (
+                        <p className="text-sm text-gray-500 italic">No scheduled content</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {outputs.map(output => {
+                            const card = getCard(output.id);
+                            if (!card) return null;
+                            const brandColor = getBrandColor(card);
+                            const outputIsOverdue = isOverdue(output);
+                            return (
+                              <div
+                                key={output.id}
+                                onClick={() => handleOutputClick(output)}
+                                className={`p-3 rounded-lg cursor-pointer hover:opacity-80 transition-opacity ${
+                                  outputIsOverdue ? 'ring-2 ring-red-500' : ''
+                                }`}
+                                style={{ backgroundColor: brandColor + '20', borderLeft: `4px solid ${brandColor}` }}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
+                                    {outputIsOverdue && <span className="text-red-600 font-bold text-lg">⚠️</span>}
+                                    <span className="text-xl">{platformIcons[output.platform] || '📱'}</span>
+                                    <div>
+                                      <p className="font-semibold">{card.title}</p>
+                                      <p className="text-xs text-gray-600">{output.platform}</p>
+                                    </div>
+                                  </div>
+                                  <div className={`text-sm font-medium ${outputIsOverdue ? 'text-red-600' : 'text-gray-700'}`}>
+                                    {format(new Date(output.schedule_datetime), 'h:mm a')}
+                                    {outputIsOverdue && <span className="block text-xs">OVERDUE</span>}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
