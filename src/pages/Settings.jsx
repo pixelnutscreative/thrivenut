@@ -322,6 +322,10 @@ export default function Settings() {
               <Code className="w-4 h-4" />
               <span className="hidden lg:inline ml-2">🎨 Custom Homepage</span>
             </TabsTrigger>
+            <TabsTrigger value="referrals">
+              <Gift className="w-4 h-4" />
+              <span className="hidden lg:inline ml-2">Share & Earn</span>
+            </TabsTrigger>
             </TabsList>
 
           {/* PROFILE TAB */}
@@ -873,6 +877,111 @@ export default function Settings() {
                     </div>
                   </motion.div>
                 )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* REFERRALS TAB */}
+          <TabsContent value="referrals">
+            <div className="flex justify-end mb-4">
+              <Button onClick={handleSave} disabled={updatePreferencesMutation.isPending}>
+                <Save className="w-4 h-4 mr-2" />
+                {updatePreferencesMutation.isPending ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </div>
+            
+            {/* Referral Link Section */}
+            <Card className="mb-4">
+              <CardHeader>
+                <CardTitle>Your Referral Link</CardTitle>
+                <CardDescription>Share Thrive with friends and earn rewards when they sign up!</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="p-4 bg-gradient-to-r from-teal-50 to-purple-50 rounded-lg border-2 border-purple-200">
+                  <p className="text-sm font-medium mb-2">📊 Your Stats</p>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-purple-600">0</p>
+                      <p className="text-xs text-gray-600">Clicks</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-teal-600">0</p>
+                      <p className="text-xs text-gray-600">Sign-ups</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-pink-600">0</p>
+                      <p className="text-xs text-gray-600">Points</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <Label>Referral Code (Customize)</Label>
+                  <div className="flex gap-2">
+                    <Input 
+                      value={prefData.referral_code || 'Loading...'} 
+                      onChange={(e) => setPrefData({ ...prefData, referral_code: e.target.value.toUpperCase() })}
+                      placeholder="YOUR-CODE"
+                      className="font-mono"
+                      maxLength={30}
+                    />
+                    <Button variant="outline" onClick={() => {
+                      const link = `https://thrivenut.app?ref=${prefData.referral_code}`;
+                      navigator.clipboard.writeText(link);
+                      setSaveMessage('Link copied!');
+                      setTimeout(() => setSaveMessage(''), 2000);
+                    }}>
+                      <Share2 className="w-4 h-4 mr-2" /> Copy Link
+                    </Button>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Your link: https://thrivenut.app?ref={prefData.referral_code || 'YOUR-CODE'}</p>
+                </div>
+
+                <div className="border-t pt-4">
+                  <h3 className="font-semibold mb-2">How Thrive Referrals Work</h3>
+                  <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
+                    <li>Share your referral link with friends, family, or followers</li>
+                    <li>When they sign up for FREE, you earn points</li>
+                    <li>When they upgrade to Social Add-on ($77/year), you earn more points</li>
+                    <li>Redeem points for rewards like free months, shoutouts, featured placement, and more!</li>
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* AI Tool Commissions Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle>AI Tool Commissions</CardTitle>
+                <CardDescription>Earn 22% commission credits when people buy AI tools through your affiliate links</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                  <p className="text-sm font-medium mb-2">💰 Commission Credits</p>
+                  <p className="text-3xl font-bold text-amber-600">$0.00</p>
+                  <p className="text-xs text-gray-600 mt-1">Available to use toward AI tools</p>
+                </div>
+
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm font-medium mb-2">🎟️ Unlock Your Next Coupon</p>
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="flex-1 bg-gray-200 rounded-full h-3">
+                      <div className="bg-blue-600 h-3 rounded-full" style={{ width: '0%' }}></div>
+                    </div>
+                    <span className="text-sm font-bold">0/4</span>
+                  </div>
+                  <p className="text-xs text-gray-600">4 annual AI tool purchases needed to unlock your next coupon code</p>
+                </div>
+
+                <div className="border-t pt-4">
+                  <h3 className="font-semibold mb-2">How AI Tool Commissions Work</h3>
+                  <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
+                    <li>When someone buys <strong>Pixel's AI Toolbox</strong> or <strong>Nuts & Bots</strong> (annual only) through your affiliate link, you earn 22% in credits</li>
+                    <li>Every 4 purchases = unlock a coupon code worth your total credits</li>
+                    <li>Use credits toward your own AI tool subscriptions (no cash outs)</li>
+                    <li>Coupons generated after 2-week refund period + onboarding verification</li>
+                  </ul>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
