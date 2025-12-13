@@ -10,10 +10,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Trash2, Bell } from 'lucide-react';
+import { format } from 'date-fns';
 
 export default function AdminNotificationsContent({ userEmail }) {
   const queryClient = useQueryClient();
   const [showDialog, setShowDialog] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     message: '',
@@ -25,6 +27,12 @@ export default function AdminNotificationsContent({ userEmail }) {
   const { data: notifications = [] } = useQuery({
     queryKey: ['notifications'],
     queryFn: () => base44.entities.Notification.list('-created_date'),
+  });
+
+  const { data: allReads = [] } = useQuery({
+    queryKey: ['allNotificationReads'],
+    queryFn: () => base44.entities.NotificationRead.list('-created_date'),
+    enabled: showHistory,
   });
 
   const createMutation = useMutation({
@@ -54,10 +62,15 @@ export default function AdminNotificationsContent({ userEmail }) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Push Notifications</h2>
-        <Button onClick={() => setShowDialog(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          New Notification
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowHistory(!showHistory)}>
+            {showHistory ? 'Hide History' : 'View History'}
+          </Button>
+          <Button onClick={() => setShowDialog(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            New Notification
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4">
@@ -104,6 +117,35 @@ export default function AdminNotificationsContent({ userEmail }) {
           </Card>
         ))}
       </div>
+
+      {showHistory && (
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>Notification Read History</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {allReads.length === 0 ? (
+                <p className="text-center text-gray-500 py-4">No read history yet</p>
+              ) : (
+                allReads.map(read => {
+                  const notification = notifications.find(n => n.id === read.notification_id);
+                  return (
+                    <div key={read.id} className="p-3 border rounded-lg flex items-center justify-between">
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">{notification?.title || 'Unknown'}</p>
+                        <p className="text-xs text-gray-500">
+                          Read by: {read.user_email} on {format(new Date(read.read_at), 'MMM d, yyyy h:mm a')}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent>
