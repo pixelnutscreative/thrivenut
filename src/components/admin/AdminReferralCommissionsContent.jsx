@@ -146,38 +146,48 @@ export default function AdminReferralCommissionsContent() {
           <CardTitle>AI Tool Purchase History</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
+          <div className="space-y-3 max-h-96 overflow-y-auto">
             {purchases.map(purchase => (
-              <div key={purchase.id} className="p-3 bg-gray-50 rounded-lg flex items-center justify-between">
-                <div>
-                  <p className="font-medium">{purchase.buyer_email}</p>
-                  <p className="text-sm text-gray-600">
-                    {purchase.product_type} • ${purchase.purchase_amount}
-                    {purchase.referred_by_user_id && ` • Referred by: ${purchase.referred_by_user_id}`}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    Purchase: {new Date(purchase.created_date).toLocaleDateString()}
-                  </p>
+              <div key={purchase.id} className="p-4 bg-gray-50 rounded-lg border">
+                <div className="flex items-start justify-between mb-2">
+                  <div>
+                    <p className="font-medium">{purchase.buyer_email}</p>
+                    <p className="text-sm text-gray-600">
+                      {purchase.product_type?.replace(/_/g, ' ')} • ${purchase.purchase_amount}
+                    </p>
+                    {purchase.referred_by_user_id && (
+                      <p className="text-xs text-purple-600">Referred by: {purchase.referred_by_user_id}</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {purchase.verified ? (
+                      <Badge className="bg-green-100 text-green-800">
+                        <Check className="w-3 h-3 mr-1" /> Verified
+                      </Badge>
+                    ) : (
+                      <Badge className="bg-amber-100 text-amber-800">Pending</Badge>
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  {purchase.verified ? (
-                    <Badge className="bg-green-100 text-green-800">
-                      <Check className="w-3 h-3 mr-1" /> Verified
-                    </Badge>
-                  ) : (
-                    <Button 
-                      size="sm"
-                      onClick={() => verifyPurchaseMutation.mutate(purchase.id)}
-                    >
-                      Verify
-                    </Button>
-                  )}
-                  <Badge>${(purchase.purchase_amount * 0.22).toFixed(2)}</Badge>
+                <div className="flex items-center justify-between text-xs text-gray-500">
+                  <span>Purchased: {new Date(purchase.created_date).toLocaleDateString()}</span>
+                  <Badge variant="outline" className="font-mono">
+                    22% = ${(purchase.purchase_amount * 0.22).toFixed(2)}
+                  </Badge>
                 </div>
+                {!purchase.verified && (
+                  <Button 
+                    size="sm"
+                    className="w-full mt-2"
+                    onClick={() => verifyPurchaseMutation.mutate(purchase.id)}
+                  >
+                    Mark as Verified (Passed 2-week + Onboarding)
+                  </Button>
+                )}
               </div>
             ))}
             {purchases.length === 0 && (
-              <p className="text-center text-gray-400 py-8">No AI tool purchases yet</p>
+              <p className="text-center text-gray-400 py-8">No AI tool purchases tracked yet</p>
             )}
           </div>
         </CardContent>
