@@ -17,13 +17,13 @@ import QuickEventAdder from '../dashboard/QuickEventAdder';
 
 const builtInActions = [
   { id: 'mood', label: 'Mood', icon: Smile, color: 'bg-pink-500' },
-  { id: 'water', label: 'Water', icon: Droplet, color: 'bg-cyan-500' },
-  { id: 'task', label: 'Task', icon: CheckCircle, color: 'bg-teal-500' },
-  { id: 'event', label: 'Event', icon: CalendarIcon, color: 'bg-orange-500' },
+  { id: 'water', label: 'Water', icon: Droplet, color: 'bg-blue-500' },
+  { id: 'task', label: 'Quick Task', icon: CheckCircle, color: 'bg-teal-500' },
+  { id: 'event', label: 'Add Event', icon: CalendarIcon, color: 'bg-orange-500' },
   { id: 'food', label: 'Food', icon: Utensils, color: 'bg-green-500' },
   { id: 'idea', label: 'Idea', icon: Lightbulb, color: 'bg-yellow-500' },
-  { id: 'negative_thought', label: 'Reframe', icon: Cloud, color: 'bg-gray-500' },
-  { id: 'note', label: 'Note', icon: StickyNote, color: 'bg-purple-500' },
+  { id: 'negative_thought', label: 'Reframe', icon: Cloud, color: 'bg-purple-500' },
+  { id: 'note', label: 'Note', icon: StickyNote, color: 'bg-lime-500' },
   { id: 'gratitude', label: 'Gratitude', icon: Heart, color: 'bg-red-500' },
 ];
 
