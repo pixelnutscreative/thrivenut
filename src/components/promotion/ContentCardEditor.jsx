@@ -55,6 +55,54 @@ export default function ContentCardEditor({ card, onClose, userEmail }) {
     queryFn: () => base44.entities.PromotionCampaign.list('-created_date'),
   });
 
+  // Auto-create default brand if none exists
+  const ensureDefaultBrand = async () => {
+    if (brands.length === 0) {
+      const defaultBrand = await base44.entities.Brand.create({
+        name: 'Personal / Default Brand',
+        category: 'personal',
+        owner: userEmail
+      });
+      queryClient.invalidateQueries({ queryKey: ['brands'] });
+      return defaultBrand.id;
+    }
+    return brands[0].id;
+  };
+
+  // Auto-create default campaign for brand if none exists
+  const ensureDefaultCampaign = async (brandId) => {
+    const brandCampaigns = campaigns.filter(c => c.brand_id === brandId);
+    if (brandCampaigns.length === 0) {
+      const defaultCampaign = await base44.entities.PromotionCampaign.create({
+        name: 'One-Off Content',
+        campaign_type: 'general',
+        goal: 'awareness',
+        brand_id: brandId,
+        status: 'active'
+      });
+      queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+      return defaultCampaign.id;
+    }
+    return brandCampaigns[0].id;
+  };
+
+  // Auto-select brand if only one exists and we're creating a new card
+  useEffect(() => {
+    if (!card && brands.length === 1 && !formData.brand_id) {
+      setFormData(prev => ({ ...prev, brand_id: brands[0].id }));
+    }
+  }, [card, brands]);
+
+  // Auto-select campaign if only one exists for selected brand
+  useEffect(() => {
+    if (!card && formData.brand_id) {
+      const brandCampaigns = campaigns.filter(c => c.brand_id === formData.brand_id);
+      if (brandCampaigns.length === 1 && !formData.campaign_id) {
+        setFormData(prev => ({ ...prev, campaign_id: brandCampaigns[0].id }));
+      }
+    }
+  }, [card, formData.brand_id, campaigns]);
+
   const { data: workflowSteps = [] } = useQuery({
     queryKey: ['workflowSteps'],
     queryFn: () => base44.entities.WorkflowStep.list('order'),
@@ -62,10 +110,24 @@ export default function ContentCardEditor({ card, onClose, userEmail }) {
 
   const saveMutation = useMutation({
     mutationFn: async (data) => {
+      // Ensure brand exists
+      let brandId = data.brand_id;
+      if (!brandId) {
+        brandId = await ensureDefaultBrand();
+      }
+
+      // Ensure campaign exists for brand
+      let campaignId = data.campaign_id;
+      if (!campaignId) {
+        campaignId = await ensureDefaultCampaign(brandId);
+      }
+
+      const finalData = { ...data, brand_id: brandId, campaign_id: campaignId };
+
       if (card) {
-        return await base44.entities.ContentCard.update(card.id, data);
+        return await base44.entities.ContentCard.update(card.id, finalData);
       } else {
-        return await base44.entities.ContentCard.create(data);
+        return await base44.entities.ContentCard.create(finalData);
       }
     },
     onSuccess: () => {
@@ -124,7 +186,7 @@ export default function ContentCardEditor({ card, onClose, userEmail }) {
                 {scriptDrawerOpen ? 'Close' : 'Open'} Script
               </Button>
             )}
-            <Button onClick={handleSave} disabled={saveMutation.isPending || !formData.title || !formData.brand_id}>
+            <Button onClick={handleSave} disabled={saveMutation.isPending || !formData.title}>
               <Save className="w-4 h-4 mr-2" />
               {saveMutation.isPending ? 'Saving...' : 'Save'}
             </Button>

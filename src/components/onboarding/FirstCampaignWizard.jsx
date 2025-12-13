@@ -23,11 +23,50 @@ export default function FirstCampaignWizard({ isOpen, onClose, onComplete, userE
     end_date: ''
   });
   const [createStarterCards, setCreateStarterCards] = useState(true);
+  const [isCreatingDefaults, setIsCreatingDefaults] = useState(false);
 
   const { data: brands = [] } = useQuery({
     queryKey: ['brands'],
     queryFn: () => base44.entities.Brand.list('name'),
   });
+
+  // Auto-create default brand if none exists
+  const ensureDefaultBrand = async () => {
+    if (brands.length === 0) {
+      const defaultBrand = await base44.entities.Brand.create({
+        name: 'Personal / Default Brand',
+        category: 'personal',
+        owner: userEmail
+      });
+      queryClient.invalidateQueries({ queryKey: ['brands'] });
+      return defaultBrand.id;
+    }
+    return brands[0].id;
+  };
+
+  // Auto-create default campaign if none exists
+  const ensureDefaultCampaign = async (brandId) => {
+    const existingCampaigns = await base44.entities.PromotionCampaign.filter({ brand_id: brandId });
+    if (existingCampaigns.length === 0) {
+      const defaultCampaign = await base44.entities.PromotionCampaign.create({
+        name: 'One-Off Content',
+        campaign_type: 'general',
+        goal: 'awareness',
+        brand_id: brandId,
+        status: 'active'
+      });
+      queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+      return defaultCampaign;
+    }
+    return existingCampaigns[0];
+  };
+
+  // Auto-select if only one option exists
+  React.useEffect(() => {
+    if (brands.length === 1 && !campaignData.brand_id) {
+      setCampaignData(prev => ({ ...prev, brand_id: brands[0].id }));
+    }
+  }, [brands]);
 
   const createCampaignMutation = useMutation({
     mutationFn: (data) => base44.entities.PromotionCampaign.create(data),
@@ -98,8 +137,21 @@ export default function FirstCampaignWizard({ isOpen, onClose, onComplete, userE
     });
   };
 
-  const handleSkip = () => {
-    dismissMutation.mutate();
+  const handleSkip = async () => {
+    setIsCreatingDefaults(true);
+    try {
+      // Ensure defaults exist
+      const brandId = await ensureDefaultBrand();
+      await ensureDefaultCampaign(brandId);
+      
+      // Dismiss wizard and complete
+      await dismissMutation.mutateAsync();
+      onComplete();
+    } catch (error) {
+      console.error('Error creating defaults:', error);
+    } finally {
+      setIsCreatingDefaults(false);
+    }
   };
 
   const canProceed = () => {
@@ -247,8 +299,8 @@ export default function FirstCampaignWizard({ isOpen, onClose, onComplete, userE
 
           {/* Actions */}
           <div className="flex items-center justify-between pt-4 border-t">
-            <Button variant="ghost" onClick={handleSkip}>
-              Skip for Now
+            <Button variant="ghost" onClick={handleSkip} disabled={isCreatingDefaults}>
+              {isCreatingDefaults ? 'Setting up...' : 'Skip for Now'}
             </Button>
             <div className="flex gap-2">
               {step > 1 && (
