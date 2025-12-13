@@ -19,6 +19,18 @@ export default function ReferralsTab({ userEmail, primaryColor, accentColor }) {
   const [codeError, setCodeError] = useState('');
   const [showAddNew, setShowAddNew] = useState(false);
 
+  // Fetch user preferences to check annual plan status
+  const { data: userPrefs } = useQuery({
+    queryKey: ['userPrefsForReferrals', userEmail],
+    queryFn: async () => {
+      const prefs = await base44.entities.UserPreferences.filter({ user_email: userEmail });
+      return prefs[0] || null;
+    },
+    enabled: !!userEmail,
+  });
+
+  const hasAnnualAIPlan = userPrefs?.has_annual_ai_plan || false;
+
   // Fetch all referral codes
   const { data: referralData, isLoading } = useQuery({
     queryKey: ['referralCode', userEmail],
@@ -29,7 +41,7 @@ export default function ReferralsTab({ userEmail, primaryColor, accentColor }) {
     enabled: !!userEmail,
   });
 
-  // Fetch AI commission data
+  // Fetch AI commission data (only if not on annual plan)
   const { data: commissionData } = useQuery({
     queryKey: ['commissionData', userEmail],
     queryFn: async () => {
@@ -381,7 +393,8 @@ export default function ReferralsTab({ userEmail, primaryColor, accentColor }) {
         </CardContent>
       </Card>
 
-      {/* AI Tool Commissions */}
+      {/* AI Tool Commissions (hidden if annual plan) */}
+      {!hasAnnualAIPlan && (
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -472,6 +485,7 @@ export default function ReferralsTab({ userEmail, primaryColor, accentColor }) {
           </div>
         </CardContent>
       </Card>
+      )}
     </div>
   );
 }
