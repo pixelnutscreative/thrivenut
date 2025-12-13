@@ -297,11 +297,10 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="fixed z-40 backdrop-blur-sm px-2 py-1.5 shadow-2xl"
+      className="fixed z-40 backdrop-blur-sm px-2 py-1.5 shadow-2xl announcement-aware"
       style={{
         left: isMobile ? 0 : '288px',
         right: 0,
-        top: isMobile ? '56px' : '0',
         width: isMobile ? '100%' : 'calc(100% - 288px)',
         display: 'flex',
         flexDirection: 'row',

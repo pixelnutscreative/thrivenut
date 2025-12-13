@@ -52,7 +52,9 @@ export default function AnnouncementBar() {
     return false;
   };
 
-  const activeBar = bars.find(bar => isInSchedule(bar) && !dismissed.includes(bar.id));
+  // Find all active bars, then pick the highest priority one
+  const activeBars = bars.filter(bar => isInSchedule(bar) && !dismissed.includes(bar.id));
+  const activeBar = activeBars.length > 0 ? activeBars[0] : null; // Already sorted by -display_order
 
   const handleDismiss = () => {
     if (activeBar) {
@@ -63,7 +65,7 @@ export default function AnnouncementBar() {
   useEffect(() => {
     if (activeBar?.google_font) {
       const link = document.createElement('link');
-      link.href = `https://fonts.googleapis.com/css2?family=${activeBar.google_font.replace(/ /g, '+')}:wght@400;600;700&display=swap`;
+      link.href = `https://fonts.googleapis.com/css2?family=${activeBar.google_font.replace(/ /g, '+')}:wght@400;700;900&display=swap`;
       link.rel = 'stylesheet';
       document.head.appendChild(link);
     }
@@ -75,12 +77,20 @@ export default function AnnouncementBar() {
     ? { background: `linear-gradient(to right, ${activeBar.gradient_color_start}, ${activeBar.gradient_color_end})` }
     : { backgroundColor: activeBar.background_color };
 
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
+  
+  const formattedMessage = activeBar.message.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
   return (
     <div
-      className="fixed top-0 left-0 right-0 z-[200] overflow-hidden"
+      className="fixed z-[45] overflow-hidden"
       style={{
         ...backgroundStyle,
         fontFamily: activeBar.google_font || 'inherit',
+        left: isMobile ? 0 : '288px',
+        right: 0,
+        top: isMobile ? '56px' : '0',
+        width: isMobile ? '100%' : 'calc(100% - 288px)',
       }}
     >
       <div className="relative py-3 px-4">
@@ -91,9 +101,8 @@ export default function AnnouncementBar() {
             rel="noopener noreferrer"
             className="marquee-content whitespace-nowrap inline-block hover:opacity-80 transition-opacity"
             style={{ color: activeBar.text_color }}
-          >
-            <span className="text-lg font-semibold">{activeBar.message}</span>
-          </a>
+            dangerouslySetInnerHTML={{ __html: formattedMessage }}
+          />
         </div>
         <button
           onClick={handleDismiss}

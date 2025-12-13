@@ -14,7 +14,9 @@ import { Plus, Trash2, Edit2, Eye, EyeOff } from 'lucide-react';
 
 const GOOGLE_FONTS = [
   'Poppins', 'Montserrat', 'Roboto', 'Open Sans', 'Lato', 'Raleway', 'Oswald',
-  'Bebas Neue', 'Playfair Display', 'Merriweather', 'Dancing Script', 'Pacifico'
+  'Bebas Neue', 'Playfair Display', 'Merriweather', 'Dancing Script', 'Pacifico',
+  'Righteous', 'Bangers', 'Permanent Marker', 'Fredoka', 'Lobster', 'Anton',
+  'Caveat', 'Comfortaa', 'Quicksand', 'Archivo Black', 'Bungee', 'Russo One'
 ];
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -138,7 +140,9 @@ export default function AdminAnnouncementsContent() {
                       {bar.schedule_type === 'manual' ? (bar.is_active ? 'ON' : 'OFF') : bar.schedule_type}
                     </Badge>
                   </div>
-                  <p className="text-sm text-gray-600">{bar.message}</p>
+                  <p className="text-sm text-gray-600">
+                    Priority: {bar.display_order || 0} • {bar.message}
+                  </p>
                 </div>
                 <div className="flex items-center gap-2">
                   {bar.schedule_type === 'manual' && (
@@ -167,9 +171,10 @@ export default function AdminAnnouncementsContent() {
                   color: bar.text_color,
                   fontFamily: bar.google_font
                 }}
-              >
-                {bar.message}
-              </div>
+                dangerouslySetInnerHTML={{ 
+                  __html: bar.message.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                }}
+              />
               {bar.recurring_schedule?.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-2">
                   {bar.recurring_schedule.map((s, i) => (
@@ -197,13 +202,16 @@ export default function AdminAnnouncementsContent() {
               />
             </div>
             <div>
-              <Label>Message *</Label>
+              <Label>Message * (Supports emojis and **bold text**)</Label>
               <Textarea
                 value={formData.message}
                 onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                placeholder="🔴 LIVE NOW - Join us at..."
+                placeholder="🔴 LIVE NOW - Join us at... Use **bold** for emphasis!"
                 rows={2}
               />
+              <p className="text-xs text-gray-500 mt-1">
+                Use **text** for bold • Emojis work perfectly 😊
+              </p>
             </div>
             <div>
               <Label>Link URL</Label>
@@ -229,8 +237,12 @@ export default function AdminAnnouncementsContent() {
                 <Label>Google Font</Label>
                 <Select value={formData.google_font} onValueChange={(v) => setFormData({ ...formData, google_font: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {GOOGLE_FONTS.map(font => <SelectItem key={font} value={font}>{font}</SelectItem>)}
+                  <SelectContent className="max-h-60">
+                    {GOOGLE_FONTS.map(font => (
+                      <SelectItem key={font} value={font}>
+                        <span style={{ fontFamily: font }}>{font}</span>
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -301,6 +313,19 @@ export default function AdminAnnouncementsContent() {
             )}
 
             <div>
+              <Label>Priority (Higher = Shows First) *</Label>
+              <Input
+                type="number"
+                value={formData.display_order}
+                onChange={(e) => setFormData({ ...formData, display_order: parseInt(e.target.value) || 0 })}
+                placeholder="0"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                If multiple banners are active, the highest priority one shows
+              </p>
+            </div>
+
+            <div>
               <Label>Preview</Label>
               <div
                 className="p-4 rounded text-center mt-2"
@@ -309,9 +334,10 @@ export default function AdminAnnouncementsContent() {
                   color: formData.text_color,
                   fontFamily: formData.google_font
                 }}
-              >
-                {formData.message || 'Your message here'}
-              </div>
+                dangerouslySetInnerHTML={{ 
+                  __html: (formData.message || 'Your message here').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                }}
+              />
             </div>
 
             <Button

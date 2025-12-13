@@ -775,15 +775,15 @@ export default function Layout({ children, currentPageName }) {
         </div>
 
         {/* Main Content Area */}
-        <div className={`ml-72 flex-1 ${user && preferences?.quick_actions?.length > 0 ? 'pt-[52px]' : ''}`}>
+        <div className={`ml-72 flex-1 ${hasAnnouncementBar && user && preferences?.quick_actions?.length > 0 ? 'pt-[104px]' : user && preferences?.quick_actions?.length > 0 ? 'pt-[52px]' : hasAnnouncementBar ? 'pt-[52px]' : ''}`}>
           {children}
         </div>
-      </div>
+        </div>
 
-      {/* Mobile Main Content */}
-      <div className={`lg:hidden ${user && preferences?.quick_actions?.length > 0 ? 'pt-[108px]' : 'pt-16'}`}>
+        {/* Mobile Main Content */}
+        <div className={`lg:hidden ${hasAnnouncementBar && user && preferences?.quick_actions?.length > 0 ? 'pt-[160px]' : user && preferences?.quick_actions?.length > 0 ? 'pt-[108px]' : hasAnnouncementBar ? 'pt-[108px]' : 'pt-16'}`}>
         {children}
-      </div>
+        </div>
 
       {/* Floating Elements */}
       {soundcloudPosition === 'menu' && soundcloudUrl && (
