@@ -93,6 +93,72 @@ export default function ReferralsTab({ userEmail, primaryColor, accentColor }) {
     enabled: !!userEmail,
   });
 
+  // Fetch all referral activity for suffix breakdown
+  const { data: activityData = [] } = useQuery({
+    queryKey: ['referralActivity', userEmail],
+    queryFn: async () => {
+      if (!userEmail) return [];
+      const activities = await base44.entities.ReferralActivity.filter({ 
+        referrer_email: userEmail 
+      }, '-activity_date');
+      return activities;
+    },
+    enabled: !!userEmail,
+  });
+
+  const [timePeriod, setTimePeriod] = useState('all');
+
+  // Filter activities by time period
+  const getFilteredActivities = () => {
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+
+    return activityData.filter(activity => {
+      const activityDate = new Date(activity.activity_date);
+      switch (timePeriod) {
+        case 'today': return activityDate >= startOfToday;
+        case 'week': return activityDate >= startOfWeek;
+        case 'month': return activityDate >= startOfMonth;
+        case 'year': return activityDate >= startOfYear;
+        default: return true;
+      }
+    });
+  };
+
+  // Group activities by tracking suffix
+  const suffixStats = React.useMemo(() => {
+    const filtered = getFilteredActivities();
+    const grouped = {};
+    
+    filtered.forEach(activity => {
+      const suffix = activity.tracking_identifier || 'no-suffix';
+      if (!grouped[suffix]) {
+        grouped[suffix] = {
+          suffix,
+          baseCode: activity.base_code,
+          clicks: 0,
+          signups: 0,
+          upgrades: 0,
+          activities: []
+        };
+      }
+      
+      if (activity.activity_type === 'click') grouped[suffix].clicks++;
+      if (activity.activity_type === 'signup') grouped[suffix].signups++;
+      if (activity.activity_type === 'upgrade') grouped[suffix].upgrades++;
+      grouped[suffix].activities.push(activity);
+    });
+
+    return Object.values(grouped).sort((a, b) => 
+      (b.clicks + b.signups + b.upgrades) - (a.clicks + a.signups + a.upgrades)
+    );
+  }, [activityData, timePeriod]);
+
   const pointsPerSignup = pointsConfig.find(c => c.config_key === 'points_per_signup')?.points_value || 1;
   const pointsPerUpgrade = pointsConfig.find(c => c.config_key === 'points_per_upgrade')?.points_value || 5;
 
@@ -370,6 +436,56 @@ export default function ReferralsTab({ userEmail, primaryColor, accentColor }) {
               </Card>
             ))}
           </div>
+
+          {/* Suffix Tracking Stats */}
+          {suffixStats.length > 0 && (
+            <div className="space-y-3 p-4 bg-gradient-to-br from-teal-50 to-blue-50 border-2 border-teal-300 rounded-lg">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-semibold">📊 Stats by Tracking Suffix</Label>
+                <Select value={timePeriod} onValueChange={setTimePeriod}>
+                  <SelectTrigger className="w-32 h-8 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Time</SelectItem>
+                    <SelectItem value="today">Today</SelectItem>
+                    <SelectItem value="week">This Week</SelectItem>
+                    <SelectItem value="month">This Month</SelectItem>
+                    <SelectItem value="year">This Year</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                {suffixStats.map(stat => (
+                  <div key={stat.suffix} className="p-3 bg-white rounded-lg border border-teal-200">
+                    <div className="flex items-center justify-between mb-2">
+                      <code className="text-sm font-bold text-teal-700">
+                        {stat.baseCode}-{stat.suffix}
+                      </code>
+                      <span className="text-xs text-gray-500">
+                        {stat.activities.length} total events
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 text-xs">
+                      <div className="text-center p-2 bg-blue-50 rounded">
+                        <p className="font-bold text-blue-600">{stat.clicks}</p>
+                        <p className="text-gray-600">Clicks</p>
+                      </div>
+                      <div className="text-center p-2 bg-green-50 rounded">
+                        <p className="font-bold text-green-600">{stat.signups}</p>
+                        <p className="text-gray-600">Signups</p>
+                      </div>
+                      <div className="text-center p-2 bg-purple-50 rounded">
+                        <p className="font-bold text-purple-600">{stat.upgrades}</p>
+                        <p className="text-gray-600">Upgrades</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Enhanced Tracking Section */}
           <div className="space-y-3 p-4 bg-gradient-to-br from-purple-50 to-blue-50 border-2 border-purple-200 rounded-lg">
