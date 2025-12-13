@@ -10,7 +10,7 @@ import {
   ChevronRight, Bell, Share2, Music, Star, Lock, UserCog, Sparkles, 
   Palette, Eye, Bookmark, HandMetal, PawPrint, Search, MousePointerClick, 
   Calendar, Sun, Cross, Smile, FileText, StickyNote, Tablet, HelpCircle, 
-  MessageCircle, Briefcase, DollarSign, Activity, Wallet, Swords
+  MessageCircle, Briefcase, DollarSign, Activity, Wallet, Swords, Lightbulb
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import TikTokAccessGate from './components/access/TikTokAccessGate';
