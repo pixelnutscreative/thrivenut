@@ -240,7 +240,13 @@ export default function TikTokEngagement() {
 
     return true;
   }).sort((a, b) => {
-    // Sort by last engaged date - oldest first (null/never engaged at top)
+    // Fully engaged contacts move to bottom
+    const aFullyEngaged = isFullyEngaged(a);
+    const bFullyEngaged = isFullyEngaged(b);
+    if (aFullyEngaged && !bFullyEngaged) return 1;
+    if (!aFullyEngaged && bFullyEngaged) return -1;
+    
+    // Among non-fully-engaged, sort by last engaged date - oldest first
     if (!a.last_engaged_date && !b.last_engaged_date) return 0;
     if (!a.last_engaged_date) return -1;
     if (!b.last_engaged_date) return 1;

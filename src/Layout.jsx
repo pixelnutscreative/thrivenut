@@ -179,11 +179,11 @@ export default function Layout({ children, currentPageName }) {
           { name: 'Social Engagement', icon: MousePointerClick, path: 'TikTokEngagement' },
           { name: 'Content Calendar', icon: Calendar, path: 'LiveSchedule' },
           { name: 'Sunny Songbird', icon: Sun, path: 'SongGenerator' },
-          { name: 'Hire a Creator', icon: Briefcase, path: 'ContentMarketplace', highlight: true },
           { name: 'Gift Gallery Gratitude', icon: Gift, path: 'WeeklyGifterGallery' },
           { name: 'Love Away Giveaways', icon: Gift, path: 'LoveAway' },
           { name: 'Pictionary Helper', icon: Palette, path: 'PictionaryHelper' },
         ]},
+        { name: 'Hire a Creator', icon: Briefcase, path: 'ContentMarketplace', highlight: true },
         { name: 'Content Ideas', icon: Smile, path: 'SavedMotivations', moduleId: 'motivations' },
         { name: "Ping & Pong's Silly Songs", icon: Smile, externalUrl: 'https://sillysongs.pixelnutscreative.com' },
       ]
