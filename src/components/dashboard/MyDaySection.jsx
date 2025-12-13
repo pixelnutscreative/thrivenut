@@ -1380,8 +1380,6 @@ export default function MyDaySection({
     </>
   );
 }
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
           <CardTitle className="flex items-center gap-2 text-white">
             <Sun className="w-6 h-6" />
             My Day
