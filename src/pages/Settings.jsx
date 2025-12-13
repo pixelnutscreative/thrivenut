@@ -185,17 +185,30 @@ export default function Settings() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['userProfile'] });
+      queryClient.invalidateQueries({ queryKey: ['userProfile', effectiveEmail] });
       setSaveMessage('Saved!');
       setTimeout(() => setSaveMessage(''), 2000);
     },
+    onError: (error) => {
+      console.error('Save error:', error);
+      setSaveMessage('Error saving!');
+      setTimeout(() => setSaveMessage(''), 3000);
+    }
   });
 
-  const handleSave = () => {
-    if (Object.keys(prefData).length > 0) {
-      updatePreferencesMutation.mutate(prefData);
+  const handleSave = async () => {
+    const promises = [];
+    
+    if (Object.keys(prefData).length > 0 && preferences) {
+      promises.push(updatePreferencesMutation.mutateAsync(prefData));
     }
-    if (Object.keys(profileData).length > 1) {
-      updateUserProfileMutation.mutate(profileData);
+    
+    if (profileData && (profileData.social_links || profileData.clothing_sizes || profileData.wish_list)) {
+      promises.push(updateUserProfileMutation.mutateAsync(profileData));
+    }
+    
+    if (promises.length > 0) {
+      await Promise.all(promises);
     }
   };
 
