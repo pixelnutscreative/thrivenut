@@ -915,7 +915,7 @@ export default function Settings() {
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base flex items-center gap-2">
                     <Sparkles className="w-5 h-5 text-teal-600" />
-                    Rhonda's Custom Homepage Course
+                    Rhonda's Wins Custom Homepage Course
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -929,7 +929,7 @@ export default function Settings() {
                     className="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 text-sm font-medium transition-colors"
                   >
                     <ExternalLink className="w-4 h-4" />
-                    Visit Rhonda's Site & Book Time
+                    Visit Rhonda's Wins & Book Time
                   </a>
                 </CardContent>
               </Card>
@@ -1078,7 +1078,7 @@ export default function Settings() {
                     <ul className="list-disc list-inside space-y-1">
                       <li>Create different homepages for work, personal projects, or clients</li>
                       <li>Use Canva Code to export HTML directly from Canva designs</li>
-                      <li>Book time with Rhonda to get a custom HTML template + learn ChatGPT prompting</li>
+                      <li>Book time with Rhonda's Wins to get a custom HTML template + learn ChatGPT prompting</li>
                       <li>Switch between homepages anytime by clicking "Set Active"</li>
                     </ul>
                   </div>
