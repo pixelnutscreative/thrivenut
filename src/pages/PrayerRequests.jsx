@@ -14,7 +14,6 @@ import {
   Heart, Plus, Users, Lock, Globe, Check, Send, BookOpen, 
   MessageCircle, Sparkles, Clock, AlertTriangle, PartyPopper, Edit, X, CheckCircle
 } from 'lucide-react';
-import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, formatDistanceToNow } from 'date-fns';
 import { useTheme } from '../components/shared/useTheme';
