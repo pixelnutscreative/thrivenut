@@ -295,14 +295,13 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
   <>
     {/* Fixed Top Bar */}
     <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
       className="fixed z-[44] backdrop-blur-sm px-2 py-1.5 shadow-2xl"
       id="quick-actions-bar"
       style={{
         left: isMobile ? 0 : '288px',
         right: 0,
-        top: '0',
         width: isMobile ? '100%' : 'calc(100% - 288px)',
         display: 'flex',
         flexDirection: 'row',

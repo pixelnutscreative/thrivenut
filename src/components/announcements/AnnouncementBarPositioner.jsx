@@ -5,44 +5,45 @@ export default function AnnouncementBarPositioner() {
     const adjustPositions = () => {
       const isMobile = window.innerWidth < 1024;
       const announcementBar = document.querySelector('[data-announcement-bar]');
-      const quickActions = document.querySelector('#quick-actions-bar');
-      const desktopContent = document.querySelector('.ml-72.flex-1');
-      const mobileContent = document.querySelector('.lg\\:hidden');
+      const quickActionsBar = document.querySelector('#quick-actions-bar');
       
-      let topOffset = 0;
+      let cumulativeTop = 0;
       
-      // Add announcement bar height if it exists
+      // Position announcement bar at the top
       if (announcementBar) {
-        const barHeight = announcementBar.offsetHeight;
-        topOffset += barHeight;
+        cumulativeTop += announcementBar.offsetHeight;
       }
       
-      // Position quick actions
-      if (quickActions) {
-        quickActions.style.top = `${topOffset}px`;
-        topOffset += quickActions.offsetHeight;
+      // Position quick actions bar below announcement bar
+      if (quickActionsBar) {
+        quickActionsBar.style.top = `${cumulativeTop}px`;
+        cumulativeTop += quickActionsBar.offsetHeight;
       }
       
-      // Add extra spacing
-      topOffset += 16;
-      
-      // Apply padding to main content
-      if (desktopContent) {
-        desktopContent.style.paddingTop = `${topOffset}px`;
-      }
-      if (mobileContent && !desktopContent) {
-        mobileContent.style.paddingTop = `${topOffset + 56}px`; // Add mobile menu height
-      }
+      // Add padding to all main content areas
+      const allMainContent = document.querySelectorAll('.ml-72.flex-1, .lg\\:hidden');
+      allMainContent.forEach((el) => {
+        if (el.classList.contains('ml-72')) {
+          // Desktop content
+          el.style.paddingTop = `${cumulativeTop + 20}px`;
+        } else {
+          // Mobile content - add mobile header height
+          el.style.paddingTop = `${cumulativeTop + 56 + 20}px`;
+        }
+      });
     };
 
-    // Initial adjustment
+    // Run immediately
     adjustPositions();
     
-    // Adjust on resize
+    // Run on resize
     window.addEventListener('resize', adjustPositions);
     
-    // Check periodically for changes
-    const interval = setInterval(adjustPositions, 200);
+    // Run periodically to catch dynamic changes
+    const interval = setInterval(adjustPositions, 100);
+    
+    // Run after a short delay to catch initial render
+    setTimeout(adjustPositions, 100);
 
     return () => {
       window.removeEventListener('resize', adjustPositions);
