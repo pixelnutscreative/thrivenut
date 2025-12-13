@@ -194,7 +194,9 @@ export default function Home() {
     if (isAuthenticated) {
       window.location.href = createPageUrl('Dashboard');
     } else {
-      base44.auth.redirectToLogin(createPageUrl('Dashboard'));
+      // Redirect to signup page (base44.auth.redirectToLogin with signup=true or just use the signup URL)
+      const signupUrl = window.location.origin + '/auth/signup?next=' + encodeURIComponent(createPageUrl('Dashboard'));
+      window.location.href = signupUrl;
     }
   };
 
@@ -225,10 +227,10 @@ export default function Home() {
           ) : (
             <Button 
               onClick={handleLogin}
-              className="bg-gradient-to-r from-teal-500 to-purple-500 hover:from-teal-600 hover:to-purple-600"
+              variant="outline"
+              className="border-purple-400 text-purple-400 hover:bg-purple-400/10"
             >
-              <Sparkles className="w-4 h-4 mr-2" />
-              Get Started Free
+              Log In
             </Button>
           )}
         </div>

@@ -336,7 +336,7 @@ export default function Settings() {
 
             <TabsTrigger value="referrals">
               <Gift className="w-4 h-4" />
-              <span className="hidden lg:inline ml-2">Share & Earn</span>
+              <span className="hidden lg:inline ml-2">Share</span>
             </TabsTrigger>
             <TabsTrigger value="account">
               <UserX className="w-4 h-4" />
