@@ -47,14 +47,9 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
   const [isOpen, setIsOpen] = useState(true);
   const [activeAction, setActiveAction] = useState(null);
   const [noteContent, setNoteContent] = useState('');
-  const [isDragging, setIsDragging] = useState(false);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const dragRef = useRef(null);
   const [showAddMoodInput, setShowAddMoodInput] = useState(false);
   const [customMoodInput, setCustomMoodInput] = useState({ emoji: '', label: '' });
-  const [musicMinimized, setMusicMinimized] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [scrollPosition, setScrollPosition] = useState(0);
   const scrollContainerRef = useRef(null);
   const [moodNote, setMoodNote] = useState('');
   const [showQuickEventDialog, setShowQuickEventDialog] = useState(false);
@@ -65,10 +60,6 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
     const checkMobile = () => {
       const mobile = window.innerWidth < 1024;
       setIsMobile(mobile);
-      // If mobile and no position set, default to top right under header
-      if (mobile) {
-        setPosition({ x: window.innerWidth - 60, y: 70 });
-      }
     };
     checkMobile();
     window.addEventListener('resize', checkMobile);
@@ -77,7 +68,6 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
   const userEmail = preferences?.user_email;
   const quickActions = preferences?.quick_actions || ['mood', 'water', 'food', 'note'];
   const customActions = preferences?.custom_quick_actions || [];
-  const [isDocked, setIsDocked] = useState(true); // Desktop docked by default
 
   // Fetch today's data for displaying counts
   const { data: todaysWater } = useQuery({
@@ -118,33 +108,6 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
   };
 
   const latestMood = todaysMoodLogs.length > 0 ? todaysMoodLogs[todaysMoodLogs.length - 1] : null;
-
-  // Load saved position from localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem('quickActionsPosition');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        // Fix for widget stuck at top - ensure it's not covering header
-        if (parsed.y < 80) {
-           parsed.y = window.innerHeight - 120;
-        }
-        setPosition(parsed);
-      } catch (e) {
-        // Reset if invalid - default to bottom
-        setPosition({ x: 0, y: window.innerHeight - 120 });
-      }
-    } else {
-      // Default to bottom for new users
-      setPosition({ x: 0, y: window.innerHeight - 120 });
-    }
-  }, []);
-
-  // Save position to localStorage when it changes
-  const savePosition = (newPos) => {
-    setPosition(newPos);
-    localStorage.setItem('quickActionsPosition', JSON.stringify(newPos));
-  };
 
   // Mutations
   const [waterSuccess, setWaterSuccess] = useState(false);
@@ -291,54 +254,7 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
     }
   };
 
-  // Handle drag
-  const handleDragStart = (e) => {
-    setIsDragging(true);
-    const rect = dragRef.current?.getBoundingClientRect();
-    if (rect) {
-      dragRef.current.dragOffset = {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top
-      };
-    }
-  };
 
-  const handleDrag = (e) => {
-    if (!isDragging || !dragRef.current) return;
-    e.preventDefault();
-    
-    const offset = dragRef.current.dragOffset || { x: 0, y: 0 };
-    const newX = e.clientX - offset.x;
-    const newY = e.clientY - offset.y;
-    
-    // Keep within viewport
-    const maxX = window.innerWidth - (dragRef.current.offsetWidth || 200);
-    const maxY = window.innerHeight - (dragRef.current.offsetHeight || 60);
-    
-    savePosition({
-      x: Math.max(0, Math.min(newX, maxX)),
-      y: Math.max(0, Math.min(newY, maxY))
-    });
-  };
-
-  const handleDragEnd = () => {
-    setIsDragging(false);
-  };
-
-  useEffect(() => {
-    if (isDragging) {
-      document.addEventListener('mousemove', handleDrag);
-      document.addEventListener('mouseup', handleDragEnd);
-      document.addEventListener('touchmove', handleDrag);
-      document.addEventListener('touchend', handleDragEnd);
-      return () => {
-        document.removeEventListener('mousemove', handleDrag);
-        document.removeEventListener('mouseup', handleDragEnd);
-        document.removeEventListener('touchmove', handleDrag);
-        document.removeEventListener('touchend', handleDragEnd);
-      };
-    }
-  }, [isDragging]);
 
   if (!isOpen) {
         return (
@@ -362,45 +278,27 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
 
   return (
   <>
-    {/* Floating/Docked Bar */}
+    {/* Fixed Top Bar */}
     <motion.div
-      ref={dragRef}
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="fixed z-40 backdrop-blur-sm rounded-full px-2 py-1.5 shadow-2xl"
+      className="fixed z-40 backdrop-blur-sm px-2 py-1.5 shadow-2xl"
       style={{
-        // Desktop: docked at top, wide; Mobile: docked below mobile header
-        left: isDocked ? (isMobile ? 0 : '288px') : (position.x || 'calc(50% - 150px)'),
-        right: isDocked ? 0 : 'auto',
-        top: isDocked ? (isMobile ? '56px' : '0') : (position.y || 80),
-        width: isDocked ? (isMobile ? '100%' : 'calc(100% - 288px)') : 'auto',
-        cursor: (!isDocked && isDragging) ? 'grabbing' : 'default',
+        left: isMobile ? 0 : '288px',
+        right: 0,
+        top: isMobile ? '56px' : '0',
+        width: isMobile ? '100%' : 'calc(100% - 288px)',
         display: 'flex',
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
         gap: '4px',
-        maxWidth: isDocked ? '100%' : '600px',
-        overflowX: 'auto',
-        borderRadius: isDocked ? (isMobile ? '0 0 12px 12px' : '0 0 12px 0') : '9999px',
+        borderRadius: isMobile ? '0 0 12px 12px' : '0 0 12px 0',
         backgroundColor: 'rgba(75, 85, 99, 0.95)',
       }}
     >
         {/* Main action bar */}
         <div className="flex items-center gap-1">
-        {/* Pin/Unpin button - Desktop only */}
-        {!isMobile && (
-          <button
-            onClick={() => setIsDocked(!isDocked)}
-            onMouseDown={(e) => isDocked ? null : handleDragStart(e)}
-            onTouchStart={(e) => isDocked ? null : handleDragStart(e)}
-            className="p-1.5 hover:bg-white/10 rounded-full transition-colors"
-            style={{ cursor: isDocked ? 'pointer' : 'grab' }}
-            title={isDocked ? "Detach to drag" : "Drag to move"}
-          >
-            {isDocked ? <GripHorizontal className="w-4 h-4 text-gray-300" /> : <GripHorizontal className="w-4 h-4 text-gray-400" />}
-          </button>
-        )}
 
         {/* Close button */}
         <button
@@ -432,7 +330,7 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
             overflowX: 'auto',
             scrollbarWidth: 'none',
             msOverflowStyle: 'none',
-            maxWidth: (isMobile || isDocked) ? 'calc(100vw - 200px)' : '600px'
+            maxWidth: 'calc(100vw - 200px)'
           }}
         >
           {visibleActions.map((action) => {
@@ -613,7 +511,7 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
             className="fixed z-[60] bg-white rounded-2xl shadow-2xl p-4 max-w-sm"
             style={{ 
               right: '80px',
-              top: (position.y || 80)
+              top: isMobile ? '120px' : '80px'
             }}
           >
             <div className="flex items-center justify-between mb-3">
@@ -709,7 +607,7 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
             className="fixed z-[60] bg-white rounded-2xl shadow-2xl p-4 w-80"
             style={{ 
               right: '80px',
-              top: (position.y || 16)
+              top: isMobile ? '120px' : '80px'
             }}
           >
             <div className="flex items-center justify-between mb-3">
