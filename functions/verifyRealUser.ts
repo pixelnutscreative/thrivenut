@@ -74,6 +74,27 @@ Deno.serve(async (req) => {
         });
       }
 
+      // Check if user should get social media suite access
+      // 1. Check if they're in AIPlatformUser with includes_social_access
+      const platformUser = await base44.asServiceRole.entities.AIPlatformUser.filter({
+        user_email: user.email
+      });
+
+      if (platformUser.length > 0 && platformUser[0].includes_social_access) {
+        // Grant social access via UserPreferences
+        if (prefs.length > 0) {
+          await base44.asServiceRole.entities.UserPreferences.update(prefs[0].id, {
+            tiktok_access_approved: true
+          });
+        } else {
+          await base44.asServiceRole.entities.UserPreferences.create({
+            user_email: user.email,
+            tiktok_access_approved: true,
+            onboarding_completed: true
+          });
+        }
+      }
+
       return Response.json({
         success: true,
         verified: true,

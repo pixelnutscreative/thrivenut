@@ -12,12 +12,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Trash2, Edit, Image, Users, Loader2, Upload } from 'lucide-react';
 import { motion } from 'framer-motion';
 import ImageUploader from '../settings/ImageUploader';
+import { Switch } from '@/components/ui/switch';
 
 export default function AdminAIToolsContent() {
   const queryClient = useQueryClient();
   const [showAddTool, setShowAddTool] = useState(false);
   const [showAddUser, setShowAddUser] = useState(false);
   const [editingTool, setEditingTool] = useState(null);
+  const [editingUser, setEditingUser] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [newTool, setNewTool] = useState({
     tool_name: '',
@@ -29,7 +31,13 @@ export default function AdminAIToolsContent() {
     is_general_tool: false,
     sort_order: 100
   });
-  const [newUser, setNewUser] = useState({ user_email: '', platform: 'lets_go_nuts' });
+  const [newUser, setNewUser] = useState({ 
+    user_name: '', 
+    user_email: '', 
+    platform: 'lets_go_nuts', 
+    subscription_tier: '',
+    includes_social_access: false
+  });
 
   // Fetch current user
   React.useEffect(() => {
@@ -76,16 +84,24 @@ export default function AdminAIToolsContent() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['aiToolLinks'] }),
   });
 
-  const createUserMutation = useMutation({
+  const createPlatformUserMutation = useMutation({
     mutationFn: (data) => base44.entities.AIPlatformUser.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['platformUsers'] });
       setShowAddUser(false);
-      setNewUser({ user_email: '', platform: 'lets_go_nuts' });
+      setNewUser({ user_name: '', user_email: '', platform: 'lets_go_nuts', subscription_tier: '', includes_social_access: false });
     },
   });
 
-  const deleteUserMutation = useMutation({
+  const updatePlatformUserMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.AIPlatformUser.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['platformUsers'] });
+      setEditingUser(null);
+    },
+  });
+
+  const deletePlatformUserMutation = useMutation({
     mutationFn: (id) => base44.entities.AIPlatformUser.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['platformUsers'] }),
   });
@@ -189,9 +205,15 @@ export default function AdminAIToolsContent() {
                 <Button onClick={() => {
                   // Pre-populate with current user's email if not already assigned
                   if (currentUser?.email && !currentUserAssignment) {
-                    setNewUser({ user_email: currentUser.email, platform: 'lets_go_nuts' });
+                    setNewUser({ 
+                      user_name: currentUser.full_name || '', 
+                      user_email: currentUser.email, 
+                      platform: 'lets_go_nuts', 
+                      subscription_tier: '',
+                      includes_social_access: false
+                    });
                   } else {
-                    setNewUser({ user_email: '', platform: 'lets_go_nuts' });
+                    setNewUser({ user_name: '', user_email: '', platform: 'lets_go_nuts', subscription_tier: '', includes_social_access: false });
                   }
                   setShowAddUser(true);
                 }} size="sm">
@@ -212,19 +234,44 @@ export default function AdminAIToolsContent() {
                   {platformUsers.map(user => (
                     <div key={user.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
                       <div>
-                        <p className="font-medium">{user.user_email}</p>
-                        <Badge variant="outline" className="text-xs mt-1">
-                          {user.platform === 'pixels_toolbox' ? "Pixel's AI Toolbox" : "Let's Go Nuts"}
-                        </Badge>
+                        <p className="font-medium">{user.user_name || user.user_email}</p>
+                        {user.user_name && (
+                          <p className="text-xs text-gray-500">{user.user_email}</p>
+                        )}
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          <Badge variant="outline" className="text-xs">
+                            {user.platform === 'pixels_toolbox' ? "Pixel's AI Toolbox" : "Let's Go Nuts"}
+                          </Badge>
+                          {user.subscription_tier && (
+                            <Badge variant="secondary" className="text-xs">
+                              {user.subscription_tier}
+                            </Badge>
+                          )}
+                          {user.includes_social_access && (
+                            <Badge className="text-xs bg-teal-100 text-teal-800">
+                              Social Suite ✓
+                            </Badge>
+                          )}
+                        </div>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => deleteUserMutation.mutate(user.id)}
-                        className="text-red-400 hover:text-red-600"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setEditingUser(user)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Edit className="w-4 h-4 text-gray-400" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => deletePlatformUserMutation.mutate(user.id)}
+                          className="h-8 w-8 p-0 text-red-400 hover:text-red-600"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -386,22 +433,36 @@ export default function AdminAIToolsContent() {
         </DialogContent>
       </Dialog>
 
-      {/* Add User Dialog */}
-      <Dialog open={showAddUser} onOpenChange={setShowAddUser}>
+      {/* Add/Edit Platform User Dialog */}
+      <Dialog open={showAddUser || !!editingUser} onOpenChange={() => { setShowAddUser(false); setEditingUser(null); }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Assign User to Platform</DialogTitle>
+            <DialogTitle>{editingUser ? 'Edit' : 'Add'} Platform User</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>User Name</Label>
+              <Input
+                value={editingUser?.user_name || newUser.user_name}
+                onChange={(e) => editingUser 
+                  ? setEditingUser({ ...editingUser, user_name: e.target.value })
+                  : setNewUser({ ...newUser, user_name: e.target.value })
+                }
+                placeholder="John Doe"
+              />
+            </div>
             <div className="space-y-2">
               <Label>User Email</Label>
               <Input
                 type="email"
-                value={newUser.user_email}
-                onChange={(e) => setNewUser({ ...newUser, user_email: e.target.value })}
+                value={editingUser?.user_email || newUser.user_email}
+                onChange={(e) => editingUser 
+                  ? setEditingUser({ ...editingUser, user_email: e.target.value })
+                  : setNewUser({ ...newUser, user_email: e.target.value })
+                }
                 placeholder="user@example.com"
               />
-              {currentUser?.email && newUser.user_email === currentUser.email && !currentUserAssignment && (
+              {currentUser?.email && (editingUser?.user_email === currentUser.email || newUser.user_email === currentUser.email) && !currentUserAssignment && (
                 <p className="text-xs text-purple-600">
                   ℹ️ Pre-populated with your email. You can change it if needed.
                 </p>
@@ -409,7 +470,13 @@ export default function AdminAIToolsContent() {
             </div>
             <div className="space-y-2">
               <Label>AI Platform</Label>
-              <Select value={newUser.platform} onValueChange={(v) => setNewUser({ ...newUser, platform: v })}>
+              <Select 
+                value={editingUser?.platform || newUser.platform}
+                onValueChange={(v) => editingUser 
+                  ? setEditingUser({ ...editingUser, platform: v })
+                  : setNewUser({ ...newUser, platform: v })
+                }
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -419,14 +486,43 @@ export default function AdminAIToolsContent() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-2">
+              <Label>Subscription Tier</Label>
+              <Input
+                value={editingUser?.subscription_tier || newUser.subscription_tier}
+                onChange={(e) => editingUser 
+                  ? setEditingUser({ ...editingUser, subscription_tier: e.target.value })
+                  : setNewUser({ ...newUser, subscription_tier: e.target.value })
+                }
+                placeholder="e.g., Founding Member, PLUS AI"
+              />
+            </div>
+            <div className="flex items-center justify-between p-3 bg-teal-50 border border-teal-200 rounded-lg">
+              <div>
+                <Label className="font-medium text-teal-800">Includes Social Media Suite</Label>
+                <p className="text-xs text-teal-600 mt-1">Grant access to TikTok features & creator tools</p>
+              </div>
+              <Switch
+                checked={editingUser?.includes_social_access || newUser.includes_social_access}
+                onCheckedChange={(checked) => editingUser 
+                  ? setEditingUser({ ...editingUser, includes_social_access: checked })
+                  : setNewUser({ ...newUser, includes_social_access: checked })
+                }
+              />
+            </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddUser(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => { setShowAddUser(false); setEditingUser(null); }}>
+              Cancel
+            </Button>
             <Button 
-              onClick={() => createUserMutation.mutate(newUser)}
-              disabled={!newUser.user_email || createUserMutation.isPending}
+              onClick={() => editingUser 
+                ? updatePlatformUserMutation.mutate({ id: editingUser.id, data: editingUser })
+                : createPlatformUserMutation.mutate(newUser)
+              }
+              disabled={!(editingUser?.user_email || newUser.user_email) || createPlatformUserMutation.isPending || updatePlatformUserMutation.isPending}
             >
-              Add User
+              {editingUser ? 'Save Changes' : 'Add User'}
             </Button>
           </DialogFooter>
         </DialogContent>
