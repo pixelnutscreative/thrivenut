@@ -278,7 +278,7 @@ export default function Dashboard() {
           userEmail={effectiveEmail}
         />
 
-        {/* My Day Section - All daily tasks unified with Goals Scroll */}
+        {/* My Day Section - All daily tasks unified */}
         <MyDaySection
           selfCareLog={selfCareLog}
           onToggleTask={(taskId, value) => selfCareMutation.mutate({ taskId, value })}
@@ -296,14 +296,14 @@ export default function Dashboard() {
           }}
         />
 
-        {/* Active Goals Section - Full Card View */}
-        <DashboardGoalsSection userEmail={effectiveEmail} />
-
         {/* Tasks Section */}
         <DashboardTasksSection 
           userEmail={effectiveEmail} 
           viewMode={preferences?.dashboard_view_mode || 'detailed'}
         />
+
+        {/* Active Goals Section - Full Card View */}
+        <DashboardGoalsSection userEmail={effectiveEmail} />
 
         {/* Calendar Integration - Google Calendar & Pixel Nuts Events */}
         {(!preferences?.google_calendar_connected) && (

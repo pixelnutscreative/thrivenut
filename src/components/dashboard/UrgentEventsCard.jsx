@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertTriangle, Calendar, Clock, ExternalLink, Swords, Video, Users, GraduationCap, Zap, Settings, Edit } from 'lucide-react';
+import { AlertTriangle, Calendar, Clock, ExternalLink, Swords, Video, Users, GraduationCap, Zap, Settings, Edit, Check } from 'lucide-react';
 import { format, parseISO, isToday, isTomorrow } from 'date-fns';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
@@ -188,6 +188,16 @@ export default function UrgentEventsCard({ events, publicCalendarEvents, alertCo
                   </div>
 
                   <div className="flex gap-2 flex-shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => updateEventMutation.mutate({ id: event.id, is_completed: true, is_urgent: false })}
+                      className="h-8 px-3 bg-green-100 hover:bg-green-200 text-green-700"
+                      disabled={updateEventMutation.isPending}
+                    >
+                      <Check className="w-4 h-4 mr-1" />
+                      Done
+                    </Button>
                     <Button
                       variant="ghost"
                       size="sm"

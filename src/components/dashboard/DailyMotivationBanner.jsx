@@ -104,8 +104,8 @@ ${contextParts.length > 0 ? '- Specifically address the focus area mentioned abo
 
 ${type === 'scripture' 
   ? `CRITICAL: Provide the EXACT scripture text word-for-word from ${bibleVersion}. Include the Bible reference (book chapter:verse).` 
-  : type === 'motivational' 
-    ? `If inspired by a scripture, you can mention it in the reference field with "Inspired by [Book Chapter:Verse]" but the main text should be your own motivational message, not the actual scripture.`
+  : type === 'motivational' || type === 'positive_quote' || type === 'affirmation'
+    ? `IMPORTANT: You may use Biblical principles and wisdom, but DO NOT include explicit scripture references unless you're absolutely sure they enhance the message. The "scripture" type is specifically for that. For these other types, focus on the core principle or wisdom itself without always citing chapter and verse. Leave the reference field empty or use "Inspired by Biblical principles" if it's heavily scripture-based.`
     : ''
 }`;
 
