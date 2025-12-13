@@ -200,6 +200,7 @@ export default function Layout({ children, currentPageName }) {
       bgColor: 'bg-pink-500/10',
       items: [
         { name: 'Support', icon: HelpCircle, path: 'Support', alwaysShow: true },
+        { name: 'Notifications', icon: Bell, path: 'NotificationHistory', alwaysShow: true },
         { name: 'Admin Panel', icon: UserCog, path: 'Admin', adminOnly: true },
         { name: 'Community Map', icon: Share2, path: 'CommunityMap', adminOnly: true },
       ]

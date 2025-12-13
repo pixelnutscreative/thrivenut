@@ -14,10 +14,16 @@ export default function NotificationBell({ userEmail, isDark }) {
   const { data: notifications = [] } = useQuery({
     queryKey: ['notifications', userEmail],
     queryFn: async () => {
-      const all = await base44.entities.Notification.filter({ is_active: true }, '-created_date');
-      return all;
+      try {
+        const all = await base44.entities.Notification.filter({ is_active: true }, '-created_date');
+        return all;
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+        return [];
+      }
     },
     enabled: !!userEmail,
+    retry: false,
   });
 
   const { data: readNotifications = [] } = useQuery({

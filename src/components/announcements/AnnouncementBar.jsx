@@ -9,10 +9,16 @@ export default function AnnouncementBar() {
   const { data: bars = [] } = useQuery({
     queryKey: ['announcementBars'],
     queryFn: async () => {
-      const all = await base44.entities.AnnouncementBar.list('-display_order');
-      return all;
+      try {
+        const all = await base44.entities.AnnouncementBar.list('-display_order');
+        return all;
+      } catch (error) {
+        console.error('Error fetching announcement bars:', error);
+        return [];
+      }
     },
-    refetchInterval: 30000, // Check every 30 seconds
+    refetchInterval: 30000,
+    retry: false,
   });
 
   const isInSchedule = (bar) => {

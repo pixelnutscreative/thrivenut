@@ -64,6 +64,7 @@ import CampaignTimeline from './pages/CampaignTimeline';
 import SalesTracking from './pages/SalesTracking';
 import PromotedOffers from './pages/PromotedOffers';
 import CreatorDashboard from './pages/CreatorDashboard';
+import NotificationHistory from './pages/NotificationHistory';
 import __Layout from './Layout.jsx';
 
 
@@ -134,6 +135,7 @@ export const PAGES = {
     "SalesTracking": SalesTracking,
     "PromotedOffers": PromotedOffers,
     "CreatorDashboard": CreatorDashboard,
+    "NotificationHistory": NotificationHistory,
 }
 
 export const pagesConfig = {
