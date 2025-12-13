@@ -83,6 +83,7 @@ export default function AnnouncementBar() {
 
   return (
     <div
+      data-announcement-bar
       className="fixed z-[45] overflow-hidden"
       style={{
         ...backgroundStyle,

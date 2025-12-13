@@ -20,6 +20,7 @@ import FloatingHelpButton from './components/support/FloatingHelpButton';
 import QuickActionsWidget from './components/widgets/QuickActionsWidget';
 import SoundCloudPlayer, { FloatingSoundCloudPlayer, MobileSoundCloudPopup } from './components/widgets/SoundCloudPlayer.jsx';
 import AnnouncementBar from './components/announcements/AnnouncementBar';
+import AnnouncementBarPositioner from './components/announcements/AnnouncementBarPositioner';
 
 // Icon mapping
 const iconMap = {
@@ -775,13 +776,13 @@ export default function Layout({ children, currentPageName }) {
         </div>
 
         {/* Main Content Area */}
-        <div className={`ml-72 flex-1 ${hasAnnouncementBar && user && preferences?.quick_actions?.length > 0 ? 'pt-[104px]' : user && preferences?.quick_actions?.length > 0 ? 'pt-[52px]' : hasAnnouncementBar ? 'pt-[52px]' : ''}`}>
+        <div className={`ml-72 flex-1 ${user && preferences?.quick_actions?.length > 0 ? 'pt-[52px]' : ''}`}>
           {children}
         </div>
         </div>
 
         {/* Mobile Main Content */}
-        <div className={`lg:hidden ${hasAnnouncementBar && user && preferences?.quick_actions?.length > 0 ? 'pt-[160px]' : user && preferences?.quick_actions?.length > 0 ? 'pt-[108px]' : hasAnnouncementBar ? 'pt-[108px]' : 'pt-16'}`}>
+        <div className={`lg:hidden ${user && preferences?.quick_actions?.length > 0 ? 'pt-[108px]' : 'pt-16'}`}>
         {children}
         </div>
 
