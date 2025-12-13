@@ -172,7 +172,7 @@ export default function Admin() {
               <TabsList className="flex gap-1">
                 <TabsTrigger value="rewards" className="flex items-center gap-2">
                   <Award className="w-4 h-4" />
-                  <span className="hidden sm:inline">Thrive Rewards</span>
+                  <span className="hidden sm:inline">Thrive System</span>
                 </TabsTrigger>
                 <TabsTrigger value="commissions" className="flex items-center gap-2">
                   <DollarSign className="w-4 h-4" />
@@ -255,7 +255,7 @@ export default function Admin() {
           </TabsContent>
 
           <TabsContent value="rewards" className="mt-6">
-            <AdminReferralRewardsContent />
+            <AdminReferralSystem />
           </TabsContent>
 
           <TabsContent value="commissions" className="mt-6">
