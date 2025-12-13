@@ -248,7 +248,7 @@ export default function Layout({ children, currentPageName }) {
   const menuBorderClass = isMenuDark ? 'border-gray-600' : 'border-gray-200';
 
   // Public/Auth Check
-  const publicPages = ['Onboarding', 'Home', 'Pricing', 'SubscriptionSuccess', 'BattleInventoryShared'];
+  const publicPages = ['Onboarding', 'Home', 'Pricing', 'SubscriptionSuccess', 'BattleInventoryShared', 'CustomHomepage'];
   if (publicPages.includes(currentPageName)) {
     return children;
   }
@@ -660,13 +660,13 @@ export default function Layout({ children, currentPageName }) {
         </div>
 
         {/* Main Content Area */}
-        <div className="ml-72 flex-1">
+        <div className={`ml-72 flex-1 ${user && preferences?.quick_actions?.length > 0 ? 'pt-[52px]' : ''}`}>
           {children}
         </div>
       </div>
 
       {/* Mobile Main Content */}
-      <div className={`lg:hidden pt-16 ${user && preferences?.quick_actions?.length > 0 ? 'pt-32' : ''}`}>
+      <div className={`lg:hidden ${user && preferences?.quick_actions?.length > 0 ? 'pt-[108px]' : 'pt-16'}`}>
         {children}
       </div>
 

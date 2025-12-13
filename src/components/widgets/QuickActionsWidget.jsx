@@ -367,23 +367,23 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
       ref={dragRef}
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="fixed z-50 backdrop-blur-sm rounded-full px-2 py-1.5 shadow-2xl"
+      className="fixed z-40 backdrop-blur-sm rounded-full px-2 py-1.5 shadow-2xl"
       style={{
-        // Docked to top below header on both mobile and desktop
-        left: (isMobile || isDocked) ? 0 : (position.x || 'calc(50% - 150px)'),
-        right: (isMobile || isDocked) ? 0 : 'auto',
-        top: (isMobile || isDocked) ? '56px' : (position.y || 80),
-        width: (isMobile || isDocked) ? '100%' : 'auto',
-        cursor: (!isMobile && !isDocked && isDragging) ? 'grabbing' : 'default',
+        // Desktop: docked at top, wide; Mobile: docked below mobile header
+        left: isDocked ? (isMobile ? 0 : '288px') : (position.x || 'calc(50% - 150px)'),
+        right: isDocked ? 0 : 'auto',
+        top: isDocked ? (isMobile ? '56px' : '0') : (position.y || 80),
+        width: isDocked ? (isMobile ? '100%' : 'calc(100% - 288px)') : 'auto',
+        cursor: (!isDocked && isDragging) ? 'grabbing' : 'default',
         display: 'flex',
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
         gap: '4px',
-        maxWidth: '100%',
+        maxWidth: isDocked ? '100%' : '600px',
         overflowX: 'auto',
-        borderRadius: (isMobile || isDocked) ? '0 0 12px 12px' : '9999px',
-        backgroundColor: 'rgba(75, 85, 99, 0.95)', // Lighter gray (gray-600)
+        borderRadius: isDocked ? (isMobile ? '0 0 12px 12px' : '0 0 12px 0') : '9999px',
+        backgroundColor: 'rgba(75, 85, 99, 0.95)',
       }}
     >
         {/* Main action bar */}

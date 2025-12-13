@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Save, User, Palette, Layers, MessageSquare, Zap, BookOpen, Shirt, Gift, Share2, Sparkles, Plus, Trash2, Briefcase, Check } from 'lucide-react';
+import { Loader2, Save, User, Palette, Layers, MessageSquare, Zap, BookOpen, Shirt, Gift, Share2, Sparkles, Plus, Trash2, Briefcase, Check, Code } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -35,14 +35,16 @@ const greetingTypeOptions = [
 ];
 
 const pageOptions = [
-  { id: 'Dashboard', name: 'Dashboard' },
-  { id: 'Goals', name: 'Goals' },
-  { id: 'Wellness', name: 'Wellness' },
-  { id: 'Journal', name: 'Journal' },
-  { id: 'TikTokContacts', name: 'Creator Contacts' },
-  { id: 'LiveSchedule', name: 'Content Calendar' },
-  { id: 'PixelsParadise', name: "Pixel's Place" },
-];
+        { id: 'Dashboard', name: 'Dashboard' },
+        { id: 'Goals', name: 'Goals' },
+        { id: 'Wellness', name: 'Wellness' },
+        { id: 'Journal', name: 'Journal' },
+        { id: 'TikTokContacts', name: 'Creator Contacts' },
+        { id: 'LiveSchedule', name: 'Content Calendar' },
+        { id: 'TikTokEngagement', name: 'Social Engagement' },
+        { id: 'PixelsParadise', name: "Pixel's Place" },
+        { id: 'CustomHomepage', name: 'My Custom Homepage' },
+      ];
 
 const bibleVersions = [
   { id: 'NIV', name: 'NIV (New International Version)' },
@@ -288,7 +290,8 @@ export default function Settings() {
             <TabsTrigger value="connections" title="AI Connections"><Zap className="w-4 h-4" /></TabsTrigger>
             <TabsTrigger value="widgets" title="Widgets"><Zap className="w-4 h-4" /></TabsTrigger>
             <TabsTrigger value="bible" title="Bible Settings"><BookOpen className="w-4 h-4" /></TabsTrigger>
-          </TabsList>
+            <TabsTrigger value="homepage" title="Custom Homepage"><Sparkles className="w-4 h-4" /></TabsTrigger>
+            </TabsList>
 
           {/* PROFILE TAB */}
           <TabsContent value="profile">
@@ -842,10 +845,86 @@ export default function Settings() {
               </CardContent>
             </Card>
           </TabsContent>
-        </Tabs>
+
+          {/* CUSTOM HOMEPAGE TAB */}
+          <TabsContent value="homepage" id="homepage">
+            <div className="flex justify-end mb-4">
+              <Button onClick={handleSave} disabled={updatePreferencesMutation.isPending}>
+                <Save className="w-4 h-4 mr-2" />
+                {updatePreferencesMutation.isPending ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </div>
+            <Card className="mb-4">
+              <CardHeader>
+                <CardTitle>Custom Homepage Builder</CardTitle>
+                <CardDescription>
+                  Create your own custom homepage using HTML from Canva, ChatGPT, or any no-code builder.
+                  This brings back the MySpace days on steroids! 🎨
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label className="mb-2 block">Set As Landing Page</Label>
+                  <Select 
+                    value={prefData.default_landing_page || 'Dashboard'} 
+                    onValueChange={(v) => setPrefData({ ...prefData, default_landing_page: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Dashboard">Dashboard (My Day)</SelectItem>
+                      <SelectItem value="Goals">Goals</SelectItem>
+                      <SelectItem value="Wellness">Wellness</SelectItem>
+                      <SelectItem value="Journal">Journal</SelectItem>
+                      <SelectItem value="TikTokContacts">Creator Contacts</SelectItem>
+                      <SelectItem value="LiveSchedule">Content Calendar</SelectItem>
+                      <SelectItem value="TikTokEngagement">Social Engagement</SelectItem>
+                      <SelectItem value="PixelsParadise">Pixel's Place</SelectItem>
+                      <SelectItem value="CustomHomepage">My Custom Homepage</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    This page will load when you log in or click the logo
+                  </p>
+                </div>
+
+                <div>
+                  <Label className="mb-2 block">Custom HTML Code</Label>
+                  <Textarea
+                    placeholder="Paste your HTML code from Canva, ChatGPT, or any website builder here..."
+                    value={prefData.custom_homepage_html || ''}
+                    onChange={(e) => setPrefData({ ...prefData, custom_homepage_html: e.target.value })}
+                    className="font-mono text-sm min-h-[300px]"
+                  />
+                  <div className="flex items-start gap-2 mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <Sparkles className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <div className="text-xs text-blue-800">
+                      <p className="font-semibold mb-1">Pro Tips:</p>
+                      <ul className="list-disc list-inside space-y-1">
+                        <li>Export HTML from Canva (File → Download → HTML)</li>
+                        <li>Ask ChatGPT to build you a page and export HTML</li>
+                        <li>Use any no-code builder and export the code</li>
+                        <li>Make sure to include styles (CSS) in your HTML</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                {prefData.custom_homepage_html && (
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-sm text-green-800">
+                      ✅ Your custom homepage is ready! Set it as your landing page above to use it.
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+          </Tabs>
 
 
-      </div>
-    </div>
-  );
-}
+          </div>
+          </div>
+          );
+          }

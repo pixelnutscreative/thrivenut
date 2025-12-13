@@ -52,6 +52,7 @@ import ActivityTracker from './pages/ActivityTracker';
 import LiveEngagement from './pages/LiveEngagement';
 import BattlePrep from './pages/BattlePrep';
 import BattleInventoryShared from './pages/BattleInventoryShared';
+import CustomHomepage from './pages/CustomHomepage';
 import __Layout from './Layout.jsx';
 
 
@@ -110,6 +111,7 @@ export const PAGES = {
     "LiveEngagement": LiveEngagement,
     "BattlePrep": BattlePrep,
     "BattleInventoryShared": BattleInventoryShared,
+    "CustomHomepage": CustomHomepage,
 }
 
 export const pagesConfig = {
