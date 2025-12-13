@@ -44,6 +44,7 @@ const iconMap = { Smile, Droplet, Utensils, Lightbulb, Cloud, StickyNote, Heart,
 
 export default function QuickActionsWidget({ preferences, primaryColor, accentColor }) {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(true);
   const [activeAction, setActiveAction] = useState(null);
   const [noteContent, setNoteContent] = useState('');
