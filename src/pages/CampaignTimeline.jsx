@@ -323,37 +323,90 @@ export default function CampaignTimeline() {
               );
             })}
 
-            {/* Campaign Summary */}
+            {/* Campaign Summary & Trust Loop */}
             {campaign && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Campaign Summary</CardTitle>
-                </CardHeader>
-                <CardContent className="grid md:grid-cols-4 gap-4">
-                  <div className="text-center p-4 bg-blue-50 rounded-lg">
-                    <p className="text-2xl font-bold text-blue-700">{campaignCards.length}</p>
-                    <p className="text-xs text-blue-600">Total Cards</p>
-                  </div>
-                  <div className="text-center p-4 bg-green-50 rounded-lg">
-                    <p className="text-2xl font-bold text-green-700">
-                      {campaignCards.filter(c => c.status === 'posted').length}
-                    </p>
-                    <p className="text-xs text-green-600">Posted</p>
-                  </div>
-                  <div className="text-center p-4 bg-purple-50 rounded-lg">
-                    <p className="text-2xl font-bold text-purple-700">
-                      {campaignCards.filter(c => c.status === 'scheduled').length}
-                    </p>
-                    <p className="text-xs text-purple-600">Scheduled</p>
-                  </div>
-                  <div className="text-center p-4 bg-amber-50 rounded-lg">
-                    <p className="text-2xl font-bold text-amber-700">
-                      {salesLogs.filter(s => s.campaign_id === selectedCampaign).length}
-                    </p>
-                    <p className="text-xs text-amber-600">Sales Logged</p>
-                  </div>
-                </CardContent>
-              </Card>
+              <>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Campaign Summary</CardTitle>
+                  </CardHeader>
+                  <CardContent className="grid md:grid-cols-4 gap-4">
+                    <div className="text-center p-4 bg-blue-50 rounded-lg">
+                      <p className="text-2xl font-bold text-blue-700">{campaignCards.length}</p>
+                      <p className="text-xs text-blue-600">Total Cards</p>
+                    </div>
+                    <div className="text-center p-4 bg-green-50 rounded-lg">
+                      <p className="text-2xl font-bold text-green-700">
+                        {campaignCards.filter(c => c.status === 'posted').length}
+                      </p>
+                      <p className="text-xs text-green-600">Posted</p>
+                    </div>
+                    <div className="text-center p-4 bg-purple-50 rounded-lg">
+                      <p className="text-2xl font-bold text-purple-700">
+                        {campaignCards.filter(c => c.status === 'scheduled').length}
+                      </p>
+                      <p className="text-xs text-purple-600">Scheduled</p>
+                    </div>
+                    <div className="text-center p-4 bg-amber-50 rounded-lg">
+                      <p className="text-2xl font-bold text-amber-700">
+                        {salesLogs.filter(s => s.campaign_id === selectedCampaign).length}
+                      </p>
+                      <p className="text-xs text-amber-600">Sales Logged</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Trust Loop Status */}
+                {salesLogs.filter(s => s.campaign_id === selectedCampaign).length > 0 && (
+                  <Card className="border-2 border-purple-200">
+                    <CardHeader>
+                      <CardTitle className="text-base flex items-center gap-2">
+                        💝 Trust Loop Completion
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid md:grid-cols-3 gap-4">
+                        <div className={`p-4 rounded-lg ${
+                          campaignCards.some(c => c.intent === 'nurture' && c.title?.toLowerCase().includes('thank')) 
+                            ? 'bg-green-50 border-2 border-green-200' 
+                            : 'bg-gray-50 border-2 border-gray-200'
+                        }`}>
+                          <p className="text-sm font-medium mb-1">Thank You Content</p>
+                          <p className="text-xs text-gray-600">
+                            {campaignCards.some(c => c.intent === 'nurture' && c.title?.toLowerCase().includes('thank')) 
+                              ? '✓ Present' 
+                              : '○ Not Found'}
+                          </p>
+                        </div>
+                        <div className={`p-4 rounded-lg ${
+                          campaignCards.some(c => c.intent === 'authority' && (c.title?.toLowerCase().includes('spotlight') || c.title?.toLowerCase().includes('case')))
+                            ? 'bg-green-50 border-2 border-green-200' 
+                            : 'bg-gray-50 border-2 border-gray-200'
+                        }`}>
+                          <p className="text-sm font-medium mb-1">Spotlight/Case Study</p>
+                          <p className="text-xs text-gray-600">
+                            {campaignCards.some(c => c.intent === 'authority' && (c.title?.toLowerCase().includes('spotlight') || c.title?.toLowerCase().includes('case')))
+                              ? '✓ Present' 
+                              : '○ Not Found'}
+                          </p>
+                        </div>
+                        <div className={`p-4 rounded-lg ${
+                          campaignCards.some(c => c.intent === 'nurture' && ['scheduled', 'posted'].includes(c.status))
+                            ? 'bg-green-50 border-2 border-green-200' 
+                            : 'bg-gray-50 border-2 border-gray-200'
+                        }`}>
+                          <p className="text-sm font-medium mb-1">Nurture/Follow-Up</p>
+                          <p className="text-xs text-gray-600">
+                            {campaignCards.some(c => c.intent === 'nurture' && ['scheduled', 'posted'].includes(c.status))
+                              ? '✓ Active' 
+                              : '○ Not Scheduled'}
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </>
             )}
           </div>
         )}
