@@ -374,28 +374,41 @@ export default function ReferralsTab({ userEmail, primaryColor, accentColor }) {
           {/* Enhanced Tracking Section */}
           <div className="space-y-3 p-4 bg-gradient-to-br from-purple-50 to-blue-50 border-2 border-purple-200 rounded-lg">
             <div className="flex items-center justify-between">
-              <Label className="text-sm font-semibold">📊 Enhanced Link Tracking</Label>
+              <div>
+                <Label className="text-sm font-semibold">📊 Link Builder & Auto-Tracking</Label>
+                <p className="text-xs text-gray-500 mt-0.5">Build custom links OR just share any code-suffix combo!</p>
+              </div>
               <Button 
                 size="sm" 
                 variant="ghost"
                 onClick={() => setShowSourceTracking(!showSourceTracking)}
               >
-                {showSourceTracking ? 'Hide' : 'Show'} Options
+                {showSourceTracking ? 'Hide' : 'Show'} Builder
               </Button>
             </div>
 
+            <div className="bg-teal-50 border border-teal-200 rounded-lg p-3">
+              <p className="text-xs text-teal-800 font-semibold mb-1">✅ Auto-Tracking is ALWAYS ON</p>
+              <p className="text-xs text-teal-700">
+                Share <code className="bg-white px-1 py-0.5 rounded">pixel-friendsirl</code> or <code className="bg-white px-1 py-0.5 rounded">pixel-tiktok1</code> - 
+                we'll automatically track the suffix! No setup needed.
+              </p>
+            </div>
+
             {showSourceTracking && (
-              <div className="space-y-3 pt-2">
+              <div className="space-y-3 pt-2 border-t border-purple-200">
+                <p className="text-xs font-semibold text-purple-700">🛠️ Optional: Use this builder to create enhanced links</p>
+
                 <div>
-                  <Label className="text-xs mb-1 block">Tracking ID (Optional)</Label>
+                  <Label className="text-xs mb-1 block">Tracking Suffix (Optional)</Label>
                   <Input
-                    placeholder="e.g., tiktok1, email-series1, instagram-story"
+                    placeholder="e.g., tiktok1, friendsirl, email-blast2"
                     value={trackingId}
                     onChange={(e) => setTrackingId(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
                     className="text-sm"
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    Adds -trackingId to your code (e.g., pixel-tiktok1)
+                    This adds <code className="bg-white px-1 py-0.5 rounded">-{trackingId || 'suffix'}</code> to your code when you copy the link below
                   </p>
                 </div>
 
@@ -430,13 +443,10 @@ export default function ReferralsTab({ userEmail, primaryColor, accentColor }) {
                     onChange={(e) => setSourceDetail(e.target.value)}
                     className="text-sm"
                   />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Add a URL, description, or note about this specific placement
-                  </p>
                 </div>
 
                 <div className="bg-white p-3 rounded border border-purple-200">
-                  <p className="text-xs font-semibold text-purple-700 mb-1">Your enhanced link will include:</p>
+                  <p className="text-xs font-semibold text-purple-700 mb-1">When you click "Copy Link" below, it will include:</p>
                   <code className="text-xs text-gray-600 break-all">
                     ?ref=yourcode{trackingId && `-${trackingId}`}{sourceType && `&source_type=${sourceType}`}{sourceDetail && `&source_detail=${encodeURIComponent(sourceDetail)}`}
                   </code>
@@ -445,7 +455,7 @@ export default function ReferralsTab({ userEmail, primaryColor, accentColor }) {
             )}
 
             <p className="text-xs text-gray-600">
-              💡 Track exactly which posts, emails, or campaigns bring the most signups!
+              💡 <strong>How it works:</strong> Any link with a dash-suffix (like pixel-friendsirl) is automatically tracked. Use the builder above to add even more detail!
             </p>
           </div>
 
