@@ -64,27 +64,20 @@ export default function SoundCloudPlayer({ playlistUrl, isMenuDark, collapsed = 
         )}
       </button>
       
-      <AnimatePresence>
-        {isExpanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            <iframe
-              width="100%"
-              height={embedDetails.height}
-              scrolling="no"
-              frameBorder="0"
-              allow={embedDetails.allow}
-              src={embedDetails.src}
-              className="border-0"
-              loading="lazy"
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Keep iframe in DOM, just hide it - prevents reload */}
+      <div 
+        className={`transition-all duration-200 ${isExpanded ? 'h-auto opacity-100' : 'h-0 opacity-0 overflow-hidden'}`}
+      >
+        <iframe
+          width="100%"
+          height={embedDetails.height}
+          scrolling="no"
+          frameBorder="0"
+          allow={embedDetails.allow}
+          src={embedDetails.src}
+          className="border-0"
+        />
+      </div>
     </div>
   );
 }

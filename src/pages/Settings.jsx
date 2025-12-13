@@ -675,7 +675,8 @@ export default function Settings() {
               </CardContent>
             </Card>
 
-            {/* Custom Homepage Section */}
+            {/* Custom Homepage Section - Only show if landing page is CustomHomepage */}
+            {prefData.default_landing_page === 'CustomHomepage' && (
             <Card className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
