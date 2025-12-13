@@ -19,6 +19,7 @@ import NotificationBell from './components/notifications/NotificationBell';
 import FloatingHelpButton from './components/support/FloatingHelpButton';
 import QuickActionsWidget from './components/widgets/QuickActionsWidget';
 import SoundCloudPlayer, { FloatingSoundCloudPlayer, MobileSoundCloudPopup } from './components/widgets/SoundCloudPlayer.jsx';
+import AnnouncementBar from './components/announcements/AnnouncementBar';
 
 // Icon mapping
 const iconMap = {
@@ -276,8 +277,10 @@ export default function Layout({ children, currentPageName }) {
   const soundcloudPosition = preferences?.soundcloud_player_position || 'menu';
 
   return (
-    <div 
-      className={`min-h-screen ${bgClass} ${currentlyImpersonating ? 'pt-10' : ''}`} 
+    <>
+      <AnnouncementBar />
+      <div 
+        className={`min-h-screen ${bgClass} ${currentlyImpersonating ? 'pt-10' : ''}`} 
       style={{ 
         '--primary-color': primaryColor, 
         '--accent-color': accentColor,
@@ -409,10 +412,11 @@ export default function Layout({ children, currentPageName }) {
                                         )
                                       ))}
                                     </div>
-                                  )}
-                                </div>
-                              );
-                            }
+                                    )}
+                                    </div>
+                                    </>
+                                    );
+                                    }
 
                             // Standard Link
                             if (item.externalUrl) {
