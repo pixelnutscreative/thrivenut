@@ -319,10 +319,7 @@ export default function Settings() {
               <BookOpen className="w-4 h-4" />
               <span className="hidden lg:inline ml-2">Bible</span>
             </TabsTrigger>
-            <TabsTrigger value="homepage" className="bg-gradient-to-r from-purple-100 to-pink-100 border-2 border-purple-400 font-semibold">
-              <Code className="w-4 h-4" />
-              <span className="hidden lg:inline ml-2">🎨 Custom Homepage</span>
-            </TabsTrigger>
+
             <TabsTrigger value="referrals">
               <Gift className="w-4 h-4" />
               <span className="hidden lg:inline ml-2">Share & Earn</span>
@@ -659,7 +656,7 @@ export default function Settings() {
                 </div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="mb-4">
               <CardContent className="pt-6">
                 <Label className="mb-2 block">Landing Page</Label>
                 <Select value={prefData.default_landing_page} onValueChange={(v) => setPrefData({ ...prefData, default_landing_page: v })}>
@@ -675,6 +672,219 @@ export default function Settings() {
                     ))}
                   </SelectContent>
                 </Select>
+              </CardContent>
+            </Card>
+
+            {/* Custom Homepage Section */}
+            <Card className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Code className="w-5 h-5 text-purple-600" />
+                  🎨 Custom Homepage
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Helpful Resources */}
+                <div className="grid md:grid-cols-2 gap-4">
+                  <Card className="border-2 border-purple-200 bg-white">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <Code className="w-5 h-5 text-purple-600" />
+                        Canva Code
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-gray-600 mb-3">
+                        Export HTML directly from Canva to create beautiful custom pages
+                      </p>
+                      <a 
+                        href="https://www.canva.com/code/" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm font-medium transition-colors"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        Open Canva Code
+                      </a>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-2 border-teal-200 bg-white">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <Sparkles className="w-5 h-5 text-teal-600" />
+                        Rhonda's Wins Course
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-gray-600 mb-2">
+                        Learn to create custom HTML with ChatGPT! Includes base template + help
+                      </p>
+                      <a 
+                        href="https://rhondaswins.com" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 text-sm font-medium transition-colors"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        Visit & Book Time
+                      </a>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Legacy HTML Migration Notice */}
+                {prefData.custom_homepage_html && (!prefData.custom_homepages || prefData.custom_homepages.length === 0) && (
+                  <div className="p-4 bg-amber-50 border-2 border-amber-200 rounded-lg">
+                    <p className="text-sm text-amber-800 mb-3">
+                      ✨ You have HTML in the old format. Click below to migrate it to the new system!
+                    </p>
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        const migratedHomepage = {
+                          id: Date.now().toString(),
+                          name: 'My Homepage',
+                          html: prefData.custom_homepage_html,
+                          is_default: true
+                        };
+                        setPrefData({
+                          ...prefData,
+                          custom_homepages: [migratedHomepage],
+                          active_homepage_id: migratedHomepage.id
+                        });
+                      }}
+                    >
+                      Migrate to New Format
+                    </Button>
+                  </div>
+                )}
+
+                {/* List of Custom Homepages */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label>Your Custom Homepages</Label>
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        const newHomepage = {
+                          id: Date.now().toString(),
+                          name: 'New Homepage',
+                          html: '',
+                          is_default: (prefData.custom_homepages || []).length === 0
+                        };
+                        setPrefData({
+                          ...prefData,
+                          custom_homepages: [...(prefData.custom_homepages || []), newHomepage],
+                          active_homepage_id: newHomepage.id
+                        });
+                      }}
+                    >
+                      <Plus className="w-4 h-4 mr-1" /> Add Homepage
+                    </Button>
+                  </div>
+
+                  {(prefData.custom_homepages || []).length === 0 ? (
+                    <div className="text-center p-8 bg-white rounded-lg border-2 border-dashed border-gray-300">
+                      <p className="text-gray-500 mb-3">No custom homepages yet</p>
+                      <Button
+                        onClick={() => {
+                          const newHomepage = {
+                            id: Date.now().toString(),
+                            name: 'My First Homepage',
+                            html: '',
+                            is_default: true
+                          };
+                          setPrefData({
+                            ...prefData,
+                            custom_homepages: [newHomepage],
+                            active_homepage_id: newHomepage.id
+                          });
+                        }}
+                      >
+                        <Plus className="w-4 h-4 mr-2" /> Create Your First Homepage
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {prefData.custom_homepages.map((homepage, idx) => (
+                        <Card key={homepage.id} className={homepage.id === prefData.active_homepage_id ? 'border-2 border-purple-400 bg-white' : 'bg-white'}>
+                          <CardContent className="pt-4">
+                            <div className="space-y-3">
+                              <div className="flex items-center gap-3">
+                                <Input
+                                  value={homepage.name}
+                                  onChange={(e) => {
+                                    const updated = [...prefData.custom_homepages];
+                                    updated[idx].name = e.target.value;
+                                    setPrefData({ ...prefData, custom_homepages: updated });
+                                  }}
+                                  placeholder="Homepage name"
+                                  className="flex-1"
+                                />
+                                <Button
+                                  size="sm"
+                                  variant={homepage.id === prefData.active_homepage_id ? 'default' : 'outline'}
+                                  onClick={() => setPrefData({ ...prefData, active_homepage_id: homepage.id })}
+                                >
+                                  {homepage.id === prefData.active_homepage_id ? '✓ Active' : 'Set Active'}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    const updated = prefData.custom_homepages.filter(h => h.id !== homepage.id);
+                                    setPrefData({ 
+                                      ...prefData, 
+                                      custom_homepages: updated,
+                                      active_homepage_id: updated[0]?.id || null
+                                    });
+                                  }}
+                                >
+                                  <Trash2 className="w-4 h-4 text-red-400" />
+                                </Button>
+                              </div>
+                              <div className="space-y-2">
+                                <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs">
+                                  <Sparkles className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                                  <div className="text-blue-800">
+                                    <p className="font-semibold mb-1">What to paste:</p>
+                                    <ul className="list-disc list-inside space-y-1">
+                                      <li><strong>Canva Code:</strong> Click "Publish" → "Website" → "View code" → Copy ALL</li>
+                                      <li><strong>Custom HTML:</strong> Complete HTML with &lt;html&gt;, &lt;head&gt;, &lt;body&gt;</li>
+                                    </ul>
+                                  </div>
+                                </div>
+                                <Textarea
+                                  placeholder="Paste your HTML code here..."
+                                  value={homepage.html}
+                                  onChange={(e) => {
+                                    const updated = [...prefData.custom_homepages];
+                                    updated[idx].html = e.target.value;
+                                    setPrefData({ ...prefData, custom_homepages: updated });
+                                  }}
+                                  className="font-mono text-sm min-h-[200px]"
+                                />
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <Sparkles className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                  <div className="text-xs text-blue-800">
+                    <p className="font-semibold mb-1">Pro Tips:</p>
+                    <ul className="list-disc list-inside space-y-1">
+                      <li>Create different homepages for work, projects, or clients</li>
+                      <li>Use Canva Code or get help from Rhonda's Wins course</li>
+                      <li>Switch between homepages anytime by clicking "Set Active"</li>
+                    </ul>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -891,255 +1101,7 @@ export default function Settings() {
             />
           </TabsContent>
 
-          {/* CUSTOM HOMEPAGE TAB */}
-          <TabsContent value="homepage" id="homepage">
-            <div className="flex justify-end mb-4">
-              <Button onClick={handleSave} disabled={updatePreferencesMutation.isPending}>
-                <Save className="w-4 h-4 mr-2" />
-                {updatePreferencesMutation.isPending ? 'Saving...' : 'Save Changes'}
-              </Button>
-            </div>
 
-            {/* Helpful Resources */}
-            <div className="grid md:grid-cols-2 gap-4 mb-6">
-              <Card className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Code className="w-5 h-5 text-purple-600" />
-                    Canva Code
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-gray-600 mb-3">
-                    Export HTML directly from Canva to create beautiful custom pages
-                  </p>
-                  <a 
-                    href="https://www.canva.com/code/" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm font-medium transition-colors"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                    Open Canva Code
-                  </a>
-                </CardContent>
-              </Card>
-
-              <Card className="border-2 border-teal-200 bg-gradient-to-br from-teal-50 to-cyan-50">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-teal-600" />
-                    Rhonda's Wins Custom Homepage Course
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-gray-600 mb-2">
-                    Learn to create custom HTML with ChatGPT! Includes base HTML template + customization help
-                  </p>
-                  <a 
-                    href="https://rhondaswins.com" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 text-sm font-medium transition-colors"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                    Visit Rhonda's Wins & Book Time
-                  </a>
-                </CardContent>
-              </Card>
-            </div>
-
-            <Card className="mb-4">
-              <CardHeader>
-                <CardTitle>My Custom Homepages</CardTitle>
-                <CardDescription>
-                  Create multiple custom homepages for different projects, clients, or use cases. Switch between them anytime!
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label className="mb-2 block">Set As Landing Page</Label>
-                  <Select 
-                    value={prefData.default_landing_page || 'Dashboard'} 
-                    onValueChange={(v) => setPrefData({ ...prefData, default_landing_page: v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Dashboard">Dashboard (My Day)</SelectItem>
-                      <SelectItem value="Goals">Goals</SelectItem>
-                      <SelectItem value="Wellness">Wellness</SelectItem>
-                      <SelectItem value="Journal">Journal</SelectItem>
-                      <SelectItem value="TikTokContacts">Creator Contacts</SelectItem>
-                      <SelectItem value="LiveSchedule">Content Calendar</SelectItem>
-                      <SelectItem value="TikTokEngagement">Social Engagement</SelectItem>
-                      <SelectItem value="PixelsParadise">Pixel's Place</SelectItem>
-                      <SelectItem value="CustomHomepage">My Custom Homepage</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-gray-500 mt-1">
-                    This page will load when you log in or click the logo
-                  </p>
-                </div>
-
-                {/* Legacy HTML Migration Notice */}
-                {prefData.custom_homepage_html && (!prefData.custom_homepages || prefData.custom_homepages.length === 0) && (
-                  <div className="p-4 bg-amber-50 border-2 border-amber-200 rounded-lg">
-                    <p className="text-sm text-amber-800 mb-3">
-                      ✨ You have HTML in the old format. Click below to migrate it to the new system (supports multiple homepages!)
-                    </p>
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        const migratedHomepage = {
-                          id: Date.now().toString(),
-                          name: 'My Homepage',
-                          html: prefData.custom_homepage_html,
-                          is_default: true
-                        };
-                        setPrefData({
-                          ...prefData,
-                          custom_homepages: [migratedHomepage],
-                          active_homepage_id: migratedHomepage.id
-                        });
-                      }}
-                    >
-                      Migrate to New Format
-                    </Button>
-                  </div>
-                )}
-
-                {/* List of Custom Homepages */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Label>Your Custom Homepages</Label>
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        const newHomepage = {
-                          id: Date.now().toString(),
-                          name: 'New Homepage',
-                          html: prefData.custom_homepage_html && (!prefData.custom_homepages || prefData.custom_homepages.length === 0) ? prefData.custom_homepage_html : '',
-                          is_default: (prefData.custom_homepages || []).length === 0
-                        };
-                        setPrefData({
-                          ...prefData,
-                          custom_homepages: [...(prefData.custom_homepages || []), newHomepage],
-                          active_homepage_id: newHomepage.id
-                        });
-                      }}
-                    >
-                      <Plus className="w-4 h-4 mr-1" /> Add Homepage
-                    </Button>
-                  </div>
-
-                  {(prefData.custom_homepages || []).length === 0 ? (
-                    <div className="text-center p-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                      <p className="text-gray-500 mb-3">No custom homepages yet</p>
-                      <Button
-                        onClick={() => {
-                          const newHomepage = {
-                            id: Date.now().toString(),
-                            name: 'My First Homepage',
-                            html: '',
-                            is_default: true
-                          };
-                          setPrefData({
-                            ...prefData,
-                            custom_homepages: [newHomepage],
-                            active_homepage_id: newHomepage.id
-                          });
-                        }}
-                      >
-                        <Plus className="w-4 h-4 mr-2" /> Create Your First Homepage
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {prefData.custom_homepages.map((homepage, idx) => (
-                        <Card key={homepage.id} className={homepage.id === prefData.active_homepage_id ? 'border-2 border-purple-400' : ''}>
-                          <CardContent className="pt-4">
-                            <div className="space-y-3">
-                              <div className="flex items-center gap-3">
-                                <Input
-                                  value={homepage.name}
-                                  onChange={(e) => {
-                                    const updated = [...prefData.custom_homepages];
-                                    updated[idx].name = e.target.value;
-                                    setPrefData({ ...prefData, custom_homepages: updated });
-                                  }}
-                                  placeholder="Homepage name (e.g., Client Project, Work Hub)"
-                                  className="flex-1"
-                                />
-                                <Button
-                                  size="sm"
-                                  variant={homepage.id === prefData.active_homepage_id ? 'default' : 'outline'}
-                                  onClick={() => setPrefData({ ...prefData, active_homepage_id: homepage.id })}
-                                >
-                                  {homepage.id === prefData.active_homepage_id ? '✓ Active' : 'Set Active'}
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => {
-                                    const updated = prefData.custom_homepages.filter(h => h.id !== homepage.id);
-                                    setPrefData({ 
-                                      ...prefData, 
-                                      custom_homepages: updated,
-                                      active_homepage_id: updated[0]?.id || null
-                                    });
-                                  }}
-                                >
-                                  <Trash2 className="w-4 h-4 text-red-400" />
-                                </Button>
-                              </div>
-                              <div className="space-y-2">
-                                <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs">
-                                  <Sparkles className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
-                                  <div className="text-blue-800">
-                                    <p className="font-semibold mb-1">What to paste here:</p>
-                                    <ul className="list-disc list-inside space-y-1">
-                                      <li><strong>From Canva Code:</strong> Click "Publish" → "Website" → "View code" → Copy ALL the code (including &lt;!DOCTYPE html&gt;)</li>
-                                      <li><strong>Custom HTML:</strong> Paste a complete HTML document with &lt;html&gt;, &lt;head&gt;, and &lt;body&gt; tags</li>
-                                      <li><strong>Partial HTML:</strong> Just sections/divs work too, but may need styling</li>
-                                    </ul>
-                                  </div>
-                                </div>
-                                <Textarea
-                                  placeholder="Paste your HTML code here... (e.g., from Canva Code export or custom HTML)"
-                                  value={homepage.html}
-                                  onChange={(e) => {
-                                    const updated = [...prefData.custom_homepages];
-                                    updated[idx].html = e.target.value;
-                                    setPrefData({ ...prefData, custom_homepages: updated });
-                                  }}
-                                  className="font-mono text-sm min-h-[200px]"
-                                />
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex items-start gap-2 mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <Sparkles className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
-                  <div className="text-xs text-blue-800">
-                    <p className="font-semibold mb-1">Pro Tips:</p>
-                    <ul className="list-disc list-inside space-y-1">
-                      <li>Create different homepages for work, personal projects, or clients</li>
-                      <li>Use Canva Code to export HTML directly from Canva designs</li>
-                      <li>Book time with Rhonda's Wins to get a custom HTML template + learn ChatGPT prompting</li>
-                      <li>Switch between homepages anytime by clicking "Set Active"</li>
-                    </ul>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
           </Tabs>
 
 
