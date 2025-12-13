@@ -177,7 +177,7 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
     if (actionId === 'water') {
       waterLogMutation.mutate();
     } else if (actionId === 'task') {
-      window.location.href = createPageUrl('Tasks');
+      setActiveAction('task');
     } else if (actionId === 'event') {
       setShowQuickEventDialog(true);
     } else {
@@ -185,16 +185,30 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
     }
   };
 
-  const handleSubmitNote = () => {
+  const handleSubmitNote = async () => {
     if (!noteContent.trim()) return;
-    quickNoteMutation.mutate({
-      type: activeAction,
-      content: noteContent
-    });
+    
+    if (activeAction === 'task') {
+      // Create task instead of note
+      await base44.entities.Task.create({
+        title: noteContent,
+        status: 'pending',
+        priority: 'medium'
+      });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      setActiveAction(null);
+      setNoteContent('');
+    } else {
+      quickNoteMutation.mutate({
+        type: activeAction,
+        content: noteContent
+      });
+    }
   };
 
   const handleMoodSelect = (mood) => {
     moodLogMutation.mutate({ mood, note: moodNote });
+    setMoodNote(''); // Reset note after submission
   };
 
   const handleAddCustomMood = () => {
@@ -367,31 +381,30 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
               const foodNotes = todaysNotes.filter(n => n.type === 'food');
 
               // Meal time logic: breakfast (5-11), lunch (11-16), dinner (16-23)
-              let currentMeal = 'breakfast';
-              if (hour >= 11 && hour < 16) currentMeal = 'lunch';
-              else if (hour >= 16) currentMeal = 'dinner';
+              const meals = ['breakfast', 'lunch', 'dinner'];
+              const mealTimes = {
+                breakfast: { start: 5, end: 11 },
+                lunch: { start: 11, end: 16 },
+                dinner: { start: 16, end: 24 }
+              };
 
-              // Check if current meal already logged
-              const mealLogged = foodNotes.some(note => {
-                const noteTime = new Date(note.created_date).getHours();
-                if (currentMeal === 'breakfast' && noteTime >= 5 && noteTime < 11) return true;
-                if (currentMeal === 'lunch' && noteTime >= 11 && noteTime < 16) return true;
-                if (currentMeal === 'dinner' && noteTime >= 16) return true;
-                return false;
+              // Check which meals have been logged
+              const loggedMeals = meals.filter(meal => {
+                return foodNotes.some(note => {
+                  const noteTime = new Date(note.created_date).getHours();
+                  return noteTime >= mealTimes[meal].start && noteTime < mealTimes[meal].end;
+                });
               });
 
-              if (mealLogged) {
-                displayContent = foodNotes.length;
+              const mealsCompleted = loggedMeals.length;
+              const allMealsLogged = mealsCompleted === 3;
+
+              if (allMealsLogged) {
+                displayContent = '✓';
                 showIcon = false;
               } else {
-                // Show meal time indicator
-                if (currentMeal === 'breakfast') {
-                  mealTimeIcon = <Sunrise className="absolute inset-0 w-9 h-9 text-orange-300 opacity-30" />;
-                } else if (currentMeal === 'lunch') {
-                  mealTimeIcon = <Sun className="absolute inset-0 w-9 h-9 text-yellow-300 opacity-30" />;
-                } else {
-                  mealTimeIcon = <Sunset className="absolute inset-0 w-9 h-9 text-purple-300 opacity-30" />;
-                }
+                displayContent = `${mealsCompleted}/3`;
+                showIcon = false;
               }
             } else if (noteCounts[action.id] > 0) {
               displayContent = noteCounts[action.id];
@@ -428,11 +441,31 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
               }
             }
 
+            // Determine button styling based on action type
+            let buttonClass = `w-9 h-9 flex-shrink-0 rounded-full flex items-center justify-center text-white hover:opacity-90 transition-all relative overflow-hidden`;
+            let buttonStyle = {};
+
+            if (action.id === 'food') {
+              const mealsCompleted = parseInt(displayContent?.split('/')[0]) || 0;
+              if (mealsCompleted === 0) {
+                buttonStyle = { background: 'linear-gradient(to right, #ef4444, #dc2626)' }; // Red gradient - no meals
+              } else if (mealsCompleted === 1) {
+                buttonStyle = { background: 'linear-gradient(to right, #f59e0b, #d97706)' }; // Orange gradient - 1 meal
+              } else if (mealsCompleted === 2) {
+                buttonStyle = { background: 'linear-gradient(to right, #eab308, #ca8a04)' }; // Yellow gradient - 2 meals
+              } else {
+                buttonStyle = { background: 'linear-gradient(to right, #22c55e, #16a34a)' }; // Green gradient - all meals
+              }
+            } else {
+              buttonClass += ` ${action.color}`;
+            }
+
             return (
               <motion.button
                 key={action.id}
                 onClick={() => handleAction(action.id)}
-                className={`w-9 h-9 flex-shrink-0 rounded-full ${action.color} flex items-center justify-center text-white hover:opacity-90 transition-all relative overflow-hidden`}
+                className={buttonClass}
+                style={buttonStyle}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
                 title={action.label}
@@ -520,12 +553,12 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="flex flex-wrap gap-2 mb-3">
+            <div className="grid grid-cols-4 gap-2 mb-3">
               {moodOptions.map((mood) => (
                 <button
                   key={mood.value}
                   onClick={() => handleMoodSelect(mood.value)}
-                  className="flex flex-col items-center gap-1 p-3 rounded-xl hover:bg-gray-100 transition-colors"
+                  className="flex flex-col items-center gap-1 p-3 rounded-xl hover:bg-purple-100 transition-colors border-2 border-transparent hover:border-purple-400"
                   disabled={moodLogMutation.isPending}
                 >
                   <span className="text-2xl">{mood.emoji}</span>
@@ -578,12 +611,13 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
 
               {/* Optional mood note */}
               <div className="border-t pt-3 mt-3">
-              <label className="text-xs text-gray-600 mb-1 block">Why? (optional)</label>
+              <label className="text-xs text-gray-600 mb-1 block">Why do you feel this way? (optional)</label>
               <Input
                 placeholder="e.g., Had a great call, stressful meeting..."
                 value={moodNote}
                 onChange={(e) => setMoodNote(e.target.value)}
                 className="text-sm"
+                autoFocus
                 onKeyDown={(e) => {
                   if (e.key === 'Escape') {
                     setActiveAction(null);
@@ -591,7 +625,7 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
                   }
                 }}
               />
-              <p className="text-xs text-gray-400 mt-1">Press any mood emoji above to log</p>
+              <p className="text-xs text-purple-600 mt-2 font-medium">👆 Type your reason first, then click an emoji above to log it</p>
               </div>
               </motion.div>
               )}

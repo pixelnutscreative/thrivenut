@@ -53,6 +53,8 @@ import LiveEngagement from './pages/LiveEngagement';
 import BattlePrep from './pages/BattlePrep';
 import BattleInventoryShared from './pages/BattleInventoryShared';
 import CustomHomepage from './pages/CustomHomepage';
+import WaterHistory from './pages/WaterHistory';
+import MyEvents from './pages/MyEvents';
 import __Layout from './Layout.jsx';
 
 
@@ -112,6 +114,8 @@ export const PAGES = {
     "BattlePrep": BattlePrep,
     "BattleInventoryShared": BattleInventoryShared,
     "CustomHomepage": CustomHomepage,
+    "WaterHistory": WaterHistory,
+    "MyEvents": MyEvents,
 }
 
 export const pagesConfig = {
