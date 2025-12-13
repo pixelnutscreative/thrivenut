@@ -61,13 +61,21 @@ export default function NotificationBell({ userEmail, isDark = false }) {
   });
 
   const saveNotificationMutation = useMutation({
-    mutationFn: (notificationId) =>
-      base44.entities.NotificationSaved.create({
+    mutationFn: async (notificationId) => {
+      // Save the notification
+      await base44.entities.NotificationSaved.create({
         notification_id: notificationId,
         user_email: userEmail
-      }),
+      });
+      // Also mark as read
+      await base44.entities.NotificationRead.create({
+        notification_id: notificationId,
+        user_email: userEmail
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notificationReads'] });
+      queryClient.invalidateQueries({ queryKey: ['notificationSaved'] });
     }
   });
 

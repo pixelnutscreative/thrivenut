@@ -462,24 +462,25 @@ export default function Layout({ children, currentPageName }) {
 
               {user && (
               <div className={`pt-6 mt-6 border-t ${menuBorderClass}`}>
-                <div className="flex items-center gap-3 mb-4 px-2">
-                  <img 
-                    src={preferences?.profile_image_url || 'https://via.placeholder.com/40'} 
-                    alt="Profile" 
-                    className="w-10 h-10 rounded-full object-cover border-2 border-gray-300"
-                  />
-                  <div className="flex-1">
-                    <p className={`text-sm font-medium ${menuTextClass}`}>{user.full_name || user.email}</p>
-                    <p className={`text-xs ${menuSubtextClass}`}>{user.email}</p>
+                <div className="flex items-center justify-between gap-2 mb-4 px-2">
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm font-medium truncate ${menuTextClass}`}>{preferences?.nickname || user.full_name || user.email}</p>
+                      <p className={`text-xs truncate ${menuSubtextClass}`}>{user.email}</p>
+                    </div>
                   </div>
+                  <img 
+                    src={preferences?.profile_image_url || `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'%3E%3C/path%3E%3Ccircle cx='12' cy='7' r='4'%3E%3C/circle%3E%3C/svg%3E`} 
+                    alt="Profile" 
+                    className="w-10 h-10 rounded-full object-cover border-2 border-gray-300 flex-shrink-0"
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <Button
                     onClick={handleLogout}
-                    variant="outline"
                     size="sm"
-                    className={`w-full justify-start ${isMenuDark ? 'border-gray-600 text-gray-100 hover:bg-gray-700 hover:text-white' : 'text-gray-800 border-gray-300 hover:bg-gray-100'}`}
+                    className={`w-full justify-start ${isMenuDark ? 'bg-gray-700 text-gray-100 hover:bg-gray-600' : 'bg-gray-800 text-white hover:bg-gray-700'}`}
                   >
                     <LogOut className="w-4 h-4 mr-2" /> Log Out
                   </Button>
@@ -516,7 +517,7 @@ export default function Layout({ children, currentPageName }) {
 
       {/* Desktop Sidebar */}
       <div className="hidden lg:flex">
-        <div className="fixed left-0 top-0 bottom-0 w-72 backdrop-blur-sm border-r p-6 flex flex-col" style={sidebarStyle}>
+        <div className="fixed left-0 top-0 bottom-0 w-72 backdrop-blur-sm border-r p-6 flex flex-col overflow-y-auto" style={sidebarStyle}>
           <div className="mb-8">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-3">
@@ -671,24 +672,25 @@ export default function Layout({ children, currentPageName }) {
           {/* Footer & SoundCloud */}
           {user && (
             <div className={`pt-6 mt-6 border-t ${menuBorderClass}`}>
-              <div className="flex items-center gap-3 mb-4 px-2">
-                <img 
-                  src={preferences?.profile_image_url || 'https://via.placeholder.com/40'} 
-                  alt="Profile" 
-                  className="w-10 h-10 rounded-full object-cover border-2 border-gray-300"
-                />
-                <div className="flex-1 min-w-0">
-                  <p className={`text-sm font-medium truncate ${menuTextClass}`}>{user.full_name || user.email}</p>
-                  <p className={`text-xs truncate ${menuSubtextClass}`}>{user.email}</p>
+              <div className="flex items-center justify-between gap-2 mb-4 px-2">
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-sm font-medium truncate ${menuTextClass}`}>{preferences?.nickname || user.full_name || user.email}</p>
+                    <p className={`text-xs truncate ${menuSubtextClass}`}>{user.email}</p>
+                  </div>
                 </div>
+                <img 
+                  src={preferences?.profile_image_url || `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'%3E%3C/path%3E%3Ccircle cx='12' cy='7' r='4'%3E%3C/circle%3E%3C/svg%3E`} 
+                  alt="Profile" 
+                  className="w-10 h-10 rounded-full object-cover border-2 border-gray-300 flex-shrink-0"
+                />
               </div>
 
               <div className="space-y-2">
                 <Button
                   onClick={handleLogout}
-                  variant="outline"
                   size="sm"
-                  className={`w-full justify-start ${isMenuDark ? 'border-gray-600 text-gray-100 hover:bg-gray-700 hover:text-white' : 'text-gray-800 border-gray-300 hover:bg-gray-100'}`}
+                  className={`w-full justify-start ${isMenuDark ? 'bg-gray-700 text-gray-100 hover:bg-gray-600' : 'bg-gray-800 text-white hover:bg-gray-700'}`}
                 >
                   <LogOut className="w-4 h-4 mr-2" /> Log Out
                 </Button>

@@ -7,39 +7,42 @@ export default function AnnouncementBarPositioner() {
       const announcementBar = document.querySelector('[data-announcement-bar]');
       const quickActions = document.querySelector('#quick-actions-bar');
       const desktopContent = document.querySelector('.ml-72.flex-1');
-      const mobileContent = document.querySelector('.lg\\:hidden:not(.ml-72)');
+      const mobileContent = document.querySelector('.lg\\:hidden');
       
-      let mobileOffset = 56; // Mobile menu height
-      let desktopOffset = 0;
+      let topOffset = 0;
       
-      // Calculate offsets
+      // Add announcement bar height if it exists
       if (announcementBar) {
         const barHeight = announcementBar.offsetHeight;
-        mobileOffset += barHeight;
-        desktopOffset += barHeight;
+        topOffset += barHeight;
       }
       
-      // Position quick actions below announcement bar
+      // Position quick actions
       if (quickActions) {
-        quickActions.style.top = isMobile ? `${mobileOffset}px` : `${desktopOffset}px`;
-        const qaHeight = quickActions.offsetHeight;
-        mobileOffset += qaHeight;
-        desktopOffset += qaHeight;
+        quickActions.style.top = `${topOffset}px`;
+        topOffset += quickActions.offsetHeight;
       }
+      
+      // Add extra spacing
+      topOffset += 16;
       
       // Apply padding to main content
       if (desktopContent) {
-        desktopContent.style.paddingTop = `${desktopOffset + 20}px`;
+        desktopContent.style.paddingTop = `${topOffset}px`;
       }
-      if (mobileContent) {
-        mobileContent.style.paddingTop = `${mobileOffset + 20}px`;
+      if (mobileContent && !desktopContent) {
+        mobileContent.style.paddingTop = `${topOffset + 56}px`; // Add mobile menu height
       }
     };
 
+    // Initial adjustment
     adjustPositions();
+    
+    // Adjust on resize
     window.addEventListener('resize', adjustPositions);
     
-    const interval = setInterval(adjustPositions, 300);
+    // Check periodically for changes
+    const interval = setInterval(adjustPositions, 200);
 
     return () => {
       window.removeEventListener('resize', adjustPositions);
