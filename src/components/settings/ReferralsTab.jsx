@@ -82,6 +82,16 @@ export default function ReferralsTab({ userEmail, primaryColor, accentColor }) {
     queryFn: () => base44.entities.ReferralPointsConfig.filter({})
   });
 
+  // Fetch user's referral info (who referred them)
+  const { data: userVerification } = useQuery({
+    queryKey: ['userVerification', userEmail],
+    queryFn: async () => {
+      const verifications = await base44.entities.UserVerification.filter({ user_email: userEmail });
+      return verifications[0] || null;
+    },
+    enabled: !!userEmail,
+  });
+
   const pointsPerSignup = pointsConfig.find(c => c.config_key === 'points_per_signup')?.points_value || 1;
   const pointsPerUpgrade = pointsConfig.find(c => c.config_key === 'points_per_upgrade')?.points_value || 5;
 
@@ -181,6 +191,25 @@ export default function ReferralsTab({ userEmail, primaryColor, accentColor }) {
 
   return (
     <div className="space-y-4">
+      {/* Referred By Section */}
+      {userVerification?.referred_by_code && (
+        <Card className="border-teal-300 bg-teal-50/50">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-teal-500 flex items-center justify-center text-white font-bold text-xl">
+                🎁
+              </div>
+              <div>
+                <p className="text-sm text-teal-700 font-medium">You joined through a referral!</p>
+                <p className="text-xs text-teal-600">
+                  Referral code: <code className="bg-white px-2 py-0.5 rounded font-mono font-semibold">{userVerification.referred_by_code}</code>
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Referral Link Section */}
       <Card>
         <CardHeader>
