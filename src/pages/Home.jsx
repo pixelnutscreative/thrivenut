@@ -196,9 +196,7 @@ export default function Home() {
     if (isAuthenticated) {
       window.location.href = createPageUrl('Dashboard');
     } else {
-      // Redirect to signup page (base44.auth.redirectToLogin with signup=true or just use the signup URL)
-      const signupUrl = window.location.origin + '/auth/signup?next=' + encodeURIComponent(createPageUrl('Dashboard'));
-      window.location.href = signupUrl;
+      base44.auth.redirectToLogin(createPageUrl('Dashboard'));
     }
   };
 
