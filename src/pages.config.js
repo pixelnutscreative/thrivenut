@@ -56,6 +56,7 @@ import CustomHomepage from './pages/CustomHomepage';
 import WaterHistory from './pages/WaterHistory';
 import MyEvents from './pages/MyEvents';
 import ContentMarketplace from './pages/ContentMarketplace';
+import PromotionEngine from './pages/PromotionEngine';
 import __Layout from './Layout.jsx';
 
 
@@ -118,6 +119,7 @@ export const PAGES = {
     "WaterHistory": WaterHistory,
     "MyEvents": MyEvents,
     "ContentMarketplace": ContentMarketplace,
+    "PromotionEngine": PromotionEngine,
 }
 
 export const pagesConfig = {
