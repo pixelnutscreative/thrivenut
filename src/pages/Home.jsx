@@ -164,10 +164,12 @@ export default function Home() {
     const refCode = urlParams.get('ref');
     if (refCode) {
       sessionStorage.setItem('referral_code', refCode);
-      // Track click
+      // Track click with source info if available
       base44.functions.invoke('trackReferral', { 
         referralCode: refCode, 
-        activityType: 'click' 
+        activityType: 'click',
+        sourceType: urlParams.get('source_type') || null,
+        sourceDetail: urlParams.get('source_detail') || null
       }).catch(() => {});
     }
 

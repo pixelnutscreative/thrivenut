@@ -149,10 +149,23 @@ export default function ReferralsTab({ userEmail, primaryColor, accentColor }) {
   });
 
   const [trackingId, setTrackingId] = useState('');
+  const [sourceType, setSourceType] = useState('url');
+  const [sourceDetail, setSourceDetail] = useState('');
+  const [showSourceTracking, setShowSourceTracking] = useState(false);
 
   const handleCopyLink = (code, withTracking = false) => {
     const baseLink = `https://thrive.pixelnutscreative.com?ref=${code}`;
-    const link = withTracking && trackingId ? `${baseLink}-${trackingId}` : baseLink;
+    const fullCode = withTracking && trackingId ? `${code}-${trackingId}` : code;
+    let link = `https://thrive.pixelnutscreative.com?ref=${fullCode}`;
+    
+    // Add source tracking params if provided
+    if (sourceType) {
+      link += `&source_type=${sourceType}`;
+    }
+    if (sourceDetail) {
+      link += `&source_detail=${encodeURIComponent(sourceDetail)}`;
+    }
+    
     navigator.clipboard.writeText(link);
     setCopySuccess(true);
     setTimeout(() => setCopySuccess(false), 2000);
@@ -357,17 +370,81 @@ export default function ReferralsTab({ userEmail, primaryColor, accentColor }) {
             ))}
           </div>
 
-          {/* Tracking Identifier Info */}
-          <div className="space-y-2 p-3 bg-purple-50 border border-purple-200 rounded-lg">
-            <Label className="text-sm font-semibold">📊 Pro Tip: Track Specific Posts</Label>
+          {/* Enhanced Tracking Section */}
+          <div className="space-y-3 p-4 bg-gradient-to-br from-purple-50 to-blue-50 border-2 border-purple-200 rounded-lg">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-semibold">📊 Enhanced Link Tracking</Label>
+              <Button 
+                size="sm" 
+                variant="ghost"
+                onClick={() => setShowSourceTracking(!showSourceTracking)}
+              >
+                {showSourceTracking ? 'Hide' : 'Show'} Options
+              </Button>
+            </div>
+
+            {showSourceTracking && (
+              <div className="space-y-3 pt-2">
+                <div>
+                  <Label className="text-xs mb-1 block">Tracking ID (Optional)</Label>
+                  <Input
+                    placeholder="e.g., tiktok1, email-series1, instagram-story"
+                    value={trackingId}
+                    onChange={(e) => setTrackingId(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                    className="text-sm"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Adds -trackingId to your code (e.g., pixel-tiktok1)
+                  </p>
+                </div>
+
+                <div>
+                  <Label className="text-xs mb-1 block">Where are you sharing this?</Label>
+                  <Select value={sourceType} onValueChange={setSourceType}>
+                    <SelectTrigger className="text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="url">🔗 Website/URL</SelectItem>
+                      <SelectItem value="social_post">📱 Social Media Post</SelectItem>
+                      <SelectItem value="email">📧 Email</SelectItem>
+                      <SelectItem value="text">💬 Text Message</SelectItem>
+                      <SelectItem value="print">🖨️ Printed Material</SelectItem>
+                      <SelectItem value="other">✨ Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label className="text-xs mb-1 block">Source Details (Optional)</Label>
+                  <Input
+                    placeholder={
+                      sourceType === 'url' ? 'https://yourwebsite.com/blog-post' :
+                      sourceType === 'email' ? 'Email Campaign: Newsletter #3' :
+                      sourceType === 'social_post' ? 'TikTok Post about Goals Feature' :
+                      sourceType === 'text' ? 'Text to my VIP list' :
+                      'Brief description of where this link is'
+                    }
+                    value={sourceDetail}
+                    onChange={(e) => setSourceDetail(e.target.value)}
+                    className="text-sm"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Add a URL, description, or note about this specific placement
+                  </p>
+                </div>
+
+                <div className="bg-white p-3 rounded border border-purple-200">
+                  <p className="text-xs font-semibold text-purple-700 mb-1">Your enhanced link will include:</p>
+                  <code className="text-xs text-gray-600 break-all">
+                    ?ref=yourcode{trackingId && `-${trackingId}`}{sourceType && `&source_type=${sourceType}`}{sourceDetail && `&source_detail=${encodeURIComponent(sourceDetail)}`}
+                  </code>
+                </div>
+              </div>
+            )}
+
             <p className="text-xs text-gray-600">
-              Add <code className="bg-white px-1 py-0.5 rounded">-tracking</code> to any code to track specific posts or campaigns
-            </p>
-            <p className="text-xs text-purple-600 font-mono">
-              Example: ?ref=pixel-tiktok1 or ?ref=pixel-emailsig
-            </p>
-            <p className="text-xs text-gray-500 mt-2">
-              This helps you see which specific posts drive results while keeping your main code clean
+              💡 Track exactly which posts, emails, or campaigns bring the most signups!
             </p>
           </div>
 
