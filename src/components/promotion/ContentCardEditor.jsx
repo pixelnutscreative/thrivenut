@@ -287,6 +287,30 @@ export default function ContentCardEditor({ card, onClose, userEmail }) {
                   </div>
                 </div>
 
+                {/* Workflow Step Indicator */}
+                <div className="pt-4 border-t">
+                  <Label>Current Workflow Step</Label>
+                  <Select
+                    value={formData.current_workflow_step_id}
+                    onValueChange={(v) => setFormData({ ...formData, current_workflow_step_id: v })}
+                    disabled={isLocked}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select workflow step..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {workflowSteps.map(step => (
+                        <SelectItem key={step.id} value={step.id}>
+                          {step.order}. {step.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Determines which checklist items are shown
+                  </p>
+                </div>
+
                 {/* Lock States */}
                 <div className="grid grid-cols-3 gap-4 pt-4 border-t">
                   <div className="flex items-center justify-between">
