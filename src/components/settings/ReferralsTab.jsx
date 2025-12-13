@@ -11,11 +11,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 export default function ReferralsTab({ userEmail, primaryColor, accentColor }) {
   const queryClient = useQueryClient();
-  const [customCode, setCustomCode] = useState('');
+  const [editingLinkId, setEditingLinkId] = useState(null);
+  const [editingCode, setEditingCode] = useState('');
+  const [editingLabel, setEditingLabel] = useState('');
   const [copySuccess, setCopySuccess] = useState(false);
   const [codeError, setCodeError] = useState('');
+  const [showAddNew, setShowAddNew] = useState(false);
 
-  // Fetch or generate referral code
+  // Fetch all referral codes
   const { data: referralData, isLoading } = useQuery({
     queryKey: ['referralCode', userEmail],
     queryFn: async () => {
@@ -60,22 +63,39 @@ export default function ReferralsTab({ userEmail, primaryColor, accentColor }) {
     queryFn: () => base44.entities.ThriveReferralReward.filter({ is_active: true }, 'level')
   });
 
-  useEffect(() => {
-    if (referralData?.referral_code) {
-      setCustomCode(referralData.referral_code);
-    }
-  }, [referralData]);
+  const links = referralData?.links || [];
+  const totalStats = links.reduce((acc, link) => ({
+    clicks: acc.clicks + (link.stats?.clicks || 0),
+    signups: acc.signups + (link.stats?.signups || 0),
+    upgrades: acc.upgrades + (link.stats?.upgrades || 0)
+  }), { clicks: 0, signups: 0, upgrades: 0 });
 
-  const updateCodeMutation = useMutation({
-    mutationFn: async (newCode) => {
+  const addCodeMutation = useMutation({
+    mutationFn: async () => {
       const response = await base44.functions.invoke('generateReferralCode', { 
-        action: 'customize', 
-        customCode: newCode 
+        action: 'generate'
       });
       return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['referralCode'] });
+      setShowAddNew(false);
+    },
+  });
+
+  const updateCodeMutation = useMutation({
+    mutationFn: async ({ linkId, code, label }) => {
+      const response = await base44.functions.invoke('generateReferralCode', { 
+        action: 'customize', 
+        linkId,
+        customCode: code,
+        codeLabel: label
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['referralCode'] });
+      setEditingLinkId(null);
       setCodeError('');
     },
     onError: (error) => {
@@ -83,22 +103,46 @@ export default function ReferralsTab({ userEmail, primaryColor, accentColor }) {
     }
   });
 
+  const deleteCodeMutation = useMutation({
+    mutationFn: async (linkId) => {
+      const response = await base44.functions.invoke('generateReferralCode', { 
+        action: 'delete',
+        linkId
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['referralCode'] });
+    },
+  });
+
   const [trackingId, setTrackingId] = useState('');
 
-  const handleCopyLink = (withTracking = false) => {
-    const baseLink = `https://thrive.pixelnutscreative.com?ref=${customCode}`;
+  const handleCopyLink = (code, withTracking = false) => {
+    const baseLink = `https://thrive.pixelnutscreative.com?ref=${code}`;
     const link = withTracking && trackingId ? `${baseLink}-${trackingId}` : baseLink;
     navigator.clipboard.writeText(link);
     setCopySuccess(true);
     setTimeout(() => setCopySuccess(false), 2000);
   };
 
-  const handleUpdateCode = () => {
-    if (customCode.length < 3 || customCode.length > 30) {
+  const handleStartEdit = (link) => {
+    setEditingLinkId(link.id);
+    setEditingCode(link.referral_code);
+    setEditingLabel(link.code_label || '');
+    setCodeError('');
+  };
+
+  const handleSaveEdit = () => {
+    if (editingCode.length < 3 || editingCode.length > 30) {
       setCodeError('Code must be 3-30 characters');
       return;
     }
-    updateCodeMutation.mutate(customCode);
+    updateCodeMutation.mutate({ 
+      linkId: editingLinkId, 
+      code: editingCode,
+      label: editingLabel 
+    });
   };
 
   if (isLoading) {
@@ -109,8 +153,7 @@ export default function ReferralsTab({ userEmail, primaryColor, accentColor }) {
     );
   }
 
-  const stats = referralData?.stats || { clicks: 0, signups: 0, upgrades: 0 };
-  const totalPoints = (stats.signups * 10) + (stats.upgrades * 50); // Placeholder values
+  const totalPoints = (totalStats.signups * 10) + (totalStats.upgrades * 50);
   const couponProgress = (commissionData?.verifiedPurchaseCount || 0) % 4;
   const couponsUnlocked = Math.floor((commissionData?.verifiedPurchaseCount || 0) / 4);
 
@@ -126,23 +169,23 @@ export default function ReferralsTab({ userEmail, primaryColor, accentColor }) {
           <CardDescription>Share Thrive and earn points toward rewards!</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Stats */}
+          {/* Overall Stats */}
           <div className="p-4 bg-gradient-to-r from-teal-50 to-purple-50 rounded-lg border-2 border-purple-200">
             <p className="text-sm font-semibold mb-3 flex items-center gap-2">
               <Award className="w-4 h-4" />
-              Your Referral Stats
+              Total Referral Stats (All Codes)
             </p>
             <div className="grid grid-cols-4 gap-3">
               <div className="text-center">
-                <p className="text-2xl font-bold" style={{ color: primaryColor }}>{stats.clicks}</p>
+                <p className="text-2xl font-bold" style={{ color: primaryColor }}>{totalStats.clicks}</p>
                 <p className="text-xs text-gray-600">Clicks</p>
               </div>
               <div className="text-center">
-                <p className="text-2xl font-bold text-teal-600">{stats.signups}</p>
+                <p className="text-2xl font-bold text-teal-600">{totalStats.signups}</p>
                 <p className="text-xs text-gray-600">Sign-ups</p>
               </div>
               <div className="text-center">
-                <p className="text-2xl font-bold text-purple-600">{stats.upgrades}</p>
+                <p className="text-2xl font-bold text-purple-600">{totalStats.upgrades}</p>
                 <p className="text-xs text-gray-600">Upgrades</p>
               </div>
               <div className="text-center">
@@ -152,93 +195,128 @@ export default function ReferralsTab({ userEmail, primaryColor, accentColor }) {
             </div>
           </div>
 
-          {/* Referral Code */}
-          <div className="space-y-2">
-            <Label>Your Referral Code</Label>
-            <div className="flex gap-2">
-              <Input
-                value={customCode}
-                onChange={(e) => {
-                  setCustomCode(e.target.value.toUpperCase());
-                  setCodeError('');
-                }}
-                placeholder="YOUR-CODE"
-                className="font-mono text-lg"
-                maxLength={30}
-              />
-              <Button 
-                onClick={handleUpdateCode}
-                disabled={updateCodeMutation.isPending || customCode === referralData?.referral_code}
-              >
-                {updateCodeMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Update'}
-              </Button>
-            </div>
-            {codeError && (
-              <p className="text-xs text-red-600 flex items-center gap-1">
-                <AlertTriangle className="w-3 h-3" />
-                {codeError}
-              </p>
-            )}
-            <p className="text-xs text-gray-500">
-              3-30 characters. Can include your business name!
-            </p>
-          </div>
-
-          {/* Copy Link */}
-          <div className="space-y-2">
-            <Label>Your Share Link</Label>
-            <div className="flex gap-2">
-              <Input
-                value={`https://thrive.pixelnutscreative.com?ref=${customCode}`}
-                readOnly
-                className="bg-gray-50 font-mono text-sm"
-              />
-              <Button onClick={() => handleCopyLink(false)}>
-                {copySuccess ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-              </Button>
-            </div>
-            <AnimatePresence>
-              {copySuccess && (
-                <motion.p
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  className="text-xs text-green-600 font-medium"
+          {/* Referral Codes */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-base">Your Referral Codes ({links.length}/7)</Label>
+              {links.length < 7 && (
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => addCodeMutation.mutate()}
+                  disabled={addCodeMutation.isPending}
                 >
-                  ✓ Link copied to clipboard!
-                </motion.p>
+                  {addCodeMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Plus className="w-3 h-3 mr-1" />}
+                  Add Code
+                </Button>
               )}
-            </AnimatePresence>
+            </div>
+            <p className="text-xs text-gray-500">
+              Codes are NOT case sensitive • All lowercase for simplicity
+            </p>
+
+            {links.map(link => (
+              <Card key={link.id} className="border-2">
+                <CardContent className="pt-4">
+                  {editingLinkId === link.id ? (
+                    <div className="space-y-3">
+                      <div>
+                        <Label className="text-xs">Code</Label>
+                        <Input
+                          value={editingCode}
+                          onChange={(e) => {
+                            setEditingCode(e.target.value.toLowerCase());
+                            setCodeError('');
+                          }}
+                          placeholder="your-code"
+                          className="font-mono"
+                          maxLength={30}
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Label (Optional)</Label>
+                        <Input
+                          value={editingLabel}
+                          onChange={(e) => setEditingLabel(e.target.value)}
+                          placeholder="e.g., TikTok, Instagram, Email"
+                          maxLength={30}
+                        />
+                      </div>
+                      {codeError && (
+                        <p className="text-xs text-red-600 flex items-center gap-1">
+                          <AlertTriangle className="w-3 h-3" />
+                          {codeError}
+                        </p>
+                      )}
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={handleSaveEdit} disabled={updateCodeMutation.isPending}>
+                          {updateCodeMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Save'}
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => setEditingLinkId(null)}>
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <code className="text-lg font-bold font-mono">{link.referral_code}</code>
+                            {link.code_label && (
+                              <Badge variant="secondary" className="text-xs">{link.code_label}</Badge>
+                            )}
+                          </div>
+                          <div className="grid grid-cols-3 gap-2 text-xs mb-2">
+                            <div>
+                              <span className="text-gray-500">Clicks:</span> <span className="font-semibold">{link.stats?.clicks || 0}</span>
+                            </div>
+                            <div>
+                              <span className="text-gray-500">Signups:</span> <span className="font-semibold">{link.stats?.signups || 0}</span>
+                            </div>
+                            <div>
+                              <span className="text-gray-500">Upgrades:</span> <span className="font-semibold">{link.stats?.upgrades || 0}</span>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button size="sm" variant="outline" onClick={() => handleCopyLink(link.referral_code)}>
+                              <Copy className="w-3 h-3 mr-1" />
+                              Copy Link
+                            </Button>
+                            <Button size="sm" variant="ghost" onClick={() => handleStartEdit(link)}>
+                              Edit
+                            </Button>
+                            {links.length > 1 && (
+                              <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                className="text-red-600"
+                                onClick={() => deleteCodeMutation.mutate(link.id)}
+                              >
+                                Delete
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
           </div>
 
-          {/* Tracking Identifier */}
+          {/* Tracking Identifier Info */}
           <div className="space-y-2 p-3 bg-purple-50 border border-purple-200 rounded-lg">
-            <Label className="text-sm font-semibold">📊 Track Link Source (Optional)</Label>
-            <p className="text-xs text-gray-600 mb-2">
-              Add a tracking ID to see which posts/platforms perform best
+            <Label className="text-sm font-semibold">📊 Pro Tip: Track Specific Posts</Label>
+            <p className="text-xs text-gray-600">
+              Add <code className="bg-white px-1 py-0.5 rounded">-tracking</code> to any code to track specific posts or campaigns
             </p>
-            <div className="flex gap-2">
-              <Input
-                value={trackingId}
-                onChange={(e) => setTrackingId(e.target.value.toLowerCase().replace(/\s+/g, ''))}
-                placeholder="e.g., tiktokpost1, facebookprofile"
-                className="text-sm font-mono"
-              />
-              <Button 
-                onClick={() => handleCopyLink(true)}
-                disabled={!trackingId.trim()}
-                size="sm"
-              >
-                Copy
-              </Button>
-            </div>
-            {trackingId && (
-              <p className="text-xs text-purple-600 font-mono mt-1">
-                ?ref={customCode}-{trackingId}
-              </p>
-            )}
+            <p className="text-xs text-purple-600 font-mono">
+              Example: ?ref=pixel-tiktok1 or ?ref=pixel-emailsig
+            </p>
             <p className="text-xs text-gray-500 mt-2">
-              Examples: tiktokpost1, facebookprofile, instastory, emailsignature
+              This helps you see which specific posts drive results while keeping your main code clean
             </p>
           </div>
 
@@ -264,8 +342,8 @@ export default function ReferralsTab({ userEmail, primaryColor, accentColor }) {
                 {rewardLevels.map(level => {
                   const signupsNeeded = level.thrive_signups_required || 0;
                   const upgradesNeeded = level.social_suite_upgrades_required || 0;
-                  const hasEnoughSignups = stats.signups >= signupsNeeded;
-                  const hasEnoughUpgrades = stats.upgrades >= upgradesNeeded;
+                  const hasEnoughSignups = totalStats.signups >= signupsNeeded;
+                  const hasEnoughUpgrades = totalStats.upgrades >= upgradesNeeded;
                   const unlocked = hasEnoughSignups && hasEnoughUpgrades;
 
                   return (
@@ -284,10 +362,10 @@ export default function ReferralsTab({ userEmail, primaryColor, accentColor }) {
                             <div className="flex-1 bg-gray-200 rounded-full h-2">
                               <div 
                                 className="bg-teal-500 h-2 rounded-full transition-all"
-                                style={{ width: `${Math.min((stats.signups / signupsNeeded) * 100, 100)}%` }}
+                                style={{ width: `${Math.min((totalStats.signups / signupsNeeded) * 100, 100)}%` }}
                               />
                             </div>
-                            <span className="font-mono">{stats.signups}/{signupsNeeded} signups</span>
+                            <span className="font-mono">{totalStats.signups}/{signupsNeeded} signups</span>
                           </div>
                         )}
                         {upgradesNeeded > 0 && (
@@ -295,10 +373,10 @@ export default function ReferralsTab({ userEmail, primaryColor, accentColor }) {
                             <div className="flex-1 bg-gray-200 rounded-full h-2">
                               <div 
                                 className="bg-purple-500 h-2 rounded-full transition-all"
-                                style={{ width: `${Math.min((stats.upgrades / upgradesNeeded) * 100, 100)}%` }}
+                                style={{ width: `${Math.min((totalStats.upgrades / upgradesNeeded) * 100, 100)}%` }}
                               />
                             </div>
-                            <span className="font-mono">{stats.upgrades}/{upgradesNeeded} upgrades</span>
+                            <span className="font-mono">{totalStats.upgrades}/{upgradesNeeded} upgrades</span>
                           </div>
                         )}
                       </div>
