@@ -9,7 +9,7 @@ import { ChevronLeft, ChevronRight, Filter } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek } from 'date-fns';
 import { useTheme } from '../components/shared/useTheme';
 import { useNavigate } from 'react-router-dom';
-import { createPageUrl } from './utils';
+import { createPageUrl } from '../utils';
 
 const platformIcons = {
   TikTok: '🎵',
