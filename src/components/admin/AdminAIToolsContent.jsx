@@ -117,10 +117,8 @@ export default function AdminAIToolsContent() {
 
   const bulkEnableSocialMutation = useMutation({
     mutationFn: async () => {
-      const updates = platformUsers.map(user => 
-        base44.entities.AIPlatformUser.update(user.id, { includes_social_access: true })
-      );
-      return Promise.all(updates);
+      const response = await base44.functions.invoke('bulkEnableSocial', {});
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['platformUsers'] });
@@ -307,6 +305,16 @@ export default function AdminAIToolsContent() {
                             {user.includes_social_access && (
                               <Badge className="text-xs bg-teal-100 text-teal-800">
                                 Social Suite ✓
+                              </Badge>
+                            )}
+                            {user.renewal_date && (
+                              <Badge variant="outline" className="text-xs">
+                                Renews: {new Date(user.renewal_date).toLocaleDateString()}
+                              </Badge>
+                            )}
+                            {user.subscription_status === 'past_due' && (
+                              <Badge className="text-xs bg-red-100 text-red-800">
+                                Past Due 💰
                               </Badge>
                             )}
                           </div>
@@ -549,6 +557,17 @@ export default function AdminAIToolsContent() {
                     : setNewUser({ ...newUser, subscription_tier: e.target.value })
                   }
                   placeholder="Founding Member"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Renewal Date</Label>
+                <Input
+                  type="date"
+                  value={editingUser?.renewal_date || newUser.renewal_date || ''}
+                  onChange={(e) => editingUser 
+                    ? setEditingUser({ ...editingUser, renewal_date: e.target.value })
+                    : setNewUser({ ...newUser, renewal_date: e.target.value })
+                  }
                 />
               </div>
             </div>

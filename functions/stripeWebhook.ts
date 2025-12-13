@@ -2,7 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
 import Stripe from 'npm:stripe@17.5.0';
 
 const stripe = new Stripe(Deno.env.get('STRIPE_API_KEY'));
-const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
+const webhookSecret = Deno.env.get('STRIPE_API_KEY'); // Using same secret as API key per user
 
 Deno.serve(async (req) => {
   try {
@@ -73,6 +73,14 @@ Deno.serve(async (req) => {
       const hasNutsAndBots = productType.includes('nuts_and_bots');
       const includesSocialAccess = productType.includes('plus_ai') || hasNutsAndBots;
 
+      // Calculate renewal date (1 year from now for annual, 1 month for monthly)
+      const renewalDate = new Date();
+      if (subscriptionType === 'annual') {
+        renewalDate.setFullYear(renewalDate.getFullYear() + 1);
+      } else {
+        renewalDate.setMonth(renewalDate.getMonth() + 1);
+      }
+
       if (platformUsers.length === 0) {
         // Create new platform user
         await base44.asServiceRole.entities.AIPlatformUser.create({
@@ -80,6 +88,9 @@ Deno.serve(async (req) => {
           user_name: customer.name || '',
           platform: platform,
           subscription_tier: productType.replace(/_/g, ' '),
+          subscription_status: 'active',
+          renewal_date: renewalDate.toISOString().split('T')[0],
+          stripe_subscription_id: session.subscription || session.id,
           has_nuts_and_bots: hasNutsAndBots,
           includes_social_access: includesSocialAccess
         });
@@ -88,6 +99,9 @@ Deno.serve(async (req) => {
         await base44.asServiceRole.entities.AIPlatformUser.update(platformUsers[0].id, {
           platform: platform,
           subscription_tier: productType.replace(/_/g, ' '),
+          subscription_status: 'active',
+          renewal_date: renewalDate.toISOString().split('T')[0],
+          stripe_subscription_id: session.subscription || session.id,
           has_nuts_and_bots: hasNutsAndBots,
           includes_social_access: includesSocialAccess
         });
