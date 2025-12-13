@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Trash2, Edit, Image, Users, Loader2, Upload } from 'lucide-react';
+import { Plus, Trash2, Edit, Image, Users, Loader2, Upload, Check, Link as LinkIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
 import ImageUploader from '../settings/ImageUploader';
 import { Switch } from '@/components/ui/switch';
@@ -21,6 +21,7 @@ export default function AdminAIToolsContent() {
   const [editingTool, setEditingTool] = useState(null);
   const [editingUser, setEditingUser] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
+  const [showContactPicker, setShowContactPicker] = useState(null);
   const [newTool, setNewTool] = useState({
     tool_name: '',
     app_id: '',
@@ -36,7 +37,9 @@ export default function AdminAIToolsContent() {
     user_email: '', 
     platform: 'lets_go_nuts', 
     subscription_tier: '',
-    includes_social_access: false
+    has_nuts_and_bots: false,
+    includes_social_access: false,
+    tiktok_contact_id: ''
   });
 
   // Fetch current user
@@ -54,6 +57,12 @@ export default function AdminAIToolsContent() {
   const { data: platformUsers = [], isLoading: usersLoading } = useQuery({
     queryKey: ['platformUsers'],
     queryFn: () => base44.entities.AIPlatformUser.list('-created_date'),
+  });
+
+  // Fetch TikTok contacts for linking
+  const { data: tiktokContacts = [] } = useQuery({
+    queryKey: ['tiktokContacts'],
+    queryFn: () => base44.entities.TikTokContact.list('username'),
   });
 
   // Check if current user already has a platform assignment
@@ -89,7 +98,7 @@ export default function AdminAIToolsContent() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['platformUsers'] });
       setShowAddUser(false);
-      setNewUser({ user_name: '', user_email: '', platform: 'lets_go_nuts', subscription_tier: '', includes_social_access: false });
+      setNewUser({ user_name: '', user_email: '', platform: 'lets_go_nuts', subscription_tier: '', has_nuts_and_bots: false, includes_social_access: false, tiktok_contact_id: '' });
     },
   });
 
@@ -105,6 +114,23 @@ export default function AdminAIToolsContent() {
     mutationFn: (id) => base44.entities.AIPlatformUser.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['platformUsers'] }),
   });
+
+  const bulkEnableSocialMutation = useMutation({
+    mutationFn: async () => {
+      const updates = platformUsers.map(user => 
+        base44.entities.AIPlatformUser.update(user.id, { includes_social_access: true })
+      );
+      return Promise.all(updates);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['platformUsers'] });
+    }
+  });
+
+  const getLinkedContact = (platformUser) => {
+    if (!platformUser.tiktok_contact_id) return null;
+    return tiktokContacts.find(c => c.id === platformUser.tiktok_contact_id);
+  };
 
   return (
     <div className="space-y-6">
@@ -200,26 +226,42 @@ export default function AdminAIToolsContent() {
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
                   <Users className="w-5 h-5" />
-                  Platform Assignments
+                  Platform Assignments ({platformUsers.length})
                 </CardTitle>
-                <Button onClick={() => {
-                  // Pre-populate with current user's email if not already assigned
-                  if (currentUser?.email && !currentUserAssignment) {
-                    setNewUser({ 
-                      user_name: currentUser.full_name || '', 
-                      user_email: currentUser.email, 
-                      platform: 'lets_go_nuts', 
-                      subscription_tier: '',
-                      includes_social_access: false
-                    });
-                  } else {
-                    setNewUser({ user_name: '', user_email: '', platform: 'lets_go_nuts', subscription_tier: '', includes_social_access: false });
-                  }
-                  setShowAddUser(true);
-                }} size="sm">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add User
-                </Button>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => bulkEnableSocialMutation.mutate()}
+                    disabled={bulkEnableSocialMutation.isPending}
+                  >
+                    {bulkEnableSocialMutation.isPending ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Check className="w-4 h-4 mr-2" />
+                    )}
+                    Enable Social for All
+                  </Button>
+                  <Button onClick={() => {
+                    if (currentUser?.email && !currentUserAssignment) {
+                      setNewUser({ 
+                        user_name: currentUser.full_name || '', 
+                        user_email: currentUser.email, 
+                        platform: 'lets_go_nuts', 
+                        subscription_tier: '',
+                        has_nuts_and_bots: false,
+                        includes_social_access: false,
+                        tiktok_contact_id: ''
+                      });
+                    } else {
+                      setNewUser({ user_name: '', user_email: '', platform: 'lets_go_nuts', subscription_tier: '', has_nuts_and_bots: false, includes_social_access: false, tiktok_contact_id: '' });
+                    }
+                    setShowAddUser(true);
+                  }} size="sm">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add User
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
@@ -231,49 +273,65 @@ export default function AdminAIToolsContent() {
                 <p className="text-center text-gray-500 py-8">No platform assignments yet</p>
               ) : (
                 <div className="space-y-2">
-                  {platformUsers.map(user => (
-                    <div key={user.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
-                      <div>
-                        <p className="font-medium">{user.user_name || user.user_email}</p>
-                        {user.user_name && (
-                          <p className="text-xs text-gray-500">{user.user_email}</p>
-                        )}
-                        <div className="flex items-center gap-2 mt-1 flex-wrap">
-                          <Badge variant="outline" className="text-xs">
-                            {user.platform === 'pixels_toolbox' ? "Pixel's AI Toolbox" : "Let's Go Nuts"}
-                          </Badge>
-                          {user.subscription_tier && (
-                            <Badge variant="secondary" className="text-xs">
-                              {user.subscription_tier}
-                            </Badge>
+                  {platformUsers.map(user => {
+                    const linkedContact = getLinkedContact(user);
+                    return (
+                      <div key={user.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium">{user.user_name || user.user_email}</p>
+                            {linkedContact && (
+                              <Badge variant="outline" className="text-xs">
+                                <LinkIcon className="w-3 h-3 mr-1" />
+                                @{linkedContact.username}
+                              </Badge>
+                            )}
+                          </div>
+                          {user.user_name && (
+                            <p className="text-xs text-gray-500">{user.user_email}</p>
                           )}
-                          {user.includes_social_access && (
-                            <Badge className="text-xs bg-teal-100 text-teal-800">
-                              Social Suite ✓
+                          <div className="flex items-center gap-2 mt-1 flex-wrap">
+                            <Badge variant="outline" className="text-xs">
+                              {user.platform === 'pixels_toolbox' ? "Pixel's AI Toolbox" : "Let's Go Nuts"}
                             </Badge>
-                          )}
+                            {user.subscription_tier && (
+                              <Badge variant="secondary" className="text-xs">
+                                {user.subscription_tier}
+                              </Badge>
+                            )}
+                            {user.has_nuts_and_bots && (
+                              <Badge className="text-xs bg-purple-100 text-purple-800">
+                                Nuts & Bots ✓
+                              </Badge>
+                            )}
+                            {user.includes_social_access && (
+                              <Badge className="text-xs bg-teal-100 text-teal-800">
+                                Social Suite ✓
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setEditingUser(user)}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Edit className="w-4 h-4 text-gray-400" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => deletePlatformUserMutation.mutate(user.id)}
+                            className="h-8 w-8 p-0 text-red-400 hover:text-red-600"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setEditingUser(user)}
-                          className="h-8 w-8 p-0"
-                        >
-                          <Edit className="w-4 h-4 text-gray-400" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => deletePlatformUserMutation.mutate(user.id)}
-                          className="h-8 w-8 p-0 text-red-400 hover:text-red-600"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </CardContent>
@@ -435,7 +493,7 @@ export default function AdminAIToolsContent() {
 
       {/* Add/Edit Platform User Dialog */}
       <Dialog open={showAddUser || !!editingUser} onOpenChange={() => { setShowAddUser(false); setEditingUser(null); }}>
-        <DialogContent>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>{editingUser ? 'Edit' : 'Add'} Platform User</DialogTitle>
           </DialogHeader>
@@ -462,53 +520,95 @@ export default function AdminAIToolsContent() {
                 }
                 placeholder="user@example.com"
               />
-              {currentUser?.email && (editingUser?.user_email === currentUser.email || newUser.user_email === currentUser.email) && !currentUserAssignment && (
-                <p className="text-xs text-purple-600">
-                  ℹ️ Pre-populated with your email. You can change it if needed.
-                </p>
-              )}
             </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>AI Platform</Label>
+                <Select 
+                  value={editingUser?.platform || newUser.platform}
+                  onValueChange={(v) => editingUser 
+                    ? setEditingUser({ ...editingUser, platform: v })
+                    : setNewUser({ ...newUser, platform: v })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pixels_toolbox">Pixel's AI Toolbox</SelectItem>
+                    <SelectItem value="lets_go_nuts">Let's Go Nuts</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Subscription Tier</Label>
+                <Input
+                  value={editingUser?.subscription_tier || newUser.subscription_tier}
+                  onChange={(e) => editingUser 
+                    ? setEditingUser({ ...editingUser, subscription_tier: e.target.value })
+                    : setNewUser({ ...newUser, subscription_tier: e.target.value })
+                  }
+                  placeholder="Founding Member"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-3 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="font-medium text-purple-800">Has Nuts & Bots</Label>
+                  <p className="text-xs text-purple-600 mt-1">Don't upsell Nuts & Bots to this user</p>
+                </div>
+                <Switch
+                  checked={editingUser?.has_nuts_and_bots || newUser.has_nuts_and_bots}
+                  onCheckedChange={(checked) => editingUser 
+                    ? setEditingUser({ ...editingUser, has_nuts_and_bots: checked })
+                    : setNewUser({ ...newUser, has_nuts_and_bots: checked })
+                  }
+                />
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="font-medium text-teal-800">Includes Social Media Suite</Label>
+                  <p className="text-xs text-teal-600 mt-1">Grant access to TikTok features & creator tools</p>
+                </div>
+                <Switch
+                  checked={editingUser?.includes_social_access || newUser.includes_social_access}
+                  onCheckedChange={(checked) => editingUser 
+                    ? setEditingUser({ ...editingUser, includes_social_access: checked })
+                    : setNewUser({ ...newUser, includes_social_access: checked })
+                  }
+                />
+              </div>
+            </div>
+
             <div className="space-y-2">
-              <Label>AI Platform</Label>
-              <Select 
-                value={editingUser?.platform || newUser.platform}
-                onValueChange={(v) => editingUser 
-                  ? setEditingUser({ ...editingUser, platform: v })
-                  : setNewUser({ ...newUser, platform: v })
-                }
+              <Label>Link to Creator Contact (Optional)</Label>
+              <Select
+                value={editingUser?.tiktok_contact_id || newUser.tiktok_contact_id || 'none'}
+                onValueChange={(v) => {
+                  const value = v === 'none' ? '' : v;
+                  editingUser 
+                    ? setEditingUser({ ...editingUser, tiktok_contact_id: value })
+                    : setNewUser({ ...newUser, tiktok_contact_id: value });
+                }}
               >
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Select a contact..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="pixels_toolbox">Pixel's AI Toolbox</SelectItem>
-                  <SelectItem value="lets_go_nuts">Let's Go Nuts</SelectItem>
+                  <SelectItem value="none">No contact linked</SelectItem>
+                  {tiktokContacts.map(contact => (
+                    <SelectItem key={contact.id} value={contact.id}>
+                      @{contact.username} {contact.display_name ? `(${contact.display_name})` : ''}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Subscription Tier</Label>
-              <Input
-                value={editingUser?.subscription_tier || newUser.subscription_tier}
-                onChange={(e) => editingUser 
-                  ? setEditingUser({ ...editingUser, subscription_tier: e.target.value })
-                  : setNewUser({ ...newUser, subscription_tier: e.target.value })
-                }
-                placeholder="e.g., Founding Member, PLUS AI"
-              />
-            </div>
-            <div className="flex items-center justify-between p-3 bg-teal-50 border border-teal-200 rounded-lg">
-              <div>
-                <Label className="font-medium text-teal-800">Includes Social Media Suite</Label>
-                <p className="text-xs text-teal-600 mt-1">Grant access to TikTok features & creator tools</p>
-              </div>
-              <Switch
-                checked={editingUser?.includes_social_access || newUser.includes_social_access}
-                onCheckedChange={(checked) => editingUser 
-                  ? setEditingUser({ ...editingUser, includes_social_access: checked })
-                  : setNewUser({ ...newUser, includes_social_access: checked })
-                }
-              />
+              <p className="text-xs text-gray-500">
+                Link this platform user to their creator contact card
+              </p>
             </div>
           </div>
           <DialogFooter>
