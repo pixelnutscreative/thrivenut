@@ -23,6 +23,7 @@ import QuickActionsSettings from '../components/settings/QuickActionsSettings';
 import SoundCloudSettings from '../components/settings/SoundCloudSettings';
 import MoodEmojiSettings from '../components/settings/MoodEmojiSettings';
 import ReferralsTab from '../components/settings/ReferralsTab';
+import AccountDeletionTab from '../components/settings/AccountDeletionTab';
 import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
 import { useTheme } from '../components/shared/useTheme';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -336,6 +337,10 @@ export default function Settings() {
             <TabsTrigger value="referrals">
               <Gift className="w-4 h-4" />
               <span className="hidden lg:inline ml-2">Share & Earn</span>
+            </TabsTrigger>
+            <TabsTrigger value="account">
+              <Trash2 className="w-4 h-4" />
+              <span className="hidden lg:inline ml-2">Account</span>
             </TabsTrigger>
             </TabsList>
 
@@ -1116,6 +1121,10 @@ export default function Settings() {
             />
           </TabsContent>
 
+          {/* ACCOUNT DELETION TAB */}
+          <TabsContent value="account">
+            <AccountDeletionTab userEmail={effectiveEmail} />
+          </TabsContent>
 
           </Tabs>
 
