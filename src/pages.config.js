@@ -58,6 +58,8 @@ import MyEvents from './pages/MyEvents';
 import ContentMarketplace from './pages/ContentMarketplace';
 import PromotionEngine from './pages/PromotionEngine';
 import ContentCards from './pages/ContentCards';
+import ContentCalendar from './pages/ContentCalendar';
+import BatchMode from './pages/BatchMode';
 import __Layout from './Layout.jsx';
 
 
@@ -122,6 +124,8 @@ export const PAGES = {
     "ContentMarketplace": ContentMarketplace,
     "PromotionEngine": PromotionEngine,
     "ContentCards": ContentCards,
+    "ContentCalendar": ContentCalendar,
+    "BatchMode": BatchMode,
 }
 
 export const pagesConfig = {

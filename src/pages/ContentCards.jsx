@@ -8,9 +8,11 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import ContentCardEditor from '../components/promotion/ContentCardEditor';
 import { useTheme } from '../components/shared/useTheme';
+import { useLocation } from 'react-router-dom';
 
 export default function ContentCards() {
   const queryClient = useQueryClient();
+  const location = useLocation();
   const { user, effectiveEmail, bgClass, primaryColor, accentColor } = useTheme();
   const [selectedCard, setSelectedCard] = useState(null);
   const [showEditor, setShowEditor] = useState(false);
@@ -47,6 +49,18 @@ export default function ContentCards() {
     setShowEditor(false);
     setSelectedCard(null);
   };
+
+  // Check URL for edit parameter
+  React.useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const editId = params.get('edit');
+    if (editId && contentCards.length > 0) {
+      const card = contentCards.find(c => c.id === editId);
+      if (card) {
+        handleEditCard(card);
+      }
+    }
+  }, [location.search, contentCards]);
 
   const getBrandName = (brandId) => {
     const brand = brands.find(b => b.id === brandId);
