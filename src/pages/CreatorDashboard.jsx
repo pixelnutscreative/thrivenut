@@ -1,5 +1,5 @@
-import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,10 +9,14 @@ import { useTheme } from '../components/shared/useTheme';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { format, parseISO, differenceInDays, isBefore } from 'date-fns';
+import FirstCampaignWizard from '../components/onboarding/FirstCampaignWizard';
+import BatchModeSuggestion from '../components/onboarding/BatchModeSuggestion';
 
 export default function CreatorDashboard() {
   const navigate = useNavigate();
-  const { bgClass, primaryColor, accentColor, user, effectiveEmail } = useTheme();
+  const queryClient = useQueryClient();
+  const { bgClass, primaryColor, accentColor, user, effectiveEmail, preferences } = useTheme();
+  const [showWizard, setShowWizard] = useState(false);
 
   const isAdmin = user?.role === 'admin';
 
@@ -188,6 +192,28 @@ export default function CreatorDashboard() {
     incompleteCards.length > 0 || campaignIssues.length > 0 || offerAlerts.length > 0 || 
     thisWeekSales.length > 0 || reusableContent.length > 0 || staleEvergreen.length > 0;
 
+  // Onboarding Logic
+  const showCampaignWizard = campaigns.length === 0 && !preferences?.onboarding_wizard_dismissed;
+  const showBatchSuggestion = batchReadyGroups.length > 0 && !preferences?.batch_mode_suggestion_dismissed;
+
+  const dismissBatchSuggestion = useMutation({
+    mutationFn: async () => {
+      const prefs = await base44.entities.UserPreferences.filter({ user_email: effectiveEmail });
+      if (prefs[0]) {
+        await base44.entities.UserPreferences.update(prefs[0].id, {
+          batch_mode_suggestion_dismissed: true
+        });
+      }
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['preferences'] }),
+  });
+
+  React.useEffect(() => {
+    if (showCampaignWizard) {
+      setShowWizard(true);
+    }
+  }, [showCampaignWizard]);
+
   return (
     <div className={`min-h-screen ${bgClass} p-6`}>
       <div className="max-w-7xl mx-auto">
@@ -195,6 +221,15 @@ export default function CreatorDashboard() {
           <h1 className="text-3xl font-bold text-gray-800 mb-2">Creator Command Center</h1>
           <p className="text-gray-600">What should I work on today?</p>
         </div>
+
+        {/* Batch Mode Suggestion */}
+        {showBatchSuggestion && (
+          <BatchModeSuggestion
+            cardCount={batchReadyGroups[0][1].length}
+            stepName={getStepName(batchReadyGroups[0][0])}
+            onDismiss={() => dismissBatchSuggestion.mutate()}
+          />
+        )}
 
         {!hasAnyItems ? (
           <Card>
@@ -492,6 +527,18 @@ export default function CreatorDashboard() {
             )}
           </div>
         )}
+
+        {/* First Campaign Wizard */}
+        <FirstCampaignWizard
+          isOpen={showWizard}
+          onClose={() => setShowWizard(false)}
+          onComplete={() => {
+            setShowWizard(false);
+            queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+            queryClient.invalidateQueries({ queryKey: ['contentCards'] });
+          }}
+          userEmail={effectiveEmail}
+        />
       </div>
     </div>
   );
