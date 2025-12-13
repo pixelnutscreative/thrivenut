@@ -543,8 +543,9 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
             exit={{ opacity: 0, scale: 0.9 }}
             className="fixed z-[60] bg-white rounded-2xl shadow-2xl p-4 max-w-sm"
             style={{ 
-              right: '80px',
-              top: isMobile ? '120px' : '80px'
+              left: isMobile ? '50%' : '320px',
+              transform: isMobile ? 'translateX(-50%)' : 'none',
+              top: isMobile ? '120px' : '60px'
             }}
           >
             <div className="flex items-center justify-between mb-3">
@@ -640,8 +641,9 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
             exit={{ opacity: 0, scale: 0.9 }}
             className="fixed z-[60] bg-white rounded-2xl shadow-2xl p-4 w-80"
             style={{ 
-              right: '80px',
-              top: isMobile ? '120px' : '80px'
+              left: isMobile ? '50%' : '320px',
+              transform: isMobile ? 'translateX(-50%)' : 'none',
+              top: isMobile ? '120px' : '60px'
             }}
           >
             <div className="flex items-center justify-between mb-3">

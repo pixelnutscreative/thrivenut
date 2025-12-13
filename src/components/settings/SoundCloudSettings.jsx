@@ -12,6 +12,12 @@ const positionOptions = [
   { value: 'bottom_bar', label: 'Bottom Bar', icon: MonitorPlay, description: 'Fixed to bottom of screen' }, // Added hypothetical option if wanted, but sticking to existing for now
 ];
 
+const predefinedPlaylists = [
+  { name: 'Rise & Praise', url: 'https://soundcloud.com/pixel-nuts-creative/sets/rise-praise', service: 'soundcloud' },
+  { name: 'Holy Hitmakers', url: 'https://soundcloud.com/pixel-nuts-creative/sets/holy-hitmakers', service: 'soundcloud' },
+  { name: 'Worship Vibes', url: 'https://open.spotify.com/playlist/37i9dQZF1DWVWOBcS9bDCR', service: 'spotify' },
+];
+
 export default function SoundCloudSettings({ formData, setFormData }) {
   const position = formData.soundcloud_player_position || 'hidden';
   const activeService = formData.active_music_service || 'soundcloud';
@@ -27,6 +33,22 @@ export default function SoundCloudSettings({ formData, setFormData }) {
 
   const handleServiceChange = (value) => {
     setFormData({ ...formData, active_music_service: value });
+  };
+  
+  const handlePresetSelect = (playlist) => {
+    if (playlist.service === 'soundcloud') {
+      setFormData({ 
+        ...formData, 
+        soundcloud_playlist_url: playlist.url,
+        active_music_service: 'soundcloud'
+      });
+    } else {
+      setFormData({ 
+        ...formData, 
+        spotify_playlist_url: playlist.url,
+        active_music_service: 'spotify'
+      });
+    }
   };
 
   return (
@@ -69,6 +91,24 @@ export default function SoundCloudSettings({ formData, setFormData }) {
                 <span className="font-semibold">Spotify</span>
                 {activeService === 'spotify' && <Check className="w-4 h-4 ml-1" />}
               </button>
+            </div>
+          </div>
+
+          {/* Preset Playlists */}
+          <div className="space-y-2">
+            <Label>Quick Select from Pixel's Playlists</Label>
+            <div className="grid grid-cols-3 gap-2">
+              {predefinedPlaylists.filter(p => p.service === activeService).map(playlist => (
+                <Button
+                  key={playlist.url}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePresetSelect(playlist)}
+                  className="text-xs h-auto py-2"
+                >
+                  {playlist.name}
+                </Button>
+              ))}
             </div>
           </div>
 
