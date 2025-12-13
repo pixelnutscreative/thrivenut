@@ -6,40 +6,40 @@ export default function AnnouncementBarPositioner() {
       const isMobile = window.innerWidth < 1024;
       const announcementBar = document.querySelector('[data-announcement-bar]');
       const quickActions = document.querySelector('#quick-actions-bar');
-      const mainContent = document.querySelectorAll('.ml-72, .lg\\:hidden');
+      const desktopContent = document.querySelector('.ml-72.flex-1');
+      const mobileContent = document.querySelector('.lg\\:hidden:not(.ml-72)');
       
-      let topOffset = isMobile ? 56 : 0;
+      let mobileOffset = 56; // Mobile menu height
+      let desktopOffset = 0;
       
-      // Position quick actions below announcement bar if it exists
+      // Calculate offsets
       if (announcementBar) {
         const barHeight = announcementBar.offsetHeight;
-        topOffset += barHeight;
-        
-        if (quickActions) {
-          quickActions.style.top = `${topOffset}px`;
-          topOffset += quickActions.offsetHeight;
-        }
-      } else if (quickActions) {
-        quickActions.style.top = isMobile ? '56px' : '0px';
-        topOffset += quickActions.offsetHeight;
+        mobileOffset += barHeight;
+        desktopOffset += barHeight;
       }
       
-      // Adjust main content padding
-      mainContent.forEach(el => {
-        if (el.classList.contains('ml-72')) {
-          // Desktop
-          el.style.paddingTop = announcementBar || quickActions ? `${topOffset}px` : '0px';
-        } else {
-          // Mobile
-          el.style.paddingTop = `${topOffset}px`;
-        }
-      });
+      // Position quick actions below announcement bar
+      if (quickActions) {
+        quickActions.style.top = isMobile ? `${mobileOffset}px` : `${desktopOffset}px`;
+        const qaHeight = quickActions.offsetHeight;
+        mobileOffset += qaHeight;
+        desktopOffset += qaHeight;
+      }
+      
+      // Apply padding to main content
+      if (desktopContent) {
+        desktopContent.style.paddingTop = `${desktopOffset}px`;
+      }
+      if (mobileContent) {
+        mobileContent.style.paddingTop = `${mobileOffset}px`;
+      }
     };
 
     adjustPositions();
     window.addEventListener('resize', adjustPositions);
     
-    const interval = setInterval(adjustPositions, 500);
+    const interval = setInterval(adjustPositions, 300);
 
     return () => {
       window.removeEventListener('resize', adjustPositions);

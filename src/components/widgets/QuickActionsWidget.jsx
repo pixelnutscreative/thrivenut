@@ -302,6 +302,7 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
       style={{
         left: isMobile ? 0 : '288px',
         right: 0,
+        top: isMobile ? '56px' : '0',
         width: isMobile ? '100%' : 'calc(100% - 288px)',
         display: 'flex',
         flexDirection: 'row',
