@@ -11,6 +11,7 @@ import { motion } from 'framer-motion';
 
 export default function ReferralsTab({ userEmail, primaryColor, accentColor }) {
   const queryClient = useQueryClient();
+  
   const [editingLinkId, setEditingLinkId] = useState(null);
   const [editingCode, setEditingCode] = useState('');
   const [editingLabel, setEditingLabel] = useState('');
