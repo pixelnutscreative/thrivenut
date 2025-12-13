@@ -1080,16 +1080,29 @@ export default function Settings() {
                                   <Trash2 className="w-4 h-4 text-red-400" />
                                 </Button>
                               </div>
-                              <Textarea
-                                placeholder="Paste your HTML code here..."
-                                value={homepage.html}
-                                onChange={(e) => {
-                                  const updated = [...prefData.custom_homepages];
-                                  updated[idx].html = e.target.value;
-                                  setPrefData({ ...prefData, custom_homepages: updated });
-                                }}
-                                className="font-mono text-sm min-h-[200px]"
-                              />
+                              <div className="space-y-2">
+                                <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs">
+                                  <Sparkles className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                                  <div className="text-blue-800">
+                                    <p className="font-semibold mb-1">What to paste here:</p>
+                                    <ul className="list-disc list-inside space-y-1">
+                                      <li><strong>From Canva Code:</strong> Click "Publish" → "Website" → "View code" → Copy ALL the code (including &lt;!DOCTYPE html&gt;)</li>
+                                      <li><strong>Custom HTML:</strong> Paste a complete HTML document with &lt;html&gt;, &lt;head&gt;, and &lt;body&gt; tags</li>
+                                      <li><strong>Partial HTML:</strong> Just sections/divs work too, but may need styling</li>
+                                    </ul>
+                                  </div>
+                                </div>
+                                <Textarea
+                                  placeholder="Paste your HTML code here... (e.g., from Canva Code export or custom HTML)"
+                                  value={homepage.html}
+                                  onChange={(e) => {
+                                    const updated = [...prefData.custom_homepages];
+                                    updated[idx].html = e.target.value;
+                                    setPrefData({ ...prefData, custom_homepages: updated });
+                                  }}
+                                  className="font-mono text-sm min-h-[200px]"
+                                />
+                              </div>
                             </div>
                           </CardContent>
                         </Card>
