@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -42,6 +42,16 @@ export default function AdminAnnouncementsContent() {
   });
   const [scheduleDay, setScheduleDay] = useState('');
   const [scheduleTime, setScheduleTime] = useState('');
+
+  // Load Google Font for preview
+  useEffect(() => {
+    if (formData.google_font) {
+      const link = document.createElement('link');
+      link.href = `https://fonts.googleapis.com/css2?family=${formData.google_font.replace(/ /g, '+')}:wght@400;700;900&display=swap`;
+      link.rel = 'stylesheet';
+      document.head.appendChild(link);
+    }
+  }, [formData.google_font]);
 
   const { data: bars = [] } = useQuery({
     queryKey: ['announcementBars'],
