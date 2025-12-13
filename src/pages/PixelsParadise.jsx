@@ -12,8 +12,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { ExternalLink, Sparkles, Search, Loader2, Zap, Crown, Bot, Palette, GraduationCap, Users, Wrench, Youtube, BookOpen, Bell, Check, X, ShoppingBag, Clock } from 'lucide-react';
 import ShopSection from '../components/pixelshop/ShopSection';
 import CustomGPTsSection from '../components/pixelshop/CustomGPTsSection';
+import PortfolioSection from '../components/portfolio/PortfolioSection';
 import { motion } from 'framer-motion';
 import { useTheme } from '../components/shared/useTheme';
+import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
 
 // Pixel's AI Toolbox pricing options
 const aiToolboxOptions = [
@@ -174,12 +176,15 @@ export default function PixelsParadise() {
   
   const { isDark, bgClass, textClass, cardBgClass, subtextClass, primaryColor, accentColor } = useTheme();
 
+  const effectiveEmail = user ? getEffectiveUserEmail(user.email) : null;
+
   useEffect(() => {
     base44.auth.isAuthenticated().then(setIsAuthenticated).catch(() => {});
     base44.auth.me().then(async (userData) => {
       setUser(userData);
+      const email = getEffectiveUserEmail(userData.email);
       // Fetch preferences
-      const prefs = await base44.entities.UserPreferences.filter({ user_email: userData.email });
+      const prefs = await base44.entities.UserPreferences.filter({ user_email: email });
       if (prefs[0]) setPreferences(prefs[0]);
     }).catch(() => {});
   }, []);
@@ -431,12 +436,21 @@ export default function PixelsParadise() {
 
 
 
-        {/* ===== PIXEL'S CREATIVE SHOP - TEMPORARILY HIDDEN ===== */}
-        {/* <div className={`pt-4 border-t ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+        {/* ===== PIXEL'S CREATIVE SHOP ===== */}
+        <div className={`pt-4 border-t ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
           <ShopSection isDark={isDark} primaryColor={primaryColor} accentColor={accentColor} />
-        </div> */}
+        </div>
 
-
+        {/* ===== CREATOR PORTFOLIO SHOWCASE ===== */}
+        <div className={`pt-4 border-t ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+          <PortfolioSection 
+            userEmail={effectiveEmail}
+            isAuthenticated={isAuthenticated}
+            primaryColor={primaryColor}
+            accentColor={accentColor}
+            isDark={isDark}
+          />
+        </div>
 
         {/* ===== SEARCH & FILTERS ===== */}
         <div className={`space-y-4 pt-4 border-t ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
