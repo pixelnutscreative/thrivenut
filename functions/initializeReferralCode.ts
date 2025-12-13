@@ -18,6 +18,10 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Get referral code from request body (passed from frontend)
+    const body = await req.json().catch(() => ({}));
+    const referralCodeUsed = body.referral_code || null;
+
     // Check if user already has a referral link
     const existingLinks = await base44.asServiceRole.entities.ReferralLink.filter({ 
       user_email: user.email 
@@ -56,8 +60,6 @@ Deno.serve(async (req) => {
     });
 
     // Create user verification record
-    const referralCodeUsed = sessionStorage?.getItem?.('referral_code') || null;
-    
     await base44.asServiceRole.entities.UserVerification.create({
       user_email: user.email,
       signup_date: new Date().toISOString(),
