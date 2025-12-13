@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
@@ -1207,7 +1206,7 @@ export default function MyDaySection({
     );
   }
 
-  // Detailed view - show full detailed layout with all tasks
+  // Detailed view - show full detailed layout with all tasks organized by time
   return (
     <>
       <Card className="shadow-lg border-0 bg-gradient-to-br from-teal-400 via-blue-400 to-purple-500">
@@ -1233,8 +1232,79 @@ export default function MyDaySection({
           </div>
           <CompactGoalsScroll userEmail={preferences?.user_email} />
         </CardHeader>
-        <CardContent className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl">
-          <p className="text-sm text-gray-600">Detailed view coming soon. For now, use Compact view above.</p>
+        <CardContent className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl space-y-3">
+          {Object.keys(timeLabels).map(timeSlot => {
+            const sectionTasks = tasksByTime[timeSlot] || [];
+            if (sectionTasks.length === 0) return null;
+            
+            const visibleTasks = getVisibleTasks(sectionTasks);
+            if (visibleTasks.length === 0) return null;
+
+            const TimeIcon = timeLabels[timeSlot].icon;
+            const isCollapsed = collapsedSections.includes(timeSlot);
+            
+            return (
+              <Collapsible key={timeSlot} open={!isCollapsed} onOpenChange={() => toggleSectionCollapse(timeSlot)}>
+                <CollapsibleTrigger className="w-full">
+                  <div className={`flex items-center justify-between p-3 rounded-lg ${timeLabels[timeSlot].bg} border-2 border-transparent hover:border-purple-300 transition-colors cursor-pointer`}>
+                    <div className="flex items-center gap-2">
+                      <TimeIcon className={`w-4 h-4 ${timeLabels[timeSlot].color}`} />
+                      <h3 className="font-semibold text-sm">{timeLabels[timeSlot].label}</h3>
+                      <Badge variant="secondary" className="text-xs">
+                        {visibleTasks.filter(t => isTaskComplete(t)).length}/{visibleTasks.length}
+                      </Badge>
+                    </div>
+                    {isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+                  </div>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-2 mt-2">
+                  {visibleTasks.map(task => {
+                    const Icon = task.icon;
+                    const isComplete = isTaskComplete(task);
+                    
+                    return (
+                      <div key={task.id} className="flex items-center gap-3 p-3 bg-white rounded-lg border hover:border-purple-300 transition-colors">
+                        <Checkbox
+                          checked={isComplete}
+                          onCheckedChange={() => handleToggleTask(task)}
+                          className="flex-shrink-0"
+                        />
+                        <Icon className={`w-4 h-4 flex-shrink-0 ${task.color}`} />
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-sm font-medium ${isComplete ? 'line-through text-gray-400' : ''}`}>
+                            {task.label}
+                          </p>
+                          {task.sublabel && (
+                            <p className="text-xs text-gray-500">{task.sublabel}</p>
+                          )}
+                        </div>
+                        {task.isLink && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => window.location.href = createPageUrl(task.linkTo)}
+                            className="h-7 px-2"
+                          >
+                            <ArrowRight className="w-3 h-3" />
+                          </Button>
+                        )}
+                        {task.externalLink && (
+                          <a
+                            href={task.externalLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-500 hover:text-blue-600"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        )}
+                      </div>
+                    );
+                  })}
+                </CollapsibleContent>
+              </Collapsible>
+            );
+          })}
         </CardContent>
       </Card>
 
