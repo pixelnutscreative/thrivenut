@@ -19,7 +19,7 @@ export default function AccountDeletionTab({ userEmail }) {
   const { data: deletionRequest } = useQuery({
     queryKey: ['deletionRequest', userEmail],
     queryFn: async () => {
-      const requests = await base44.entities.DeletionRequest.filter({ 
+      const requests = await base44.entities.AccountDeletionRequest.filter({ 
         user_email: userEmail,
         status: 'pending'
       });
@@ -33,7 +33,7 @@ export default function AccountDeletionTab({ userEmail }) {
       const deletionDate = new Date();
       deletionDate.setDate(deletionDate.getDate() + 30);
       
-      return await base44.entities.DeletionRequest.create({
+      return await base44.entities.AccountDeletionRequest.create({
         user_email: userEmail,
         requested_date: new Date().toISOString(),
         scheduled_deletion_date: deletionDate.toISOString(),
@@ -51,7 +51,7 @@ export default function AccountDeletionTab({ userEmail }) {
 
   const cancelDeletionMutation = useMutation({
     mutationFn: async () => {
-      return await base44.entities.DeletionRequest.update(deletionRequest.id, {
+      return await base44.entities.AccountDeletionRequest.update(deletionRequest.id, {
         status: 'cancelled',
         cancelled_date: new Date().toISOString()
       });

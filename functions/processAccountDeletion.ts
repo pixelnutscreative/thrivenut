@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
 
     // Find all pending deletion requests that are past their 30-day period
     const now = new Date();
-    const allRequests = await base44.asServiceRole.entities.DeletionRequest.filter({ 
+    const allRequests = await base44.asServiceRole.entities.AccountDeletionRequest.filter({ 
       status: 'pending' 
     });
 
@@ -67,7 +67,7 @@ Deno.serve(async (req) => {
         }
 
         // Mark deletion request as completed
-        await base44.asServiceRole.entities.DeletionRequest.update(request.id, {
+        await base44.asServiceRole.entities.AccountDeletionRequest.update(request.id, {
           status: 'completed',
           actual_deletion_date: new Date().toISOString(),
           records_deleted: deletedCount
