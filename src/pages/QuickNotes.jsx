@@ -29,13 +29,17 @@ export default function QuickNotes() {
   const { bgClass, textClass, cardBgClass, primaryColor, accentColor, effectiveEmail } = useTheme();
 
   React.useEffect(() => {
-    base44.auth.me().then(setUser);
+    base44.auth.me().then(userData => {
+      setUser(userData);
+    }).catch(() => {
+      window.location.href = '/';
+    });
   }, []);
 
   const { data: notes = [], isLoading } = useQuery({
-    queryKey: ['quickNotes', effectiveEmail],
-    queryFn: () => base44.entities.QuickNote.filter({ created_by: effectiveEmail }, '-created_date'),
-    enabled: !!effectiveEmail,
+    queryKey: ['quickNotes', user?.email],
+    queryFn: () => base44.entities.QuickNote.filter({ created_by: effectiveEmail || user?.email }, '-created_date'),
+    enabled: !!(effectiveEmail || user?.email),
   });
 
   const deleteMutation = useMutation({
