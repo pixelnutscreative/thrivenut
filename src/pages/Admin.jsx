@@ -24,6 +24,8 @@ import AdminPixelsPlaceContent from '../components/admin/AdminPixelsPlaceContent
 import AdminAIToolsContent from '../components/admin/AdminAIToolsContent';
 import AdminReferralRewardsContent from '../components/admin/AdminReferralRewardsContent';
 import AdminReferralCommissionsContent from '../components/admin/AdminReferralCommissionsContent';
+import AdminNotificationsContent from '../components/admin/AdminNotificationsContent';
+import AdminAnnouncementsContent from '../components/admin/AdminAnnouncementsContent';
 
 const ADMIN_EMAILS = ['pixelnutscreative@gmail.com', 'pixel@thrivenut.app'];
 
@@ -98,6 +100,14 @@ export default function Admin() {
                 <TabsTrigger value="support" className="flex items-center gap-2">
                   <MessageSquare className="w-4 h-4" />
                   <span className="hidden sm:inline">Tickets</span>
+                </TabsTrigger>
+                <TabsTrigger value="notifications" className="flex items-center gap-2">
+                  <Shield className="w-4 h-4" />
+                  <span className="hidden sm:inline">Notifications</span>
+                </TabsTrigger>
+                <TabsTrigger value="announcements" className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4" />
+                  <span className="hidden sm:inline">Announce</span>
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -182,6 +192,14 @@ export default function Admin() {
 
           <TabsContent value="support" className="mt-6">
             <AdminSupportContent />
+          </TabsContent>
+
+          <TabsContent value="notifications" className="mt-6">
+            <AdminNotificationsContent userEmail={user?.email} />
+          </TabsContent>
+
+          <TabsContent value="announcements" className="mt-6">
+            <AdminAnnouncementsContent />
           </TabsContent>
 
           <TabsContent value="queue" className="mt-6">
