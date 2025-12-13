@@ -888,6 +888,7 @@ export default function Settings() {
                 </div>
               </CardContent>
             </Card>
+            )}
           </TabsContent>
 
           {/* CONNECTIONS TAB */}
