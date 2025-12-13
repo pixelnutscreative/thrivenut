@@ -194,7 +194,6 @@ export default function Layout({ children, currentPageName }) {
       bgColor: 'bg-pink-500/10',
       items: [
         { name: 'Support', icon: HelpCircle, path: 'Support', alwaysShow: true },
-        { name: 'Settings', icon: Settings, path: 'Settings', alwaysShow: true },
         { name: 'Admin Panel', icon: UserCog, path: 'Admin', adminOnly: true },
         { name: 'Community Map', icon: Share2, path: 'CommunityMap', adminOnly: true },
       ]
@@ -264,7 +263,7 @@ export default function Layout({ children, currentPageName }) {
     ? (preferences?.spotify_playlist_url || '') 
     : (preferences?.soundcloud_playlist_url || '');
     
-  const soundcloudPosition = preferences?.soundcloud_player_position || 'hidden';
+  const soundcloudPosition = preferences?.soundcloud_player_position || 'menu';
 
   return (
     <div 
@@ -448,22 +447,20 @@ export default function Layout({ children, currentPageName }) {
 
               {user && (
                 <div className={`pt-6 mt-6 border-t ${menuBorderClass}`}>
-                  <Link
-                    to={createPageUrl('Settings')}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all mb-3 ${menuTextClass} ${menuHoverClass}`}
-                  >
-                    <Settings className="w-4 h-4" />
-                    <span className="font-medium">Settings</span>
-                  </Link>
                   <Button
                     onClick={handleLogout}
                     variant="outline"
                     size="sm"
-                    className="w-full"
+                    className={`w-full ${isMenuDark ? 'border-gray-600 text-gray-100 hover:bg-gray-700 hover:text-white' : 'text-gray-800 border-gray-300 hover:bg-gray-100'}`}
                   >
                     <LogOut className="w-4 h-4 mr-2" /> Sign Out
                   </Button>
+
+                  {soundcloudPosition === 'menu' && soundcloudUrl && (
+                    <div className="mt-4 pt-4 border-t" style={{ borderColor: menuBorderClass }}>
+                      <SoundCloudPlayer playlistUrl={soundcloudUrl} isMenuDark={isMenuDark} />
+                    </div>
+                  )}
                 </div>
               )}
             </nav>
