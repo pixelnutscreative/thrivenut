@@ -64,6 +64,7 @@ Deno.serve(async (req) => {
       user_email: user.email,
       signup_date: new Date().toISOString(),
       referral_code_used: referralCodeUsed,
+      referred_by_code: referralCodeUsed,
       has_logged_in: true,
       days_active: 1,
       last_activity_date: new Date().toISOString()
@@ -71,11 +72,15 @@ Deno.serve(async (req) => {
 
     // Track signup if they used a referral code
     if (referralCodeUsed) {
-      await base44.asServiceRole.functions.invoke('trackReferral', {
-        referralCode: referralCodeUsed,
-        activityType: 'signup',
-        email: user.email
-      });
+      try {
+        await base44.functions.invoke('trackReferral', {
+          referralCode: referralCodeUsed,
+          activityType: 'signup',
+          email: user.email
+        });
+      } catch (error) {
+        console.error('Error tracking referral signup:', error);
+      }
     }
 
     return Response.json({ 
