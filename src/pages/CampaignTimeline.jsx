@@ -17,6 +17,9 @@ export default function CampaignTimeline() {
   const [selectedCampaign, setSelectedCampaign] = useState('');
 
   const isAdmin = user?.role === 'admin';
+  
+  // Permission check: Owner/Admin have full access, VA/MOD read-only
+  const canModifyCampaigns = isAdmin || effectiveEmail === campaign?.owner;
 
   const { data: campaigns = [] } = useQuery({
     queryKey: ['campaigns'],
@@ -198,7 +201,10 @@ export default function CampaignTimeline() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold text-gray-800">Campaign Timeline</h1>
-            <p className="text-sm text-gray-600 mt-1">Visualize content phases for your campaigns</p>
+            <p className="text-sm text-gray-600 mt-1">
+              Visualize content phases for your campaigns
+              {!isAdmin && <span className="ml-2 text-xs text-purple-600">(Read-Only View)</span>}
+            </p>
           </div>
         </div>
 
