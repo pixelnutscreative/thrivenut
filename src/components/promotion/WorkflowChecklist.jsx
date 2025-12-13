@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ExternalLink, CheckCircle2, Circle } from 'lucide-react';
 
-export default function WorkflowChecklist({ contentCardId, workflowStep, contentType, selectedPlatform }) {
+export default function WorkflowChecklist({ contentCardId, workflowStep, contentType, selectedPlatform = 'all' }) {
   const { data: templates = [] } = useQuery({
     queryKey: ['checklistTemplates', workflowStep?.id],
     queryFn: async () => {

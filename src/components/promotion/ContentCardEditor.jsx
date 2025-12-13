@@ -15,6 +15,7 @@ import AssetsPanel from './AssetsPanel';
 import WorkflowChecklist from './WorkflowChecklist';
 import ScriptDrawer from './ScriptDrawer';
 import OutcomeTracker from './OutcomeTracker';
+import ChangeRequestModal from './ChangeRequestModal';
 
 export default function ContentCardEditor({ card, onClose, userEmail }) {
   const queryClient = useQueryClient();
@@ -25,6 +26,7 @@ export default function ContentCardEditor({ card, onClose, userEmail }) {
     content_type: 'video',
     intent: 'grow',
     status: 'idea',
+    current_workflow_step_id: '',
     owner: userEmail,
     assigned_va: '',
     script_approved: false,
@@ -35,6 +37,7 @@ export default function ContentCardEditor({ card, onClose, userEmail }) {
     reuse_toggle: false
   });
   const [scriptDrawerOpen, setScriptDrawerOpen] = useState(false);
+  const [showChangeRequestModal, setShowChangeRequestModal] = useState(false);
 
   useEffect(() => {
     if (card) {
@@ -79,7 +82,14 @@ export default function ContentCardEditor({ card, onClose, userEmail }) {
   const canEdit = !isLocked; // VAs would need additional permission check
 
   const filteredCampaigns = campaigns.filter(c => c.brand_id === formData.brand_id);
-  const currentStep = workflowSteps.find(s => s.name === 'Strategy & Script') || workflowSteps[0];
+  const currentStep = workflowSteps.find(s => s.id === formData.current_workflow_step_id) || workflowSteps[0];
+
+  // Set default workflow step if none selected
+  React.useEffect(() => {
+    if (card && !formData.current_workflow_step_id && workflowSteps.length > 0) {
+      setFormData(prev => ({ ...prev, current_workflow_step_id: workflowSteps[0].id }));
+    }
+  }, [card, workflowSteps]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-50 via-purple-50 to-blue-50 p-6">
@@ -120,6 +130,29 @@ export default function ContentCardEditor({ card, onClose, userEmail }) {
             </Button>
           </div>
         </div>
+
+        {/* Edit Lock Banner */}
+        {isLocked && (
+          <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 mb-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Lock className="w-5 h-5 text-red-600" />
+                <div>
+                  <h3 className="font-semibold text-red-900">Content Locked for Editing</h3>
+                  <p className="text-sm text-red-700">This content is locked. You cannot make changes directly.</p>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowChangeRequestModal(true)}
+                className="border-red-300 text-red-700 hover:bg-red-100"
+              >
+                Request Change
+              </Button>
+            </div>
+          </div>
+        )}
 
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Left Column - Main Form */}
@@ -327,6 +360,16 @@ export default function ContentCardEditor({ card, onClose, userEmail }) {
             isOpen={scriptDrawerOpen}
             onClose={() => setScriptDrawerOpen(false)}
             isLocked={!formData.script_approved}
+          />
+        )}
+
+        {/* Change Request Modal */}
+        {card && (
+          <ChangeRequestModal
+            contentCardId={card.id}
+            isOpen={showChangeRequestModal}
+            onClose={() => setShowChangeRequestModal(false)}
+            userEmail={userEmail}
           />
         )}
       </div>
