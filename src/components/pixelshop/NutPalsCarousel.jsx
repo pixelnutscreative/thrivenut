@@ -23,10 +23,10 @@ function NutPalCard({ nutpal, onClick }) {
 
   return (
     <div 
-      className="flex-shrink-0 w-40 cursor-pointer group"
+      className="flex-shrink-0 w-32 md:w-40 cursor-pointer group"
       onClick={() => onClick(nutpal)}
     >
-      <div className="aspect-square rounded-xl overflow-hidden bg-gradient-to-br from-teal-100 to-cyan-100 relative">
+      <div className="aspect-square rounded-lg md:rounded-xl overflow-hidden bg-gradient-to-br from-teal-100 to-cyan-100 relative">
         {images.length > 0 ? (
           <>
             <img 
@@ -35,11 +35,11 @@ function NutPalCard({ nutpal, onClick }) {
               className="w-full h-full object-cover transition-transform group-hover:scale-105"
             />
             {images.length > 1 && (
-              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+              <div className="absolute bottom-1.5 md:bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
                 {images.map((_, idx) => (
                   <div 
                     key={idx}
-                    className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                    className={`w-1 md:w-1.5 h-1 md:h-1.5 rounded-full transition-colors ${
                       idx === currentImageIndex ? 'bg-white' : 'bg-white/50'
                     }`}
                   />
@@ -49,11 +49,11 @@ function NutPalCard({ nutpal, onClick }) {
           </>
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <Palette className="w-12 h-12 text-teal-300" />
+            <Palette className="w-8 md:w-12 h-8 md:h-12 text-teal-300" />
           </div>
         )}
       </div>
-      <p className="mt-2 text-center text-sm font-medium truncate">{nutpal.name}</p>
+      <p className="mt-1.5 md:mt-2 text-center text-xs md:text-sm font-medium truncate">{nutpal.name}</p>
     </div>
   );
 }
@@ -105,29 +105,29 @@ export default function NutPalsCarousel({ isDark, primaryColor, accentColor, isA
 
   return (
     <>
-      <div className="relative">
+      <div className="relative px-2 md:px-0">
         {/* Scroll Buttons */}
         <button
           onClick={() => scroll('left')}
-          className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full shadow-lg ${
+          className={`absolute left-0 md:left-2 top-1/2 -translate-y-1/2 z-10 p-1.5 md:p-2 rounded-full shadow-lg ${
             isDark ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'
           } hover:scale-110 transition-transform`}
         >
-          <ChevronLeft className="w-5 h-5" />
+          <ChevronLeft className="w-4 md:w-5 h-4 md:h-5" />
         </button>
         <button
           onClick={() => scroll('right')}
-          className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full shadow-lg ${
+          className={`absolute right-0 md:right-2 top-1/2 -translate-y-1/2 z-10 p-1.5 md:p-2 rounded-full shadow-lg ${
             isDark ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'
           } hover:scale-110 transition-transform`}
         >
-          <ChevronRight className="w-5 h-5" />
+          <ChevronRight className="w-4 md:w-5 h-4 md:h-5" />
         </button>
 
         {/* Carousel */}
         <div 
           ref={scrollRef}
-          className="flex gap-4 overflow-x-auto scrollbar-hide py-4 px-8"
+          className="flex gap-3 md:gap-4 overflow-x-auto scrollbar-hide py-4 px-8 md:px-12"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {nutpals.map((nutpal) => (

@@ -211,21 +211,23 @@ export default function ShopSection({ isDark, primaryColor, accentColor }) {
       )}
 
       {/* NutPals Carousel Section */}
-      <Card className="text-white border-0" style={gradientStyle}>
-        <CardContent className="p-6">
+      <Card className="text-white border-0 overflow-hidden" style={gradientStyle}>
+        <CardContent className="p-4 md:p-6">
           <div className="text-center mb-4">
-            <h3 className="text-xl font-bold mb-2">🐿️ Meet the NutPals!</h3>
-            <p className="text-white/90">
+            <h3 className="text-lg md:text-xl font-bold mb-2">🐿️ Meet the NutPals!</h3>
+            <p className="text-white/90 text-sm md:text-base">
               50+ character styles! Any animal or object personified - from designer bags to toilet paper with personality. 
               If you can dream it, I can create it!
             </p>
           </div>
           
-          <NutPalsCarousel 
-            isDark={false} 
-            primaryColor={primaryColor} 
-            accentColor={accentColor}
-          />
+          <div className="max-w-full overflow-hidden">
+            <NutPalsCarousel 
+              isDark={false} 
+              primaryColor={primaryColor} 
+              accentColor={accentColor}
+            />
+          </div>
           
           <div className="text-center mt-4">
             <Button

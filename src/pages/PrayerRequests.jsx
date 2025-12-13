@@ -14,6 +14,7 @@ import {
   Heart, Plus, Users, Lock, Globe, Check, Send, BookOpen, 
   MessageCircle, Sparkles, Clock, AlertTriangle, PartyPopper, Edit, X, CheckCircle
 } from 'lucide-react';
+import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, formatDistanceToNow } from 'date-fns';
 import { useTheme } from '../components/shared/useTheme';
@@ -59,11 +60,14 @@ export default function PrayerRequests() {
     title: '',
     description: '',
     category: 'other',
+    request_type: isBibleEnabled ? 'prayer' : 'light_and_love',
     is_urgent: false,
     is_anonymous: false,
     allow_messages: true,
     visibility: 'community'
   });
+  
+  const [showPrayerHistory, setShowPrayerHistory] = useState(null);
   const [updateModal, setUpdateModal] = useState(null); // holds request being updated
   const [updateContent, setUpdateContent] = useState('');
   const [isAnswerUpdate, setIsAnswerUpdate] = useState(false);
@@ -74,13 +78,19 @@ export default function PrayerRequests() {
 
   const effectiveEmail = user?.email ? getEffectiveUserEmail(user.email) : null;
 
-  // Fetch all community prayer requests
+  // Fetch all community prayer requests - filtered by user's Bible belief status
   const { data: prayerRequests = [] } = useQuery({
-    queryKey: ['prayerRequests'],
+    queryKey: ['prayerRequests', isBibleEnabled],
     queryFn: async () => {
       const requests = await base44.entities.PrayerRequest.filter({ visibility: 'community' }, '-created_date');
+      // Non-Bible believers only see light_and_love requests
+      // Bible believers see ALL requests (they can pray for everyone)
+      if (!isBibleEnabled) {
+        return requests.filter(r => r.request_type === 'light_and_love');
+      }
       return requests;
     },
+    enabled: isBibleEnabled !== undefined,
   });
 
   // Fetch my prayer requests
@@ -97,23 +107,32 @@ export default function PrayerRequests() {
     enabled: !!selectedRequest,
   });
 
-  // Check if I've prayed for each request
-  const { data: myPrayers = [] } = useQuery({
+  // Check if I've prayed for each request - now returns full prayer history
+  const { data: myPrayerHistory = [] } = useQuery({
     queryKey: ['myPrayers', effectiveEmail],
     queryFn: async () => {
       const prayers = await base44.entities.PrayerInteraction.filter({ 
         type: 'prayed',
         created_by: effectiveEmail 
       });
-      return prayers.map(p => p.prayer_request_id);
+      return prayers;
     },
     enabled: !!effectiveEmail,
   });
+
+  // Get prayer IDs for quick lookup
+  const myPrayers = myPrayerHistory.map(p => p.prayer_request_id);
+  
+  // Get prayer history for a specific request
+  const getPrayerHistoryForRequest = (requestId) => {
+    return myPrayerHistory.filter(p => p.prayer_request_id === requestId);
+  };
 
   const createRequestMutation = useMutation({
     mutationFn: async (data) => {
       return base44.entities.PrayerRequest.create({
         ...data,
+        request_type: isBibleEnabled ? 'prayer' : 'light_and_love',
         requester_display_name: user?.full_name || effectiveEmail?.split('@')[0]
       });
     },
@@ -125,6 +144,7 @@ export default function PrayerRequests() {
         title: '',
         description: '',
         category: 'other',
+        request_type: isBibleEnabled ? 'prayer' : 'light_and_love',
         is_urgent: false,
         is_anonymous: false,
         allow_messages: true,
@@ -225,44 +245,51 @@ export default function PrayerRequests() {
   const isMyRequest = (request) => request.created_by === effectiveEmail;
 
   const PrayerCard = ({ request, showPrayButton = true, showActions = false }) => {
-    const hasPrayed = myPrayers.includes(request.id);
+    const prayerHistory = getPrayerHistoryForRequest(request.id);
+    const hasPrayed = prayerHistory.length > 0;
     const categoryInfo = categories.find(c => c.value === request.category);
     const isMine = isMyRequest(request);
+    const isLightAndLove = request.request_type === 'light_and_love';
     
     return (
       <Card className={`${cardBgClass} ${request.is_answered ? (isDark ? 'border-green-600 bg-green-900/20' : 'border-green-300 bg-green-50/50') : ''} ${request.is_urgent && !request.is_answered ? (isDark ? 'border-red-600' : 'border-red-300') : ''}`}>
         <CardContent className="p-4">
           <div className="flex items-start justify-between gap-3">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap mb-2">
-                {request.is_urgent && !request.is_answered && (
-                  <Badge className="bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300">
-                    <AlertTriangle className="w-3 h-3 mr-1" />
-                    Urgent
-                  </Badge>
-                )}
-                {request.is_answered && (
-                  <Badge className="bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300">
-                    <PartyPopper className="w-3 h-3 mr-1" />
-                    Answered!
-                  </Badge>
-                )}
-                {request.is_closed && !request.is_answered && (
-                  <Badge variant="secondary" className={isDark ? 'bg-gray-700 text-gray-300' : ''}>
-                    <X className="w-3 h-3 mr-1" />
-                    Closed
-                  </Badge>
-                )}
-                {categoryInfo && (
-                  <Badge className={categoryInfo.color}>{categoryInfo.label}</Badge>
-                )}
-                {request.is_anonymous && (
-                  <Badge variant="outline" className={`text-xs ${isDark ? 'border-gray-500 text-gray-300' : ''}`}>
-                    <Lock className="w-3 h-3 mr-1" />
-                    Anonymous
-                  </Badge>
-                )}
-              </div>
+          <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap mb-2">
+            {isLightAndLove && (
+              <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white">
+                ✨ Light & Love
+              </Badge>
+            )}
+            {request.is_urgent && !request.is_answered && (
+              <Badge className="bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300">
+                <AlertTriangle className="w-3 h-3 mr-1" />
+                Urgent
+              </Badge>
+            )}
+            {request.is_answered && (
+              <Badge className="bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300">
+                <PartyPopper className="w-3 h-3 mr-1" />
+                {isLightAndLove ? 'Resolved!' : 'Answered!'}
+              </Badge>
+            )}
+            {request.is_closed && !request.is_answered && (
+              <Badge variant="secondary" className={isDark ? 'bg-gray-700 text-gray-300' : ''}>
+                <X className="w-3 h-3 mr-1" />
+                Closed
+              </Badge>
+            )}
+            {categoryInfo && (
+              <Badge className={categoryInfo.color}>{categoryInfo.label}</Badge>
+            )}
+            {request.is_anonymous && (
+              <Badge variant="outline" className={`text-xs ${isDark ? 'border-gray-500 text-gray-300' : ''}`}>
+                <Lock className="w-3 h-3 mr-1" />
+                Anonymous
+              </Badge>
+            )}
+          </div>
               
               <h3 className={`font-semibold ${textClass}`}>{request.title}</h3>
               <p className={`text-sm mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -317,23 +344,34 @@ export default function PrayerRequests() {
                 <>
                   <Button
                     size="sm"
-                    onClick={() => hasPrayed ? null : prayMutation.mutate(request.id)}
-                    disabled={hasPrayed || prayMutation.isPending}
+                    onClick={() => prayMutation.mutate(request.id)}
+                    disabled={prayMutation.isPending}
                     className={hasPrayed ? 'bg-green-500' : ''}
                     style={!hasPrayed ? { background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` } : {}}
                   >
                     {hasPrayed ? (
                       <>
                         <Check className="w-4 h-4 mr-1" />
-                        Prayed
+                        {prayerHistory.length}
                       </>
                     ) : (
                       <>
                         <Heart className="w-4 h-4 mr-1" />
-                        Pray
+                        {isLightAndLove ? 'Send Love' : 'Pray'}
                       </>
                     )}
                   </Button>
+                  {hasPrayed && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setShowPrayerHistory(request)}
+                      className="text-xs"
+                    >
+                      <Clock className="w-3 h-3 mr-1" />
+                      History
+                    </Button>
+                  )}
                   {request.allow_messages && (
                     <Button
                       size="sm"
@@ -687,35 +725,47 @@ export default function PrayerRequests() {
                 </div>
               )}
 
-              <Tabs defaultValue="message">
-                <TabsList className="grid grid-cols-2">
-                  <TabsTrigger value="message">💬 Message</TabsTrigger>
-                  <TabsTrigger value="scripture">📖 Scripture</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="message" className="space-y-3">
+              {selectedRequest.request_type === 'light_and_love' ? (
+                <div className="space-y-3">
+                  <p className="text-sm text-gray-600">Send an encouraging message (scriptures not shown for Light & Love requests)</p>
                   <Textarea
-                    placeholder="Write an encouraging message or a prayer for them..."
+                    placeholder="Write an encouraging message of love and support..."
                     value={messageContent}
                     onChange={(e) => setMessageContent(e.target.value)}
                     rows={3}
                   />
-                </TabsContent>
+                </div>
+              ) : (
+                <Tabs defaultValue="message">
+                  <TabsList className="grid grid-cols-2">
+                    <TabsTrigger value="message">💬 Message</TabsTrigger>
+                    <TabsTrigger value="scripture">📖 Scripture</TabsTrigger>
+                  </TabsList>
 
-                <TabsContent value="scripture" className="space-y-3">
-                  <Input
-                    placeholder="Scripture reference (e.g., Philippians 4:6)"
-                    value={scriptureRef}
-                    onChange={(e) => setScriptureRef(e.target.value)}
-                  />
-                  <Textarea
-                    placeholder="Paste the scripture text..."
-                    value={scriptureText}
-                    onChange={(e) => setScriptureText(e.target.value)}
-                    rows={3}
-                  />
-                </TabsContent>
-              </Tabs>
+                  <TabsContent value="message" className="space-y-3">
+                    <Textarea
+                      placeholder="Write an encouraging message or a prayer for them..."
+                      value={messageContent}
+                      onChange={(e) => setMessageContent(e.target.value)}
+                      rows={3}
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="scripture" className="space-y-3">
+                    <Input
+                      placeholder="Scripture reference (e.g., Philippians 4:6)"
+                      value={scriptureRef}
+                      onChange={(e) => setScriptureRef(e.target.value)}
+                    />
+                    <Textarea
+                      placeholder="Paste the scripture text..."
+                      value={scriptureText}
+                      onChange={(e) => setScriptureText(e.target.value)}
+                      rows={3}
+                    />
+                  </TabsContent>
+                </Tabs>
+              )}
 
               <label 
                 className="flex items-center gap-2 cursor-pointer"
@@ -748,6 +798,50 @@ export default function PrayerRequests() {
               >
                 <Send className="w-4 h-4 mr-2" />
                 Send Encouragement
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Prayer History Dialog */}
+      <Dialog open={!!showPrayerHistory} onOpenChange={() => setShowPrayerHistory(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Clock className="w-5 h-5 text-purple-500" />
+              Prayer History
+            </DialogTitle>
+          </DialogHeader>
+          
+          {showPrayerHistory && (
+            <div className="space-y-4">
+              <div className="p-3 bg-gray-50 rounded-lg">
+                <p className="font-medium">{showPrayerHistory.title}</p>
+              </div>
+              
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-gray-700">
+                  You've {showPrayerHistory.request_type === 'light_and_love' ? 'sent love' : 'prayed'} {prayerHistory.length} time{prayerHistory.length !== 1 ? 's' : ''}:
+                </p>
+                <div className="max-h-60 overflow-y-auto space-y-1">
+                  {prayerHistory.map((prayer, idx) => (
+                    <div key={prayer.id} className="p-2 bg-purple-50 rounded text-sm flex items-center justify-between">
+                      <span className="text-purple-700">#{idx + 1}</span>
+                      <span className="text-gray-600 text-xs">
+                        {format(new Date(prayer.created_date), 'MMM d, yyyy h:mm a')}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              <Button
+                onClick={() => setShowPrayerHistory(null)}
+                variant="outline"
+                className="w-full"
+              >
+                Close
               </Button>
             </div>
           )}
