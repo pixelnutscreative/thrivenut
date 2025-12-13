@@ -44,6 +44,9 @@ export default function Dashboard() {
         const userData = await base44.auth.me();
         setUser(userData);
 
+        // Verify user activity on each dashboard visit
+        base44.functions.invoke('verifyRealUser', {}).catch(() => {});
+
         // Check if user is pre-approved and auto-grant TikTok access
         if (userData?.email) {
           const prefs = await base44.entities.UserPreferences.filter({ user_email: userData.email }, '-updated_date');

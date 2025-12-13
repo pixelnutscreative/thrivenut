@@ -13,6 +13,7 @@ import {
   Sliders, Accessibility, MessageCircle
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 
 // ===================== FREE FEATURES =====================
 const freeFeatures = [
@@ -152,18 +153,34 @@ const customizationFeatures = [
 ];
 
 export default function Home() {
+  const navigate = useNavigate();
   const [hoveredFeature, setHoveredFeature] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
 
   useEffect(() => {
+    // Capture referral code from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const refCode = urlParams.get('ref');
+    if (refCode) {
+      sessionStorage.setItem('referral_code', refCode);
+      // Track click
+      base44.functions.invoke('trackReferral', { 
+        referralCode: refCode, 
+        activityType: 'click' 
+      }).catch(() => {});
+    }
+
     base44.auth.isAuthenticated().then(auth => {
       setIsAuthenticated(auth);
       setCheckingAuth(false);
+      if (auth) {
+        navigate(createPageUrl('Dashboard'));
+      }
     }).catch(() => {
       setCheckingAuth(false);
     });
-  }, []);
+  }, [navigate]);
 
   const handleLogin = () => {
     if (isAuthenticated) {
