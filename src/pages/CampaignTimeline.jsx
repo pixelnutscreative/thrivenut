@@ -19,13 +19,21 @@ export default function CampaignTimeline() {
   const isAdmin = user?.role === 'admin';
 
   const { data: campaigns = [] } = useQuery({
-    queryKey: ['campaigns'],
-    queryFn: () => base44.entities.PromotionCampaign.list('-created_date'),
+    queryKey: ['campaigns', effectiveEmail],
+    queryFn: async () => {
+      const userBrands = await base44.entities.Brand.filter({ owner: effectiveEmail }, 'name');
+      const brandIds = userBrands.map(b => b.id);
+      if (brandIds.length === 0) return [];
+      const allCampaigns = await base44.entities.PromotionCampaign.list('-created_date');
+      return allCampaigns.filter(c => brandIds.includes(c.brand_id));
+    },
+    enabled: !!effectiveEmail,
   });
 
   const { data: contentCards = [] } = useQuery({
-    queryKey: ['contentCards'],
-    queryFn: () => base44.entities.ContentCard.list('-updated_date'),
+    queryKey: ['contentCards', effectiveEmail],
+    queryFn: () => base44.entities.ContentCard.filter({ owner: effectiveEmail }, '-updated_date'),
+    enabled: !!effectiveEmail,
   });
 
   const { data: platformOutputs = [] } = useQuery({
