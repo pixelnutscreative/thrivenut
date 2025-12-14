@@ -17,9 +17,6 @@ export default function CampaignTimeline() {
   const [selectedCampaign, setSelectedCampaign] = useState('');
 
   const isAdmin = user?.role === 'admin';
-  
-  // Permission check: Owner/Admin have full access, VA/MOD read-only
-  const canModifyCampaigns = isAdmin || effectiveEmail === campaign?.owner;
 
   const { data: campaigns = [] } = useQuery({
     queryKey: ['campaigns'],
