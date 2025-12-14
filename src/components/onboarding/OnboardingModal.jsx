@@ -39,8 +39,21 @@ function OnboardingModal({ isOpen, user, onComplete }) {
     favorite_color: '#1fd2ea',
     greeting_types: ['positive_quote'],
     mental_health_struggles: [],
-    improvement_goals: []
+    improvement_goals: [],
+    referral_code_input: ''
   });
+
+  // Check if user came via referral link
+  const [hasReferralCode, setHasReferralCode] = useState(false);
+  
+  useEffect(() => {
+    const referralCode = sessionStorage.getItem('referral_code');
+    const storedData = localStorage.getItem('referral_data');
+    
+    if (referralCode || storedData) {
+      setHasReferralCode(true);
+    }
+  }, []);
 
   const completeMutation = useMutation({
     mutationFn: async () => {
