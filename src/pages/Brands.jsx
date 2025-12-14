@@ -23,6 +23,7 @@ export default function BrandsPage() {
   const [editingBrand, setEditingBrand] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
+    primary_product_service: '',
     category: 'personal',
     description: '',
     positioning_statement: '',
@@ -74,6 +75,7 @@ export default function BrandsPage() {
   const resetForm = () => {
     setFormData({
       name: '',
+      primary_product_service: '',
       category: 'personal',
       description: '',
       positioning_statement: '',
@@ -96,6 +98,7 @@ export default function BrandsPage() {
     setEditingBrand(brand);
     setFormData({
       name: brand.name || '',
+      primary_product_service: brand.primary_product_service || '',
       category: brand.category || 'personal',
       description: brand.description || '',
       positioning_statement: brand.positioning_statement || '',
@@ -139,9 +142,20 @@ export default function BrandsPage() {
         <Input
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          placeholder="My Business / My Brand"
+          placeholder="e.g., Pixel's Toolbox, My Coaching Brand"
           required
         />
+        <p className="text-xs text-gray-500 mt-1">Your company or content brand name</p>
+      </div>
+
+      <div>
+        <Label>Primary Product / Service</Label>
+        <Input
+          value={formData.primary_product_service || ''}
+          onChange={(e) => setFormData({ ...formData, primary_product_service: e.target.value })}
+          placeholder="e.g., AI Tools Subscription, Business Coaching, Discord Workshop"
+        />
+        <p className="text-xs text-gray-500 mt-1">What you're selling or promoting under this brand</p>
       </div>
 
       <div>
@@ -315,10 +329,18 @@ export default function BrandsPage() {
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    {brand.description && (
-                      <p className="text-sm text-gray-600 line-clamp-2">{brand.description}</p>
+                    {brand.primary_product_service && (
+                     <div className="flex items-start gap-2 mb-2">
+                       <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                         {brand.primary_product_service}
+                       </Badge>
+                     </div>
                     )}
-                    
+
+                    {brand.description && (
+                     <p className="text-sm text-gray-600 line-clamp-2">{brand.description}</p>
+                    )}
+
                     {brand.target_audience && (
                       <div className="flex items-start gap-2 text-xs">
                         <Users className="w-3 h-3 text-gray-400 mt-0.5 flex-shrink-0" />
