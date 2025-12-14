@@ -68,6 +68,7 @@ export default function Settings() {
   const [saveMessage, setSaveMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('profile');
+  const [expandedTabs, setExpandedTabs] = useState(['profile']);
 
   useEffect(() => {
     const hash = location.hash.replace('#', '');
