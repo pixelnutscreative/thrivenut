@@ -19,22 +19,26 @@ import ChangeRequestModal from './ChangeRequestModal';
 
 export default function ContentCardEditor({ card, onClose, userEmail }) {
   const queryClient = useQueryClient();
-  const [formData, setFormData] = useState({
-    title: '',
-    brand_id: '',
-    campaign_id: '',
-    content_type: 'video',
-    intent: 'grow',
-    status: 'idea',
-    current_workflow_step_id: '',
-    owner: userEmail,
-    assigned_va: '',
-    script_approved: false,
-    assets_locked: false,
-    edit_locked: false,
-    outcome_result: '',
-    outcome_notes: '',
-    reuse_toggle: false
+  // Initialize with first brand if creating new card and brands exist
+  const [formData, setFormData] = useState(() => {
+    const initialBrandId = !card && brands.length > 0 ? brands[0].id : '';
+    return {
+      title: '',
+      brand_id: initialBrandId,
+      campaign_id: '',
+      content_type: 'video',
+      intent: 'grow',
+      status: 'idea',
+      current_workflow_step_id: '',
+      owner: userEmail,
+      assigned_va: '',
+      script_approved: false,
+      assets_locked: false,
+      edit_locked: false,
+      outcome_result: '',
+      outcome_notes: '',
+      reuse_toggle: false
+    };
   });
   const [scriptDrawerOpen, setScriptDrawerOpen] = useState(false);
   const [showChangeRequestModal, setShowChangeRequestModal] = useState(false);
@@ -86,18 +90,18 @@ export default function ContentCardEditor({ card, onClose, userEmail }) {
     return brandCampaigns[0].id;
   };
 
-  // Auto-select brand if only one exists and we're creating a new card
+  // Auto-select brand if brands exist and we're creating a new card
   useEffect(() => {
-    if (!card && brands.length === 1 && !formData.brand_id) {
+    if (!card && brands.length > 0 && !formData.brand_id) {
       setFormData(prev => ({ ...prev, brand_id: brands[0].id }));
     }
   }, [card, brands]);
 
-  // Auto-select campaign if only one exists for selected brand
+  // Auto-select campaign if one exists for selected brand
   useEffect(() => {
     if (!card && formData.brand_id) {
       const brandCampaigns = campaigns.filter(c => c.brand_id === formData.brand_id);
-      if (brandCampaigns.length === 1 && !formData.campaign_id) {
+      if (brandCampaigns.length > 0 && !formData.campaign_id) {
         setFormData(prev => ({ ...prev, campaign_id: brandCampaigns[0].id }));
       }
     }
