@@ -41,20 +41,35 @@ export default function FirstCampaignWizard({ isOpen, onClose, onComplete, userE
     mutationFn: (data) => base44.entities.PromotionCampaign.create(data),
     onSuccess: async (campaign) => {
       if (createStarterCards) {
-        const starterCards = [
-          { title: 'Teaser Post', content_type: 'post', intent: 'grow', status: 'idea' },
-          { title: 'Launch Announcement', content_type: 'post', intent: 'sell', status: 'idea' },
-          { title: 'Follow-up Email', content_type: 'email', intent: 'nurture', status: 'idea' }
-        ];
-        
-        for (const card of starterCards) {
-          await base44.entities.ContentCard.create({
-            ...card,
+        await base44.entities.ContentCard.bulkCreate([
+          {
+            title: 'EXAMPLE: Introducing Your Campaign',
             brand_id: campaignData.brand_id,
             campaign_id: campaign.id,
+            content_type: 'post',
+            intent: 'grow',
+            status: 'idea',
             owner: userEmail
-          });
-        }
+          },
+          {
+            title: 'EXAMPLE: Share Your Why',
+            brand_id: campaignData.brand_id,
+            campaign_id: campaign.id,
+            content_type: 'post',
+            intent: 'authority',
+            status: 'idea',
+            owner: userEmail
+          },
+          {
+            title: 'EXAMPLE: Call to Action',
+            brand_id: campaignData.brand_id,
+            campaign_id: campaign.id,
+            content_type: 'post',
+            intent: 'sell',
+            status: 'idea',
+            owner: userEmail
+          }
+        ]);
       }
       
       queryClient.invalidateQueries({ queryKey: ['campaigns'] });
