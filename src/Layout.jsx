@@ -178,9 +178,9 @@ export default function Layout({ children, currentPageName }) {
           { name: 'Brands', icon: Briefcase, path: 'Brands' },
           { name: 'Campaigns', icon: TrendingUp, path: 'CampaignTimeline' },
           { name: 'Content Cards', icon: FileText, path: 'ContentCards' },
+          { name: 'Offers & Sales', icon: DollarSign, path: 'PromotedOffers' },
+          { name: 'Batch Mode', icon: Zap, path: 'BatchMode' },
         ]},
-        { name: 'Offers & Sales', icon: DollarSign, path: 'PromotedOffers' },
-        { name: 'Batch Mode', icon: Zap, path: 'BatchMode' },
         { name: 'Content Ideas', icon: Lightbulb, path: 'SavedMotivations', moduleId: 'motivations' },
         { name: 'Content Marketplace', icon: Briefcase, path: 'ContentMarketplace', highlight: true },
         { name: 'Create AI Music', icon: Music, isSection: true, subItems: [
