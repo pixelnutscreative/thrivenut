@@ -241,7 +241,11 @@ export default function AdminAIToolsContent() {
 
   // Filter contacts for search - search all name fields thoroughly
   const filteredContacts = React.useMemo(() => {
-    if (!contactSearch) return tiktokContacts;
+    // Show ALL contacts if no search query
+    if (!contactSearch || contactSearch.trim() === '') {
+      return tiktokContacts;
+    }
+    
     const query = contactSearch.toLowerCase().trim();
     const queryWords = query.split(/\s+/); // Split by spaces for multi-word search
     
@@ -251,7 +255,8 @@ export default function AdminAIToolsContent() {
         c.username?.toLowerCase() || '',
         c.display_name?.toLowerCase() || '',
         c.real_name?.toLowerCase() || '',
-        c.nickname?.toLowerCase() || ''
+        c.nickname?.toLowerCase() || '',
+        c.email?.toLowerCase() || ''
       ].join(' ');
       
       // Match if ANY query word is found OR if the full query is found
@@ -911,12 +916,16 @@ export default function AdminAIToolsContent() {
               </Label>
               <div className="space-y-2">
                 <Input
-                  placeholder="Search by @username, real name, display name..."
+                  placeholder="Search by @username, real name, display name, email..."
                   value={contactSearch}
                   onChange={(e) => setContactSearch(e.target.value)}
                 />
                 <p className="text-xs text-gray-500">
-                  Try: "jes", "mcg", "jessica", or partial names
+                  {!contactSearch ? (
+                    <>Showing all {filteredContacts.length} contacts - type to search</>
+                  ) : (
+                    <>Found {filteredContacts.length} contact{filteredContacts.length !== 1 ? 's' : ''} matching "{contactSearch}"</>
+                  )}
                 </p>
                 <Select
                   value={editingUser?.tiktok_contact_id || newUser.tiktok_contact_id || 'none'}
@@ -930,38 +939,45 @@ export default function AdminAIToolsContent() {
                   <SelectTrigger>
                     <SelectValue placeholder="Select a contact..." />
                   </SelectTrigger>
-                  <SelectContent className="max-h-60">
-                    <SelectItem value="none">No contact linked</SelectItem>
-                    {filteredContacts.length === 0 && contactSearch ? (
-                      <div className="p-2 text-sm text-gray-500">
-                        No contacts found matching "{contactSearch}"
-                        <br />
-                        <span className="text-xs">Try clicking Refresh ↑ or search differently</span>
+                  <SelectContent className="max-h-80">
+                    <SelectItem value="none">
+                      <span className="text-gray-400">No contact linked</span>
+                    </SelectItem>
+                    {filteredContacts.length === 0 ? (
+                      <div className="p-3 text-sm text-gray-500">
+                        {contactSearch ? (
+                          <>
+                            No contacts found matching "{contactSearch}"
+                            <br />
+                            <span className="text-xs">Try clicking Refresh ↑ or search differently</span>
+                          </>
+                        ) : (
+                          <>No contacts in database. Click Refresh ↑</>
+                        )}
                       </div>
                     ) : (
                       filteredContacts.slice(0, 500).map(contact => {
-                        const username = contact.tiktok_username || contact.username;
+                        const username = contact.tiktok_username || contact.username || 'no-username';
                         const displayInfo = [
                           contact.real_name,
                           contact.display_name,
-                          contact.nickname
-                        ].filter(Boolean).join(' / ');
+                          contact.nickname,
+                          contact.email
+                        ].filter(Boolean).join(' • ');
                         
                         return (
                           <SelectItem key={contact.id} value={contact.id}>
-                            @{username} {displayInfo && `— ${displayInfo}`}
+                            <div className="flex flex-col py-1">
+                              <span className="font-medium">@{username}</span>
+                              {displayInfo && <span className="text-xs text-gray-500">{displayInfo}</span>}
+                            </div>
                           </SelectItem>
                         );
                       })
                     )}
                     {filteredContacts.length > 500 && (
-                      <div className="p-2 text-xs text-gray-500 border-t">
-                        Showing first 500 of {filteredContacts.length} contacts. Use search to narrow down.
-                      </div>
-                    )}
-                    {contactSearch && filteredContacts.length > 0 && (
-                      <div className="p-2 text-xs text-green-600 border-t bg-green-50">
-                        ✓ Found {filteredContacts.length} contact{filteredContacts.length !== 1 ? 's' : ''} matching "{contactSearch}"
+                      <div className="p-2 text-xs text-orange-600 border-t bg-orange-50">
+                        ⚠️ Showing first 500 of {filteredContacts.length} contacts. Use search to narrow down.
                       </div>
                     )}
                   </SelectContent>
