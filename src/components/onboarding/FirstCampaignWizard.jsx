@@ -30,40 +30,12 @@ export default function FirstCampaignWizard({ isOpen, onClose, onComplete, userE
     queryFn: () => base44.entities.Brand.list('name'),
   });
 
-  // Auto-create defaults on mount if needed
+  // Auto-select if only one brand exists
   React.useEffect(() => {
-    const initDefaults = async () => {
-      if (brands.length === 0) {
-        // Auto-create default brand and campaign immediately
-        const defaultBrand = await base44.entities.Brand.create({
-          name: 'My Content',
-          category: 'personal',
-          owner: userEmail
-        });
-        
-        await base44.entities.PromotionCampaign.create({
-          name: 'Ideas & One-Off Content',
-          campaign_type: 'general',
-          goal: 'awareness',
-          brand_id: defaultBrand.id,
-          status: 'evergreen'
-        });
-        
-        queryClient.invalidateQueries({ queryKey: ['brands'] });
-        queryClient.invalidateQueries({ queryKey: ['campaigns'] });
-        
-        // Close wizard and complete
-        await dismissMutation.mutateAsync();
-        onComplete();
-      } else if (brands.length === 1 && !campaignData.brand_id) {
-        setCampaignData(prev => ({ ...prev, brand_id: brands[0].id }));
-      }
-    };
-    
-    if (isOpen && brands.length === 0) {
-      initDefaults();
+    if (brands.length === 1 && !campaignData.brand_id) {
+      setCampaignData(prev => ({ ...prev, brand_id: brands[0].id }));
     }
-  }, [isOpen, brands.length]);
+  }, [brands.length]);
 
   const createCampaignMutation = useMutation({
     mutationFn: (data) => base44.entities.PromotionCampaign.create(data),
@@ -135,7 +107,43 @@ export default function FirstCampaignWizard({ isOpen, onClose, onComplete, userE
   };
 
   const handleSkip = async () => {
-    await dismissMutation.mutateAsync();
+    setIsCreatingDefaults(true);
+    try {
+      // Auto-create default brand and campaign if none exist
+      let brandId;
+      if (brands.length === 0) {
+        const defaultBrand = await base44.entities.Brand.create({
+          name: 'My Content',
+          category: 'personal',
+          owner: userEmail
+        });
+        brandId = defaultBrand.id;
+      } else {
+        brandId = brands[0].id;
+      }
+      
+      // Check if campaign exists for this brand
+      const existingCampaigns = await base44.entities.PromotionCampaign.filter({ brand_id: brandId });
+      if (existingCampaigns.length === 0) {
+        await base44.entities.PromotionCampaign.create({
+          name: 'Ideas & One-Off Content',
+          campaign_type: 'general',
+          goal: 'awareness',
+          brand_id: brandId,
+          status: 'evergreen'
+        });
+      }
+      
+      queryClient.invalidateQueries({ queryKey: ['brands'] });
+      queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+      
+      await dismissMutation.mutateAsync();
+      onComplete();
+    } catch (error) {
+      console.error('Error creating defaults:', error);
+    } finally {
+      setIsCreatingDefaults(false);
+    }
   };
 
   const canProceed = () => {
