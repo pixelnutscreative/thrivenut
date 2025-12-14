@@ -129,7 +129,7 @@ export default function FirstCampaignWizard({ isOpen, onClose, onComplete, userE
       if (brands.length === 0) {
         const exampleBrand = await base44.entities.Brand.create({
           name: 'Thrive (Personal Example)',
-          category: 'personal',
+          primary_product_service: 'Thrive Platform Membership',
           description: 'Example brand to show how Thrive works - edit or delete this anytime!',
           owner: userEmail
         });
