@@ -25,12 +25,16 @@ const commonStruggles = [
 
 function OnboardingModal({ isOpen, user, onComplete }) {
   const [step, setStep] = useState(1);
+  
+  // Auto-detect timezone
+  const detectedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/New_York';
+  
   const [data, setData] = useState({
     city: '',
     state: '',
     show_on_map: false,
     skip_location: false,
-    user_timezone: 'America/New_York',
+    user_timezone: detectedTimezone,
     time_format: '12h',
     favorite_color: '#1fd2ea',
     greeting_types: ['positive_quote'],
@@ -117,13 +121,13 @@ function OnboardingModal({ isOpen, user, onComplete }) {
   });
 
   const handleNext = () => {
-    if (step === 1 && (data.skip_location || (data.city && data.state))) {
+    if (step === 1 && data.user_timezone) {
       setStep(2);
-    } else if (step === 2 && data.user_timezone) {
+    } else if (step === 2) {
       setStep(3);
-    } else if (step === 3 && data.favorite_color) {
+    } else if (step === 3 && data.greeting_types.length > 0) {
       setStep(4);
-    } else if (step === 4 && data.greeting_types.length > 0) {
+    } else if (step === 4) {
       setStep(5);
     } else if (step === 5) {
       completeMutation.mutate();
@@ -131,11 +135,11 @@ function OnboardingModal({ isOpen, user, onComplete }) {
   };
 
   const canProceed = () => {
-    if (step === 1) return data.skip_location || (data.city && data.state);
-    if (step === 2) return data.user_timezone;
-    if (step === 3) return data.favorite_color;
-    if (step === 4) return data.greeting_types.length > 0;
-    if (step === 5) return true;
+    if (step === 1) return data.user_timezone;
+    if (step === 2) return true; // Favorite color + greeting types combined
+    if (step === 3) return data.greeting_types.length > 0;
+    if (step === 4) return true; // Mental health is optional
+    if (step === 5) return data.skip_location || (data.city && data.state);
     return false;
   };
 
@@ -146,16 +150,157 @@ function OnboardingModal({ isOpen, user, onComplete }) {
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-purple-500" />
             {step === 1 && 'Welcome to Let\'s Thrive!'}
-            {step === 2 && 'Choose Your Timezone'}
-            {step === 3 && 'What\'s Your Favorite Color?'}
-            {step === 4 && 'Daily Inspiration'}
-            {step === 5 && 'What Are You Working On?'}
+            {step === 2 && 'Personalize Your Experience'}
+            {step === 3 && 'Daily Inspiration'}
+            {step === 4 && 'What Are You Working On?'}
+            {step === 5 && 'Join Our Community Map'}
           </DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4 py-4">
-          {/* Step 1: Location */}
+          {/* Step 1: Timezone */}
           {step === 1 && (
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600">
+                We've detected your timezone. Update it if needed, and select your preferred time format.
+              </p>
+              <TimezoneSelector 
+                value={data.user_timezone} 
+                onChange={(v) => setData({ ...data, user_timezone: v })} 
+              />
+              <div className="space-y-2 mt-4">
+                <Label>Time Format</Label>
+                <Select value={data.time_format} onValueChange={(v) => setData({ ...data, time_format: v })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="12h">12-hour (2:30 PM)</SelectItem>
+                    <SelectItem value="24h">24-hour / Military (14:30)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+
+          {/* Step 2: Favorite Color + Greeting Types Combined */}
+          {step === 2 && (
+            <div className="space-y-6">
+              <div className="space-y-3">
+                <Label className="text-base font-semibold">Pick your favorite color</Label>
+                <p className="text-sm text-gray-600">We'll use it throughout the app!</p>
+                <div className="flex gap-3 items-center">
+                  <Input
+                    type="color"
+                    value={data.favorite_color}
+                    onChange={(e) => setData({ ...data, favorite_color: e.target.value })}
+                    className="w-16 h-16 p-1"
+                  />
+                  <div className="flex-1">
+                    <Input
+                      value={data.favorite_color}
+                      onChange={(e) => setData({ ...data, favorite_color: e.target.value })}
+                      placeholder="#1fd2ea"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Step 3: Greeting Types */}
+          {step === 3 && (
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600">
+                Choose which types of daily inspiration you want to see (select all that apply):
+              </p>
+              {greetingTypeOptions.map(greeting => {
+                const isSelected = data.greeting_types.includes(greeting.id);
+                return (
+                  <div
+                    key={greeting.id}
+                    onClick={() => {
+                      const current = data.greeting_types;
+                      const newTypes = isSelected
+                        ? current.filter(t => t !== greeting.id)
+                        : [...current, greeting.id];
+                      if (newTypes.length > 0) {
+                        setData({ ...data, greeting_types: newTypes });
+                      }
+                    }}
+                    className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                      isSelected ? 'border-purple-500 bg-purple-50' : 'border-gray-200 hover:border-purple-300'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Checkbox checked={isSelected} />
+                      <span>{greeting.icon}</span>
+                      <div>
+                        <span className="font-medium">{greeting.name}</span>
+                        <p className="text-xs text-gray-500">{greeting.description}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Step 4: Mental Health / Goals */}
+          {step === 4 && (
+            <div className="space-y-4">
+              <div>
+                <Label className="mb-2 flex items-center gap-2">
+                  <Brain className="w-4 h-4" />
+                  What are you working on? (Optional)
+                </Label>
+                <p className="text-xs text-gray-500 mb-3">Select ALL areas you'd like support with. You can update this anytime in Settings.</p>
+                <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto pr-2">
+                  {commonStruggles.map(struggle => {
+                    const isSelected = data.mental_health_struggles.includes(struggle);
+                    return (
+                      <button
+                        key={struggle}
+                        onClick={() => {
+                          const current = data.mental_health_struggles;
+                          setData({
+                            ...data,
+                            mental_health_struggles: isSelected
+                              ? current.filter(s => s !== struggle)
+                              : [...current, struggle]
+                          });
+                        }}
+                        className={`p-2 rounded-lg border text-xs transition-all ${
+                          isSelected ? 'border-purple-500 bg-purple-50 text-purple-700' : 'border-gray-200 hover:border-purple-300'
+                        }`}
+                      >
+                        {struggle}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div>
+                <Label className="mb-2">Add custom areas (optional)</Label>
+                <Input
+                  placeholder="Add your own (comma separated)"
+                  onBlur={(e) => {
+                    if (e.target.value.trim()) {
+                      const custom = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+                      setData({
+                        ...data,
+                        mental_health_struggles: [...new Set([...data.mental_health_struggles, ...custom])]
+                      });
+                      e.target.value = '';
+                    }
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Step 5: Location */}
+          {step === 5 && (
             <>
               <p className="text-sm text-gray-600">
                 We'd love to show where our Pixel Nuts community is from on a map! Your name won't show - you'll just be a dot at your city center.
@@ -210,147 +355,6 @@ function OnboardingModal({ isOpen, user, onComplete }) {
                 </div>
               </div>
             </>
-          )}
-
-          {/* Step 2: Timezone */}
-          {step === 2 && (
-            <div className="space-y-4">
-              <p className="text-sm text-gray-600">
-                Select your timezone so event times show correctly for you.
-              </p>
-              <TimezoneSelector 
-                value={data.user_timezone} 
-                onChange={(v) => setData({ ...data, user_timezone: v })} 
-              />
-              <div className="space-y-2 mt-4">
-                <Label>Time Format</Label>
-                <Select value={data.time_format} onValueChange={(v) => setData({ ...data, time_format: v })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="12h">12-hour (2:30 PM)</SelectItem>
-                    <SelectItem value="24h">24-hour / Military (14:30)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          )}
-
-          {/* Step 3: Favorite Color */}
-          {step === 3 && (
-            <div className="space-y-4">
-              <p className="text-sm text-gray-600">
-                Pick your favorite color - we'll use it throughout the app!
-              </p>
-              <div className="flex gap-3 items-center">
-                <Input
-                  type="color"
-                  value={data.favorite_color}
-                  onChange={(e) => setData({ ...data, favorite_color: e.target.value })}
-                  className="w-20 h-20 p-1"
-                />
-                <div className="flex-1">
-                  <Input
-                    value={data.favorite_color}
-                    onChange={(e) => setData({ ...data, favorite_color: e.target.value })}
-                    placeholder="#1fd2ea"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Enter hex color or use the picker</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Step 4: Greeting Types */}
-          {step === 4 && (
-            <div className="space-y-4">
-              <p className="text-sm text-gray-600">
-                Choose which types of daily inspiration you want to see (select all that apply):
-              </p>
-              {greetingTypeOptions.map(greeting => {
-                const isSelected = data.greeting_types.includes(greeting.id);
-                return (
-                  <div
-                    key={greeting.id}
-                    onClick={() => {
-                      const current = data.greeting_types;
-                      const newTypes = isSelected
-                        ? current.filter(t => t !== greeting.id)
-                        : [...current, greeting.id];
-                      if (newTypes.length > 0) {
-                        setData({ ...data, greeting_types: newTypes });
-                      }
-                    }}
-                    className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                      isSelected ? 'border-purple-500 bg-purple-50' : 'border-gray-200 hover:border-purple-300'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Checkbox checked={isSelected} />
-                      <span>{greeting.icon}</span>
-                      <div>
-                        <span className="font-medium">{greeting.name}</span>
-                        <p className="text-xs text-gray-500">{greeting.description}</p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Step 5: Mental Health / Goals */}
-          {step === 5 && (
-            <div className="space-y-4">
-              <div>
-                <Label className="mb-2 flex items-center gap-2">
-                  <Brain className="w-4 h-4" />
-                  What are you working on? (Optional)
-                </Label>
-                <p className="text-xs text-gray-500 mb-3">Select areas you'd like support with:</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {commonStruggles.map(struggle => {
-                    const isSelected = data.mental_health_struggles.includes(struggle);
-                    return (
-                      <button
-                        key={struggle}
-                        onClick={() => {
-                          const current = data.mental_health_struggles;
-                          setData({
-                            ...data,
-                            mental_health_struggles: isSelected
-                              ? current.filter(s => s !== struggle)
-                              : [...current, struggle]
-                          });
-                        }}
-                        className={`p-2 rounded-lg border text-xs transition-all ${
-                          isSelected ? 'border-purple-500 bg-purple-50 text-purple-700' : 'border-gray-200 hover:border-purple-300'
-                        }`}
-                      >
-                        {struggle}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-              <div>
-                <Label className="mb-2">Custom areas (optional)</Label>
-                <Input
-                  placeholder="Add your own (comma separated)"
-                  onBlur={(e) => {
-                    if (e.target.value.trim()) {
-                      const custom = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
-                      setData({
-                        ...data,
-                        mental_health_struggles: [...new Set([...data.mental_health_struggles, ...custom])]
-                      });
-                      e.target.value = '';
-                    }
-                  }}
-                />
-              </div>
-            </div>
           )}
         </div>
 
