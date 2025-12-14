@@ -234,13 +234,96 @@ export default function CreatorDashboard() {
         )}
 
         {!hasAnyItems ? (
-          <Card>
-            <CardContent className="pt-6 text-center py-12">
-              <Target className="w-12 h-12 text-green-600 mx-auto mb-4" />
-              <p className="text-lg font-semibold text-gray-800 mb-2">All Clear! 🎉</p>
-              <p className="text-sm text-gray-600">No urgent items or suggestions at the moment.</p>
-            </CardContent>
-          </Card>
+          <div className="space-y-6">
+            <Card className="border-2 border-purple-200">
+              <CardContent className="pt-6 text-center py-8">
+                <Target className="w-12 h-12 text-purple-600 mx-auto mb-4" />
+                <p className="text-lg font-semibold text-gray-800 mb-2">Ready to Create!</p>
+                <p className="text-sm text-gray-600 mb-6">Jump into your creator tools and start building content.</p>
+              </CardContent>
+            </Card>
+
+            {/* Quick Actions Grid */}
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Content Cards */}
+              <Card 
+                className="border-2 border-blue-200 hover:border-blue-400 cursor-pointer transition-all"
+                onClick={() => navigate(createPageUrl('ContentCards'))}
+              >
+                <CardContent className="pt-6 text-center">
+                  <FileText className="w-10 h-10 text-blue-600 mx-auto mb-3" />
+                  <h3 className="font-semibold text-gray-800 mb-2">Content Cards</h3>
+                  <p className="text-xs text-gray-600 mb-4">Create and manage your content ideas</p>
+                  <Badge className="bg-blue-100 text-blue-700">{contentCards.length} cards</Badge>
+                </CardContent>
+              </Card>
+
+              {/* Campaigns */}
+              <Card 
+                className="border-2 border-purple-200 hover:border-purple-400 cursor-pointer transition-all"
+                onClick={() => navigate(createPageUrl('CampaignTimeline'))}
+              >
+                <CardContent className="pt-6 text-center">
+                  <TrendingUp className="w-10 h-10 text-purple-600 mx-auto mb-3" />
+                  <h3 className="font-semibold text-gray-800 mb-2">Campaigns</h3>
+                  <p className="text-xs text-gray-600 mb-4">Organize content by campaign</p>
+                  <Badge className="bg-purple-100 text-purple-700">{campaigns.length} campaigns</Badge>
+                </CardContent>
+              </Card>
+
+              {/* Brands */}
+              <Card 
+                className="border-2 border-teal-200 hover:border-teal-400 cursor-pointer transition-all"
+                onClick={() => navigate(createPageUrl('Brands'))}
+              >
+                <CardContent className="pt-6 text-center">
+                  <Sparkles className="w-10 h-10 text-teal-600 mx-auto mb-3" />
+                  <h3 className="font-semibold text-gray-800 mb-2">Brands</h3>
+                  <p className="text-xs text-gray-600 mb-4">Manage your brands & businesses</p>
+                  <Badge className="bg-teal-100 text-teal-700">{brands.length} brands</Badge>
+                </CardContent>
+              </Card>
+
+              {/* Calendar */}
+              <Card 
+                className="border-2 border-amber-200 hover:border-amber-400 cursor-pointer transition-all"
+                onClick={() => navigate(createPageUrl('ContentCalendar'))}
+              >
+                <CardContent className="pt-6 text-center">
+                  <Calendar className="w-10 h-10 text-amber-600 mx-auto mb-3" />
+                  <h3 className="font-semibold text-gray-800 mb-2">Content Calendar</h3>
+                  <p className="text-xs text-gray-600 mb-4">Schedule & plan your content</p>
+                  <Badge className="bg-amber-100 text-amber-700">{platformOutputs.filter(o => o.schedule_datetime).length} scheduled</Badge>
+                </CardContent>
+              </Card>
+
+              {/* Offers & Sales */}
+              <Card 
+                className="border-2 border-green-200 hover:border-green-400 cursor-pointer transition-all"
+                onClick={() => navigate(createPageUrl('PromotedOffers'))}
+              >
+                <CardContent className="pt-6 text-center">
+                  <TrendingUp className="w-10 h-10 text-green-600 mx-auto mb-3" />
+                  <h3 className="font-semibold text-gray-800 mb-2">Offers & Sales</h3>
+                  <p className="text-xs text-gray-600 mb-4">Track your promotions</p>
+                  <Badge className="bg-green-100 text-green-700">{promotedOffers.length} offers</Badge>
+                </CardContent>
+              </Card>
+
+              {/* Batch Mode */}
+              <Card 
+                className="border-2 border-indigo-200 hover:border-indigo-400 cursor-pointer transition-all"
+                onClick={() => navigate(createPageUrl('BatchMode'))}
+              >
+                <CardContent className="pt-6 text-center">
+                  <Lightbulb className="w-10 h-10 text-indigo-600 mx-auto mb-3" />
+                  <h3 className="font-semibold text-gray-800 mb-2">Batch Mode</h3>
+                  <p className="text-xs text-gray-600 mb-4">Process content in batches</p>
+                  <Badge className="bg-indigo-100 text-indigo-700">Power tool</Badge>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         ) : (
           <div className="space-y-6">
             {/* TODAY'S FOCUS */}

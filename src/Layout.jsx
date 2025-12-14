@@ -174,6 +174,11 @@ export default function Layout({ children, currentPageName }) {
       bgColor: 'bg-orange-500/10',
       items: [
         { name: 'Creator Command Center', icon: Target, path: 'CreatorDashboard', highlight: true },
+        { name: 'Content Cards', icon: FileText, path: 'ContentCards' },
+        { name: 'Campaigns', icon: TrendingUp, path: 'CampaignTimeline' },
+        { name: 'Brands', icon: Briefcase, path: 'Brands' },
+        { name: 'Offers & Sales', icon: DollarSign, path: 'PromotedOffers' },
+        { name: 'Batch Mode', icon: Zap, path: 'BatchMode' },
         { name: 'Content Ideas', icon: Lightbulb, path: 'SavedMotivations', moduleId: 'motivations' },
         { name: 'Content Marketplace', icon: Briefcase, path: 'ContentMarketplace', highlight: true },
         { name: 'Create AI Music', icon: Music, isSection: true, subItems: [
