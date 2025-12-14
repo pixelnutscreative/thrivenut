@@ -80,9 +80,17 @@ export default function AdminAIToolsContent() {
   });
 
   // Fetch TikTok contacts for linking
-  const { data: tiktokContacts = [] } = useQuery({
+  const { data: tiktokContacts = [], refetch: refetchContacts } = useQuery({
     queryKey: ['tiktokContacts'],
-    queryFn: () => base44.entities.TikTokContact.list('tiktok_username'),
+    queryFn: async () => {
+      const contacts = await base44.entities.TikTokContact.list('-updated_date');
+      // Sort alphabetically by username
+      return contacts.sort((a, b) => {
+        const nameA = (a.tiktok_username || a.username || '').toLowerCase();
+        const nameB = (b.tiktok_username || b.username || '').toLowerCase();
+        return nameA.localeCompare(nameB);
+      });
+    },
   });
 
   // Check if current user already has a platform assignment
@@ -868,7 +876,18 @@ export default function AdminAIToolsContent() {
             </div>
 
             <div className="space-y-2">
-              <Label>Link to Creator Contact (Optional)</Label>
+              <Label className="flex items-center justify-between">
+                <span>Link to Creator Contact (Optional)</span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => refetchContacts()}
+                  className="h-6 text-xs"
+                >
+                  🔄 Refresh ({tiktokContacts.length} contacts)
+                </Button>
+              </Label>
               <div className="space-y-2">
                 <Input
                   placeholder="Search contacts by @username or name..."
@@ -890,13 +909,22 @@ export default function AdminAIToolsContent() {
                   <SelectContent className="max-h-60">
                     <SelectItem value="none">No contact linked</SelectItem>
                     {filteredContacts.length === 0 && contactSearch ? (
-                      <div className="p-2 text-sm text-gray-500">No contacts found</div>
+                      <div className="p-2 text-sm text-gray-500">
+                        No contacts found matching "{contactSearch}"
+                        <br />
+                        <span className="text-xs">Try clicking Refresh ↑ or search differently</span>
+                      </div>
                     ) : (
-                      filteredContacts.map(contact => (
+                      filteredContacts.slice(0, 100).map(contact => (
                         <SelectItem key={contact.id} value={contact.id}>
                           @{contact.tiktok_username || contact.username} {contact.display_name ? `(${contact.display_name})` : contact.real_name ? `(${contact.real_name})` : ''}
                         </SelectItem>
                       ))
+                    )}
+                    {filteredContacts.length > 100 && (
+                      <div className="p-2 text-xs text-gray-500 border-t">
+                        Showing first 100 of {filteredContacts.length} contacts. Use search to narrow down.
+                      </div>
                     )}
                   </SelectContent>
                 </Select>
