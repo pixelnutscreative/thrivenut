@@ -300,6 +300,7 @@ export default function QuickActionsWidget({ preferences, primaryColor, accentCo
       className="fixed z-[44] backdrop-blur-sm px-2 py-1.5 shadow-2xl"
       id="quick-actions-bar"
       style={{
+        top: isMobile ? '56px' : '0',
         left: isMobile ? 0 : '288px',
         right: 0,
         width: isMobile ? '100%' : 'calc(100% - 288px)',
