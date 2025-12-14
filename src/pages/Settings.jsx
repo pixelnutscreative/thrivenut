@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Save, User, Palette, Layers, MessageSquare, Zap, BookOpen, Shirt, Gift, Share2, Sparkles, Plus, Trash2, Briefcase, Check, Code, ExternalLink, UserX } from 'lucide-react';
+import { Loader2, Save, User, Palette, Layers, MessageSquare, Zap, BookOpen, Shirt, Gift, Share2, Sparkles, Plus, Trash2, Briefcase, Check, Code, ExternalLink, UserX, Calendar as CalendarIcon, Sliders, PuzzleIcon } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -276,19 +276,7 @@ export default function Settings() {
                 {saveMessage}
               </motion.div>
             )}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                if (user?.email) {
-                  localStorage.removeItem(`onboarding_completed_${user.email}`);
-                  window.location.reload();
-                }
-              }}
-            >
-              <Sparkles className="w-4 h-4 mr-2" />
-              Setup Tour
-            </Button>
+
           </div>
         </div>
 
@@ -297,53 +285,38 @@ export default function Settings() {
           setActiveTab(v); 
           navigate(`#${v}`); 
         }} className="w-full">
-          <TabsList className="flex flex-wrap gap-1 mb-6 bg-transparent justify-start">
-            <TabsTrigger value="profile">
+          <TabsList className="grid grid-cols-6 md:grid-cols-10 gap-1 mb-6 bg-transparent h-auto">
+            <TabsTrigger value="profile" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
               <User className="w-4 h-4" />
-              <span className="hidden lg:inline ml-2">Profile</span>
             </TabsTrigger>
-            <TabsTrigger value="social">
+            <TabsTrigger value="social" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
               <Share2 className="w-4 h-4" />
-              <span className="hidden lg:inline ml-2">Social</span>
             </TabsTrigger>
-            <TabsTrigger value="appearance">
+            <TabsTrigger value="appearance" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
               <Palette className="w-4 h-4" />
-              <span className="hidden lg:inline ml-2">Theme</span>
             </TabsTrigger>
-            <TabsTrigger value="features">
+            <TabsTrigger value="features" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
               <Layers className="w-4 h-4" />
-              <span className="hidden lg:inline ml-2">Features</span>
             </TabsTrigger>
-            <TabsTrigger value="dashboard">
+            <TabsTrigger value="dashboard" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
+              <CalendarIcon className="w-4 h-4" />
+            </TabsTrigger>
+            <TabsTrigger value="preferences" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
+              <Sliders className="w-4 h-4" />
+            </TabsTrigger>
+            <TabsTrigger value="connections" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
               <Sparkles className="w-4 h-4" />
-              <span className="hidden lg:inline ml-2">Dashboard</span>
             </TabsTrigger>
-            <TabsTrigger value="preferences">
-              <MessageSquare className="w-4 h-4" />
-              <span className="hidden lg:inline ml-2">Preferences</span>
+            <TabsTrigger value="widgets" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
+              <PuzzleIcon className="w-4 h-4" />
             </TabsTrigger>
-            <TabsTrigger value="connections">
-              <Zap className="w-4 h-4" />
-              <span className="hidden lg:inline ml-2">AI Tools</span>
-            </TabsTrigger>
-            <TabsTrigger value="widgets">
-              <Zap className="w-4 h-4" />
-              <span className="hidden lg:inline ml-2">Widgets</span>
-            </TabsTrigger>
-            <TabsTrigger value="bible">
+            <TabsTrigger value="bible" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
               <BookOpen className="w-4 h-4" />
-              <span className="hidden lg:inline ml-2">Bible</span>
             </TabsTrigger>
-
-            <TabsTrigger value="referrals">
-              <Gift className="w-4 h-4" />
-              <span className="hidden lg:inline ml-2">Share</span>
+            <TabsTrigger value="referrals" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
+              <Share2 className="w-4 h-4" />
             </TabsTrigger>
-            <TabsTrigger value="account">
-              <UserX className="w-4 h-4" />
-              <span className="hidden lg:inline ml-2">Account</span>
-            </TabsTrigger>
-            </TabsList>
+          </TabsList>
 
           {/* PROFILE TAB */}
           <TabsContent value="profile">
@@ -501,6 +474,11 @@ export default function Settings() {
                     </Button>
                   </CardContent>
                 </Card>
+
+                {/* Delete Account Section */}
+                <div className="mt-8 pt-8 border-t border-gray-200">
+                  <AccountDeletionTab userEmail={effectiveEmail} />
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -1120,11 +1098,6 @@ export default function Settings() {
               primaryColor={primaryColor}
               accentColor={accentColor}
             />
-          </TabsContent>
-
-          {/* ACCOUNT DELETION TAB */}
-          <TabsContent value="account">
-            <AccountDeletionTab userEmail={effectiveEmail} />
           </TabsContent>
 
           </Tabs>
