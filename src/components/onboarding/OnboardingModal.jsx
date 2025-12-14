@@ -188,7 +188,9 @@ function OnboardingModal({ isOpen, user, onComplete }) {
             <div className="space-y-6">
               <div className="space-y-3">
                 <Label className="text-base font-semibold">Pick your favorite color</Label>
-                <p className="text-sm text-gray-600">We'll use it throughout the app!</p>
+                <p className="text-sm text-gray-600">
+                  We'll use it throughout the app! Your dashboard will be called "{user?.full_name?.split(' ')[0] || 'My'}'s Day"
+                </p>
                 <div className="flex gap-3 items-center">
                   <Input
                     type="color"
