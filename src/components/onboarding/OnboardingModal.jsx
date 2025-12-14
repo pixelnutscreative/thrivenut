@@ -40,6 +40,25 @@ function OnboardingModal({ isOpen, user, onComplete }) {
 
   const completeMutation = useMutation({
     mutationFn: async () => {
+      // Get referral code FIRST (365-day persistence)
+      let referralCode = sessionStorage.getItem('referral_code');
+      
+      // Check localStorage for persistent referral (365-day cookie)
+      if (!referralCode) {
+        try {
+          const storedData = localStorage.getItem('referral_data');
+          if (storedData) {
+            const parsed = JSON.parse(storedData);
+            const expiresAt = new Date(parsed.expiresAt);
+            if (expiresAt > new Date()) {
+              referralCode = parsed.code;
+            } else {
+              localStorage.removeItem('referral_data'); // Expired, clean up
+            }
+          }
+        } catch (e) {}
+      }
+
       const prefs = await base44.entities.UserPreferences.filter({ user_email: user.email });
       
       const prefsData = {
@@ -79,28 +98,16 @@ function OnboardingModal({ isOpen, user, onComplete }) {
         await base44.entities.UserProfile.create(profileData);
       }
 
-      // Initialize referral code with referral tracking (365-day persistence)
-      let referralCode = sessionStorage.getItem('referral_code');
-      
-      // Check localStorage for persistent referral (365-day cookie)
-      if (!referralCode) {
-        try {
-          const storedData = localStorage.getItem('referral_data');
-          if (storedData) {
-            const parsed = JSON.parse(storedData);
-            const expiresAt = new Date(parsed.expiresAt);
-            if (expiresAt > new Date()) {
-              referralCode = parsed.code;
-            } else {
-              localStorage.removeItem('referral_data'); // Expired, clean up
-            }
-          }
-        } catch (e) {}
+      // Initialize referral code - THIS MUST SUCCEED
+      try {
+        const result = await base44.functions.invoke('initializeReferralCode', { 
+          referral_code: referralCode 
+        });
+        console.log('Referral tracking result:', result);
+      } catch (error) {
+        console.error('Failed to track referral:', error);
+        // Still continue - don't block onboarding
       }
-      
-      await base44.functions.invoke('initializeReferralCode', { 
-        referral_code: referralCode 
-      }).catch(() => {});
 
       localStorage.setItem(`onboarding_completed_${user.email}`, 'true');
     },
