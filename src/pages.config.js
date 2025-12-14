@@ -66,6 +66,7 @@ import PromotedOffers from './pages/PromotedOffers';
 import CreatorDashboard from './pages/CreatorDashboard';
 import NotificationHistory from './pages/NotificationHistory';
 import Brands from './pages/Brands';
+import ContentCreatorHub from './pages/ContentCreatorHub';
 import __Layout from './Layout.jsx';
 
 
@@ -138,6 +139,7 @@ export const PAGES = {
     "CreatorDashboard": CreatorDashboard,
     "NotificationHistory": NotificationHistory,
     "Brands": Brands,
+    "ContentCreatorHub": ContentCreatorHub,
 }
 
 export const pagesConfig = {

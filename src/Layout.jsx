@@ -173,15 +173,7 @@ export default function Layout({ children, currentPageName }) {
       color: 'text-orange-400', // Orange
       bgColor: 'bg-orange-500/10',
       items: [
-        { name: 'Content Creator Center', icon: Target, isSection: true, subItems: [
-          { name: 'Dashboard', icon: Target, path: 'CreatorDashboard' },
-          { name: 'Brands', icon: Briefcase, path: 'Brands' },
-          { name: 'Campaigns', icon: TrendingUp, path: 'CampaignTimeline' },
-          { name: 'Content Cards', icon: FileText, path: 'ContentCards' },
-          { name: 'Content Calendar', icon: Calendar, path: 'ContentCalendar' },
-          { name: 'Offers & Sales', icon: DollarSign, path: 'PromotedOffers' },
-          { name: 'Batch Mode', icon: Zap, path: 'BatchMode' },
-        ]},
+        { name: 'Content Creator Center', icon: Target, path: 'ContentCreatorHub' },
         { name: 'Content Ideas', icon: Lightbulb, path: 'SavedMotivations', moduleId: 'motivations' },
         { name: 'Content Marketplace', icon: Briefcase, path: 'ContentMarketplace', highlight: true },
         { name: 'Create AI Music', icon: Music, isSection: true, subItems: [
