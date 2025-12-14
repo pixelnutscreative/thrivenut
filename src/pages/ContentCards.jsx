@@ -33,16 +33,34 @@ export default function ContentCards() {
     enabled: !!effectiveEmail,
   });
 
+  const { data: preferences } = useQuery({
+    queryKey: ['preferences', effectiveEmail],
+    queryFn: async () => {
+      const prefs = await base44.entities.UserPreferences.filter({ user_email: effectiveEmail }, '-updated_date');
+      return prefs[0] || null;
+    },
+    enabled: !!effectiveEmail,
+  });
+
   const { data: campaigns = [] } = useQuery({
     queryKey: ['campaigns', effectiveEmail],
     queryFn: async () => {
       const userBrands = await base44.entities.Brand.filter({ owner: effectiveEmail }, 'name');
       const brandIds = userBrands.map(b => b.id);
-      if (brandIds.length === 0) return [];
+      
+      // Get user's own campaigns
       const allCampaigns = await base44.entities.PromotionCampaign.list('-created_date');
-      return allCampaigns.filter(c => brandIds.includes(c.brand_id));
+      const userCampaigns = allCampaigns.filter(c => brandIds.includes(c.brand_id));
+      
+      // Add affiliate campaigns user has opted into
+      const optedInIds = preferences?.opted_in_affiliate_campaigns || [];
+      const affiliateCampaigns = allCampaigns.filter(c => 
+        c.is_affiliate_program && optedInIds.includes(c.id)
+      );
+      
+      return [...userCampaigns, ...affiliateCampaigns];
     },
-    enabled: !!effectiveEmail,
+    enabled: !!effectiveEmail && !!preferences,
   });
 
   const handleNewCard = () => {
