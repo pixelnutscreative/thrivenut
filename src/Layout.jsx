@@ -36,7 +36,7 @@ export default function Layout({ children, currentPageName }) {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
-  const [expandedSections, setExpandedSections] = useState(['Social Media Suite']); // Default expand
+  const [expandedSections, setExpandedSections] = useState(['Content Creator Center']); // Default expand creator center
   const [showAccessGate, setShowAccessGate] = useState(false);
   const [userLoading, setUserLoading] = useState(true);
 
@@ -173,10 +173,12 @@ export default function Layout({ children, currentPageName }) {
       color: 'text-orange-400', // Orange
       bgColor: 'bg-orange-500/10',
       items: [
-        { name: 'Creator Command Center', icon: Target, path: 'CreatorDashboard', highlight: true },
-        { name: 'Content Cards', icon: FileText, path: 'ContentCards' },
-        { name: 'Campaigns', icon: TrendingUp, path: 'CampaignTimeline' },
-        { name: 'Brands', icon: Briefcase, path: 'Brands' },
+        { name: 'Content Creator Center', isSection: true, subItems: [
+          { name: 'Dashboard', icon: Target, path: 'CreatorDashboard' },
+          { name: 'Brands', icon: Briefcase, path: 'Brands' },
+          { name: 'Campaigns', icon: TrendingUp, path: 'CampaignTimeline' },
+          { name: 'Content Cards', icon: FileText, path: 'ContentCards' },
+        ]},
         { name: 'Offers & Sales', icon: DollarSign, path: 'PromotedOffers' },
         { name: 'Batch Mode', icon: Zap, path: 'BatchMode' },
         { name: 'Content Ideas', icon: Lightbulb, path: 'SavedMotivations', moduleId: 'motivations' },

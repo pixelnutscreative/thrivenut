@@ -57,6 +57,9 @@ function OnboardingModal({ isOpen, user, onComplete }) {
 
   const completeMutation = useMutation({
     mutationFn: async () => {
+      // Check if user is admin - skip example content for admins
+      const isAdmin = user.email && ['pixelnutscreative@gmail.com', 'pixel@thrivenut.app'].includes(user.email.toLowerCase());
+
       // Get referral code FIRST (365-day persistence)
       let referralCode = sessionStorage.getItem('referral_code');
       
@@ -74,6 +77,62 @@ function OnboardingModal({ isOpen, user, onComplete }) {
             }
           }
         } catch (e) {}
+      }
+
+      // Auto-create example brand, campaign, and content cards for non-admin users
+      if (!isAdmin) {
+        const existingBrands = await base44.entities.Brand.list();
+        if (existingBrands.length === 0) {
+          // Create example brand
+          const exampleBrand = await base44.entities.Brand.create({
+            name: 'Thrive – Example Brand',
+            primary_product_service: 'Thrive Creator Platform',
+            category: 'personal',
+            description: 'This is an example brand to show you how Thrive works. Edit or delete it anytime!',
+            owner: user.email
+          });
+
+          // Create example campaign
+          const exampleCampaign = await base44.entities.PromotionCampaign.create({
+            name: 'Grow With Thrive',
+            campaign_type: 'tool_promotion',
+            goal: 'grow',
+            brand_id: exampleBrand.id,
+            status: 'evergreen',
+            description: 'Example campaign - edit or delete anytime!'
+          });
+
+          // Create 3 example content cards
+          await base44.entities.ContentCard.bulkCreate([
+            {
+              title: 'Example – Why I\'m Building Thrive',
+              brand_id: exampleBrand.id,
+              campaign_id: exampleCampaign.id,
+              content_type: 'post',
+              intent: 'grow',
+              status: 'idea',
+              owner: user.email
+            },
+            {
+              title: 'Example – How Thrive Helps Creators Stay Consistent',
+              brand_id: exampleBrand.id,
+              campaign_id: exampleCampaign.id,
+              content_type: 'post',
+              intent: 'authority',
+              status: 'idea',
+              owner: user.email
+            },
+            {
+              title: 'Example – Share Thrive & Earn (CTA)',
+              brand_id: exampleBrand.id,
+              campaign_id: exampleCampaign.id,
+              content_type: 'post',
+              intent: 'sell',
+              status: 'idea',
+              owner: user.email
+            }
+          ]);
+        }
       }
 
       const prefs = await base44.entities.UserPreferences.filter({ user_email: user.email });

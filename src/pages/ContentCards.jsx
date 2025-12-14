@@ -16,6 +16,7 @@ export default function ContentCards() {
   const { user, effectiveEmail, bgClass, primaryColor, accentColor } = useTheme();
   const [selectedCard, setSelectedCard] = useState(null);
   const [showEditor, setShowEditor] = useState(false);
+  // Default filters to show ALL content
   const [filterBrand, setFilterBrand] = useState('all');
   const [filterCampaign, setFilterCampaign] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
