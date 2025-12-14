@@ -109,38 +109,69 @@ export default function FirstCampaignWizard({ isOpen, onClose, onComplete, userE
   const handleSkip = async () => {
     setIsCreatingDefaults(true);
     try {
-      // Auto-create default brand and campaign if none exist
+      // Auto-create example brand, campaign, and content cards
       let brandId;
       if (brands.length === 0) {
-        const defaultBrand = await base44.entities.Brand.create({
-          name: 'My Content',
+        const exampleBrand = await base44.entities.Brand.create({
+          name: 'Thrive (Personal Example)',
           category: 'personal',
+          description: 'Example brand to show how Thrive works - edit or delete this anytime!',
           owner: userEmail
         });
-        brandId = defaultBrand.id;
+        brandId = exampleBrand.id;
       } else {
         brandId = brands[0].id;
       }
       
-      // Check if campaign exists for this brand
-      const existingCampaigns = await base44.entities.PromotionCampaign.filter({ brand_id: brandId });
-      if (existingCampaigns.length === 0) {
-        await base44.entities.PromotionCampaign.create({
-          name: 'Ideas & One-Off Content',
-          campaign_type: 'general',
-          goal: 'awareness',
+      // Create example campaign
+      const exampleCampaign = await base44.entities.PromotionCampaign.create({
+        name: 'Grow with Thrive',
+        campaign_type: 'general',
+        goal: 'awareness',
+        brand_id: brandId,
+        status: 'evergreen',
+        description: 'Example campaign - edit or delete anytime!'
+      });
+      
+      // Create 3 example content cards
+      await base44.entities.ContentCard.bulkCreate([
+        {
+          title: 'EXAMPLE: Why I\'m Building with Thrive',
           brand_id: brandId,
-          status: 'evergreen'
-        });
-      }
+          campaign_id: exampleCampaign.id,
+          content_type: 'post',
+          intent: 'grow',
+          status: 'idea',
+          owner: userEmail
+        },
+        {
+          title: 'EXAMPLE: How Thrive Helps Creators Stay Consistent',
+          brand_id: brandId,
+          campaign_id: exampleCampaign.id,
+          content_type: 'post',
+          intent: 'authority',
+          status: 'idea',
+          owner: userEmail
+        },
+        {
+          title: 'EXAMPLE: Join Thrive - Grab Your Referral Code',
+          brand_id: brandId,
+          campaign_id: exampleCampaign.id,
+          content_type: 'post',
+          intent: 'sell',
+          status: 'idea',
+          owner: userEmail
+        }
+      ]);
       
       queryClient.invalidateQueries({ queryKey: ['brands'] });
       queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+      queryClient.invalidateQueries({ queryKey: ['contentCards'] });
       
       await dismissMutation.mutateAsync();
       onComplete();
     } catch (error) {
-      console.error('Error creating defaults:', error);
+      console.error('Error creating examples:', error);
     } finally {
       setIsCreatingDefaults(false);
     }
