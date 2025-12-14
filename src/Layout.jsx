@@ -835,9 +835,9 @@ export default function Layout({ children, currentPageName }) {
 
       <FloatingHelpButton pageName={currentPageName} userEmail={user?.email} />
 
-      {user && preferences && (
+      {user && effectiveEmail && preferences && (
         <QuickActionsWidget 
-          preferences={preferences}
+          preferences={{ ...preferences, user_email: effectiveEmail }}
           primaryColor={primaryColor}
           accentColor={accentColor}
         />
