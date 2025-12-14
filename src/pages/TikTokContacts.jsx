@@ -132,23 +132,13 @@ export default function TikTokContacts() {
   const [hidePrivateInfo, setHidePrivateInfo] = useState(false);
   const defaultFormTab = 'tiktok'; // TikTok Contacts opens to TikTok tab
   
-  // Quick add contact function for dropdowns - now accepts master data for auto-fill
-        const handleQuickAddContact = async (username, masterData = null) => {
-          try {
-            const newContact = await base44.entities.TikTokContact.create({
-              username: username,
-              display_name: masterData?.display_name || '',
-              phonetic: masterData?.phonetic || '',
-              role: [],
-              is_favorite: false
-            });
-            queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] });
-            return newContact.id;
-          } catch (error) {
-            console.error('Failed to quick add contact:', error);
-            return null;
-          }
-        };
+  // DISABLED: Quick-add contact creation removed for launch safety
+  // TikTokContact creation is now admin-only via Admin panel
+  // This function is preserved but unused - will be removed post-launch
+  const handleQuickAddContact = async (username, masterData = null) => {
+    console.warn('TikTokContact auto-creation disabled - admin-only');
+    return null;
+  };
   const [formData, setFormData] = useState(defaultFormData);
   const [filterVeterans, setFilterVeterans] = useState(false);
   const [filterLiveType, setFilterLiveType] = useState('');
