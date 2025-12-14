@@ -284,17 +284,57 @@ export default function TikTokContacts() {
     setShowModal(true);
   };
 
-  const handleSubmit = (shouldClose = true) => {
+  const handleSubmit = async (shouldClose = true) => {
     setShouldCloseAfterSave(shouldClose);
-    const cleanData = {
-      ...formData,
-      username: (formData.username || '').replace('@', '').trim()
-    };
+    const cleanUsername = (formData.username || '').replace('@', '').trim();
     
-    if (editingContact) {
-      updateMutation.mutate({ id: editingContact.id, data: cleanData });
+    if (!cleanUsername) {
+      alert('TikTok username is required');
+      return;
+    }
+
+    // Check if TikTokContact already exists (case-insensitive)
+    const existingTikTokContacts = await base44.entities.TikTokContact.list();
+    const existingContact = existingTikTokContacts.find(
+      c => c.tiktok_username?.toLowerCase() === cleanUsername.toLowerCase()
+    );
+
+    let tiktokContactId;
+
+    if (existingContact) {
+      // Use existing TikTokContact
+      tiktokContactId = existingContact.id;
     } else {
-      createMutation.mutate(cleanData);
+      // Create placeholder TikTokContact (unclaimed)
+      const newTikTokContact = await base44.entities.TikTokContact.create({
+        tiktok_username: cleanUsername,
+        display_name: formData.display_name || cleanUsername,
+        phonetic_spelling: formData.phonetic || '',
+        is_claimed_by_thrive_user: false,
+        claim_status: 'unclaimed'
+      });
+      tiktokContactId = newTikTokContact.id;
+    }
+
+    // Create PersonalContact linked to TikTokContact
+    const personalContactData = {
+      tiktok_contact_id: tiktokContactId,
+      name: formData.real_name || formData.display_name || cleanUsername,
+      nickname: formData.nickname || '',
+      photo_url: formData.image_url || '',
+      phone: formData.phone || '',
+      email: formData.email || '',
+      birthday: formData.birthday || '',
+      relationship: 'tiktok',
+      notes: formData.personal_notes?.map(n => n.note).join('\n\n') || ''
+    };
+
+    if (editingContact) {
+      // Update existing contact
+      updateMutation.mutate({ id: editingContact.id, data: { ...formData, username: cleanUsername } });
+    } else {
+      // Create new contact (old system for now)
+      createMutation.mutate({ ...formData, username: cleanUsername });
     }
   };
 
