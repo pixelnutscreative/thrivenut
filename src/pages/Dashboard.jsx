@@ -82,11 +82,17 @@ export default function Dashboard() {
     enabled: !!user,
   });
 
+  // Admin check
+  const realUserEmail = user?.email ? user.email.toLowerCase() : '';
+  const adminEmails = ['pixelnutscreative@gmail.com', 'pixel@thrivenut.app'];
+  const isAdmin = adminEmails.includes(realUserEmail);
+
   // Check if onboarding should show AND initialize referral tracking
   useEffect(() => {
     if (user && preferences !== undefined) {
       const hasCompletedOnboarding = preferences?.onboarding_completed || 
-                                     localStorage.getItem(`onboarding_completed_${user.email}`) === 'true';
+                                     localStorage.getItem(`onboarding_completed_${user.email}`) === 'true' ||
+                                     isAdmin; // Admins never see onboarding
       setShowOnboarding(!hasCompletedOnboarding);
 
       // CRITICAL: Always try to initialize referral code for new users (tracks signup)
