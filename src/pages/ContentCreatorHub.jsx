@@ -20,10 +20,10 @@ export default function ContentCreatorHub() {
     { id: 'dashboard', label: 'Dashboard', icon: Target, component: CreatorDashboard },
     { id: 'brands', label: 'Brands', icon: Briefcase, component: Brands },
     { id: 'campaigns', label: 'Campaigns', icon: TrendingUp, component: CampaignTimeline },
-    { id: 'content', label: 'Content Cards', icon: FileText, component: ContentCards },
     { id: 'offers', label: 'Offers & Sales', icon: DollarSign, component: PromotedOffers },
-    { id: 'calendar', label: 'Calendar', icon: Calendar, component: ContentCalendar },
+    { id: 'content', label: 'Content Cards', icon: FileText, component: ContentCards },
     { id: 'batch', label: 'Batch Mode', icon: Zap, component: BatchMode },
+    { id: 'calendar', label: 'Calendar', icon: Calendar, component: ContentCalendar },
   ];
 
   return (
@@ -32,17 +32,18 @@ export default function ContentCreatorHub() {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm border-b px-6 py-4">
             <h1 className="text-2xl font-bold text-gray-800 mb-4">Content Creator Center</h1>
-            <TabsList className="grid w-full grid-cols-7 gap-2">
+            <TabsList className="flex w-full gap-3 justify-start overflow-x-auto">
               {tabs.map(tab => {
                 const Icon = tab.icon;
+                const isActive = activeTab === tab.id;
                 return (
                   <TabsTrigger 
                     key={tab.id} 
                     value={tab.id}
-                    className="flex items-center gap-2 data-[state=active]:bg-purple-600 data-[state=active]:text-white"
+                    className="flex items-center gap-2 px-4 py-2 data-[state=active]:bg-purple-600 data-[state=active]:text-white whitespace-nowrap"
                   >
-                    <Icon className="w-4 h-4" />
-                    <span className="hidden md:inline">{tab.label}</span>
+                    <Icon className="w-5 h-5 flex-shrink-0" />
+                    <span className={isActive ? '' : 'hidden md:inline'}>{tab.label}</span>
                   </TabsTrigger>
                 );
               })}
