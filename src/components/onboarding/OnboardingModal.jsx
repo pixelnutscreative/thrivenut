@@ -105,7 +105,7 @@ function OnboardingModal({ isOpen, user, onComplete }) {
           // Create 3 example content cards
           await base44.entities.ContentCard.bulkCreate([
             {
-              title: 'Example – Why I\'m Building Thrive',
+              title: '(Example) Why I\'m Building Thrive',
               brand_id: exampleBrand.id,
               campaign_id: exampleCampaign.id,
               content_type: 'post',
@@ -114,7 +114,7 @@ function OnboardingModal({ isOpen, user, onComplete }) {
               owner: user.email
             },
             {
-              title: 'Example – How Thrive Helps Creators Stay Consistent',
+              title: '(Example) How Thrive Helps Creators Stay Consistent',
               brand_id: exampleBrand.id,
               campaign_id: exampleCampaign.id,
               content_type: 'post',
@@ -123,7 +123,7 @@ function OnboardingModal({ isOpen, user, onComplete }) {
               owner: user.email
             },
             {
-              title: 'Example – Share Thrive & Earn (CTA)',
+              title: '(Example) Share Thrive & Earn',
               brand_id: exampleBrand.id,
               campaign_id: exampleCampaign.id,
               content_type: 'post',

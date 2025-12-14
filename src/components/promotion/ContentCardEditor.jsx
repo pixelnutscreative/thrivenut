@@ -55,11 +55,12 @@ export default function ContentCardEditor({ card, onClose, userEmail }) {
     queryFn: () => base44.entities.PromotionCampaign.list('-created_date'),
   });
 
-  // Auto-create default brand if none exists
+  // Auto-create default brand if none exists (should rarely trigger - onboarding handles this)
   const ensureDefaultBrand = async () => {
     if (brands.length === 0) {
       const defaultBrand = await base44.entities.Brand.create({
-        name: 'Personal / Default Brand',
+        name: 'My Brand',
+        primary_product_service: 'My Product/Service',
         category: 'personal',
         owner: userEmail
       });
@@ -67,23 +68,6 @@ export default function ContentCardEditor({ card, onClose, userEmail }) {
       return defaultBrand.id;
     }
     return brands[0].id;
-  };
-
-  // Auto-create default campaign for brand if none exists
-  const ensureDefaultCampaign = async (brandId) => {
-    const brandCampaigns = campaigns.filter(c => c.brand_id === brandId);
-    if (brandCampaigns.length === 0) {
-      const defaultCampaign = await base44.entities.PromotionCampaign.create({
-        name: 'One-Off Content',
-        campaign_type: 'general',
-        goal: 'awareness',
-        brand_id: brandId,
-        status: 'active'
-      });
-      queryClient.invalidateQueries({ queryKey: ['campaigns'] });
-      return defaultCampaign.id;
-    }
-    return brandCampaigns[0].id;
   };
 
   // Auto-select first brand when creating new card (no blockers)

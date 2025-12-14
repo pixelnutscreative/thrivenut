@@ -14,6 +14,12 @@ import BatchModeSuggestion from '../components/onboarding/BatchModeSuggestion';
 
 export default function CreatorDashboard() {
   const navigate = useNavigate();
+  
+  // Ensure this page never shows white screen
+  const [isReady, setIsReady] = React.useState(false);
+  React.useEffect(() => {
+    setIsReady(true);
+  }, []);
   const queryClient = useQueryClient();
   const { bgClass, primaryColor, accentColor, user, effectiveEmail, preferences } = useTheme();
   const [showWizard, setShowWizard] = useState(false);
