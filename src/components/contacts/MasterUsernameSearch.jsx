@@ -93,11 +93,10 @@ export default function MasterUsernameSearch({
     );
   }, [consolidatedContacts, searchTerm]);
 
-  // Check if search term is a new username not in the database
+  // DISABLED: Auto-creation removed for launch safety
+  // Users can only select from existing TikTokContact records
   const cleanSearchTerm = searchTerm.replace('@', '').trim().toLowerCase();
-  const isNewUsername = cleanSearchTerm && !consolidatedContacts.some(
-    c => c.username.toLowerCase() === cleanSearchTerm
-  );
+  const isNewUsername = false; // Always false - no new contact creation
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -124,12 +123,11 @@ export default function MasterUsernameSearch({
     setIsOpen(false);
   };
 
+  // DISABLED: Contact creation restricted to admin-only manual flow
   const handleCreateNew = () => {
-    if (onCreateNew) {
-      onCreateNew(cleanSearchTerm);
-    }
-    setSearchTerm('');
-    setIsOpen(false);
+    // This function is disabled for launch safety
+    // TikTokContact can only be created via Admin panel
+    console.warn('TikTokContact auto-creation disabled - admin-only');
   };
 
   return (
@@ -151,21 +149,8 @@ export default function MasterUsernameSearch({
 
       {isOpen && (searchTerm || filteredContacts.length > 0) && (
         <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-72 overflow-hidden">
-          {/* Add New Option - shown when typing a new username */}
-          {isNewUsername && onCreateNew && (
-            <button
-              onClick={handleCreateNew}
-              className="w-full p-3 text-left hover:bg-green-50 border-b flex items-center gap-3 text-green-700"
-            >
-              <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-                <Plus className="w-4 h-4" />
-              </div>
-              <div>
-                <p className="font-medium">Add "@{cleanSearchTerm}" as new</p>
-                <p className="text-xs text-gray-500">Not found in database</p>
-              </div>
-            </button>
-          )}
+          {/* REMOVED: "Add New" option disabled for launch safety */}
+          {/* TikTokContact creation is now admin-only via Admin panel */}
 
           {/* Existing Contacts */}
           <div className="overflow-y-auto max-h-56">
