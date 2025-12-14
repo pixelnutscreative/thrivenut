@@ -82,12 +82,35 @@ export default function Dashboard() {
     enabled: !!user,
   });
 
-  // Check if onboarding should show
+  // Check if onboarding should show AND initialize referral tracking
   useEffect(() => {
     if (user && preferences !== undefined) {
       const hasCompletedOnboarding = preferences?.onboarding_completed || 
                                      localStorage.getItem(`onboarding_completed_${user.email}`) === 'true';
       setShowOnboarding(!hasCompletedOnboarding);
+
+      // CRITICAL: Always try to initialize referral code for new users (tracks signup)
+      if (!hasCompletedOnboarding) {
+        // Get referral code from storage
+        let referralCode = sessionStorage.getItem('referral_code');
+        if (!referralCode) {
+          try {
+            const storedData = localStorage.getItem('referral_data');
+            if (storedData) {
+              const parsed = JSON.parse(storedData);
+              const expiresAt = new Date(parsed.expiresAt);
+              if (expiresAt > new Date()) {
+                referralCode = parsed.code;
+              }
+            }
+          } catch (e) {}
+        }
+
+        // Initialize referral tracking
+        base44.functions.invoke('initializeReferralCode', { 
+          referral_code: referralCode 
+        }).catch(() => {});
+      }
     }
   }, [user, preferences]);
 
