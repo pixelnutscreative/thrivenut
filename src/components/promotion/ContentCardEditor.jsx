@@ -46,13 +46,21 @@ export default function ContentCardEditor({ card, onClose, userEmail }) {
   }, [card]);
 
   const { data: brands = [] } = useQuery({
-    queryKey: ['brands'],
-    queryFn: () => base44.entities.Brand.list('name'),
+    queryKey: ['brands', userEmail],
+    queryFn: () => base44.entities.Brand.filter({ owner: userEmail }, 'name'),
+    enabled: !!userEmail,
   });
 
   const { data: campaigns = [] } = useQuery({
-    queryKey: ['campaigns'],
-    queryFn: () => base44.entities.PromotionCampaign.list('-created_date'),
+    queryKey: ['campaigns', userEmail],
+    queryFn: async () => {
+      const userBrands = await base44.entities.Brand.filter({ owner: userEmail }, 'name');
+      const brandIds = userBrands.map(b => b.id);
+      if (brandIds.length === 0) return [];
+      const allCampaigns = await base44.entities.PromotionCampaign.list('-created_date');
+      return allCampaigns.filter(c => brandIds.includes(c.brand_id));
+    },
+    enabled: !!userEmail,
   });
 
   // Auto-create default brand if none exists (should rarely trigger - onboarding handles this)

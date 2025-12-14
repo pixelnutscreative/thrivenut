@@ -44,7 +44,7 @@ export default function BrandsPage() {
       const userBrands = await base44.entities.Brand.filter({ owner: effectiveEmail }, 'name');
       const brandIds = userBrands.map(b => b.id);
       if (brandIds.length === 0) return [];
-      const allCampaigns = await base44.entities.PromotionCampaign.list();
+      const allCampaigns = await base44.entities.PromotionCampaign.list('-created_date');
       return allCampaigns.filter(c => brandIds.includes(c.brand_id));
     },
     enabled: !!effectiveEmail,
