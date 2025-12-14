@@ -22,7 +22,6 @@ import DashboardPreferences from '../components/settings/DashboardPreferences';
 import QuickActionsSettings from '../components/settings/QuickActionsSettings';
 import SoundCloudSettings from '../components/settings/SoundCloudSettings';
 import MoodEmojiSettings from '../components/settings/MoodEmojiSettings';
-import WidgetSettingsV2 from '../components/settings/WidgetSettingsV2';
 import ReferralsTab from '../components/settings/ReferralsTab';
 import AccountDeletionTab from '../components/settings/AccountDeletionTab';
 import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
@@ -308,10 +307,7 @@ export default function Settings() {
             <TabsTrigger value="connections" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
               <Sparkles className="w-4 h-4" />
             </TabsTrigger>
-            <TabsTrigger value="widgets-v2" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
-              <PuzzleIcon className="w-4 h-4" />
-            </TabsTrigger>
-            <TabsTrigger value="widgets" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white opacity-50">
+            <TabsTrigger value="widgets" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
               <PuzzleIcon className="w-4 h-4" />
             </TabsTrigger>
             <TabsTrigger value="bible" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
@@ -970,29 +966,15 @@ export default function Settings() {
             </Card>
           </TabsContent>
 
-          {/* WIDGETS V2 TAB */}
-          <TabsContent value="widgets-v2" id="widgets-v2">
-            <div className="flex justify-end mb-4">
-              <Button onClick={handleSave} disabled={updatePreferencesMutation.isPending}>
-                <Save className="w-4 h-4 mr-2" />
-                {updatePreferencesMutation.isPending ? 'Saving...' : 'Save Changes'}
-              </Button>
-            </div>
-            <WidgetSettingsV2 formData={prefData} setFormData={setPrefData} />
-          </TabsContent>
-
-          {/* OLD WIDGETS TAB */}
+          {/* WIDGETS TAB */}
           <TabsContent value="widgets" id="widgets">
-            <div className="p-4 bg-amber-50 border-2 border-amber-200 rounded-lg mb-4">
-              <p className="text-sm text-amber-800 font-medium">⚠️ This is the old widgets tab. Please use the new Widgets tab instead.</p>
-            </div>
             <div className="flex justify-end mb-4">
               <Button onClick={handleSave} disabled={updatePreferencesMutation.isPending}>
                 <Save className="w-4 h-4 mr-2" />
                 {updatePreferencesMutation.isPending ? 'Saving...' : 'Save Changes'}
               </Button>
             </div>
-            <div className="space-y-4 opacity-60">
+            <div className="space-y-4">
               <QuickActionsSettings formData={prefData} setFormData={setPrefData} />
               <MoodEmojiSettings formData={prefData} setFormData={setPrefData} />
               <SoundCloudSettings formData={prefData} setFormData={setPrefData} />
