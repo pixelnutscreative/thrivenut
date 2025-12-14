@@ -209,8 +209,8 @@ export default function CreatorDashboard() {
     incompleteCards.length > 0 || campaignIssues.length > 0 || offerAlerts.length > 0 || 
     thisWeekSales.length > 0 || reusableContent.length > 0 || staleEvergreen.length > 0;
 
-  // Onboarding Logic - Never show to admins
-  const showCampaignWizard = !isAdmin && campaigns.length === 0 && !preferences?.onboarding_wizard_dismissed;
+  // Onboarding Logic - DISABLED
+  const showCampaignWizard = false;
   const showBatchSuggestion = batchReadyGroups.length > 0 && !preferences?.batch_mode_suggestion_dismissed;
 
   const dismissBatchSuggestion = useMutation({
