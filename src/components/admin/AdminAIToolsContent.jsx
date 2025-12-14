@@ -81,7 +81,7 @@ export default function AdminAIToolsContent() {
   // Fetch TikTok contacts for linking
   const { data: tiktokContacts = [] } = useQuery({
     queryKey: ['tiktokContacts'],
-    queryFn: () => base44.entities.TikTokContact.list('username'),
+    queryFn: () => base44.entities.TikTokContact.list('tiktok_username'),
   });
 
   // Check if current user already has a platform assignment
@@ -170,6 +170,7 @@ export default function AdminAIToolsContent() {
       filtered = filtered.filter(user => 
         user.user_name?.toLowerCase().includes(query) ||
         user.user_email?.toLowerCase().includes(query) ||
+        getLinkedContact(user)?.tiktok_username?.toLowerCase().includes(query) ||
         getLinkedContact(user)?.username?.toLowerCase().includes(query)
       );
     }
@@ -217,6 +218,7 @@ export default function AdminAIToolsContent() {
     if (!contactSearch) return tiktokContacts;
     const query = contactSearch.toLowerCase();
     return tiktokContacts.filter(c => 
+      c.tiktok_username?.toLowerCase().includes(query) ||
       c.username?.toLowerCase().includes(query) ||
       c.display_name?.toLowerCase().includes(query) ||
       c.real_name?.toLowerCase().includes(query)
@@ -488,7 +490,7 @@ export default function AdminAIToolsContent() {
                             {linkedContact && (
                               <Badge variant="outline" className="text-xs">
                                 <LinkIcon className="w-3 h-3 mr-1" />
-                                @{linkedContact.username}
+                                @{linkedContact.tiktok_username || linkedContact.username}
                               </Badge>
                             )}
                             {hasThriveAccount(user.user_email) && (
@@ -865,7 +867,7 @@ export default function AdminAIToolsContent() {
                     ) : (
                       filteredContacts.map(contact => (
                         <SelectItem key={contact.id} value={contact.id}>
-                          @{contact.username} {contact.display_name ? `(${contact.display_name})` : contact.real_name ? `(${contact.real_name})` : ''}
+                          @{contact.tiktok_username || contact.username} {contact.display_name ? `(${contact.display_name})` : contact.real_name ? `(${contact.real_name})` : ''}
                         </SelectItem>
                       ))
                     )}
@@ -938,7 +940,7 @@ export default function AdminAIToolsContent() {
               onClick={() => {
                 if (newContactUsername.trim()) {
                   createContactMutation.mutate({
-                    username: newContactUsername.trim(),
+                    tiktok_username: newContactUsername.trim(),
                     created_by: currentUser?.email
                   });
                 }
