@@ -159,11 +159,22 @@ export default function Home() {
   const [checkingAuth, setCheckingAuth] = useState(true);
 
   useEffect(() => {
-    // Capture referral code from URL
+    // Capture referral code from URL with 365-day persistence
     const urlParams = new URLSearchParams(window.location.search);
     const refCode = urlParams.get('ref');
     if (refCode) {
+      const referralData = {
+        code: refCode,
+        sourceType: urlParams.get('source_type') || null,
+        sourceDetail: urlParams.get('source_detail') || null,
+        timestamp: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString() // 365 days
+      };
+      
+      // Store in both sessionStorage (for immediate use) and localStorage (for persistence)
       sessionStorage.setItem('referral_code', refCode);
+      localStorage.setItem('referral_data', JSON.stringify(referralData));
+      
       // Track click with source info if available
       base44.functions.invoke('trackReferral', { 
         referralCode: refCode, 
