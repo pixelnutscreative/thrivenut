@@ -237,16 +237,25 @@ export default function AdminAIToolsContent() {
     return filtered;
   }, [platformUsers, searchQuery, filters, thriveUsers, tiktokContacts, sortBy]);
 
-  // Filter contacts for search
+  // Filter contacts for search - search all name fields thoroughly
   const filteredContacts = React.useMemo(() => {
     if (!contactSearch) return tiktokContacts;
-    const query = contactSearch.toLowerCase();
-    return tiktokContacts.filter(c => 
-      c.tiktok_username?.toLowerCase().includes(query) ||
-      c.username?.toLowerCase().includes(query) ||
-      c.display_name?.toLowerCase().includes(query) ||
-      c.real_name?.toLowerCase().includes(query)
-    );
+    const query = contactSearch.toLowerCase().trim();
+    const queryWords = query.split(/\s+/); // Split by spaces for multi-word search
+    
+    return tiktokContacts.filter(c => {
+      const searchFields = [
+        c.tiktok_username?.toLowerCase() || '',
+        c.username?.toLowerCase() || '',
+        c.display_name?.toLowerCase() || '',
+        c.real_name?.toLowerCase() || '',
+        c.nickname?.toLowerCase() || ''
+      ].join(' ');
+      
+      // Match if ANY query word is found OR if the full query is found
+      return queryWords.every(word => searchFields.includes(word)) || 
+             searchFields.includes(query);
+    });
   }, [tiktokContacts, contactSearch]);
 
   const createContactMutation = useMutation({
@@ -890,10 +899,13 @@ export default function AdminAIToolsContent() {
               </Label>
               <div className="space-y-2">
                 <Input
-                  placeholder="Search contacts by @username or name..."
+                  placeholder="Search by @username, real name, display name..."
                   value={contactSearch}
                   onChange={(e) => setContactSearch(e.target.value)}
                 />
+                <p className="text-xs text-gray-500">
+                  Try: "jes", "mcg", "jessica", or partial names
+                </p>
                 <Select
                   value={editingUser?.tiktok_contact_id || newUser.tiktok_contact_id || 'none'}
                   onValueChange={(v) => {
@@ -915,15 +927,24 @@ export default function AdminAIToolsContent() {
                         <span className="text-xs">Try clicking Refresh ↑ or search differently</span>
                       </div>
                     ) : (
-                      filteredContacts.slice(0, 100).map(contact => (
-                        <SelectItem key={contact.id} value={contact.id}>
-                          @{contact.tiktok_username || contact.username} {contact.display_name ? `(${contact.display_name})` : contact.real_name ? `(${contact.real_name})` : ''}
-                        </SelectItem>
-                      ))
+                      filteredContacts.slice(0, 200).map(contact => {
+                        const username = contact.tiktok_username || contact.username;
+                        const displayInfo = [
+                          contact.real_name,
+                          contact.display_name,
+                          contact.nickname
+                        ].filter(Boolean).join(' / ');
+                        
+                        return (
+                          <SelectItem key={contact.id} value={contact.id}>
+                            @{username} {displayInfo && `— ${displayInfo}`}
+                          </SelectItem>
+                        );
+                      })
                     )}
-                    {filteredContacts.length > 100 && (
+                    {filteredContacts.length > 200 && (
                       <div className="p-2 text-xs text-gray-500 border-t">
-                        Showing first 100 of {filteredContacts.length} contacts. Use search to narrow down.
+                        Showing first 200 of {filteredContacts.length} contacts. Use search to narrow down.
                       </div>
                     )}
                   </SelectContent>
