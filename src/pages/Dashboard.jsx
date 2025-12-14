@@ -19,6 +19,7 @@ import UrgentEventsCard from '../components/dashboard/UrgentEventsCard';
 import CalendarIntegrationCard from '../components/dashboard/CalendarIntegrationCard';
 import DashboardGoalsSection from '../components/dashboard/DashboardGoalsSection';
 import DashboardTasksSection from '../components/dashboard/DashboardTasksSection';
+import OnboardingModal from '../components/onboarding/OnboardingModal';
 import { format, startOfWeek, addDays } from 'date-fns';
 import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
 import { useTheme } from '../components/shared/useTheme';
@@ -27,9 +28,9 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
-
-    const [loading, setLoading] = useState(true);
-    const [collapsedSections, setCollapsedSections] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [collapsedSections, setCollapsedSections] = useState([]);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   
   const { bgClass, textClass, cardBgClass, primaryColor } = useTheme();
 
@@ -80,6 +81,15 @@ export default function Dashboard() {
     },
     enabled: !!user,
   });
+
+  // Check if onboarding should show
+  useEffect(() => {
+    if (user && preferences !== undefined) {
+      const hasCompletedOnboarding = preferences?.onboarding_completed || 
+                                     localStorage.getItem(`onboarding_completed_${user.email}`) === 'true';
+      setShowOnboarding(!hasCompletedOnboarding);
+    }
+  }, [user, preferences]);
 
   const contentGoal = null; // Removed feature
 
@@ -253,8 +263,18 @@ export default function Dashboard() {
   const isSectionCollapsed = (sectionId) => collapsedSections.includes(sectionId);
 
   return (
-    <div className={`min-h-screen ${bgClass} p-4 md:p-8`}>
-      <div className="max-w-7xl mx-auto space-y-8">
+    <>
+      <OnboardingModal 
+        isOpen={showOnboarding} 
+        user={user} 
+        onComplete={() => {
+          setShowOnboarding(false);
+          queryClient.invalidateQueries({ queryKey: ['preferences'] });
+        }} 
+      />
+
+      <div className={`min-h-screen ${bgClass} p-4 md:p-8`}>
+        <div className="max-w-7xl mx-auto space-y-8">
         {/* Daily Motivation Banner - AT THE TOP */}
         <DailyMotivationBanner
           greetingTypes={preferences?.greeting_types || [preferences?.greeting_type || 'positive_quote']}
@@ -339,9 +359,8 @@ export default function Dashboard() {
             </CollapsibleContent>
           </Collapsible>
         )}
+        </div>
       </div>
-
-
-    </div>
+    </>
   );
 }
