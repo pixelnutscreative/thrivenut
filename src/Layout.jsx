@@ -174,6 +174,7 @@ export default function Layout({ children, currentPageName }) {
       bgColor: 'bg-orange-500/10',
       items: [
         { name: 'Content Creator Center', icon: Target, path: 'ContentCreatorHub' },
+        { name: 'Affiliate Programs', icon: DollarSign, path: 'AffiliateCampaigns' },
         { name: 'Content Ideas', icon: Lightbulb, path: 'SavedMotivations', moduleId: 'motivations' },
         { name: 'Content Marketplace', icon: Briefcase, path: 'ContentMarketplace', highlight: true },
         { name: 'Create AI Music', icon: Music, isSection: true, subItems: [

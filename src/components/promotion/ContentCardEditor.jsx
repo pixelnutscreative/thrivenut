@@ -261,13 +261,17 @@ export default function ContentCardEditor({ card, onClose, userEmail }) {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="video">Video</SelectItem>
-                        <SelectItem value="post">Post</SelectItem>
-                        <SelectItem value="email">Email</SelectItem>
-                        <SelectItem value="sms">SMS</SelectItem>
-                        <SelectItem value="live">Live</SelectItem>
-                        <SelectItem value="blog">Blog</SelectItem>
-                        <SelectItem value="promo">Promo</SelectItem>
+                        <SelectItem value="video">📹 Video</SelectItem>
+                        <SelectItem value="post">📱 Post</SelectItem>
+                        <SelectItem value="email">📧 Email</SelectItem>
+                        <SelectItem value="sms">💬 SMS</SelectItem>
+                        <SelectItem value="live">🔴 Live</SelectItem>
+                        <SelectItem value="blog">📝 Blog</SelectItem>
+                        <SelectItem value="long_form">📄 Long Form</SelectItem>
+                        <SelectItem value="carousel">🎠 Carousel</SelectItem>
+                        <SelectItem value="story">📖 Story</SelectItem>
+                        <SelectItem value="reel">🎬 Reel</SelectItem>
+                        <SelectItem value="promo">🎁 Promo</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
