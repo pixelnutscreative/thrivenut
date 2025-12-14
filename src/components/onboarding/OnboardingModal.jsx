@@ -116,9 +116,12 @@ function OnboardingModal({ isOpen, user, onComplete }) {
       }
 
       // Initialize referral code - THIS MUST SUCCEED
+      // Use link referral code first, then manual input
+      const finalReferralCode = referralCode || data.referral_code_input || null;
+      
       try {
         const result = await base44.functions.invoke('initializeReferralCode', { 
-          referral_code: referralCode 
+          referral_code: finalReferralCode 
         });
         console.log('Referral tracking result:', result);
       } catch (error) {
@@ -314,9 +317,24 @@ function OnboardingModal({ isOpen, user, onComplete }) {
             </div>
           )}
 
-          {/* Step 5: Location */}
+          {/* Step 5: Location + Referral Code */}
           {step === 5 && (
             <>
+              {!hasReferralCode && (
+                <div className="mb-6 p-4 bg-purple-50 border-2 border-purple-200 rounded-lg">
+                  <Label className="mb-2 block font-semibold">Were you referred by someone? (Optional)</Label>
+                  <Input
+                    placeholder="Enter their referral code"
+                    value={data.referral_code_input}
+                    onChange={(e) => setData({ ...data, referral_code_input: e.target.value.toLowerCase() })}
+                    className="font-mono"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    If someone sent you a referral link, you can skip this. Otherwise, enter their code here to give them credit!
+                  </p>
+                </div>
+              )}
+
               <p className="text-sm text-gray-600">
                 We'd love to show where our Pixel Nuts community is from on a map! Your name won't show - you'll just be a dot at your city center.
               </p>
