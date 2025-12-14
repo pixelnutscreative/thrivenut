@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { createPageUrl } from './utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/button.jsx';
 import { 
   LayoutDashboard, Target, Heart, BookOpen, Settings, Menu, X, LogOut, 
   TrendingUp, Users, Video, Pill, Gift, Brain, Home, ChevronDown, 
