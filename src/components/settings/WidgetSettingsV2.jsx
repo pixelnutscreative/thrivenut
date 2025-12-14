@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { 
-  Zap, Droplet, Smile, Utensils, Lightbulb, Cloud, StickyNote, Heart, Home, Music as MusicIcon, Link, ExternalLink,
+  Zap, Droplet, Smile, Utensils, Lightbulb, Cloud, StickyNote, Heart, Home, Music, Link, ExternalLink,
   CheckCircle, Calendar, Mail, Phone, MessageSquare, Send, Inbox, Star, Bookmark, Flag, Bell, Gift,
   ShoppingCart, ShoppingBag, CreditCard, DollarSign, Target, Trophy, Award, TrendingUp, Activity,
   BarChart, PieChart, LineChart, Users, User, UserPlus, UserCheck, Camera, Video, Film, Image, Tv,
@@ -19,12 +19,12 @@ import {
   Wifi, Radio, Signal, Lock, Unlock, Key, Shield, Eye, EyeOff, Search, Filter, Settings, Sliders, Volume,
   Volume2, VolumeX, Mic, MicOff, Play, Pause, SkipForward, SkipBack, FastForward, Rewind, Repeat, Shuffle,
   Clock, Timer, Hourglass, Watch, AlarmClock, Sunrise, Sunset, Cat, Dog, Fish, Bike, Dumbbell, Footprints,
-  Hand, ThumbsUp, ThumbsDown, Laugh, Angry, Frown, Brain, Pill, Cross, Plus, Minus, X, Check, Anchor,
+  Hand, ThumbsUp, ThumbsDown, Laugh, Frown, Brain, Pill, Cross, Plus, Minus, X, Check, Anchor,
   Rocket, Ship, Train, Truck, Building, Store, Factory, Tent, PawPrint, Bone, Gamepad, Monitor, Laptop,
   Smartphone, Tablet, Printer, Keyboard, Mouse, Megaphone, Speaker, Podcast, Instagram, Twitter, Facebook,
   Youtube, Linkedin, Github, Chrome, Command, Code, Terminal, Database, Server, HardDrive, CloudUpload,
   Wallet, Coins, Banknote, Receipt, Calculator, Landmark, PiggyBank, Hammer, Wrench, Brush, Ruler, Sword,
-  GripVertical, Trash2, MonitorPlay, Menu, EyeOff, Music
+  GripVertical, Trash2, MonitorPlay, Menu, EyeOff
 } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
@@ -41,7 +41,7 @@ const iconMap = {
   Wifi, Radio, Signal, Lock, Unlock, Key, Shield, Eye, EyeOff, Search, Filter, Settings, Sliders, Volume,
   Volume2, VolumeX, Mic, MicOff, Play, Pause, SkipForward, SkipBack, FastForward, Rewind, Repeat, Shuffle,
   Clock, Timer, Hourglass, Watch, AlarmClock, Sunrise, Sunset, Cat, Dog, Fish, Bike, Dumbbell, Footprints,
-  Hand, ThumbsUp, ThumbsDown, Laugh, Angry, Frown, Brain, Pill, Cross, Plus, Minus, Check, Anchor,
+  Hand, ThumbsUp, ThumbsDown, Laugh, Frown, Brain, Pill, Cross, Plus, Minus, Check, Anchor,
   Rocket, Ship, Train, Truck, Building, Store, Factory, Tent, PawPrint, Bone, Gamepad, Monitor, Laptop,
   Smartphone, Tablet, Printer, Keyboard, Mouse, Megaphone, Speaker, Podcast, Instagram, Twitter, Facebook,
   Youtube, Linkedin, Github, Chrome, Command, Code, Terminal, Database, Server, HardDrive, CloudUpload,
@@ -414,7 +414,7 @@ export default function WidgetSettingsV2({ formData, setFormData }) {
       {/* Music */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><MusicIcon className="w-5 h-5" />Music Player</CardTitle>
+          <CardTitle className="flex items-center gap-2"><Music className="w-5 h-5" />Music Player</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex gap-4">
@@ -432,7 +432,7 @@ export default function WidgetSettingsV2({ formData, setFormData }) {
           <div>
             <Label>Position</Label>
             <div className="grid grid-cols-3 gap-3">
-              {[{ value: 'menu', label: 'In Menu', icon: MenuIcon }, { value: 'floating', label: 'Floating', icon: MonitorPlay }, { value: 'hidden', label: 'Hidden', icon: EyeOff }].map(opt => {
+              {[{ value: 'menu', label: 'In Menu', icon: Menu }, { value: 'floating', label: 'Floating', icon: MonitorPlay }, { value: 'hidden', label: 'Hidden', icon: EyeOff }].map(opt => {
                 const Icon = opt.icon;
                 return (
                   <div key={opt.value} onClick={() => setFormData({ ...formData, soundcloud_player_position: opt.value })} className={`p-4 rounded-xl border-2 cursor-pointer text-center ${position === opt.value ? 'border-purple-500 bg-purple-50' : 'border-gray-200'}`}>
