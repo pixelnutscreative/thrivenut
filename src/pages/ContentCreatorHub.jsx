@@ -28,9 +28,9 @@ export default function ContentCreatorHub() {
 
   return (
     <div className={`min-h-screen ${bgClass}`}>
-      <div className="max-w-[1800px] mx-auto">
+      <div className="w-full">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm border-b px-6 py-4">
+          <div className="sticky top-0 z-[5] bg-white/80 backdrop-blur-sm border-b px-6 py-4">
             <h1 className="text-2xl font-bold text-gray-800 mb-4">Content Creator Center</h1>
             <TabsList className="flex w-full gap-3 justify-start overflow-x-auto">
               {tabs.map(tab => {
