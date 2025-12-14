@@ -79,11 +79,13 @@ export default function AdminAIToolsContent() {
     queryFn: () => base44.entities.UserPreferences.list(),
   });
 
-  // Fetch TikTok contacts for linking
-  const { data: tiktokContacts = [], refetch: refetchContacts } = useQuery({
+  // Fetch TikTok contacts for linking - fetch ALL without limits
+  const { data: tiktokContacts = [], refetch: refetchContacts, isRefetching } = useQuery({
     queryKey: ['tiktokContacts'],
     queryFn: async () => {
-      const contacts = await base44.entities.TikTokContact.list('-updated_date');
+      // Fetch all contacts without any filters
+      const contacts = await base44.entities.TikTokContact.filter({});
+      console.log(`Fetched ${contacts.length} TikTok contacts`);
       // Sort alphabetically by username
       return contacts.sort((a, b) => {
         const nameA = (a.tiktok_username || a.username || '').toLowerCase();
@@ -889,12 +891,22 @@ export default function AdminAIToolsContent() {
                 <span>Link to Creator Contact (Optional)</span>
                 <Button
                   type="button"
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
                   onClick={() => refetchContacts()}
-                  className="h-6 text-xs"
+                  disabled={isRefetching}
+                  className="h-7 text-xs font-semibold"
                 >
-                  🔄 Refresh ({tiktokContacts.length} contacts)
+                  {isRefetching ? (
+                    <>
+                      <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                      Loading...
+                    </>
+                  ) : (
+                    <>
+                      🔄 Refresh List ({tiktokContacts.length} total)
+                    </>
+                  )}
                 </Button>
               </Label>
               <div className="space-y-2">
@@ -927,7 +939,7 @@ export default function AdminAIToolsContent() {
                         <span className="text-xs">Try clicking Refresh ↑ or search differently</span>
                       </div>
                     ) : (
-                      filteredContacts.slice(0, 200).map(contact => {
+                      filteredContacts.slice(0, 500).map(contact => {
                         const username = contact.tiktok_username || contact.username;
                         const displayInfo = [
                           contact.real_name,
@@ -942,9 +954,14 @@ export default function AdminAIToolsContent() {
                         );
                       })
                     )}
-                    {filteredContacts.length > 200 && (
+                    {filteredContacts.length > 500 && (
                       <div className="p-2 text-xs text-gray-500 border-t">
-                        Showing first 200 of {filteredContacts.length} contacts. Use search to narrow down.
+                        Showing first 500 of {filteredContacts.length} contacts. Use search to narrow down.
+                      </div>
+                    )}
+                    {contactSearch && filteredContacts.length > 0 && (
+                      <div className="p-2 text-xs text-green-600 border-t bg-green-50">
+                        ✓ Found {filteredContacts.length} contact{filteredContacts.length !== 1 ? 's' : ''} matching "{contactSearch}"
                       </div>
                     )}
                   </SelectContent>
