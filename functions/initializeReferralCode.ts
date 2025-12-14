@@ -59,16 +59,22 @@ Deno.serve(async (req) => {
       is_active: true
     });
 
-    // Create user verification record
-    await base44.asServiceRole.entities.UserVerification.create({
-      user_email: user.email,
-      signup_date: new Date().toISOString(),
-      referral_code_used: referralCodeUsed,
-      referred_by_code: referralCodeUsed,
-      has_logged_in: true,
-      days_active: 1,
-      last_activity_date: new Date().toISOString()
+    // Create user verification record (only if doesn't exist)
+    const existingVerification = await base44.asServiceRole.entities.UserVerification.filter({ 
+      user_email: user.email 
     });
+
+    if (existingVerification.length === 0) {
+      await base44.asServiceRole.entities.UserVerification.create({
+        user_email: user.email,
+        signup_date: new Date().toISOString(),
+        referral_code_used: referralCodeUsed,
+        referred_by_code: referralCodeUsed,
+        has_logged_in: true,
+        days_active: 1,
+        last_activity_date: new Date().toISOString()
+      });
+    }
 
     // Track signup if they used a referral code
     if (referralCodeUsed) {
