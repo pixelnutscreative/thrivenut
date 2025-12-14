@@ -178,6 +178,7 @@ export default function Layout({ children, currentPageName }) {
           { name: 'Brands', icon: Briefcase, path: 'Brands' },
           { name: 'Campaigns', icon: TrendingUp, path: 'CampaignTimeline' },
           { name: 'Content Cards', icon: FileText, path: 'ContentCards' },
+          { name: 'Content Calendar', icon: Calendar, path: 'ContentCalendar' },
           { name: 'Offers & Sales', icon: DollarSign, path: 'PromotedOffers' },
           { name: 'Batch Mode', icon: Zap, path: 'BatchMode' },
         ]},
