@@ -44,8 +44,12 @@ export default function QuickEventAdder({ isOpen, onClose, userEmail }) {
     }
   });
 
+  // DISABLED: Contact creation restricted to admin-only manual flow
   const createContactMutation = useMutation({
-    mutationFn: (data) => base44.entities.TikTokContact.create(data),
+    mutationFn: (data) => {
+      console.warn('TikTokContact auto-creation disabled - admin-only');
+      return Promise.reject(new Error('Contact creation disabled'));
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] });
       setShowCreateContact(false);
@@ -155,16 +159,15 @@ export default function QuickEventAdder({ isOpen, onClose, userEmail }) {
                     ))
                   ) : (
                     <div className="p-3">
-                      <p className="text-sm text-gray-500 mb-2">Not in your contacts yet</p>
-                      <Button
-                        size="sm"
-                        onClick={handleCreateContact}
-                        disabled={createContactMutation.isPending}
-                        className="w-full bg-purple-600 hover:bg-purple-700"
+                      <p className="text-sm text-gray-500 mb-2">Not in your contacts - you can still use this username</p>
+                      <button
+                        onClick={() => {
+                          handleSearchSelect(searchUsername.replace('@', '').trim());
+                        }}
+                        className="w-full px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-lg"
                       >
-                        <UserPlus className="w-3 h-3 mr-2" />
-                        Add @{searchUsername.replace('@', '')} to Contacts
-                      </Button>
+                        Use @{searchUsername.replace('@', '')}
+                      </button>
                     </div>
                   )}
                 </div>
