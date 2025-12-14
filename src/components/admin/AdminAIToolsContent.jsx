@@ -31,6 +31,7 @@ export default function AdminAIToolsContent() {
     is_overdue: 'all',
     includes_social_access: 'all'
   });
+  const [sortBy, setSortBy] = useState('name');
   const [contactSearch, setContactSearch] = useState('');
   const [showCreateContact, setShowCreateContact] = useState(false);
   const [newContactUsername, setNewContactUsername] = useState('');
@@ -210,8 +211,23 @@ export default function AdminAIToolsContent() {
       filtered = filtered.filter(u => isOverdue(u) === shouldBeOverdue);
     }
 
+    // Sort
+    if (sortBy === 'name') {
+      filtered.sort((a, b) => {
+        const nameA = (a.user_name || a.user_email || '').toLowerCase();
+        const nameB = (b.user_name || b.user_email || '').toLowerCase();
+        return nameA.localeCompare(nameB);
+      });
+    } else if (sortBy === 'email') {
+      filtered.sort((a, b) => {
+        const emailA = (a.user_email || '').toLowerCase();
+        const emailB = (b.user_email || '').toLowerCase();
+        return emailA.localeCompare(emailB);
+      });
+    }
+
     return filtered;
-  }, [platformUsers, searchQuery, filters, thriveUsers, tiktokContacts]);
+  }, [platformUsers, searchQuery, filters, thriveUsers, tiktokContacts, sortBy]);
 
   // Filter contacts for search
   const filteredContacts = React.useMemo(() => {
@@ -376,12 +392,23 @@ export default function AdminAIToolsContent() {
             <CardContent>
               {/* Search and Filters */}
               <div className="space-y-4 mb-6 p-4 bg-gray-50 rounded-lg border">
-                <Input
-                  placeholder="Search by name, email, or @username..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full"
-                />
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Search by name, email, or @username..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Select value={sortBy} onValueChange={setSortBy}>
+                    <SelectTrigger className="w-40">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="name">Sort by Name</SelectItem>
+                      <SelectItem value="email">Sort by Email</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
                   <Select value={filters.platform} onValueChange={(v) => setFilters({ ...filters, platform: v })}>
                     <SelectTrigger className="text-xs">
