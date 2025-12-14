@@ -65,6 +65,7 @@ import SalesTracking from './pages/SalesTracking';
 import PromotedOffers from './pages/PromotedOffers';
 import CreatorDashboard from './pages/CreatorDashboard';
 import NotificationHistory from './pages/NotificationHistory';
+import Brands from './pages/Brands';
 import __Layout from './Layout.jsx';
 
 
@@ -136,6 +137,7 @@ export const PAGES = {
     "PromotedOffers": PromotedOffers,
     "CreatorDashboard": CreatorDashboard,
     "NotificationHistory": NotificationHistory,
+    "Brands": Brands,
 }
 
 export const pagesConfig = {
