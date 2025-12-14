@@ -14,7 +14,7 @@ import { useTheme } from '../components/shared/useTheme';
 
 export default function PromotedOffers() {
   const queryClient = useQueryClient();
-  const { bgClass, primaryColor, accentColor } = useTheme();
+  const { bgClass, primaryColor, accentColor, effectiveEmail } = useTheme();
   const [showDialog, setShowDialog] = useState(false);
   const [editingOffer, setEditingOffer] = useState(null);
   const [selectedOffer, setSelectedOffer] = useState(null);
@@ -27,8 +27,9 @@ export default function PromotedOffers() {
   });
 
   const { data: offers = [] } = useQuery({
-    queryKey: ['promotedOffers'],
-    queryFn: () => base44.entities.PromotedOffer.list('name'),
+    queryKey: ['promotedOffers', effectiveEmail],
+    queryFn: () => base44.entities.PromotedOffer.filter({ owner: effectiveEmail }, 'name'),
+    enabled: !!effectiveEmail,
   });
 
   const { data: salesLogs = [] } = useQuery({
@@ -37,17 +38,25 @@ export default function PromotedOffers() {
   });
 
   const { data: campaigns = [] } = useQuery({
-    queryKey: ['campaigns'],
-    queryFn: () => base44.entities.PromotionCampaign.list('-created_date'),
+    queryKey: ['campaigns', effectiveEmail],
+    queryFn: async () => {
+      const userBrands = await base44.entities.Brand.filter({ owner: effectiveEmail }, 'name');
+      const brandIds = userBrands.map(b => b.id);
+      if (brandIds.length === 0) return [];
+      const allCampaigns = await base44.entities.PromotionCampaign.list('-created_date');
+      return allCampaigns.filter(c => brandIds.includes(c.brand_id));
+    },
+    enabled: !!effectiveEmail,
   });
 
   const { data: contentCards = [] } = useQuery({
-    queryKey: ['contentCards'],
-    queryFn: () => base44.entities.ContentCard.list('-updated_date'),
+    queryKey: ['contentCards', effectiveEmail],
+    queryFn: () => base44.entities.ContentCard.filter({ owner: effectiveEmail }, '-updated_date'),
+    enabled: !!effectiveEmail,
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.PromotedOffer.create(data),
+    mutationFn: (data) => base44.entities.PromotedOffer.create({ ...data, owner: effectiveEmail }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['promotedOffers'] });
       setShowDialog(false);

@@ -23,7 +23,7 @@ const platformIcons = {
 
 export default function ContentCalendar() {
   const navigate = useNavigate();
-  const { bgClass, primaryColor, accentColor } = useTheme();
+  const { bgClass, primaryColor, accentColor, effectiveEmail } = useTheme();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState('month'); // 'month' or 'week'
   const [filterPlatform, setFilterPlatform] = useState('all');
@@ -40,18 +40,27 @@ export default function ContentCalendar() {
   });
 
   const { data: contentCards = [] } = useQuery({
-    queryKey: ['contentCards'],
-    queryFn: () => base44.entities.ContentCard.list(),
+    queryKey: ['contentCards', effectiveEmail],
+    queryFn: () => base44.entities.ContentCard.filter({ owner: effectiveEmail }),
+    enabled: !!effectiveEmail,
   });
 
   const { data: brands = [] } = useQuery({
-    queryKey: ['brands'],
-    queryFn: () => base44.entities.Brand.list('name'),
+    queryKey: ['brands', effectiveEmail],
+    queryFn: () => base44.entities.Brand.filter({ owner: effectiveEmail }, 'name'),
+    enabled: !!effectiveEmail,
   });
 
   const { data: campaigns = [] } = useQuery({
-    queryKey: ['campaigns'],
-    queryFn: () => base44.entities.PromotionCampaign.list(),
+    queryKey: ['campaigns', effectiveEmail],
+    queryFn: async () => {
+      const userBrands = await base44.entities.Brand.filter({ owner: effectiveEmail }, 'name');
+      const brandIds = userBrands.map(b => b.id);
+      if (brandIds.length === 0) return [];
+      const allCampaigns = await base44.entities.PromotionCampaign.list();
+      return allCampaigns.filter(c => brandIds.includes(c.brand_id));
+    },
+    enabled: !!effectiveEmail,
   });
 
   const { data: platforms = [] } = useQuery({
