@@ -88,14 +88,46 @@ export default function QuickAddContactSelect({
     setIsOpen(false);
   };
 
-  // DISABLED: Quick-add contact creation removed for launch safety
-  // TikTokContact creation is now admin-only via Admin panel
   const handleQuickAdd = async (masterData = null) => {
-    console.warn('TikTokContact auto-creation disabled - admin-only');
-    // Do nothing - prevent contact creation
-    setSearchTerm('');
-    setIsOpen(false);
-    setShowQuickAdd(false);
+    const cleanUsername = searchTerm.replace('@', '').trim();
+    if (!cleanUsername) return;
+
+    try {
+      // Create placeholder TikTokContact if using master data
+      if (masterData) {
+        const newContact = await base44.entities.TikTokContact.create({
+          tiktok_username: masterData.username,
+          display_name: masterData.display_name || masterData.username,
+          phonetic_spelling: masterData.phonetic || '',
+          is_claimed_by_thrive_user: false,
+          claim_status: 'unclaimed'
+        });
+        
+        if (onQuickAdd) {
+          await onQuickAdd(masterData.username, masterData);
+        }
+        onChange(newContact.id);
+      } else {
+        // Create from search term only
+        const newContact = await base44.entities.TikTokContact.create({
+          tiktok_username: cleanUsername,
+          display_name: cleanUsername,
+          is_claimed_by_thrive_user: false,
+          claim_status: 'unclaimed'
+        });
+        
+        if (onQuickAdd) {
+          await onQuickAdd(cleanUsername);
+        }
+        onChange(newContact.id);
+      }
+      
+      setSearchTerm('');
+      setIsOpen(false);
+      setShowQuickAdd(false);
+    } catch (error) {
+      console.error('Error creating contact:', error);
+    }
   };
 
   const noResults = searchTerm.length > 0 && filteredContacts.length === 0;
@@ -144,12 +176,63 @@ export default function QuickAddContactSelect({
             </div>
           ))}
 
-          {/* REMOVED: Master database suggestions disabled for launch safety */}
-          {/* TikTokContact creation is now admin-only via Admin panel */}
+          {/* Master database suggestions */}
+          {useMasterDb && masterSuggestions.length > 0 && (
+            <>
+              {filteredContacts.length > 0 && (
+                <div className="border-t border-gray-200" />
+              )}
+              <div className="bg-green-50 px-2 py-1">
+                <p className="text-[10px] text-green-700 font-semibold">From Master Database</p>
+              </div>
+              {masterSuggestions.map(contact => (
+                <div
+                  key={contact.id}
+                  onClick={() => handleQuickAdd(contact)}
+                  className="px-3 py-2 hover:bg-green-50 cursor-pointer flex items-center gap-2 border-b last:border-0"
+                >
+                  <div className="w-6 h-6 rounded-full bg-green-200 flex items-center justify-center">
+                    <Plus className="w-3 h-3 text-green-700" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium truncate">
+                      @{contact.username}
+                    </p>
+                    {contact.display_name && (
+                      <p className="text-[10px] text-gray-500">{contact.display_name}</p>
+                    )}
+                  </div>
+                  <Badge variant="outline" className="text-[10px] bg-green-100 text-green-700 border-green-300">
+                    Add
+                  </Badge>
+                </div>
+              ))}
+            </>
+          )}
 
-          {noResults && (
+          {noResults && masterSuggestions.length === 0 && (
             <div className="p-3">
-              <p className="text-xs text-gray-500 text-center">No contacts found - contact admin to add new creators</p>
+              <p className="text-xs text-gray-500 text-center mb-2">Not in database yet</p>
+              <Button
+                size="sm"
+                className="w-full h-7 text-xs bg-green-600 hover:bg-green-700"
+                onClick={() => setShowQuickAdd(true)}
+              >
+                <Plus className="w-3 h-3 mr-1" /> Add @{searchTerm.replace('@', '')}
+              </Button>
+            </div>
+          )}
+
+          {showQuickAdd && (
+            <div className="p-3 bg-green-50 border-t">
+              <p className="text-xs font-semibold text-green-800 mb-2">Add New Creator</p>
+              <Button
+                size="sm"
+                className="w-full bg-green-600 hover:bg-green-700"
+                onClick={() => handleQuickAdd()}
+              >
+                <Plus className="w-4 h-4 mr-2" /> Create @{searchTerm.replace('@', '')}
+              </Button>
             </div>
           )}
         </div>
