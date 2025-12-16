@@ -25,7 +25,7 @@ export default function SubscribedEventsSection({ userEmail, primaryColor }) {
     queryFn: async () => {
       const events = await base44.entities.ContentCalendarItem.filter({ 
         share_to_directory: true 
-      }, 'day_of_week,time');
+      }, 'day_of_week');
       return events;
     },
   });
