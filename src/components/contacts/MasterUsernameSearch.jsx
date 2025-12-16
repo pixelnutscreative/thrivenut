@@ -93,10 +93,10 @@ export default function MasterUsernameSearch({
     );
   }, [consolidatedContacts, searchTerm]);
 
-  // DISABLED: Auto-creation removed for launch safety
-  // Users can only select from existing TikTokContact records
+  // Check if searchTerm is a new username not in database
   const cleanSearchTerm = searchTerm.replace('@', '').trim().toLowerCase();
-  const isNewUsername = false; // Always false - no new contact creation
+  const isNewUsername = cleanSearchTerm.length > 0 && 
+    !consolidatedContacts.some(c => c.username.toLowerCase() === cleanSearchTerm);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -123,11 +123,24 @@ export default function MasterUsernameSearch({
     setIsOpen(false);
   };
 
-  // DISABLED: Contact creation restricted to admin-only manual flow
-  const handleCreateNew = () => {
-    // This function is disabled for launch safety
-    // TikTokContact can only be created via Admin panel
-    console.warn('TikTokContact auto-creation disabled - admin-only');
+  const handleCreateNew = async () => {
+    if (!cleanSearchTerm) return;
+    
+    // Create placeholder TikTokContact
+    try {
+      const newContact = await base44.entities.TikTokContact.create({
+        tiktok_username: cleanSearchTerm,
+        display_name: cleanSearchTerm,
+        is_claimed_by_thrive_user: false,
+        claim_status: 'unclaimed'
+      });
+      
+      onCreateNew(cleanSearchTerm);
+      setSearchTerm('');
+      setIsOpen(false);
+    } catch (error) {
+      console.error('Error creating TikTokContact:', error);
+    }
   };
 
   return (
@@ -149,8 +162,21 @@ export default function MasterUsernameSearch({
 
       {isOpen && (searchTerm || filteredContacts.length > 0) && (
         <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-72 overflow-hidden">
-          {/* REMOVED: "Add New" option disabled for launch safety */}
-          {/* TikTokContact creation is now admin-only via Admin panel */}
+          {/* Add New Username */}
+          {isNewUsername && (
+            <button
+              onClick={handleCreateNew}
+              className="w-full p-3 text-left bg-green-50 hover:bg-green-100 flex items-center gap-3 border-b font-medium text-green-700"
+            >
+              <div className="w-8 h-8 rounded-full bg-green-200 flex items-center justify-center">
+                <Plus className="w-4 h-4 text-green-700" />
+              </div>
+              <div>
+                <p className="font-mono">@{cleanSearchTerm}</p>
+                <p className="text-xs text-green-600">Create new creator profile</p>
+              </div>
+            </button>
+          )}
 
           {/* Existing Contacts */}
           <div className="overflow-y-auto max-h-56">
