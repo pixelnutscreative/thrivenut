@@ -150,9 +150,9 @@ export default function QuickActionsBarV2({
 
   return (
     <motion.div 
-      initial={{ y: 100 }} 
+      initial={{ y: -100 }} 
       animate={{ y: 0 }}
-      className="fixed bottom-0 left-0 right-0 z-50 lg:left-72"
+      className="fixed top-14 left-0 right-0 z-40 lg:top-0 lg:left-72"
     >
       <div 
         className="mx-auto max-w-5xl px-4 py-4 backdrop-blur-md border-t shadow-[0_-4px_20px_rgba(0,0,0,0.05)] flex justify-between items-center"
@@ -174,7 +174,9 @@ export default function QuickActionsBarV2({
                 >
                   {IconComponent && <IconComponent className="w-6 h-6" />}
                 </div>
-                <span className="text-[10px] font-medium text-gray-500 group-hover:text-gray-800">{action.label}</span>
+                {!preferences?.hide_quick_action_labels && (
+                  <span className="text-[10px] font-medium text-gray-500 group-hover:text-gray-800">{action.label}</span>
+                )}
               </div>
             );
           })}

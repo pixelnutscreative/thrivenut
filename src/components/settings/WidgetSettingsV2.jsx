@@ -209,6 +209,14 @@ export default function WidgetSettingsV2({ formData, setFormData }) {
           <div className="p-4 rounded-lg" style={{ backgroundColor: barColor }}>
             <p className="text-white text-sm font-medium">Preview: This is how your bar will look</p>
           </div>
+          <div className="flex items-center space-x-2 pt-2">
+            <Checkbox 
+              id="hideLabels" 
+              checked={formData.hide_quick_action_labels}
+              onCheckedChange={(checked) => setFormData({ ...formData, hide_quick_action_labels: checked })}
+            />
+            <Label htmlFor="hideLabels">Hide icon labels (titles)</Label>
+          </div>
         </CardContent>
       </Card>
 
