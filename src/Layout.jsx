@@ -17,7 +17,7 @@ import TikTokAccessGate from './components/access/TikTokAccessGate';
 import ImpersonationBanner, { getEffectiveUserEmail, isImpersonating } from './components/admin/ImpersonationBanner';
 import NotificationBell from './components/notifications/NotificationBell';
 import FloatingHelpButton from './components/support/FloatingHelpButton';
-import QuickActionsWidget from './components/widgets/QuickActionsWidget';
+import QuickActionsBarV2 from './components/widgets/QuickActionsBarV2';
 import SoundCloudPlayer, { FloatingSoundCloudPlayer, MobileSoundCloudPopup } from './components/widgets/SoundCloudPlayer.jsx';
 import AnnouncementBar from './components/announcements/AnnouncementBar';
 import AnnouncementBarPositioner from './components/announcements/AnnouncementBarPositioner';
@@ -837,8 +837,8 @@ export default function Layout({ children, currentPageName }) {
       <FloatingHelpButton pageName={currentPageName} userEmail={user?.email} />
 
       {user && effectiveEmail && preferences && (
-        <QuickActionsWidget 
-          preferences={{ ...preferences, user_email: effectiveEmail }}
+        <QuickActionsBarV2 
+          preferences={preferences}
           primaryColor={primaryColor}
           accentColor={accentColor}
         />

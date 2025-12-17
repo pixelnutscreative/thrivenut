@@ -22,6 +22,7 @@ import DashboardPreferences from '../components/settings/DashboardPreferences';
 import QuickActionsSettings from '../components/settings/QuickActionsSettings';
 import SoundCloudSettings from '../components/settings/SoundCloudSettings';
 import MoodEmojiSettings from '../components/settings/MoodEmojiSettings';
+import WidgetSettingsV2 from '../components/settings/WidgetSettingsV2';
 import ReferralsTab from '../components/settings/ReferralsTab';
 import AccountDeletionTab from '../components/settings/AccountDeletionTab';
 import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
@@ -307,9 +308,10 @@ export default function Settings() {
             <TabsTrigger value="connections" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
               <Sparkles className="w-4 h-4" />
             </TabsTrigger>
-            <TabsTrigger value="widgets" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
+            <TabsTrigger value="widgets-v2" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
               <PuzzleIcon className="w-4 h-4" />
             </TabsTrigger>
+
             <TabsTrigger value="bible" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
               <BookOpen className="w-4 h-4" />
             </TabsTrigger>
@@ -966,19 +968,15 @@ export default function Settings() {
             </Card>
           </TabsContent>
 
-          {/* WIDGETS TAB */}
-          <TabsContent value="widgets" id="widgets">
+          {/* WIDGETS V2 TAB */}
+          <TabsContent value="widgets-v2" id="widgets-v2">
             <div className="flex justify-end mb-4">
               <Button onClick={handleSave} disabled={updatePreferencesMutation.isPending}>
                 <Save className="w-4 h-4 mr-2" />
                 {updatePreferencesMutation.isPending ? 'Saving...' : 'Save Changes'}
               </Button>
             </div>
-            <div className="space-y-4">
-              <QuickActionsSettings formData={prefData} setFormData={setPrefData} />
-              <MoodEmojiSettings formData={prefData} setFormData={setPrefData} />
-              <SoundCloudSettings formData={prefData} setFormData={setPrefData} />
-            </div>
+            <WidgetSettingsV2 formData={prefData} setFormData={setPrefData} />
           </TabsContent>
 
           {/* BIBLE TAB */}
