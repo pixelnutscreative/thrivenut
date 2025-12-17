@@ -34,6 +34,7 @@ import ContactFormHeader from '../components/contacts/ContactFormHeader';
 import TikTokTabContent from '../components/contacts/TikTokTabContent';
 import PersonalTabContent from '../components/contacts/PersonalTabContent';
 import BusinessTabContent from '../components/contacts/BusinessTabContent';
+import ProfileFavoritesTab from '../components/contacts/ProfileFavoritesTab';
 
 const AFFILIATE_TAG = 'pixelnuts-20';
 
@@ -316,9 +317,7 @@ export default function Settings() {
             <TabsTrigger value="profile" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
               <User className="w-4 h-4" />
             </TabsTrigger>
-            <TabsTrigger value="social" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
-              <Share2 className="w-4 h-4" />
-            </TabsTrigger>
+
             <TabsTrigger value="appearance" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
               <Palette className="w-4 h-4" />
             </TabsTrigger>
@@ -344,9 +343,7 @@ export default function Settings() {
             <TabsTrigger value="referrals" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
               <Share2 className="w-4 h-4" />
             </TabsTrigger>
-            <TabsTrigger value="mypeople" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
-              <User className="w-4 h-4" />
-            </TabsTrigger>
+
           </TabsList>
 
           {/* PROFILE TAB */}
@@ -443,54 +440,7 @@ export default function Settings() {
                   </div>
                 </div>
 
-                <div className="border-t pt-4 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-semibold flex items-center gap-2"><Shirt className="w-4 h-4" /> Sizes & Style</h3>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-500">Share Sizes</span>
-                      <Switch 
-                        checked={profileData.privacy_settings?.share_sizes}
-                        onCheckedChange={(checked) => updateProfileNested('privacy_settings', 'share_sizes', checked)}
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <div><Label className="text-xs">Top</Label><Input value={profileData.clothing_sizes?.top || ''} onChange={(e) => updateProfileNested('clothing_sizes', 'top', e.target.value)} /></div>
-                    <div><Label className="text-xs">Bottom</Label><Input value={profileData.clothing_sizes?.bottom || ''} onChange={(e) => updateProfileNested('clothing_sizes', 'bottom', e.target.value)} /></div>
-                    <div><Label className="text-xs">Shoe</Label><Input value={profileData.clothing_sizes?.shoe || ''} onChange={(e) => updateProfileNested('clothing_sizes', 'shoe', e.target.value)} /></div>
-                    <div><Label className="text-xs">Dress/Suit</Label><Input value={profileData.clothing_sizes?.dress || ''} onChange={(e) => updateProfileNested('clothing_sizes', 'dress', e.target.value)} /></div>
-                    <div><Label className="text-xs">Ring</Label><Input value={profileData.clothing_sizes?.ring || ''} onChange={(e) => updateProfileNested('clothing_sizes', 'ring', e.target.value)} /></div>
-                    <div><Label className="text-xs">Hat</Label><Input value={profileData.clothing_sizes?.hat || ''} onChange={(e) => updateProfileNested('clothing_sizes', 'hat', e.target.value)} /></div>
-                  </div>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div><Label>Style Vibe</Label><Input value={profileData.style_profile?.vibe || ''} onChange={(e) => updateProfileNested('style_profile', 'vibe', e.target.value)} /></div>
-                    <div><Label>Favorite Brands</Label><Input value={profileData.style_profile?.favorite_brands || ''} onChange={(e) => updateProfileNested('style_profile', 'favorite_brands', e.target.value)} /></div>
-                  </div>
-                </div>
 
-                <div className="border-t pt-4 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-semibold flex items-center gap-2"><Gift className="w-4 h-4" /> Wish List</h3>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-500">Share Wishlist</span>
-                      <Switch 
-                        checked={profileData.privacy_settings?.share_wishlist}
-                        onCheckedChange={(checked) => updateProfileNested('privacy_settings', 'share_wishlist', checked)}
-                      />
-                      <Button size="sm" variant="outline" onClick={addWishItem}><Plus className="w-3 h-3" /></Button>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    {(profileData.wish_list || []).map((item, idx) => (
-                      <div key={idx} className="flex gap-2">
-                        <Input placeholder="Item" value={item.item} onChange={(e) => updateWishItem(idx, 'item', e.target.value)} />
-                        <Input placeholder="Link (Amazon links auto-tagged)" value={item.link} onChange={(e) => updateWishItem(idx, 'link', e.target.value)} />
-                        <Button size="icon" variant="ghost" onClick={() => removeWishItem(idx)}><Trash2 className="w-4 h-4 text-red-400" /></Button>
-                      </div>
-                    ))}
-                    {profileData.wish_list?.length === 0 && <p className="text-sm text-gray-400 italic">No items yet</p>}
-                  </div>
-                </div>
 
                 <Card className="mt-4">
                   <CardContent className="pt-6 flex items-center justify-between">
@@ -550,20 +500,43 @@ export default function Settings() {
                             />
                           </div>
 
-                          <Tabs defaultValue="tiktok" className="w-full">
-                            <TabsList className="w-full grid grid-cols-3 rounded-none border-b bg-gray-50/50 p-0 h-12">
-                              <TabsTrigger value="tiktok" className="rounded-none border-b-2 border-transparent data-[state=active]:border-purple-600 data-[state=active]:bg-white h-full">
-                                TikTok
-                              </TabsTrigger>
-                              <TabsTrigger value="personal" className="rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:bg-white h-full">
+                          <Tabs defaultValue="personal" className="w-full">
+                            <TabsList className="w-full grid grid-cols-4 rounded-none border-b bg-gray-50/50 p-0 h-12">
+                              <TabsTrigger value="personal" className="rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:bg-white h-full text-xs px-1">
                                 Personal
                               </TabsTrigger>
-                              <TabsTrigger value="business" className="rounded-none border-b-2 border-transparent data-[state=active]:border-amber-600 data-[state=active]:bg-white h-full">
+                              <TabsTrigger value="favorites" className="rounded-none border-b-2 border-transparent data-[state=active]:border-pink-600 data-[state=active]:bg-white h-full text-xs px-1">
+                                Favorites
+                              </TabsTrigger>
+                              <TabsTrigger value="tiktok" className="rounded-none border-b-2 border-transparent data-[state=active]:border-purple-600 data-[state=active]:bg-white h-full text-xs px-1">
+                                TikTok
+                              </TabsTrigger>
+                              <TabsTrigger value="business" className="rounded-none border-b-2 border-transparent data-[state=active]:border-amber-600 data-[state=active]:bg-white h-full text-xs px-1">
                                 Business
                               </TabsTrigger>
                             </TabsList>
 
                             <div className="p-4">
+                              <TabsContent value="personal" className="mt-0">
+                                <PersonalTabContent
+                                  formData={{
+                                    ...profileData,
+                                    email: user?.email,
+                                    phone: profileData.phone
+                                  }}
+                                  setFormData={(newData) => setProfileData(prev => ({ ...prev, ...newData }))}
+                                  isProfile={true}
+                                />
+                              </TabsContent>
+
+                              <TabsContent value="favorites" className="mt-0">
+                                <ProfileFavoritesTab
+                                  formData={profileData}
+                                  setFormData={setProfileData}
+                                  isProfile={true}
+                                />
+                              </TabsContent>
+
                               <TabsContent value="tiktok" className="mt-0">
                                 <TikTokTabContent
                                   formData={{
@@ -579,18 +552,6 @@ export default function Settings() {
                                   }}
                                   contacts={[]}
                                   categories={[]}
-                                  isProfile={true}
-                                />
-                              </TabsContent>
-
-                              <TabsContent value="personal" className="mt-0">
-                                <PersonalTabContent
-                                  formData={{
-                                    ...profileData,
-                                    email: user?.email,
-                                    phone: profileData.phone
-                                  }}
-                                  setFormData={(newData) => setProfileData(prev => ({ ...prev, ...newData }))}
                                   isProfile={true}
                                 />
                               </TabsContent>
@@ -616,70 +577,7 @@ export default function Settings() {
             </Card>
           </TabsContent>
 
-          {/* SOCIAL TAB */}
-          <TabsContent value="social">
-            <Card>
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle>Social Media</CardTitle>
-                  <Button onClick={handleSave} disabled={updatePreferencesMutation.isPending || updateUserProfileMutation.isPending}>
-                    <Save className="w-4 h-4 mr-2" />
-                    {updatePreferencesMutation.isPending || updateUserProfileMutation.isPending ? 'Saving...' : 'Save'}
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="flex items-center justify-between mb-2">
-                  <Label className="text-base font-semibold">Social Media Profiles</Label>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-500">Share Socials</span>
-                    <Switch 
-                      checked={profileData.privacy_settings?.share_socials}
-                      onCheckedChange={(checked) => updateProfileNested('privacy_settings', 'share_socials', checked)}
-                    />
-                  </div>
-                </div>
-                
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div><Label>TikTok</Label><Input placeholder="@username" value={prefData.tiktok_username || ''} onChange={(e) => setPrefData({ ...prefData, tiktok_username: e.target.value })} /></div>
-                  <div><Label>Discord</Label><Input placeholder="username#1234" value={prefData.discord_username || ''} onChange={(e) => setPrefData({ ...prefData, discord_username: e.target.value })} /></div>
-                  <div><Label>Instagram URL</Label><Input placeholder="https://instagram.com/..." value={profileData.social_links?.instagram || ''} onChange={(e) => updateProfileNested('social_links', 'instagram', e.target.value)} /></div>
-                  <div><Label>Facebook URL</Label><Input placeholder="https://facebook.com/..." value={profileData.social_links?.facebook || ''} onChange={(e) => updateProfileNested('social_links', 'facebook', e.target.value)} /></div>
-                  <div><Label>YouTube URL</Label><Input placeholder="https://youtube.com/..." value={profileData.social_links?.youtube || ''} onChange={(e) => updateProfileNested('social_links', 'youtube', e.target.value)} /></div>
-                  <div><Label>Twitter/X URL</Label><Input placeholder="https://x.com/..." value={profileData.social_links?.twitter || ''} onChange={(e) => updateProfileNested('social_links', 'twitter', e.target.value)} /></div>
-                  <div><Label>Twitch URL</Label><Input placeholder="https://twitch.tv/..." value={profileData.social_links?.twitch || ''} onChange={(e) => updateProfileNested('social_links', 'twitch', e.target.value)} /></div>
-                  <div><Label>Website URL</Label><Input placeholder="https://..." value={profileData.social_links?.website || ''} onChange={(e) => updateProfileNested('social_links', 'website', e.target.value)} /></div>
-                </div>
 
-                <div className="border-t pt-4">
-                  <Label className="mb-2 block">Communities</Label>
-                  <div className="space-y-2">
-                    {prefData.communities?.map((community, idx) => (
-                      <div key={idx} className="p-3 bg-gray-50 rounded flex justify-between items-center">
-                        <span>{community.name} ({community.platform})</span>
-                        <Button 
-                          size="sm" 
-                          variant="ghost" 
-                          onClick={() => {
-                            const newComms = prefData.communities.filter((_, i) => i !== idx);
-                            setPrefData({ ...prefData, communities: newComms });
-                          }}
-                        >
-                          <Trash2 className="w-4 h-4 text-red-400" />
-                        </Button>
-                      </div>
-                    ))}
-                    <Button variant="outline" size="sm" onClick={() => {
-                      const newComms = [...(prefData.communities || []), { platform: 'Other', name: 'New Community', link: '' }];
-                      setPrefData({ ...prefData, communities: newComms });
-                    }}>
-                      <Plus className="w-4 h-4 mr-2" /> Add Community
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
 
           {/* APPEARANCE TAB */}
           <TabsContent value="appearance">
@@ -1229,10 +1127,7 @@ export default function Settings() {
             />
           </TabsContent>
 
-          {/* MY PEOPLE TAB */}
-          <TabsContent value="mypeople">
-            <People />
-          </TabsContent>
+
 
           </Tabs>
 

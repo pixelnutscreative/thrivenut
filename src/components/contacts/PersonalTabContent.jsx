@@ -85,6 +85,21 @@ export default function PersonalTabContent({ formData, setFormData, hidePrivateI
 
   return (
     <div className="space-y-4">
+      {/* Link to App User (Email) - Only for contacts, not profile */}
+      {!isProfile && (
+        <div className="p-3 bg-blue-50/50 rounded-lg border border-blue-100">
+          <Label className="text-xs font-semibold text-blue-800">Link to App User (Email)</Label>
+          <p className="text-[10px] text-blue-600 mb-1.5">Link to their account to see their self-managed wishlist & sizes.</p>
+          <Input
+            type="email"
+            placeholder="their-email@example.com"
+            value={formData.linked_user_email || ''}
+            onChange={(e) => setFormData({ ...formData, linked_user_email: e.target.value })}
+            className="bg-white"
+          />
+        </div>
+      )}
+
       {/* Contact Info */}
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1">
