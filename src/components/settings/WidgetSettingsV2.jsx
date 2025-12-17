@@ -24,7 +24,7 @@ import {
   Smartphone, Tablet, Printer, Keyboard, Mouse, Megaphone, Speaker, Podcast, Instagram, Twitter, Facebook,
   Youtube, Linkedin, Github, Chrome, Command, Code, Terminal, Database, Server, HardDrive, CloudUpload,
   Wallet, Coins, Banknote, Receipt, Calculator, Landmark, PiggyBank, Hammer, Wrench, Brush, Ruler, Sword,
-  GripVertical, Trash2, MonitorPlay, Menu, EyeOff
+  GripVertical, Trash2, MonitorPlay, Menu
 } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
