@@ -29,6 +29,7 @@ import AccountDeletionTab from '../components/settings/AccountDeletionTab';
 import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
 import { useTheme } from '../components/shared/useTheme';
 import { useLocation, useNavigate } from 'react-router-dom';
+import People from './People';
 
 const AFFILIATE_TAG = 'pixelnuts-20';
 
@@ -125,9 +126,20 @@ export default function Settings() {
       share_socials: true,
       share_recovery: true,
       share_military: true,
-      share_color: true
+      share_color: true,
+      share_creator_info: true
     },
-    allow_sharing: true
+    allow_sharing: true,
+    // Creator fields
+    phonetic: '',
+    role: [],
+    creator_notes: '',
+    calendar_enabled: false,
+    is_gifter: false,
+    live_stream_types: [],
+    live_agency: '',
+    shop_agency: '',
+    started_going_live: ''
   });
 
   useEffect(() => {
@@ -152,7 +164,16 @@ export default function Settings() {
           share_military: true,
           share_color: true,
           ...userProfile.privacy_settings
-        }
+        },
+        phonetic: userProfile.phonetic || '',
+        role: userProfile.role || [],
+        creator_notes: userProfile.creator_notes || '',
+        calendar_enabled: userProfile.calendar_enabled || false,
+        is_gifter: userProfile.is_gifter || false,
+        live_stream_types: userProfile.live_stream_types || [],
+        live_agency: userProfile.live_agency || '',
+        shop_agency: userProfile.shop_agency || '',
+        started_going_live: userProfile.started_going_live || ''
       });
     }
   }, [userProfile]);
@@ -319,6 +340,9 @@ export default function Settings() {
             <TabsTrigger value="referrals" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
               <Share2 className="w-4 h-4" />
             </TabsTrigger>
+            <TabsTrigger value="mypeople" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
+              <User className="w-4 h-4" />
+            </TabsTrigger>
           </TabsList>
 
           {/* PROFILE TAB */}
@@ -471,12 +495,43 @@ export default function Settings() {
                       <p className="text-sm text-gray-500">Manage your shifts and work hours</p>
                     </div>
                     <Button variant="outline" onClick={() => window.location.href = '/WorkSchedules'}>
-                      Manage Schedule
+                    Manage Schedule
                     </Button>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                    </Card>
 
-                {/* Delete Account Section */}
+                    {/* Creator Profile Section */}
+                    <div className="border-t pt-4 space-y-4">
+                    <div className="flex items-center justify-between">
+                    <h3 className="font-semibold flex items-center gap-2"><Sparkles className="w-4 h-4" /> Creator Info</h3>
+                    <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500">Share Creator Info</span>
+                    <Switch 
+                      checked={profileData.privacy_settings?.share_creator_info}
+                      onCheckedChange={(checked) => updateProfileNested('privacy_settings', 'share_creator_info', checked)}
+                    />
+                    </div>
+                    </div>
+                    <div className="grid md:grid-cols-2 gap-4">
+                    <div><Label>Phonetic Pronunciation</Label><Input value={profileData.phonetic || ''} onChange={(e) => setProfileData({ ...profileData, phonetic: e.target.value })} placeholder="e.g. Pixel-Nuts" /></div>
+                    <div><Label>Creator Notes</Label><Input value={profileData.creator_notes || ''} onChange={(e) => setProfileData({ ...profileData, creator_notes: e.target.value })} placeholder="Public notes..." /></div>
+                    <div><Label>Live Agency</Label><Input value={profileData.live_agency || ''} onChange={(e) => setProfileData({ ...profileData, live_agency: e.target.value })} /></div>
+                    <div><Label>Shop Agency</Label><Input value={profileData.shop_agency || ''} onChange={(e) => setProfileData({ ...profileData, shop_agency: e.target.value })} /></div>
+                    <div><Label>Started Going Live</Label><Input type="date" value={profileData.started_going_live || ''} onChange={(e) => setProfileData({ ...profileData, started_going_live: e.target.value })} /></div>
+                    </div>
+                    <div className="flex gap-6 mt-2">
+                    <div className="flex items-center gap-2">
+                    <Switch checked={profileData.is_gifter} onCheckedChange={(c) => setProfileData({ ...profileData, is_gifter: c })} />
+                    <Label>Is Gifter</Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                    <Switch checked={profileData.calendar_enabled} onCheckedChange={(c) => setProfileData({ ...profileData, calendar_enabled: c })} />
+                    <Label>Enable Live Calendar</Label>
+                    </div>
+                    </div>
+                    </div>
+
+                    {/* Delete Account Section */}
                 <div className="mt-8 pt-8 border-t border-gray-200">
                   <AccountDeletionTab userEmail={effectiveEmail} />
                 </div>
@@ -1095,6 +1150,11 @@ export default function Settings() {
               primaryColor={primaryColor}
               accentColor={accentColor}
             />
+          </TabsContent>
+
+          {/* MY PEOPLE TAB */}
+          <TabsContent value="mypeople">
+            <People />
           </TabsContent>
 
           </Tabs>
