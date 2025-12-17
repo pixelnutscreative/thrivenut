@@ -30,6 +30,10 @@ import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
 import { useTheme } from '../components/shared/useTheme';
 import { useLocation, useNavigate } from 'react-router-dom';
 import People from './People';
+import ContactFormHeader from '../components/contacts/ContactFormHeader';
+import TikTokTabContent from '../components/contacts/TikTokTabContent';
+import PersonalTabContent from '../components/contacts/PersonalTabContent';
+import BusinessTabContent from '../components/contacts/BusinessTabContent';
 
 const AFFILIATE_TAG = 'pixelnuts-20';
 
@@ -41,16 +45,16 @@ const greetingTypeOptions = [
 ];
 
 const pageOptions = [
-        { id: 'Dashboard', name: 'Dashboard' },
-        { id: 'Goals', name: 'Goals' },
-        { id: 'Wellness', name: 'Wellness' },
-        { id: 'Journal', name: 'Journal' },
-        { id: 'TikTokContacts', name: 'Creator Contacts' },
-        { id: 'LiveSchedule', name: 'Content Calendar' },
-        { id: 'TikTokEngagement', name: 'Social Engagement' },
-        { id: 'PixelsParadise', name: "Pixel's Place" },
-        { id: 'CustomHomepage', name: 'My Custom Homepage' },
-      ];
+  { id: 'Dashboard', name: 'Dashboard' },
+  { id: 'Goals', name: 'Goals' },
+  { id: 'Wellness', name: 'Wellness' },
+  { id: 'Journal', name: 'Journal' },
+  { id: 'TikTokContacts', name: 'Creator Contacts' },
+  { id: 'LiveSchedule', name: 'Content Calendar' },
+  { id: 'TikTokEngagement', name: 'Social Engagement' },
+  { id: 'PixelsParadise', name: "Pixel's Place" },
+  { id: 'CustomHomepage', name: 'My Custom Homepage' },
+];
 
 const bibleVersions = [
   { id: 'NIV', name: 'NIV (New International Version)' },
