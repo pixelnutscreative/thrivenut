@@ -93,6 +93,7 @@ export default function WidgetSettingsV2({ formData, setFormData }) {
   const quickActions = formData.quick_actions || ['mood', 'water', 'food', 'note'];
   const customActions = formData.custom_quick_actions || [];
   const barColor = formData.quick_actions_bar_color || 'rgba(255, 255, 255, 0.9)';
+  const iconSize = formData.quick_actions_icon_size || 'medium';
 
   const filteredIcons = iconLibrary.filter(icon => icon.toLowerCase().includes(iconSearch.toLowerCase()));
 
@@ -217,126 +218,213 @@ export default function WidgetSettingsV2({ formData, setFormData }) {
             />
             <Label htmlFor="hideLabels">Hide icon labels (titles)</Label>
           </div>
+          
+          <div className="pt-4 mt-2 border-t">
+            <Label className="mb-2 block">Icon Size</Label>
+            <div className="flex gap-2">
+              {['small', 'medium', 'large', 'xl'].map((size) => (
+                <button
+                  key={size}
+                  onClick={() => setFormData({ ...formData, quick_actions_icon_size: size })}
+                  className={`px-3 py-1.5 rounded-lg border text-sm capitalize ${iconSize === size ? 'bg-purple-100 border-purple-500 text-purple-800 font-medium' : 'bg-white border-gray-200 hover:bg-gray-50'}`}
+                >
+                  {size}
+                </button>
+              ))}
+            </div>
+          </div>
         </CardContent>
       </Card>
 
       {/* Quick Actions */}
       <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-          <CardDescription>Drag to reorder, toggle to enable/disable</CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <div>
+            <CardTitle>Quick Actions</CardTitle>
+            <CardDescription>Drag to reorder active icons</CardDescription>
+          </div>
+          <Dialog open={showAddCustom} onOpenChange={setShowAddCustom}>
+            <DialogTrigger asChild>
+              <Button size="sm" variant="outline" className="gap-1">
+                <Plus className="w-4 h-4" /> Custom
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Add Custom Shortcut</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div>
+                  <Label>Label *</Label>
+                  <Input value={newAction.label} onChange={(e) => setNewAction({ ...newAction, label: e.target.value })} placeholder="Gmail, ChatGPT, My Calendar, Notion..." />
+                </div>
+                <div>
+                  <Label>Icon *</Label>
+                  <Input placeholder="Search icons..." value={iconSearch} onChange={(e) => setIconSearch(e.target.value)} className="mb-2" />
+                  <div className="grid grid-cols-8 gap-1 max-h-60 overflow-y-auto p-2 border rounded-lg">
+                    {filteredIcons.slice(0, 200).map(iconName => {
+                      const Icon = iconMap[iconName];
+                      return (
+                        <button key={iconName} type="button" onClick={() => setNewAction({ ...newAction, icon: iconName })} className={`p-2 rounded border-2 hover:border-purple-400 ${newAction.icon === iconName ? 'border-purple-500 bg-purple-50' : 'border-gray-200'}`} title={iconName}>
+                          <Icon className="w-5 h-5" />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div>
+                  <Label>Color</Label>
+                  <div className="mt-2">
+                    <ColorPicker color={newAction.color} onChange={(c) => setNewAction({ ...newAction, color: c })} label="Select Icon Color" />
+                  </div>
+                </div>
+                <div>
+                  <Label>Link to Page</Label>
+                  <Select value={newAction.page || ''} onValueChange={(v) => setNewAction({ ...newAction, page: v, external_url: '' })}>
+                    <SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={null}>None</SelectItem>
+                      <SelectItem value="Dashboard">Dashboard</SelectItem>
+                      <SelectItem value="Goals">Goals</SelectItem>
+                      <SelectItem value="Tasks">Tasks</SelectItem>
+                      <SelectItem value="Journal">Journal</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Or External URL</Label>
+                  <Input value={newAction.external_url} onChange={(e) => setNewAction({ ...newAction, external_url: e.target.value, page: '' })} placeholder="https://..." />
+                </div>
+                <Button onClick={handleAddCustomAction} className="w-full" disabled={!newAction.label}>Add Shortcut</Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </CardHeader>
         <CardContent>
+          {/* Active Items List */}
           <DragDropContext onDragEnd={handleDragEnd}>
-            <Droppable droppableId="quick-actions">
+            <Droppable droppableId="quick-actions" direction="horizontal">
               {(provided) => (
-                <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-2">
+                <div 
+                  {...provided.droppableProps} 
+                  ref={provided.innerRef} 
+                  className="flex flex-wrap gap-3 mb-6 p-2 bg-gray-50/50 rounded-xl border border-dashed border-gray-200 min-h-[80px] items-center"
+                >
                   {quickActions.map((actionId, index) => {
                     const action = getActionDisplay(actionId);
                     if (!action) return null;
                     const Icon = getIconComponent(action.icon);
+                    const isTailwind = action.color?.startsWith('bg-');
+                    const style = isTailwind ? {} : { backgroundColor: action.color };
+                    const colorClass = isTailwind ? action.color : '';
+
                     return (
                       <Draggable key={actionId} draggableId={actionId} index={index}>
                         {(provided, snapshot) => (
-                          <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} className={`flex items-center gap-3 p-3 rounded-lg border-2 ${snapshot.isDragging ? 'border-purple-400 shadow-lg bg-white' : 'border-gray-200 bg-gray-50 hover:border-purple-300'}`}>
-                            <GripVertical className="w-4 h-4 text-gray-400" />
-                            <Checkbox checked={quickActions.includes(actionId)} onCheckedChange={() => handleToggleAction(actionId)} />
-                            <div className={`w-8 h-8 rounded-lg ${action.color} flex items-center justify-center`}>
-                              <Icon className="w-4 h-4 text-white" />
+                          <div 
+                            ref={provided.innerRef} 
+                            {...provided.draggableProps} 
+                            {...provided.dragHandleProps} 
+                            className={`group relative flex flex-col items-center justify-center p-2 rounded-xl transition-all ${snapshot.isDragging ? 'shadow-lg scale-110 z-50 bg-white' : 'hover:bg-white hover:shadow-sm'}`}
+                          >
+                            <div className="absolute -top-2 -right-2 hidden group-hover:flex gap-1 z-10">
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); setEditingAction({ ...action }); }} 
+                                className="w-6 h-6 bg-white rounded-full shadow border flex items-center justify-center text-gray-500 hover:text-purple-600"
+                                title="Edit"
+                              >
+                                <Settings className="w-3 h-3" />
+                              </button>
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); handleToggleAction(actionId); }} 
+                                className="w-6 h-6 bg-white rounded-full shadow border flex items-center justify-center text-gray-500 hover:text-red-500"
+                                title="Remove"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
                             </div>
-                            <span className="font-medium flex-1">{action.label}</span>
-                            {!action.isBuiltIn && <span className="text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded">Custom</span>}
-                            <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setEditingAction({ ...action }); }} className="h-7 w-7 p-0">
-                              <Settings className="w-4 h-4 text-gray-400" />
-                            </Button>
-                            {!action.isBuiltIn && (
-                              <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleRemoveCustomAction(action.id); }} className="h-7 w-7 p-0 text-red-400">
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            )}
+
+                            <div 
+                              className={`w-10 h-10 rounded-lg shadow-sm flex items-center justify-center mb-1 text-white ${colorClass}`}
+                              style={style}
+                            >
+                              <Icon className="w-5 h-5" />
+                            </div>
+                            <span className="text-[10px] font-medium text-gray-600 max-w-[60px] truncate">{action.label}</span>
                           </div>
                         )}
                       </Draggable>
                     );
                   })}
                   {provided.placeholder}
+                  {quickActions.length === 0 && (
+                    <div className="w-full text-center text-sm text-gray-400 py-4">
+                      No active actions. Click icons below to add.
+                    </div>
+                  )}
                 </div>
               )}
             </Droppable>
           </DragDropContext>
 
-          <div className="mt-4 pt-4 border-t">
-            <p className="text-sm text-gray-600 mb-3">Add More:</p>
-            <div className="grid grid-cols-2 gap-2">
+          {/* Available Items */}
+          <div>
+            <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 block">Available to Add</Label>
+            <div className="flex flex-wrap gap-2">
               {builtInActions.filter(a => !quickActions.includes(a.id)).map(action => {
                 const Icon = getIconComponent(action.icon);
                 return (
-                  <button key={action.id} onClick={() => handleToggleAction(action.id)} className="flex items-center gap-2 p-2 rounded-lg border-2 border-dashed border-gray-300 hover:border-purple-400 hover:bg-purple-50">
+                  <button 
+                    key={action.id} 
+                    onClick={() => handleToggleAction(action.id)} 
+                    className="flex items-center gap-2 p-2 pr-3 rounded-lg border border-gray-200 bg-white hover:border-purple-300 hover:shadow-sm transition-all group"
+                  >
                     <div className={`w-6 h-6 rounded ${action.color} flex items-center justify-center`}>
                       <Icon className="w-3 h-3 text-white" />
                     </div>
-                    <span className="text-sm">{action.label}</span>
+                    <span className="text-xs font-medium text-gray-700">{action.label}</span>
+                    <Plus className="w-3 h-3 text-gray-300 group-hover:text-purple-500 ml-1" />
                   </button>
                 );
               })}
-              <Dialog open={showAddCustom} onOpenChange={setShowAddCustom}>
-                <DialogTrigger asChild>
-                  <button className="flex items-center justify-center gap-2 p-2 rounded-lg border-2 border-dashed border-purple-300 hover:border-purple-500 hover:bg-purple-50">
-                    <Plus className="w-4 h-4 text-purple-600" />
-                    <span className="text-sm text-purple-600 font-medium">Custom</span>
-                  </button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>Add Custom Shortcut</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    <div>
-                      <Label>Label *</Label>
-                      <Input value={newAction.label} onChange={(e) => setNewAction({ ...newAction, label: e.target.value })} placeholder="Gmail, ChatGPT, My Calendar, Notion..." />
-                    </div>
-                    <div>
-                      <Label>Icon * ({filteredIcons.length} icons available)</Label>
-                      <Input placeholder="Search icons..." value={iconSearch} onChange={(e) => setIconSearch(e.target.value)} className="mb-2" />
-                      <div className="grid grid-cols-8 gap-1 max-h-60 overflow-y-auto p-2 border rounded-lg">
-                        {filteredIcons.slice(0, 200).map(iconName => {
-                          const Icon = iconMap[iconName];
-                          return (
-                            <button key={iconName} type="button" onClick={() => setNewAction({ ...newAction, icon: iconName })} className={`p-2 rounded border-2 hover:border-purple-400 ${newAction.icon === iconName ? 'border-purple-500 bg-purple-50' : 'border-gray-200'}`} title={iconName}>
-                              <Icon className="w-5 h-5" />
-                            </button>
-                          );
-                        })}
+              {customActions.filter(a => !quickActions.includes(a.id)).map(action => {
+                const Icon = getIconComponent(action.icon);
+                const isTailwind = action.color?.startsWith('bg-');
+                const style = isTailwind ? {} : { backgroundColor: action.color };
+                const colorClass = isTailwind ? action.color : '';
+
+                return (
+                  <div key={action.id} className="relative group">
+                     <button 
+                      onClick={() => handleToggleAction(action.id)} 
+                      className="flex items-center gap-2 p-2 pr-3 rounded-lg border border-gray-200 bg-white hover:border-purple-300 hover:shadow-sm transition-all"
+                    >
+                      <div 
+                        className={`w-6 h-6 rounded flex items-center justify-center text-white ${colorClass}`}
+                        style={style}
+                      >
+                        <Icon className="w-3 h-3" />
                       </div>
-                      <p className="text-xs text-gray-500 mt-2">Showing {Math.min(filteredIcons.length, 200)} of {filteredIcons.length} icons</p>
+                      <span className="text-xs font-medium text-gray-700">{action.label}</span>
+                      <Plus className="w-3 h-3 text-gray-300 group-hover:text-purple-500 ml-1" />
+                    </button>
+                    <div className="absolute -top-2 -right-2 hidden group-hover:flex gap-1">
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); setEditingAction({ ...action }); }} 
+                        className="w-5 h-5 bg-white rounded-full shadow border flex items-center justify-center text-gray-500 hover:text-purple-600"
+                      >
+                        <Settings className="w-2.5 h-2.5" />
+                      </button>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); handleRemoveCustomAction(action.id); }} 
+                        className="w-5 h-5 bg-white rounded-full shadow border flex items-center justify-center text-gray-500 hover:text-red-500"
+                      >
+                        <Trash2 className="w-2.5 h-2.5" />
+                      </button>
                     </div>
-                    <div>
-                      <Label>Color</Label>
-                      <div className="mt-2">
-                        <ColorPicker color={newAction.color} onChange={(c) => setNewAction({ ...newAction, color: c })} label="Select Icon Color" />
-                      </div>
-                    </div>
-                    <div>
-                      <Label>Link to Page</Label>
-                      <Select value={newAction.page || ''} onValueChange={(v) => setNewAction({ ...newAction, page: v, external_url: '' })}>
-                        <SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value={null}>None</SelectItem>
-                          <SelectItem value="Dashboard">Dashboard</SelectItem>
-                          <SelectItem value="Goals">Goals</SelectItem>
-                          <SelectItem value="Tasks">Tasks</SelectItem>
-                          <SelectItem value="Journal">Journal</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label>Or External URL</Label>
-                      <Input value={newAction.external_url} onChange={(e) => setNewAction({ ...newAction, external_url: e.target.value, page: '' })} placeholder="https://mail.google.com, https://chatgpt.com, etc." />
-                    </div>
-                    <Button onClick={handleAddCustomAction} className="w-full" disabled={!newAction.label}>Add Shortcut</Button>
                   </div>
-                </DialogContent>
-              </Dialog>
+                );
+              })}
             </div>
           </div>
         </CardContent>

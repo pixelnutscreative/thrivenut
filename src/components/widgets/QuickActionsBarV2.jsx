@@ -147,6 +147,17 @@ export default function QuickActionsBarV2({
   };
 
   const barBg = preferences?.quick_actions_bar_color || 'rgba(255, 255, 255, 0.9)';
+  const iconSize = preferences?.quick_actions_icon_size || 'medium';
+
+  // Define size classes
+  const sizeClasses = {
+    small: { container: 'w-8 h-8', icon: 'w-4 h-4' },
+    medium: { container: 'w-12 h-12', icon: 'w-6 h-6' },
+    large: { container: 'w-16 h-16', icon: 'w-8 h-8' },
+    xl: { container: 'w-20 h-20', icon: 'w-10 h-10' }
+  };
+
+  const currentSize = sizeClasses[iconSize] || sizeClasses.medium;
 
   return (
     <motion.div 
@@ -169,10 +180,10 @@ export default function QuickActionsBarV2({
             return (
               <div key={action.id || index} className="flex flex-col items-center gap-2 group cursor-pointer" onClick={() => handleActionClick(action)}>
                 <div 
-                  className={`w-12 h-12 rounded-full flex items-center justify-center text-white shadow-lg transition-transform group-hover:scale-110 group-active:scale-95 ${className}`}
+                  className={`${currentSize.container} rounded-full flex items-center justify-center text-white shadow-lg transition-transform group-hover:scale-110 group-active:scale-95 ${className}`}
                   style={style}
                 >
-                  {IconComponent && <IconComponent className="w-6 h-6" />}
+                  {IconComponent && <IconComponent className={currentSize.icon} />}
                 </div>
                 {!preferences?.hide_quick_action_labels && (
                   <span className="text-[10px] font-medium text-gray-500 group-hover:text-gray-800">{action.label}</span>

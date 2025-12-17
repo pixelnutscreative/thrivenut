@@ -275,7 +275,7 @@ export default function Layout({ children, currentPageName }) {
   const activeService = preferences?.active_music_service || 'soundcloud';
   const soundcloudUrl = activeService === 'spotify' 
     ? (preferences?.spotify_playlist_url || '') 
-    : (preferences?.soundcloud_playlist_url || '');
+    : (preferences?.soundcloud_playlist_url || 'https://soundcloud.com/pixel-nuts-creative/sets/rise-praise');
     
   const soundcloudPosition = preferences?.soundcloud_player_position || 'menu';
 
