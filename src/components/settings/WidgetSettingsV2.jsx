@@ -63,12 +63,6 @@ const builtInActions = [
   { id: 'event', label: 'Add Event', icon: 'Calendar', color: '#F59E0B' },
 ];
 
-const colorOptions = [
-  'bg-pink-500', 'bg-blue-500', 'bg-orange-500', 'bg-yellow-500', 'bg-purple-500', 
-  'bg-green-500', 'bg-red-500', 'bg-teal-500', 'bg-indigo-500', 'bg-cyan-500', 
-  'bg-lime-500', 'bg-amber-500', 'bg-rose-500', 'bg-fuchsia-500', 'bg-violet-500'
-];
-
 const defaultMoodOptions = [
   { emoji: '😄', label: 'Great', value: 'great' },
   { emoji: '🙂', label: 'Good', value: 'good' },
@@ -94,6 +88,7 @@ export default function WidgetSettingsV2({ formData, setFormData }) {
   const customActions = formData.custom_quick_actions || [];
   const barColor = formData.quick_actions_bar_color || 'rgba(255, 255, 255, 0.9)';
   const iconSize = formData.quick_actions_icon_size || 'medium';
+  const barHeight = formData.quick_actions_bar_height || 'standard';
 
   const filteredIcons = iconLibrary.filter(icon => icon.toLowerCase().includes(iconSearch.toLowerCase()));
 
@@ -186,67 +181,17 @@ export default function WidgetSettingsV2({ formData, setFormData }) {
 
   return (
     <div className="space-y-6">
-      {/* Bar Color */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Access Bar Color</CardTitle>
-          <CardDescription>Customize the background color</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex gap-4 items-center">
-            <div className="flex-1">
-              <Label className="mb-2 block">Background Color</Label>
-              <ColorPicker 
-                color={barColor.startsWith('rgba') || barColor.startsWith('rgb') ? '#ffffff' : barColor} 
-                onChange={(c) => setFormData({ ...formData, quick_actions_bar_color: c })} 
-                label="Pick Color"
-              />
-            </div>
-            <div className="flex-1">
-              <Label>Manual Value</Label>
-              <Input value={barColor} onChange={(e) => setFormData({ ...formData, quick_actions_bar_color: e.target.value })} placeholder="rgba(255, 255, 255, 0.9)" />
-            </div>
-          </div>
-          <div className="p-4 rounded-lg" style={{ backgroundColor: barColor }}>
-            <p className="text-white text-sm font-medium">Preview: This is how your bar will look</p>
-          </div>
-          <div className="flex items-center space-x-2 pt-2">
-            <Checkbox 
-              id="hideLabels" 
-              checked={formData.hide_quick_action_labels}
-              onCheckedChange={(checked) => setFormData({ ...formData, hide_quick_action_labels: checked })}
-            />
-            <Label htmlFor="hideLabels">Hide icon labels (titles)</Label>
-          </div>
-          
-          <div className="pt-4 mt-2 border-t">
-            <Label className="mb-2 block">Icon Size</Label>
-            <div className="flex gap-2">
-              {['small', 'medium', 'large', 'xl'].map((size) => (
-                <button
-                  key={size}
-                  onClick={() => setFormData({ ...formData, quick_actions_icon_size: size })}
-                  className={`px-3 py-1.5 rounded-lg border text-sm capitalize ${iconSize === size ? 'bg-purple-100 border-purple-500 text-purple-800 font-medium' : 'bg-white border-gray-200 hover:bg-gray-50'}`}
-                >
-                  {size}
-                </button>
-              ))}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Quick Actions */}
+      {/* Consolidated Quick Actions Card */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <div>
-            <CardTitle>Quick Actions</CardTitle>
-            <CardDescription>Drag to reorder active icons</CardDescription>
+            <CardTitle>Quick Actions Bar</CardTitle>
+            <CardDescription>Configure appearance, layout, and shortcuts</CardDescription>
           </div>
           <Dialog open={showAddCustom} onOpenChange={setShowAddCustom}>
             <DialogTrigger asChild>
               <Button size="sm" variant="outline" className="gap-1">
-                <Plus className="w-4 h-4" /> Custom
+                <Plus className="w-4 h-4" /> Add Custom
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -300,76 +245,128 @@ export default function WidgetSettingsV2({ formData, setFormData }) {
             </DialogContent>
           </Dialog>
         </CardHeader>
-        <CardContent>
-          {/* Active Items List */}
-          <DragDropContext onDragEnd={handleDragEnd}>
-            <Droppable droppableId="quick-actions" direction="horizontal">
-              {(provided) => (
-                <div 
-                  {...provided.droppableProps} 
-                  ref={provided.innerRef} 
-                  className="flex flex-wrap gap-3 mb-6 p-2 bg-gray-50/50 rounded-xl border border-dashed border-gray-200 min-h-[80px] items-center"
-                >
-                  {quickActions.map((actionId, index) => {
-                    const action = getActionDisplay(actionId);
-                    if (!action) return null;
-                    const Icon = getIconComponent(action.icon);
-                    const isTailwind = action.color?.startsWith('bg-');
-                    const style = isTailwind ? {} : { backgroundColor: action.color };
-                    const colorClass = isTailwind ? action.color : '';
+        <CardContent className="space-y-6">
+          {/* Configuration Row */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg border">
+            <div>
+              <Label className="text-xs mb-1.5 block">Bar Color</Label>
+              <ColorPicker 
+                color={barColor.startsWith('rgba') || barColor.startsWith('rgb') ? '#ffffff' : barColor} 
+                onChange={(c) => setFormData({ ...formData, quick_actions_bar_color: c })} 
+                label="Pick Color"
+                className="w-full justify-start"
+              />
+            </div>
+            <div>
+              <Label className="text-xs mb-1.5 block">Icon Size</Label>
+              <Select value={iconSize} onValueChange={(v) => setFormData({ ...formData, quick_actions_icon_size: v })}>
+                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="small">Small</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="large">Large</SelectItem>
+                  <SelectItem value="xl">XL</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs mb-1.5 block">Bar Height</Label>
+              <Select value={barHeight} onValueChange={(v) => setFormData({ ...formData, quick_actions_bar_height: v })}>
+                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="compact">Compact</SelectItem>
+                  <SelectItem value="standard">Standard</SelectItem>
+                  <SelectItem value="tall">Tall</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-end pb-2">
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="hideLabels" 
+                  checked={formData.hide_quick_action_labels}
+                  onCheckedChange={(checked) => setFormData({ ...formData, hide_quick_action_labels: checked })}
+                />
+                <Label htmlFor="hideLabels" className="cursor-pointer text-sm">Hide Labels</Label>
+              </div>
+            </div>
+          </div>
 
-                    return (
-                      <Draggable key={actionId} draggableId={actionId} index={index}>
-                        {(provided, snapshot) => (
-                          <div 
-                            ref={provided.innerRef} 
-                            {...provided.draggableProps} 
-                            {...provided.dragHandleProps} 
-                            className={`group relative flex flex-col items-center justify-center p-2 rounded-xl transition-all ${snapshot.isDragging ? 'shadow-lg scale-110 z-50 bg-white' : 'hover:bg-white hover:shadow-sm'}`}
-                          >
-                            <div className="absolute -top-2 -right-2 hidden group-hover:flex gap-1 z-10">
-                              <button 
-                                onClick={(e) => { e.stopPropagation(); setEditingAction({ ...action }); }} 
-                                className="w-6 h-6 bg-white rounded-full shadow border flex items-center justify-center text-gray-500 hover:text-purple-600"
-                                title="Edit"
-                              >
-                                <Settings className="w-3 h-3" />
-                              </button>
-                              <button 
-                                onClick={(e) => { e.stopPropagation(); handleToggleAction(actionId); }} 
-                                className="w-6 h-6 bg-white rounded-full shadow border flex items-center justify-center text-gray-500 hover:text-red-500"
-                                title="Remove"
-                              >
-                                <X className="w-3 h-3" />
-                              </button>
-                            </div>
+          {/* Active Items List (Draggable) */}
+          <div>
+            <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">Active Actions (Drag to reorder)</Label>
+            <DragDropContext onDragEnd={handleDragEnd}>
+              <Droppable droppableId="quick-actions" direction="horizontal">
+                {(provided) => (
+                  <div 
+                    {...provided.droppableProps} 
+                    ref={provided.innerRef} 
+                    className="flex flex-wrap gap-2 p-3 bg-white rounded-xl border border-gray-200 min-h-[80px] items-center"
+                    style={{ backgroundColor: barColor }}
+                  >
+                    {quickActions.map((actionId, index) => {
+                      const action = getActionDisplay(actionId);
+                      if (!action) return null;
+                      const Icon = getIconComponent(action.icon);
+                      const isTailwind = action.color?.startsWith('bg-');
+                      const style = isTailwind ? {} : { backgroundColor: action.color };
+                      const colorClass = isTailwind ? action.color : '';
 
+                      return (
+                        <Draggable key={actionId} draggableId={actionId} index={index}>
+                          {(provided, snapshot) => (
                             <div 
-                              className={`w-10 h-10 rounded-lg shadow-sm flex items-center justify-center mb-1 text-white ${colorClass}`}
-                              style={style}
+                              ref={provided.innerRef} 
+                              {...provided.draggableProps} 
+                              {...provided.dragHandleProps} 
+                              className={`group relative flex flex-col items-center justify-center p-2 rounded-lg transition-all ${snapshot.isDragging ? 'shadow-lg scale-110 z-50 bg-white ring-2 ring-purple-400' : 'hover:bg-white/50'}`}
                             >
-                              <Icon className="w-5 h-5" />
+                              <div className="absolute -top-2 -right-2 hidden group-hover:flex gap-1 z-10 bg-white rounded-full shadow-sm p-0.5">
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); setEditingAction({ ...action }); }} 
+                                  className="w-5 h-5 rounded-full flex items-center justify-center text-gray-500 hover:text-purple-600 hover:bg-purple-50"
+                                  title="Edit"
+                                >
+                                  <Settings className="w-3 h-3" />
+                                </button>
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); handleToggleAction(actionId); }} 
+                                  className="w-5 h-5 rounded-full flex items-center justify-center text-gray-500 hover:text-red-500 hover:bg-red-50"
+                                  title="Remove"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </div>
+
+                              <div 
+                                className={`w-10 h-10 rounded-lg shadow-sm flex items-center justify-center mb-1 text-white ${colorClass}`}
+                                style={style}
+                              >
+                                <Icon className="w-5 h-5" />
+                              </div>
+                              {!formData.hide_quick_action_labels && (
+                                <span className="text-[10px] font-medium text-gray-600 max-w-[60px] truncate">{action.label}</span>
+                              )}
                             </div>
-                            <span className="text-[10px] font-medium text-gray-600 max-w-[60px] truncate">{action.label}</span>
-                          </div>
-                        )}
-                      </Draggable>
-                    );
-                  })}
-                  {provided.placeholder}
-                  {quickActions.length === 0 && (
-                    <div className="w-full text-center text-sm text-gray-400 py-4">
-                      No active actions. Click icons below to add.
-                    </div>
-                  )}
-                </div>
-              )}
-            </Droppable>
-          </DragDropContext>
+                          )}
+                        </Draggable>
+                      );
+                    })}
+                    {provided.placeholder}
+                    {quickActions.length === 0 && (
+                      <div className="w-full text-center text-sm text-gray-400 py-4">
+                        No active actions. Click icons below to add.
+                      </div>
+                    )}
+                  </div>
+                )}
+              </Droppable>
+            </DragDropContext>
+          </div>
 
           {/* Available Items */}
           <div>
-            <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 block">Available to Add</Label>
+            <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">Available to Add</Label>
             <div className="flex flex-wrap gap-2">
               {builtInActions.filter(a => !quickActions.includes(a.id)).map(action => {
                 const Icon = getIconComponent(action.icon);

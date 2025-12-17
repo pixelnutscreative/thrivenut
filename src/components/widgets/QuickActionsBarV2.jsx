@@ -148,6 +148,7 @@ export default function QuickActionsBarV2({
 
   const barBg = preferences?.quick_actions_bar_color || 'rgba(255, 255, 255, 0.9)';
   const iconSize = preferences?.quick_actions_icon_size || 'medium';
+  const barHeight = preferences?.quick_actions_bar_height || 'standard';
 
   // Define size classes
   const sizeClasses = {
@@ -159,6 +160,13 @@ export default function QuickActionsBarV2({
 
   const currentSize = sizeClasses[iconSize] || sizeClasses.medium;
 
+  // Define padding classes based on height setting
+  const paddingClass = {
+    compact: 'py-2',
+    standard: 'py-4',
+    tall: 'py-6'
+  }[barHeight] || 'py-4';
+
   return (
     <motion.div 
       initial={{ y: -100 }} 
@@ -166,7 +174,7 @@ export default function QuickActionsBarV2({
       className="fixed top-14 left-0 right-0 z-40 lg:top-0 lg:left-72"
     >
       <div 
-        className="mx-auto max-w-5xl px-4 py-4 backdrop-blur-md border-t shadow-[0_-4px_20px_rgba(0,0,0,0.05)] flex justify-between items-center"
+        className={`w-full px-4 ${paddingClass} backdrop-blur-md border-t shadow-[0_-4px_20px_rgba(0,0,0,0.05)] flex justify-between items-center`}
         style={{ backgroundColor: barBg }}
       >
         <div className="flex-1 flex justify-center gap-4 sm:gap-8 overflow-x-auto pb-2 sm:pb-0 scrollbar-hide">
