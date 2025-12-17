@@ -20,6 +20,7 @@ import TikTokTabContent from '../components/contacts/TikTokTabContent';
 import PersonalTabContent from '../components/contacts/PersonalTabContent';
 import BusinessTabContent from '../components/contacts/BusinessTabContent';
 import ProfileFavoritesTab from '../components/contacts/ProfileFavoritesTab';
+import MomentsTabContent from '../components/contacts/MomentsTabContent';
 import { useTheme } from '../components/shared/useTheme';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -522,12 +523,15 @@ export default function People() {
             />
 
             <Tabs value={formTab} onValueChange={setFormTab}>
-              <TabsList className="w-full grid grid-cols-4">
+              <TabsList className="w-full grid grid-cols-5">
                 <TabsTrigger value="personal" className="data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700 text-xs px-1">
                   Personal
                 </TabsTrigger>
                 <TabsTrigger value="favorites" className="data-[state=active]:bg-pink-100 data-[state=active]:text-pink-700 text-xs px-1">
                   Favorites
+                </TabsTrigger>
+                <TabsTrigger value="moments" className="data-[state=active]:bg-indigo-100 data-[state=active]:text-indigo-700 text-xs px-1">
+                  Moments
                 </TabsTrigger>
                 <TabsTrigger value="business" className="data-[state=active]:bg-amber-100 data-[state=active]:text-amber-700 text-xs px-1">
                   Business
@@ -549,6 +553,13 @@ export default function People() {
                   formData={formData}
                   setFormData={setFormData}
                   linkedEmail={formData.linked_user_email || formData.claimed_by_email} // Support both standard link and tiktok claim link
+                />
+              </TabsContent>
+
+              <TabsContent value="moments" className="mt-4">
+                <MomentsTabContent
+                  formData={formData}
+                  setFormData={setFormData}
                 />
               </TabsContent>
 

@@ -35,6 +35,7 @@ import TikTokTabContent from '../components/contacts/TikTokTabContent';
 import PersonalTabContent from '../components/contacts/PersonalTabContent';
 import BusinessTabContent from '../components/contacts/BusinessTabContent';
 import ProfileFavoritesTab from '../components/contacts/ProfileFavoritesTab';
+import MomentsTabContent from '../components/contacts/MomentsTabContent';
 
 const AFFILIATE_TAG = 'pixelnuts-20';
 
@@ -501,12 +502,15 @@ export default function Settings() {
                           </div>
 
                           <Tabs defaultValue="personal" className="w-full">
-                            <TabsList className="w-full grid grid-cols-4 rounded-none border-b bg-gray-50/50 p-0 h-12">
+                            <TabsList className="w-full grid grid-cols-5 rounded-none border-b bg-gray-50/50 p-0 h-12">
                               <TabsTrigger value="personal" className="rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:bg-white h-full text-xs px-1">
                                 Personal
                               </TabsTrigger>
                               <TabsTrigger value="favorites" className="rounded-none border-b-2 border-transparent data-[state=active]:border-pink-600 data-[state=active]:bg-white h-full text-xs px-1">
                                 Favorites
+                              </TabsTrigger>
+                              <TabsTrigger value="moments" className="rounded-none border-b-2 border-transparent data-[state=active]:border-indigo-600 data-[state=active]:bg-white h-full text-xs px-1">
+                                Moments
                               </TabsTrigger>
                               <TabsTrigger value="tiktok" className="rounded-none border-b-2 border-transparent data-[state=active]:border-purple-600 data-[state=active]:bg-white h-full text-xs px-1">
                                 TikTok
@@ -535,6 +539,16 @@ export default function Settings() {
                                   setFormData={setProfileData}
                                   isProfile={true}
                                 />
+                              </TabsContent>
+
+                              <TabsContent value="moments" className="mt-0">
+                                <div className="p-4 bg-white">
+                                  <MomentsTabContent
+                                    formData={profileData}
+                                    setFormData={setProfileData}
+                                    isProfile={true}
+                                  />
+                                </div>
                               </TabsContent>
 
                               <TabsContent value="tiktok" className="mt-0">
