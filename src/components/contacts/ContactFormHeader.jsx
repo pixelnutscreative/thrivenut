@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
+import ColorPicker from '../shared/ColorPicker';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -78,47 +79,14 @@ export default function ContactFormHeader({ formData, setFormData, onSave, isSav
             </div>
           )}
           
-          {/* Favorite Color with popover */}
-          <div className="flex items-center gap-1">
+          {/* Favorite Color with new picker */}
+          <div className="flex items-center gap-2">
             <span className="text-xs text-gray-400">Color</span>
-            <Popover open={showColorPicker} onOpenChange={setShowColorPicker}>
-              <PopoverTrigger asChild>
-                <button
-                  type="button"
-                  className="relative w-5 h-5 rounded-full ring-2 ring-offset-1 ring-gray-300 flex items-center justify-center group"
-                  style={{ backgroundColor: formData.color || '#000000' }}
-                >
-                  <Pencil className="w-2.5 h-2.5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-3" align="start">
-                <div className="grid grid-cols-6 gap-1.5">
-                  {colorOptions.map(color => (
-                    <div
-                      key={color}
-                      onClick={() => {
-                        setFormData({ ...formData, color });
-                        setShowColorPicker(false);
-                      }}
-                      className={`w-6 h-6 rounded-full cursor-pointer hover:scale-110 transition-transform ${formData.color === color ? 'ring-2 ring-offset-1 ring-gray-400' : ''}`}
-                      style={{ backgroundColor: color }}
-                    />
-                  ))}
-                </div>
-                <div className="mt-2 pt-2 border-t flex items-center gap-2">
-                  <span className="text-xs text-gray-500">Custom:</span>
-                  <label className="relative w-6 h-6 rounded-full border-2 border-dashed border-gray-300 hover:border-purple-400 cursor-pointer flex items-center justify-center overflow-hidden">
-                    <Plus className="w-3 h-3 text-gray-400" />
-                    <Input
-                      type="color"
-                      value={formData.color || '#000000'}
-                      onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                    />
-                  </label>
-                </div>
-              </PopoverContent>
-            </Popover>
+            <ColorPicker 
+              color={formData.color || '#000000'} 
+              onChange={(c) => setFormData({ ...formData, color: c })}
+              className="scale-90"
+            />
           </div>
         </div>
         <div className="flex gap-2">

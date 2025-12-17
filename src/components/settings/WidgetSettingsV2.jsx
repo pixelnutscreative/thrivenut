@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import ColorPicker from '../shared/ColorPicker';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button.jsx';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -51,15 +52,15 @@ const iconMap = {
 const iconLibrary = Object.keys(iconMap);
 
 const builtInActions = [
-  { id: 'mood', label: 'Mood', icon: 'Smile', color: 'bg-pink-500' },
-  { id: 'water', label: 'Water', icon: 'Droplet', color: 'bg-blue-500' },
-  { id: 'task', label: 'Quick Task', icon: 'CheckCircle', color: 'bg-teal-500' },
-  { id: 'event', label: 'Add Event', icon: 'Calendar', color: 'bg-orange-500' },
-  { id: 'food', label: 'Food', icon: 'Utensils', color: 'bg-green-500' },
-  { id: 'idea', label: 'Idea', icon: 'Lightbulb', color: 'bg-yellow-500' },
-  { id: 'negative_thought', label: 'Reframe', icon: 'Cloud', color: 'bg-purple-500' },
-  { id: 'note', label: 'Note', icon: 'StickyNote', color: 'bg-lime-500' },
-  { id: 'gratitude', label: 'Gratitude', icon: 'Heart', color: 'bg-red-500' },
+  { id: 'mood', label: 'Mood', icon: 'Smile', color: '#EC4899' },
+  { id: 'water', label: 'Water', icon: 'Droplet', color: '#06B6D4' },
+  { id: 'food', label: 'Food', icon: 'Utensils', color: '#F97316' },
+  { id: 'note', label: 'Note', icon: 'StickyNote', color: '#EAB308' },
+  { id: 'idea', label: 'Idea', icon: 'Lightbulb', color: '#A855F7' },
+  { id: 'gratitude', label: 'Gratitude', icon: 'Heart', color: '#EF4444' },
+  { id: 'negative_thought', label: 'Reframe', icon: 'Cloud', color: '#10B981' },
+  { id: 'task', label: 'Task', icon: 'Check', color: '#3B82F6' },
+  { id: 'event', label: 'Add Event', icon: 'Calendar', color: '#F59E0B' },
 ];
 
 const colorOptions = [
@@ -91,7 +92,7 @@ export default function WidgetSettingsV2({ formData, setFormData }) {
 
   const quickActions = formData.quick_actions || ['mood', 'water', 'food', 'note'];
   const customActions = formData.custom_quick_actions || [];
-  const barColor = formData.quick_actions_bar_color || 'rgba(75, 85, 99, 0.95)';
+  const barColor = formData.quick_actions_bar_color || 'rgba(255, 255, 255, 0.9)';
 
   const filteredIcons = iconLibrary.filter(icon => icon.toLowerCase().includes(iconSearch.toLowerCase()));
 
@@ -192,13 +193,17 @@ export default function WidgetSettingsV2({ formData, setFormData }) {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex gap-4 items-center">
-            <div>
-              <Label>Color</Label>
-              <Input type="color" value={barColor.startsWith('rgba') || barColor.startsWith('rgb') ? '#4b5563' : barColor} onChange={(e) => setFormData({ ...formData, quick_actions_bar_color: e.target.value })} className="w-20 h-10" />
+            <div className="flex-1">
+              <Label className="mb-2 block">Background Color</Label>
+              <ColorPicker 
+                color={barColor.startsWith('rgba') || barColor.startsWith('rgb') ? '#ffffff' : barColor} 
+                onChange={(c) => setFormData({ ...formData, quick_actions_bar_color: c })} 
+                label="Pick Color"
+              />
             </div>
             <div className="flex-1">
-              <Label>Custom (hex, rgb, rgba)</Label>
-              <Input value={barColor} onChange={(e) => setFormData({ ...formData, quick_actions_bar_color: e.target.value })} placeholder="rgba(75, 85, 99, 0.95) or #4b5563" />
+              <Label>Manual Value</Label>
+              <Input value={barColor} onChange={(e) => setFormData({ ...formData, quick_actions_bar_color: e.target.value })} placeholder="rgba(255, 255, 255, 0.9)" />
             </div>
           </div>
           <div className="p-4 rounded-lg" style={{ backgroundColor: barColor }}>
@@ -299,10 +304,9 @@ export default function WidgetSettingsV2({ formData, setFormData }) {
                     </div>
                     <div>
                       <Label>Color</Label>
-                      <div className="flex gap-2 flex-wrap mb-2">
-                        {colorOptions.map(color => <button key={color} type="button" onClick={() => setNewAction({ ...newAction, color })} className={`w-8 h-8 rounded-lg ${color} ${newAction.color === color ? 'ring-2 ring-purple-500' : ''}`} />)}
+                      <div className="mt-2">
+                        <ColorPicker color={newAction.color} onChange={(c) => setNewAction({ ...newAction, color: c })} label="Select Icon Color" />
                       </div>
-                      <Input type="color" onChange={(e) => setNewAction({ ...newAction, color: e.target.value })} className="w-20 h-10" />
                     </div>
                     <div>
                       <Label>Link to Page</Label>
@@ -338,10 +342,9 @@ export default function WidgetSettingsV2({ formData, setFormData }) {
             <div className="space-y-4 py-4">
               <div><Label>Label</Label><Input value={editingAction.label} onChange={(e) => setEditingAction({ ...editingAction, label: e.target.value })} /></div>
               <div><Label>Color</Label>
-                <div className="flex gap-2 flex-wrap mb-2">
-                  {colorOptions.map(color => <button key={color} type="button" onClick={() => setEditingAction({ ...editingAction, color })} className={`w-10 h-10 rounded-lg ${color} ${editingAction.color === color ? 'ring-2 ring-purple-500' : ''}`} />)}
+                <div className="mt-2">
+                  <ColorPicker color={editingAction.color} onChange={(c) => setEditingAction({ ...editingAction, color: c })} label="Select Icon Color" />
                 </div>
-                <Input type="color" onChange={(e) => setEditingAction({ ...editingAction, color: e.target.value })} className="w-20 h-10" />
               </div>
               {!editingAction.isBuiltIn && (
                 <>

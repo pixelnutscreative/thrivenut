@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { 
   Zap, Droplet, Smile, Utensils, Lightbulb, Cloud, StickyNote, Heart,
   Plus, Check, ExternalLink, Home, Music, Link, Calendar as CalendarIcon, 
-  Settings as SettingsIcon, 
+  Settings as SettingsIcon, GripVertical
 } from 'lucide-react';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
@@ -24,37 +22,22 @@ import { format } from 'date-fns';
 
 // Map icon names to Lucide components
 const iconMap = {
-  Smile: Smile,
-  Droplet: Droplet,
-  Utensils: Utensils,
-  Lightbulb: Lightbulb,
-  Cloud: Cloud,
-  StickyNote: StickyNote,
-  Heart: Heart,
-  Plus: Plus,
-  Check: Check,
-  ExternalLink: ExternalLink,
-  Home: Home,
-  Music: Music,
-  Link: Link,
-  Calendar: CalendarIcon,
-  Settings: SettingsIcon,
+  Smile, Droplet, Utensils, Lightbulb, Cloud, StickyNote, Heart,
+  Plus, Check, ExternalLink, Home, Music, Link, Calendar: CalendarIcon,
+  Settings: SettingsIcon, Zap, GripVertical
 };
 
-// Reframe action is a placeholder for future AI-powered features
-const REFRAME_ACTION = { id: 'reframe', label: 'Reframe', icon: 'Cloud', color: 'bg-purple-500' };
+const REFRAME_ACTION = { id: 'reframe', label: 'Reframe', icon: 'Cloud', color: '#10B981' };
 
-// Base built-in actions (some have default modals)
 const baseBuiltInActions = [
-  { id: 'mood', label: 'Mood', icon: 'Smile', color: 'bg-pink-500' },
-  { id: 'water', label: 'Water', icon: 'Droplet', color: 'bg-blue-500' },
-  { id: 'food', label: 'Food', icon: 'Utensils', color: 'bg-green-500' },
-  { id: 'note', label: 'Note', icon: 'StickyNote', color: 'bg-lime-500' },
-  { id: 'idea', label: 'Idea', icon: 'Lightbulb', color: 'bg-yellow-500' },
-  { id: 'gratitude', label: 'Gratitude', icon: 'Heart', color: 'bg-red-500' },
-  { id: 'task', label: 'Quick Task', icon: 'Check', color: 'bg-teal-500' },
-  { id: 'event', label: 'Add Event', icon: 'Calendar', color: 'bg-orange-500' },
-  REFRAME_ACTION,
+  { id: 'mood', label: 'Mood', icon: 'Smile', color: '#EC4899' },
+  { id: 'water', label: 'Water', icon: 'Droplet', color: '#06B6D4' },
+  { id: 'food', label: 'Food', icon: 'Utensils', color: '#F97316' },
+  { id: 'note', label: 'Note', icon: 'StickyNote', color: '#EAB308' },
+  { id: 'idea', label: 'Idea', icon: 'Lightbulb', color: '#A855F7' },
+  { id: 'gratitude', label: 'Gratitude', icon: 'Heart', color: '#EF4444' },
+  { id: 'reframe', label: 'Reframe', icon: 'Cloud', color: '#10B981' },
+  { id: 'task', label: 'Task', icon: 'Check', color: '#3B82F6' },
 ];
 
 export default function QuickActionsBarV2({
@@ -66,11 +49,10 @@ export default function QuickActionsBarV2({
   const navigate = useNavigate();
   const { user } = useTheme();
 
-  const [openModal, setOpenModal] = useState(null); // 'mood', 'food', 'note', etc.
+  const [openModal, setOpenModal] = useState(null);
 
-  // Combine built-in, custom, and override preferences
   const actionsToDisplay = useMemo(() => {
-    if (!preferences || !preferences.quick_actions) return [];
+    if (!preferences || !preferences.quick_actions) return baseBuiltInActions.map(a => ({...a, Icon: iconMap[a.icon]}));
 
     const allActions = [];
 
@@ -82,13 +64,13 @@ export default function QuickActionsBarV2({
       if (custom) {
         allActions.push({
           ...custom,
-          Icon: iconMap[custom.icon],
-          color: custom.color || 'bg-gray-500', // Ensure a fallback color
+          Icon: iconMap[custom.icon] || Zap,
+          color: custom.color || '#6B7280',
         });
       } else if (builtIn) {
         allActions.push({
           ...builtIn,
-          Icon: iconMap[builtIn.icon],
+          Icon: iconMap[builtIn.icon] || Zap,
           label: overrides?.label || builtIn.label,
           color: overrides?.color || builtIn.color,
         });
@@ -97,7 +79,7 @@ export default function QuickActionsBarV2({
     return allActions;
   }, [preferences]);
 
-  // Water Log Mutation
+  // Mutations
   const logWaterMutation = useMutation({
     mutationFn: async () => {
       const todayStr = format(new Date(), 'yyyy-MM-dd');
@@ -111,149 +93,115 @@ export default function QuickActionsBarV2({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['waterLogs'] });
-      queryClient.invalidateQueries({ queryKey: ['dailySelfCareLog'] }); // If dashboard uses this
+      queryClient.invalidateQueries({ queryKey: ['dailySelfCareLog'] });
     },
   });
 
-  // Mood Log Mutation
   const logMoodMutation = useMutation({
     mutationFn: (data) => base44.entities.MoodLog.create({ ...data, date: format(new Date(), 'yyyy-MM-dd'), timestamp: new Date().toISOString() }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['moodLogs'] }),
   });
 
-  // Food Log Mutation
   const logFoodMutation = useMutation({
     mutationFn: (data) => base44.entities.FoodLog.create(data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['foodLogs'] }),
   });
 
-  // Note Log Mutation
   const logNoteMutation = useMutation({
     mutationFn: (data) => base44.entities.QuickNote.create({ ...data, created_date: new Date().toISOString() }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['quickNotes'] }),
   });
 
-  // Idea Log Mutation (using QuickNote for now as ContentIdea is not explicit entity)
   const logIdeaMutation = useMutation({
-    mutationFn: (data) => base44.entities.QuickNote.create({ ...data, created_date: new Date().toISOString() }), // Assuming ContentIdea is a QuickNote with a specific intent, or similar
+    mutationFn: (data) => base44.entities.QuickNote.create({ ...data, created_date: new Date().toISOString() }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['contentIdeas'] }),
   });
 
-  // Gratitude Log Mutation
   const logGratitudeMutation = useMutation({
     mutationFn: (data) => base44.entities.GratitudeLog.create({ ...data, date: format(new Date(), 'yyyy-MM-dd') }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['gratitudeLogs'] }),
   });
 
-  // Task Log Mutation
   const logTaskMutation = useMutation({
     mutationFn: (data) => base44.entities.Task.create({ ...data, created_date: new Date().toISOString(), status: 'pending' }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
   });
 
-  // Event Log Mutation (using ExternalEvent for now)
   const logEventMutation = useMutation({
     mutationFn: (data) => base44.entities.ExternalEvent.create({ ...data, created_date: new Date().toISOString() }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['externalEvents'] }),
   });
 
   const handleActionClick = (action) => {
-    if (action.id === 'water') {
-      logWaterMutation.mutate();
-    } else if (action.id === 'mood') {
-      setOpenModal('mood');
-    } else if (action.id === 'food') {
-      setOpenModal('food');
-    } else if (action.id === 'note') {
-      setOpenModal('note');
-    } else if (action.id === 'idea') {
-      setOpenModal('idea');
-    } else if (action.id === 'gratitude') {
-      setOpenModal('gratitude');
-    } else if (action.id === 'task') {
-      setOpenModal('task');
-    } else if (action.id === 'event') {
-      setOpenModal('event');
-    } else if (action.id === 'reframe') {
-      // Placeholder for AI reframe
-      alert('AI Reframe coming soon!');
-    } else if (action.page) {
-      navigate(createPageUrl(action.page));
-    } else if (action.external_url) {
-      window.open(action.external_url, '_blank');
-    }
+    if (action.id === 'water') logWaterMutation.mutate();
+    else if (action.id === 'mood') setOpenModal('mood');
+    else if (action.id === 'food') setOpenModal('food');
+    else if (action.id === 'note') setOpenModal('note');
+    else if (action.id === 'idea') setOpenModal('idea');
+    else if (action.id === 'gratitude') setOpenModal('gratitude');
+    else if (action.id === 'task') setOpenModal('task');
+    else if (action.id === 'event') setOpenModal('event');
+    else if (action.id === 'reframe') alert('AI Reframe coming soon!');
+    else if (action.page) navigate(createPageUrl(action.page));
+    else if (action.external_url) window.open(action.external_url, '_blank');
   };
 
-  const quickActionsBarColor = preferences?.quick_actions_bar_color || 'rgba(75, 85, 99, 0.95)'; // default gray-700
+  const barBg = preferences?.quick_actions_bar_color || 'rgba(255, 255, 255, 0.9)';
 
   return (
     <motion.div 
       initial={{ y: 100 }} 
       animate={{ y: 0 }}
-      transition={{ type: "spring", stiffness: 120, damping: 20 }}
-      className="fixed bottom-0 left-0 right-0 z-50 p-3 bg-gray-700 backdrop-blur-sm bg-opacity-95 shadow-lg lg:left-72"
-      style={{ backgroundColor: quickActionsBarColor }}
+      className="fixed bottom-0 left-0 right-0 z-50 lg:left-72"
     >
-      <div className="max-w-4xl mx-auto flex justify-around items-center gap-2">
-        {actionsToDisplay.map((action, index) => {
-          const IconComponent = action.Icon;
-          return (
-            <Button
-              key={action.id || index}
-              onClick={() => handleActionClick(action)}
-              className={`flex-1 flex flex-col items-center justify-center p-2 rounded-lg text-white shadow-none hover:shadow-md transition-all`}
-              style={{ backgroundColor: action.color || primaryColor }}
-            >
-              {IconComponent && <IconComponent className="w-5 h-5 mb-1" />}
-              <span className="text-xs font-medium leading-none">{action.label}</span>
-            </Button>
-          );
-        })}
+      <div 
+        className="mx-auto max-w-5xl px-4 py-4 backdrop-blur-md border-t shadow-[0_-4px_20px_rgba(0,0,0,0.05)] flex justify-between items-center"
+        style={{ backgroundColor: barBg }}
+      >
+        <div className="flex-1 flex justify-center gap-4 sm:gap-8 overflow-x-auto pb-2 sm:pb-0 scrollbar-hide">
+          {actionsToDisplay.map((action, index) => {
+            const IconComponent = action.Icon;
+            // Handle tailwind classes vs hex codes
+            const isTailwind = action.color?.startsWith('bg-');
+            const style = isTailwind ? {} : { backgroundColor: action.color };
+            const className = isTailwind ? action.color : '';
+
+            return (
+              <div key={action.id || index} className="flex flex-col items-center gap-2 group cursor-pointer" onClick={() => handleActionClick(action)}>
+                <div 
+                  className={`w-12 h-12 rounded-full flex items-center justify-center text-white shadow-lg transition-transform group-hover:scale-110 group-active:scale-95 ${className}`}
+                  style={style}
+                >
+                  {IconComponent && <IconComponent className="w-6 h-6" />}
+                </div>
+                <span className="text-[10px] font-medium text-gray-500 group-hover:text-gray-800">{action.label}</span>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Settings Gear */}
+        <div className="pl-4 border-l border-gray-200 ml-4 flex flex-col items-center justify-center">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate('/Settings#widgets-v2')}
+            className="rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600"
+          >
+            <SettingsIcon className="w-5 h-5" />
+          </Button>
+          <span className="text-[10px] text-gray-400 mt-1">Config</span>
+        </div>
       </div>
 
-      <MoodDialog 
-        isOpen={openModal === 'mood'} 
-        onClose={() => setOpenModal(null)} 
-        onSave={logMoodMutation.mutate}
-        isLoading={logMoodMutation.isPending}
-        topMoodEmojis={preferences?.custom_mood_options || []}
-      />
-      <FoodDialog 
-        isOpen={openModal === 'food'} 
-        onClose={() => setOpenModal(null)} 
-        onSave={logFoodMutation.mutate}
-        isLoading={logFoodMutation.isPending}
-      />
-      <NoteDialog 
-        isOpen={openModal === 'note'} 
-        onClose={() => setOpenModal(null)} 
-        onSave={logNoteMutation.mutate}
-        isLoading={logNoteMutation.isPending}
-      />
-      <IdeaDialog 
-        isOpen={openModal === 'idea'} 
-        onClose={() => setOpenModal(null)} 
-        onSave={logIdeaMutation.mutate}
-        isLoading={logIdeaMutation.isPending}
-      />
-      <GratitudeDialog 
-        isOpen={openModal === 'gratitude'} 
-        onClose={() => setOpenModal(null)} 
-        onSave={logGratitudeMutation.mutate}
-        isLoading={logGratitudeMutation.isPending}
-      />
-      <TaskDialog 
-        isOpen={openModal === 'task'} 
-        onClose={() => setOpenModal(null)} 
-        onSave={logTaskMutation.mutate}
-        isLoading={logTaskMutation.isPending}
-      />
-      <EventDialog 
-        isOpen={openModal === 'event'} 
-        onClose={() => setOpenModal(null)} 
-        onSave={logEventMutation.mutate}
-        isLoading={logEventMutation.isPending}
-      />
+      {/* Modals */}
+      <MoodDialog isOpen={openModal === 'mood'} onClose={() => setOpenModal(null)} onSave={logMoodMutation.mutate} isLoading={logMoodMutation.isPending} topMoodEmojis={preferences?.custom_mood_options || []} />
+      <FoodDialog isOpen={openModal === 'food'} onClose={() => setOpenModal(null)} onSave={logFoodMutation.mutate} isLoading={logFoodMutation.isPending} />
+      <NoteDialog isOpen={openModal === 'note'} onClose={() => setOpenModal(null)} onSave={logNoteMutation.mutate} isLoading={logNoteMutation.isPending} />
+      <IdeaDialog isOpen={openModal === 'idea'} onClose={() => setOpenModal(null)} onSave={logIdeaMutation.mutate} isLoading={logIdeaMutation.isPending} />
+      <GratitudeDialog isOpen={openModal === 'gratitude'} onClose={() => setOpenModal(null)} onSave={logGratitudeMutation.mutate} isLoading={logGratitudeMutation.isPending} />
+      <TaskDialog isOpen={openModal === 'task'} onClose={() => setOpenModal(null)} onSave={logTaskMutation.mutate} isLoading={logTaskMutation.isPending} />
+      <EventDialog isOpen={openModal === 'event'} onClose={() => setOpenModal(null)} onSave={logEventMutation.mutate} isLoading={logEventMutation.isPending} />
     </motion.div>
   );
 }

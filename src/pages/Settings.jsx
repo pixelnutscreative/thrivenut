@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, Save, User, Palette, Layers, MessageSquare, Zap, BookOpen, Shirt, Gift, Share2, Sparkles, Plus, Trash2, Briefcase, Check, Code, ExternalLink, UserX, Calendar as CalendarIcon, Sliders, PuzzleIcon } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
+import ColorPicker from '../components/shared/ColorPicker';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -356,17 +357,15 @@ export default function Settings() {
                     <div className="space-y-1">
                       <Label className="text-xs">Favorite Color</Label>
                       <div className="flex gap-2">
-                        <Input 
-                          type="color" 
-                          value={profileData.favorite_color || '#000000'} 
-                          onChange={(e) => setProfileData({ ...profileData, favorite_color: e.target.value })} 
-                          className="w-10 h-9 p-1"
+                        <ColorPicker 
+                          color={profileData.favorite_color || '#000000'} 
+                          onChange={(c) => setProfileData({ ...profileData, favorite_color: c })} 
                         />
                         <Input 
                           value={profileData.favorite_color || ''} 
                           onChange={(e) => setProfileData({ ...profileData, favorite_color: e.target.value })} 
                           placeholder="#000000"
-                          className="h-9"
+                          className="h-9 flex-1"
                         />
                       </div>
                     </div>

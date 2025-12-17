@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import ColorPicker from '../shared/ColorPicker';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -137,21 +138,28 @@ export default function HabitDialog({ open, onOpenChange, habit, onSave, isLoadi
 
           <div className="space-y-3">
             <Label>Color</Label>
-            <div className="flex flex-wrap gap-2">
-              {COLORS.map(color => (
-                <button
-                  key={color.value}
-                  type="button"
-                  onClick={() => setFormData({ ...formData, color: color.value })}
-                  className={`w-8 h-8 rounded-full transition-transform ${
-                    formData.color === color.value 
-                      ? 'ring-2 ring-offset-2 ring-gray-400 scale-110' 
-                      : 'hover:scale-105'
-                  }`}
-                  style={{ backgroundColor: color.value }}
-                  title={color.label}
-                />
-              ))}
+            <div className="flex items-center gap-4">
+              <ColorPicker 
+                color={formData.color} 
+                onChange={(c) => setFormData({ ...formData, color: c })} 
+                label="Choose Habit Color" 
+              />
+              <div className="flex flex-wrap gap-2">
+                {COLORS.slice(0, 5).map(color => (
+                  <button
+                    key={color.value}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, color: color.value })}
+                    className={`w-6 h-6 rounded-full transition-transform ${
+                      formData.color === color.value 
+                        ? 'ring-2 ring-offset-2 ring-gray-400 scale-110' 
+                        : 'hover:scale-105'
+                    }`}
+                    style={{ backgroundColor: color.value }}
+                    title={color.label}
+                  />
+                ))}
+              </div>
             </div>
           </div>
 
