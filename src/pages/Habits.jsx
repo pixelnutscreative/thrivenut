@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Flame, TrendingUp, Plus, Check, ChevronLeft, ChevronRight, MoreVertical, Edit, Trash2, Calendar as CalendarIcon } from 'lucide-react';
 import { useTheme } from '../components/shared/useTheme';
-import { format, startOfWeek, addDays, subDays, isSameDay, isToday } from 'date-fns';
+import { format, startOfWeek, addDays, subDays, isSameDay, isToday, parseISO } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import HabitDialog from '../components/habits/HabitDialog';
 
