@@ -34,7 +34,7 @@ const defaultClubs = [
   { id: 'we_do_not_have', label: 'We Do Not Have Club', display: 'We Do Not Have Club' },
 ];
 
-export default function ContactFormHeader({ formData, setFormData, onSave, isSaving, isEditing, sharedClubs = [], onAddSharedClub, hiddenClubs = [], onToggleClubVisibility, primaryColor, showIrlToggle = true }) {
+export default function ContactFormHeader({ formData, setFormData, onSave, isSaving, isEditing, sharedClubs = [], onAddSharedClub, hiddenClubs = [], onToggleClubVisibility, primaryColor, showIrlToggle = true, isProfile = false }) {
   const [newClub, setNewClub] = useState('');
   const [showClubsModal, setShowClubsModal] = useState(false);
   const [shareNewClub, setShareNewClub] = useState(false);
@@ -56,16 +56,18 @@ export default function ContactFormHeader({ formData, setFormData, onSave, isSav
       {/* Top row with favorite, friend IRL, color, and save */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => setFormData({ ...formData, is_favorite: !formData.is_favorite })}
-            className="p-1 hover:bg-gray-100 rounded"
-          >
-            <Star className={`w-5 h-5 ${formData.is_favorite ? 'fill-amber-400 text-amber-400' : 'text-gray-300'}`} />
-          </button>
+          {!isProfile && (
+            <button
+              type="button"
+              onClick={() => setFormData({ ...formData, is_favorite: !formData.is_favorite })}
+              className="p-1 hover:bg-gray-100 rounded"
+            >
+              <Star className={`w-5 h-5 ${formData.is_favorite ? 'fill-amber-400 text-amber-400' : 'text-gray-300'}`} />
+            </button>
+          )}
           
-          {/* My People (IRL) toggle */}
-          {showIrlToggle && (
+          {/* My People (IRL) toggle - Hide on Profile */}
+          {showIrlToggle && !isProfile && (
             <div
               onClick={() => setFormData({ ...formData, is_irl_contact: !formData.is_irl_contact })}
               className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border cursor-pointer transition-colors text-xs ${

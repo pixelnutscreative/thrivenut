@@ -500,35 +500,108 @@ export default function Settings() {
                     </CardContent>
                     </Card>
 
-                    {/* Creator Profile Section */}
+                    {/* Creator Profile Section with Tabs */}
                     <div className="border-t pt-4 space-y-4">
-                    <div className="flex items-center justify-between">
-                    <h3 className="font-semibold flex items-center gap-2"><Sparkles className="w-4 h-4" /> Creator Info</h3>
-                    <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-500">Share Creator Info</span>
-                    <Switch 
-                      checked={profileData.privacy_settings?.share_creator_info}
-                      onCheckedChange={(checked) => updateProfileNested('privacy_settings', 'share_creator_info', checked)}
-                    />
-                    </div>
-                    </div>
-                    <div className="grid md:grid-cols-2 gap-4">
-                    <div><Label>Phonetic Pronunciation</Label><Input value={profileData.phonetic || ''} onChange={(e) => setProfileData({ ...profileData, phonetic: e.target.value })} placeholder="e.g. Pixel-Nuts" /></div>
-                    <div><Label>Creator Notes</Label><Input value={profileData.creator_notes || ''} onChange={(e) => setProfileData({ ...profileData, creator_notes: e.target.value })} placeholder="Public notes..." /></div>
-                    <div><Label>Live Agency</Label><Input value={profileData.live_agency || ''} onChange={(e) => setProfileData({ ...profileData, live_agency: e.target.value })} /></div>
-                    <div><Label>Shop Agency</Label><Input value={profileData.shop_agency || ''} onChange={(e) => setProfileData({ ...profileData, shop_agency: e.target.value })} /></div>
-                    <div><Label>Started Going Live</Label><Input type="date" value={profileData.started_going_live || ''} onChange={(e) => setProfileData({ ...profileData, started_going_live: e.target.value })} /></div>
-                    </div>
-                    <div className="flex gap-6 mt-2">
-                    <div className="flex items-center gap-2">
-                    <Switch checked={profileData.is_gifter} onCheckedChange={(c) => setProfileData({ ...profileData, is_gifter: c })} />
-                    <Label>Is Gifter</Label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                    <Switch checked={profileData.calendar_enabled} onCheckedChange={(c) => setProfileData({ ...profileData, calendar_enabled: c })} />
-                    <Label>Enable Live Calendar</Label>
-                    </div>
-                    </div>
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-semibold flex items-center gap-2"><Sparkles className="w-4 h-4" /> My Profile Card</h3>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-gray-500">Share Creator Info</span>
+                          <Switch 
+                            checked={profileData.privacy_settings?.share_creator_info}
+                            onCheckedChange={(checked) => updateProfileNested('privacy_settings', 'share_creator_info', checked)}
+                          />
+                        </div>
+                      </div>
+
+                      <Card className="border-2 border-purple-100 bg-white overflow-hidden">
+                        <CardContent className="p-0">
+                          <div className="p-4 bg-gray-50/50">
+                            <ContactFormHeader 
+                              formData={{
+                                ...profileData,
+                                real_name: user?.full_name,
+                                image_url: prefData.profile_image_url,
+                                color: profileData.favorite_color,
+                                clubs: profileData.clubs,
+                                custom_clubs: profileData.custom_clubs
+                              }} 
+                              setFormData={(newData) => {
+                                setProfileData(prev => ({
+                                  ...prev,
+                                  nickname: newData.nickname,
+                                  favorite_color: newData.color,
+                                  clubs: newData.clubs,
+                                  custom_clubs: newData.custom_clubs
+                                }));
+                                if (newData.image_url !== prefData.profile_image_url) {
+                                  setPrefData(prev => ({ ...prev, profile_image_url: newData.image_url }));
+                                }
+                              }}
+                              onSave={() => handleSave()}
+                              isSaving={updatePreferencesMutation.isPending || updateUserProfileMutation.isPending}
+                              isEditing={true}
+                              showIrlToggle={false}
+                              isProfile={true}
+                              primaryColor={primaryColor}
+                            />
+                          </div>
+
+                          <Tabs defaultValue="tiktok" className="w-full">
+                            <TabsList className="w-full grid grid-cols-3 rounded-none border-b bg-gray-50/50 p-0 h-12">
+                              <TabsTrigger value="tiktok" className="rounded-none border-b-2 border-transparent data-[state=active]:border-purple-600 data-[state=active]:bg-white h-full">
+                                TikTok
+                              </TabsTrigger>
+                              <TabsTrigger value="personal" className="rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:bg-white h-full">
+                                Personal
+                              </TabsTrigger>
+                              <TabsTrigger value="business" className="rounded-none border-b-2 border-transparent data-[state=active]:border-amber-600 data-[state=active]:bg-white h-full">
+                                Business
+                              </TabsTrigger>
+                            </TabsList>
+
+                            <div className="p-4">
+                              <TabsContent value="tiktok" className="mt-0">
+                                <TikTokTabContent
+                                  formData={{
+                                    ...profileData,
+                                    username: prefData.tiktok_username,
+                                    display_name: profileData.display_name,
+                                  }}
+                                  setFormData={(newData) => {
+                                    setProfileData(prev => ({ ...prev, ...newData }));
+                                    if (newData.username !== prefData.tiktok_username) {
+                                      setPrefData(prev => ({ ...prev, tiktok_username: newData.username }));
+                                    }
+                                  }}
+                                  contacts={[]}
+                                  categories={[]}
+                                  isProfile={true}
+                                />
+                              </TabsContent>
+
+                              <TabsContent value="personal" className="mt-0">
+                                <PersonalTabContent
+                                  formData={{
+                                    ...profileData,
+                                    email: user?.email,
+                                    phone: profileData.phone
+                                  }}
+                                  setFormData={(newData) => setProfileData(prev => ({ ...prev, ...newData }))}
+                                  isProfile={true}
+                                />
+                              </TabsContent>
+
+                              <TabsContent value="business" className="mt-0">
+                                <BusinessTabContent
+                                  formData={profileData}
+                                  setFormData={(newData) => setProfileData(prev => ({ ...prev, ...newData }))}
+                                  isProfile={true}
+                                />
+                              </TabsContent>
+                            </div>
+                          </Tabs>
+                        </CardContent>
+                      </Card>
                     </div>
 
                     {/* Delete Account Section */}

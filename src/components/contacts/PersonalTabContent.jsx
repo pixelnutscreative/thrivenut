@@ -39,7 +39,7 @@ const defaultSocialPlatforms = [
   { key: 'pinterest', label: 'Pinterest', icon: null },
 ];
 
-export default function PersonalTabContent({ formData, setFormData, hidePrivateInfo }) {
+export default function PersonalTabContent({ formData, setFormData, hidePrivateInfo, isProfile = false }) {
   const [showSocialPicker, setShowSocialPicker] = useState(false);
   const [customSocialName, setCustomSocialName] = useState('');
   const [customSocialValue, setCustomSocialValue] = useState('');
@@ -107,12 +107,14 @@ export default function PersonalTabContent({ formData, setFormData, hidePrivateI
         </div>
       </div>
 
-      {/* Personal Notes - moved up */}
-      <NotesWithHistory
-        notes={formData.personal_notes || []}
-        onAddNote={handleAddNote}
-        label="Personal Notes"
-      />
+      {/* Personal Notes - Hidden on Profile */}
+      {!isProfile && (
+        <NotesWithHistory
+          notes={formData.personal_notes || []}
+          onAddNote={handleAddNote}
+          label="Personal Notes"
+        />
+      )}
 
       {/* Key Statuses - Veteran & Recovery */}
       <div className="grid grid-cols-2 gap-3">

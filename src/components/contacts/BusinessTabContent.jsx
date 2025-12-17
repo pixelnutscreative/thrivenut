@@ -17,7 +17,7 @@ const serviceTypes = [
   { value: 'other', label: 'Other' }
 ];
 
-export default function BusinessTabContent({ formData, setFormData, hidePrivateInfo }) {
+export default function BusinessTabContent({ formData, setFormData, hidePrivateInfo, isProfile = false }) {
   const businesses = formData.businesses || [];
 
   const handleAddBusiness = () => {

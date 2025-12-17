@@ -190,7 +190,8 @@ export default function TikTokTabContent({
   savedCustomRoles,
   onSaveCustomRole,
   editingContactId,
-  onQuickAddContact
+  onQuickAddContact,
+  isProfile = false
 }) {
   const [customRoleInput, setCustomRoleInput] = useState('');
   const [showCustomRoleInput, setShowCustomRoleInput] = useState(false);
@@ -307,99 +308,127 @@ export default function TikTokTabContent({
 
   return (
     <div className="space-y-4">
-      {/* Feature Toggles - Purple themed */}
-      <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
-        <h4 className="font-semibold text-sm mb-2 text-purple-800">Enable Features</h4>
-        <div className="grid grid-cols-3 gap-2">
-          {/* Engage with inline edit */}
-          <div
-            className={`flex items-center justify-between p-2 border rounded-lg cursor-pointer hover:bg-white text-xs ${formData.engagement_enabled ? 'border-purple-400 bg-purple-100' : 'border-purple-200 bg-white'}`}
-          >
-            <div 
-              className="flex items-center gap-1 flex-1"
-              onClick={() => setFormData({ ...formData, engagement_enabled: !formData.engagement_enabled })}
+      {/* Feature Toggles - Purple themed (Hidden on Profile) */}
+      {!isProfile && (
+        <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
+          <h4 className="font-semibold text-sm mb-2 text-purple-800">Enable Features</h4>
+          <div className="grid grid-cols-3 gap-2">
+            {/* Engage with inline edit */}
+            <div
+              className={`flex items-center justify-between p-2 border rounded-lg cursor-pointer hover:bg-white text-xs ${formData.engagement_enabled ? 'border-purple-400 bg-purple-100' : 'border-purple-200 bg-white'}`}
             >
-              <Checkbox checked={formData.engagement_enabled} />
-              <Sparkles className="w-3 h-3 text-purple-500" />
-              <span className="text-purple-700 font-medium">Engage</span>
-            </div>
-            {formData.engagement_enabled && (
-              <Popover open={showEngagementSettings} onOpenChange={setShowEngagementSettings}>
-                <PopoverTrigger asChild>
-                  <button className="p-1 hover:bg-purple-200 rounded" onClick={(e) => e.stopPropagation()}>
-                    <Pencil className="w-3 h-3 text-purple-500" />
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-64 p-3">
-                  <div className="space-y-3">
-                    <h5 className="font-semibold text-sm text-purple-800">Engagement Frequency</h5>
-                    <Select 
-                      value={formData.engagement_frequency || 'multiple_per_week'} 
-                      onValueChange={(v) => setFormData({ ...formData, engagement_frequency: v })}
-                    >
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="daily">Daily</SelectItem>
-                        <SelectItem value="multiple_per_week">Specific Days</SelectItem>
-                        <SelectItem value="monthly">Monthly</SelectItem>
-                      </SelectContent>
-                    </Select>
-
-                    {formData.engagement_frequency === 'multiple_per_week' && (
-                      <div className="flex flex-wrap gap-1">
-                        {daysOfWeek.map(day => (
-                          <Badge
-                            key={day}
-                            variant={formData.engagement_days?.includes(day) ? 'default' : 'outline'}
-                            className="cursor-pointer text-xs"
-                            onClick={() => toggleDay(day)}
-                          >
-                            {day.slice(0, 3)}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-
-                    {formData.engagement_frequency === 'monthly' && (
+              <div 
+                className="flex items-center gap-1 flex-1"
+                onClick={() => setFormData({ ...formData, engagement_enabled: !formData.engagement_enabled })}
+              >
+                <Checkbox checked={formData.engagement_enabled} />
+                <Sparkles className="w-3 h-3 text-purple-500" />
+                <span className="text-purple-700 font-medium">Engage</span>
+              </div>
+              {formData.engagement_enabled && (
+                <Popover open={showEngagementSettings} onOpenChange={setShowEngagementSettings}>
+                  <PopoverTrigger asChild>
+                    <button className="p-1 hover:bg-purple-200 rounded" onClick={(e) => e.stopPropagation()}>
+                      <Pencil className="w-3 h-3 text-purple-500" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-64 p-3">
+                    <div className="space-y-3">
+                      <h5 className="font-semibold text-sm text-purple-800">Engagement Frequency</h5>
                       <Select 
-                        value={String(formData.engagement_day_of_month || 1)} 
-                        onValueChange={(v) => setFormData({ ...formData, engagement_day_of_month: parseInt(v) })}
+                        value={formData.engagement_frequency || 'multiple_per_week'} 
+                        onValueChange={(v) => setFormData({ ...formData, engagement_frequency: v })}
                       >
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
-                          {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
-                            <SelectItem key={day} value={String(day)}>
-                              {day === 1 ? '1st' : day === 2 ? '2nd' : day === 3 ? '3rd' : `${day}th`}
-                            </SelectItem>
-                          ))}
+                          <SelectItem value="daily">Daily</SelectItem>
+                          <SelectItem value="multiple_per_week">Specific Days</SelectItem>
+                          <SelectItem value="monthly">Monthly</SelectItem>
                         </SelectContent>
                       </Select>
-                    )}
-                  </div>
-                </PopoverContent>
-              </Popover>
-            )}
-          </div>
-          
-          <div
-            onClick={() => setFormData({ ...formData, calendar_enabled: !formData.calendar_enabled })}
-            className={`flex items-center gap-1 p-2 border rounded-lg cursor-pointer hover:bg-white text-xs ${formData.calendar_enabled ? 'border-blue-400 bg-blue-100' : 'border-purple-200 bg-white'}`}
-          >
-            <Checkbox checked={formData.calendar_enabled} />
-            <Calendar className="w-3 h-3 text-blue-500" />
-            <span className="text-purple-700 font-medium text-[10px]">+ Creator Cal</span>
-          </div>
-          
-          <div
-            onClick={() => setFormData({ ...formData, is_gifter: !formData.is_gifter })}
-            className={`flex items-center gap-1 p-2 border rounded-lg cursor-pointer hover:bg-white text-xs ${formData.is_gifter ? 'border-amber-400 bg-amber-100' : 'border-purple-200 bg-white'}`}
-          >
-            <Checkbox checked={formData.is_gifter} />
-            <Gift className="w-3 h-3 text-amber-500" />
-            <span className="text-purple-700 font-medium text-[10px]">Top Gifter</span>
+
+                      {formData.engagement_frequency === 'multiple_per_week' && (
+                        <div className="flex flex-wrap gap-1">
+                          {daysOfWeek.map(day => (
+                            <Badge
+                              key={day}
+                              variant={formData.engagement_days?.includes(day) ? 'default' : 'outline'}
+                              className="cursor-pointer text-xs"
+                              onClick={() => toggleDay(day)}
+                            >
+                              {day.slice(0, 3)}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+
+                      {formData.engagement_frequency === 'monthly' && (
+                        <Select 
+                          value={String(formData.engagement_day_of_month || 1)} 
+                          onValueChange={(v) => setFormData({ ...formData, engagement_day_of_month: parseInt(v) })}
+                        >
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                              <SelectItem key={day} value={String(day)}>
+                                {day === 1 ? '1st' : day === 2 ? '2nd' : day === 3 ? '3rd' : `${day}th`}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              )}
+            </div>
+            
+            <div
+              onClick={() => setFormData({ ...formData, calendar_enabled: !formData.calendar_enabled })}
+              className={`flex items-center gap-1 p-2 border rounded-lg cursor-pointer hover:bg-white text-xs ${formData.calendar_enabled ? 'border-blue-400 bg-blue-100' : 'border-purple-200 bg-white'}`}
+            >
+              <Checkbox checked={formData.calendar_enabled} />
+              <Calendar className="w-3 h-3 text-blue-500" />
+              <span className="text-purple-700 font-medium text-[10px]">+ Creator Cal</span>
+            </div>
+            
+            <div
+              onClick={() => setFormData({ ...formData, is_gifter: !formData.is_gifter })}
+              className={`flex items-center gap-1 p-2 border rounded-lg cursor-pointer hover:bg-white text-xs ${formData.is_gifter ? 'border-amber-400 bg-amber-100' : 'border-purple-200 bg-white'}`}
+            >
+              <Checkbox checked={formData.is_gifter} />
+              <Gift className="w-3 h-3 text-amber-500" />
+              <span className="text-purple-700 font-medium text-[10px]">Top Gifter</span>
+            </div>
           </div>
         </div>
-      </div>
+      )}
+
+      {/* Feature Toggles FOR PROFILE - Only relevant ones */}
+      {isProfile && (
+        <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
+          <h4 className="font-semibold text-sm mb-2 text-purple-800">My Creator Settings</h4>
+          <div className="grid grid-cols-2 gap-2">
+            <div
+              onClick={() => setFormData({ ...formData, calendar_enabled: !formData.calendar_enabled })}
+              className={`flex items-center gap-1 p-2 border rounded-lg cursor-pointer hover:bg-white text-xs ${formData.calendar_enabled ? 'border-blue-400 bg-blue-100' : 'border-purple-200 bg-white'}`}
+            >
+              <Checkbox checked={formData.calendar_enabled} />
+              <Calendar className="w-3 h-3 text-blue-500" />
+              <span className="text-purple-700 font-medium text-[10px]">Enable Live Calendar</span>
+            </div>
+            
+            <div
+              onClick={() => setFormData({ ...formData, is_gifter: !formData.is_gifter })}
+              className={`flex items-center gap-1 p-2 border rounded-lg cursor-pointer hover:bg-white text-xs ${formData.is_gifter ? 'border-amber-400 bg-amber-100' : 'border-purple-200 bg-white'}`}
+            >
+              <Checkbox checked={formData.is_gifter} />
+              <Gift className="w-3 h-3 text-amber-500" />
+              <span className="text-purple-700 font-medium text-[10px]">I'm a Gifter</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Primary TikTok Account - Blue themed */}
       <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
@@ -549,7 +578,8 @@ export default function TikTokTabContent({
               ))}
             </div>
             
-            {(formData.role?.includes('loves_to_battle') || formData.role?.includes('battle_sniper')) && (
+            {/* Live Inventory - Hidden on Profile */}
+            {!isProfile && (formData.role?.includes('loves_to_battle') || formData.role?.includes('battle_sniper')) && (
               <div className="p-2 bg-red-100 rounded border border-red-300 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-semibold text-red-700">Live Inventory (Active)</span>
@@ -563,77 +593,83 @@ export default function TikTokTabContent({
             )}
           </div>
 
-          {/* Engagement Column - Teal themed */}
-          <div className="p-2 bg-teal-50 rounded-lg border border-teal-200 space-y-2">
-            <div className="space-y-1">
-              {Object.entries(engagementRoles).map(([key, config]) => (
-                <RoleButton key={key} roleKey={key} config={config} small />
-              ))}
+          {/* Engagement Column - Teal themed - Hidden on Profile */}
+          {!isProfile && (
+            <div className="p-2 bg-teal-50 rounded-lg border border-teal-200 space-y-2">
+              <div className="space-y-1">
+                {Object.entries(engagementRoles).map(([key, config]) => (
+                  <RoleButton key={key} roleKey={key} config={config} small />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* How did you find each other? - Green themed - Hidden on Profile */}
+      {!isProfile && (
+        <div className="p-3 bg-green-50 rounded-lg border border-green-200 space-y-2">
+          <Label className="text-xs font-semibold text-green-800">How did you find each other?</Label>
+          <div className="flex gap-2 items-center">
+            <div
+              onClick={() => setFormData({ ...formData, found_on_fyf: !formData.found_on_fyf, met_through_id: formData.found_on_fyf ? formData.met_through_id : null })}
+              className={`flex items-center gap-1 px-3 py-1.5 border rounded-lg cursor-pointer text-xs ${formData.found_on_fyf ? 'border-green-500 bg-green-100 text-green-700' : 'border-gray-200 bg-white'}`}
+            >
+              <Checkbox checked={formData.found_on_fyf} className="h-3 w-3" />
+              <span>FYF</span>
+            </div>
+            <span className="text-gray-400 text-xs">or</span>
+            <div className="flex-1 flex gap-1">
+              <QuickAddContactSelect
+                contacts={contacts?.filter(c => c.id !== editingContactId) || []}
+                value={formData.met_through_id || ''}
+                onChange={(v) => setFormData({ ...formData, met_through_id: v, found_on_fyf: false })}
+                onQuickAdd={onQuickAddContact}
+                placeholder="Through a contact..."
+                disabled={formData.found_on_fyf}
+                useMasterDb={true}
+              />
+              {formData.met_through_id && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-9 w-9 p-0 text-gray-400 hover:text-red-500"
+                  onClick={() => setFormData({ ...formData, met_through_id: null })}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              )}
             </div>
           </div>
+          {formData.met_through_id && (
+            <p className="text-xs text-green-600">
+              Connected through: @{contacts?.find(c => c.id === formData.met_through_id)?.username || allMasterContacts?.find(c => c.id === formData.met_through_id)?.username || 'Unknown'}
+            </p>
+          )}
         </div>
-      </div>
+      )}
 
-      {/* How did you find each other? - Green themed */}
-      <div className="p-3 bg-green-50 rounded-lg border border-green-200 space-y-2">
-        <Label className="text-xs font-semibold text-green-800">How did you find each other?</Label>
-        <div className="flex gap-2 items-center">
-          <div
-            onClick={() => setFormData({ ...formData, found_on_fyf: !formData.found_on_fyf, met_through_id: formData.found_on_fyf ? formData.met_through_id : null })}
-            className={`flex items-center gap-1 px-3 py-1.5 border rounded-lg cursor-pointer text-xs ${formData.found_on_fyf ? 'border-green-500 bg-green-100 text-green-700' : 'border-gray-200 bg-white'}`}
-          >
-            <Checkbox checked={formData.found_on_fyf} className="h-3 w-3" />
-            <span>FYF</span>
-          </div>
-          <span className="text-gray-400 text-xs">or</span>
-          <div className="flex-1 flex gap-1">
-            <QuickAddContactSelect
-              contacts={contacts?.filter(c => c.id !== editingContactId) || []}
-              value={formData.met_through_id || ''}
-              onChange={(v) => setFormData({ ...formData, met_through_id: v, found_on_fyf: false })}
-              onQuickAdd={onQuickAddContact}
-              placeholder="Through a contact..."
-              disabled={formData.found_on_fyf}
-              useMasterDb={true}
-            />
-            {formData.met_through_id && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-9 w-9 p-0 text-gray-400 hover:text-red-500"
-                onClick={() => setFormData({ ...formData, met_through_id: null })}
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            )}
-          </div>
+      {/* TikTok Notes - Hidden on Profile */}
+      {!isProfile && (
+        <div className="space-y-1">
+          <Label className="text-xs">TikTok Notes</Label>
+          <Textarea
+            placeholder="Add notes about this person's TikTok presence..."
+            value={formData.tiktok_notes_text || ''}
+            onChange={(e) => setFormData({ ...formData, tiktok_notes_text: e.target.value })}
+            rows={2}
+            className="text-sm"
+          />
         </div>
-        {formData.met_through_id && (
-          <p className="text-xs text-green-600">
-            Connected through: @{contacts?.find(c => c.id === formData.met_through_id)?.username || allMasterContacts?.find(c => c.id === formData.met_through_id)?.username || 'Unknown'}
-          </p>
-        )}
-      </div>
-
-      {/* TikTok Notes */}
-      <div className="space-y-1">
-        <Label className="text-xs">TikTok Notes</Label>
-        <Textarea
-          placeholder="Add notes about this person's TikTok presence..."
-          value={formData.tiktok_notes_text || ''}
-          onChange={(e) => setFormData({ ...formData, tiktok_notes_text: e.target.value })}
-          rows={2}
-          className="text-sm"
-        />
-      </div>
+      )}
 
       {/* Relationship & Custom Fields - Combined Rose themed */}
       <div className="p-3 bg-rose-50 rounded-lg border border-rose-200 space-y-2">
         <div className="flex items-center justify-between">
           <div className="flex flex-wrap gap-1 flex-1">
-            {/* Relationship roles */}
-            {Object.entries(relationshipRoles).map(([key, config]) => (
+            {/* Relationship roles - Hide on Profile */}
+            {!isProfile && Object.entries(relationshipRoles).map(([key, config]) => (
               <Badge
                 key={key}
                 variant={formData.role?.includes(key) ? 'default' : 'outline'}
