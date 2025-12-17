@@ -5,7 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Camera, Plus, Trash2, Wand2, Music, PenTool, FileText } from 'lucide-react';
+import { Camera, Plus, Trash2, Wand2, Music, PenTool, FileText, MessageCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function MomentsTabContent({ formData, setFormData, isProfile = false }) {
