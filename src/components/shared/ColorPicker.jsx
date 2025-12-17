@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Check, ChevronDown, Pipette } from 'lucide-react';
+import { Pipette } from 'lucide-react';
 
 // --- Color Utility Functions ---
 
@@ -92,6 +92,12 @@ export default function ColorPicker({ color, onChange, label, className }) {
     handleColorChange(rgbToHex(newRgb.r, newRgb.g, newRgb.b));
   };
 
+  // Function to trigger system picker
+  const triggerSystemPicker = () => {
+    const picker = document.getElementById('system-color-picker-input');
+    if (picker) picker.click();
+  };
+
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
@@ -107,6 +113,20 @@ export default function ColorPicker({ color, onChange, label, className }) {
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-72 p-3" align="start">
+        <div className="flex justify-end mb-2">
+           <Button variant="ghost" size="sm" onClick={triggerSystemPicker} className="h-6 px-2 text-[10px] text-gray-500 hover:text-gray-900 gap-1">
+             <Pipette className="w-3 h-3" /> System Picker
+           </Button>
+           {/* Hidden system input */}
+           <input 
+             id="system-color-picker-input"
+             type="color" 
+             value={internalColor} 
+             onChange={(e) => handleColorChange(e.target.value)}
+             className="absolute opacity-0 pointer-events-none w-0 h-0"
+           />
+        </div>
+
         <Tabs defaultValue="wheel" className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-3">
             <TabsTrigger value="wheel">Wheel</TabsTrigger>
@@ -124,7 +144,6 @@ export default function ColorPicker({ color, onChange, label, className }) {
                 onChange={(e) => handleColorChange(e.target.value)}
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
               />
-              {/* Visual indicator of selection would typically require canvas/js math, relying on native picker via transparent overlay for simplicity/robustness without heavy libs */}
               <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
                  <div className="w-1/2 h-1/2 bg-white rounded-full flex items-center justify-center shadow-lg">
                     <div className="w-full h-full rounded-full" style={{ backgroundColor: internalColor }} />
@@ -135,7 +154,6 @@ export default function ColorPicker({ color, onChange, label, className }) {
             {/* Brightness Slider */}
             <div className="space-y-1">
                <div className="h-3 rounded-full w-full" style={{ background: `linear-gradient(to right, white, ${internalColor}, black)` }}></div>
-               {/* Native slider logic for brightness is complex without HSL conversion libs, simplifying to direct input for now */}
             </div>
 
             {/* Inputs */}
@@ -199,15 +217,16 @@ export default function ColorPicker({ color, onChange, label, className }) {
           </TabsContent>
 
           <TabsContent value="crayons">
-            <div className="grid grid-cols-5 gap-2">
+            <div className="grid grid-cols-5 gap-3 p-2 bg-gray-50 rounded-lg">
               {CRAYON_COLORS.map(c => (
-                <button
-                  key={c}
-                  className={`w-8 h-8 rounded-full border border-gray-100 shadow-sm transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-purple-500 ${internalColor.toLowerCase() === c.toLowerCase() ? 'ring-2 ring-purple-500 ring-offset-1' : ''}`}
-                  style={{ backgroundColor: c }}
-                  onClick={() => handleColorChange(c)}
-                  title={c}
-                />
+                <div key={c} className="flex flex-col items-center">
+                  <button
+                    className={`w-4 h-12 rounded-full shadow-sm transition-transform hover:scale-110 focus:outline-none ${internalColor.toLowerCase() === c.toLowerCase() ? 'ring-2 ring-purple-500 ring-offset-1 scale-110' : ''}`}
+                    style={{ backgroundColor: c }}
+                    onClick={() => handleColorChange(c)}
+                    title={c}
+                  />
+                </div>
               ))}
             </div>
           </TabsContent>
