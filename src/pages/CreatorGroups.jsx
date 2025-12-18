@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Users, Plus, Settings, Video, AlertCircle, ArrowLeft, Loader2, Building, Home, Heart } from 'lucide-react';
+import { Users, Plus, Settings, Video, AlertCircle, ArrowLeft, Loader2, Building, Home, Heart, Sparkles, Brain, Briefcase } from 'lucide-react';
 import { useTheme } from '../components/shared/useTheme';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import GroupTrainingTab from '../components/groups/GroupTrainingTab';
@@ -90,6 +90,39 @@ export default function CreatorGroups() {
     return <div className="flex justify-center items-center h-screen"><Loader2 className="w-8 h-8 animate-spin text-purple-600" /></div>;
   }
 
+  const getGroupIcon = (type) => {
+    switch (type) {
+      case 'agency': return Building;
+      case 'family': return Home;
+      case 'collective': return Sparkles;
+      case 'mastermind': return Brain;
+      case 'project': return Briefcase;
+      default: return Users;
+    }
+  };
+
+  const getGroupColorClass = (type) => {
+    switch (type) {
+      case 'agency': return 'bg-purple-100 text-purple-600';
+      case 'family': return 'bg-green-100 text-green-600';
+      case 'collective': return 'bg-pink-100 text-pink-600';
+      case 'mastermind': return 'bg-amber-100 text-amber-600';
+      case 'project': return 'bg-blue-100 text-blue-600';
+      default: return 'bg-gray-100 text-gray-600';
+    }
+  };
+
+  const getGroupLabel = (type) => {
+    switch (type) {
+      case 'agency': return 'AGENCY';
+      case 'family': return 'FAMILY';
+      case 'collective': return 'COLLECTIVE';
+      case 'mastermind': return 'MASTERMIND';
+      case 'project': return 'PROJECT';
+      default: return 'COMMUNITY';
+    }
+  };
+
   // LIST VIEW
   if (!activeGroup) {
     return (
@@ -129,10 +162,25 @@ export default function CreatorGroups() {
                           <Home className="w-4 h-4" /> Family
                         </div>
                       </SelectItem>
+                      <SelectItem value="collective">
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="w-4 h-4" /> Creative Collective
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="mastermind">
+                        <div className="flex items-center gap-2">
+                          <Brain className="w-4 h-4" /> Mastermind Group
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="project">
+                        <div className="flex items-center gap-2">
+                          <Briefcase className="w-4 h-4" /> Project Team
+                        </div>
+                      </SelectItem>
                       {canCreateAgency && (
                         <SelectItem value="agency">
                           <div className="flex items-center gap-2">
-                            <Building className="w-4 h-4" /> Agency / Official
+                            <Building className="w-4 h-4" /> Creative Agency / Business
                           </div>
                         </SelectItem>
                       )}
@@ -140,8 +188,8 @@ export default function CreatorGroups() {
                   </Select>
                   <p className="text-xs text-gray-500">
                     {newGroupType === 'agency' 
-                      ? 'Official Creator Groups for agencies, coaching, or brands.' 
-                      : 'Casual groups for friends, family, or shared interests.'}
+                      ? 'Official business groups for agencies, coaching, or brands.' 
+                      : 'Create a space for collaboration, sharing, and growth.'}
                   </p>
                 </div>
                 <div className="space-y-2">
@@ -163,32 +211,35 @@ export default function CreatorGroups() {
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {groups.map(group => (
-            <Card key={group.id} className="hover:shadow-lg transition-all cursor-pointer group" onClick={() => setSearchParams({ id: group.id })}>
-              <CardContent className="p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-xl ${
-                    group.type === 'agency' ? 'bg-purple-100 text-purple-600' :
-                    group.type === 'family' ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'
-                  }`}>
-                    {group.name[0]}
+          {groups.map(group => {
+            const GroupIcon = getGroupIcon(group.type);
+            const colorClass = getGroupColorClass(group.type);
+            
+            return (
+              <Card key={group.id} className="hover:shadow-lg transition-all cursor-pointer group" onClick={() => setSearchParams({ id: group.id })}>
+                <CardContent className="p-6">
+                  <div className="flex justify-between items-start mb-4">
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-xl ${colorClass}`}>
+                      {group.logo_url ? <img src={group.logo_url} alt="" className="w-full h-full object-cover rounded-xl" /> : group.name[0]}
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${colorClass.replace('text-', 'text-opacity-80 text-').replace('bg-', 'bg-opacity-50 bg-')}`}>
+                        {getGroupLabel(group.type)}
+                      </span>
+                      {group.owner_email === user?.email && (
+                        <span className="text-[10px] border px-2 py-0.5 rounded-full text-gray-500">Owner</span>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex flex-col items-end gap-1">
-                    {group.type === 'agency' && <span className="text-[10px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-medium">AGENCY</span>}
-                    {group.type === 'family' && <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">FAMILY</span>}
-                    {group.owner_email === user?.email && (
-                      <span className="text-[10px] border px-2 py-0.5 rounded-full text-gray-500">Owner</span>
-                    )}
+                  <h3 className="text-xl font-bold mb-2 group-hover:text-purple-600 transition-colors">{group.name}</h3>
+                  <p className="text-sm text-gray-500 line-clamp-2 mb-4">{group.description || 'No description yet.'}</p>
+                  <div className="text-xs text-gray-400 flex items-center gap-1">
+                    <GroupIcon className="w-3 h-3" /> Click to enter dashboard
                   </div>
-                </div>
-                <h3 className="text-xl font-bold mb-2 group-hover:text-purple-600 transition-colors">{group.name}</h3>
-                <p className="text-sm text-gray-500 line-clamp-2 mb-4">{group.description || 'No description yet.'}</p>
-                <div className="text-xs text-gray-400">
-                  Click to enter dashboard
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            );
+          })}
           {groups.length === 0 && (
             <div className="col-span-full text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed">
               <Users className="w-12 h-12 mx-auto text-gray-300 mb-3" />
@@ -203,6 +254,9 @@ export default function CreatorGroups() {
   }
 
   // DASHBOARD VIEW
+  const GroupHeaderIcon = getGroupIcon(activeGroup.type);
+  const groupColorClass = getGroupColorClass(activeGroup.type);
+
   return (
     <div className="min-h-screen bg-gray-50/50">
       {/* Header */}
@@ -215,10 +269,9 @@ export default function CreatorGroups() {
             <div>
               <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
                 {activeGroup.name}
-                {activeGroup.type === 'agency' && <Building className="w-4 h-4 text-purple-500" />}
-                {activeGroup.type === 'family' && <Home className="w-4 h-4 text-green-500" />}
+                <GroupHeaderIcon className={`w-5 h-5 ${groupColorClass.split(' ')[1]}`} />
               </h1>
-              <p className="text-xs text-gray-500">Dashboard</p>
+              <p className="text-xs text-gray-500">Dashboard • {getGroupLabel(activeGroup.type)}</p>
             </div>
           </div>
           <div className="flex gap-2">
