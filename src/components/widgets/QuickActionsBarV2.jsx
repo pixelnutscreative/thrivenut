@@ -3,7 +3,7 @@ import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { 
   Zap, Droplet, Smile, Utensils, Lightbulb, Cloud, StickyNote, Heart,
-  Plus, Check, ExternalLink, Home, Music, Link, Calendar as CalendarIcon, 
+  Plus, Check, ExternalLink, Home, Music, Link, Calendar, 
   Settings as SettingsIcon, GripVertical
 } from 'lucide-react';
 import { createPageUrl } from '@/utils';
@@ -23,7 +23,7 @@ import { format } from 'date-fns';
 // Map icon names to Lucide components
 const iconMap = {
   Smile, Droplet, Utensils, Lightbulb, Cloud, StickyNote, Heart,
-  Plus, Check, ExternalLink, Home, Music, Link, Calendar: CalendarIcon,
+  Plus, Check, ExternalLink, Home, Music, Link, Calendar,
   Settings: SettingsIcon, Zap, GripVertical
 };
 
@@ -38,6 +38,7 @@ const baseBuiltInActions = [
   { id: 'gratitude', label: 'Gratitude', icon: 'Heart', color: '#EF4444' },
   { id: 'reframe', label: 'Reframe', icon: 'Cloud', color: '#10B981' },
   { id: 'task', label: 'Task', icon: 'Check', color: '#3B82F6' },
+  { id: 'event', label: 'Add Event', icon: 'Calendar', color: '#F59E0B' },
 ];
 
 export default function QuickActionsBarV2({
