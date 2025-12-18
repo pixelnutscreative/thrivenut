@@ -123,24 +123,14 @@ export default function MasterUsernameSearch({
     setIsOpen(false);
   };
 
-  const handleCreateNew = async () => {
+  const handleCreateNew = () => {
     if (!cleanSearchTerm) return;
     
-    // Create placeholder TikTokContact
-    try {
-      const newContact = await base44.entities.TikTokContact.create({
-        tiktok_username: cleanSearchTerm,
-        display_name: cleanSearchTerm,
-        is_claimed_by_thrive_user: false,
-        claim_status: 'unclaimed'
-      });
-      
-      onCreateNew(cleanSearchTerm);
-      setSearchTerm('');
-      setIsOpen(false);
-    } catch (error) {
-      console.error('Error creating TikTokContact:', error);
-    }
+    // Just pass the username to the parent form
+    // We don't need to create the entity here - it will be created when the form is saved
+    onCreateNew(cleanSearchTerm);
+    setSearchTerm('');
+    setIsOpen(false);
   };
 
   return (

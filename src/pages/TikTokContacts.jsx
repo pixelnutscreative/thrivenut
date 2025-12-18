@@ -294,22 +294,26 @@ export default function TikTokContacts() {
     }
 
     try {
-      // Step 1: Find or create TikTokContact (public canonical profile)
-      const existingTikTokContacts = await base44.entities.TikTokContact.list();
-      let tiktokContact = existingTikTokContacts.find(
-        c => c.tiktok_username?.toLowerCase() === cleanUsername.toLowerCase()
-      );
+      // Step 1: Find or create TikTokContact (public canonical profile) - Try/Catch to prevent blocking
+      try {
+        const existingTikTokContacts = await base44.entities.TikTokContact.list();
+        let tiktokContact = existingTikTokContacts.find(
+          c => c.tiktok_username?.toLowerCase() === cleanUsername.toLowerCase()
+        );
 
-      if (!tiktokContact) {
-        // Create new unclaimed TikTokContact
-        tiktokContact = await base44.entities.TikTokContact.create({
-          tiktok_username: cleanUsername,
-          display_name: formData.display_name || cleanUsername,
-          phonetic_spelling: formData.phonetic || '',
-          profile_picture_url: formData.image_url || '',
-          is_claimed_by_thrive_user: false,
-          claim_status: 'unclaimed'
-        });
+        if (!tiktokContact) {
+          // Create new unclaimed TikTokContact
+          tiktokContact = await base44.entities.TikTokContact.create({
+            tiktok_username: cleanUsername,
+            display_name: formData.display_name || cleanUsername,
+            phonetic_spelling: formData.phonetic || '',
+            profile_picture_url: formData.image_url || '',
+            is_claimed_by_thrive_user: false,
+            claim_status: 'unclaimed'
+          });
+        }
+      } catch (err) {
+        console.warn('Could not create canonical contact, proceeding with personal contact:', err);
       }
 
       // Step 2: Update the legacy TikTokContact record with all form data (for backward compatibility)
