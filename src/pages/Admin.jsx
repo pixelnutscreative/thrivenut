@@ -17,6 +17,7 @@ import AdminSupportContent from '../components/admin/AdminSupportContent';
 import AdminFeedbackContent from '../components/admin/AdminFeedbackContent';
 import AdminNutPalsContent from '../components/admin/AdminNutPalsContent';
 import AdminCategoriesContent from '../components/admin/AdminCategoriesContent';
+import AdminContentReview from '../components/admin/AdminContentReview';
 import DuplicateContactMerger from '../components/admin/DuplicateContactMerger';
 import AdminPreApprovedEmailsContent from '../components/admin/AdminPreApprovedEmailsContent';
 import AdminMenuContent from '../components/admin/AdminMenuContent';
@@ -69,6 +70,7 @@ export default function Admin() {
             <TabsTrigger value="users" className="text-sm font-semibold">Users</TabsTrigger>
             <TabsTrigger value="support" className="text-sm font-semibold">Support</TabsTrigger>
             <TabsTrigger value="content" className="text-sm font-semibold">Content</TabsTrigger>
+            <TabsTrigger value="showcase" className="text-sm font-semibold">Showcase</TabsTrigger>
             <TabsTrigger value="app" className="text-sm font-semibold">App</TabsTrigger>
             <TabsTrigger value="referrals" className="text-sm font-semibold">Referrals</TabsTrigger>
           </TabsList>
@@ -113,6 +115,11 @@ export default function Admin() {
                 </Tabs>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* SHOWCASE TAB */}
+          <TabsContent value="showcase" className="mt-0">
+            <AdminContentReview />
           </TabsContent>
 
           {/* CONTENT TAB */}

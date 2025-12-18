@@ -68,6 +68,7 @@ import NotificationHistory from './pages/NotificationHistory';
 import Brands from './pages/Brands';
 import ContentCreatorHub from './pages/ContentCreatorHub';
 import AffiliateCampaigns from './pages/AffiliateCampaigns';
+import MyResources from './pages/MyResources';
 import __Layout from './Layout.jsx';
 
 
@@ -142,6 +143,7 @@ export const PAGES = {
     "Brands": Brands,
     "ContentCreatorHub": ContentCreatorHub,
     "AffiliateCampaigns": AffiliateCampaigns,
+    "MyResources": MyResources,
 }
 
 export const pagesConfig = {
