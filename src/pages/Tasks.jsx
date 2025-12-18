@@ -44,14 +44,24 @@ export default function Tasks() {
     requires_photo_proof: false
   });
 
+  const { user } = useTheme();
+
   const { data: tasks = [] } = useQuery({
-    queryKey: ['tasks'],
-    queryFn: () => base44.entities.Task.list('-updated_date'),
+    queryKey: ['tasks', user?.email],
+    queryFn: async () => {
+      if (!user?.email) return [];
+      return await base44.entities.Task.filter({ created_by: user.email }, '-updated_date');
+    },
+    enabled: !!user?.email
   });
 
   const { data: brainDumps = [] } = useQuery({
-    queryKey: ['brainDumps'],
-    queryFn: () => base44.entities.BrainDump.filter({ is_processed: false }, '-created_date'),
+    queryKey: ['brainDumps', user?.email],
+    queryFn: async () => {
+      if (!user?.email) return [];
+      return await base44.entities.BrainDump.filter({ is_processed: false, created_by: user.email }, '-created_date');
+    },
+    enabled: !!user?.email
   });
 
   const { data: familyMembers = [] } = useQuery({

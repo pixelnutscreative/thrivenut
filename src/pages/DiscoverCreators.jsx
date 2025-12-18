@@ -42,6 +42,14 @@ export default function DiscoverCreators() {
     initialData: [],
   });
 
+  const { data: allProfiles = [] } = useQuery({
+    queryKey: ['allUserProfiles'],
+    queryFn: async () => {
+      return await base44.entities.UserProfile.list();
+    },
+    initialData: [],
+  });
+
   // Discord workshop signup URL
   const discordWorkshopUrl = "https://pixelnutscreative.com/discord-workshop";
 
@@ -54,9 +62,13 @@ export default function DiscoverCreators() {
       const email = item.created_by;
       if (!grouped[email]) {
         const pref = allPreferences.find(p => p.user_email === email);
+        const profile = allProfiles.find(p => p.user_email === email);
+        // Better name logic: TikTok username > Nickname > Real Name > Email
+        const displayName = pref?.tiktok_username || profile?.nickname || profile?.real_name || email.split('@')[0];
+        
         grouped[email] = {
           email,
-          tiktok_username: pref?.tiktok_username || email.split('@')[0],
+          tiktok_username: displayName,
           discord_username: pref?.discord_username,
           discord_invite_link: pref?.discord_invite_link,
           discord_public: pref?.discord_public,

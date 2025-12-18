@@ -70,6 +70,7 @@ import ContentCreatorHub from './pages/ContentCreatorHub';
 import AffiliateCampaigns from './pages/AffiliateCampaigns';
 import MyResources from './pages/MyResources';
 import CreatorGroups from './pages/CreatorGroups';
+import KidsJournal from './pages/KidsJournal';
 import __Layout from './Layout.jsx';
 
 
@@ -146,6 +147,7 @@ export const PAGES = {
     "AffiliateCampaigns": AffiliateCampaigns,
     "MyResources": MyResources,
     "CreatorGroups": CreatorGroups,
+    "KidsJournal": KidsJournal,
 }
 
 export const pagesConfig = {

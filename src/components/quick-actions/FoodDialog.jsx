@@ -92,6 +92,7 @@ export default function FoodDialog({ isOpen, onClose, onSave, isLoading }) {
                     <Camera className="w-6 h-6 text-purple-600" />
                   </div>
                   <span className="text-sm font-medium text-gray-600">Snap a photo to auto-log</span>
+                  <p className="text-[10px] text-gray-400 mt-1">(Image will be analyzed then discarded)</p>
                   <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
                 </>
               )}

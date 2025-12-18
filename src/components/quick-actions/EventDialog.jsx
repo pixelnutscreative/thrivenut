@@ -14,6 +14,7 @@ export default function EventDialog({ isOpen, onClose, onSave, isLoading }) {
   const [description, setDescription] = useState('');
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
+  const [isUrgent, setIsUrgent] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -21,12 +22,13 @@ export default function EventDialog({ isOpen, onClose, onSave, isLoading }) {
       setDescription('');
       setDate(format(new Date(), 'yyyy-MM-dd'));
       setTime(format(new Date(), 'HH:mm'));
+      setIsUrgent(false);
     }
   }, [isOpen]);
 
   const handleSubmit = () => {
     if (!title.trim()) return;
-    onSave({ title, description, date, time });
+    onSave({ title, description, date, time, is_urgent: isUrgent });
     onClose();
   };
 
@@ -77,6 +79,16 @@ export default function EventDialog({ isOpen, onClose, onSave, isLoading }) {
                 required
               />
             </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="urgent"
+              checked={isUrgent}
+              onChange={(e) => setIsUrgent(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+            />
+            <Label htmlFor="urgent" className="font-medium text-red-600 cursor-pointer">Mark as Urgent / Important</Label>
           </div>
         </div>
         <DialogFooter>

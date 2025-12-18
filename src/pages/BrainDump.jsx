@@ -10,21 +10,97 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../components/shared/useTheme';
 import { format } from 'date-fns';
 
+import { Brain, Trash2, Save, Plus, Tag, Search, Check, ListFilter, Sparkles, Loader2, X, RefreshCw } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+
 export default function BrainDump() {
-  const { bgClass, textClass, cardBgClass, primaryColor, accentColor } = useTheme();
+  const { bgClass, textClass, cardBgClass, primaryColor, accentColor, user } = useTheme();
   const queryClient = useQueryClient();
   const [content, setContent] = useState('');
   const [category, setCategory] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
+  
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [showAnalysis, setShowAnalysis] = useState(false);
+  const [analysisResults, setAnalysisResults] = useState([]);
 
   const { data: dumps = [] } = useQuery({
-    queryKey: ['brainDumps'],
+    queryKey: ['brainDumps', user?.email],
     queryFn: async () => {
-      const results = await base44.entities.BrainDump.filter({ is_processed: false }, '-created_date');
-      return results;
-    }
+      if (!user?.email) return [];
+      return await base44.entities.BrainDump.filter({ is_processed: false, created_by: user.email }, '-created_date');
+    },
+    enabled: !!user?.email
   });
+
+  const analyzeBrainDump = async () => {
+    if (dumps.length === 0) return;
+    setIsAnalyzing(true);
+    try {
+      const dumpTexts = dumps.map(d => `- [ID:${d.id}] ${d.content}`).join('\n');
+      const response = await base44.integrations.Core.InvokeLLM({
+        prompt: `Analyze these brain dump items and categorize them into actionable types.
+        Items:
+        ${dumpTexts}
+        
+        Return a JSON object with a list of items. Each item should have:
+        - original_id (extract from the ID tag)
+        - type (one of: 'task', 'goal', 'habit', 'note', 'event')
+        - suggested_title (clear, actionable title)
+        - suggested_category (e.g. Work, Personal, Health)
+        - reasoning (brief why)`,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            analysis: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  original_id: { type: "string" },
+                  type: { type: "string" },
+                  suggested_title: { type: "string" },
+                  suggested_category: { type: "string" },
+                  reasoning: { type: "string" }
+                }
+              }
+            }
+          }
+        }
+      });
+      setAnalysisResults(response.analysis || []);
+      setShowAnalysis(true);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to analyze. Please try again.');
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const processAnalysisItem = async (item) => {
+    // Convert logic based on type
+    try {
+      if (item.type === 'task') {
+        await base44.entities.Task.create({ title: item.suggested_title, category: item.suggested_category, status: 'pending', created_by: user.email });
+      } else if (item.type === 'goal') {
+        await base44.entities.Goal.create({ title: item.suggested_title, category: item.suggested_category, created_by: user.email });
+      } else if (item.type === 'habit') {
+        await base44.entities.Habit.create({ title: item.suggested_title, category: item.suggested_category, created_by: user.email });
+      } else if (item.type === 'event') {
+        await base44.entities.ExternalEvent.create({ title: item.suggested_title, date: new Date().toISOString().split('T')[0], created_by: user.email });
+      }
+      // Mark original dump as processed
+      await base44.entities.BrainDump.update(item.original_id, { is_processed: true });
+      
+      // Update local state
+      setAnalysisResults(prev => prev.filter(r => r.original_id !== item.original_id));
+      queryClient.invalidateQueries(['brainDumps']);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const createDumpMutation = useMutation({
     mutationFn: (data) => base44.entities.BrainDump.create(data),
@@ -74,15 +150,67 @@ export default function BrainDump() {
   return (
     <div className={`min-h-screen ${bgClass} p-4 md:p-8`}>
       <div className="max-w-4xl mx-auto space-y-6">
-        <div className="flex items-center gap-3">
-          <div className="p-3 bg-indigo-100 rounded-xl">
-            <Brain className="w-8 h-8 text-indigo-600" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-indigo-100 rounded-xl">
+              <Brain className="w-8 h-8 text-indigo-600" />
+            </div>
+            <div>
+              <h1 className={`text-3xl font-bold ${textClass}`}>Brain Dump</h1>
+              <p className="text-gray-500">Get it out of your head and organize it later.</p>
+            </div>
           </div>
-          <div>
-            <h1 className={`text-3xl font-bold ${textClass}`}>Brain Dump</h1>
-            <p className="text-gray-500">Get it out of your head and organize it later.</p>
-          </div>
+          <Button 
+            onClick={analyzeBrainDump} 
+            disabled={isAnalyzing || dumps.length === 0}
+            className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white"
+          >
+            {isAnalyzing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}
+            AI Sort & Organize
+          </Button>
         </div>
+
+        <Dialog open={showAnalysis} onOpenChange={setShowAnalysis}>
+          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>AI Sorting Suggestions</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              {analysisResults.length === 0 ? (
+                <p className="text-center text-gray-500 py-4">All sorted! 🎉</p>
+              ) : (
+                analysisResults.map((item, idx) => (
+                  <Card key={idx} className="bg-gray-50">
+                    <CardContent className="p-4 flex items-start gap-4">
+                      <div className={`p-2 rounded-lg shrink-0 ${
+                        item.type === 'task' ? 'bg-blue-100 text-blue-600' :
+                        item.type === 'goal' ? 'bg-purple-100 text-purple-600' :
+                        item.type === 'habit' ? 'bg-green-100 text-green-600' :
+                        'bg-gray-100 text-gray-600'
+                      }`}>
+                        {item.type === 'task' ? <Check className="w-5 h-5" /> :
+                         item.type === 'goal' ? <Tag className="w-5 h-5" /> :
+                         item.type === 'habit' ? <RefreshCw className="w-5 h-5" /> :
+                         <ListFilter className="w-5 h-5" />}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-bold capitalize">{item.type}</span>
+                          <span className="text-sm bg-white px-2 rounded border">{item.suggested_category}</span>
+                        </div>
+                        <p className="font-medium text-gray-900">{item.suggested_title}</p>
+                        <p className="text-xs text-gray-500 mt-1">{item.reasoning}</p>
+                      </div>
+                      <Button size="sm" onClick={() => processAnalysisItem(item)}>
+                        Confirm
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
 
         <Card className={`${cardBgClass} border-indigo-200 shadow-md`}>
           <CardContent className="p-6 space-y-4">
