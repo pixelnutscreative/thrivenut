@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Heart, ExternalLink, Image as ImageIcon, FileText, Music, Video, Sparkles, Loader2, Upload, X } from 'lucide-react';
+import { Plus, Heart, ExternalLink, Image as ImageIcon, FileText, Music, Video, Sparkles, Loader2, Upload, X, Palette } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const contentTypeIcons = {
@@ -19,6 +19,7 @@ const contentTypeIcons = {
   poem: FileText,
   song: Music,
   video: Video,
+  nutpal: Palette,
   other: Sparkles
 };
 
@@ -129,7 +130,9 @@ export default function PortfolioSection({ userEmail, isAuthenticated, primaryCo
       image_urls: [],
       text_content: '',
       external_link: '',
-      tags: []
+      tags: [],
+      is_nutpal: false,
+      style_id: ''
     });
   };
 
@@ -162,7 +165,7 @@ export default function PortfolioSection({ userEmail, isAuthenticated, primaryCo
           <div className="flex items-start justify-between gap-2 mb-2">
             <Badge className="text-xs" style={{ backgroundColor: `${primaryColor}20`, color: primaryColor }}>
               <Icon className="w-3 h-3 mr-1" />
-              {item.ai_tool_name}
+              {item.is_nutpal ? 'NutPal' : item.ai_tool_name}
             </Badge>
             {item.is_featured && (
               <Badge className="bg-yellow-100 text-yellow-700 text-xs">⭐ Featured</Badge>
@@ -258,27 +261,13 @@ export default function PortfolioSection({ userEmail, isAuthenticated, primaryCo
 
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <Label>AI Tool Used</Label>
-                <Select value={formData.ai_tool_name} onValueChange={(v) => setFormData({ ...formData, ai_tool_name: v })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select tool..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {aiTools.map(tool => (
-                      <SelectItem key={tool.id} value={tool.tool_name}>{tool.tool_name}</SelectItem>
-                    ))}
-                    <SelectItem value="Other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
                 <Label>Content Type</Label>
-                <Select value={formData.content_type} onValueChange={(v) => setFormData({ ...formData, content_type: v })}>
+                <Select value={formData.content_type} onValueChange={(v) => setFormData({ ...formData, content_type: v, is_nutpal: v === 'nutpal' })}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="nutpal">🐿️ NutPal Character</SelectItem>
                     <SelectItem value="image">🖼️ Image</SelectItem>
                     <SelectItem value="text">📝 Text/Poem</SelectItem>
                     <SelectItem value="image_with_text">✨ Image + Text</SelectItem>
@@ -288,6 +277,38 @@ export default function PortfolioSection({ userEmail, isAuthenticated, primaryCo
                   </SelectContent>
                 </Select>
               </div>
+
+              {formData.content_type === 'nutpal' ? (
+                <div>
+                  <Label>Which NutPal Style?</Label>
+                  <Select value={formData.style_id} onValueChange={(v) => setFormData({ ...formData, style_id: v })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select style..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {nutPalStyles.map(style => (
+                        <SelectItem key={style.id} value={style.id}>{style.name}</SelectItem>
+                      ))}
+                      <SelectItem value="custom">Custom / New Style</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : (
+                <div>
+                  <Label>AI Tool Used</Label>
+                  <Select value={formData.ai_tool_name} onValueChange={(v) => setFormData({ ...formData, ai_tool_name: v })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select tool..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {aiTools.map(tool => (
+                        <SelectItem key={tool.id} value={tool.tool_name}>{tool.tool_name}</SelectItem>
+                      ))}
+                      <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
 
             <div>
@@ -390,7 +411,7 @@ export default function PortfolioSection({ userEmail, isAuthenticated, primaryCo
 
             <Button
               onClick={handleSubmit}
-              disabled={createItemMutation.isPending || !formData.ai_tool_name || !formData.title}
+              disabled={createItemMutation.isPending || (!formData.ai_tool_name && !formData.is_nutpal) || !formData.title}
               className="w-full text-white"
               style={{ background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` }}
             >
@@ -445,7 +466,7 @@ export default function PortfolioSection({ userEmail, isAuthenticated, primaryCo
                 
                 <div className="flex items-center gap-2 flex-wrap">
                   <Badge style={{ backgroundColor: `${primaryColor}20`, color: primaryColor }}>
-                    {selectedItem.ai_tool_name}
+                    {selectedItem.is_nutpal ? 'NutPal' : selectedItem.ai_tool_name}
                   </Badge>
                   {selectedItem.tags?.map(tag => (
                     <Badge key={tag} variant="outline" className="text-xs">
