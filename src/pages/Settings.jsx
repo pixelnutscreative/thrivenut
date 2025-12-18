@@ -360,103 +360,8 @@ export default function Settings() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="flex gap-4">
-                  <div className="flex-shrink-0">
-                    <ImageUploader
-                      label=""
-                      currentImage={prefData.profile_image_url}
-                      onImageChange={(url) => setPrefData({ ...prefData, profile_image_url: url })}
-                      aspectRatio="square"
-                      size="small"
-                    />
-                  </div>
-                  <div className="flex-1 grid md:grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <Label className="text-xs">Nickname</Label>
-                      <Input 
-                        placeholder="What should we call you?" 
-                        value={prefData.nickname || ''} 
-                        onChange={(e) => setPrefData({ ...prefData, nickname: e.target.value })}
-                        className="h-9"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Favorite Color</Label>
-                      <div className="flex gap-2">
-                        <ColorPicker 
-                          color={profileData.favorite_color || '#000000'} 
-                          onChange={(c) => setProfileData({ ...profileData, favorite_color: c })} 
-                        />
-                        <Input 
-                          value={profileData.favorite_color || ''} 
-                          onChange={(e) => setProfileData({ ...profileData, favorite_color: e.target.value })} 
-                          placeholder="#000000"
-                          className="h-9 flex-1"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-1 md:col-span-2">
-                      <Label className="text-xs">Location</Label>
-                      <div className="flex gap-2">
-                        <Input 
-                          placeholder="City" 
-                          value={prefData.location_city || ''} 
-                          onChange={(e) => setPrefData({ ...prefData, location_city: e.target.value })}
-                          className="h-9"
-                        />
-                        <Input 
-                          placeholder="State" 
-                          value={prefData.location_state || ''} 
-                          onChange={(e) => setPrefData({ ...prefData, location_state: e.target.value })}
-                          className="h-9"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-3 pt-3 border-t">
-                  <div className="space-y-1">
-                    <Label className="text-xs">Recovery Date (Optional)</Label>
-                    <Input 
-                      type="date" 
-                      value={profileData.recovery_date || ''} 
-                      onChange={(e) => setProfileData({ ...profileData, recovery_date: e.target.value })}
-                      className="h-9"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">Military Branch</Label>
-                    <Select 
-                      value={profileData.military_branch || ''} 
-                      onValueChange={(v) => setProfileData({ ...profileData, military_branch: v })}
-                    >
-                      <SelectTrigger className="h-9"><SelectValue placeholder="Select Branch" /></SelectTrigger>
-                      <SelectContent>
-                        {['Army', 'Navy', 'Air Force', 'Marines', 'Coast Guard', 'Space Force', 'National Guard', 'Other'].map(b => (
-                          <SelectItem key={b} value={b}>{b}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-
-
-                <Card className="mt-4">
-                  <CardContent className="pt-6 flex items-center justify-between">
-                    <div>
-                      <h3 className="font-semibold flex items-center gap-2"><Briefcase className="w-4 h-4" /> Work Schedule</h3>
-                      <p className="text-sm text-gray-500">Manage your shifts and work hours</p>
-                    </div>
-                    <Button variant="outline" onClick={() => window.location.href = '/WorkSchedules'}>
-                    Manage Schedule
-                    </Button>
-                    </CardContent>
-                    </Card>
-
                     {/* Creator Profile Section with Tabs */}
-                    <div className="border-t pt-4 space-y-4">
+                    <div className="pt-4 space-y-4">
                       <div className="flex items-center justify-between mb-4">
                         <h3 className="font-semibold flex items-center gap-2"><Sparkles className="w-4 h-4" /> My Profile Card</h3>
                         <div className="flex items-center gap-2">
@@ -521,7 +426,7 @@ export default function Settings() {
                             </TabsList>
 
                             <div className="p-4">
-                              <TabsContent value="personal" className="mt-0">
+                              <TabsContent value="personal" className="mt-0 space-y-4">
                                 <PersonalTabContent
                                   formData={{
                                     ...profileData,
@@ -531,6 +436,17 @@ export default function Settings() {
                                   setFormData={(newData) => setProfileData(prev => ({ ...prev, ...newData }))}
                                   isProfile={true}
                                 />
+                                <Card>
+                                  <CardContent className="pt-6 flex items-center justify-between">
+                                    <div>
+                                      <h3 className="font-semibold flex items-center gap-2"><Briefcase className="w-4 h-4" /> Work Schedule</h3>
+                                      <p className="text-sm text-gray-500">Manage your shifts and work hours</p>
+                                    </div>
+                                    <Button variant="outline" onClick={() => window.location.href = '/WorkSchedules'}>
+                                      Manage Schedule
+                                    </Button>
+                                  </CardContent>
+                                </Card>
                               </TabsContent>
 
                               <TabsContent value="favorites" className="mt-0">

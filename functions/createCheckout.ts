@@ -22,9 +22,9 @@ Deno.serve(async (req) => {
 
     const { plan_type } = payload;
 
-    // Define plans matching the Pricing page UI
-    // Monthly: $49
-    // Annual: $77 (Sale price)
+    // Define plans
+    // Annual: $111/year (Sale $77)
+    // Monthly: $49/month
     const plans = {
       monthly: {
         name: "Let's Thrive Monthly",
@@ -32,8 +32,8 @@ Deno.serve(async (req) => {
         interval: 'month'
       },
       annual: {
-        name: "Let's Thrive Annual",
-        amount: 7700, // $77.00
+        name: "Let's Thrive Annual (Sale)",
+        amount: 7700, // $77.00 (was $111)
         interval: 'year'
       }
     };

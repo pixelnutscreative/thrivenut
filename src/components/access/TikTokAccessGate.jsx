@@ -66,29 +66,9 @@ export default function TikTokAccessGate({ isOpen, onClose }) {
               ) : (
                 <Sparkles className="w-4 h-4 mr-2" />
               )}
-              $77/year (Best Value!)
+              $77/year (Sale! Regularly $111)
             </Button>
-            
-            <div className="relative my-4">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">or</span>
-              </div>
-            </div>
-
-            <Link to={createPageUrl('SuperFanAccess')} onClick={onClose}>
-              <Button variant="outline" className="w-full border-2 border-amber-300 hover:border-amber-500 hover:bg-amber-50">
-                <Star className="w-4 h-4 mr-2 text-amber-500" />
-                I'm a SuperFan - Get Free Access
-              </Button>
-            </Link>
           </div>
-
-          <p className="text-xs text-gray-500 mt-6">
-            SuperFans of PixelNutsCreative get free access! Just submit proof of your subscription.
-          </p>
         </div>
       </DialogContent>
     </Dialog>

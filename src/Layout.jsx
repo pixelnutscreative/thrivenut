@@ -80,7 +80,7 @@ export default function Layout({ children, currentPageName }) {
   const hasTikTokAccess = isAdmin || preferences?.tiktok_access_approved;
   // Determine if Bible features are enabled (default to true if undefined)
   const isBibleBeliever = preferences?.enable_bible_options !== false;
-  const enabledModules = preferences?.enabled_modules || ['tiktok', 'gifter', 'goals', 'tasks', 'wellness', 'supplements', 'medications', 'pets', 'care_reminders', 'people', 'journal', 'mental_health', 'finance', 'activity'];
+  const enabledModules = preferences?.enabled_modules || ['tiktok', 'gifter', 'goals', 'tasks', 'wellness', 'supplements', 'medications', 'pets', 'care_reminders', 'people', 'journal', 'mental_health', 'finance', 'activity', 'motivations'];
 
   // --- THEME HANDLING ---
   const primaryColor = preferences?.primary_color || '#1fd2ea';
@@ -245,6 +245,8 @@ export default function Layout({ children, currentPageName }) {
   };
 
   const handleLogout = async () => {
+    sessionStorage.removeItem('impersonating');
+    sessionStorage.removeItem('impersonatingStarted');
     await base44.auth.logout();
   };
 
