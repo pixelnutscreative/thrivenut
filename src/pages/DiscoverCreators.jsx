@@ -63,8 +63,8 @@ export default function DiscoverCreators() {
       if (!grouped[email]) {
         const pref = allPreferences.find(p => p.user_email === email);
         const profile = allProfiles.find(p => p.user_email === email);
-        // Better name logic: TikTok username > Nickname > Real Name > Email
-        const displayName = pref?.tiktok_username || profile?.nickname || profile?.real_name || email.split('@')[0];
+        // Better name logic: TikTok Profile Username > UserPreferences TikTok Username > UserProfile Display Name > UserProfile Nickname > UserProfile Real Name > Email
+        const displayName = profile?.tiktok_username || pref?.tiktok_username || profile?.display_name || profile?.nickname || profile?.real_name || email.split('@')[0];
         
         grouped[email] = {
           email,

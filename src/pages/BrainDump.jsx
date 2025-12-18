@@ -200,7 +200,11 @@ export default function BrainDump() {
                         <p className="font-medium text-gray-900">{item.suggested_title}</p>
                         <p className="text-xs text-gray-500 mt-1">{item.reasoning}</p>
                       </div>
-                      <Button size="sm" onClick={() => processAnalysisItem(item)}>
+                      <Button 
+                        size="sm" 
+                        onClick={() => processAnalysisItem(item)}
+                        className="bg-indigo-500 hover:bg-indigo-600 text-white"
+                      >
                         Confirm
                       </Button>
                     </CardContent>

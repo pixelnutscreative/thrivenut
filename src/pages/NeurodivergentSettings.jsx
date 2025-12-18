@@ -61,6 +61,7 @@ export default function NeurodivergentSettings() {
   const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [customItemInput, setCustomItemInput] = useState('');
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -359,7 +360,50 @@ export default function NeurodivergentSettings() {
                   Add your own custom items. Once submitted, admin can add them to the global list for others.
                 </p>
                 
-                {/* Custom Items Placeholder removed */}
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {formData.mental_health_struggles.filter(item => !struggles.map(s => s.id).includes(item)).map(item => (
+                    <Badge key={item} className="bg-purple-100 text-purple-800 text-sm px-3 py-1 rounded-full cursor-pointer hover:bg-purple-200" onClick={() => toggleStruggle(item)}>
+                      {item} <span className="ml-1">×</span>
+                    </Badge>
+                  ))}
+                  {formData.improvement_goals.filter(item => !improvementGoals.map(s => s.id).includes(item)).map(item => (
+                    <Badge key={item} className="bg-pink-100 text-pink-800 text-sm px-3 py-1 rounded-full cursor-pointer hover:bg-pink-200" onClick={() => toggleImprovement(item)}>
+                      {item} <span className="ml-1">×</span>
+                    </Badge>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <Label htmlFor="custom-item" className="sr-only">Add custom item</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="custom-item"
+                        placeholder="Add custom item (e.g. 'Burnout')"
+                        value={customItemInput}
+                        onChange={(e) => setCustomItemInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && customItemInput.trim()) {
+                            e.preventDefault();
+                            toggleStruggle(customItemInput.trim());
+                            setCustomItemInput('');
+                          }
+                        }}
+                      />
+                      <Button 
+                        onClick={() => {
+                          if (customItemInput.trim()) {
+                            toggleStruggle(customItemInput.trim());
+                            setCustomItemInput('');
+                          }
+                        }}
+                        variant="outline"
+                      >
+                        Add
+                      </Button>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Added to "Things I'm working through" by default</p>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>

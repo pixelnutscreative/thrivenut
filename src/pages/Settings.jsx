@@ -473,13 +473,18 @@ export default function Settings() {
                                     ...profileData,
                                     username: prefData.tiktok_username,
                                     display_name: profileData.display_name,
-                                  }}
-                                  setFormData={(newData) => {
-                                    setProfileData(prev => ({ ...prev, ...newData }));
+                                    tiktok_username: profileData.tiktok_username
+                                    }}
+                                    setFormData={(newData) => {
+                                    setProfileData(prev => ({ 
+                                      ...prev, 
+                                      ...newData,
+                                      tiktok_username: newData.username // Sync username to profile data too
+                                    }));
                                     if (newData.username !== prefData.tiktok_username) {
                                       setPrefData(prev => ({ ...prev, tiktok_username: newData.username }));
                                     }
-                                  }}
+                                    }}
                                   contacts={[]}
                                   categories={[]}
                                   isProfile={true}

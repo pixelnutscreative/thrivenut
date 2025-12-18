@@ -25,7 +25,8 @@ import React, { useState } from 'react';
      const [isAddOpen, setIsAddOpen] = useState(false);
      const [editingItem, setEditingItem] = useState(null);
      const [showShared, setShowShared] = useState(false);
-     
+     const [resourceToDelete, setResourceToDelete] = useState(null);
+
      const [formData, setFormData] = useState({
        title: '',
        url: '',
@@ -106,7 +107,19 @@ import React, { useState } from 'react';
  
      const deleteMutation = useMutation({
        mutationFn: (id) => base44.entities.UserResource.delete(id),
-       onSuccess: () => queryClient.invalidateQueries({ queryKey: ['myResources'] })
+       onSuccess: () => {
+         queryClient.invalidateQueries({ queryKey: ['myResources'] });
+         setResourceToDelete(null);
+       }
+     });
+
+     const toggleFavoriteMutation = useMutation({
+       mutationFn: async (resource) => {
+         return await base44.entities.UserResource.update(resource.id, { is_favorite: !resource.is_favorite });
+       },
+       onSuccess: () => {
+         queryClient.invalidateQueries({ queryKey: ['myResources'] });
+       }
      });
  
      const resetForm = () => {
@@ -235,13 +248,22 @@ import React, { useState } from 'react';
                      <div className="flex justify-between items-start">
                        <Badge variant="outline" className="mb-2 bg-white/50 backdrop-blur-sm">{resource.category}</Badge>
                        {!showShared && (
-                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white/50 rounded-lg p-1">
-                           <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => handleEdit(resource)}>
-                             <Edit2 className="w-3 h-3" />
-                           </Button>
-                           <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-red-500 hover:text-red-600" onClick={() => deleteMutation.mutate(resource.id)}>
-                             <Trash2 className="w-3 h-3" />
-                           </Button>
+                         <div className="flex items-center gap-2">
+                           <div className="flex items-center gap-1 bg-white/50 rounded-lg px-1" title="Favorite">
+                             <Switch 
+                               checked={resource.is_favorite} 
+                               onCheckedChange={() => toggleFavoriteMutation.mutate(resource)}
+                               className="scale-75"
+                             />
+                           </div>
+                           <div className="flex gap-1 bg-white/50 rounded-lg p-1">
+                             <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => handleEdit(resource)}>
+                               <Edit2 className="w-3 h-3" />
+                             </Button>
+                             <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-red-500 hover:text-red-600" onClick={() => setResourceToDelete(resource)}>
+                               <Trash2 className="w-3 h-3" />
+                             </Button>
+                           </div>
                          </div>
                        )}
                      </div>
@@ -278,6 +300,25 @@ import React, { useState } from 'react';
            </div>
          )}
  
+         <Dialog open={!!resourceToDelete} onOpenChange={(open) => !open && setResourceToDelete(null)}>
+           <DialogContent>
+             <DialogHeader>
+               <DialogTitle>Delete Resource?</DialogTitle>
+             </DialogHeader>
+             <p>Are you sure you want to delete <strong>{resourceToDelete?.title}</strong>? This cannot be undone.</p>
+             <DialogFooter>
+               <Button variant="ghost" onClick={() => setResourceToDelete(null)}>Cancel</Button>
+               <Button 
+                 variant="destructive" 
+                 onClick={() => deleteMutation.mutate(resourceToDelete.id)}
+                 disabled={deleteMutation.isPending}
+               >
+                 {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+               </Button>
+             </DialogFooter>
+           </DialogContent>
+         </Dialog>
+
          <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
            <DialogContent>
              <DialogHeader>

@@ -70,6 +70,8 @@ export default function CreatorGroups() {
         status: 'active',
         joined_date: new Date().toISOString()
       });
+      // Wait a moment to ensure database consistency before refetching
+      await new Promise(resolve => setTimeout(resolve, 800));
       return group;
     },
     onSuccess: (newGroup) => {
