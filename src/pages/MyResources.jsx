@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Loader2, Plus, Search, ExternalLink, Trash2, Filter, Link as LinkIcon, Edit2 } from 'lucide-react';
 import { useTheme } from '../components/shared/useTheme';
 import ColorPicker from '../components/shared/ColorPicker';
+import { Switch } from '@/components/ui/switch';
 
 const defaultCategories = ['Courses', 'Communities', 'Tools', 'Inspiration', 'Reading', 'Watch Later', 'Other'];
 
