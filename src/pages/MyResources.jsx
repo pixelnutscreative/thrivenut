@@ -57,7 +57,7 @@ import React, { useState } from 'react';
      const [formData, setFormData] = useState({
        title: '',
        url: '',
-       category: 'Other',
+       categories: ['Other'],
        notes: '',
        tags: [],
        color: '#ffffff',
@@ -88,9 +88,9 @@ import React, { useState } from 'react';
      const allResources = React.useMemo(() => {
        if (viewFilter === 'mine') return myResources;
        if (viewFilter === 'shared') return sharedResources;
-       // For 'all', merge them but avoid duplicates if any ID collision (unlikely between distinct sets but good practice)
-       const sharedIds = new Set(sharedResources.map(r => r.id));
-       return [...myResources, ...sharedResources.filter(r => !sharedIds.has(r.id))];
+       // For 'all', merge them but avoid duplicates
+       const myIds = new Set(myResources.map(r => r.id));
+       return [...myResources, ...sharedResources.filter(r => !myIds.has(r.id))];
      }, [viewFilter, myResources, sharedResources]);
 
      const isLoading = myLoading || sharedLoading;
@@ -126,15 +126,18 @@ import React, { useState } from 'react';
      const allCategories = [...new Set([...defaultCategories, ...userCategories])];
  
      const saveMutation = useMutation({
-       mutationFn: async (data) => {
-         if (editingItem) {
-           return await base44.entities.UserResource.update(editingItem.id, data);
-         }
-         return await base44.entities.UserResource.create({
-           ...data,
-           user_email: user.email
-         });
-       },
+     mutationFn: async (data) => {
+       const payload = {
+         ...data,
+         category: data.categories[0] || 'Other', // Sync primary category for legacy support
+         user_email: user.email
+       };
+
+       if (editingItem) {
+         return await base44.entities.UserResource.update(editingItem.id, payload);
+       }
+       return await base44.entities.UserResource.create(payload);
+     },
        onSuccess: () => {
          queryClient.invalidateQueries({ queryKey: ['myResources'] });
          setIsAddOpen(false);
@@ -164,7 +167,7 @@ import React, { useState } from 'react';
        setFormData({
          title: '',
          url: '',
-         category: 'Other',
+         categories: ['Other'],
          notes: '',
          tags: [],
          color: '#ffffff',
@@ -183,10 +186,17 @@ import React, { useState } from 'react';
          itemGroupIds.push(item.group_id);
        }
 
+       // Handle backward compatibility for categories
+       let itemCategories = item.categories || [];
+       if (item.category && !itemCategories.includes(item.category)) {
+         itemCategories.push(item.category);
+       }
+       if (itemCategories.length === 0) itemCategories = ['Other'];
+
        setFormData({
          title: item.title,
          url: item.url,
-         category: item.category,
+         categories: itemCategories,
          notes: item.notes,
          tags: item.tags || [],
          color: item.color || '#ffffff',
@@ -204,7 +214,10 @@ import React, { useState } from 'react';
          res.notes?.toLowerCase().includes(search.toLowerCase()) ||
          res.tags?.some(t => t.toLowerCase().includes(search.toLowerCase()));
        
-       const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(res.category);
+       // Handle backward compatibility: check 'categories' array OR single 'category' string
+       const resCategories = res.categories || (res.category ? [res.category] : []);
+       const matchesCategory = selectedCategories.length === 0 || 
+         selectedCategories.some(c => resCategories.includes(c));
        
        return matchesSearch && matchesCategory;
      });
@@ -337,7 +350,8 @@ import React, { useState } from 'react';
 
                // Use lighter accent/border approach instead of full background
                const accentColor = resource.color && resource.color !== '#ffffff' ? resource.color : '#e5e7eb';
-               const Icon = categoryIcons[resource.category] || <LinkIcon className="w-4 h-4" />;
+               const primaryCategory = (resource.categories && resource.categories[0]) || resource.category || 'Other';
+               const Icon = categoryIcons[primaryCategory] || <LinkIcon className="w-4 h-4" />;
 
                return (
                  <Card 
@@ -347,11 +361,13 @@ import React, { useState } from 'react';
                  >
                    <CardHeader className="pb-2 pt-4 px-4">
                      <div className="flex justify-between items-start mb-1">
-                       <div className="flex items-center gap-2">
-                         <Badge variant="outline" className="flex items-center gap-1.5 font-medium px-2 py-0.5 bg-gray-50 text-gray-700 border-gray-200">
-                           {Icon}
-                           {resource.category}
-                         </Badge>
+                       <div className="flex flex-wrap items-center gap-1">
+                         {(resource.categories || [resource.category]).map((cat, idx) => (
+                           <Badge key={idx} variant="outline" className="flex items-center gap-1.5 font-medium px-2 py-0.5 bg-gray-50 text-gray-700 border-gray-200 text-[10px]">
+                             {categoryIcons[cat] || <LinkIcon className="w-3 h-3" />}
+                             {cat}
+                           </Badge>
+                         ))}
                          {isShared && (
                            <Badge variant="secondary" className="text-[10px] bg-blue-50 text-blue-700">Shared</Badge>
                          )}
@@ -444,7 +460,7 @@ import React, { useState } from 'react';
          </Dialog>
 
          <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-           <DialogContent>
+           <DialogContent className="max-h-[85vh] overflow-y-auto max-w-2xl">
              <DialogHeader>
                <DialogTitle>{editingItem ? 'Edit Resource' : 'Add New Resource'}</DialogTitle>
              </DialogHeader>
@@ -465,12 +481,34 @@ import React, { useState } from 'react';
                    placeholder="https://..."
                  />
                </div>
-               <div className="grid grid-cols-2 gap-4">
-                 <div className="col-span-2 sm:col-span-1">
-                   <Label>Category</Label>
-                   <Select value={formData.category} onValueChange={(v) => setFormData({...formData, category: v})}>
+               <div>
+                 <Label className="mb-2 block">Categories</Label>
+                 <div className="flex flex-wrap gap-2 mb-3">
+                   {formData.categories.map(cat => (
+                     <Badge key={cat} variant="secondary" className="flex items-center gap-1 py-1 px-2">
+                       {categoryIcons[cat] || <LinkIcon className="w-3 h-3" />}
+                       {cat}
+                       <button 
+                         onClick={() => setFormData(prev => ({
+                           ...prev, 
+                           categories: prev.categories.filter(c => c !== cat)
+                         }))}
+                         className="ml-1 hover:text-red-500"
+                       >
+                         <X className="w-3 h-3" />
+                       </button>
+                     </Badge>
+                   ))}
+                 </div>
+
+                 <div className="grid grid-cols-2 gap-2">
+                   <Select onValueChange={(v) => {
+                     if (!formData.categories.includes(v)) {
+                       setFormData(prev => ({ ...prev, categories: [...prev.categories, v] }));
+                     }
+                   }}>
                      <SelectTrigger>
-                       <SelectValue placeholder="Select category..." />
+                       <SelectValue placeholder="Add Category..." />
                      </SelectTrigger>
                      <SelectContent className="max-h-[200px]">
                        {defaultCategories.map(cat => (
@@ -483,28 +521,52 @@ import React, { useState } from 'react';
                        ))}
                      </SelectContent>
                    </Select>
-                 </div>
-                 <div className="col-span-2 sm:col-span-1 flex items-end">
-                    <Input 
-                     placeholder="Or type custom category..." 
-                     onChange={(e) => setFormData({...formData, category: e.target.value})}
-                     className="bg-gray-50"
-                   />
+
+                   <div className="flex gap-2">
+                     <Input 
+                       placeholder="Custom category..." 
+                       id="custom-cat-input"
+                       onKeyDown={(e) => {
+                         if (e.key === 'Enter') {
+                           e.preventDefault();
+                           const val = e.target.value.trim();
+                           if (val && !formData.categories.includes(val)) {
+                             setFormData(prev => ({ ...prev, categories: [...prev.categories, val] }));
+                             e.target.value = '';
+                           }
+                         }
+                       }}
+                     />
+                     <Button 
+                       type="button" 
+                       variant="secondary"
+                       onClick={() => {
+                         const input = document.getElementById('custom-cat-input');
+                         const val = input.value.trim();
+                         if (val && !formData.categories.includes(val)) {
+                           setFormData(prev => ({ ...prev, categories: [...prev.categories, val] }));
+                           input.value = '';
+                         }
+                       }}
+                     >
+                       Add
+                     </Button>
+                   </div>
                  </div>
                </div>
 
-               {formData.category === 'Login' && (
-                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex gap-3 items-start text-sm text-amber-800">
-                   <TriangleAlert className="w-5 h-5 flex-shrink-0 text-amber-600" />
-                   <p>
-                     <strong>Security Warning:</strong> Please do NOT store actual passwords here. 
-                     Use your browser's password manager or a secure tool like 1Password/LastPass. 
-                     Only store the login URL and username here.
-                   </p>
-                 </div>
-               )}
+                 {formData.categories.includes('Login') && (
+                   <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex gap-3 items-start text-sm text-amber-800">
+                     <TriangleAlert className="w-5 h-5 flex-shrink-0 text-amber-600" />
+                     <p>
+                       <strong>Security Warning:</strong> Please do NOT store actual passwords here. 
+                       Use your browser's password manager or a secure tool like 1Password/LastPass. 
+                       Only store the login URL and username here.
+                     </p>
+                   </div>
+                 )}
 
-               {formData.category === 'Recipe' && (
+                 {formData.categories.includes('Recipe') && (
                  <div className="bg-green-50 border border-green-200 rounded-lg p-3 space-y-3">
                    <div className="flex gap-3 items-start text-sm text-green-800">
                      <Utensils className="w-5 h-5 flex-shrink-0 text-green-600" />
