@@ -22,6 +22,7 @@ export default function MyResources() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
+  const [showShared, setShowShared] = useState(false);
   
   const [formData, setFormData] = useState({
     title: '',
@@ -30,12 +31,44 @@ export default function MyResources() {
     notes: '',
     tags: [],
     color: '#ffffff',
-    secondary_color: ''
+    secondary_color: '',
+    visibility: 'private',
+    agency_id: ''
   });
 
-  const { data: resources = [], isLoading } = useQuery({
+  const { data: myResources = [], isLoading: myLoading } = useQuery({
     queryKey: ['myResources', user?.email],
     queryFn: () => base44.entities.UserResource.filter({ user_email: user?.email }, '-created_date'),
+    enabled: !!user?.email && !showShared
+  });
+
+  const { data: sharedResources = [], isLoading: sharedLoading } = useQuery({
+    queryKey: ['sharedResources'],
+    queryFn: async () => {
+      const response = await base44.functions.invoke('fetchSharedResources');
+      return response.data.resources || [];
+    },
+    enabled: !!user && showShared
+  });
+
+  const resources = showShared ? sharedResources : myResources;
+  const isLoading = showShared ? sharedLoading : myLoading;
+
+  // Fetch agencies for dropdown
+  const { data: myAgencies = [] } = useQuery({
+    queryKey: ['myAgencies', user?.email],
+    queryFn: async () => {
+        if (!user?.email) return [];
+        const memberships = await base44.entities.AgencyMember.filter({ user_email: user.email, status: 'active' });
+        if (memberships.length === 0) return [];
+        // Fetch agency details
+        const agencies = [];
+        for (const m of memberships) {
+            const agency = await base44.entities.Agency.findById(m.agency_id);
+            if (agency) agencies.push(agency);
+        }
+        return agencies;
+    },
     enabled: !!user?.email
   });
 
@@ -83,7 +116,9 @@ export default function MyResources() {
       notes: '',
       tags: [],
       color: '#ffffff',
-      secondary_color: ''
+      secondary_color: '',
+      visibility: 'private',
+      agency_id: ''
     });
   };
 
@@ -96,7 +131,9 @@ export default function MyResources() {
       notes: item.notes,
       tags: item.tags || [],
       color: item.color || '#ffffff',
-      secondary_color: item.secondary_color || ''
+      secondary_color: item.secondary_color || '',
+      visibility: item.visibility || 'private',
+      agency_id: item.agency_id || ''
     });
     setIsAddOpen(true);
   };
@@ -116,12 +153,28 @@ export default function MyResources() {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <LinkIcon className="w-6 h-6 text-purple-600" />
-            {preferences?.my_resources_label || 'My Stuff'}
+            {showShared ? 'Shared Resources' : (preferences?.my_resources_label || 'My Stuff')}
           </h1>
-          <p className="text-gray-600">Your personal library of links, courses, and inspiration.</p>
+          <p className="text-gray-600">
+            {showShared 
+              ? 'Resources shared with you by your agencies and community.' 
+              : 'Your personal library of links, courses, and inspiration.'}
+          </p>
         </div>
-        <div className="flex gap-2">
-          {/* Rename Button */}
+        <div className="flex gap-2 items-center">
+          <div className="flex items-center gap-2 bg-white p-2 rounded-lg border shadow-sm mr-2">
+            <Switch 
+              checked={showShared}
+              onCheckedChange={setShowShared}
+              id="shared-mode"
+            />
+            <Label htmlFor="shared-mode" className="cursor-pointer font-medium text-sm">
+              {showShared ? 'Viewing Shared' : 'Viewing Mine'}
+            </Label>
+          </div>
+          {!showShared && (
+            <>
+              {/* Rename Button */}
           <Button variant="outline" size="sm" onClick={() => {
             const newName = prompt('Rename "My Stuff" to:', preferences?.my_resources_label || 'My Stuff');
             if (newName && newName.trim()) {
@@ -134,6 +187,8 @@ export default function MyResources() {
           <Button onClick={() => { setEditingItem(null); resetForm(); setIsAddOpen(true); }} className="bg-purple-600 hover:bg-purple-700 text-white">
             <Plus className="w-4 h-4 mr-2" /> Add Item
           </Button>
+            </>
+          )}
         </div>
       </div>
 
@@ -181,14 +236,16 @@ export default function MyResources() {
                 <CardHeader className="pb-2">
                   <div className="flex justify-between items-start">
                     <Badge variant="outline" className="mb-2 bg-white/50 backdrop-blur-sm">{resource.category}</Badge>
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white/50 rounded-lg p-1">
-                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => handleEdit(resource)}>
-                        <Edit2 className="w-3 h-3" />
-                      </Button>
-                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-red-500 hover:text-red-600" onClick={() => deleteMutation.mutate(resource.id)}>
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
-                    </div>
+                    {!showShared && (
+                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white/50 rounded-lg p-1">
+                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => handleEdit(resource)}>
+                          <Edit2 className="w-3 h-3" />
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-red-500 hover:text-red-600" onClick={() => deleteMutation.mutate(resource.id)}>
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                   <CardTitle className="text-lg leading-tight">
                     {resource.url ? (
@@ -299,6 +356,62 @@ export default function MyResources() {
                   label="Border/Accent"
                 />
               </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 bg-gray-50 p-3 rounded-lg border">
+              <div className="space-y-2">
+                <Label>Visibility</Label>
+                <Select 
+                  value={formData.visibility || 'private'} 
+                  onValueChange={(v) => setFormData({...formData, visibility: v})}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="private">
+                      <div className="flex items-center gap-2">
+                        <Lock className="w-4 h-4" /> Private
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="public">
+                      <div className="flex items-center gap-2">
+                        <Globe className="w-4 h-4" /> Public (Everyone)
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="agency">
+                      <div className="flex items-center gap-2">
+                        <Building className="w-4 h-4" /> Agency Only
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {formData.visibility === 'agency' && (
+                <div className="space-y-2">
+                  <Label>Select Agency</Label>
+                  <Select 
+                    value={formData.agency_id || ''} 
+                    onValueChange={(v) => setFormData({...formData, agency_id: v})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose agency..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {myAgencies.length > 0 ? (
+                        myAgencies.map(agency => (
+                          <SelectItem key={agency.id} value={agency.id}>
+                            {agency.name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="none" disabled>No agencies found</SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
           </div>
           <DialogFooter>
