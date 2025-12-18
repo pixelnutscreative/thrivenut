@@ -36,8 +36,12 @@ export default function DiscoverCreators() {
   const { data: allPreferences = [] } = useQuery({
     queryKey: ['allUserPreferences'],
     queryFn: async () => {
-      const prefs = await base44.entities.UserPreferences.list();
-      return prefs.filter(p => p.tiktok_username && p.allow_in_community_directory);
+      // Fetch more to ensure we catch everyone (limit 1000)
+      const prefs = await base44.entities.UserPreferences.list('created_date', 1000);
+      // Filter out those without any username set, but INCLUDE those who haven't explicitly opted out (since default might be undefined)
+      // If we strictly require allow_in_community_directory === true, many users disappear.
+      // For shared items, we want to show the creator even if they are not in the directory listing.
+      return prefs.filter(p => p.tiktok_username);
     },
     initialData: [],
   });
@@ -45,7 +49,7 @@ export default function DiscoverCreators() {
   const { data: allProfiles = [] } = useQuery({
     queryKey: ['allUserProfiles'],
     queryFn: async () => {
-      return await base44.entities.UserProfile.list();
+      return await base44.entities.UserProfile.list('created_date', 1000);
     },
     initialData: [],
   });

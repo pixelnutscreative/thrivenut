@@ -190,7 +190,7 @@ export default function CreatorGroups() {
                   </Select>
                   <p className="text-xs text-gray-500">
                     {newGroupType === 'agency' 
-                      ? 'Official business groups for agencies, coaching, or brands.' 
+                      ? 'Official business groups for agencies, coaching, or brands. This creates your Agency entity.' 
                       : 'Create a space for collaboration, sharing, and growth.'}
                   </p>
                 </div>
