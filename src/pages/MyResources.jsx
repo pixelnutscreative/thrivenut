@@ -9,10 +9,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Plus, Search, ExternalLink, Trash2, Filter, Link as LinkIcon, Edit2 } from 'lucide-react';
+import { Loader2, Plus, Search, ExternalLink, Trash2, Filter, Link as LinkIcon, Edit2, Users, Globe, Lock, Building } from 'lucide-react';
 import { useTheme } from '../components/shared/useTheme';
 import ColorPicker from '../components/shared/ColorPicker';
 import { Switch } from '@/components/ui/switch';
+import { Link } from 'react-router-dom';
 
 const defaultCategories = ['Courses', 'Communities', 'Tools', 'Inspiration', 'Reading', 'Watch Later', 'Other'];
 
@@ -34,7 +35,7 @@ export default function MyResources() {
     color: '#ffffff',
     secondary_color: '',
     visibility: 'private',
-    agency_id: ''
+    group_id: ''
   });
 
   const { data: myResources = [], isLoading: myLoading } = useQuery({
@@ -55,20 +56,19 @@ export default function MyResources() {
   const resources = showShared ? sharedResources : myResources;
   const isLoading = showShared ? sharedLoading : myLoading;
 
-  // Fetch agencies for dropdown
-  const { data: myAgencies = [] } = useQuery({
-    queryKey: ['myAgencies', user?.email],
+  // Fetch groups for dropdown
+  const { data: myGroups = [] } = useQuery({
+    queryKey: ['myGroups', user?.email],
     queryFn: async () => {
         if (!user?.email) return [];
-        const memberships = await base44.entities.AgencyMember.filter({ user_email: user.email, status: 'active' });
+        const memberships = await base44.entities.CreatorGroupMember.filter({ user_email: user.email, status: 'active' });
         if (memberships.length === 0) return [];
-        // Fetch agency details
-        const agencies = [];
+        const groups = [];
         for (const m of memberships) {
-            const agency = await base44.entities.Agency.findById(m.agency_id);
-            if (agency) agencies.push(agency);
+            const group = await base44.entities.CreatorGroup.findById(m.group_id);
+            if (group) groups.push(group);
         }
-        return agencies;
+        return groups;
     },
     enabled: !!user?.email
   });
@@ -119,7 +119,7 @@ export default function MyResources() {
       color: '#ffffff',
       secondary_color: '',
       visibility: 'private',
-      agency_id: ''
+      group_id: ''
     });
   };
 
@@ -134,7 +134,7 @@ export default function MyResources() {
       color: item.color || '#ffffff',
       secondary_color: item.secondary_color || '',
       visibility: item.visibility || 'private',
-      agency_id: item.agency_id || ''
+      group_id: item.group_id || ''
     });
     setIsAddOpen(true);
   };
@@ -158,11 +158,16 @@ export default function MyResources() {
           </h1>
           <p className="text-gray-600">
             {showShared 
-              ? 'Resources shared with you by your agencies and community.' 
+              ? 'Resources shared with you by your groups and community.' 
               : 'Your personal library of links, courses, and inspiration.'}
           </p>
         </div>
-        <div className="flex gap-2 items-center">
+        <div className="flex flex-wrap gap-2 items-center">
+          <Link to="/CreatorGroups">
+            <Button variant="outline" className="gap-2">
+              <Users className="w-4 h-4" /> Manage Groups
+            </Button>
+          </Link>
           <div className="flex items-center gap-2 bg-white p-2 rounded-lg border shadow-sm mr-2">
             <Switch 
               checked={showShared}
@@ -223,9 +228,6 @@ export default function MyResources() {
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredResources.map(resource => {
-            // Determine text color based on background color brightness if needed, 
-            // but for simplicity assuming mostly light backgrounds or user handles it.
-            // If secondary color exists, use it for border or accent.
             const cardStyle = {
               backgroundColor: resource.color || '#ffffff',
               borderColor: resource.secondary_color || 'transparent',
@@ -377,37 +379,37 @@ export default function MyResources() {
                     </SelectItem>
                     <SelectItem value="public">
                       <div className="flex items-center gap-2">
-                        <Globe className="w-4 h-4" /> Public (Everyone)
+                        <Globe className="w-4 h-4" /> Public (All Thrive Users)
                       </div>
                     </SelectItem>
-                    <SelectItem value="agency">
+                    <SelectItem value="group">
                       <div className="flex items-center gap-2">
-                        <Building className="w-4 h-4" /> Agency Only
+                        <Building className="w-4 h-4" /> Creator Group Only
                       </div>
                     </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               
-              {formData.visibility === 'agency' && (
+              {formData.visibility === 'group' && (
                 <div className="space-y-2">
-                  <Label>Select Agency</Label>
+                  <Label>Select Group</Label>
                   <Select 
-                    value={formData.agency_id || ''} 
-                    onValueChange={(v) => setFormData({...formData, agency_id: v})}
+                    value={formData.group_id || ''} 
+                    onValueChange={(v) => setFormData({...formData, group_id: v})}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Choose agency..." />
+                      <SelectValue placeholder="Choose group..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {myAgencies.length > 0 ? (
-                        myAgencies.map(agency => (
-                          <SelectItem key={agency.id} value={agency.id}>
-                            {agency.name}
+                      {myGroups.length > 0 ? (
+                        myGroups.map(group => (
+                          <SelectItem key={group.id} value={group.id}>
+                            {group.name}
                           </SelectItem>
                         ))
                       ) : (
-                        <SelectItem value="none" disabled>No agencies found</SelectItem>
+                        <SelectItem value="none" disabled>No groups found</SelectItem>
                       )}
                     </SelectContent>
                   </Select>

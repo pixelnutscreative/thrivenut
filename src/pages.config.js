@@ -69,6 +69,7 @@ import Brands from './pages/Brands';
 import ContentCreatorHub from './pages/ContentCreatorHub';
 import AffiliateCampaigns from './pages/AffiliateCampaigns';
 import MyResources from './pages/MyResources';
+import CreatorGroups from './pages/CreatorGroups';
 import __Layout from './Layout.jsx';
 
 
@@ -144,6 +145,7 @@ export const PAGES = {
     "ContentCreatorHub": ContentCreatorHub,
     "AffiliateCampaigns": AffiliateCampaigns,
     "MyResources": MyResources,
+    "CreatorGroups": CreatorGroups,
 }
 
 export const pagesConfig = {
