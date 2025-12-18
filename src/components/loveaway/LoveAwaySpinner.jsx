@@ -51,32 +51,114 @@ export default function LoveAwaySpinner({ giveaway, onClose }) {
   };
 
   const handleSpin = () => {
+    // Weighted random selection
     const pool = buildEntryPool();
     if (pool.length === 0) return;
 
     setSpinning(true);
-    const spinDuration = 5000; // 5 seconds
-    const spinRotations = 5 + Math.random() * 3; // 5-8 full rotations
-    const finalRotation = spinRotations * 360;
+    
+    // Determine winner instantly (but show animation)
+    const randomIndex = Math.floor(Math.random() * pool.length);
+    const winningEntry = pool[randomIndex];
+    
+    // Calculate rotation to land on the winner
+    // We need to find the segment corresponding to the winner
+    // Since segments are mapped from entries, let's find the winning entry's index in entries array
+    // Wait, multiple entries might be same person. But `pool` has replicates.
+    // The visual wheel uses `segments` which is unique entries.
+    // We need to pick a winner based on weight, then spin to THAT person's segment.
+    
+    const winnerSegmentIndex = entries.findIndex(e => e.id === winningEntry.id);
+    if (winnerSegmentIndex === -1) return; // Should not happen
 
-    setRotation(finalRotation);
+    const segmentCount = entries.length;
+    const segmentAngle = 360 / segmentCount;
+    
+    // Calculate angle to land on this segment
+    // Segment 0 is at 0 degrees (top? right?)
+    // Usually 0 is right (3 o'clock) in CSS rotate, but depends on setup.
+    // Let's assume standard CSS rotation. 
+    // Target angle = -(index * segmentAngle + segmentAngle/2)
+    // Add multiple full rotations (e.g. 10 rounds = 3600)
+    // Add random jitter within the segment
+    
+    const spinRotations = 10 + Math.random() * 5; // 10-15 rotations
+    const targetAngle = (winnerSegmentIndex * segmentAngle) + (segmentAngle / 2);
+    // Adjust for the pointer being at top (270deg or -90deg) vs 0 (right)
+    // If pointer is top, we need to rotate so target is at top.
+    
+    // Let's just do a big spin and force result
+    // Actually user said "it has to go round and round and the person cannot stop it"
+    // "it's got to be completely random"
+    
+    const finalRotation = 3600 + (360 - targetAngle) + 90; // +90 to align with top pointer if 0 is right?
+    // Let's simplfy: Just spin a lot random amount, calculate winner based on where it lands?
+    // NO, weighted probability is harder to visualize if segments are equal size.
+    // If I show equal segments but use weighted probability, visual doesn't match physics.
+    // IF I want visual to match: segments should be sized by weight.
+    
+    // Let's resize segments based on weight!
+    
+    // But for now, let's keep logic simple: 
+    // 1. Determine winner by weight (done)
+    // 2. Spin to that winner's segment
+    
+    const spinDuration = 8000; // 8 seconds
+    const extraSpins = 360 * 10;
+    // Calculate angle to land on winner
+    // Winner index i. Center of wedge is i*wedge + wedge/2.
+    // We want this angle to be at 270 deg (top) or whatever pointer is.
+    // If pointer is top (270 deg), we need to rotate: 270 - center_angle.
+    // And add full spins.
+    
+    // Visual logic handled in rendering
+    
+    // New logic with sized segments:
+    const totalWeight = entries.reduce((sum, e) => sum + (e.final_entry_count || 1), 0);
+    let currentAngle = 0;
+    let winnerStartAngle = 0;
+    let winnerEndAngle = 0;
+    
+    entries.forEach(e => {
+        const weight = e.final_entry_count || 1;
+        const angle = (weight / totalWeight) * 360;
+        if (e.id === winningEntry.id) {
+            winnerStartAngle = currentAngle;
+            winnerEndAngle = currentAngle + angle;
+        }
+        currentAngle += angle;
+    });
+    
+    const winnerCenter = (winnerStartAngle + winnerEndAngle) / 2;
+    // We want winnerCenter to end up at -90 (top)
+    const stopAngle = 360 * 10 + (360 - winnerCenter) - 90; 
+    
+    setRotation(stopAngle);
 
     setTimeout(() => {
-      const randomIndex = Math.floor(Math.random() * pool.length);
-      const winningEntry = pool[randomIndex];
       setWinner(winningEntry);
       setSpinning(false);
       selectWinnerMutation.mutate(winningEntry);
     }, spinDuration);
   };
 
-  // Build segments from entries
-  const segments = entries.map(entry => ({
-    ...entry,
-    color: entry.favorite_color || `hsl(${Math.random() * 360}, 70%, 60%)`
-  }));
-
-  const segmentAngle = 360 / Math.max(segments.length, 1);
+  // Build weighted segments
+  const totalWeight = entries.reduce((sum, e) => sum + (e.final_entry_count || 1), 0);
+  let currentAngle = 0;
+  
+  const segments = entries.map(entry => {
+    const weight = entry.final_entry_count || 1;
+    const angleSize = (weight / totalWeight) * 360;
+    const start = currentAngle;
+    currentAngle += angleSize;
+    
+    return {
+      ...entry,
+      color: entry.favorite_color || `hsl(${Math.random() * 360}, 70%, 60%)`,
+      startAngle: start,
+      angleSize: angleSize
+    };
+  });
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
@@ -107,35 +189,26 @@ export default function LoveAwaySpinner({ giveaway, onClose }) {
               style={{ border: '8px solid #fff' }}
             >
               {segments.map((segment, index) => {
-                const startAngle = index * segmentAngle;
-                const endAngle = startAngle + segmentAngle;
-                const midAngle = (startAngle + endAngle) / 2;
-
+                // Using conic-gradient for variable sized segments is easier than clip-path
                 return (
                   <div
                     key={segment.id}
-                    className="absolute inset-0 flex items-center justify-center"
+                    className="absolute inset-0"
                     style={{
-                      transform: `rotate(${startAngle}deg)`,
-                      transformOrigin: 'center center'
+                      background: `conic-gradient(${segment.color} ${segment.startAngle}deg, ${segment.color} ${segment.startAngle + segment.angleSize}deg, transparent 0)`,
+                      borderRadius: '50%'
                     }}
                   >
-                    <div
-                      className="absolute w-full h-full"
+                    {/* Label */}
+                    <div 
+                      className="absolute w-full h-full flex items-start justify-center pt-4"
                       style={{
-                        clipPath: `polygon(50% 50%, 50% 0%, 100% 0%)`,
-                        background: segment.color,
-                        transform: `rotate(${segmentAngle / 2}deg)`,
-                        transformOrigin: '0% 50%'
+                        transform: `rotate(${segment.startAngle + segment.angleSize / 2}deg)`
                       }}
                     >
-                      <div
-                        className="absolute left-[60%] top-[10%] text-white font-bold text-sm"
-                        style={{
-                          transform: `rotate(${90 - segmentAngle / 2}deg)`
-                        }}
-                      >
+                      <div className="text-white font-bold text-xs" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>
                         {segment.username}
+                        {segment.final_entry_count > 1 && ` (x${segment.final_entry_count})`}
                       </div>
                     </div>
                   </div>

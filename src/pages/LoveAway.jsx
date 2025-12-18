@@ -9,10 +9,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Gift, Sparkles, Trophy, Users, Settings, Play, X } from 'lucide-react';
+import { Plus, Gift, Sparkles, Trophy, Users, Settings, Play, X, Edit } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
 import { useTheme } from '../components/shared/useTheme';
 import LoveAwaySpinner from '../components/loveaway/LoveAwaySpinner';
+import LoveAwayEntriesList from '../components/loveaway/LoveAwayEntriesList';
 
 export default function LoveAway() {
   const queryClient = useQueryClient();
@@ -124,8 +126,8 @@ export default function LoveAway() {
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className={`text-3xl font-bold ${textClass}`}>Love Away Giveaways</h1>
-            <p className="text-gray-500 mt-1">Manage giveaways with multipliers and winner selection</p>
+            <h1 className={`text-3xl font-bold ${textClass}`}>Love Away</h1>
+            <p className="text-gray-500 mt-1">Manage giveaways and pick random winners</p>
           </div>
           <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
             <DialogTrigger asChild>
@@ -157,78 +159,17 @@ export default function LoveAway() {
                 />
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Entry Methods</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {entryMethods.map(method => (
-                      <div
-                        key={method.value}
-                        onClick={() => {
-                          const methods = formData.entry_methods.includes(method.value)
-                            ? formData.entry_methods.filter(m => m !== method.value)
-                            : [...formData.entry_methods, method.value];
-                          setFormData({ ...formData, entry_methods: methods });
-                        }}
-                        className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                          formData.entry_methods.includes(method.value)
-                            ? 'border-purple-500 bg-purple-50'
-                            : 'border-gray-200 hover:border-purple-300'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <Checkbox checked={formData.entry_methods.includes(method.value)} />
-                          <span className="text-sm">{method.label}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <Input
-                    type="number"
-                    placeholder="Entries per action"
-                    value={formData.entries_per_action}
-                    onChange={(e) => setFormData({ ...formData, entries_per_action: parseInt(e.target.value) || 1 })}
-                  />
-                  <Input
-                    type="datetime-local"
-                    value={formData.end_date}
-                    onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                    placeholder="End Date"
+                  <label className="text-sm font-medium">How to Enter (Optional Notes)</label>
+                  <Textarea
+                    placeholder="e.g. Send a rose, Share the live..."
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    rows={2}
                   />
                 </div>
 
-                <div className="space-y-3 pt-4 border-t">
-                  <h3 className="font-semibold flex items-center gap-2">
-                    <Sparkles className="w-4 h-4" />
-                    Entry Multipliers
-                  </h3>
-                  {multipliers.map(mult => (
-                    <div key={mult.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <Checkbox
-                          checked={formData.multipliers_enabled[mult.id] || false}
-                          onCheckedChange={(checked) => setFormData({
-                            ...formData,
-                            multipliers_enabled: { ...formData.multipliers_enabled, [mult.id]: checked }
-                          })}
-                        />
-                        <span className="text-sm">{mult.label}</span>
-                      </div>
-                      {formData.multipliers_enabled[mult.id] && (
-                        <Input
-                          type="number"
-                          step="0.1"
-                          value={formData.multiplier_values[mult.id] || mult.defaultValue}
-                          onChange={(e) => setFormData({
-                            ...formData,
-                            multiplier_values: { ...formData.multiplier_values, [mult.id]: parseFloat(e.target.value) }
-                          })}
-                          className="w-20"
-                        />
-                      )}
-                    </div>
-                  ))}
+                <div className="p-4 bg-purple-50 rounded-lg text-sm text-purple-800">
+                  <p>✨ <strong>Simplified!</strong> You can manually add entries and multiply them (2x, 3x, 10x) directly in the Entries list.</p>
                 </div>
 
                 <Button onClick={handleCreate} className="w-full" style={{ backgroundColor: primaryColor }}>
@@ -272,15 +213,24 @@ export default function LoveAway() {
                   </div>
                 )}
                 <div className="flex gap-2 pt-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() => setShowEntriesDialog(giveaway)}
-                  >
-                    <Users className="w-4 h-4 mr-1" />
-                    Entries
-                  </Button>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1"
+                      >
+                        <Users className="w-4 h-4 mr-1" />
+                        Entries ({giveaway.total_entries || 0})
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle>Entries for {giveaway.title}</DialogTitle>
+                      </DialogHeader>
+                      <LoveAwayEntriesList giveawayId={giveaway.id} />
+                    </DialogContent>
+                  </Dialog>
                   {giveaway.status === 'active' && (
                     <Button
                       size="sm"
