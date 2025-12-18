@@ -178,9 +178,24 @@ export default function PixelsParadise() {
 
   const effectiveEmail = user ? getEffectiveUserEmail(user.email) : null;
 
-  const hasAIToolbox = preferences?.subscription_product === 'pixels_toolbox_annual' || preferences?.subscription_product === 'nuts_bots_annual' || preferences?.has_annual_ai_plan;
-  const hasNutsBots = preferences?.subscription_product === 'nuts_bots_annual';
-  const hasDigitalTwin = preferences?.digital_twin_created;
+  // Fetch AI Platform User details for additional access checks
+  const { data: aiUser } = useQuery({
+    queryKey: ['aiPlatformUser', effectiveEmail],
+    queryFn: async () => {
+      if (!effectiveEmail) return null;
+      const users = await base44.entities.AIPlatformUser.filter({ user_email: effectiveEmail });
+      return users[0] || null;
+    },
+    enabled: !!effectiveEmail
+  });
+
+  const hasAIToolbox = preferences?.subscription_product === 'pixels_toolbox_annual' || 
+                       preferences?.subscription_product === 'nuts_bots_annual' || 
+                       preferences?.has_annual_ai_plan ||
+                       (aiUser && (aiUser.platform === 'pixels_toolbox' || aiUser.platform === 'lets_go_nuts'));
+                       
+  const hasNutsBots = preferences?.subscription_product === 'nuts_bots_annual' || aiUser?.has_nuts_and_bots;
+  const hasDigitalTwin = preferences?.digital_twin_created || aiUser?.has_digital_twin;
 
   useEffect(() => {
     base44.auth.isAuthenticated().then(setIsAuthenticated).catch(() => {});

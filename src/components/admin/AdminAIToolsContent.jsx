@@ -246,7 +246,8 @@ export default function AdminAIToolsContent() {
       return tiktokContacts;
     }
     
-    const query = contactSearch.toLowerCase().trim();
+    // Strip @ from search to allow searching by @username
+    const query = contactSearch.toLowerCase().replace(/@/g, '').trim();
     const queryWords = query.split(/\s+/); // Split by spaces for multi-word search
     
     return tiktokContacts.filter(c => {
