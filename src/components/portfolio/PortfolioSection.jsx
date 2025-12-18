@@ -330,46 +330,30 @@ export default function PortfolioSection({ userEmail, isAuthenticated, primaryCo
               />
             </div>
 
-            {/* Image Upload (for image, nutpal, image_with_text types) */}
+            {/* Image URL Input (for image, nutpal, image_with_text types) */}
             {(formData.content_type === 'image' || formData.content_type === 'nutpal' || formData.content_type === 'image_with_text') && (
               <div>
-                <Label>Upload Images</Label>
+                <Label>Image URL</Label>
+                <p className="text-xs text-gray-500 mb-2">Paste the URL of your creation from the AI tool (e.g., from Midjourney, Ideogram, etc.)</p>
                 <div className="space-y-2">
-                  <div className="grid grid-cols-3 gap-2">
-                    {formData.image_urls.map((url, idx) => (
-                      <div key={idx} className="relative aspect-square rounded-lg overflow-hidden bg-gray-100">
-                        <img src={url} alt="" className="w-full h-full object-cover" />
-                        <button
-                          onClick={() => removeImage(idx)}
-                          className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                  <label className="block">
-                    <input 
-                      type="file" 
-                      accept="image/*" 
-                      onChange={handleImageUpload}
-                      className="hidden"
-                      disabled={uploadingImage}
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="https://..."
+                      value={formData.image_urls[0] || ''}
+                      onChange={(e) => {
+                        const url = e.target.value;
+                        setFormData({
+                          ...formData,
+                          image_urls: url ? [url] : []
+                        });
+                      }}
                     />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-full"
-                      disabled={uploadingImage}
-                      onClick={() => document.querySelector('input[type="file"]').click()}
-                    >
-                      {uploadingImage ? (
-                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Uploading...</>
-                      ) : (
-                        <><Upload className="w-4 h-4 mr-2" /> Add Image</>
-                      )}
-                    </Button>
-                  </label>
+                  </div>
+                  {formData.image_urls.length > 0 && (
+                    <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-100 border">
+                      <img src={formData.image_urls[0]} alt="Preview" className="w-full h-full object-contain" />
+                    </div>
+                  )}
                 </div>
               </div>
             )}
