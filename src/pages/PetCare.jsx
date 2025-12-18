@@ -252,6 +252,11 @@ export default function PetCare() {
           </Button>
         </div>
 
+        {/* Quick Check List moved here from Wellness */}
+        <div className="mb-6">
+          <QuickPetCareCheck userEmail={user?.email} />
+        </div>
+
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           <AnimatePresence>
             {pets.map((pet, index) => (

@@ -80,9 +80,34 @@ export default function QuickActionsBarV2({
   }, [preferences]);
 
   // Mutations
+  // Fetch today's water log for immediate display
+  const { data: waterLog } = useQuery({
+    queryKey: ['waterLogToday', user?.email],
+    queryFn: async () => {
+      if (!user?.email) return null;
+      const todayStr = format(new Date(), 'yyyy-MM-dd');
+      const logs = await base44.entities.WaterLog.filter({ date: todayStr, created_by: user.email });
+      return logs[0] || { glasses: 0 };
+    },
+    enabled: !!user?.email
+  });
+
+  // Fetch today's mood for icon display
+  const { data: moodLog } = useQuery({
+    queryKey: ['moodLogToday', user?.email],
+    queryFn: async () => {
+      if (!user?.email) return null;
+      const todayStr = format(new Date(), 'yyyy-MM-dd');
+      const logs = await base44.entities.MoodLog.filter({ date: todayStr, created_by: user.email }, '-timestamp');
+      return logs[0] || null;
+    },
+    enabled: !!user?.email
+  });
+
   const logWaterMutation = useMutation({
     mutationFn: async () => {
       const todayStr = format(new Date(), 'yyyy-MM-dd');
+      // Optimistic update logic handled by UI, actual DB update:
       const existingLog = await base44.entities.WaterLog.filter({ date: todayStr, created_by: user.email });
       if (existingLog.length > 0) {
         const currentGlasses = existingLog[0].glasses;
@@ -92,6 +117,7 @@ export default function QuickActionsBarV2({
       }
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['waterLogToday'] });
       queryClient.invalidateQueries({ queryKey: ['waterLogs'] });
       queryClient.invalidateQueries({ queryKey: ['dailySelfCareLog'] });
     },
@@ -99,7 +125,10 @@ export default function QuickActionsBarV2({
 
   const logMoodMutation = useMutation({
     mutationFn: (data) => base44.entities.MoodLog.create({ ...data, date: format(new Date(), 'yyyy-MM-dd'), timestamp: new Date().toISOString() }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['moodLogs'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['moodLogs'] });
+      queryClient.invalidateQueries({ queryKey: ['moodLogToday'] });
+    }
   });
 
   const logFoodMutation = useMutation({
@@ -185,13 +214,39 @@ export default function QuickActionsBarV2({
             const style = isTailwind ? {} : { backgroundColor: action.color };
             const className = isTailwind ? action.color : '';
 
+            // Custom display for Water (counter) and Mood (emoji)
+            let displayContent = <IconComponent className={currentSize.icon} />;
+            
+            if (action.id === 'water' && waterLog?.glasses > 0) {
+              displayContent = (
+                <div className="relative w-full h-full flex items-center justify-center">
+                  <IconComponent className={currentSize.icon} />
+                  <div className="absolute -top-1 -right-1 bg-blue-600 text-white text-[8px] font-bold rounded-full w-4 h-4 flex items-center justify-center border border-white">
+                    {waterLog.glasses}
+                  </div>
+                </div>
+              );
+            }
+
+            if (action.id === 'mood' && moodLog?.mood) {
+              const emojiMap = {
+                amazing: '🤩', good: '😊', okay: '😐', low: '😔', struggling: '😢',
+                great: '😄', anxious: '😰', angry: '😡', sad: '😢', loved: '🥰', motivated: '💪', tired: '😴'
+              };
+              // Check user custom moods too
+              const customEmoji = preferences?.custom_mood_options?.find(m => m.value === moodLog.mood)?.emoji;
+              const emoji = customEmoji || emojiMap[moodLog.mood] || '😐';
+              
+              displayContent = <span className="text-xl">{emoji}</span>;
+            }
+
             return (
               <div key={action.id || index} className="flex flex-col items-center gap-2 group cursor-pointer" onClick={() => handleActionClick(action)}>
                 <div 
                   className={`${currentSize.container} rounded-full flex items-center justify-center text-white shadow-lg transition-transform group-hover:scale-110 group-active:scale-95 ${className}`}
                   style={style}
                 >
-                  {IconComponent && <IconComponent className={currentSize.icon} />}
+                  {displayContent}
                 </div>
                 {!preferences?.hide_quick_action_labels && (
                   <span className="text-[10px] font-medium text-gray-500 group-hover:text-gray-800">{action.label}</span>

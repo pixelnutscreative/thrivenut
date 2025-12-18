@@ -32,15 +32,24 @@ export default function ActivityTracker() {
     notes: ''
   });
 
-  // Advanced Form State (simplified for now to basic sets)
+  // Advanced Form State
   const [advancedForm, setAdvancedForm] = useState({
-    exercises: [],
-    notes: ''
+    name: 'Full Body',
+    exercises: [
+      { name: '', sets: [{ reps: '', weight: '', completed: false }] }
+    ],
+    notes: '',
+    duration_minutes: ''
   });
 
   const { data: activities = [] } = useQuery({
     queryKey: ['activities'],
     queryFn: async () => base44.entities.ActivityLog.filter({ date: today }),
+  });
+
+  const { data: workouts = [] } = useQuery({
+    queryKey: ['workouts'],
+    queryFn: async () => base44.entities.WorkoutSession.filter({ date: today }),
   });
 
   const createActivityMutation = useMutation({
@@ -65,12 +74,70 @@ export default function ActivityTracker() {
     }
   });
 
+  const createWorkoutMutation = useMutation({
+    mutationFn: async (data) => {
+      return await base44.entities.WorkoutSession.create({
+        date: today,
+        ...data
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workouts'] });
+      setShowForm(false);
+      setAdvancedForm({
+        name: 'Full Body',
+        exercises: [{ name: '', sets: [{ reps: '', weight: '', completed: false }] }],
+        notes: '',
+        duration_minutes: ''
+      });
+    }
+  });
+
   const handleSimpleSubmit = () => {
     if (!simpleForm.simple_activity) return;
     createActivityMutation.mutate({
       ...simpleForm,
       calories_burned: simpleForm.calories_burned ? parseInt(simpleForm.calories_burned) : undefined
     });
+  };
+
+  const handleAdvancedSubmit = () => {
+    if (!advancedForm.name) return;
+    // Clean up empty exercises
+    const cleanExercises = advancedForm.exercises.filter(ex => ex.name.trim() !== '');
+    if (cleanExercises.length === 0) return;
+
+    createWorkoutMutation.mutate({
+      name: advancedForm.name,
+      exercises: cleanExercises,
+      notes: advancedForm.notes,
+      duration_minutes: advancedForm.duration_minutes ? parseInt(advancedForm.duration_minutes) : undefined
+    });
+  };
+
+  const addExercise = () => {
+    setAdvancedForm({
+      ...advancedForm,
+      exercises: [...advancedForm.exercises, { name: '', sets: [{ reps: '', weight: '', completed: false }] }]
+    });
+  };
+
+  const addSet = (exerciseIndex) => {
+    const newExercises = [...advancedForm.exercises];
+    newExercises[exerciseIndex].sets.push({ reps: '', weight: '', completed: false });
+    setAdvancedForm({ ...advancedForm, exercises: newExercises });
+  };
+
+  const updateExercise = (index, field, value) => {
+    const newExercises = [...advancedForm.exercises];
+    newExercises[index][field] = value;
+    setAdvancedForm({ ...advancedForm, exercises: newExercises });
+  };
+
+  const updateSet = (exIndex, setIndex, field, value) => {
+    const newExercises = [...advancedForm.exercises];
+    newExercises[exIndex].sets[setIndex][field] = value;
+    setAdvancedForm({ ...advancedForm, exercises: newExercises });
   };
 
   const intensityColors = {
@@ -228,13 +295,85 @@ export default function ActivityTracker() {
                       </div>
                     </>
                   ) : (
-                    <div className="text-center py-8 text-gray-500">
-                      <Dumbbell className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                      <p>Advanced workout builder coming soon!</p>
-                      <p className="text-sm">For now, please use Simple mode to track.</p>
-                      <Button variant="outline" onClick={() => setMode('simple')} className="mt-4">
-                        Switch to Simple Mode
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Workout Name / Type</label>
+                        <Input 
+                          placeholder="e.g. Push Day, Leg Day, Full Body"
+                          value={advancedForm.name}
+                          onChange={(e) => setAdvancedForm({...advancedForm, name: e.target.value})}
+                        />
+                      </div>
+
+                      {advancedForm.exercises.map((ex, exIndex) => (
+                        <div key={exIndex} className="p-4 bg-gray-50 rounded-lg border space-y-3">
+                          <div className="flex gap-2">
+                            <Input 
+                              placeholder={`Exercise ${exIndex + 1} Name`}
+                              value={ex.name}
+                              onChange={(e) => updateExercise(exIndex, 'name', e.target.value)}
+                              className="font-medium"
+                            />
+                            <Button variant="ghost" size="icon" onClick={() => {
+                              const newEx = [...advancedForm.exercises];
+                              newEx.splice(exIndex, 1);
+                              setAdvancedForm({...advancedForm, exercises: newEx});
+                            }}>
+                              <Trash2 className="w-4 h-4 text-red-400" />
+                            </Button>
+                          </div>
+
+                          <div className="space-y-2">
+                            <div className="grid grid-cols-3 gap-2 text-xs font-medium text-gray-500 px-1">
+                              <span>Reps</span>
+                              <span>Weight</span>
+                              <span>Set</span>
+                            </div>
+                            {ex.sets.map((set, setIndex) => (
+                              <div key={setIndex} className="grid grid-cols-3 gap-2 items-center">
+                                <Input 
+                                  placeholder="Reps" 
+                                  type="number"
+                                  value={set.reps}
+                                  onChange={(e) => updateSet(exIndex, setIndex, 'reps', e.target.value)}
+                                  className="h-8"
+                                />
+                                <Input 
+                                  placeholder="Lbs/Kg" 
+                                  type="number"
+                                  value={set.weight}
+                                  onChange={(e) => updateSet(exIndex, setIndex, 'weight', e.target.value)}
+                                  className="h-8"
+                                />
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs text-gray-400">#{setIndex + 1}</span>
+                                </div>
+                              </div>
+                            ))}
+                            <Button variant="outline" size="sm" onClick={() => addSet(exIndex)} className="w-full text-xs h-7 mt-2">
+                              <Plus className="w-3 h-3 mr-1" /> Add Set
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+
+                      <Button variant="outline" onClick={addExercise} className="w-full border-dashed">
+                        <Plus className="w-4 h-4 mr-2" /> Add Exercise
                       </Button>
+
+                      <div className="space-y-2 pt-2">
+                        <label className="text-sm font-medium">Notes</label>
+                        <Textarea 
+                          placeholder="How did the workout go?"
+                          value={advancedForm.notes}
+                          onChange={(e) => setAdvancedForm({...advancedForm, notes: e.target.value})}
+                        />
+                      </div>
+
+                      <div className="flex justify-end gap-2 pt-2">
+                        <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
+                        <Button onClick={handleAdvancedSubmit} className="bg-blue-600 hover:bg-blue-700">Save Workout</Button>
+                      </div>
                     </div>
                   )}
                 </CardContent>
@@ -250,7 +389,7 @@ export default function ActivityTracker() {
             Today's Movement
           </h2>
           
-          {activities.length === 0 ? (
+          {activities.length === 0 && workouts.length === 0 ? (
             <Card className="border-dashed">
               <CardContent className="p-8 text-center text-gray-400">
                 <Dumbbell className="w-12 h-12 mx-auto mb-2 opacity-20" />
@@ -260,6 +399,45 @@ export default function ActivityTracker() {
             </Card>
           ) : (
             <div className="grid gap-4">
+              {workouts.map((workout) => (
+                <motion.div
+                  key={workout.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                >
+                  <Card className={`${cardBgClass} hover:shadow-md transition-all border-l-4 border-l-blue-500`}>
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                            <Dumbbell className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-lg">{workout.name}</h3>
+                            <p className="text-xs text-gray-500">{workout.exercises?.length || 0} Exercises</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        {workout.exercises?.map((ex, i) => (
+                          <div key={i} className="text-sm border-b border-gray-100 pb-2 last:border-0 last:pb-0">
+                            <p className="font-medium">{ex.name}</p>
+                            <div className="flex gap-2 flex-wrap mt-1">
+                              {ex.sets?.map((set, s) => (
+                                <Badge key={s} variant="secondary" className="text-xs font-normal">
+                                  {set.reps} x {set.weight}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+
               {activities.map((activity) => (
                 <motion.div
                   key={activity.id}
