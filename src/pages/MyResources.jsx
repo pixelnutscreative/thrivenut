@@ -163,11 +163,6 @@ export default function MyResources() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2 items-center">
-          <Link to="/CreatorGroups">
-            <Button variant="outline" className="gap-2">
-              <Users className="w-4 h-4" /> Manage Groups
-            </Button>
-          </Link>
           <div className="flex items-center gap-2 bg-white p-2 rounded-lg border shadow-sm mr-2">
             <Switch 
               checked={showShared}

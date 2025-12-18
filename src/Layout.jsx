@@ -202,6 +202,7 @@ export default function Layout({ children, currentPageName }) {
       color: 'text-pink-400', // Hot Pink
       bgColor: 'bg-pink-500/10',
       items: [
+        { name: 'My Groups', icon: Users, path: 'CreatorGroups', alwaysShow: true },
         { name: 'Settings', icon: Settings, path: 'Settings', alwaysShow: true },
         { name: 'Support', icon: HelpCircle, path: 'Support', alwaysShow: true },
         { name: 'Admin Panel', icon: UserCog, path: 'Admin', adminOnly: true },

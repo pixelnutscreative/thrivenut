@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
-import { Users, Plus, Settings, Video, AlertCircle, ArrowLeft, Loader2 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Users, Plus, Settings, Video, AlertCircle, ArrowLeft, Loader2, Building, Home, Heart } from 'lucide-react';
 import { useTheme } from '../components/shared/useTheme';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import GroupTrainingTab from '../components/groups/GroupTrainingTab';
@@ -15,12 +16,19 @@ import GroupRequestsTab from '../components/groups/GroupRequestsTab';
 import GroupMembersTab from '../components/groups/GroupMembersTab';
 
 export default function CreatorGroups() {
-  const { user } = useTheme();
+  const { user, preferences } = useTheme();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeGroupId = searchParams.get('id');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
+  const [newGroupType, setNewGroupType] = useState('community');
+
+  // Admin Check
+  const realUserEmail = user?.email ? user.email.toLowerCase() : '';
+  const adminEmails = ['pixelnutscreative@gmail.com', 'pixel@thrivenut.app'];
+  const isSuperAdmin = realUserEmail && adminEmails.includes(realUserEmail);
+  const canCreateAgency = isSuperAdmin || preferences?.can_create_agency;
 
   // Fetch my groups
   const { data: myMemberships = [], isLoading } = useQuery({
@@ -45,13 +53,14 @@ export default function CreatorGroups() {
   });
 
   const createGroupMutation = useMutation({
-    mutationFn: async (name) => {
+    mutationFn: async ({ name, type }) => {
       // 1. Create Group
       const group = await base44.entities.CreatorGroup.create({
         name,
         owner_email: user.email,
         invite_code: Math.random().toString(36).substring(7).toUpperCase(),
-        status: 'active'
+        status: 'active',
+        type
       });
       // 2. Add Owner as Member
       await base44.entities.CreatorGroupMember.create({
@@ -68,6 +77,7 @@ export default function CreatorGroups() {
       queryClient.invalidateQueries(['myGroupsDetails']);
       setIsCreateOpen(false);
       setNewGroupName('');
+      setNewGroupType('community');
       setSearchParams({ id: newGroup.id });
     }
   });
@@ -87,7 +97,7 @@ export default function CreatorGroups() {
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
-              <Users className="w-7 h-7 text-purple-600" /> Creator Groups
+              <Users className="w-7 h-7 text-purple-600" /> My Groups
             </h1>
             <p className="text-gray-600 mt-1">Connect, learn, and grow with your squads.</p>
           </div>
@@ -99,19 +109,52 @@ export default function CreatorGroups() {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Create New Creator Group</DialogTitle>
+                <DialogTitle>Create New Group</DialogTitle>
               </DialogHeader>
-              <div className="py-4">
-                <Label>Group Name</Label>
-                <Input 
-                  value={newGroupName} 
-                  onChange={(e) => setNewGroupName(e.target.value)} 
-                  placeholder="e.g. The Treehouse" 
-                  className="mt-2"
-                />
+              <div className="py-4 space-y-4">
+                <div className="space-y-2">
+                  <Label>Group Type</Label>
+                  <Select value={newGroupType} onValueChange={setNewGroupType}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="community">
+                        <div className="flex items-center gap-2">
+                          <Users className="w-4 h-4" /> Community / Friends
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="family">
+                        <div className="flex items-center gap-2">
+                          <Home className="w-4 h-4" /> Family
+                        </div>
+                      </SelectItem>
+                      {canCreateAgency && (
+                        <SelectItem value="agency">
+                          <div className="flex items-center gap-2">
+                            <Building className="w-4 h-4" /> Agency / Official
+                          </div>
+                        </SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500">
+                    {newGroupType === 'agency' 
+                      ? 'Official Creator Groups for agencies, coaching, or brands.' 
+                      : 'Casual groups for friends, family, or shared interests.'}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Group Name</Label>
+                  <Input 
+                    value={newGroupName} 
+                    onChange={(e) => setNewGroupName(e.target.value)} 
+                    placeholder="e.g. The Treehouse" 
+                  />
+                </div>
               </div>
               <DialogFooter>
-                <Button onClick={() => createGroupMutation.mutate(newGroupName)} disabled={!newGroupName}>
+                <Button onClick={() => createGroupMutation.mutate({ name: newGroupName, type: newGroupType })} disabled={!newGroupName}>
                   Create Group
                 </Button>
               </DialogFooter>
@@ -124,12 +167,19 @@ export default function CreatorGroups() {
             <Card key={group.id} className="hover:shadow-lg transition-all cursor-pointer group" onClick={() => setSearchParams({ id: group.id })}>
               <CardContent className="p-6">
                 <div className="flex justify-between items-start mb-4">
-                  <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center text-purple-600 font-bold text-xl">
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-xl ${
+                    group.type === 'agency' ? 'bg-purple-100 text-purple-600' :
+                    group.type === 'family' ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'
+                  }`}>
                     {group.name[0]}
                   </div>
-                  {group.owner_email === user?.email && (
-                    <Badge variant="secondary" className="bg-purple-100 text-purple-800">Owner</Badge>
-                  )}
+                  <div className="flex flex-col items-end gap-1">
+                    {group.type === 'agency' && <span className="text-[10px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-medium">AGENCY</span>}
+                    {group.type === 'family' && <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">FAMILY</span>}
+                    {group.owner_email === user?.email && (
+                      <span className="text-[10px] border px-2 py-0.5 rounded-full text-gray-500">Owner</span>
+                    )}
+                  </div>
                 </div>
                 <h3 className="text-xl font-bold mb-2 group-hover:text-purple-600 transition-colors">{group.name}</h3>
                 <p className="text-sm text-gray-500 line-clamp-2 mb-4">{group.description || 'No description yet.'}</p>
@@ -163,7 +213,11 @@ export default function CreatorGroups() {
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div>
-              <h1 className="text-xl font-bold text-gray-900">{activeGroup.name}</h1>
+              <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                {activeGroup.name}
+                {activeGroup.type === 'agency' && <Building className="w-4 h-4 text-purple-500" />}
+                {activeGroup.type === 'family' && <Home className="w-4 h-4 text-green-500" />}
+              </h1>
               <p className="text-xs text-gray-500">Dashboard</p>
             </div>
           </div>
@@ -178,7 +232,7 @@ export default function CreatorGroups() {
 
       <div className="max-w-6xl mx-auto p-6">
         <Tabs defaultValue="training" className="space-y-6">
-          <TabsList className="bg-white border p-1 rounded-xl h-auto">
+          <TabsList className="bg-white border p-1 rounded-xl h-auto flex-wrap">
             <TabsTrigger value="training" className="px-6 py-2 rounded-lg data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700">
               <Video className="w-4 h-4 mr-2" /> Training
             </TabsTrigger>
