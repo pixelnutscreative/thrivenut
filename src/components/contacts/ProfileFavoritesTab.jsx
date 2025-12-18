@@ -19,7 +19,9 @@ export default function ProfileFavoritesTab({
   const [viewMode, setViewMode] = useState('mine'); // 'mine' or 'theirs'
 
   // Fetch public profile if we're in "theirs" mode and have a linked email
-  const { data: publicProfile, isLoading, refetch } = useQuery({
+  // When using in FamilyMembers, we pass the linked profile data directly via `linkedProfileData` prop if available
+  // If not, we fetch it here (legacy/other contacts behavior)
+  const { data: fetchedPublicProfile } = useQuery({
     queryKey: ['publicProfile', linkedEmail],
     queryFn: async () => {
       if (!linkedEmail) return null;
@@ -31,11 +33,12 @@ export default function ProfileFavoritesTab({
         return null;
       }
     },
-    enabled: !!linkedEmail && viewMode === 'theirs' && !isProfile
+    enabled: !!linkedEmail && !formData.linkedProfileData && viewMode === 'theirs' && !isProfile
   });
 
-  const data = (viewMode === 'theirs' && publicProfile && !isProfile) ? publicProfile : formData;
-  const isReadOnly = viewMode === 'theirs' && !isProfile;
+  const linkedData = formData.linkedProfileData || fetchedPublicProfile;
+  const data = (viewMode === 'theirs' && linkedData && !isProfile) ? linkedData : formData;
+  const isReadOnly = (viewMode === 'theirs' && !isProfile) || formData.isReadOnly; // Support forced read-only from parent
 
   const updateNested = (category, field, value) => {
     if (isReadOnly) return;
@@ -112,13 +115,26 @@ export default function ProfileFavoritesTab({
                   <div><Label className="text-xs text-gray-500">Top</Label><Input disabled={isReadOnly} value={data.clothing_sizes?.top || ''} onChange={(e) => updateNested('clothing_sizes', 'top', e.target.value)} className="h-8" /></div>
                   <div><Label className="text-xs text-gray-500">Bottom</Label><Input disabled={isReadOnly} value={data.clothing_sizes?.bottom || ''} onChange={(e) => updateNested('clothing_sizes', 'bottom', e.target.value)} className="h-8" /></div>
                   <div><Label className="text-xs text-gray-500">Shoe</Label><Input disabled={isReadOnly} value={data.clothing_sizes?.shoe || ''} onChange={(e) => updateNested('clothing_sizes', 'shoe', e.target.value)} className="h-8" /></div>
-                  <div><Label className="text-xs text-gray-500">Dress</Label><Input disabled={isReadOnly} value={data.clothing_sizes?.dress || ''} onChange={(e) => updateNested('clothing_sizes', 'dress', e.target.value)} className="h-8" /></div>
+                  <div><Label className="text-xs text-gray-500">Dress/Suit</Label><Input disabled={isReadOnly} value={data.clothing_sizes?.dress || ''} onChange={(e) => updateNested('clothing_sizes', 'dress', e.target.value)} className="h-8" /></div>
                   <div><Label className="text-xs text-gray-500">Ring</Label><Input disabled={isReadOnly} value={data.clothing_sizes?.ring || ''} onChange={(e) => updateNested('clothing_sizes', 'ring', e.target.value)} className="h-8" /></div>
                   <div><Label className="text-xs text-gray-500">Hat</Label><Input disabled={isReadOnly} value={data.clothing_sizes?.hat || ''} onChange={(e) => updateNested('clothing_sizes', 'hat', e.target.value)} className="h-8" /></div>
+                  <div className="col-span-2"><Label className="text-xs text-gray-500">Other/Notes</Label><Input disabled={isReadOnly} value={data.clothing_sizes?.other || ''} onChange={(e) => updateNested('clothing_sizes', 'other', e.target.value)} className="h-8" /></div>
                 </div>
-                <div className="space-y-2 pt-2 border-t">
-                  <div><Label className="text-xs text-gray-500">Style Vibe</Label><Input disabled={isReadOnly} value={data.style_profile?.vibe || ''} onChange={(e) => updateNested('style_profile', 'vibe', e.target.value)} className="h-8" /></div>
-                  <div><Label className="text-xs text-gray-500">Favorite Brands</Label><Input disabled={isReadOnly} value={data.style_profile?.favorite_brands || ''} onChange={(e) => updateNested('style_profile', 'favorite_brands', e.target.value)} className="h-8" /></div>
+                
+                <div className="space-y-3 pt-3 border-t">
+                  <h4 className="text-xs font-bold text-pink-600 uppercase">Beauty & Style</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div><Label className="text-xs text-gray-500">Hair Color Pref</Label><Input disabled={isReadOnly} value={data.beauty_profile?.hair_color_preference || ''} onChange={(e) => updateNested('beauty_profile', 'hair_color_preference', e.target.value)} className="h-8" /></div>
+                    <div><Label className="text-xs text-gray-500">Nail Polish</Label><Input disabled={isReadOnly} value={data.beauty_profile?.nail_polish_preference || ''} onChange={(e) => updateNested('beauty_profile', 'nail_polish_preference', e.target.value)} className="h-8" /></div>
+                    <div><Label className="text-xs text-gray-500">Makeup Notes</Label><Input disabled={isReadOnly} value={data.beauty_profile?.makeup_notes || ''} onChange={(e) => updateNested('beauty_profile', 'makeup_notes', e.target.value)} className="h-8" /></div>
+                    <div><Label className="text-xs text-gray-500">Scent/Perfume</Label><Input disabled={isReadOnly} value={data.beauty_profile?.scent_notes || ''} onChange={(e) => updateNested('beauty_profile', 'scent_notes', e.target.value)} className="h-8" /></div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div><Label className="text-xs text-gray-500">Style Vibe</Label><Input disabled={isReadOnly} value={data.style_profile?.vibe || ''} onChange={(e) => updateNested('style_profile', 'vibe', e.target.value)} className="h-8" /></div>
+                    <div><Label className="text-xs text-gray-500">Favorite Brands</Label><Input disabled={isReadOnly} value={data.style_profile?.favorite_brands || ''} onChange={(e) => updateNested('style_profile', 'favorite_brands', e.target.value)} className="h-8" /></div>
+                    <div><Label className="text-xs text-gray-500">Loves Materials</Label><Input disabled={isReadOnly} value={data.style_profile?.favorite_materials || ''} onChange={(e) => updateNested('style_profile', 'favorite_materials', e.target.value)} className="h-8" /></div>
+                    <div><Label className="text-xs text-gray-500">Hates Materials</Label><Input disabled={isReadOnly} value={data.style_profile?.disliked_materials || ''} onChange={(e) => updateNested('style_profile', 'disliked_materials', e.target.value)} className="h-8" /></div>
+                  </div>
                 </div>
               </motion.div>
             </TabsContent>
@@ -143,16 +159,36 @@ export default function ProfileFavoritesTab({
                   <Label className="text-xs text-gray-500">Favorite Restaurants</Label>
                   <Input disabled={isReadOnly} value={data.food_preferences?.favorite_restaurants || ''} onChange={(e) => updateNested('food_preferences', 'favorite_restaurants', e.target.value)} className="h-8" />
                 </div>
+                
+                <div className="grid grid-cols-2 gap-3 pt-2">
+                  <div><Label className="text-xs text-gray-500">Coffee Order</Label><Input disabled={isReadOnly} value={data.food_profile?.coffee_order || ''} onChange={(e) => updateNested('food_profile', 'coffee_order', e.target.value)} className="h-8" /></div>
+                  <div><Label className="text-xs text-gray-500">Cocktail/Drink</Label><Input disabled={isReadOnly} value={data.food_profile?.cocktail_order || ''} onChange={(e) => updateNested('food_profile', 'cocktail_order', e.target.value)} className="h-8" /></div>
+                </div>
+
                 <div className="pt-2 border-t">
-                  <Label className="text-xs text-gray-500 mb-2 block">Allergies</Label>
-                  {(data.allergies || []).map((allergy, idx) => (
-                    <div key={idx} className="flex gap-2 mb-2">
-                      <Input disabled={isReadOnly} value={allergy.name} onChange={(e) => updateListItem('allergies', idx, 'name', e.target.value)} placeholder="Allergy" className="h-8" />
-                      <Input disabled={isReadOnly} value={allergy.severity} onChange={(e) => updateListItem('allergies', idx, 'severity', e.target.value)} placeholder="Severity" className="h-8 w-24" />
-                      {!isReadOnly && <Button size="sm" variant="ghost" onClick={() => removeListItem('allergies', idx)} className="h-8 w-8 p-0 text-red-400">×</Button>}
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-xs text-red-500 font-bold mb-1 block">Allergies</Label>
+                      {/* Handle both array of strings (simple) and array of objects (detailed) */}
+                      <Input 
+                        disabled={isReadOnly} 
+                        placeholder="Peanuts, Shellfish..."
+                        value={Array.isArray(data.food_profile?.allergies) ? data.food_profile.allergies.map(a => typeof a === 'string' ? a : a.name).join(', ') : ''} 
+                        onChange={(e) => updateNested('food_profile', 'allergies', e.target.value.split(',').map(s => s.trim()))}
+                        className="h-8"
+                      />
                     </div>
-                  ))}
-                  {!isReadOnly && <Button size="sm" variant="outline" onClick={() => addListItem('allergies', { name: '', severity: 'mild' })} className="h-7 text-xs">+ Add Allergy</Button>}
+                    <div>
+                      <Label className="text-xs text-orange-500 font-bold mb-1 block">Dietary Restrictions</Label>
+                      <Input 
+                        disabled={isReadOnly} 
+                        placeholder="Vegan, Gluten Free..."
+                        value={(data.food_profile?.dietary_restrictions || []).join(', ')} 
+                        onChange={(e) => updateNested('food_profile', 'dietary_restrictions', e.target.value.split(',').map(s => s.trim()))}
+                        className="h-8"
+                      />
+                    </div>
+                  </div>
                 </div>
               </motion.div>
             </TabsContent>

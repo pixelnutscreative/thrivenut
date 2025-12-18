@@ -17,19 +17,24 @@ export default function MomentsTabContent({ formData, setFormData, isProfile = f
     story: ''
   });
 
-  const moments = formData.moments || [];
+  // Support both key names for compatibility
+  const moments = formData.memorable_moments || formData.moments || [];
 
   const handleAddMoment = () => {
     if (!newMoment.title) return;
     
     const moment = {
       id: Date.now().toString(),
-      ...newMoment
+      ...newMoment,
+      description: newMoment.story // Map story to description for compatibility
     };
 
+    const newMomentsList = [moment, ...moments];
+    
     setFormData({
       ...formData,
-      moments: [moment, ...moments]
+      moments: newMomentsList,
+      memorable_moments: newMomentsList // Update both keys
     });
 
     setNewMoment({
@@ -42,9 +47,11 @@ export default function MomentsTabContent({ formData, setFormData, isProfile = f
   };
 
   const removeMoment = (id) => {
+    const filtered = moments.filter(m => m.id !== id);
     setFormData({
       ...formData,
-      moments: moments.filter(m => m.id !== id)
+      moments: filtered,
+      memorable_moments: filtered
     });
   };
 
@@ -152,7 +159,7 @@ export default function MomentsTabContent({ formData, setFormData, isProfile = f
               <span className="text-xs text-gray-500">{moment.date || 'No date'}</span>
             </div>
             <h4 className="font-medium text-gray-800 mb-1">{moment.title}</h4>
-            {moment.story && <p className="text-sm text-gray-600 leading-relaxed">{moment.story}</p>}
+            {(moment.story || moment.description) && <p className="text-sm text-gray-600 leading-relaxed">{moment.story || moment.description}</p>}
           </div>
         ))}
       </div>

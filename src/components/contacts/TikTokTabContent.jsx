@@ -548,39 +548,11 @@ export default function TikTokTabContent({
         )}
 
         {/* Creator & Battle Info inside blue box */}
-        <div className="mt-3 grid grid-cols-2 gap-3">
-          {/* Creator + Battle Column - Indigo themed */}
-          <div className="p-2 bg-indigo-50 rounded-lg border border-indigo-200 space-y-2">
-            <div className="space-y-1">
-              {Object.entries(creatorRoles).map(([key, config]) => (
-                <RoleButton key={key} roleKey={key} config={config} small />
-              ))}
-            </div>
-            <div className="pt-2 border-t border-indigo-200 space-y-1">
-              {Object.entries(battleRoles).map(([key, config]) => (
-                <RoleButton key={key} roleKey={key} config={config} small />
-              ))}
-            </div>
-            
-            {/* Live Inventory - Hidden on Profile */}
-            {!isProfile && (formData.role?.includes('loves_to_battle') || formData.role?.includes('battle_sniper')) && (
-              <div className="p-2 bg-red-100 rounded border border-red-300 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-semibold text-red-700">Live Inventory (Active)</span>
-                  <QuickInventoryAdd 
-                    contactId={editingContactId} 
-                    contactName={formData.display_name || formData.username} 
-                  />
-                </div>
-                <ContactInventoryDisplay contactId={editingContactId} />
-              </div>
-            )}
-          </div>
-
+        <div className="mt-3">
           {/* Engagement Column - Teal themed - Hidden on Profile */}
           {!isProfile && (
             <div className="p-2 bg-teal-50 rounded-lg border border-teal-200 space-y-2">
-              <div className="space-y-1">
+              <div className="grid grid-cols-2 gap-2">
                 {Object.entries(engagementRoles).map(([key, config]) => (
                   <RoleButton key={key} roleKey={key} config={config} small />
                 ))}

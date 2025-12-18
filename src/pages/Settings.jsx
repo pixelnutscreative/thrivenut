@@ -314,35 +314,44 @@ export default function Settings() {
           setActiveTab(v); 
           navigate(`#${v}`); 
         }} className="w-full">
-          <TabsList className="grid grid-cols-6 md:grid-cols-10 gap-1 mb-6 bg-transparent h-auto">
-            <TabsTrigger value="profile" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
+          <TabsList className="grid grid-cols-5 md:grid-cols-9 gap-1 mb-6 bg-transparent h-auto">
+            <TabsTrigger value="profile" className="flex flex-col items-center gap-1 h-auto py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
               <User className="w-4 h-4" />
+              <span className="text-[10px] font-medium">Profile</span>
             </TabsTrigger>
 
-            <TabsTrigger value="appearance" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
+            <TabsTrigger value="appearance" className="flex flex-col items-center gap-1 h-auto py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
               <Palette className="w-4 h-4" />
+              <span className="text-[10px] font-medium">Theme</span>
             </TabsTrigger>
-            <TabsTrigger value="features" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
+            <TabsTrigger value="features" className="flex flex-col items-center gap-1 h-auto py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
               <Layers className="w-4 h-4" />
+              <span className="text-[10px] font-medium">Features</span>
             </TabsTrigger>
-            <TabsTrigger value="dashboard" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
+            <TabsTrigger value="dashboard" className="flex flex-col items-center gap-1 h-auto py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
               <CalendarIcon className="w-4 h-4" />
+              <span className="text-[10px] font-medium">Dash</span>
             </TabsTrigger>
-            <TabsTrigger value="preferences" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
+            <TabsTrigger value="preferences" className="flex flex-col items-center gap-1 h-auto py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
               <Sliders className="w-4 h-4" />
+              <span className="text-[10px] font-medium">Prefs</span>
             </TabsTrigger>
-            <TabsTrigger value="connections" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
+            <TabsTrigger value="connections" className="flex flex-col items-center gap-1 h-auto py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
               <Sparkles className="w-4 h-4" />
+              <span className="text-[10px] font-medium">Connect</span>
             </TabsTrigger>
-            <TabsTrigger value="widgets-v2" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
+            <TabsTrigger value="widgets-v2" className="flex flex-col items-center gap-1 h-auto py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
               <PuzzleIcon className="w-4 h-4" />
+              <span className="text-[10px] font-medium">Widgets</span>
             </TabsTrigger>
 
-            <TabsTrigger value="bible" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
+            <TabsTrigger value="bible" className="flex flex-col items-center gap-1 h-auto py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
               <BookOpen className="w-4 h-4" />
+              <span className="text-[10px] font-medium">Bible</span>
             </TabsTrigger>
-            <TabsTrigger value="referrals" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
+            <TabsTrigger value="referrals" className="flex flex-col items-center gap-1 h-auto py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
               <Share2 className="w-4 h-4" />
+              <span className="text-[10px] font-medium">Share</span>
             </TabsTrigger>
 
           </TabsList>
