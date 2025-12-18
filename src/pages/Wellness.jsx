@@ -97,6 +97,10 @@ export default function Wellness() {
     enabled: !!user,
   });
 
+  // Dynamic custom tasks from preferences
+  const customTasks = preferences?.custom_wellness_tasks || [];
+  const hiddenTasks = preferences?.hidden_wellness_tasks || [];
+
   const { data: medicationsCount } = useQuery({
     queryKey: ['medicationsCount'],
     queryFn: async () => {
@@ -326,7 +330,7 @@ export default function Wellness() {
           </motion.div>
         )}
 
-        {/* Quick Check Cards */}
+        {/* Quick Check Cards - Pet/Care removed as requested */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -335,16 +339,6 @@ export default function Wellness() {
         >
           <QuickMedicationCheck userEmail={user?.email} />
           <QuickSupplementCheck userEmail={user?.email} />
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.065 }}
-          className="grid md:grid-cols-2 gap-4"
-        >
-          <QuickPetCareCheck userEmail={user?.email} />
-          <QuickCareReminderCheck userEmail={user?.email} />
         </motion.div>
 
         {/* Nutrition & Cycle Tracking Row */}

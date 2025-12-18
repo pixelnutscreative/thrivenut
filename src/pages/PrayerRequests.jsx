@@ -63,7 +63,9 @@ export default function PrayerRequests() {
     is_urgent: false,
     is_anonymous: false,
     allow_messages: true,
-    visibility: 'community'
+    visibility: 'community',
+    is_private: false,
+    assigned_person: ''
   });
   
   const [showPrayerHistory, setShowPrayerHistory] = useState(null);
@@ -81,13 +83,34 @@ export default function PrayerRequests() {
   const { data: prayerRequests = [] } = useQuery({
     queryKey: ['prayerRequests', isBibleEnabled],
     queryFn: async () => {
+      // Fetch public community requests
       const requests = await base44.entities.PrayerRequest.filter({ visibility: 'community' }, '-created_date');
+      
+      // Fetch my private requests
+      const myPrivateRequests = await base44.entities.PrayerRequest.filter({ 
+        created_by: effectiveEmail,
+        visibility: 'private' 
+      }, '-created_date');
+
+      const allRequests = [...requests, ...myPrivateRequests];
+      
+      // Deduplicate in case I created community requests
+      const seen = new Set();
+      const uniqueRequests = allRequests.filter(r => {
+        if (seen.has(r.id)) return false;
+        seen.add(r.id);
+        return true;
+      });
+
+      // Sort by date desc
+      uniqueRequests.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+
       // Non-Bible believers only see light_and_love requests
       // Bible believers see ALL requests (they can pray for everyone)
       if (!isBibleEnabled) {
-        return requests.filter(r => r.request_type === 'light_and_love');
+        return uniqueRequests.filter(r => r.request_type === 'light_and_love');
       }
-      return requests;
+      return uniqueRequests;
     },
     enabled: isBibleEnabled !== undefined,
   });
@@ -292,6 +315,17 @@ export default function PrayerRequests() {
               <Badge variant="outline" className={`text-xs ${isDark ? 'border-gray-500 text-gray-300' : ''}`}>
                 <Lock className="w-3 h-3 mr-1" />
                 Anonymous
+              </Badge>
+            )}
+            {request.is_private && (
+              <Badge variant="outline" className="text-xs border-purple-500 text-purple-600 bg-purple-50">
+                <Lock className="w-3 h-3 mr-1" />
+                Private
+              </Badge>
+            )}
+            {request.assigned_person && (
+              <Badge variant="outline" className="text-xs border-blue-500 text-blue-600 bg-blue-50">
+                For: {request.assigned_person}
               </Badge>
             )}
           </div>
@@ -619,6 +653,29 @@ export default function PrayerRequests() {
                   <p className="text-xs text-gray-500">Let others send messages & scriptures</p>
                 </div>
               </label>
+
+              <label 
+                className="flex items-center gap-3 p-3 rounded-lg border cursor-pointer hover:bg-gray-50"
+                onClick={() => setFormData({ ...formData, is_private: !formData.is_private, visibility: !formData.is_private ? 'private' : 'community' })}
+              >
+                <Checkbox checked={formData.is_private} />
+                <div>
+                  <span className="font-medium">🔒 Private / Personal</span>
+                  <p className="text-xs text-gray-500">Only visible to you (or assigned person)</p>
+                </div>
+              </label>
+
+              {formData.is_private && (
+                <div className="space-y-2 pt-2">
+                  <label className="text-sm font-medium">Assign to Person (Optional)</label>
+                  <Input 
+                    placeholder="Name of person you are praying for..." 
+                    value={formData.assigned_person || ''}
+                    onChange={(e) => setFormData({ ...formData, assigned_person: e.target.value })}
+                  />
+                  <p className="text-xs text-gray-500">Use this to track prayers for specific people privately.</p>
+                </div>
+              )}
             </div>
 
             <Button

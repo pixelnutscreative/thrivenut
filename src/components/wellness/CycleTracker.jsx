@@ -27,7 +27,9 @@ const symptomsList = [
   { id: 'insomnia', label: 'Insomnia', icon: '👀' },
   { id: 'joint_pain', label: 'Joint Pain', icon: '🦵' },
   { id: 'anxiety', label: 'Anxiety', icon: '😰' },
-  { id: 'irritability', label: 'Irritability', icon: '😤' }
+  { id: 'irritability', label: 'Irritability', icon: '😤' },
+  { id: 'do_not_care', label: 'IDGAF Mode', icon: '😑' },
+  { id: 'pee_trip', label: 'Pee Trip', icon: '🚽' }
 ];
 
 const flowOptions = [
@@ -111,29 +113,60 @@ export default function CycleTracker({ userEmail }) {
         </div>
 
         {/* Quick Menopause Check */}
-        <div className="grid grid-cols-2 gap-3">
-          <button
-            onClick={() => toggleSymptom('hot_flashes')}
-            className={`p-3 rounded-xl border flex items-center gap-2 justify-center transition-all ${
-              log?.symptoms?.includes('hot_flashes')
-                ? 'bg-orange-100 border-orange-300 text-orange-700'
-                : 'bg-white border-gray-200 text-gray-600 hover:bg-orange-50'
-            }`}
-          >
-            <Thermometer className="w-4 h-4" />
-            Hot Flash
-          </button>
-          <button
-            onClick={() => toggleSymptom('brain_fog')}
-            className={`p-3 rounded-xl border flex items-center gap-2 justify-center transition-all ${
-              log?.symptoms?.includes('brain_fog')
-                ? 'bg-indigo-100 border-indigo-300 text-indigo-700'
-                : 'bg-white border-gray-200 text-gray-600 hover:bg-indigo-50'
-            }`}
-          >
-            <Brain className="w-4 h-4" />
-            Brain Fog
-          </button>
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-rose-800">Menopause & Fun Stuff</label>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() => toggleSymptom('hot_flashes')}
+              className={`p-3 rounded-xl border flex items-center gap-2 justify-center transition-all ${
+                log?.symptoms?.includes('hot_flashes')
+                  ? 'bg-orange-100 border-orange-300 text-orange-700'
+                  : 'bg-white border-gray-200 text-gray-600 hover:bg-orange-50'
+              }`}
+            >
+              <Thermometer className="w-4 h-4" />
+              Hot Flash 🔥
+            </button>
+            <button
+              onClick={() => toggleSymptom('night_sweats')}
+              className={`p-3 rounded-xl border flex items-center gap-2 justify-center transition-all ${
+                log?.symptoms?.includes('night_sweats')
+                  ? 'bg-blue-100 border-blue-300 text-blue-700'
+                  : 'bg-white border-gray-200 text-gray-600 hover:bg-blue-50'
+              }`}
+            >
+              <Moon className="w-4 h-4" />
+              Sweaty Night 💦
+            </button>
+          </div>
+          
+          <div className="flex items-center gap-2 p-3 bg-white rounded-xl border border-gray-200">
+             <span className="text-sm">🚽 Pee Trips:</span>
+             <div className="flex items-center gap-2">
+               <Button size="sm" variant="outline" className="h-6 w-6 p-0" onClick={() => logMutation.mutate({ bathroom_trips: Math.max(0, (log?.bathroom_trips || 0) - 1) })}>-</Button>
+               <span className="w-4 text-center">{log?.bathroom_trips || 0}</span>
+               <Button size="sm" variant="outline" className="h-6 w-6 p-0" onClick={() => logMutation.mutate({ bathroom_trips: (log?.bathroom_trips || 0) + 1 })}>+</Button>
+             </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs text-gray-600">IDGAF Level (Do Not Care Status):</label>
+            <div className="flex gap-1">
+              {['low', 'medium', 'high', 'extreme'].map(level => (
+                <button
+                  key={level}
+                  onClick={() => logMutation.mutate({ do_not_care_status: level })}
+                  className={`flex-1 py-1 rounded text-xs capitalize border ${
+                    log?.do_not_care_status === level 
+                      ? 'bg-rose-500 text-white border-rose-500' 
+                      : 'bg-white text-gray-500 border-gray-200'
+                  }`}
+                >
+                  {level}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Symptoms Accordion */}

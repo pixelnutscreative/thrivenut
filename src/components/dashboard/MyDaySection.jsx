@@ -17,6 +17,7 @@ import {
   Calendar, History, Settings, Eye, EyeOff, CalendarDays, Trash2,
   Plus, Filter, MoreHorizontal, AlertTriangle
 } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
@@ -1240,7 +1241,7 @@ export default function MyDaySection({
                     const isComplete = isTaskComplete(task);
                     
                     return (
-                      <div key={task.id} className="flex items-center gap-3 p-3 bg-white rounded-lg border hover:border-purple-300 transition-colors">
+                      <div key={task.id} className="flex items-center gap-3 p-3 bg-white rounded-lg border hover:border-purple-300 transition-colors group">
                         <Checkbox
                           checked={isComplete}
                           onCheckedChange={() => handleToggleTask(task)}
@@ -1255,26 +1256,58 @@ export default function MyDaySection({
                             <p className="text-xs text-gray-500">{task.sublabel}</p>
                           )}
                         </div>
-                        {task.isLink && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => window.location.href = createPageUrl(task.linkTo)}
-                            className="h-7 px-2"
-                          >
-                            <ArrowRight className="w-3 h-3" />
-                          </Button>
-                        )}
-                        {task.externalLink && (
-                          <a
-                            href={task.externalLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-500 hover:text-blue-600"
-                          >
-                            <ExternalLink className="w-3 h-3" />
-                          </a>
-                        )}
+                        
+                        {/* Actions */}
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {task.isLink && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => window.location.href = createPageUrl(task.linkTo)}
+                              className="h-7 px-2"
+                            >
+                              <ArrowRight className="w-3 h-3" />
+                            </Button>
+                          )}
+                          {task.externalLink && (
+                            <a
+                              href={task.externalLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-500 hover:text-blue-600 p-1"
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          )}
+                          
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                                <Settings className="w-3 h-3 text-gray-400" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-48 p-1">
+                              <div className="flex flex-col gap-1">
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="justify-start text-xs h-8"
+                                  onClick={() => handlePushToNextDay(task.id, format(new Date(Date.now() + 86400000), 'yyyy-MM-dd'))}
+                                >
+                                  <SkipForward className="w-3 h-3 mr-2" /> Push to Tomorrow
+                                </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="justify-start text-xs h-8 text-orange-600"
+                                  onClick={() => handleSkipTask(task.id)}
+                                >
+                                  <X className="w-3 h-3 mr-2" /> Skip Today
+                                </Button>
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+                        </div>
                       </div>
                     );
                   })}
