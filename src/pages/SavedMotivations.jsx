@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Bookmark, Trash2, Copy, Check, Sparkles, Loader2, ExternalLink, Wand2, Filter, Plus, Image } from 'lucide-react';
+import { Bookmark, Trash2, Copy, Check, Sparkles, Loader2, ExternalLink, Wand2, Filter, Plus, Image, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { useTheme } from '../components/shared/useTheme';
