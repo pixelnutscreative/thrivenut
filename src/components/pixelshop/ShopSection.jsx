@@ -177,38 +177,14 @@ export default function ShopSection({ isDark, primaryColor, accentColor }) {
         Book a session and we'll dive in and get working together! Or get the tools and learn FREE 7 times a week.
       </p>
 
-      {/* Featured Items - No prices shown */}
+      {/* Featured Items Removed per request */}
+      {/* 
       {featuredItems.length > 0 && (
         <div className="grid md:grid-cols-3 gap-4">
-          {featuredItems.map(item => {
-            const config = categoryConfig[item.category] || categoryConfig.other;
-            const Icon = config.icon;
-            return (
-              <Card 
-                key={item.id} 
-                className={`overflow-hidden cursor-pointer hover:shadow-lg transition-shadow ${isDark ? 'bg-gray-800 border-gray-700' : ''}`}
-                style={{ borderColor: item.is_featured ? primaryColor : undefined }}
-                onClick={() => window.open(shopUrl, '_blank')}
-              >
-                <ImageCarousel images={item.gallery_images} />
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <Badge className={config.color}>
-                      <Icon className="w-3 h-3 mr-1" />
-                      {config.label}
-                    </Badge>
-                    {item.badge && (
-                      <Badge variant="secondary" className="text-xs">{item.badge}</Badge>
-                    )}
-                  </div>
-                  <h3 className={`font-bold ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>{item.name}</h3>
-                  <p className={`text-sm mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{item.description}</p>
-                </CardContent>
-              </Card>
-            );
-          })}
+          ...
         </div>
-      )}
+      )} 
+      */}
 
       {/* NutPals Carousel Section */}
       <Card className="text-white border-0 overflow-hidden" style={gradientStyle}>

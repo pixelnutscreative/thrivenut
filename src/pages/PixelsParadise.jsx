@@ -28,7 +28,7 @@ const aiToolboxOptions = [
 const workshopItems = [
   { 
     name: "Go Nuts! Content Creation Challenge", 
-    nickname: "(aka AI Class)",
+    nickname: "AI CLASS",
     description: "The legendary class where we go absolutely nuts creating content with AI. Warning: Side effects include uncontrollable creativity and an addiction to prompts. 🥜", 
     link: 'https://pixelnutscreative.com/aiclass',
     badge: '🔥 Fan Favorite',
@@ -40,7 +40,7 @@ const workshopItems = [
 const nutsAndBotsItem = {
   name: 'The Nuts + Bots',
   description: "Your all-in-one business command center. CRM, funnels, automations, AND Pixel's AI Toolbox included. It's like having a robot army... but friendlier. 🤖",
-  link: 'https://thenutsandbots.com/pricing',
+  link: 'https://thenutsandbots.com/order-thenutsandbotsplusai-annual-8125-6335-3387-5540',
   badge: '⚡ Includes AI Toolbox!',
   note: 'White-label High Level + All AI Tools',
 };
@@ -336,7 +336,7 @@ export default function PixelsParadise() {
                       {workshop.name}
                     </h3>
                     {workshop.nickname && (
-                      <span className="text-sm font-medium" style={{ color: primaryColor }}>{workshop.nickname}</span>
+                      <span className="text-2xl font-black block mt-1 mb-2" style={{ color: primaryColor }}>{workshop.nickname}</span>
                     )}
                   </div>
                   <ExternalLink className="w-4 h-4 text-gray-400 group-hover:opacity-80 flex-shrink-0 mt-1" style={{ color: primaryColor }} />
@@ -351,6 +351,15 @@ export default function PixelsParadise() {
                   {workshop.badge && (
                     <Badge className="text-xs border-0" style={{ backgroundColor: `${accentColor}20`, color: accentColor }}>{workshop.badge}</Badge>
                   )}
+                </div>
+                
+                <div className="pt-4">
+                  <Button 
+                    className="w-full text-white font-bold text-lg h-12 shadow-lg hover:scale-[1.02] transition-transform"
+                    style={gradientStyle}
+                  >
+                    REGISTER FOR FREE
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -372,8 +381,11 @@ export default function PixelsParadise() {
                 <h2 className="text-xl md:text-2xl lg:text-3xl font-bold">Pixel's AI Toolbox</h2>
               </div>
               <p className="text-white/90 mb-4 text-sm md:text-base">
-                The ultimate collection of AI tools, templates, prompts, and pure creative chaos. 
-                Everything I use to create content that makes people say "wait, HOW did you do that?!" 🤯
+                Access the most amazing collection of 300+ AI tools to do anything you could possibly imagine (almost, except AI video).
+                <br /><br />
+                Basically it's for <strong>less than one dollar a day</strong> when paid annually!
+                <br />
+                Also includes <strong>seven AI classes each week</strong> where you can ask questions, get new tools, and get specific help for your needs! 🤯
               </p>
               <div className="flex flex-col gap-3">
                 <Select value={selectedPlan} onValueChange={handlePlanSelect}>
@@ -410,24 +422,15 @@ export default function PixelsParadise() {
                 </p>
                 <div className="flex flex-col sm:flex-row flex-wrap items-center gap-2 md:gap-3 mt-3 justify-center md:justify-start">
                   <Button
-                    onClick={() => window.open('https://thenutsandbots.com/pricing', '_blank')}
-                    className="bg-white/30 hover:bg-white/40 text-white w-full sm:w-auto"
-                    size="sm"
+                    onClick={() => window.open('https://thenutsandbots.com/order-thenutsandbotsplusai-annual-8125-6335-3387-5540', '_blank')}
+                    className="bg-white/30 hover:bg-white/40 text-white w-full sm:w-auto font-bold text-lg h-12"
+                    size="lg"
                   >
-                    See Pricing
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => window.open('https://api.leadconnectorhq.com/widget/booking/kYlIpWiW6Cl1hulku154', '_blank')}
-                    className="border-white/50 text-white hover:bg-white/20 w-full sm:w-auto"
-                    size="sm"
-                  >
-                    <Clock className="w-3 h-3 mr-1" />
-                    Book Session
+                    See Pricing & Get Started
                   </Button>
                 </div>
-                <p className="text-white/70 text-xs mt-2 text-center md:text-left">
-                  Ready to dive in? Book a session and we'll get working together right away.
+                <p className="text-white/90 text-sm mt-3 text-center md:text-left font-semibold">
+                  🎉 Use coupon code <span className="text-yellow-300 font-bold bg-black/20 px-1 rounded">NIKOLE</span> to get $111 off the annual plan!
                 </p>
               </div>
             </div>

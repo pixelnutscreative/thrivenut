@@ -128,6 +128,7 @@ export default function Layout({ children, currentPageName }) {
         { name: 'Habits', icon: Target, path: 'Habits', moduleId: 'habits' },
         { name: 'Goals', icon: Target, path: 'Goals', moduleId: 'goals' },
         { name: 'Vision Board', icon: Eye, path: 'VisionBoard', moduleId: 'goals' },
+        { name: 'My Resources', icon: Bookmark, path: 'MyResources' },
         { name: 'Journal', icon: BookOpen, path: 'Journal', moduleId: 'journal' },
         { name: 'Finance', icon: Wallet, path: 'Finance', moduleId: 'finance' },
       ]

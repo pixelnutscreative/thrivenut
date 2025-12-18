@@ -34,7 +34,9 @@ export default function PortfolioSection({ userEmail, isAuthenticated, primaryCo
     image_urls: [],
     text_content: '',
     external_link: '',
-    tags: []
+    tags: [],
+    is_nutpal: false,
+    style_id: ''
   });
   const [uploadingImage, setUploadingImage] = useState(false);
 
@@ -42,6 +44,20 @@ export default function PortfolioSection({ userEmail, isAuthenticated, primaryCo
   const { data: aiTools = [] } = useQuery({
     queryKey: ['aiToolLinks'],
     queryFn: () => base44.entities.AIToolLink.filter({ is_active: true }, 'sort_order'),
+  });
+
+  const { data: nutPalStyles = [] } = useQuery({
+    queryKey: ['nutPalStyles'],
+    queryFn: () => base44.entities.NutPalStyle.filter({ is_active: true }, 'sort_order'),
+  });
+
+  const { data: userProfile } = useQuery({
+    queryKey: ['userProfile', userEmail],
+    queryFn: async () => {
+      const p = await base44.entities.UserProfile.filter({ user_email: userEmail });
+      return p[0] || null;
+    },
+    enabled: !!userEmail
   });
 
   // Fetch approved portfolio items
@@ -58,9 +74,18 @@ export default function PortfolioSection({ userEmail, isAuthenticated, primaryCo
   });
 
   const createItemMutation = useMutation({
-    mutationFn: (data) => base44.entities.CreatorPortfolio.create(data),
+    mutationFn: (data) => {
+      const isTrusted = userProfile?.is_trusted_creator;
+      return base44.entities.CreatorPortfolio.create({
+        ...data,
+        approval_status: isTrusted ? 'approved' : 'pending',
+        creator_name: userProfile?.nickname || userProfile?.real_name || data.creator_name,
+        creator_email: userEmail
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['myPortfolio'] });
+      queryClient.invalidateQueries({ queryKey: ['creatorPortfolio'] }); // Refresh public list if approved
       setShowAddModal(false);
       resetForm();
     },
@@ -284,8 +309,8 @@ export default function PortfolioSection({ userEmail, isAuthenticated, primaryCo
               />
             </div>
 
-            {/* Image Upload (for image, image_with_text types) */}
-            {(formData.content_type === 'image' || formData.content_type === 'image_with_text') && (
+            {/* Image Upload (for image, nutpal, image_with_text types) */}
+            {(formData.content_type === 'image' || formData.content_type === 'nutpal' || formData.content_type === 'image_with_text') && (
               <div>
                 <Label>Upload Images</Label>
                 <div className="space-y-2">
