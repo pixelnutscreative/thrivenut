@@ -9,7 +9,11 @@ import React, { useState } from 'react';
    import { Label } from '@/components/ui/label';
    import { Textarea } from '@/components/ui/textarea';
    import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-   import { Loader2, Plus, Search, ExternalLink, Trash2, Filter, Link as LinkIcon, Edit2, Users, Globe, Lock, Building, Info, Star, BookOpen, Mic, MonitorPlay, Video, Key, Calendar as CalendarIcon, Utensils, ShoppingBag, TriangleAlert } from 'lucide-react';
+   import { Loader2, Plus, Search, ExternalLink, Trash2, Filter, Link as LinkIcon, Edit2, Users, Globe, Lock, Building, Info, Star, BookOpen, Mic, MonitorPlay, Video, Key, Calendar as CalendarIcon, Utensils, ShoppingBag, TriangleAlert, Camera, ScanText, X } from 'lucide-react';
+   import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+   import { Command, CommandGroup, CommandItem, CommandList } from '@/components/ui/command';
+   import ImageUploader from '../components/settings/ImageUploader';
+   import { Check } from 'lucide-react';
    import { useTheme } from '../components/shared/useTheme';
    import ColorPicker from '../components/shared/ColorPicker';
    import { Switch } from '@/components/ui/switch';
@@ -43,8 +47,9 @@ import React, { useState } from 'react';
      const queryClient = useQueryClient();
      const { user, preferences } = useTheme();
      const [search, setSearch] = useState('');
-     const [selectedCategory, setSelectedCategory] = useState('All');
+     const [selectedCategories, setSelectedCategories] = useState([]); // Empty = All
      const [viewFilter, setViewFilter] = useState('mine'); // 'mine', 'shared', 'all'
+     const [isScanning, setIsScanning] = useState(false);
      const [isAddOpen, setIsAddOpen] = useState(false);
      const [editingItem, setEditingItem] = useState(null);
      const [resourceToDelete, setResourceToDelete] = useState(null);
@@ -198,7 +203,9 @@ import React, { useState } from 'react';
          res.title.toLowerCase().includes(search.toLowerCase()) || 
          res.notes?.toLowerCase().includes(search.toLowerCase()) ||
          res.tags?.some(t => t.toLowerCase().includes(search.toLowerCase()));
-       const matchesCategory = selectedCategory === 'All' || res.category === selectedCategory;
+       
+       const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(res.category);
+       
        return matchesSearch && matchesCategory;
      });
  
@@ -253,26 +260,69 @@ import React, { useState } from 'react';
          </div>
  
          <div className="flex flex-col md:flex-row gap-4">
-           <div className="relative flex-1">
-             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-             <Input 
-               placeholder="Search resources..." 
-               value={search}
-               onChange={(e) => setSearch(e.target.value)}
-               className="pl-9"
-             />
-           </div>
-           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-             <SelectTrigger className="w-[200px]">
-               <SelectValue placeholder="Category" />
-             </SelectTrigger>
-             <SelectContent>
-               <SelectItem value="All">All Categories</SelectItem>
-               {allCategories.map(cat => (
-                 <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-               ))}
-             </SelectContent>
-           </Select>
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input 
+              placeholder="Search resources..." 
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+
+          {/* Multi-Select Category Filter */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="w-[200px] justify-between">
+                {selectedCategories.length === 0 
+                  ? "All Categories" 
+                  : `${selectedCategories.length} selected`}
+                <Filter className="ml-2 h-4 w-4 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[200px] p-0" align="end">
+              <Command>
+                <CommandList>
+                  <CommandGroup>
+                    {allCategories.map(cat => {
+                      const isSelected = selectedCategories.includes(cat);
+                      return (
+                        <CommandItem
+                          key={cat}
+                          onSelect={() => {
+                            setSelectedCategories(prev => 
+                              isSelected 
+                                ? prev.filter(c => c !== cat)
+                                : [...prev, cat]
+                            );
+                          }}
+                        >
+                          <div className={`mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary ${isSelected ? "bg-primary text-primary-foreground" : "opacity-50 [&_svg]:invisible"}`}>
+                            <Check className={("h-4 w-4")} />
+                          </div>
+                          <span className="flex items-center gap-2">
+                            {categoryIcons[cat]} {cat}
+                          </span>
+                        </CommandItem>
+                      );
+                    })}
+                  </CommandGroup>
+                </CommandList>
+                {selectedCategories.length > 0 && (
+                   <div className="p-2 border-t">
+                     <Button 
+                       variant="ghost" 
+                       size="sm" 
+                       className="w-full justify-center h-8 text-xs"
+                       onClick={() => setSelectedCategories([])}
+                     >
+                       Clear Filters
+                     </Button>
+                   </div>
+                )}
+              </Command>
+            </PopoverContent>
+          </Popover>
          </div>
  
          {isLoading ? (
@@ -307,7 +357,7 @@ import React, { useState } from 'react';
                          )}
                        </div>
 
-                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                       <div className="flex items-center gap-1">
                          {/* Favorite Star */}
                          {!isShared && (
                            <button 
@@ -315,9 +365,9 @@ import React, { useState } from 'react';
                                e.stopPropagation();
                                toggleFavoriteMutation.mutate(resource);
                              }}
-                             className={`p-1 rounded-full hover:bg-gray-100 transition-colors ${resource.is_favorite ? 'text-yellow-400' : 'text-gray-300 hover:text-yellow-400'}`}
+                             className={`p-1.5 rounded-full hover:bg-gray-100 transition-colors ${resource.is_favorite ? 'text-yellow-400' : 'text-gray-300 hover:text-yellow-400'}`}
                            >
-                             <Star className={`w-4 h-4 ${resource.is_favorite ? 'fill-current' : ''}`} />
+                             <Star className={`w-5 h-5 ${resource.is_favorite ? 'fill-current' : ''}`} />
                            </button>
                          )}
 
@@ -326,10 +376,10 @@ import React, { useState } from 'react';
                            <Button 
                              variant="ghost" 
                              size="sm" 
-                             className="h-7 w-7 p-0 text-gray-400 hover:text-gray-700" 
+                             className="h-8 w-8 p-0 text-gray-400 hover:text-purple-600 hover:bg-purple-50" 
                              onClick={() => handleEdit(resource)}
                            >
-                             <Edit2 className="w-3.5 h-3.5" />
+                             <Edit2 className="w-4 h-4" />
                            </Button>
                          )}
                        </div>
@@ -451,6 +501,50 @@ import React, { useState } from 'react';
                      Use your browser's password manager or a secure tool like 1Password/LastPass. 
                      Only store the login URL and username here.
                    </p>
+                 </div>
+               )}
+
+               {formData.category === 'Recipe' && (
+                 <div className="bg-green-50 border border-green-200 rounded-lg p-3 space-y-3">
+                   <div className="flex gap-3 items-start text-sm text-green-800">
+                     <Utensils className="w-5 h-5 flex-shrink-0 text-green-600" />
+                     <div className="space-y-2 w-full">
+                       <p className="font-medium">Scan Recipe from Image</p>
+                       <p className="text-xs opacity-90">Upload a photo of a recipe card or book, and AI will type it out for you below!</p>
+
+                       <div className="pt-2">
+                         <ImageUploader 
+                           label="Take Photo / Upload"
+                           onImageChange={async (url) => {
+                             if (!url) return;
+                             setIsScanning(true);
+                             try {
+                               const res = await base44.functions.invoke('scanRecipe', { file_url: url });
+                               if (res.data?.content) {
+                                 setFormData(prev => ({
+                                   ...prev,
+                                   title: prev.title || res.data.title || '',
+                                   notes: (prev.notes ? prev.notes + '\n\n' : '') + res.data.content
+                                 }));
+                               }
+                             } catch (e) {
+                               console.error(e);
+                               alert("Failed to scan recipe. Please try again.");
+                             } finally {
+                               setIsScanning(false);
+                             }
+                           }}
+                           size="small"
+                           aspectRatio="video"
+                         />
+                         {isScanning && (
+                           <div className="flex items-center gap-2 mt-2 text-xs text-green-700 font-medium animate-pulse">
+                             <ScanText className="w-4 h-4" /> Scanning recipe text...
+                           </div>
+                         )}
+                       </div>
+                     </div>
+                   </div>
                  </div>
                )}
                <div>
