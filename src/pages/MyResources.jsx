@@ -9,10 +9,12 @@ import React, { useState } from 'react';
    import { Label } from '@/components/ui/label';
    import { Textarea } from '@/components/ui/textarea';
    import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-   import { Loader2, Plus, Search, ExternalLink, Trash2, Filter, Link as LinkIcon, Edit2, Users, Globe, Lock, Building } from 'lucide-react';
+   import { Loader2, Plus, Search, ExternalLink, Trash2, Filter, Link as LinkIcon, Edit2, Users, Globe, Lock, Building, Info } from 'lucide-react';
    import { useTheme } from '../components/shared/useTheme';
    import ColorPicker from '../components/shared/ColorPicker';
    import { Switch } from '@/components/ui/switch';
+   import { Checkbox } from '@/components/ui/checkbox';
+   import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
    import { Link } from 'react-router-dom';
  
    const defaultCategories = ['Courses', 'Communities', 'Tools', 'Inspiration', 'Reading', 'Watch Later', 'Other'];
@@ -36,7 +38,7 @@ import React, { useState } from 'react';
        color: '#ffffff',
        secondary_color: '',
        visibility: 'private',
-       group_id: ''
+       group_ids: []
      });
  
      const { data: myResources = [], isLoading: myLoading } = useQuery({
@@ -132,12 +134,18 @@ import React, { useState } from 'react';
          color: '#ffffff',
          secondary_color: '',
          visibility: 'private',
-         group_id: ''
+         group_ids: []
        });
      };
  
      const handleEdit = (item) => {
        setEditingItem(item);
+       // Handle backward compatibility for group_id
+       let itemGroupIds = item.group_ids || [];
+       if (item.group_id && !itemGroupIds.includes(item.group_id)) {
+         itemGroupIds.push(item.group_id);
+       }
+
        setFormData({
          title: item.title,
          url: item.url,
@@ -147,7 +155,7 @@ import React, { useState } from 'react';
          color: item.color || '#ffffff',
          secondary_color: item.secondary_color || '',
          visibility: item.visibility || 'private',
-         group_id: item.group_id || ''
+         group_ids: itemGroupIds
        });
        setIsAddOpen(true);
      };
@@ -177,14 +185,25 @@ import React, { useState } from 'react';
            </div>
            <div className="flex flex-wrap gap-2 items-center">
              <div className="flex items-center gap-2 bg-white p-2 rounded-lg border shadow-sm mr-2">
-               <Switch 
-                 checked={showShared}
-                 onCheckedChange={setShowShared}
-                 id="shared-mode"
-               />
-               <Label htmlFor="shared-mode" className="cursor-pointer font-medium text-sm">
-                 {showShared ? 'Viewing Shared' : 'Viewing Mine'}
-               </Label>
+               <TooltipProvider>
+                 <Tooltip>
+                   <TooltipTrigger asChild>
+                     <div className="flex items-center gap-2">
+                       <Switch 
+                         checked={showShared}
+                         onCheckedChange={setShowShared}
+                         id="shared-mode"
+                       />
+                       <Label htmlFor="shared-mode" className="cursor-pointer font-medium text-sm">
+                         {showShared ? 'Viewing Shared' : 'Viewing Mine'}
+                       </Label>
+                     </div>
+                   </TooltipTrigger>
+                   <TooltipContent>
+                     <p>Switch between your personal items and items shared with you</p>
+                   </TooltipContent>
+                 </Tooltip>
+               </TooltipProvider>
              </div>
              {!showShared && (
                <>
@@ -257,12 +276,27 @@ import React, { useState } from 'react';
                              />
                            </div>
                            <div className="flex gap-1 bg-white/50 rounded-lg p-1">
-                             <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => handleEdit(resource)}>
-                               <Edit2 className="w-3 h-3" />
-                             </Button>
-                             <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-red-500 hover:text-red-600" onClick={() => setResourceToDelete(resource)}>
-                               <Trash2 className="w-3 h-3" />
-                             </Button>
+                             <TooltipProvider>
+                               <Tooltip>
+                                 <TooltipTrigger asChild>
+                                   <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => handleEdit(resource)}>
+                                     <Edit2 className="w-3 h-3" />
+                                   </Button>
+                                 </TooltipTrigger>
+                                 <TooltipContent><p>Edit this item</p></TooltipContent>
+                               </Tooltip>
+                             </TooltipProvider>
+                             
+                             <TooltipProvider>
+                               <Tooltip>
+                                 <TooltipTrigger asChild>
+                                   <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-red-500 hover:text-red-600" onClick={() => setResourceToDelete(resource)}>
+                                     <Trash2 className="w-3 h-3" />
+                                   </Button>
+                                 </TooltipTrigger>
+                                 <TooltipContent><p>Delete this item</p></TooltipContent>
+                               </Tooltip>
+                             </TooltipProvider>
                            </div>
                          </div>
                        )}
@@ -429,26 +463,32 @@ import React, { useState } from 'react';
                  
                  {formData.visibility === 'group' && (
                    <div className="space-y-2">
-                     <Label>Select Group</Label>
-                     <Select 
-                       value={formData.group_id || ''} 
-                       onValueChange={(v) => setFormData({...formData, group_id: v})}
-                     >
-                       <SelectTrigger>
-                         <SelectValue placeholder="Choose group..." />
-                       </SelectTrigger>
-                       <SelectContent>
-                         {myGroups.length > 0 ? (
-                           myGroups.map(group => (
-                             <SelectItem key={group.id} value={group.id}>
+                     <Label>Select Groups (Multi-select)</Label>
+                     <div className="border rounded-md p-3 max-h-40 overflow-y-auto space-y-2 bg-white">
+                       {myGroups.length > 0 ? (
+                         myGroups.map(group => (
+                           <div key={group.id} className="flex items-center space-x-2">
+                             <Checkbox 
+                               id={`group-${group.id}`}
+                               checked={(formData.group_ids || []).includes(group.id)}
+                               onCheckedChange={(checked) => {
+                                 const currentIds = formData.group_ids || [];
+                                 if (checked) {
+                                   setFormData({...formData, group_ids: [...currentIds, group.id]});
+                                 } else {
+                                   setFormData({...formData, group_ids: currentIds.filter(id => id !== group.id)});
+                                 }
+                               }}
+                             />
+                             <Label htmlFor={`group-${group.id}`} className="text-sm font-normal cursor-pointer">
                                {group.name}
-                             </SelectItem>
-                           ))
-                         ) : (
-                           <SelectItem value="none" disabled>No groups found</SelectItem>
-                         )}
-                       </SelectContent>
-                     </Select>
+                             </Label>
+                           </div>
+                         ))
+                       ) : (
+                         <p className="text-sm text-gray-500">No groups found. Join or create a group first.</p>
+                       )}
+                     </div>
                    </div>
                  )}
                </div>
