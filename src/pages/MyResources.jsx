@@ -38,7 +38,8 @@ import React, { useState } from 'react';
        color: '#ffffff',
        secondary_color: '',
        visibility: 'private',
-       group_ids: []
+       group_ids: [],
+       is_favorite: false
      });
  
      const { data: myResources = [], isLoading: myLoading } = useQuery({
@@ -134,7 +135,8 @@ import React, { useState } from 'react';
          color: '#ffffff',
          secondary_color: '',
          visibility: 'private',
-         group_ids: []
+         group_ids: [],
+         is_favorite: false
        });
      };
  
@@ -155,7 +157,8 @@ import React, { useState } from 'react';
          color: item.color || '#ffffff',
          secondary_color: item.secondary_color || '',
          visibility: item.visibility || 'private',
-         group_ids: itemGroupIds
+         group_ids: itemGroupIds,
+         is_favorite: item.is_favorite || false
        });
        setIsAddOpen(true);
      };
@@ -267,37 +270,17 @@ import React, { useState } from 'react';
                      <div className="flex justify-between items-start">
                        <Badge variant="outline" className="mb-2 bg-white/50 backdrop-blur-sm">{resource.category}</Badge>
                        {!showShared && (
-                         <div className="flex items-center gap-2">
-                           <div className="flex items-center gap-1 bg-white/50 rounded-lg px-1" title="Favorite">
-                             <Switch 
-                               checked={resource.is_favorite} 
-                               onCheckedChange={() => toggleFavoriteMutation.mutate(resource)}
-                               className="scale-75"
-                             />
-                           </div>
-                           <div className="flex gap-1 bg-white/50 rounded-lg p-1">
-                             <TooltipProvider>
-                               <Tooltip>
-                                 <TooltipTrigger asChild>
-                                   <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => handleEdit(resource)}>
-                                     <Edit2 className="w-3 h-3" />
-                                   </Button>
-                                 </TooltipTrigger>
-                                 <TooltipContent><p>Edit this item</p></TooltipContent>
-                               </Tooltip>
-                             </TooltipProvider>
-                             
-                             <TooltipProvider>
-                               <Tooltip>
-                                 <TooltipTrigger asChild>
-                                   <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-red-500 hover:text-red-600" onClick={() => setResourceToDelete(resource)}>
-                                     <Trash2 className="w-3 h-3" />
-                                   </Button>
-                                 </TooltipTrigger>
-                                 <TooltipContent><p>Delete this item</p></TooltipContent>
-                               </Tooltip>
-                             </TooltipProvider>
-                           </div>
+                         <div className="bg-white/50 rounded-lg p-1">
+                           <TooltipProvider>
+                             <Tooltip>
+                               <TooltipTrigger asChild>
+                                 <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => handleEdit(resource)}>
+                                   <Edit2 className="w-3 h-3" />
+                                 </Button>
+                               </TooltipTrigger>
+                               <TooltipContent><p>Edit Details</p></TooltipContent>
+                             </Tooltip>
+                           </TooltipProvider>
                          </div>
                        )}
                      </div>
@@ -492,12 +475,38 @@ import React, { useState } from 'react';
                    </div>
                  )}
                </div>
+
+               <div className="flex items-center space-x-2 pt-2">
+                 <Switch 
+                   id="is-favorite" 
+                   checked={formData.is_favorite} 
+                   onCheckedChange={(checked) => setFormData({...formData, is_favorite: checked})} 
+                 />
+                 <Label htmlFor="is-favorite">Mark as Favorite</Label>
+               </div>
              </div>
-             <DialogFooter>
-               <Button variant="ghost" onClick={() => setIsAddOpen(false)}>Cancel</Button>
-               <Button onClick={() => saveMutation.mutate(formData)} disabled={saveMutation.isPending || !formData.title}>
-                 {saveMutation.isPending ? 'Saving...' : 'Save Resource'}
-               </Button>
+             <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:justify-between w-full">
+                {editingItem ? (
+                  <Button 
+                    variant="destructive" 
+                    type="button"
+                    onClick={() => {
+                      setIsAddOpen(false);
+                      setResourceToDelete(editingItem);
+                    }}
+                    className="w-full sm:w-auto"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" /> Delete
+                  </Button>
+                ) : (
+                  <div /> /* Spacer */
+                )}
+                <div className="flex gap-2 w-full sm:w-auto justify-end">
+                  <Button variant="ghost" onClick={() => setIsAddOpen(false)}>Cancel</Button>
+                  <Button onClick={() => saveMutation.mutate(formData)} disabled={saveMutation.isPending || !formData.title}>
+                    {saveMutation.isPending ? 'Saving...' : 'Save Resource'}
+                  </Button>
+                </div>
              </DialogFooter>
            </DialogContent>
          </Dialog>
