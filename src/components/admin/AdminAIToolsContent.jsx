@@ -84,7 +84,7 @@ export default function AdminAIToolsContent() {
     queryKey: ['tiktokContacts'],
     queryFn: async () => {
       // Fetch all contacts without any filters
-      const contacts = await base44.entities.TikTokContact.filter({});
+      const contacts = await base44.entities.TikTokContact.list('username', 5000);
       console.log(`Fetched ${contacts.length} TikTok contacts`);
       // Sort alphabetically by username
       return contacts.sort((a, b) => {
@@ -983,18 +983,19 @@ export default function AdminAIToolsContent() {
                   </SelectContent>
                 </Select>
                 {contactSearch && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setNewContactUsername(contactSearch.replace('@', ''));
-                      setShowCreateContact(true);
-                    }}
-                    className="w-full"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Create new contact: @{contactSearch.replace('@', '')}
-                  </Button>
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        setNewContactUsername(contactSearch.replace('@', ''));
+                        setShowCreateContact(true);
+                      }}
+                      className="w-full bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Create new contact: @{contactSearch.replace('@', '')}
+                    </Button>
+                  </div>
                 )}
               </div>
               <p className="text-xs text-gray-500">
