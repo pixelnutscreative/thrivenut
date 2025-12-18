@@ -108,6 +108,25 @@ export default function ReferralsTab({ userEmail, primaryColor, accentColor }) {
 
   const [timePeriod, setTimePeriod] = useState('all');
 
+  // Content Generator State
+  const [genFeature, setGenFeature] = useState('Overview');
+  const [genType, setGenType] = useState('social_caption');
+  const [generatedContent, setGeneratedContent] = useState('');
+  
+  const generateContentMutation = useMutation({
+    mutationFn: async () => {
+      const res = await base44.functions.invoke('generateMarketingContent', {
+        feature: genFeature,
+        contentType: genType,
+        targetAudience: 'creators'
+      });
+      return res.data?.content;
+    },
+    onSuccess: (data) => {
+      setGeneratedContent(data);
+    }
+  });
+
   // Filter activities by time period
   const getFilteredActivities = () => {
     const now = new Date();
@@ -289,6 +308,99 @@ export default function ReferralsTab({ userEmail, primaryColor, accentColor }) {
           </CardContent>
         </Card>
       )}
+
+      {/* Marketing Content Generator */}
+      <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-white">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-purple-800">
+            <Sparkles className="w-5 h-5 text-purple-600" />
+            Marketing Content Generator
+          </CardTitle>
+          <CardDescription>
+            Generate scripts, captions, and posts to share Thrive Nut with your audience!
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Feature to Highlight</Label>
+              <Select value={genFeature} onValueChange={setGenFeature}>
+                <SelectTrigger className="bg-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Overview">App Overview (All-in-One)</SelectItem>
+                  <SelectItem value="Content Creator Hub">Content Creator Hub (Suite)</SelectItem>
+                  <SelectItem value="TikTok Engagement">TikTok Engagement CRM (Suite)</SelectItem>
+                  <SelectItem value="Live Schedule">Live Schedule & Calendar (Suite)</SelectItem>
+                  <SelectItem value="Battle Prep">Battle Prep & Inventory (Suite)</SelectItem>
+                  <SelectItem value="Goals & Habits">Goals & Habits Tracking</SelectItem>
+                  <SelectItem value="Journal & Mental Health">Journal & Mental Health</SelectItem>
+                  <SelectItem value="My Stuff">My Resources Organization</SelectItem>
+                  <SelectItem value="Finance">Finance & Budgeting</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Content Type</Label>
+              <Select value={genType} onValueChange={setGenType}>
+                <SelectTrigger className="bg-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="social_caption">Social Media Caption</SelectItem>
+                  <SelectItem value="short_script">Short Video Script (Reels/TikTok)</SelectItem>
+                  <SelectItem value="story_idea">Story/Post Idea</SelectItem>
+                  <SelectItem value="email_blurb">Email Newsletter Blurb</SelectItem>
+                  <SelectItem value="dm_script">Direct Message Script</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <Button 
+            onClick={() => generateContentMutation.mutate()} 
+            disabled={generateContentMutation.isPending}
+            className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+          >
+            {generateContentMutation.isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generating Magic...
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4 mr-2" /> Generate Content
+              </>
+            )}
+          </Button>
+
+          {generatedContent && (
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-4 p-4 bg-white rounded-lg border border-purple-200 shadow-sm relative"
+            >
+              <div className="absolute top-2 right-2">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    navigator.clipboard.writeText(generatedContent);
+                    setCopySuccess(true);
+                    setTimeout(() => setCopySuccess(false), 2000);
+                  }}
+                  className="h-8 w-8 p-0"
+                >
+                  {copySuccess ? <span className="text-green-500 font-bold">✓</span> : <Copy className="w-4 h-4 text-gray-400" />}
+                </Button>
+              </div>
+              <pre className="whitespace-pre-wrap font-sans text-sm text-gray-800 pr-8">
+                {generatedContent}
+              </pre>
+            </motion.div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Referral Link Section */}
       <Card>
