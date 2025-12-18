@@ -229,6 +229,26 @@ export default function CleaningTasks({ embedded = false }) {
                     </SelectContent>
                   </Select>
                 </div>
+                
+                {/* Assignment */}
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Assign To</label>
+                  <Select 
+                    value={formData.assigned_to?.[0] || 'anyone'} 
+                    onValueChange={(v) => setFormData({ ...formData, assigned_to: v === 'anyone' ? [] : [v] })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Anyone" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="anyone">Anyone</SelectItem>
+                      {familyMembers.map(member => (
+                        <SelectItem key={member.id} value={member.id}>{member.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <div>
                   <label className="text-sm font-medium mb-2 block">Grace Period (days before auto-skip)</label>
                   <Input
@@ -279,6 +299,12 @@ export default function CleaningTasks({ embedded = false }) {
                       <Badge variant="outline" className="text-xs capitalize">
                         {task.frequency}
                       </Badge>
+                      {task.assigned_to && task.assigned_to.length > 0 && (
+                        <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700">
+                          <Users className="w-3 h-3 mr-1" />
+                          {familyMembers.find(m => m.id === task.assigned_to[0])?.name || 'Assigned'}
+                        </Badge>
+                      )}
                       {task.skipped_count > 0 && (
                         <Badge className="text-xs bg-orange-100 text-orange-700">
                           <AlertCircle className="w-3 h-3 mr-1" />
@@ -421,6 +447,26 @@ export default function CleaningTasks({ embedded = false }) {
                     </SelectContent>
                   </Select>
                 </div>
+                
+                {/* Assignment */}
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Assign To</label>
+                  <Select 
+                    value={formData.assigned_to?.[0] || 'anyone'} 
+                    onValueChange={(v) => setFormData({ ...formData, assigned_to: v === 'anyone' ? [] : [v] })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Anyone" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="anyone">Anyone</SelectItem>
+                      {familyMembers.map(member => (
+                        <SelectItem key={member.id} value={member.id}>{member.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <div>
                   <label className="text-sm font-medium mb-2 block">Grace Period (days before auto-skip)</label>
                   <Input
@@ -471,6 +517,12 @@ export default function CleaningTasks({ embedded = false }) {
                       <Badge variant="outline" className="text-xs capitalize">
                         {task.frequency}
                       </Badge>
+                      {task.assigned_to && task.assigned_to.length > 0 && (
+                        <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700">
+                          <Users className="w-3 h-3 mr-1" />
+                          {familyMembers.find(m => m.id === task.assigned_to[0])?.name || 'Assigned'}
+                        </Badge>
+                      )}
                       {task.skipped_count > 0 && (
                         <Badge className="text-xs bg-orange-100 text-orange-700">
                           <AlertCircle className="w-3 h-3 mr-1" />
