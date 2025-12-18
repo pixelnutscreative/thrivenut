@@ -359,13 +359,7 @@ export default function NeurodivergentSettings() {
                   Add your own custom items. Once submitted, admin can add them to the global list for others.
                 </p>
                 
-                {/* Coming soon placeholder for now */}
-                <Alert className={isDark ? 'bg-blue-900/30 border-blue-700' : 'bg-blue-50 border-blue-200'}>
-                  <Sparkles className={`w-4 h-4 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
-                  <AlertDescription className={isDark ? 'text-blue-300' : 'text-blue-800'}>
-                    Coming soon: Add your own custom items and submit them to admin for review!
-                  </AlertDescription>
-                </Alert>
+                {/* Custom Items Placeholder removed */}
               </div>
             </CardContent>
           </Card>
@@ -429,27 +423,7 @@ export default function NeurodivergentSettings() {
                 </div>
               </div>
 
-              <div
-                onClick={() => setFormData({...formData, is_bible_believer: !formData.is_bible_believer})}
-                className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                  formData.is_bible_believer
-                    ? `border-amber-600 ${isDark ? 'bg-amber-900/30' : 'bg-amber-50'}`
-                    : `${isDark ? 'border-gray-600 hover:border-amber-400' : 'border-gray-200 hover:border-amber-300'}`
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="text-xl">📖</span>
-                    <div>
-                      <span className={`font-medium ${textClass}`}>I'm a Bible Believer</span>
-                      <p className={`text-sm ${subtextClass}`}>
-                        Show morning & night Bible reading checkboxes in self-care
-                      </p>
-                    </div>
-                  </div>
-                  <Switch checked={formData.is_bible_believer} />
-                </div>
-              </div>
+
             </CardContent>
           </Card>
         </motion.div>

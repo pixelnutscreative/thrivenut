@@ -117,6 +117,16 @@ export default function Layout({ children, currentPageName }) {
       ]
     },
     {
+      id: 'personal',
+      title: 'My World',
+      color: 'text-indigo-400',
+      bgColor: 'bg-indigo-500/10',
+      items: [
+        { name: preferences?.my_resources_label || 'My Stuff', icon: Bookmark, path: 'MyResources' },
+        { name: "Pixel's Place", icon: Sparkles, path: 'PixelsParadise', alwaysShow: true },
+      ]
+    },
+    {
       id: 'goals',
       title: 'Goals + Growth',
       color: 'text-purple-400',
@@ -125,8 +135,6 @@ export default function Layout({ children, currentPageName }) {
         { name: 'Quick Notes', icon: StickyNote, path: 'QuickNotes', moduleId: 'quick_notes' },
         { name: 'Tasks', icon: FileText, path: 'Tasks', moduleId: 'tasks' },
         { name: 'Habits', icon: Target, path: 'Habits', moduleId: 'habits' },
-        { name: preferences?.my_resources_label || 'My Stuff', icon: Bookmark, path: 'MyResources' },
-        { name: "Pixel's Place", icon: Sparkles, path: 'PixelsParadise', alwaysShow: true },
         { name: 'Goals', icon: Target, path: 'Goals', moduleId: 'goals' },
         { name: 'Vision Board', icon: Eye, path: 'VisionBoard', moduleId: 'goals' },
         { name: 'Journal', icon: BookOpen, path: 'Journal', moduleId: 'journal' },
@@ -210,7 +218,7 @@ export default function Layout({ children, currentPageName }) {
     }
   ];
 
-  const [collapsedGroups, setCollapsedGroups] = useState(['goals', 'friends', 'faith', 'health', 'creator', 'support']);
+  const [collapsedGroups, setCollapsedGroups] = useState(['personal', 'goals', 'friends', 'faith', 'health', 'creator', 'support']);
 
   const toggleGroup = (groupId) => {
     setCollapsedGroups(previousGroups => 

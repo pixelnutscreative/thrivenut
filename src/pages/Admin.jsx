@@ -27,6 +27,7 @@ import AdminReferralSystem from '../components/admin/AdminReferralSystem';
 import AdminReferralCommissionsContent from '../components/admin/AdminReferralCommissionsContent';
 import AdminNotificationsContent from '../components/admin/AdminNotificationsContent';
 import AdminAnnouncementsContent from '../components/admin/AdminAnnouncementsContent';
+import AdminBibleContent from '../components/admin/AdminBibleContent';
 
 const ADMIN_EMAILS = ['pixelnutscreative@gmail.com', 'pixel@thrivenut.app'];
 
@@ -160,6 +161,7 @@ export default function Admin() {
                       <TabsTrigger value="menu">Menu</TabsTrigger>
                       <TabsTrigger value="pixelsplace">Pixel's Place</TabsTrigger>
                       <TabsTrigger value="aitools">AI Tools</TabsTrigger>
+                      <TabsTrigger value="bible">Bible Resources</TabsTrigger>
                       <TabsTrigger value="notifications">Notifications</TabsTrigger>
                       <TabsTrigger value="announcements">Announcements</TabsTrigger>
                     </TabsList>
@@ -169,6 +171,7 @@ export default function Admin() {
                   <TabsContent value="menu"><AdminMenuContent /></TabsContent>
                   <TabsContent value="pixelsplace"><AdminPixelsPlaceContent /></TabsContent>
                   <TabsContent value="aitools"><AdminAIToolsContent /></TabsContent>
+                  <TabsContent value="bible"><AdminBibleContent /></TabsContent>
                   <TabsContent value="notifications"><AdminNotificationsContent userEmail={user?.email} /></TabsContent>
                   <TabsContent value="announcements"><AdminAnnouncementsContent /></TabsContent>
                 </Tabs>

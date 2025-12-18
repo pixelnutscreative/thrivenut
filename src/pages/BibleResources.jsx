@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,21 +10,9 @@ import { motion } from 'framer-motion';
 export default function BibleResources() {
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Fetch resources tagged as "Bible" or in "Bible Resources" category
-  // Assuming DesignResource entity is used for resources as per Pixel's Place
   const { data: resources = [], isLoading } = useQuery({
     queryKey: ['bibleResources'],
-    queryFn: async () => {
-      // Fetch all resources and filter client side if needed, or filter by category if possible
-      // Assuming we'll use a category name "Bible" or "Spiritual"
-      const allResources = await base44.entities.DesignResource.filter({ is_active: true });
-      return allResources.filter(r => 
-        r.category === 'Bible' || 
-        r.category === 'Spiritual' || 
-        r.tags?.includes('bible') ||
-        r.title?.toLowerCase().includes('bible')
-      );
-    }
+    queryFn: () => base44.entities.BibleResource.filter({ is_active: true }, 'sort_order')
   });
 
   const filteredResources = resources.filter(resource => 
