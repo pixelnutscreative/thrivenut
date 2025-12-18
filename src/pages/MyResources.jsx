@@ -16,7 +16,7 @@ const defaultCategories = ['Courses', 'Communities', 'Tools', 'Inspiration', 'Re
 
 export default function MyResources() {
   const queryClient = useQueryClient();
-  const { user } = useTheme();
+  const { user, preferences } = useTheme();
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -109,13 +109,25 @@ export default function MyResources() {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <LinkIcon className="w-6 h-6 text-purple-600" />
-            My Resources
+            {preferences?.my_resources_label || 'My Stuff'}
           </h1>
           <p className="text-gray-600">Your personal library of links, courses, and inspiration.</p>
         </div>
-        <Button onClick={() => { setEditingItem(null); resetForm(); setIsAddOpen(true); }} className="bg-purple-600 hover:bg-purple-700 text-white">
-          <Plus className="w-4 h-4 mr-2" /> Add Resource
-        </Button>
+        <div className="flex gap-2">
+          {/* Rename Button */}
+          <Button variant="outline" size="sm" onClick={() => {
+            const newName = prompt('Rename "My Stuff" to:', preferences?.my_resources_label || 'My Stuff');
+            if (newName && newName.trim()) {
+              base44.entities.UserPreferences.update(preferences.id, { my_resources_label: newName.trim() })
+                .then(() => window.location.reload()); 
+            }
+          }}>
+            <Edit2 className="w-4 h-4 mr-2" /> Rename
+          </Button>
+          <Button onClick={() => { setEditingItem(null); resetForm(); setIsAddOpen(true); }} className="bg-purple-600 hover:bg-purple-700 text-white">
+            <Plus className="w-4 h-4 mr-2" /> Add Item
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-col md:flex-row gap-4">

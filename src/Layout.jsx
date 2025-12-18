@@ -114,7 +114,6 @@ export default function Layout({ children, currentPageName }) {
       id: 'core',
       items: [
         { name: getDashboardName(), icon: LayoutDashboard, path: 'Dashboard', alwaysShow: true },
-        { name: "Pixel's Place", icon: Sparkles, path: 'PixelsParadise', alwaysShow: true },
       ]
     },
     {
@@ -126,9 +125,10 @@ export default function Layout({ children, currentPageName }) {
         { name: 'Quick Notes', icon: StickyNote, path: 'QuickNotes', moduleId: 'quick_notes' },
         { name: 'Tasks', icon: FileText, path: 'Tasks', moduleId: 'tasks' },
         { name: 'Habits', icon: Target, path: 'Habits', moduleId: 'habits' },
+        { name: preferences?.my_resources_label || 'My Stuff', icon: Bookmark, path: 'MyResources' },
+        { name: "Pixel's Place", icon: Sparkles, path: 'PixelsParadise', alwaysShow: true },
         { name: 'Goals', icon: Target, path: 'Goals', moduleId: 'goals' },
         { name: 'Vision Board', icon: Eye, path: 'VisionBoard', moduleId: 'goals' },
-        { name: 'My Resources', icon: Bookmark, path: 'MyResources' },
         { name: 'Journal', icon: BookOpen, path: 'Journal', moduleId: 'journal' },
         { name: 'Finance', icon: Wallet, path: 'Finance', moduleId: 'finance' },
       ]

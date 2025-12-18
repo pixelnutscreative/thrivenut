@@ -50,6 +50,8 @@ export default function CareReminders() {
     title: '',
     description: '',
     time: '',
+    specific_date: '',
+    is_recurring: false,
     days: [],
     is_active: true,
     notes: ''
@@ -111,6 +113,8 @@ export default function CareReminders() {
       title: reminder.title || '',
       description: reminder.description || '',
       time: reminder.time || '',
+      specific_date: reminder.specific_date || '',
+      is_recurring: reminder.is_recurring || false,
       days: reminder.days || [],
       is_active: reminder.is_active !== false,
       notes: reminder.notes || ''
@@ -213,13 +217,21 @@ export default function CareReminders() {
                                 {reminder.description && (
                                   <p className="text-sm text-gray-600">{reminder.description}</p>
                                 )}
-                                {reminder.time && (
-                                  <p className="text-sm text-purple-600 flex items-center gap-1 mt-1">
-                                    <Clock className="w-3 h-3" /> {reminder.time}
-                                  </p>
-                                )}
-                                {reminder.days?.length > 0 && (
+                                <div className="flex flex-wrap gap-2 mt-1">
+                                  {reminder.time && (
+                                    <p className="text-sm text-purple-600 flex items-center gap-1">
+                                      <Clock className="w-3 h-3" /> {reminder.time}
+                                    </p>
+                                  )}
+                                  {reminder.specific_date && !reminder.is_recurring && (
+                                    <p className="text-sm text-blue-600 flex items-center gap-1">
+                                      <Calendar className="w-3 h-3" /> {new Date(reminder.specific_date).toLocaleDateString()}
+                                    </p>
+                                  )}
+                                </div>
+                                {reminder.is_recurring && reminder.days?.length > 0 && (
                                   <div className="flex gap-1 mt-2 flex-wrap">
+                                    <Badge className="bg-purple-100 text-purple-800 border-0 text-[10px]">Recurring</Badge>
                                     {reminder.days.map(d => (
                                       <Badge key={d} variant="outline" className="text-xs">{d.slice(0, 3)}</Badge>
                                     ))}
@@ -332,31 +344,55 @@ export default function CareReminders() {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label>Time</Label>
-              <Input
-                type="time"
-                value={formData.time}
-                onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Days</Label>
-              <div className="flex flex-wrap gap-2">
-                {daysOfWeek.map(day => (
-                  <div
-                    key={day}
-                    onClick={() => toggleDay(day)}
-                    className={`px-3 py-1 rounded-full border cursor-pointer text-sm ${
-                      formData.days.includes(day) ? 'bg-purple-500 text-white border-purple-500' : 'border-gray-300'
-                    }`}
-                  >
-                    {day.slice(0, 3)}
-                  </div>
-                ))}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Time</Label>
+                <Input
+                  type="time"
+                  value={formData.time}
+                  onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Date (Optional)</Label>
+                <Input
+                  type="date"
+                  value={formData.specific_date}
+                  onChange={(e) => setFormData({ ...formData, specific_date: e.target.value })}
+                  disabled={formData.is_recurring}
+                />
               </div>
             </div>
+
+            <div className="flex items-center space-x-2 py-2">
+              <Checkbox 
+                id="recurring" 
+                checked={formData.is_recurring}
+                onCheckedChange={(checked) => setFormData({ ...formData, is_recurring: checked })}
+              />
+              <Label htmlFor="recurring" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                Recurring Reminder
+              </Label>
+            </div>
+
+            {formData.is_recurring && (
+              <div className="space-y-2 p-3 bg-gray-50 rounded-lg border">
+                <Label className="text-xs font-semibold uppercase text-gray-500">Repeat On</Label>
+                <div className="flex flex-wrap gap-2">
+                  {daysOfWeek.map(day => (
+                    <div
+                      key={day}
+                      onClick={() => toggleDay(day)}
+                      className={`px-3 py-1 rounded-full border cursor-pointer text-sm ${
+                        formData.days.includes(day) ? 'bg-purple-500 text-white border-purple-500' : 'bg-white border-gray-300 hover:border-purple-300'
+                      }`}
+                    >
+                      {day.slice(0, 3)}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label>Notes</Label>
