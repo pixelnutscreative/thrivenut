@@ -982,7 +982,7 @@ export default function AdminAIToolsContent() {
                     )}
                   </SelectContent>
                 </Select>
-                {contactSearch && filteredContacts.length === 0 && (
+                {contactSearch && (
                   <Button
                     variant="outline"
                     size="sm"
@@ -993,7 +993,7 @@ export default function AdminAIToolsContent() {
                     className="w-full"
                   >
                     <Plus className="w-4 h-4 mr-2" />
-                    Create contact: @{contactSearch.replace('@', '')}
+                    Create new contact: @{contactSearch.replace('@', '')}
                   </Button>
                 )}
               </div>

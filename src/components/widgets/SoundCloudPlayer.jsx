@@ -38,7 +38,7 @@ const getEmbedDetails = (url, service) => {
 };
 
 export default function SoundCloudPlayer({ playlistUrl, isMenuDark, collapsed = false }) {
-  const [isExpanded, setIsExpanded] = useState(!collapsed);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   if (!playlistUrl) return null;
 

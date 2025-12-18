@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { BookOpen, Calendar, Sparkles, Brain, Shield, ChevronDown, ChevronUp } from 'lucide-react';
+import { BookOpen, Calendar, Sparkles, Brain, Shield, ChevronDown, ChevronUp, Search, Plus, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import AIReframingCard from '../components/journal/AIReframingCard';
@@ -35,8 +35,7 @@ const entryTypes = [
   { value: 'general', label: 'General', description: 'Regular journal entry' },
   { value: 'venting', label: 'Venting', description: 'Let it all out - AI can help reframe' },
   { value: 'gratitude', label: 'Gratitude', description: 'What are you thankful for?' },
-  { value: 'reflection', label: 'Reflection', description: 'Looking back and learning' },
-  { value: 'goal_setting', label: 'Goal Setting', description: 'Planning and dreaming' }
+  { value: 'reflection', label: 'Reflection', description: 'Looking back and learning' }
 ];
 
 export default function Journal() {
@@ -49,6 +48,11 @@ export default function Journal() {
   const [showEncryptionModal, setShowEncryptionModal] = useState(false);
   const [decryptedContent, setDecryptedContent] = useState({}); // { id: content }
   const [unlockingId, setUnlockingId] = useState(null);
+  
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [customMood, setCustomMood] = useState('');
+  const [isCustomMood, setIsCustomMood] = useState(false);
 
   const [formData, setFormData] = useState({
     date: format(new Date(), 'yyyy-MM-dd'),
@@ -100,6 +104,9 @@ export default function Journal() {
         ai_reframe_enabled: preferences?.enable_ai_journaling !== false
       });
       setShowAIReframe(false);
+      setIsAddModalOpen(false);
+      setCustomMood('');
+      setIsCustomMood(false);
     },
   });
 
@@ -115,17 +122,22 @@ export default function Journal() {
   const handleSubmit = () => {
     if (!formData.content.trim()) return;
     
+    const finalMood = isCustomMood ? customMood : formData.mood_tag;
+    const submissionData = { ...formData, mood_tag: finalMood };
+
     if (formData.is_encrypted) {
       setShowEncryptionModal(true);
     } else {
-      createEntryMutation.mutate(formData);
+      createEntryMutation.mutate(submissionData);
     }
   };
 
   const handleEncryptionComplete = (key) => {
+    const finalMood = isCustomMood ? customMood : formData.mood_tag;
     const encryptedContent = CryptoJS.AES.encrypt(formData.content, key).toString();
     createEntryMutation.mutate({
       ...formData,
+      mood_tag: finalMood,
       content: encryptedContent,
       is_encrypted: true
     });
@@ -164,19 +176,51 @@ export default function Journal() {
 
   const { isDark, bgClass, textClass, cardBgClass, subtextClass } = useTheme();
 
+  // Filter entries
+  const filteredEntries = (entries || []).filter(entry => {
+    if (!searchTerm) return true;
+    const term = searchTerm.toLowerCase();
+    return (
+      entry.title?.toLowerCase().includes(term) ||
+      entry.content?.toLowerCase().includes(term) ||
+      entry.mood_tag?.toLowerCase().includes(term)
+    );
+  });
+
   return (
     <div className={`min-h-screen ${bgClass} p-4 md:p-8`}>
       <div className="max-w-5xl mx-auto space-y-8">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2 flex items-center gap-3">
-            <BookOpen className="w-10 h-10 text-purple-600" />
-            My Journal
-          </h1>
-          <p className={subtextClass}>Your private space for thoughts, reflections, and healing</p>
-        </motion.div>
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2 flex items-center gap-3">
+              <BookOpen className="w-10 h-10 text-purple-600" />
+              My Journal
+            </h1>
+            <p className={subtextClass}>Your private space for thoughts, reflections, and healing</p>
+          </motion.div>
+          
+          <Button 
+            onClick={() => setIsAddModalOpen(true)}
+            className="bg-purple-600 hover:bg-purple-700 text-white"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            New Entry
+          </Button>
+        </div>
+
+        {/* Search */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Input 
+            placeholder="Search entries..." 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className={`pl-9 ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white'}`}
+          />
+        </div>
 
         {/* Disclaimer */}
         <Alert className={isDark ? 'bg-purple-900/30 border-purple-700' : 'bg-purple-50 border-purple-200'}>
@@ -187,24 +231,21 @@ export default function Journal() {
           </AlertDescription>
         </Alert>
 
-        {/* New Entry Form */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-        >
-          <Card className={`shadow-lg border-0 ${cardBgClass}`}>
-            <CardHeader>
-              <CardTitle className={`flex items-center gap-2 ${textClass}`}>
+        {/* Entry Modal */}
+        <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+          <DialogContent className={`max-w-3xl max-h-[90vh] overflow-y-auto ${isDark ? 'bg-gray-900 border-gray-800' : ''}`}>
+            <DialogHeader>
+              <DialogTitle className={`flex items-center gap-2 ${textClass}`}>
                 <Sparkles className="w-5 h-5 text-amber-500" />
                 New Entry
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-4">
               {/* Entry Type Selection */}
               <div className="space-y-2">
                 <label className={`text-sm font-medium ${textClass}`}>What kind of entry is this?</label>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                   {entryTypes.map(type => (
                     <button
                       key={type.value}
@@ -244,19 +285,50 @@ export default function Journal() {
 
                 <div className="space-y-2">
                   <label className={`text-sm font-medium ${textClass}`}>Mood</label>
-                  <Select value={formData.mood_tag} onValueChange={(val) => setFormData({...formData, mood_tag: val})}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {moodTags.map(tag => (
-                        <SelectItem key={tag.value} value={tag.value}>
-                          <span className="mr-2">{tag.emoji}</span>
-                          {tag.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="flex gap-2">
+                    {!isCustomMood ? (
+                      <Select 
+                        value={formData.mood_tag} 
+                        onValueChange={(val) => {
+                          if (val === 'custom') {
+                            setIsCustomMood(true);
+                          } else {
+                            setFormData({...formData, mood_tag: val});
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="flex-1">
+                          <SelectValue placeholder="Select mood..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {moodTags.map(tag => (
+                            <SelectItem key={tag.value} value={tag.value}>
+                              <span className="mr-2">{tag.emoji}</span>
+                              {tag.label}
+                            </SelectItem>
+                          ))}
+                          <SelectItem value="custom">✨ Custom Mood...</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <div className="flex gap-2 w-full">
+                        <Input 
+                          placeholder="How are you feeling?"
+                          value={customMood}
+                          onChange={(e) => setCustomMood(e.target.value)}
+                          className={isDark ? 'bg-gray-700 border-gray-600' : ''}
+                          autoFocus
+                        />
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          onClick={() => setIsCustomMood(false)}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -338,17 +410,20 @@ export default function Journal() {
                   </motion.div>
                 )}
               </AnimatePresence>
+            </div>
 
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>Cancel</Button>
               <Button 
                 onClick={handleSubmit}
                 disabled={!formData.content.trim() || createEntryMutation.isPending}
-                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 h-12 text-lg"
+                className="bg-purple-600 hover:bg-purple-700"
               >
                 Save Entry
               </Button>
-            </CardContent>
-          </Card>
-        </motion.div>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Previous Entries */}
         <div className="space-y-4">
@@ -357,14 +432,21 @@ export default function Journal() {
             Previous Entries
           </h2>
 
-          {entries && entries.length > 0 ? (
-            <div className="space-y-4">
-              {entries.map((entry, index) => {
+          {filteredEntries && filteredEntries.length > 0 ? (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredEntries.map((entry, index) => {
                 const moodTag = moodTags.find(tag => tag.value === entry.mood_tag);
                 const entryType = entryTypes.find(t => t.value === entry.entry_type);
                 const isExpanded = expandedEntries[entry.id];
                 const hasAISuggestions = entry.ai_suggestions;
                 
+                // If it's a custom mood not in the list
+                const displayMood = moodTag || (entry.mood_tag ? { 
+                  label: entry.mood_tag, 
+                  emoji: '✨', 
+                  color: 'bg-indigo-100 text-indigo-800' 
+                } : null);
+
                 return (
                   <motion.div
                     key={entry.id}
@@ -372,25 +454,25 @@ export default function Journal() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
                   >
-                    <Card className={`shadow-md hover:shadow-lg transition-shadow ${cardBgClass}`}>
-                      <CardContent className="p-6">
+                    <Card className={`shadow-md hover:shadow-lg transition-shadow h-full ${cardBgClass}`}>
+                      <CardContent className="p-6 flex flex-col h-full">
                         <div className="flex items-start justify-between mb-3">
                           <div>
                             <p className={`text-sm ${subtextClass} mb-1`}>
-                              {format(new Date(entry.date), 'EEEE, MMMM d, yyyy')}
+                              {format(new Date(entry.date), 'MMM d, yyyy')}
                             </p>
                             {entry.title && (
-                              <h3 className={`text-xl font-bold ${textClass}`}>{entry.title}</h3>
+                              <h3 className={`text-lg font-bold ${textClass} line-clamp-1`}>{entry.title}</h3>
                             )}
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-col items-end gap-1">
                             {entryType && entryType.value !== 'general' && (
-                              <Badge variant="outline">{entryType.label}</Badge>
+                              <Badge variant="outline" className="text-[10px]">{entryType.label}</Badge>
                             )}
-                            {moodTag && (
-                              <Badge className={`${moodTag.color} border-0`}>
-                                <span className="mr-1">{moodTag.emoji}</span>
-                                {moodTag.label}
+                            {displayMood && (
+                              <Badge className={`${displayMood.color} border-0 text-[10px]`}>
+                                <span className="mr-1">{displayMood.emoji}</span>
+                                {displayMood.label}
                               </Badge>
                             )}
                           </div>
