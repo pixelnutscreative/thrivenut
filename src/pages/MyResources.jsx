@@ -9,7 +9,7 @@ import React, { useState } from 'react';
    import { Label } from '@/components/ui/label';
    import { Textarea } from '@/components/ui/textarea';
    import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-   import { Loader2, Plus, Search, ExternalLink, Trash2, Filter, Link as LinkIcon, Edit2, Users, Globe, Lock, Building, Info } from 'lucide-react';
+   import { Loader2, Plus, Search, ExternalLink, Trash2, Filter, Link as LinkIcon, Edit2, Users, Globe, Lock, Building, Info, Star, BookOpen, Mic, MonitorPlay, Video, Key, Calendar as CalendarIcon, Utensils, ShoppingBag, TriangleAlert } from 'lucide-react';
    import { useTheme } from '../components/shared/useTheme';
    import ColorPicker from '../components/shared/ColorPicker';
    import { Switch } from '@/components/ui/switch';
@@ -17,16 +17,36 @@ import React, { useState } from 'react';
    import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
    import { Link } from 'react-router-dom';
  
-   const defaultCategories = ['Courses', 'Communities', 'Tools', 'Inspiration', 'Reading', 'Watch Later', 'Other'];
+   const defaultCategories = [
+     'Course', 'Zoom Meeting', 'Login', 'Recipe', 'Movie', 'Book', 'Podcast', 'Audiobook', 'Affiliate Link', 'Affiliate Portal', 
+     'Communities', 'Tools', 'Inspiration', 'Other'
+   ];
+   
+   const categoryIcons = {
+     'Course': <BookOpen className="w-4 h-4" />,
+     'Zoom Meeting': <Video className="w-4 h-4" />,
+     'Login': <Key className="w-4 h-4" />,
+     'Recipe': <Utensils className="w-4 h-4" />,
+     'Movie': <MonitorPlay className="w-4 h-4" />,
+     'Book': <BookOpen className="w-4 h-4" />,
+     'Podcast': <Mic className="w-4 h-4" />,
+     'Audiobook': <Mic className="w-4 h-4" />,
+     'Affiliate Link': <LinkIcon className="w-4 h-4" />,
+     'Affiliate Portal': <ShoppingBag className="w-4 h-4" />,
+     'Communities': <Users className="w-4 h-4" />,
+     'Tools': <Building className="w-4 h-4" />,
+     'Inspiration': <Info className="w-4 h-4" />,
+     'Other': <LinkIcon className="w-4 h-4" />
+   };
  
    export default function MyResources() {
      const queryClient = useQueryClient();
      const { user, preferences } = useTheme();
      const [search, setSearch] = useState('');
      const [selectedCategory, setSelectedCategory] = useState('All');
+     const [viewFilter, setViewFilter] = useState('mine'); // 'mine', 'shared', 'all'
      const [isAddOpen, setIsAddOpen] = useState(false);
      const [editingItem, setEditingItem] = useState(null);
-     const [showShared, setShowShared] = useState(false);
      const [resourceToDelete, setResourceToDelete] = useState(null);
 
      const [formData, setFormData] = useState({
@@ -45,20 +65,30 @@ import React, { useState } from 'react';
      const { data: myResources = [], isLoading: myLoading } = useQuery({
        queryKey: ['myResources', user?.email],
        queryFn: () => base44.entities.UserResource.filter({ user_email: user?.email }, '-created_date'),
-       enabled: !!user?.email && !showShared
+       enabled: !!user?.email
      });
  
      const { data: sharedResources = [], isLoading: sharedLoading } = useQuery({
        queryKey: ['sharedResources'],
        queryFn: async () => {
-         const response = await base44.functions.invoke('fetchSharedResources');
-         return response.data.resources || [];
+         try {
+           const response = await base44.functions.invoke('fetchSharedResources');
+           return response.data.resources || [];
+         } catch (e) { return []; }
        },
-       enabled: !!user && showShared
+       enabled: !!user
      });
  
-     const resources = showShared ? sharedResources : myResources;
-     const isLoading = showShared ? sharedLoading : myLoading;
+     // Combine resources based on view filter
+     const allResources = React.useMemo(() => {
+       if (viewFilter === 'mine') return myResources;
+       if (viewFilter === 'shared') return sharedResources;
+       // For 'all', merge them but avoid duplicates if any ID collision (unlikely between distinct sets but good practice)
+       const sharedIds = new Set(sharedResources.map(r => r.id));
+       return [...myResources, ...sharedResources.filter(r => !sharedIds.has(r.id))];
+     }, [viewFilter, myResources, sharedResources]);
+
+     const isLoading = myLoading || sharedLoading;
  
      // Fetch groups for dropdown
      const { data: myGroups = [] } = useQuery({
@@ -163,7 +193,7 @@ import React, { useState } from 'react';
        setIsAddOpen(true);
      };
  
-     const filteredResources = resources.filter(res => {
+     const filteredResources = allResources.filter(res => {
        const matchesSearch = !search || 
          res.title.toLowerCase().includes(search.toLowerCase()) || 
          res.notes?.toLowerCase().includes(search.toLowerCase()) ||
@@ -175,42 +205,38 @@ import React, { useState } from 'react';
      return (
        <div className="p-6 max-w-6xl mx-auto space-y-6">
          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-           <div>
-             <h1 className="text-2xl font-bold flex items-center gap-2">
-               <LinkIcon className="w-6 h-6 text-purple-600" />
-               {showShared ? 'Shared Resources' : (preferences?.my_resources_label || 'My Stuff')}
-             </h1>
-             <p className="text-gray-600">
-               {showShared 
-                 ? 'Resources shared with you by your groups and community.' 
-                 : 'Your personal library of links, courses, and inspiration.'}
-             </p>
-           </div>
-           <div className="flex flex-wrap gap-2 items-center">
-             <div className="flex items-center gap-2 bg-white p-2 rounded-lg border shadow-sm mr-2">
-               <TooltipProvider>
-                 <Tooltip>
-                   <TooltipTrigger asChild>
-                     <div className="flex items-center gap-2">
-                       <Switch 
-                         checked={showShared}
-                         onCheckedChange={setShowShared}
-                         id="shared-mode"
-                       />
-                       <Label htmlFor="shared-mode" className="cursor-pointer font-medium text-sm">
-                         {showShared ? 'Viewing Shared' : 'Viewing Mine'}
-                       </Label>
-                     </div>
-                   </TooltipTrigger>
-                   <TooltipContent>
-                     <p>Switch between your personal items and items shared with you</p>
-                   </TooltipContent>
-                 </Tooltip>
-               </TooltipProvider>
+         <div>
+           <h1 className="text-2xl font-bold flex items-center gap-2">
+             <LinkIcon className="w-6 h-6 text-purple-600" />
+             {preferences?.my_resources_label || 'My Stuff'}
+           </h1>
+           <p className="text-gray-600">
+             Your personal library of links, courses, inspiration, and shared group resources.
+           </p>
+         </div>
+         <div className="flex flex-wrap gap-2 items-center">
+             {/* View Filter Tabs */}
+             <div className="flex bg-gray-100 p-1 rounded-lg mr-2">
+               <button 
+                 onClick={() => setViewFilter('mine')}
+                 className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${viewFilter === 'mine' ? 'bg-white shadow-sm text-purple-700' : 'text-gray-500 hover:text-gray-700'}`}
+               >
+                 My Stuff
+               </button>
+               <button 
+                 onClick={() => setViewFilter('shared')}
+                 className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${viewFilter === 'shared' ? 'bg-white shadow-sm text-purple-700' : 'text-gray-500 hover:text-gray-700'}`}
+               >
+                 Shared
+               </button>
+               <button 
+                 onClick={() => setViewFilter('all')}
+                 className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${viewFilter === 'all' ? 'bg-white shadow-sm text-purple-700' : 'text-gray-500 hover:text-gray-700'}`}
+               >
+                 All
+               </button>
              </div>
-             {!showShared && (
-               <>
-                 {/* Rename Button */}
+
              <Button variant="outline" size="sm" onClick={() => {
                const newName = prompt('Rename "My Stuff" to:', preferences?.my_resources_label || 'My Stuff');
                if (newName && newName.trim()) {
@@ -223,8 +249,6 @@ import React, { useState } from 'react';
              <Button onClick={() => { setEditingItem(null); resetForm(); setIsAddOpen(true); }} className="bg-purple-600 hover:bg-purple-700 text-white">
                <Plus className="w-4 h-4 mr-2" /> Add Item
              </Button>
-               </>
-             )}
            </div>
          </div>
  
@@ -258,49 +282,82 @@ import React, { useState } from 'react';
          ) : (
            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
              {filteredResources.map(resource => {
-               const cardStyle = {
-                 backgroundColor: resource.color || '#ffffff',
-                 borderColor: resource.secondary_color || 'transparent',
-                 borderWidth: resource.secondary_color ? '2px' : '1px'
-               };
- 
+               // Determine if this is a shared resource (not owned by user)
+               const isShared = resource.user_email !== user?.email;
+
+               // Use lighter accent/border approach instead of full background
+               const accentColor = resource.color && resource.color !== '#ffffff' ? resource.color : '#e5e7eb';
+               const Icon = categoryIcons[resource.category] || <LinkIcon className="w-4 h-4" />;
+
                return (
-                 <Card key={resource.id} className="hover:shadow-md transition-shadow group relative" style={cardStyle}>
-                   <CardHeader className="pb-2">
-                     <div className="flex justify-between items-start">
-                       <Badge variant="outline" className="mb-2 bg-white/50 backdrop-blur-sm">{resource.category}</Badge>
-                       {!showShared && (
-                         <div className="bg-white/50 rounded-lg p-1">
-                           <TooltipProvider>
-                             <Tooltip>
-                               <TooltipTrigger asChild>
-                                 <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => handleEdit(resource)}>
-                                   <Edit2 className="w-3 h-3" />
-                                 </Button>
-                               </TooltipTrigger>
-                               <TooltipContent><p>Edit Details</p></TooltipContent>
-                             </Tooltip>
-                           </TooltipProvider>
-                         </div>
-                       )}
+                 <Card 
+                   key={resource.id} 
+                   className="hover:shadow-lg transition-all duration-300 group relative border-l-4 overflow-hidden bg-white" 
+                   style={{ borderLeftColor: accentColor }}
+                 >
+                   <CardHeader className="pb-2 pt-4 px-4">
+                     <div className="flex justify-between items-start mb-1">
+                       <div className="flex items-center gap-2">
+                         <Badge variant="outline" className="flex items-center gap-1.5 font-medium px-2 py-0.5 bg-gray-50 text-gray-700 border-gray-200">
+                           {Icon}
+                           {resource.category}
+                         </Badge>
+                         {isShared && (
+                           <Badge variant="secondary" className="text-[10px] bg-blue-50 text-blue-700">Shared</Badge>
+                         )}
+                       </div>
+
+                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                         {/* Favorite Star */}
+                         {!isShared && (
+                           <button 
+                             onClick={(e) => {
+                               e.stopPropagation();
+                               toggleFavoriteMutation.mutate(resource);
+                             }}
+                             className={`p-1 rounded-full hover:bg-gray-100 transition-colors ${resource.is_favorite ? 'text-yellow-400' : 'text-gray-300 hover:text-yellow-400'}`}
+                           >
+                             <Star className={`w-4 h-4 ${resource.is_favorite ? 'fill-current' : ''}`} />
+                           </button>
+                         )}
+
+                         {/* Edit Button (Only for owner) */}
+                         {!isShared && (
+                           <Button 
+                             variant="ghost" 
+                             size="sm" 
+                             className="h-7 w-7 p-0 text-gray-400 hover:text-gray-700" 
+                             onClick={() => handleEdit(resource)}
+                           >
+                             <Edit2 className="w-3.5 h-3.5" />
+                           </Button>
+                         )}
+                       </div>
                      </div>
-                     <CardTitle className="text-lg leading-tight">
+
+                     <CardTitle className="text-base font-bold leading-tight line-clamp-2">
                        {resource.url ? (
-                         <a href={resource.url} target="_blank" rel="noopener noreferrer" className="hover:underline hover:opacity-80 flex gap-2 items-start">
+                         <a href={resource.url} target="_blank" rel="noopener noreferrer" className="hover:text-purple-600 transition-colors flex gap-2 items-start">
                            {resource.title}
-                           <ExternalLink className="w-3 h-3 mt-1 flex-shrink-0 opacity-50" />
+                           <ExternalLink className="w-3 h-3 mt-1 flex-shrink-0 opacity-40" />
                          </a>
                        ) : (
                          resource.title
                        )}
                      </CardTitle>
                    </CardHeader>
-                   <CardContent>
-                     {resource.notes && <p className="text-sm opacity-80 mb-3 line-clamp-3 whitespace-pre-wrap">{resource.notes}</p>}
+
+                   <CardContent className="px-4 pb-4">
+                     {resource.notes && (
+                       <div className="text-xs text-gray-500 mb-3 line-clamp-3 whitespace-pre-wrap bg-gray-50 p-2 rounded-md border border-gray-100">
+                         {resource.notes}
+                       </div>
+                     )}
+
                      {resource.tags && resource.tags.length > 0 && (
-                       <div className="flex flex-wrap gap-1">
+                       <div className="flex flex-wrap gap-1 mt-auto">
                          {resource.tags.map((tag, i) => (
-                           <span key={i} className="text-[10px] bg-white/50 px-1.5 py-0.5 rounded opacity-70">#{tag}</span>
+                           <span key={i} className="text-[10px] bg-gray-100 px-1.5 py-0.5 rounded text-gray-600 font-medium">#{tag}</span>
                          ))}
                        </div>
                      )}
@@ -359,18 +416,25 @@ import React, { useState } from 'react';
                  />
                </div>
                <div className="grid grid-cols-2 gap-4">
-                 <div>
+                 <div className="col-span-2 sm:col-span-1">
                    <Label>Category</Label>
                    <Select value={formData.category} onValueChange={(v) => setFormData({...formData, category: v})}>
                      <SelectTrigger>
-                       <SelectValue placeholder="Select or type..." />
+                       <SelectValue placeholder="Select category..." />
                      </SelectTrigger>
-                     <SelectContent>
-                       {defaultCategories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
+                     <SelectContent className="max-h-[200px]">
+                       {defaultCategories.map(cat => (
+                         <SelectItem key={cat} value={cat}>
+                           <div className="flex items-center gap-2">
+                             {categoryIcons[cat] || <LinkIcon className="w-4 h-4" />}
+                             {cat}
+                           </div>
+                         </SelectItem>
+                       ))}
                      </SelectContent>
                    </Select>
                  </div>
-                 <div className="flex items-end">
+                 <div className="col-span-2 sm:col-span-1 flex items-end">
                     <Input 
                      placeholder="Or type custom category..." 
                      onChange={(e) => setFormData({...formData, category: e.target.value})}
@@ -378,6 +442,17 @@ import React, { useState } from 'react';
                    />
                  </div>
                </div>
+
+               {formData.category === 'Login' && (
+                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex gap-3 items-start text-sm text-amber-800">
+                   <TriangleAlert className="w-5 h-5 flex-shrink-0 text-amber-600" />
+                   <p>
+                     <strong>Security Warning:</strong> Please do NOT store actual passwords here. 
+                     Use your browser's password manager or a secure tool like 1Password/LastPass. 
+                     Only store the login URL and username here.
+                   </p>
+                 </div>
+               )}
                <div>
                  <Label>Notes</Label>
                  <Textarea 
@@ -395,23 +470,13 @@ import React, { useState } from 'react';
                  />
                </div>
                
-               <div className="grid grid-cols-2 gap-4">
-                 <div>
-                   <Label className="mb-2 block">Card Color</Label>
-                   <ColorPicker 
-                     color={formData.color} 
-                     onChange={(c) => setFormData({...formData, color: c})}
-                     label="Background"
-                   />
-                 </div>
-                 <div>
-                   <Label className="mb-2 block">Secondary Color</Label>
-                   <ColorPicker 
-                     color={formData.secondary_color} 
-                     onChange={(c) => setFormData({...formData, secondary_color: c})}
-                     label="Border/Accent"
-                   />
-                 </div>
+               <div>
+                 <Label className="mb-2 block">Accent Color (Left Border)</Label>
+                 <ColorPicker 
+                   color={formData.color} 
+                   onChange={(c) => setFormData({...formData, color: c})}
+                   label="Accent Color"
+                 />
                </div>
  
                <div className="grid grid-cols-2 gap-4 bg-gray-50 p-3 rounded-lg border">
