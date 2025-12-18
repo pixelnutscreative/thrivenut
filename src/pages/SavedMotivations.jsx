@@ -28,6 +28,7 @@ export default function SavedMotivations() {
   const queryClient = useQueryClient();
   const { isDark, bgClass, user, effectiveEmail, preferences } = useTheme();
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [search, setSearch] = useState('');
   const [copied, setCopied] = useState(null);
   const [showImagePrompts, setShowImagePrompts] = useState(null);
   const [generatingPrompts, setGeneratingPrompts] = useState(null);
@@ -63,9 +64,13 @@ export default function SavedMotivations() {
 
   const categories = [...new Set(motivations.map(m => m.category || 'Uncategorized'))];
 
-  const filteredMotivations = categoryFilter === 'all' 
-    ? motivations 
-    : motivations.filter(m => (m.category || 'Uncategorized') === categoryFilter);
+  const filteredMotivations = motivations.filter(m => {
+    const matchesCategory = categoryFilter === 'all' || (m.category || 'Uncategorized') === categoryFilter;
+    const matchesSearch = !search || 
+      m.content.toLowerCase().includes(search.toLowerCase()) || 
+      m.reference?.toLowerCase().includes(search.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.SavedMotivation.delete(id),
@@ -152,8 +157,8 @@ Each prompt should be:
     } else if (tool.app_id) {
       // Auto-generate URL from App ID
       const baseUrl = userPlatform === 'pixels_toolbox' 
-        ? 'https://ai.thenutsandbots.com/apps/custom-api/'
-        : 'https://create.letsgonuts.ai/apps/custom-api/';
+        ? 'https://ai.thenutsandbots.com/apps/custom-app/'
+        : 'https://create.letsgonuts.ai/apps/custom-app/';
       url = baseUrl + tool.app_id;
     } else {
       // Fallback to custom URLs
@@ -172,17 +177,29 @@ Each prompt should be:
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-2">
               <Bookmark className="w-8 h-8 text-purple-600" />
-              Saved Motivations
+              Saved for Content
             </h1>
             <p className="text-gray-600 mt-1">Your collection of inspiration for content creation</p>
           </div>
           <Button onClick={() => setShowAddModal(true)} className="bg-purple-600 hover:bg-purple-700">
             <Plus className="w-4 h-4 mr-2" />
-            Add Motivation
+            Add Content Idea
           </Button>
         </div>
 
-        {/* Filters */}
+        {/* Search & Filters */}
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input 
+              placeholder="Search content ideas..." 
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+        </div>
+
         <div className="flex flex-wrap items-center gap-2">
           <Filter className="w-4 h-4 text-gray-500" />
           <Badge
@@ -412,8 +429,8 @@ Each prompt should be:
                                                 url = tool.pixels_toolbox_url || tool.lets_go_nuts_url;
                                               } else if (tool.app_id) {
                                                 const baseUrl = userPlatform === 'pixels_toolbox'
-                                                  ? 'https://ai.thenutsandbots.com/apps/custom-api/'
-                                                  : 'https://create.letsgonuts.ai/apps/custom-api/';
+                                                  ? 'https://ai.thenutsandbots.com/apps/custom-app/'
+                                                  : 'https://create.letsgonuts.ai/apps/custom-app/';
                                                 url = baseUrl + tool.app_id;
                                               } else {
                                                 url = userPlatform === 'pixels_toolbox' ? tool.pixels_toolbox_url : tool.lets_go_nuts_url;
@@ -475,7 +492,7 @@ Each prompt should be:
       <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add Motivation</DialogTitle>
+            <DialogTitle>Add Content Idea</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">

@@ -71,7 +71,6 @@ export default function Admin() {
             <TabsTrigger value="users" className="text-sm font-semibold">Users</TabsTrigger>
             <TabsTrigger value="support" className="text-sm font-semibold">Support</TabsTrigger>
             <TabsTrigger value="content" className="text-sm font-semibold">Content</TabsTrigger>
-            <TabsTrigger value="showcase" className="text-sm font-semibold">Showcase</TabsTrigger>
             <TabsTrigger value="app" className="text-sm font-semibold">App</TabsTrigger>
             <TabsTrigger value="referrals" className="text-sm font-semibold">Referrals</TabsTrigger>
           </TabsList>
@@ -118,11 +117,6 @@ export default function Admin() {
             </Card>
           </TabsContent>
 
-          {/* SHOWCASE TAB */}
-          <TabsContent value="showcase" className="mt-0">
-            <AdminContentReview />
-          </TabsContent>
-
           {/* CONTENT TAB */}
           <TabsContent value="content" className="mt-0">
             <Card>
@@ -135,6 +129,7 @@ export default function Admin() {
                       <TabsTrigger value="gifts">Gifts</TabsTrigger>
                       <TabsTrigger value="resources">Resources</TabsTrigger>
                       <TabsTrigger value="nutpals">NutPals</TabsTrigger>
+                      <TabsTrigger value="showcase">Showcase</TabsTrigger>
                       <TabsTrigger value="categories">Categories</TabsTrigger>
                     </TabsList>
                   </div>
@@ -144,6 +139,7 @@ export default function Admin() {
                   <TabsContent value="gifts"><AdminGiftLibraryContent /></TabsContent>
                   <TabsContent value="resources"><AdminResourcesContent /></TabsContent>
                   <TabsContent value="nutpals"><AdminNutPalsContent /></TabsContent>
+                  <TabsContent value="showcase"><AdminContentReview /></TabsContent>
                   <TabsContent value="categories"><AdminCategoriesContent /></TabsContent>
                 </Tabs>
               </CardContent>

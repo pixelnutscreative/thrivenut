@@ -114,14 +114,6 @@ export default function Layout({ children, currentPageName }) {
       id: 'core',
       items: [
         { name: getDashboardName(), icon: LayoutDashboard, path: 'Dashboard', alwaysShow: true },
-      ]
-    },
-    {
-      id: 'personal',
-      title: 'My World',
-      color: 'text-indigo-400',
-      bgColor: 'bg-indigo-500/10',
-      items: [
         { name: preferences?.my_resources_label || 'My Stuff', icon: Bookmark, path: 'MyResources' },
         { name: "Pixel's Place", icon: Sparkles, path: 'PixelsParadise', alwaysShow: true },
       ]
@@ -218,7 +210,7 @@ export default function Layout({ children, currentPageName }) {
     }
   ];
 
-  const [collapsedGroups, setCollapsedGroups] = useState(['personal', 'goals', 'friends', 'faith', 'health', 'creator', 'support']);
+  const [collapsedGroups, setCollapsedGroups] = useState(['goals', 'friends', 'faith', 'health', 'creator', 'support']);
 
   const toggleGroup = (groupId) => {
     setCollapsedGroups(previousGroups => 

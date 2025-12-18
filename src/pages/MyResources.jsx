@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, Plus, Search, ExternalLink, Trash2, Filter, Link as LinkIcon, Edit2 } from 'lucide-react';
 import { useTheme } from '../components/shared/useTheme';
+import ColorPicker from '../components/shared/ColorPicker';
 
 const defaultCategories = ['Courses', 'Communities', 'Tools', 'Inspiration', 'Reading', 'Watch Later', 'Other'];
 
@@ -27,7 +28,9 @@ export default function MyResources() {
     url: '',
     category: 'Other',
     notes: '',
-    tags: []
+    tags: [],
+    color: '#ffffff',
+    secondary_color: ''
   });
 
   const { data: resources = [], isLoading } = useQuery({
@@ -78,7 +81,9 @@ export default function MyResources() {
       url: '',
       category: 'Other',
       notes: '',
-      tags: []
+      tags: [],
+      color: '#ffffff',
+      secondary_color: ''
     });
   };
 
@@ -89,7 +94,9 @@ export default function MyResources() {
       url: item.url,
       category: item.category,
       notes: item.notes,
-      tags: item.tags || []
+      tags: item.tags || [],
+      color: item.color || '#ffffff',
+      secondary_color: item.secondary_color || ''
     });
     setIsAddOpen(true);
   };
@@ -159,43 +166,54 @@ export default function MyResources() {
         </div>
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredResources.map(resource => (
-            <Card key={resource.id} className="hover:shadow-md transition-shadow group relative">
-              <CardHeader className="pb-2">
-                <div className="flex justify-between items-start">
-                  <Badge variant="outline" className="mb-2">{resource.category}</Badge>
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => handleEdit(resource)}>
-                      <Edit2 className="w-3 h-3" />
-                    </Button>
-                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-red-500 hover:text-red-600" onClick={() => deleteMutation.mutate(resource.id)}>
-                      <Trash2 className="w-3 h-3" />
-                    </Button>
+          {filteredResources.map(resource => {
+            // Determine text color based on background color brightness if needed, 
+            // but for simplicity assuming mostly light backgrounds or user handles it.
+            // If secondary color exists, use it for border or accent.
+            const cardStyle = {
+              backgroundColor: resource.color || '#ffffff',
+              borderColor: resource.secondary_color || 'transparent',
+              borderWidth: resource.secondary_color ? '2px' : '1px'
+            };
+
+            return (
+              <Card key={resource.id} className="hover:shadow-md transition-shadow group relative" style={cardStyle}>
+                <CardHeader className="pb-2">
+                  <div className="flex justify-between items-start">
+                    <Badge variant="outline" className="mb-2 bg-white/50 backdrop-blur-sm">{resource.category}</Badge>
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white/50 rounded-lg p-1">
+                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => handleEdit(resource)}>
+                        <Edit2 className="w-3 h-3" />
+                      </Button>
+                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-red-500 hover:text-red-600" onClick={() => deleteMutation.mutate(resource.id)}>
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </div>
                   </div>
-                </div>
-                <CardTitle className="text-lg leading-tight">
-                  {resource.url ? (
-                    <a href={resource.url} target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-purple-600 flex gap-2 items-start">
-                      {resource.title}
-                      <ExternalLink className="w-3 h-3 mt-1 flex-shrink-0 opacity-50" />
-                    </a>
-                  ) : (
-                    resource.title
+                  <CardTitle className="text-lg leading-tight">
+                    {resource.url ? (
+                      <a href={resource.url} target="_blank" rel="noopener noreferrer" className="hover:underline hover:opacity-80 flex gap-2 items-start">
+                        {resource.title}
+                        <ExternalLink className="w-3 h-3 mt-1 flex-shrink-0 opacity-50" />
+                      </a>
+                    ) : (
+                      resource.title
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {resource.notes && <p className="text-sm opacity-80 mb-3 line-clamp-3 whitespace-pre-wrap">{resource.notes}</p>}
+                  {resource.tags && resource.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {resource.tags.map((tag, i) => (
+                        <span key={i} className="text-[10px] bg-white/50 px-1.5 py-0.5 rounded opacity-70">#{tag}</span>
+                      ))}
+                    </div>
                   )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {resource.notes && <p className="text-sm text-gray-600 mb-3 line-clamp-3">{resource.notes}</p>}
-                {resource.tags && resource.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    {resource.tags.map((tag, i) => (
-                      <span key={i} className="text-[10px] bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">#{tag}</span>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
 
@@ -262,6 +280,25 @@ export default function MyResources() {
                 onChange={(e) => setFormData({...formData, tags: e.target.value.split(',').map(t => t.trim())})}
                 placeholder="ai, design, recipe"
               />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="mb-2 block">Card Color</Label>
+                <ColorPicker 
+                  color={formData.color} 
+                  onChange={(c) => setFormData({...formData, color: c})}
+                  label="Background"
+                />
+              </div>
+              <div>
+                <Label className="mb-2 block">Secondary Color</Label>
+                <ColorPicker 
+                  color={formData.secondary_color} 
+                  onChange={(c) => setFormData({...formData, secondary_color: c})}
+                  label="Border/Accent"
+                />
+              </div>
             </div>
           </div>
           <DialogFooter>

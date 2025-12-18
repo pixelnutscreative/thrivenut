@@ -178,6 +178,10 @@ export default function PixelsParadise() {
 
   const effectiveEmail = user ? getEffectiveUserEmail(user.email) : null;
 
+  const hasAIToolbox = preferences?.subscription_product === 'pixels_toolbox_annual' || preferences?.subscription_product === 'nuts_bots_annual' || preferences?.has_annual_ai_plan;
+  const hasNutsBots = preferences?.subscription_product === 'nuts_bots_annual';
+  const hasDigitalTwin = preferences?.digital_twin_created;
+
   useEffect(() => {
     base44.auth.isAuthenticated().then(setIsAuthenticated).catch(() => {});
     base44.auth.me().then(async (userData) => {
@@ -311,131 +315,163 @@ export default function PixelsParadise() {
         </div>
 
         {/* ===== WORKSHOPS & CLASSES - TOP SECTION ===== */}
-        <div className="space-y-4">
-          <h2 className={`text-xl font-bold ${textClass} flex items-center gap-2`}>
-            <GraduationCap className="w-5 h-5" style={{ color: primaryColor }} />
-            Workshops & Classes
-            <span className={`text-sm font-normal ${subtextClass}`}>(where the magic happens)</span>
-          </h2>
-          {workshopItems.map((workshop) => (
-            <Card 
-              key={workshop.name}
-              className={`overflow-hidden hover:shadow-lg transition-all cursor-pointer group`}
-              style={{ 
-                background: isDark 
-                  ? `linear-gradient(135deg, ${primaryColor}20, ${accentColor}20)` 
-                  : `linear-gradient(135deg, ${primaryColor}15, ${accentColor}15)`,
-                borderColor: isDark ? `${primaryColor}50` : `${primaryColor}40`
-              }}
-              onClick={() => window.open(workshop.link, '_blank')}
-            >
-              <CardContent className="p-5 space-y-2">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <h3 className={`font-bold text-lg ${textClass} group-hover:opacity-80 transition-colors`}>
-                      {workshop.name}
-                    </h3>
-                    {workshop.nickname && (
-                      <span className="text-2xl font-black block mt-1 mb-2" style={{ color: primaryColor }}>{workshop.nickname}</span>
+        {/* Hide AI Class if already subscribed */}
+        {!hasAIToolbox && (
+          <div className="space-y-4">
+            <h2 className={`text-xl font-bold ${textClass} flex items-center gap-2`}>
+              <GraduationCap className="w-5 h-5" style={{ color: primaryColor }} />
+              Workshops & Classes
+              <span className={`text-sm font-normal ${subtextClass}`}>(where the magic happens)</span>
+            </h2>
+            {workshopItems.map((workshop) => (
+              <Card 
+                key={workshop.name}
+                className={`overflow-hidden hover:shadow-lg transition-all cursor-pointer group`}
+                style={{ 
+                  background: isDark 
+                    ? `linear-gradient(135deg, ${primaryColor}20, ${accentColor}20)` 
+                    : `linear-gradient(135deg, ${primaryColor}15, ${accentColor}15)`,
+                  borderColor: isDark ? `${primaryColor}50` : `${primaryColor}40`
+                }}
+                onClick={() => window.open(workshop.link, '_blank')}
+              >
+                <CardContent className="p-5 space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <h3 className={`font-bold text-lg ${textClass} group-hover:opacity-80 transition-colors`}>
+                        {workshop.name}
+                      </h3>
+                      {workshop.nickname && (
+                        <span className="text-2xl font-black block mt-1 mb-2" style={{ color: primaryColor }}>{workshop.nickname}</span>
+                      )}
+                    </div>
+                    <ExternalLink className="w-4 h-4 text-gray-400 group-hover:opacity-80 flex-shrink-0 mt-1" style={{ color: primaryColor }} />
+                  </div>
+                  <p className={`text-sm ${subtextClass}`}>{workshop.description}</p>
+                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                    {workshop.schedule && (
+                      <Badge className="text-xs border-0" style={{ backgroundColor: `${primaryColor}20`, color: primaryColor }}>
+                        🗓️ {workshop.schedule}
+                      </Badge>
+                    )}
+                    {workshop.badge && (
+                      <Badge className="text-xs border-0" style={{ backgroundColor: `${accentColor}20`, color: accentColor }}>{workshop.badge}</Badge>
                     )}
                   </div>
-                  <ExternalLink className="w-4 h-4 text-gray-400 group-hover:opacity-80 flex-shrink-0 mt-1" style={{ color: primaryColor }} />
-                </div>
-                <p className={`text-sm ${subtextClass}`}>{workshop.description}</p>
-                <div className="flex flex-wrap items-center gap-2 pt-1">
-                  {workshop.schedule && (
-                    <Badge className="text-xs border-0" style={{ backgroundColor: `${primaryColor}20`, color: primaryColor }}>
-                      🗓️ {workshop.schedule}
-                    </Badge>
-                  )}
-                  {workshop.badge && (
-                    <Badge className="text-xs border-0" style={{ backgroundColor: `${accentColor}20`, color: accentColor }}>{workshop.badge}</Badge>
-                  )}
-                </div>
-                
-                <div className="pt-4">
-                  <Button 
-                    className="w-full text-white font-bold text-lg h-12 shadow-lg hover:scale-[1.02] transition-transform"
-                    style={gradientStyle}
-                  >
-                    REGISTER FOR FREE
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* ===== PIXEL'S AI TOOLBOX + NUTS & BOTS ===== */}
-        <div className="rounded-2xl p-6 md:p-8 text-white shadow-2xl space-y-6" style={gradientStyle}>
-          {/* AI Toolbox */}
-          <div className="flex flex-col md:flex-row items-center gap-4 md:gap-6">
-            <div className="flex-shrink-0">
-              <div className="w-16 md:w-20 h-16 md:h-20 bg-white/20 rounded-2xl flex items-center justify-center">
-                <Zap className="w-8 md:w-10 h-8 md:h-10 text-yellow-300" />
-              </div>
-            </div>
-            <div className="flex-1 text-center md:text-left">
-              <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-2">
-                <Crown className="w-5 md:w-6 h-5 md:h-6 text-yellow-300" />
-                <h2 className="text-xl md:text-2xl lg:text-3xl font-bold">Pixel's AI Toolbox</h2>
-              </div>
-              <p className="text-white/90 mb-4 text-sm md:text-base">
-                Access the most amazing collection of 300+ AI tools to do anything you could possibly imagine (almost, except AI video).
-                <br /><br />
-                Basically it's for <strong>less than one dollar a day</strong> when paid annually!
-                <br />
-                Also includes <strong>seven AI classes each week</strong> where you can ask questions, get new tools, and get specific help for your needs! 🤯
-              </p>
-              <div className="flex flex-col gap-3">
-                <Select value={selectedPlan} onValueChange={handlePlanSelect}>
-                  <SelectTrigger className="w-full bg-white/20 border-white/30 text-white">
-                    <SelectValue placeholder="Get access now..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {aiToolboxOptions.map(option => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <span className="text-white/70 text-xs md:text-sm text-center md:text-left">Pick one and let's GO! ⬆️</span>
-              </div>
-            </div>
+                  
+                  <div className="pt-4">
+                    <Button 
+                      className="w-full text-white font-bold text-lg h-12 shadow-lg hover:scale-[1.02] transition-transform"
+                      style={gradientStyle}
+                    >
+                      REGISTER FOR FREE
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
-          
-          {/* WANT IT ALL - Nuts + Bots inside the box */}
-          <div className="bg-white/15 backdrop-blur rounded-xl p-4 md:p-5 border border-white/20">
-            <div className="flex flex-col md:flex-row items-center gap-4">
-              <div className="flex-shrink-0">
-                <div className="w-12 md:w-14 h-12 md:h-14 bg-white/30 rounded-xl flex items-center justify-center">
-                  <Bot className="w-6 md:w-7 h-6 md:h-7 text-white" />
-                </div>
+        )}
+
+        {/* ===== DIGITAL TWIN SECTION (If not created) ===== */}
+        {!hasDigitalTwin && (
+          <div className="rounded-2xl p-6 md:p-8 text-white shadow-2xl" style={{ background: `linear-gradient(135deg, ${accentColor}, ${primaryColor})` }}>
+            <div className="flex flex-col md:flex-row items-center gap-6">
+              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0 animate-pulse">
+                <Bot className="w-8 h-8 text-white" />
               </div>
               <div className="flex-1 text-center md:text-left">
-                <h3 className="text-lg md:text-xl font-bold flex flex-wrap items-center justify-center md:justify-start gap-2">
-                  🚀 WANT IT ALL? Get The Nuts + Bots
-                </h3>
-                <p className="text-white/90 text-xs md:text-sm mt-1">
-                  All the tools you need to run your business - CRM, funnels, automations, AND Pixel's AI Toolbox included!
+                <h2 className="text-2xl font-bold mb-2">Have you created your Digital Twin yet?</h2>
+                <p className="text-white/90 mb-4">
+                  Clone yourself (digitally!) so you can be in two places at once. It's the ultimate productivity hack.
                 </p>
-                <div className="flex flex-col sm:flex-row flex-wrap items-center gap-2 md:gap-3 mt-3 justify-center md:justify-start">
-                  <Button
-                    onClick={() => window.open('https://thenutsandbots.com/order-thenutsandbotsplusai-annual-8125-6335-3387-5540', '_blank')}
-                    className="bg-white/30 hover:bg-white/40 text-white w-full sm:w-auto font-bold text-lg h-12"
-                    size="lg"
-                  >
-                    See Pricing & Get Started
-                  </Button>
-                </div>
-                <p className="text-white/90 text-sm mt-3 text-center md:text-left font-semibold">
-                  🎉 Use coupon code <span className="text-yellow-300 font-bold bg-black/20 px-1 rounded">NIKOLE</span> to get $111 off the annual plan!
-                </p>
+                <Button 
+                  onClick={() => window.open('https://create.letsgonuts.ai', '_blank')}
+                  className="bg-white text-purple-600 font-bold hover:bg-gray-100"
+                >
+                  Start Cloning Now
+                </Button>
               </div>
             </div>
           </div>
-        </div>
+        )}
+
+        {/* ===== PIXEL'S AI TOOLBOX + NUTS & BOTS ===== */}
+        {(!hasAIToolbox || !hasNutsBots) && (
+          <div className="rounded-2xl p-6 md:p-8 text-white shadow-2xl space-y-6" style={gradientStyle}>
+            {/* AI Toolbox - Hide if subscribed */}
+            {!hasAIToolbox && (
+              <div className="flex flex-col md:flex-row items-center gap-4 md:gap-6">
+                <div className="flex-shrink-0">
+                  <div className="w-16 md:w-20 h-16 md:h-20 bg-white/20 rounded-2xl flex items-center justify-center">
+                    <Zap className="w-8 md:w-10 h-8 md:h-10 text-yellow-300" />
+                  </div>
+                </div>
+                <div className="flex-1 text-center md:text-left">
+                  <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-2">
+                    <Crown className="w-5 md:w-6 h-5 md:h-6 text-yellow-300" />
+                    <h2 className="text-xl md:text-2xl lg:text-3xl font-bold">Pixel's AI Toolbox</h2>
+                  </div>
+                  <p className="text-white/90 mb-4 text-sm md:text-base">
+                    Access the most amazing collection of 300+ AI tools to do anything you could possibly imagine (almost, except AI video).
+                    <br /><br />
+                    Basically it's for <strong>less than one dollar a day</strong> when paid annually!
+                    <br />
+                    Also includes <strong>seven AI classes each week</strong> where you can ask questions, get new tools, and get specific help for your needs! 🤯
+                  </p>
+                  <div className="flex flex-col gap-3">
+                    <Select value={selectedPlan} onValueChange={handlePlanSelect}>
+                      <SelectTrigger className="w-full bg-white/20 border-white/30 text-white">
+                        <SelectValue placeholder="Get access now..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {aiToolboxOptions.map(option => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <span className="text-white/70 text-xs md:text-sm text-center md:text-left">Pick one and let's GO! ⬆️</span>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* WANT IT ALL - Nuts + Bots inside the box - Hide if subscribed to Nuts + Bots */}
+            {!hasNutsBots && (
+              <div className="bg-white/15 backdrop-blur rounded-xl p-4 md:p-5 border border-white/20">
+                <div className="flex flex-col md:flex-row items-center gap-4">
+                  <div className="flex-shrink-0">
+                    <div className="w-12 md:w-14 h-12 md:h-14 bg-white/30 rounded-xl flex items-center justify-center">
+                      <Bot className="w-6 md:w-7 h-6 md:h-7 text-white" />
+                    </div>
+                  </div>
+                  <div className="flex-1 text-center md:text-left">
+                    <h3 className="text-lg md:text-xl font-bold flex flex-wrap items-center justify-center md:justify-start gap-2">
+                      🚀 WANT IT ALL? Get The Nuts + Bots
+                    </h3>
+                    <p className="text-white/90 text-xs md:text-sm mt-1">
+                      All the tools you need to run your business - CRM, funnels, automations, AND Pixel's AI Toolbox included!
+                    </p>
+                    <div className="flex flex-col sm:flex-row flex-wrap items-center gap-2 md:gap-3 mt-3 justify-center md:justify-start">
+                      <Button
+                        onClick={() => window.open('https://thenutsandbots.com/order-thenutsandbotsplusai-annual-8125-6335-3387-5540', '_blank')}
+                        className="bg-white/30 hover:bg-white/40 text-white w-full sm:w-auto font-bold text-lg h-12"
+                        size="lg"
+                      >
+                        See Pricing & Get Started
+                      </Button>
+                    </div>
+                    <p className="text-white/90 text-sm mt-3 text-center md:text-left font-semibold">
+                      🎉 Use coupon code <span className="text-yellow-300 font-bold bg-black/20 px-1 rounded">NIKOLE</span> to get $111 off the annual plan!
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
 
 
