@@ -7,7 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Save, Brain, Heart, Sparkles, Eye, Shield, Zap } from 'lucide-react';
+import { Loader2, Save, Brain, Heart, Sparkles, Eye, Shield, Zap, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import CrisisResourcesCard from '../components/mental-health/CrisisResourcesCard';
 import { useTheme } from '../components/shared/useTheme';
