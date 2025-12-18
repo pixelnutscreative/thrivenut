@@ -28,6 +28,7 @@ import AdminReferralCommissionsContent from '../components/admin/AdminReferralCo
 import AdminNotificationsContent from '../components/admin/AdminNotificationsContent';
 import AdminAnnouncementsContent from '../components/admin/AdminAnnouncementsContent';
 import AdminBibleContent from '../components/admin/AdminBibleContent';
+import AdminMentalHealthContent from '../components/admin/AdminMentalHealthContent';
 
 const ADMIN_EMAILS = ['pixelnutscreative@gmail.com', 'pixel@thrivenut.app'];
 
@@ -131,6 +132,7 @@ export default function Admin() {
                       <TabsTrigger value="nutpals">NutPals</TabsTrigger>
                       <TabsTrigger value="showcase">Showcase</TabsTrigger>
                       <TabsTrigger value="categories">Categories</TabsTrigger>
+                      <TabsTrigger value="mentalhealth">Mental Health</TabsTrigger>
                     </TabsList>
                   </div>
                   
@@ -141,6 +143,7 @@ export default function Admin() {
                   <TabsContent value="nutpals"><AdminNutPalsContent /></TabsContent>
                   <TabsContent value="showcase"><AdminContentReview /></TabsContent>
                   <TabsContent value="categories"><AdminCategoriesContent /></TabsContent>
+                  <TabsContent value="mentalhealth"><AdminMentalHealthContent /></TabsContent>
                 </Tabs>
               </CardContent>
             </Card>
