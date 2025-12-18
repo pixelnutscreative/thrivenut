@@ -161,7 +161,7 @@ export default function Layout({ children, currentPageName }) {
       color: 'text-yellow-400', // Gold/Yellow
       bgColor: 'bg-yellow-500/10',
       items: [
-        { name: 'Mental Health', icon: Brain, path: 'NeurodivergentSettings', moduleId: 'mental_health' },
+        { name: 'Mental Health', icon: Brain, path: 'MentalHealth', moduleId: 'mental_health' },
         { name: 'Daily Wellness', icon: Heart, path: 'Wellness', moduleId: 'wellness' },
         { name: 'Supplements', icon: Tablet, path: 'Supplements', moduleId: 'supplements' },
         { name: 'Medications', icon: Pill, path: 'Medications', moduleId: 'medications' },

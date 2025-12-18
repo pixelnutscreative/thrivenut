@@ -20,6 +20,7 @@ import AdminCategoriesContent from '../components/admin/AdminCategoriesContent';
 import AdminContentReview from '../components/admin/AdminContentReview';
 import DuplicateContactMerger from '../components/admin/DuplicateContactMerger';
 import AdminPreApprovedEmailsContent from '../components/admin/AdminPreApprovedEmailsContent';
+import AdminUserPermissions from '../components/admin/AdminUserPermissions';
 import AdminMenuContent from '../components/admin/AdminMenuContent';
 import AdminPixelsPlaceContent from '../components/admin/AdminPixelsPlaceContent';
 import AdminAIToolsContent from '../components/admin/AdminAIToolsContent';
@@ -84,6 +85,7 @@ export default function Admin() {
                   <div className="border-b pb-4 mb-6 overflow-x-auto">
                     <TabsList>
                       <TabsTrigger value="emails">Emails</TabsTrigger>
+                      <TabsTrigger value="permissions">Permissions</TabsTrigger>
                       <TabsTrigger value="superfan">SuperFan</TabsTrigger>
                       <TabsTrigger value="queue">Queue</TabsTrigger>
                       <TabsTrigger value="impersonate">Impersonate</TabsTrigger>
@@ -91,6 +93,7 @@ export default function Admin() {
                   </div>
                   
                   <TabsContent value="emails"><AdminPreApprovedEmailsContent /></TabsContent>
+                  <TabsContent value="permissions"><AdminUserPermissions /></TabsContent>
                   <TabsContent value="superfan"><AdminSuperFanContent /></TabsContent>
                   <TabsContent value="queue"><AdminSuperFanQueue /></TabsContent>
                   <TabsContent value="impersonate"><AdminImpersonateContent /></TabsContent>

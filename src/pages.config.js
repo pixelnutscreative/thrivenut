@@ -1,153 +1,153 @@
-import Dashboard from './pages/Dashboard';
-import Wellness from './pages/Wellness';
-import Journal from './pages/Journal';
-import Goals from './pages/Goals';
-import TikTokGoals from './pages/TikTokGoals';
-import Home from './pages/Home';
-import Settings from './pages/Settings';
-import TikTokEngagement from './pages/TikTokEngagement';
-import LiveSchedule from './pages/LiveSchedule';
-import DiscoverCreators from './pages/DiscoverCreators';
-import Supplements from './pages/Supplements';
-import Medications from './pages/Medications';
-import GiftLibrary from './pages/GiftLibrary';
-import PetCare from './pages/PetCare';
-import CareReminders from './pages/CareReminders';
-import People from './pages/People';
-import GoalSharing from './pages/GoalSharing';
-import NeurodivergentSettings from './pages/NeurodivergentSettings';
-import SongGenerator from './pages/SongGenerator';
-import SuperFanAccess from './pages/SuperFanAccess';
-import AdminSuperFanReview from './pages/AdminSuperFanReview';
-import AdminImpersonate from './pages/AdminImpersonate';
-import WeeklyGifterGallery from './pages/WeeklyGifterGallery';
-import MasterContactDatabase from './pages/MasterContactDatabase';
+import ActivityTracker from './pages/ActivityTracker';
 import Admin from './pages/Admin';
-import MeetThePixelNuts from './pages/MeetThePixelNuts';
-import PixelsParadise from './pages/PixelsParadise';
-import TikTokContacts from './pages/TikTokContacts';
-import Support from './pages/Support';
-import HolyHitmakers from './pages/HolyHitmakers';
-import PrayerRequests from './pages/PrayerRequests';
-import VisionBoard from './pages/VisionBoard';
-import QuickNotes from './pages/QuickNotes';
-import SavedMotivations from './pages/SavedMotivations';
-import SubscriptionSuccess from './pages/SubscriptionSuccess';
-import Pricing from './pages/Pricing';
-import CommunityMap from './pages/CommunityMap';
-import Tasks from './pages/Tasks';
-import FamilyMembers from './pages/FamilyMembers';
-import LoveAway from './pages/LoveAway';
-import WorkSchedules from './pages/WorkSchedules';
-import CleaningTasks from './pages/CleaningTasks';
-import PictionaryHelper from './pages/PictionaryHelper';
-import Finance from './pages/Finance';
-import MyLists from './pages/MyLists';
-import MyProfile from './pages/MyProfile';
+import AdminImpersonate from './pages/AdminImpersonate';
+import AdminSuperFanReview from './pages/AdminSuperFanReview';
+import AffiliateCampaigns from './pages/AffiliateCampaigns';
+import BatchMode from './pages/BatchMode';
+import BattleInventoryShared from './pages/BattleInventoryShared';
+import BattlePrep from './pages/BattlePrep';
 import BibleResources from './pages/BibleResources';
 import BrainDump from './pages/BrainDump';
-import Household from './pages/Household';
-import Habits from './pages/Habits';
-import ActivityTracker from './pages/ActivityTracker';
-import LiveEngagement from './pages/LiveEngagement';
-import BattlePrep from './pages/BattlePrep';
-import BattleInventoryShared from './pages/BattleInventoryShared';
-import CustomHomepage from './pages/CustomHomepage';
-import WaterHistory from './pages/WaterHistory';
-import MyEvents from './pages/MyEvents';
-import ContentMarketplace from './pages/ContentMarketplace';
-import PromotionEngine from './pages/PromotionEngine';
-import ContentCards from './pages/ContentCards';
-import ContentCalendar from './pages/ContentCalendar';
-import BatchMode from './pages/BatchMode';
-import CampaignTimeline from './pages/CampaignTimeline';
-import SalesTracking from './pages/SalesTracking';
-import PromotedOffers from './pages/PromotedOffers';
-import CreatorDashboard from './pages/CreatorDashboard';
-import NotificationHistory from './pages/NotificationHistory';
 import Brands from './pages/Brands';
+import CampaignTimeline from './pages/CampaignTimeline';
+import CareReminders from './pages/CareReminders';
+import CleaningTasks from './pages/CleaningTasks';
+import CommunityMap from './pages/CommunityMap';
+import ContentCalendar from './pages/ContentCalendar';
+import ContentCards from './pages/ContentCards';
 import ContentCreatorHub from './pages/ContentCreatorHub';
-import AffiliateCampaigns from './pages/AffiliateCampaigns';
-import MyResources from './pages/MyResources';
+import ContentMarketplace from './pages/ContentMarketplace';
+import CreatorDashboard from './pages/CreatorDashboard';
 import CreatorGroups from './pages/CreatorGroups';
+import CustomHomepage from './pages/CustomHomepage';
+import Dashboard from './pages/Dashboard';
+import DiscoverCreators from './pages/DiscoverCreators';
+import FamilyMembers from './pages/FamilyMembers';
+import Finance from './pages/Finance';
+import GiftLibrary from './pages/GiftLibrary';
+import GoalSharing from './pages/GoalSharing';
+import Goals from './pages/Goals';
+import Habits from './pages/Habits';
+import HolyHitmakers from './pages/HolyHitmakers';
+import Home from './pages/Home';
+import Household from './pages/Household';
+import Journal from './pages/Journal';
 import KidsJournal from './pages/KidsJournal';
+import LiveEngagement from './pages/LiveEngagement';
+import LiveSchedule from './pages/LiveSchedule';
+import LoveAway from './pages/LoveAway';
+import MasterContactDatabase from './pages/MasterContactDatabase';
+import Medications from './pages/Medications';
+import MeetThePixelNuts from './pages/MeetThePixelNuts';
+import MyEvents from './pages/MyEvents';
+import MyLists from './pages/MyLists';
+import MyProfile from './pages/MyProfile';
+import MyResources from './pages/MyResources';
+import NotificationHistory from './pages/NotificationHistory';
+import People from './pages/People';
+import PetCare from './pages/PetCare';
+import PictionaryHelper from './pages/PictionaryHelper';
+import PixelsParadise from './pages/PixelsParadise';
+import PrayerRequests from './pages/PrayerRequests';
+import Pricing from './pages/Pricing';
+import PromotedOffers from './pages/PromotedOffers';
+import PromotionEngine from './pages/PromotionEngine';
+import QuickNotes from './pages/QuickNotes';
+import SalesTracking from './pages/SalesTracking';
+import SavedMotivations from './pages/SavedMotivations';
+import Settings from './pages/Settings';
+import SongGenerator from './pages/SongGenerator';
+import SubscriptionSuccess from './pages/SubscriptionSuccess';
+import SuperFanAccess from './pages/SuperFanAccess';
+import Supplements from './pages/Supplements';
+import Support from './pages/Support';
+import Tasks from './pages/Tasks';
+import TikTokContacts from './pages/TikTokContacts';
+import TikTokEngagement from './pages/TikTokEngagement';
+import TikTokGoals from './pages/TikTokGoals';
+import VisionBoard from './pages/VisionBoard';
+import WaterHistory from './pages/WaterHistory';
+import WeeklyGifterGallery from './pages/WeeklyGifterGallery';
+import Wellness from './pages/Wellness';
+import WorkSchedules from './pages/WorkSchedules';
+import MentalHealth from './pages/MentalHealth';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "Dashboard": Dashboard,
-    "Wellness": Wellness,
-    "Journal": Journal,
-    "Goals": Goals,
-    "TikTokGoals": TikTokGoals,
-    "Home": Home,
-    "Settings": Settings,
-    "TikTokEngagement": TikTokEngagement,
-    "LiveSchedule": LiveSchedule,
-    "DiscoverCreators": DiscoverCreators,
-    "Supplements": Supplements,
-    "Medications": Medications,
-    "GiftLibrary": GiftLibrary,
-    "PetCare": PetCare,
-    "CareReminders": CareReminders,
-    "People": People,
-    "GoalSharing": GoalSharing,
-    "NeurodivergentSettings": NeurodivergentSettings,
-    "SongGenerator": SongGenerator,
-    "SuperFanAccess": SuperFanAccess,
-    "AdminSuperFanReview": AdminSuperFanReview,
-    "AdminImpersonate": AdminImpersonate,
-    "WeeklyGifterGallery": WeeklyGifterGallery,
-    "MasterContactDatabase": MasterContactDatabase,
+    "ActivityTracker": ActivityTracker,
     "Admin": Admin,
-    "MeetThePixelNuts": MeetThePixelNuts,
-    "PixelsParadise": PixelsParadise,
-    "TikTokContacts": TikTokContacts,
-    "Support": Support,
-    "HolyHitmakers": HolyHitmakers,
-    "PrayerRequests": PrayerRequests,
-    "VisionBoard": VisionBoard,
-    "QuickNotes": QuickNotes,
-    "SavedMotivations": SavedMotivations,
-    "SubscriptionSuccess": SubscriptionSuccess,
-    "Pricing": Pricing,
-    "CommunityMap": CommunityMap,
-    "Tasks": Tasks,
-    "FamilyMembers": FamilyMembers,
-    "LoveAway": LoveAway,
-    "WorkSchedules": WorkSchedules,
-    "CleaningTasks": CleaningTasks,
-    "PictionaryHelper": PictionaryHelper,
-    "Finance": Finance,
-    "MyLists": MyLists,
-    "MyProfile": MyProfile,
+    "AdminImpersonate": AdminImpersonate,
+    "AdminSuperFanReview": AdminSuperFanReview,
+    "AffiliateCampaigns": AffiliateCampaigns,
+    "BatchMode": BatchMode,
+    "BattleInventoryShared": BattleInventoryShared,
+    "BattlePrep": BattlePrep,
     "BibleResources": BibleResources,
     "BrainDump": BrainDump,
-    "Household": Household,
-    "Habits": Habits,
-    "ActivityTracker": ActivityTracker,
-    "LiveEngagement": LiveEngagement,
-    "BattlePrep": BattlePrep,
-    "BattleInventoryShared": BattleInventoryShared,
-    "CustomHomepage": CustomHomepage,
-    "WaterHistory": WaterHistory,
-    "MyEvents": MyEvents,
-    "ContentMarketplace": ContentMarketplace,
-    "PromotionEngine": PromotionEngine,
-    "ContentCards": ContentCards,
-    "ContentCalendar": ContentCalendar,
-    "BatchMode": BatchMode,
-    "CampaignTimeline": CampaignTimeline,
-    "SalesTracking": SalesTracking,
-    "PromotedOffers": PromotedOffers,
-    "CreatorDashboard": CreatorDashboard,
-    "NotificationHistory": NotificationHistory,
     "Brands": Brands,
+    "CampaignTimeline": CampaignTimeline,
+    "CareReminders": CareReminders,
+    "CleaningTasks": CleaningTasks,
+    "CommunityMap": CommunityMap,
+    "ContentCalendar": ContentCalendar,
+    "ContentCards": ContentCards,
     "ContentCreatorHub": ContentCreatorHub,
-    "AffiliateCampaigns": AffiliateCampaigns,
-    "MyResources": MyResources,
+    "ContentMarketplace": ContentMarketplace,
+    "CreatorDashboard": CreatorDashboard,
     "CreatorGroups": CreatorGroups,
+    "CustomHomepage": CustomHomepage,
+    "Dashboard": Dashboard,
+    "DiscoverCreators": DiscoverCreators,
+    "FamilyMembers": FamilyMembers,
+    "Finance": Finance,
+    "GiftLibrary": GiftLibrary,
+    "GoalSharing": GoalSharing,
+    "Goals": Goals,
+    "Habits": Habits,
+    "HolyHitmakers": HolyHitmakers,
+    "Home": Home,
+    "Household": Household,
+    "Journal": Journal,
     "KidsJournal": KidsJournal,
+    "LiveEngagement": LiveEngagement,
+    "LiveSchedule": LiveSchedule,
+    "LoveAway": LoveAway,
+    "MasterContactDatabase": MasterContactDatabase,
+    "Medications": Medications,
+    "MeetThePixelNuts": MeetThePixelNuts,
+    "MyEvents": MyEvents,
+    "MyLists": MyLists,
+    "MyProfile": MyProfile,
+    "MyResources": MyResources,
+    "NotificationHistory": NotificationHistory,
+    "People": People,
+    "PetCare": PetCare,
+    "PictionaryHelper": PictionaryHelper,
+    "PixelsParadise": PixelsParadise,
+    "PrayerRequests": PrayerRequests,
+    "Pricing": Pricing,
+    "PromotedOffers": PromotedOffers,
+    "PromotionEngine": PromotionEngine,
+    "QuickNotes": QuickNotes,
+    "SalesTracking": SalesTracking,
+    "SavedMotivations": SavedMotivations,
+    "Settings": Settings,
+    "SongGenerator": SongGenerator,
+    "SubscriptionSuccess": SubscriptionSuccess,
+    "SuperFanAccess": SuperFanAccess,
+    "Supplements": Supplements,
+    "Support": Support,
+    "Tasks": Tasks,
+    "TikTokContacts": TikTokContacts,
+    "TikTokEngagement": TikTokEngagement,
+    "TikTokGoals": TikTokGoals,
+    "VisionBoard": VisionBoard,
+    "WaterHistory": WaterHistory,
+    "WeeklyGifterGallery": WeeklyGifterGallery,
+    "Wellness": Wellness,
+    "WorkSchedules": WorkSchedules,
+    "MentalHealth": MentalHealth,
 }
 
 export const pagesConfig = {
