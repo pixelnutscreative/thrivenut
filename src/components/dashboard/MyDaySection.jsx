@@ -230,6 +230,16 @@ export default function MyDaySection({
     enabled: !!userEmail,
   });
 
+  // Fetch regular tasks to find timed ones
+  const { data: regularTasks = [] } = useQuery({
+    queryKey: ['regularTasksMyDay', userEmail],
+    queryFn: () => base44.entities.Task.filter({ 
+      status: 'pending',
+      created_by: userEmail
+    }),
+    enabled: !!userEmail
+  });
+
   // Fetch TikTok contacts with engagement enabled for today
   const { data: engagementContacts = [] } = useQuery({
     queryKey: ['engagementContacts', userEmail, todayDayName],
@@ -664,9 +674,31 @@ export default function MyDaySection({
           order: event.isAllDay ? 5 : getOrderFromTimeString(event.sortTime),
           externalLink: event.htmlLink,
           isCalendarEvent: true,
+          hasTime: !event.isAllDay,
+          displayTime: event.displayTime
         });
       });
     }
+
+    // Add TIMED tasks from the Tasks entity
+    regularTasks.forEach(task => {
+      if (task.due_date === today && task.due_time) {
+        const timeOfDay = getTimeOfDayFromTimeString(task.due_time);
+        tasks.push({
+          id: `task_${task.id}`,
+          type: 'regular_task',
+          taskId: task.id,
+          label: task.title,
+          sublabel: task.due_time,
+          icon: Clock,
+          color: 'text-gray-700',
+          timeOfDay,
+          order: getOrderFromTimeString(task.due_time),
+          hasTime: true,
+          displayTime: task.due_time
+        });
+      }
+    });
 
     // Note: Engagement contacts and creator calendar reminders removed - 
     // users can access those from their dedicated pages
@@ -797,6 +829,11 @@ export default function MyDaySection({
     if (task.type === 'engagement') {
       return task.completed;
     }
+    if (task.type === 'regular_task') {
+      // Find the task object from the regularTasks array to check status
+      const originalTask = regularTasks.find(t => t.id === task.taskId);
+      return originalTask?.status === 'completed';
+    }
     return false;
   };
 
@@ -872,6 +909,20 @@ export default function MyDaySection({
     } else if (task.type === 'calendar') {
       const taskId = `calendar_${task.id}`;
       onToggleTask(taskId, !isTaskComplete(task));
+    } else if (task.type === 'regular_task') {
+      // Toggle regular task status
+      const isComplete = isTaskComplete(task);
+      const newStatus = isComplete ? 'pending' : 'completed';
+      const completedDate = isComplete ? null : today;
+      
+      // We need to use the base44 client here directly or pass a handler
+      // Since this component uses useMutation for other things, let's just call the API directly
+      base44.entities.Task.update(task.taskId, { 
+        status: newStatus,
+        completed_date: completedDate
+      }).then(() => {
+        queryClient.invalidateQueries({ queryKey: ['regularTasksMyDay'] });
+      });
     }
   };
 
@@ -1021,53 +1072,106 @@ export default function MyDaySection({
   });
 
   if (localViewMode === 'compact') {
+    // Check for timed tasks (specific deadline)
+    const timedTasks = allTasks.filter(t => {
+      // Logic to check if task has a specific time
+      // For standard 'Task' entities (which aren't in allTasks directly yet, need to merge)
+      // Wait, allTasks is mostly selfcare/meds which have 'timeOfDay'.
+      // The user wants "tasks that have a specific time deadline" separate.
+      // I need to fetch Tasks here or rely on parent passing them?
+      // MyDaySection logic currently builds 'allTasks' from wellness items.
+      return false; 
+    });
+
     return (
       <>
-        <Card className="shadow-lg border-0 bg-gradient-to-br from-teal-400 via-blue-400 to-purple-500">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between mb-3">
-              <CardTitle className="flex items-center gap-2 text-white">
-                <Sun className="w-6 h-6" />
-                My Day
-              </CardTitle>
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" onClick={() => setLocalViewMode('detailed')} className="h-8 text-white hover:bg-white/20">
-                  <List className="w-4 h-4 mr-1" /> Detailed
-                </Button>
-                <Badge variant={completedCount === totalCount ? "default" : "secondary"} 
-                       className={completedCount === totalCount ? "bg-white text-teal-600" : "bg-white/20 text-white"}>
-                  {progressPercent}%
-                </Badge>
+        {/* Cleaner Compact View - No header background, circles */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-4 px-1">
+            <div className="flex items-center gap-2">
+              <Sun className="w-5 h-5 text-orange-500" />
+              <h2 className="text-lg font-bold text-gray-800">My Day</h2>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setLocalViewMode('detailed')} 
+                className="h-7 text-xs text-gray-500 hover:text-gray-900"
+              >
+                <List className="w-3 h-3 mr-1" /> Detailed
+              </Button>
+              <span className="text-xs font-mono font-medium text-gray-400">
+                {completedCount}/{totalCount}
+              </span>
+            </div>
+          </div>
+
+          {/* Timed Tasks Row (if any) */}
+          {allTasks.some(t => t.hasTime && !skippedTasks.includes(t.id)) && (
+            <div className="mb-4 overflow-x-auto pb-2">
+              <div className="flex gap-3">
+                {allTasks
+                  .filter(t => t.hasTime && !skippedTasks.includes(t.id))
+                  .sort((a, b) => (a.order || 0) - (b.order || 0))
+                  .map(task => {
+                    const isComplete = isTaskComplete(task);
+                    if (displayMode === 'hide' && isComplete) return null;
+                    
+                    return (
+                      <motion.button
+                        key={task.id}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => handleToggleTask(task)}
+                        className={`flex-shrink-0 flex flex-col items-center gap-1 min-w-[60px] ${isComplete ? 'opacity-50' : ''}`}
+                      >
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center border-2 shadow-sm transition-all ${
+                          isComplete 
+                            ? 'border-green-400 bg-green-100 text-green-600' 
+                            : 'border-purple-200 bg-white hover:border-purple-400 text-purple-600'
+                        }`}>
+                          <Clock className="w-5 h-5" />
+                        </div>
+                        <span className="text-[10px] font-medium bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">
+                          {task.displayTime}
+                        </span>
+                        <span className="text-[10px] text-gray-500 max-w-[70px] truncate text-center">
+                          {task.label}
+                        </span>
+                      </motion.button>
+                    );
+                  })}
               </div>
             </div>
+          )}
 
-            {/* Goals removed from here - showing in Active Goals section below */}
-          </CardHeader>
-          <CardContent className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl">
-            <div className="flex flex-wrap gap-2">
-              {allTasks.filter(t => !skippedTasks.includes(t.id)).map((task) => {
-                const Icon = task.icon;
-                const isComplete = isTaskComplete(task);
-                if (displayMode === 'hide' && isComplete) return null;
-                
-                return (
-                  <button
-                    key={task.id}
-                    onClick={() => handleToggleTask(task)}
-                    className={`p-2.5 rounded-xl border-2 transition-all ${
-                      isComplete 
-                        ? 'border-green-400 bg-green-100' 
-                        : 'border-gray-200 bg-white hover:border-teal-300'
-                    }`}
-                    title={task.label}
-                  >
-                    <Icon className={`w-5 h-5 ${isComplete ? 'text-green-500' : task.color}`} />
-                  </button>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
+          {/* Standard Wellness Grid */}
+          <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-3">
+            {allTasks.filter(t => !t.hasTime && !skippedTasks.includes(t.id)).map((task) => {
+              const Icon = task.icon;
+              const isComplete = isTaskComplete(task);
+              if (displayMode === 'hide' && isComplete) return null;
+              
+              return (
+                <motion.button
+                  key={task.id}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => handleToggleTask(task)}
+                  className={`aspect-square rounded-full flex items-center justify-center border-2 transition-all shadow-sm ${
+                    isComplete 
+                      ? 'border-green-400 bg-green-100 text-green-600' 
+                      : 'border-gray-200 bg-white hover:border-purple-300 text-gray-500'
+                  }`}
+                  title={task.label}
+                >
+                  <Icon className={`w-5 h-5 ${isComplete ? 'text-green-600' : task.color}`} />
+                </motion.button>
+              );
+            })}
+          </div>
+        </div>
 
         {/* Compact Detail Modal */}
         <AnimatePresence>

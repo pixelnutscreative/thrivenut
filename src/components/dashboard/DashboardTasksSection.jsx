@@ -42,9 +42,9 @@ export default function DashboardTasksSection({ userEmail, viewMode = 'detailed'
     },
   });
 
-  // Filter today's tasks
+  // Filter today's tasks - exclude timed ones as they are in MyDay
   const todaysTasks = useMemo(() => {
-    return tasks.filter(task => task.due_date === today);
+    return tasks.filter(task => task.due_date === today && !task.due_time);
   }, [tasks, today]);
 
   // Get urgent tasks (is_urgent flag OR has due_time that's passed/upcoming)

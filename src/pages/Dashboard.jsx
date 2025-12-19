@@ -346,6 +346,24 @@ export default function Dashboard() {
           }}
         /> */}
 
+        {/* My Day Section - Compact Circles */}
+        <MyDaySection
+          selfCareLog={selfCareLog}
+          onToggleTask={(taskId, value) => selfCareMutation.mutate({ taskId, value })}
+          onUpdateMealNotes={(noteKey, value) => mealNotesMutation.mutate({ noteKey, value })}
+          preferences={{ ...preferences, user_email: user?.email }}
+          viewMode={'compact'} // Force compact for this view
+          showGoogleCalendar={preferences?.show_google_calendar || false}
+          showCreatorCalendarEvents={preferences?.show_creator_calendar_events !== false}
+          onToggleGoogleCalendar={(checked) => toggleGoogleCalendarMutation.mutate(checked)}
+          onToggleCreatorCalendar={async (checked) => {
+            if (preferences?.id) {
+              await base44.entities.UserPreferences.update(preferences.id, { show_creator_calendar_events: checked });
+              queryClient.invalidateQueries({ queryKey: ['preferences'] });
+            }
+          }}
+        />
+
         {/* Clean Dashboard Grid */}
         <div className="space-y-6">
           <DashboardTasksSection 
