@@ -5,7 +5,27 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { LayoutDashboard, Droplet, Heart, Clock, Eye, EyeOff, ArrowDown, NotebookPen, Calendar, ExternalLink } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { LayoutDashboard, Droplet, Heart, Clock, Eye, EyeOff, ArrowDown, NotebookPen, Calendar, ExternalLink, Sparkles, Paintbrush } from 'lucide-react';
+
+const toneOptions = [
+  { value: 'humorous', label: '😂 Humorous', description: 'Fun, witty, and lighthearted' },
+  { value: 'professional', label: '👔 Professional', description: 'Clean, clear, and business-like' },
+  { value: 'encouraging', label: '🤗 Encouraging', description: 'Supportive, kind, and uplifting' },
+  { value: 'loving', label: '❤️ Loving', description: 'Warm, gentle, and caring' },
+  { value: 'edgy', label: '😏 Edgy / Sassy', description: 'Bold, direct, borderline disrespectful (fun!)' },
+  { value: 'biblical', label: '🙏 Biblical', description: 'Faith-based and scripture-aligned' },
+];
+
+const colorOptions = [
+  { value: 'green', label: 'Green (Default)', bg: 'bg-green-500' },
+  { value: 'blue', label: 'Blue', bg: 'bg-blue-500' },
+  { value: 'purple', label: 'Purple', bg: 'bg-purple-500' },
+  { value: 'pink', label: 'Pink', bg: 'bg-pink-500' },
+  { value: 'orange', label: 'Orange', bg: 'bg-orange-500' },
+  { value: 'teal', label: 'Teal', bg: 'bg-teal-500' },
+  { value: 'red', label: 'Red', bg: 'bg-red-500' },
+];
 
 const displayOptions = [
   { value: 'show_checked', label: 'Show with checkmark', icon: Eye, description: 'Completed items stay visible with a checkmark' },
@@ -53,6 +73,57 @@ export default function DashboardPreferences({ formData, setFormData }) {
           <CardDescription>Customize how your dashboard looks and works</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* AI Tone Voice */}
+          <div className="space-y-3 p-4 bg-purple-50 rounded-xl border border-purple-100">
+            <h4 className="font-semibold flex items-center gap-2 text-purple-800">
+              <Sparkles className="w-4 h-4" />
+              AI Personality & Tone
+            </h4>
+            <p className="text-sm text-gray-600">Choose how the AI speaks to you (motivations, goal steps, content).</p>
+            
+            <div className="grid grid-cols-2 gap-2">
+              {toneOptions.map(opt => {
+                const currentTones = formData.content_tone || ['humorous'];
+                const isSelected = currentTones.includes(opt.value);
+                
+                return (
+                  <div 
+                    key={opt.value}
+                    onClick={() => {
+                      let newTones = [...currentTones];
+                      if (isSelected) {
+                        newTones = newTones.filter(t => t !== opt.value);
+                        if (newTones.length === 0) newTones = ['humorous']; // prevent empty
+                      } else {
+                        if (newTones.length >= 2) newTones.shift(); // Max 2
+                        newTones.push(opt.value);
+                      }
+                      setFormData({ ...formData, content_tone: newTones });
+                    }}
+                    className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                      isSelected 
+                        ? 'bg-purple-100 border-purple-400 ring-1 ring-purple-400' 
+                        : 'bg-white border-gray-200 hover:border-purple-300'
+                    }`}
+                  >
+                    <div className="font-medium text-sm">{opt.label}</div>
+                    <div className="text-xs text-gray-500 leading-tight mt-1">{opt.description}</div>
+                  </div>
+                );
+              })}
+            </div>
+            
+            <div className="mt-3">
+              <Label className="text-xs text-gray-500 mb-1 block">Custom Brand Voice / Details (Optional)</Label>
+              <Textarea 
+                placeholder="Paste your brand voice details, specific phrases to use, or upload content style notes here..."
+                value={formData.custom_brand_voice || ''}
+                onChange={(e) => setFormData({ ...formData, custom_brand_voice: e.target.value })}
+                className="text-sm bg-white"
+                rows={3}
+              />
+            </div>
+          </div>
           <div className="space-y-2">
             <Label>How should I address you?</Label>
             <Select 
@@ -71,6 +142,30 @@ export default function DashboardPreferences({ formData, setFormData }) {
             <p className="text-xs text-gray-500">Used for personalized language (Queen vs King, etc.)</p>
           </div>
           
+          {/* Completed Items Color */}
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              <Paintbrush className="w-4 h-4 text-gray-500" />
+              Completed Items Color
+            </Label>
+            <div className="flex flex-wrap gap-3">
+              {colorOptions.map(color => (
+                <div
+                  key={color.value}
+                  onClick={() => setFormData({ ...formData, completed_items_color: color.value })}
+                  className={`cursor-pointer rounded-full p-1 transition-all ${
+                    (formData.completed_items_color || 'green') === color.value 
+                      ? 'ring-2 ring-offset-2 ring-gray-400' 
+                      : 'opacity-70 hover:opacity-100'
+                  }`}
+                  title={color.label}
+                >
+                  <div className={`w-8 h-8 rounded-full ${color.bg}`} />
+                </div>
+              ))}
+            </div>
+          </div>
+
           <div className="space-y-2">
             <Label>Dashboard View Mode</Label>
             <div className="grid grid-cols-2 gap-3">

@@ -64,10 +64,22 @@ export default function DailyMotivationBanner({
     const newMotivations = [];
     
     // If Bible is enabled, always put scripture first
-    const sortedTypes = isBibleBeliever && types.includes('scripture')
-      ? ['scripture', ...types.filter(t => t !== 'scripture')]
-      : types;
+    let sortedTypes = [...types];
+    if (isBibleBeliever && sortedTypes.includes('scripture')) {
+      sortedTypes = ['scripture', ...sortedTypes.filter(t => t !== 'scripture')];
+    }
     
+    // Get tone from preferences
+    const selectedTones = preferences?.content_tone || ['humorous'];
+    const toneString = Array.isArray(selectedTones) ? selectedTones.join(' and ') : selectedTones;
+    const customVoice = preferences?.custom_brand_voice ? `Custom Voice Details: "${preferences.custom_brand_voice}"` : '';
+    
+    // Check for edgy/disrespectful with Bible believer
+    let toneInstruction = toneString;
+    if (isBibleBeliever && (toneString.includes('disrespectful') || toneString.includes('edgy') || toneString.includes('sassy'))) {
+      toneInstruction += " (Keep it fun but respectful of faith - no blasphemy)";
+    }
+
     for (const type of sortedTypes) {
       // Pick ONE random struggle/goal to focus on
       const contextParts = [];
@@ -95,7 +107,7 @@ export default function DailyMotivationBanner({
 ${contextParts.length > 0 ? contextParts.join('. ') + '.' : ''}
 
 Requirements:
-- Tone: ${motivationTone}
+- Tone: ${toneInstruction} ${customVoice}
 - Very short (1-2 sentences max for quotes/affirmations)
 ${contextParts.length > 0 ? '- Specifically address the focus area mentioned above' : ''}
 - Actionable (if applicable)
@@ -141,6 +153,7 @@ ${type === 'scripture'
     setMotivations(newMotivations);
     setCurrentIndex(0);
     setLoading(false);
+    logGeneration(newMotivations);
   };
 
   const saveMotivationMutation = useMutation({
@@ -208,6 +221,15 @@ ${type === 'scripture'
                   <Bookmark className="w-3 h-3 mr-1" />
                   View Saved
                 </a>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowHistory(true)}
+                  className="text-white/80 hover:text-white hover:bg-white/20 h-6 px-2 text-xs"
+                >
+                  <Clock className="w-3 h-3 mr-1" />
+                  History
+                </Button>
               </>
             )}
           </div>
@@ -224,21 +246,9 @@ ${type === 'scripture'
           </div>
         </div>
 
-        {/* Compact Motivation Content with Navigation */}
-        <div className="relative flex items-center gap-2">
-          {motivations.length > 1 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => scroll('left')}
-              disabled={currentIndex === 0}
-              className="text-white hover:bg-white/20 h-6 w-6 p-0 flex-shrink-0"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-          )}
-          
-          <div className="flex-1 overflow-hidden">
+        {/* Compact Motivation Content */}
+        <div className="relative">
+          <div className="flex-1 overflow-hidden px-1">
             <AnimatePresence mode="wait">
               {currentMotivation && (
                 <motion.div
@@ -280,37 +290,92 @@ ${type === 'scripture'
               )}
             </AnimatePresence>
           </div>
-          
-          {motivations.length > 1 && (
+        </div>
+        
+        {/* Navigation Arrows and Dots */}
+        {motivations.length > 1 && (
+          <div className="flex items-center justify-center gap-3 mt-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => scroll('left')}
+              disabled={currentIndex === 0}
+              className="text-white hover:bg-white/20 h-6 w-6 p-0 rounded-full"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+
+            <div className="flex items-center justify-center gap-1">
+              {motivations.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setCurrentIndex(idx)}
+                  className={`w-1.5 h-1.5 rounded-full transition-all ${
+                    idx === currentIndex ? 'bg-white w-4' : 'bg-white/40'
+                  }`}
+                />
+              ))}
+            </div>
+
             <Button
               variant="ghost"
               size="sm"
               onClick={() => scroll('right')}
               disabled={currentIndex === motivations.length - 1}
-              className="text-white hover:bg-white/20 h-6 w-6 p-0 flex-shrink-0"
+              className="text-white hover:bg-white/20 h-6 w-6 p-0 rounded-full"
             >
               <ChevronRight className="w-4 h-4" />
             </Button>
-          )}
-        </div>
-        
-        {/* Type indicator dots */}
-        {motivations.length > 1 && (
-          <div className="flex items-center justify-center gap-1 mt-2">
-            {motivations.map((_, idx) => (
-              <button
-                key={idx}
-                onClick={() => setCurrentIndex(idx)}
-                className={`w-1.5 h-1.5 rounded-full transition-all ${
-                  idx === currentIndex ? 'bg-white w-4' : 'bg-white/40'
-                }`}
-              />
-            ))}
           </div>
         )}
+
+        {/* History Modal */}
+        <Dialog open={showHistory} onOpenChange={setShowHistory}>
+          <DialogContent className="max-w-md max-h-[80vh] overflow-hidden flex flex-col">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Clock className="w-5 h-5 text-purple-500" />
+                Generated History
+              </DialogTitle>
+            </DialogHeader>
+            <ScrollArea className="flex-1 p-4">
+              <div className="space-y-4">
+                <HistoryList userEmail={userEmail} />
+              </div>
+            </ScrollArea>
+          </DialogContent>
+        </Dialog>
 
 
       </div>
     </Card>
+  );
+}
+
+function HistoryList({ userEmail }) {
+  const [logs, setLogs] = useState([]);
+  
+  useEffect(() => {
+    if (userEmail) {
+      base44.entities.ContentGenerationLog.filter({ created_by: userEmail }, '-created_date', 50)
+        .then(setLogs)
+        .catch(console.error);
+    }
+  }, [userEmail]);
+
+  if (logs.length === 0) return <p className="text-center text-gray-500">No history yet.</p>;
+
+  return (
+    <div className="space-y-3">
+      {logs.map(log => (
+        <div key={log.id} className="p-3 bg-gray-50 rounded-lg text-sm border">
+          <p className="font-medium text-gray-800">"{log.content}"</p>
+          <div className="flex justify-between items-center mt-2 text-xs text-gray-500">
+            <span className="capitalize badge bg-gray-200 px-1 rounded">{log.type}</span>
+            <span>{new Date(log.created_date).toLocaleDateString()}</span>
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }

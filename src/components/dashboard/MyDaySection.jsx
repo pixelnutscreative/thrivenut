@@ -136,6 +136,19 @@ export default function MyDaySection({
   
   const mealLabels = getMealLabels(preferences?.gender);
   const displayMode = preferences?.completed_tasks_display || 'show_checked';
+  
+  // Custom checkmark colors
+  const completedColors = {
+    green: { bg: 'bg-green-100', border: 'border-green-400', text: 'text-green-600' },
+    blue: { bg: 'bg-blue-100', border: 'border-blue-400', text: 'text-blue-600' },
+    purple: { bg: 'bg-purple-100', border: 'border-purple-400', text: 'text-purple-600' },
+    pink: { bg: 'bg-pink-100', border: 'border-pink-400', text: 'text-pink-600' },
+    orange: { bg: 'bg-orange-100', border: 'border-orange-400', text: 'text-orange-600' },
+    teal: { bg: 'bg-teal-100', border: 'border-teal-400', text: 'text-teal-600' },
+    red: { bg: 'bg-red-100', border: 'border-red-400', text: 'text-red-600' },
+  };
+  
+  const activeColor = completedColors[preferences?.completed_items_color || 'green'] || completedColors.green;
 
   // Fetch medications
   const { data: medications = [] } = useQuery({
@@ -1126,9 +1139,9 @@ export default function MyDaySection({
                         onClick={() => handleToggleTask(task)}
                         className={`flex-shrink-0 flex flex-col items-center gap-1 min-w-[60px] ${isComplete ? 'opacity-50' : ''}`}
                       >
-                        <div className={`w-12 h-12 rounded-full flex items-center justify-center border-2 shadow-sm transition-all ${
+                        <div className={`w-12 h-12 md:w-10 md:h-10 lg:w-9 lg:h-9 rounded-full flex items-center justify-center border-2 shadow-sm transition-all ${
                           isComplete 
-                            ? 'border-green-400 bg-green-100 text-green-600' 
+                            ? `${activeColor.border} ${activeColor.bg} ${activeColor.text}`
                             : 'border-purple-200 bg-white hover:border-purple-400 text-purple-600'
                         }`}>
                           <Clock className="w-5 h-5" />
@@ -1147,7 +1160,7 @@ export default function MyDaySection({
           )}
 
           {/* Standard Wellness Grid */}
-          <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-3">
+          <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-12 lg:grid-cols-14 gap-3 md:gap-2">
             {allTasks.filter(t => !t.hasTime && !skippedTasks.includes(t.id)).map((task) => {
               const Icon = task.icon;
               const isComplete = isTaskComplete(task);
@@ -1161,12 +1174,12 @@ export default function MyDaySection({
                   onClick={() => handleToggleTask(task)}
                   className={`aspect-square rounded-full flex items-center justify-center border-2 transition-all shadow-sm ${
                     isComplete 
-                      ? 'border-green-400 bg-green-100 text-green-600' 
+                      ? `${activeColor.border} ${activeColor.bg} ${activeColor.text}`
                       : 'border-gray-200 bg-white hover:border-purple-300 text-gray-500'
                   }`}
                   title={task.label}
                 >
-                  <Icon className={`w-5 h-5 ${isComplete ? 'text-green-600' : task.color}`} />
+                  <Icon className={`w-5 h-5 md:w-4 md:h-4 ${isComplete ? activeColor.text : task.color}`} />
                 </motion.button>
               );
             })}
