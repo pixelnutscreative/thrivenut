@@ -238,7 +238,7 @@ ${type === 'scripture'
             </Button>
           )}
           
-          <div className="flex-1">
+          <div className="flex-1 overflow-hidden">
             <AnimatePresence mode="wait">
               {currentMotivation && (
                 <motion.div
@@ -247,8 +247,20 @@ ${type === 'scripture'
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.3 }}
+                  drag="x"
+                  dragConstraints={{ left: 0, right: 0 }}
+                  onDragEnd={(e, { offset, velocity }) => {
+                    const swipe = offset.x;
+
+                    if (swipe < -50) {
+                      scroll('right');
+                    } else if (swipe > 50) {
+                      scroll('left');
+                    }
+                  }}
+                  className="cursor-grab active:cursor-grabbing touch-pan-y"
                 >
-                  <p className="text-sm font-medium leading-snug">
+                  <p className="text-sm font-medium leading-snug select-none">
                     {loading ? '...' : `"${currentMotivation.text}"`}
                   </p>
                   {currentMotivation.reference && (
@@ -257,7 +269,7 @@ ${type === 'scripture'
                         e.stopPropagation();
                         alert(currentMotivation.reference);
                       }}
-                      className="text-white/70 hover:text-white text-xs mt-1 flex items-center gap-1 transition-colors"
+                      className="text-white/70 hover:text-white text-xs mt-1 flex items-center gap-1 transition-colors select-none"
                       title="View Scripture Reference"
                     >
                       <BookOpen className="w-3 h-3" />
