@@ -10,7 +10,8 @@ import {
   ChevronRight, Bell, Share2, Music, Star, Lock, UserCog, Sparkles, 
   Palette, Eye, Bookmark, HandMetal, PawPrint, Search, MousePointerClick, 
   Calendar, Sun, Cross, Smile, FileText, StickyNote, Tablet, HelpCircle, 
-  MessageCircle, Briefcase, DollarSign, Activity, Wallet, Swords, Lightbulb, Zap
+  MessageCircle, Briefcase, DollarSign, Activity, Wallet, Swords, Lightbulb, Zap,
+  Image as ImageIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import TikTokAccessGate from './components/access/TikTokAccessGate';
@@ -178,6 +179,7 @@ export default function Layout({ children, currentPageName }) {
         { name: 'Affiliate Programs', icon: DollarSign, path: 'AffiliateCampaigns' },
         { name: 'Content Ideas', icon: Lightbulb, path: 'SavedMotivations', moduleId: 'motivations' },
         { name: 'Content Marketplace', icon: Briefcase, path: 'ContentMarketplace', highlight: true },
+        { name: 'AI Image Generator', icon: ImageIcon, path: 'AIImageGenerator' },
         { name: 'Create AI Music', icon: Music, isSection: true, subItems: [
           { name: 'Sunny Songbird', icon: Sun, path: 'SongGenerator' },
           { name: "Ping & Pong's Silly Songs", icon: Smile, externalUrl: 'https://sillysongs.pixelnutscreative.com' },

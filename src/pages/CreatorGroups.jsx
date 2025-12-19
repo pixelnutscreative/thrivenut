@@ -45,7 +45,10 @@ export default function CreatorGroups() {
     queryKey: ['myGroupsDetails', myMemberships],
     queryFn: async () => {
       if (myMemberships.length === 0) return [];
-      const groupPromises = myMemberships.map(m => base44.entities.CreatorGroup.findById(m.group_id));
+      const groupPromises = myMemberships.map(async (m) => {
+        const results = await base44.entities.CreatorGroup.filter({ id: m.group_id });
+        return results[0];
+      });
       const results = await Promise.all(groupPromises);
       return results.filter(Boolean);
     },

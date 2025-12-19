@@ -185,7 +185,7 @@ export default function AdminFeedbackContent() {
     pending: items.filter(i => i.status === 'pending').length,
     inProgress: items.filter(i => i.status === 'in_progress').length,
     completed: items.filter(i => i.status === 'completed').length,
-    queued: items.filter(i => i.queued_for_batch).length,
+    queued: items.filter(i => i.queued_for_batch && i.status !== 'completed').length,
   };
 
   // Get items needing verification (completed from batch)

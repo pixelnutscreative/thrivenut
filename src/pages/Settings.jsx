@@ -336,10 +336,7 @@ export default function Settings() {
               <Sliders className="w-4 h-4" />
               <span className="text-[10px] font-medium">Prefs</span>
             </TabsTrigger>
-            <TabsTrigger value="connections" className="flex flex-col items-center gap-1 h-auto py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
-              <Sparkles className="w-4 h-4" />
-              <span className="text-[10px] font-medium">Connect</span>
-            </TabsTrigger>
+
             <TabsTrigger value="widgets-v2" className="flex flex-col items-center gap-1 h-auto py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
               <PuzzleIcon className="w-4 h-4" />
               <span className="text-[10px] font-medium">Widgets</span>
@@ -863,83 +860,7 @@ export default function Settings() {
             )}
           </TabsContent>
 
-          {/* CONNECTIONS TAB */}
-          <TabsContent value="connections" id="connections">
-            <div className="flex justify-end mb-4">
-              <Button onClick={handleSave} disabled={updatePreferencesMutation.isPending}>
-                <Save className="w-4 h-4 mr-2" />
-                {updatePreferencesMutation.isPending ? 'Saving...' : 'Save Changes'}
-              </Button>
-            </div>
-            <Card>
-              <CardHeader>
-                <CardTitle>AI Platform Connection</CardTitle>
-                <CardDescription>Select which AI platform you're subscribed to for personalized tool links</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {!prefData.ai_platform && (
-                  <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                    <p className="text-sm text-amber-800 font-medium mb-3">
-                      🎨 You don't have AI tools selected yet! Choose a platform below to get started.
-                    </p>
-                  </div>
-                )}
 
-                <div className="space-y-4">
-                  <div>
-                    <Label className="text-base font-semibold">Choose Your AI Platform</Label>
-                    <p className="text-sm text-gray-500 mt-1 mb-3">This determines which tool links you'll see when creating content</p>
-                    <Select 
-                      value={prefData.ai_platform || ''} 
-                      onValueChange={(v) => {
-                        setPrefData({ ...prefData, ai_platform: v });
-                        updatePreferencesMutation.mutate({ ai_platform: v });
-                      }}
-                    >
-                      <SelectTrigger className="max-w-sm">
-                        <SelectValue placeholder="Select your platform..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="lets_go_nuts">Let's Go Nuts</SelectItem>
-                        <SelectItem value="pixels_toolbox">Pixel's AI Toolbox</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                    <p className="text-sm text-blue-800">
-                      ℹ️ Can't remember which one you're subscribed to? No problem! Just pick one and you can change it anytime.
-                    </p>
-                  </div>
-
-                  {/* Quick links */}
-                  <div>
-                    <Label className="text-sm font-medium mb-2 block">Quick Links</Label>
-                    <div className="grid grid-cols-2 gap-3">
-                      <a 
-                        href="https://ai.thenutsandbots.com" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="p-4 border-2 border-purple-200 rounded-lg hover:border-purple-400 hover:bg-purple-50 transition-colors text-center"
-                      >
-                        <Sparkles className="w-8 h-8 mx-auto mb-2 text-purple-600" />
-                        <p className="font-medium text-sm">Pixel's AI Toolbox</p>
-                      </a>
-                      <a 
-                        href="https://create.letsgonuts.ai" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="p-4 border-2 border-teal-200 rounded-lg hover:border-teal-400 hover:bg-teal-50 transition-colors text-center"
-                      >
-                        <Zap className="w-8 h-8 mx-auto mb-2 text-teal-600" />
-                        <p className="font-medium text-sm">Let's Go Nuts</p>
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
 
           {/* WIDGETS V2 TAB */}
           <TabsContent value="widgets-v2" id="widgets-v2">
