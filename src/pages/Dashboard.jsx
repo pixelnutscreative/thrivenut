@@ -298,6 +298,124 @@ export default function Dashboard() {
 
   const isSectionCollapsed = (sectionId) => collapsedSections.includes(sectionId);
 
+  // Widget Layout Logic
+  const [showCustomizeModal, setShowCustomizeModal] = useState(false);
+  const defaultLayout = [
+    { id: 'daily_motivation', visible: true, order: 0 },
+    { id: 'my_day', visible: true, order: 1 },
+    { id: 'tasks', visible: true, order: 2 },
+    { id: 'goals', visible: true, order: 3 },
+    { id: 'habits', visible: true, order: 4 },
+    { id: 'calendar_integration', visible: true, order: 5 },
+    { id: 'special_events', visible: true, order: 6 },
+    { id: 'subscribed_events', visible: true, order: 7 }
+  ];
+
+  const layout = useMemo(() => {
+    const prefLayout = preferences?.dashboard_layout || [];
+    // Merge with default to ensure all widgets exist (in case of new ones)
+    const merged = [...prefLayout];
+    defaultLayout.forEach(def => {
+      if (!merged.find(p => p.id === def.id)) {
+        merged.push(def);
+      }
+    });
+    return merged.sort((a, b) => a.order - b.order);
+  }, [preferences?.dashboard_layout]);
+
+  const [tempLayout, setTempLayout] = useState(layout);
+
+  const saveLayout = () => {
+    updatePreferencesMutation.mutate({ dashboard_layout: tempLayout });
+    setShowCustomizeModal(false);
+  };
+
+  const moveWidget = (index, direction) => {
+    const newLayout = [...tempLayout];
+    if (direction === 'up' && index > 0) {
+      [newLayout[index], newLayout[index - 1]] = [newLayout[index - 1], newLayout[index]];
+      // Update order properties
+      newLayout.forEach((w, i) => w.order = i);
+      setTempLayout(newLayout);
+    } else if (direction === 'down' && index < newLayout.length - 1) {
+      [newLayout[index], newLayout[index + 1]] = [newLayout[index + 1], newLayout[index]];
+      newLayout.forEach((w, i) => w.order = i);
+      setTempLayout(newLayout);
+    }
+  };
+
+  const toggleWidgetVisibility = (id) => {
+    setTempLayout(prev => prev.map(w => w.id === id ? { ...w, visible: !w.visible } : w));
+  };
+
+  const renderWidget = (widget) => {
+    if (!widget.visible) return null;
+
+    switch (widget.id) {
+      case 'daily_motivation':
+        return (
+          <DailyMotivationBanner
+            key={prefKey}
+            greetingTypes={preferences?.greeting_types || [preferences?.greeting_type || 'positive_quote']}
+            userName={user?.full_name?.split(' ')[0] || 'Friend'}
+            struggles={preferences?.mental_health_struggles || []}
+            goals={preferences?.improvement_goals || []}
+            isBibleBeliever={preferences?.enable_bible_options !== false}
+            userEmail={user?.email}
+            bibleVersion={preferences?.bible_version || 'NIV'}
+            motivationTone={preferences?.content_tone ? preferences.content_tone.join(', ') : 'humorous'}
+            primaryColor={primaryColor}
+            accentColor={preferences?.accent_color || '#bd84f5'}
+            preferences={preferences}
+          />
+        );
+      case 'my_day':
+        return (
+          <MyDaySection
+            selfCareLog={selfCareLog}
+            onToggleTask={(taskId, value) => selfCareMutation.mutate({ taskId, value })}
+            onUpdateMealNotes={(noteKey, value) => mealNotesMutation.mutate({ noteKey, value })}
+            preferences={{ ...preferences, user_email: user?.email }}
+            viewMode={'compact'}
+            showGoogleCalendar={preferences?.show_google_calendar || false}
+            showCreatorCalendarEvents={preferences?.show_creator_calendar_events !== false}
+            onToggleGoogleCalendar={(checked) => toggleGoogleCalendarMutation.mutate(checked)}
+            onToggleCreatorCalendar={async (checked) => {
+              if (preferences?.id) {
+                await base44.entities.UserPreferences.update(preferences.id, { show_creator_calendar_events: checked });
+                queryClient.invalidateQueries({ queryKey: ['preferences'] });
+              }
+            }}
+          />
+        );
+      case 'tasks':
+        return (
+          <DashboardTasksSection 
+            userEmail={effectiveEmail} 
+            viewMode={preferences?.dashboard_view_mode || 'detailed'}
+          />
+        );
+      case 'goals':
+        return <DashboardGoalsSection userEmail={effectiveEmail} />;
+      case 'habits':
+        return <DashboardHabitsSection userEmail={effectiveEmail} />;
+      case 'calendar_integration':
+        return (!preferences?.google_calendar_connected) ? (
+          <CalendarIntegrationCard 
+            onConnectGoogleCalendar={async () => {
+              window.location.href = createPageUrl('Settings') + '?section=google_calendar';
+            }}
+          />
+        ) : null;
+      case 'special_events':
+        return <SpecialEventsCard contacts={tiktokContacts} />;
+      case 'subscribed_events':
+        return <SubscribedEventsSection userEmail={user?.email} primaryColor={primaryColor} />;
+      default:
+        return null;
+    }
+  };
+
   return (
     <>
       <OnboardingModal 
@@ -311,117 +429,83 @@ export default function Dashboard() {
 
       <div className={`min-h-screen ${bgClass} p-4 md:p-8`}>
         <div className="max-w-7xl mx-auto space-y-8">
-        {/* Daily Motivation Banner - AT THE TOP */}
-        <DailyMotivationBanner
-          key={prefKey} // Force re-render when prefs change
-          greetingTypes={preferences?.greeting_types || [preferences?.greeting_type || 'positive_quote']}
-          userName={user?.full_name?.split(' ')[0] || 'Friend'}
-          struggles={preferences?.mental_health_struggles || []}
-          goals={preferences?.improvement_goals || []}
-          isBibleBeliever={preferences?.enable_bible_options !== false}
-          userEmail={user?.email}
-          bibleVersion={preferences?.bible_version || 'NIV'}
-          motivationTone={preferences?.content_tone ? preferences.content_tone.join(', ') : 'humorous'}
-          primaryColor={primaryColor}
-          accentColor={preferences?.accent_color || '#bd84f5'}
-          preferences={preferences}
-        />
-
-        {/* Urgent Events - Battles, Training, Important Events */}
-        {/* <UrgentEventsCard 
-          events={urgentEvents} 
-          publicCalendarEvents={todaysPublicEvents}
-          alertColor={preferences?.urgent_alert_color || 'red'}
-          onColorChange={(color) => {
-            updatePreferencesMutation.mutate({ urgent_alert_color: color });
-          }}
-          userEmail={effectiveEmail}
-        /> */}
-
-        {/* My Day Section - All daily tasks unified - HIDDEN FOR CLEAN LAYOUT */}
-        {/* <MyDaySection
-          selfCareLog={selfCareLog}
-          onToggleTask={(taskId, value) => selfCareMutation.mutate({ taskId, value })}
-          onUpdateMealNotes={(noteKey, value) => mealNotesMutation.mutate({ noteKey, value })}
-          preferences={{ ...preferences, user_email: user?.email }}
-          viewMode={preferences?.dashboard_view_mode || 'detailed'}
-          showGoogleCalendar={preferences?.show_google_calendar || false}
-          showCreatorCalendarEvents={preferences?.show_creator_calendar_events !== false}
-          onToggleGoogleCalendar={(checked) => toggleGoogleCalendarMutation.mutate(checked)}
-          onToggleCreatorCalendar={async (checked) => {
-            if (preferences?.id) {
-              await base44.entities.UserPreferences.update(preferences.id, { show_creator_calendar_events: checked });
-              queryClient.invalidateQueries({ queryKey: ['preferences'] });
-            }
-          }}
-        /> */}
-
-        {/* My Day Section - Compact Circles */}
-        <MyDaySection
-          selfCareLog={selfCareLog}
-          onToggleTask={(taskId, value) => selfCareMutation.mutate({ taskId, value })}
-          onUpdateMealNotes={(noteKey, value) => mealNotesMutation.mutate({ noteKey, value })}
-          preferences={{ ...preferences, user_email: user?.email }}
-          viewMode={'compact'} // Force compact for this view
-          showGoogleCalendar={preferences?.show_google_calendar || false}
-          showCreatorCalendarEvents={preferences?.show_creator_calendar_events !== false}
-          onToggleGoogleCalendar={(checked) => toggleGoogleCalendarMutation.mutate(checked)}
-          onToggleCreatorCalendar={async (checked) => {
-            if (preferences?.id) {
-              await base44.entities.UserPreferences.update(preferences.id, { show_creator_calendar_events: checked });
-              queryClient.invalidateQueries({ queryKey: ['preferences'] });
-            }
-          }}
-        />
-
-        {/* Clean Dashboard Grid */}
-        <div className="space-y-6">
-          <DashboardTasksSection 
-            userEmail={effectiveEmail} 
-            viewMode={preferences?.dashboard_view_mode || 'detailed'}
-          />
-
-          <DashboardGoalsSection userEmail={effectiveEmail} />
           
-          <DashboardHabitsSection userEmail={effectiveEmail} />
-        </div>
+          <div className="flex justify-end">
+            <Button variant="ghost" size="sm" onClick={() => { setTempLayout(layout); setShowCustomizeModal(true); }}>
+              <Settings className="w-4 h-4 mr-2" /> Customize Dashboard
+            </Button>
+          </div>
 
-        {/* Calendar Integration - Google Calendar & Pixel Nuts Events */}
-        {(!preferences?.google_calendar_connected) && (
-          <CalendarIntegrationCard 
-            onConnectGoogleCalendar={async () => {
-              // Handle Google Calendar connection
-              window.location.href = createPageUrl('Settings') + '?section=google_calendar';
-            }}
-          />
-        )}
+          {layout.map(widget => (
+            <div key={widget.id}>
+              {renderWidget(widget)}
+            </div>
+          ))}
 
-        {/* Special Events - Birthdays & Sobriety Anniversaries from Contacts */}
-        <SpecialEventsCard contacts={tiktokContacts} />
-
-        {/* Subscribed Creator Events - Shows today's events from followed creators */}
-        <SubscribedEventsSection 
-          userEmail={user?.email}
-          primaryColor={primaryColor}
-        />
-
-        {/* Notion Task Picker - Only for admin account */}
-        {user?.email?.toLowerCase() === 'pixelnutscreative@gmail.com' && (
-          <Collapsible open={!isSectionCollapsed('notion-tasks')}>
-            <CollapsibleTrigger 
-              className="w-full flex items-center justify-between p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              onClick={() => toggleSectionCollapse('notion-tasks')}
-            >
-              <span className="text-sm font-medium text-gray-600">Notion Tasks</span>
-              {isSectionCollapsed('notion-tasks') ? <ChevronRight className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <NotionTaskPicker userEmail={user?.email} />
-            </CollapsibleContent>
-          </Collapsible>
-        )}
+          {/* Notion Task Picker - Only for admin account */}
+          {user?.email?.toLowerCase() === 'pixelnutscreative@gmail.com' && (
+            <Collapsible open={!isSectionCollapsed('notion-tasks')}>
+              <CollapsibleTrigger 
+                className="w-full flex items-center justify-between p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                onClick={() => toggleSectionCollapse('notion-tasks')}
+              >
+                <span className="text-sm font-medium text-gray-600">Notion Tasks</span>
+                {isSectionCollapsed('notion-tasks') ? <ChevronRight className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <NotionTaskPicker userEmail={user?.email} />
+              </CollapsibleContent>
+            </Collapsible>
+          )}
         </div>
       </div>
+
+      {/* Customize Dashboard Modal */}
+      {showCustomizeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <Card className="w-full max-w-md bg-white">
+            <CardHeader>
+              <CardTitle>Customize Dashboard</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-gray-500">Toggle visibility and reorder sections.</p>
+              <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+                {tempLayout.map((widget, index) => (
+                  <div key={widget.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="flex flex-col gap-1">
+                        <button 
+                          onClick={() => moveWidget(index, 'up')} 
+                          disabled={index === 0}
+                          className="text-gray-400 hover:text-gray-600 disabled:opacity-30"
+                        >
+                          <ChevronUp className="w-4 h-4" />
+                        </button>
+                        <button 
+                          onClick={() => moveWidget(index, 'down')} 
+                          disabled={index === tempLayout.length - 1}
+                          className="text-gray-400 hover:text-gray-600 disabled:opacity-30"
+                        >
+                          <ChevronDown className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <span className="font-medium capitalize">{widget.id.replace(/_/g, ' ')}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {widget.visible ? <Eye className="w-4 h-4 text-green-500" /> : <EyeOff className="w-4 h-4 text-gray-400" />}
+                      <Switch checked={widget.visible} onCheckedChange={() => toggleWidgetVisibility(widget.id)} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="flex justify-end gap-2 pt-4">
+                <Button variant="outline" onClick={() => setShowCustomizeModal(false)}>Cancel</Button>
+                <Button onClick={saveLayout} className="bg-purple-600 hover:bg-purple-700">Save Layout</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </>
   );
 }
