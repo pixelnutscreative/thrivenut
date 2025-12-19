@@ -70,9 +70,10 @@ export default function LoveAwayEntriesList({ giveawayId }) {
         final_entry_count: 1
       });
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      await updateEntryCount();
       queryClient.invalidateQueries({ queryKey: ['loveawayEntries'] });
-      queryClient.invalidateQueries({ queryKey: ['loveAways'] }); // Update total count
+      queryClient.invalidateQueries({ queryKey: ['loveAways'] });
       setNewEntryUsername('');
     }
   });
@@ -85,7 +86,8 @@ export default function LoveAwayEntriesList({ giveawayId }) {
         favorite_color: color
       });
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      await updateEntryCount();
       queryClient.invalidateQueries({ queryKey: ['loveawayEntries'] });
       queryClient.invalidateQueries({ queryKey: ['loveAways'] });
       setEditingEntry(null);
@@ -94,11 +96,20 @@ export default function LoveAwayEntriesList({ giveawayId }) {
 
   const deleteEntryMutation = useMutation({
     mutationFn: (id) => base44.entities.LoveAwayEntry.delete(id),
-    onSuccess: () => {
+    onSuccess: async () => {
+      await updateEntryCount();
       queryClient.invalidateQueries({ queryKey: ['loveawayEntries'] });
       queryClient.invalidateQueries({ queryKey: ['loveAways'] });
     }
   });
+
+  // Helper to sync count
+  const updateEntryCount = async () => {
+    // We have to wait a brief moment for the DB to be consistent or just fetch list
+    const allEntries = await base44.entities.LoveAwayEntry.filter({ loveaway_id: giveawayId });
+    const total = allEntries.reduce((sum, e) => sum + (e.final_entry_count || 1), 0);
+    await base44.entities.LoveAway.update(giveawayId, { total_entries: total });
+  };
 
   return (
     <div className="space-y-4">

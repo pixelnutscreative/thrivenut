@@ -158,7 +158,9 @@ export default function LoveAwaySpinner({ giveaway, onClose }) {
             });
         }
         const record = consolidated.get(username);
-        record.totalWeight += (e.final_entry_count || 1);
+        // Ensure weight is a number
+        const weight = typeof e.final_entry_count === 'number' ? e.final_entry_count : 1;
+        record.totalWeight += weight;
         record.ids.push(e.id);
         
         // Prefer the one with a color set
@@ -168,10 +170,16 @@ export default function LoveAwaySpinner({ giveaway, onClose }) {
     });
     
     const uniqueEntries = Array.from(consolidated.values());
-    const totalWeight = uniqueEntries.reduce((sum, e) => sum + e.totalWeight, 0);
+    // Ensure total weight is calculated correctly
+    const totalWeight = uniqueEntries.reduce((sum, e) => sum + (e.totalWeight || 0), 0);
+    
     let currentAngle = 0;
     
+    // Sort to keep consistent order
+    uniqueEntries.sort((a, b) => a.username.localeCompare(b.username));
+
     return uniqueEntries.map((entry, idx) => {
+        // Safe division
         const angleSize = totalWeight > 0 ? (entry.totalWeight / totalWeight) * 360 : 0;
         const start = currentAngle;
         currentAngle += angleSize;
@@ -205,9 +213,25 @@ export default function LoveAwaySpinner({ giveaway, onClose }) {
         <div className="py-8">
           {/* Spinner Wheel */}
           <div className="relative w-full max-w-md mx-auto aspect-square">
-            {/* Pointer */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 z-10">
-              <div className="w-0 h-0 border-l-[20px] border-l-transparent border-r-[20px] border-r-transparent border-t-[30px] border-t-red-500" />
+            {/* Pointer (Blue Pin with Star) */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-5 z-20 pointer-events-none filter drop-shadow-xl">
+              <div className="relative">
+                {/* Pin Body */}
+                <div className="w-12 h-14 bg-blue-500 rounded-full rounded-br-none transform -rotate-45 flex items-center justify-center border-4 border-white shadow-lg">
+                   {/* Star Icon inside (rotated back) */}
+                   <div className="transform rotate-45">
+                       <svg 
+                           xmlns="http://www.w3.org/2000/svg" 
+                           viewBox="0 0 24 24" 
+                           fill="white" 
+                           stroke="none" 
+                           className="w-5 h-5"
+                       >
+                           <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                       </svg>
+                   </div>
+                </div>
+              </div>
             </div>
 
             {/* Wheel */}

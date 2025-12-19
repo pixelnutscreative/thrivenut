@@ -54,6 +54,7 @@ export default function LoveAway() {
   });
 
   const [showHistory, setShowHistory] = useState(false);
+  const [editingGiveaway, setEditingGiveaway] = useState(null);
 
   const { data: loveAways = [] } = useQuery({
     queryKey: ['loveAways'],
@@ -65,6 +66,30 @@ export default function LoveAway() {
   const pastWinners = loveAways.filter(l => l.status === 'winner_selected' || l.winner_username);
 
   const createMutation = useMutation({
+    mutationFn: (data) => base44.entities.LoveAway.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['loveAways'] });
+      setShowCreateDialog(false);
+      setFormData({
+        title: '',
+        description: '',
+        prize_value: '',
+        minimum_gift_value: 0,
+        entries_per_action: 1,
+        entry_mode: 'tiktok',
+        multipliers_enabled: {},
+        status: 'upcoming'
+      });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.LoveAway.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['loveAways'] });
+      setEditingGiveaway(null);
+    },
+  });
     mutationFn: (data) => base44.entities.LoveAway.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['loveAways'] });
@@ -121,7 +146,44 @@ export default function LoveAway() {
   ];
 
   const handleCreate = () => {
-    createMutation.mutate(formData);
+    if (editingGiveaway) {
+        updateMutation.mutate({ id: editingGiveaway.id, data: formData });
+    } else {
+        createMutation.mutate(formData);
+    }
+  };
+
+  const handleEdit = (giveaway) => {
+    setEditingGiveaway(giveaway);
+    setFormData({
+        title: giveaway.title,
+        description: giveaway.description,
+        prize_value: giveaway.prize_value,
+        minimum_gift_value: giveaway.minimum_gift_value || 0,
+        entries_per_action: giveaway.entries_per_action || 1,
+        entry_mode: giveaway.entry_mode || 'tiktok',
+        multipliers_enabled: giveaway.multipliers_enabled || {},
+        status: giveaway.status
+    });
+    setShowCreateDialog(true);
+  };
+
+  // Reset form when dialog closes
+  const onOpenChange = (open) => {
+    setShowCreateDialog(open);
+    if (!open) {
+        setEditingGiveaway(null);
+        setFormData({
+            title: '',
+            description: '',
+            prize_value: '',
+            minimum_gift_value: 0,
+            entries_per_action: 1,
+            entry_mode: 'tiktok',
+            multipliers_enabled: {},
+            status: 'upcoming'
+        });
+    }
   };
 
   const updateStatusMutation = useMutation({
@@ -155,7 +217,7 @@ export default function LoveAway() {
               <History className="w-4 h-4 mr-2" />
               {showHistory ? 'Hide History' : 'Winners History'}
             </Button>
-            <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+            <Dialog open={showCreateDialog} onOpenChange={onOpenChange}>
               <DialogTrigger asChild>
                 <Button style={{ backgroundColor: primaryColor }}>
                   <Plus className="w-4 h-4 mr-2" />
@@ -164,7 +226,7 @@ export default function LoveAway() {
               </DialogTrigger>
               <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle>Create Love Away Giveaway</DialogTitle>
+                  <DialogTitle>{editingGiveaway ? 'Edit Love Away' : 'Create Love Away Giveaway'}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
@@ -205,7 +267,7 @@ export default function LoveAway() {
                   />
 
                   <Button onClick={handleCreate} className="w-full" style={{ backgroundColor: primaryColor }}>
-                    Create Giveaway
+                    {editingGiveaway ? 'Save Changes' : 'Create Giveaway'}
                   </Button>
                 </div>
               </DialogContent>
@@ -265,6 +327,16 @@ export default function LoveAway() {
                     </PopoverTrigger>
                     <PopoverContent className="w-40 p-1">
                       <div className="space-y-1">
+                        {/* Only allow editing if no winner selected yet */}
+                        {giveaway.status !== 'winner_selected' && (
+                             <button 
+                                className="w-full text-left px-2 py-1.5 text-sm hover:bg-gray-100 rounded flex items-center gap-2"
+                                onClick={() => handleEdit(giveaway)}
+                            >
+                                <Edit className="w-4 h-4" /> Edit
+                            </button>
+                        )}
+
                         {giveaway.status !== 'archived' && (
                             <button 
                                 className="w-full text-left px-2 py-1.5 text-sm hover:bg-gray-100 rounded flex items-center gap-2"
