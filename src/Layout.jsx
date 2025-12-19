@@ -4,15 +4,15 @@ import { createPageUrl } from './utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button.jsx';
-import { 
-  LayoutDashboard, Target, Heart, BookOpen, Settings, Menu, X, LogOut, 
-  TrendingUp, Users, Video, Pill, Gift, Brain, Home, ChevronDown, 
-  ChevronRight, Bell, Share2, Music, Star, Lock, UserCog, Sparkles, 
-  Palette, Eye, Bookmark, HandMetal, PawPrint, Search, MousePointerClick, 
-  Calendar, Sun, Cross, Smile, FileText, StickyNote, Tablet, HelpCircle, 
+import {
+  LayoutDashboard, Target, Heart, BookOpen, Settings, Menu, X, LogOut,
+  TrendingUp, Users, Video, Pill, Gift, Brain, Home, ChevronDown,
+  ChevronRight, Bell, Share2, Music, Star, Lock, UserCog, Sparkles,
+  Palette, Eye, Bookmark, HandMetal, PawPrint, Search, MousePointerClick,
+  Calendar, Sun, Cross, Smile, FileText, StickyNote, Tablet, HelpCircle,
   MessageCircle, Briefcase, DollarSign, Activity, Wallet, Swords, Lightbulb, Zap,
-  Image as ImageIcon
-} from 'lucide-react';
+  Image as ImageIcon } from
+'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import TikTokAccessGate from './components/access/TikTokAccessGate';
 import ImpersonationBanner, { getEffectiveUserEmail, isImpersonating } from './components/admin/ImpersonationBanner';
@@ -27,8 +27,8 @@ import AnnouncementBarPositioner from './components/announcements/AnnouncementBa
 const iconMap = {
   LayoutDashboard, Target, Heart, BookOpen, Settings, TrendingUp, Users, Video,
   Pill, Gift, Brain, Home, ChevronDown, ChevronRight, Bell, Share2, Music, Star,
-  Lock, UserCog, Sparkles, Eye, Bookmark, HandMetal, PawPrint, Search, 
-  MousePointerClick, Calendar, Sun, Cross, Smile, FileText, StickyNote, 
+  Lock, UserCog, Sparkles, Eye, Bookmark, HandMetal, PawPrint, Search,
+  MousePointerClick, Calendar, Sun, Cross, Smile, FileText, StickyNote,
   Tablet, HelpCircle, MessageCircle, Briefcase, Palette, DollarSign, Activity
 };
 
@@ -43,10 +43,10 @@ export default function Layout({ children, currentPageName }) {
 
   // Authentication
   useEffect(() => {
-    base44.auth.me()
-      .then(setUser)
-      .catch(() => setUser(null))
-      .finally(() => setUserLoading(false));
+    base44.auth.me().
+    then(setUser).
+    catch(() => setUser(null)).
+    finally(() => setUserLoading(false));
   }, []);
 
   // Effective Email (Impersonation)
@@ -58,7 +58,7 @@ export default function Layout({ children, currentPageName }) {
       return null;
     }
   }, [user]);
-  
+
   const currentlyImpersonating = isImpersonating();
 
   // Preferences Query
@@ -69,14 +69,14 @@ export default function Layout({ children, currentPageName }) {
       const prefs = await base44.entities.UserPreferences.filter({ user_email: effectiveEmail }, '-updated_date');
       return prefs[0] || null;
     },
-    enabled: !!effectiveEmail,
+    enabled: !!effectiveEmail
   });
 
   // Admin Check
   const realUserEmail = user?.email ? user.email.toLowerCase() : '';
   const adminEmails = ['pixelnutscreative@gmail.com', 'pixel@thrivenut.app'];
   const isAdmin = realUserEmail && adminEmails.includes(realUserEmail);
-  
+
   // Permissions
   const hasTikTokAccess = isAdmin || preferences?.tiktok_access_approved;
   // Determine if Bible features are enabled (default to true if undefined)
@@ -111,126 +111,126 @@ export default function Layout({ children, currentPageName }) {
 
   // --- MENU GROUPS (Collapsible) ---
   const menuGroups = [
-    {
-      id: 'core',
-      items: [
-        { name: getDashboardName(), icon: LayoutDashboard, path: 'Dashboard', alwaysShow: true },
-        { name: preferences?.my_resources_label || 'My Stuff', icon: Bookmark, path: 'MyResources' },
-        { name: "Pixel's Place", icon: Sparkles, path: 'PixelsParadise', alwaysShow: true },
-      ]
+  {
+    id: 'core',
+    items: [
+    { name: getDashboardName(), icon: LayoutDashboard, path: 'Dashboard', alwaysShow: true },
+    { name: preferences?.my_resources_label || 'My Stuff', icon: Bookmark, path: 'MyResources' },
+    { name: "Pixel's Place", icon: Sparkles, path: 'PixelsParadise', alwaysShow: true }]
+
+  },
+  {
+    id: 'goals',
+    title: 'Goals + Growth',
+    color: 'text-purple-400',
+    bgColor: 'bg-purple-500/10',
+    items: [
+    { name: 'Quick Notes', icon: StickyNote, path: 'QuickNotes', moduleId: 'quick_notes' },
+    { name: 'Tasks', icon: FileText, path: 'Tasks', moduleId: 'tasks' },
+    { name: 'Habits', icon: Target, path: 'Habits', moduleId: 'habits' },
+    { name: 'Goals', icon: Target, path: 'Goals', moduleId: 'goals' },
+    { name: 'Vision Board', icon: Eye, path: 'VisionBoard', moduleId: 'goals' },
+    { name: 'Journal', icon: BookOpen, path: 'Journal', moduleId: 'journal' },
+    { name: 'Finance', icon: Wallet, path: 'Finance', moduleId: 'finance' }]
+
+  },
+  {
+    id: 'friends',
+    title: 'Friends + Loved Ones',
+    color: 'text-cyan-400', // Turquoise
+    bgColor: 'bg-cyan-500/10',
+    items: [
+    { name: 'My People', icon: Users, path: 'People', moduleId: 'people' },
+    { name: 'Care Reminders', icon: Bell, path: 'CareReminders', moduleId: 'care_reminders' },
+    { name: 'Pet Care', icon: PawPrint, path: 'PetCare', moduleId: 'pets' }]
+
+  },
+  {
+    id: 'faith',
+    title: 'Faith & Spiritual',
+    color: 'text-lime-400', // Lime Green
+    bgColor: 'bg-lime-500/10',
+    items: [
+    { name: getPrayerName(), icon: Heart, path: 'PrayerRequests', moduleId: 'prayer' },
+    { name: 'Holy Hitmakers', icon: Music, path: 'HolyHitmakers', requiresBibleBeliever: true },
+    { name: 'Bible Resources', icon: BookOpen, path: 'BibleResources', requiresBibleBeliever: true }]
+
+  },
+  {
+    id: 'health',
+    title: 'Mind + Body Health',
+    color: 'text-yellow-400', // Gold/Yellow
+    bgColor: 'bg-yellow-500/10',
+    items: [
+    { name: 'Mental Health', icon: Brain, path: 'MentalHealth', moduleId: 'mental_health' },
+    { name: 'Daily Wellness', icon: Heart, path: 'Wellness', moduleId: 'wellness' },
+    { name: 'Supplements', icon: Tablet, path: 'Supplements', moduleId: 'supplements' },
+    { name: 'Medications', icon: Pill, path: 'Medications', moduleId: 'medications' },
+    { name: 'Activity Tracker', icon: Activity, path: 'ActivityTracker', moduleId: 'activity' }]
+
+  },
+  {
+    id: 'creator',
+    title: 'Creator Suite',
+    color: 'text-orange-400', // Orange
+    bgColor: 'bg-orange-500/10',
+    items: [
+    { name: 'Content Creator Center', icon: Target, path: 'ContentCreatorHub' },
+    { name: 'Affiliate Programs', icon: DollarSign, path: 'AffiliateCampaigns' },
+    { name: 'Content Ideas', icon: Lightbulb, path: 'SavedMotivations', moduleId: 'motivations' },
+    { name: 'Content Marketplace', icon: Briefcase, path: 'ContentMarketplace', highlight: true },
+    { name: 'AI Image Generator', icon: ImageIcon, path: 'AIImageGenerator' },
+    { name: 'Create AI Music', icon: Music, isSection: true, subItems: [
+      { name: 'Sunny Songbird', icon: Sun, path: 'SongGenerator' },
+      { name: "Ping & Pong's Silly Songs", icon: Smile, externalUrl: 'https://sillysongs.pixelnutscreative.com' },
+      { name: 'Holy Hitmakers', icon: Music, path: 'HolyHitmakers', requiresBibleBeliever: true }]
     },
-    {
-      id: 'goals',
-      title: 'Goals + Growth',
-      color: 'text-purple-400',
-      bgColor: 'bg-purple-500/10',
-      items: [
-        { name: 'Quick Notes', icon: StickyNote, path: 'QuickNotes', moduleId: 'quick_notes' },
-        { name: 'Tasks', icon: FileText, path: 'Tasks', moduleId: 'tasks' },
-        { name: 'Habits', icon: Target, path: 'Habits', moduleId: 'habits' },
-        { name: 'Goals', icon: Target, path: 'Goals', moduleId: 'goals' },
-        { name: 'Vision Board', icon: Eye, path: 'VisionBoard', moduleId: 'goals' },
-        { name: 'Journal', icon: BookOpen, path: 'Journal', moduleId: 'journal' },
-        { name: 'Finance', icon: Wallet, path: 'Finance', moduleId: 'finance' },
-      ]
-    },
-    {
-      id: 'friends',
-      title: 'Friends + Loved Ones',
-      color: 'text-cyan-400', // Turquoise
-      bgColor: 'bg-cyan-500/10',
-      items: [
-        { name: 'My People', icon: Users, path: 'People', moduleId: 'people' },
-        { name: 'Care Reminders', icon: Bell, path: 'CareReminders', moduleId: 'care_reminders' },
-        { name: 'Pet Care', icon: PawPrint, path: 'PetCare', moduleId: 'pets' },
-      ]
-    },
-    {
-      id: 'faith',
-      title: 'Faith & Spiritual',
-      color: 'text-lime-400', // Lime Green
-      bgColor: 'bg-lime-500/10',
-      items: [
-        { name: getPrayerName(), icon: Heart, path: 'PrayerRequests', moduleId: 'prayer' },
-        { name: 'Holy Hitmakers', icon: Music, path: 'HolyHitmakers', requiresBibleBeliever: true },
-        { name: 'Bible Resources', icon: BookOpen, path: 'BibleResources', requiresBibleBeliever: true },
-      ]
-    },
-    {
-      id: 'health',
-      title: 'Mind + Body Health',
-      color: 'text-yellow-400', // Gold/Yellow
-      bgColor: 'bg-yellow-500/10',
-      items: [
-        { name: 'Mental Health', icon: Brain, path: 'MentalHealth', moduleId: 'mental_health' },
-        { name: 'Daily Wellness', icon: Heart, path: 'Wellness', moduleId: 'wellness' },
-        { name: 'Supplements', icon: Tablet, path: 'Supplements', moduleId: 'supplements' },
-        { name: 'Medications', icon: Pill, path: 'Medications', moduleId: 'medications' },
-        { name: 'Activity Tracker', icon: Activity, path: 'ActivityTracker', moduleId: 'activity' },
-      ]
-    },
-    {
-      id: 'creator',
-      title: 'Creator Suite',
-      color: 'text-orange-400', // Orange
-      bgColor: 'bg-orange-500/10',
-      items: [
-        { name: 'Content Creator Center', icon: Target, path: 'ContentCreatorHub' },
-        { name: 'Affiliate Programs', icon: DollarSign, path: 'AffiliateCampaigns' },
-        { name: 'Content Ideas', icon: Lightbulb, path: 'SavedMotivations', moduleId: 'motivations' },
-        { name: 'Content Marketplace', icon: Briefcase, path: 'ContentMarketplace', highlight: true },
-        { name: 'AI Image Generator', icon: ImageIcon, path: 'AIImageGenerator' },
-        { name: 'Create AI Music', icon: Music, isSection: true, subItems: [
-          { name: 'Sunny Songbird', icon: Sun, path: 'SongGenerator' },
-          { name: "Ping & Pong's Silly Songs", icon: Smile, externalUrl: 'https://sillysongs.pixelnutscreative.com' },
-          { name: 'Holy Hitmakers', icon: Music, path: 'HolyHitmakers', requiresBibleBeliever: true },
-        ]},
-        { name: 'Social Media Suite', icon: Share2, isSection: true, moduleId: 'tiktok', requiresTikTokAccess: true, subItems: [
-          { name: 'Social Engagement', icon: MousePointerClick, path: 'TikTokEngagement' },
-          { name: 'Creator Contacts', icon: Users, path: 'TikTokContacts' },
-          { name: 'Content Calendar', icon: Calendar, path: 'LiveSchedule' },
-          { name: 'Discover Creators', icon: Search, path: 'DiscoverCreators' },
-          { name: 'Battle Prep', icon: Swords, path: 'BattlePrep' },
-          { name: 'Live Engagement', icon: Activity, path: 'LiveEngagement' },
-          { name: 'Gift Gallery Gratitude', icon: Gift, path: 'WeeklyGifterGallery' },
-          { name: 'Love Away Giveaways', icon: Gift, path: 'LoveAway' },
-          { name: 'Pictionary Helper', icon: Palette, path: 'PictionaryHelper' },
-        ]},
-      ]
-    },
-    {
-      id: 'support',
-      title: 'Support & Settings',
-      color: 'text-pink-400', // Hot Pink
-      bgColor: 'bg-pink-500/10',
-      items: [
-        { name: 'My Groups', icon: Users, path: 'CreatorGroups', alwaysShow: true },
-        { name: 'Settings', icon: Settings, path: 'Settings', alwaysShow: true },
-        { name: 'Support', icon: HelpCircle, path: 'Support', alwaysShow: true },
-        { name: 'Admin Panel', icon: UserCog, path: 'Admin', adminOnly: true },
-        { name: 'Community Map', icon: Share2, path: 'CommunityMap', adminOnly: true },
-      ]
-    }
-  ];
+    { name: 'Social Media Suite', icon: Share2, isSection: true, moduleId: 'tiktok', requiresTikTokAccess: true, subItems: [
+      { name: 'Social Engagement', icon: MousePointerClick, path: 'TikTokEngagement' },
+      { name: 'Creator Contacts', icon: Users, path: 'TikTokContacts' },
+      { name: 'Content Calendar', icon: Calendar, path: 'LiveSchedule' },
+      { name: 'Discover Creators', icon: Search, path: 'DiscoverCreators' },
+      { name: 'Battle Prep', icon: Swords, path: 'BattlePrep' },
+      { name: 'Live Engagement', icon: Activity, path: 'LiveEngagement' },
+      { name: 'Gift Gallery Gratitude', icon: Gift, path: 'WeeklyGifterGallery' },
+      { name: 'Love Away Giveaways', icon: Gift, path: 'LoveAway' },
+      { name: 'Pictionary Helper', icon: Palette, path: 'PictionaryHelper' }]
+    }]
+
+  },
+  {
+    id: 'support',
+    title: 'Support & Settings',
+    color: 'text-pink-400', // Hot Pink
+    bgColor: 'bg-pink-500/10',
+    items: [
+    { name: 'My Groups', icon: Users, path: 'CreatorGroups', alwaysShow: true },
+    { name: 'Settings', icon: Settings, path: 'Settings', alwaysShow: true },
+    { name: 'Support', icon: HelpCircle, path: 'Support', alwaysShow: true },
+    { name: 'Admin Panel', icon: UserCog, path: 'Admin', adminOnly: true },
+    { name: 'Community Map', icon: Share2, path: 'CommunityMap', adminOnly: true }]
+
+  }];
+
 
   const [collapsedGroups, setCollapsedGroups] = useState(['goals', 'friends', 'faith', 'health', 'creator', 'support']);
 
   const toggleGroup = (groupId) => {
-    setCollapsedGroups(previousGroups => 
-      previousGroups.includes(groupId) 
-        ? previousGroups.filter(id => id !== groupId)
-        : [...previousGroups, groupId]
+    setCollapsedGroups((previousGroups) =>
+    previousGroups.includes(groupId) ?
+    previousGroups.filter((id) => id !== groupId) :
+    [...previousGroups, groupId]
     );
   };
 
   // Logic to toggle expanded sections
   const toggleSection = (sectionName) => {
-    setExpandedSections(previousSections => 
-      previousSections.includes(sectionName) 
-        ? previousSections.filter(s => s !== sectionName)
-        : [...previousSections, sectionName]
+    setExpandedSections((previousSections) =>
+    previousSections.includes(sectionName) ?
+    previousSections.filter((s) => s !== sectionName) :
+    [...previousSections, sectionName]
     );
-    
+
     // Scroll to top when opening Social Media Suite
     if (sectionName === 'Social Media Suite' && !expandedSections.includes(sectionName)) {
       setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100);
@@ -241,7 +241,7 @@ export default function Layout({ children, currentPageName }) {
 
   const isSubItemActive = (item) => {
     if (item.subItems) {
-      return item.subItems.some(sub => sub.path === currentPageName);
+      return item.subItems.some((sub) => sub.path === currentPageName);
     }
     return false;
   };
@@ -279,33 +279,33 @@ export default function Layout({ children, currentPageName }) {
 
   // Determine music URL based on active service
   const activeService = preferences?.active_music_service || 'soundcloud';
-  const soundcloudUrl = activeService === 'spotify' 
-    ? (preferences?.spotify_playlist_url || '') 
-    : (preferences?.soundcloud_playlist_url || 'https://soundcloud.com/pixel-nuts-creative/sets/rise-praise');
-    
+  const soundcloudUrl = activeService === 'spotify' ?
+  preferences?.spotify_playlist_url || '' :
+  preferences?.soundcloud_playlist_url || 'https://soundcloud.com/pixel-nuts-creative/sets/rise-praise';
+
   const soundcloudPosition = preferences?.soundcloud_player_position || 'menu';
 
   return (
     <>
       <AnnouncementBar />
-      <div 
-        className={`min-h-screen ${bgClass} ${currentlyImpersonating ? 'pt-10' : ''}`} 
-      style={{ 
-        '--primary-color': primaryColor, 
-        '--accent-color': accentColor,
-      }}
-    >
+      <div
+        className={`min-h-screen ${bgClass} ${currentlyImpersonating ? 'pt-10' : ''}`}
+        style={{
+          '--primary-color': primaryColor,
+          '--accent-color': accentColor
+        }}>
+
       <ImpersonationBanner />
       
       {/* Mobile Header */}
       <div className={`lg:hidden fixed top-0 left-0 right-0 z-50 backdrop-blur-sm border-b px-4 py-3 ${menuTextClass}`} style={sidebarStyle}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img 
-              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6924840d3628eabd1d7f8247/e225113d4_Untitleddesign.png" 
-              alt="Let's Thrive!" 
-              className="w-8 h-8"
-            />
+            <img
+                src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6924840d3628eabd1d7f8247/e225113d4_Untitleddesign.png"
+                alt="Let's Thrive!"
+                className="w-8 h-8" />
+
             <h1 className="text-xl font-bold bg-gradient-to-r from-teal-600 to-purple-400 bg-clip-text text-transparent whitespace-nowrap">
               Let's Thrive!
             </h1>
@@ -313,11 +313,11 @@ export default function Layout({ children, currentPageName }) {
           <div className="flex items-center gap-2">
             {user && <NotificationBell userEmail={effectiveEmail} isDark={isMenuDark} />}
             <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className={menuTextClass}
-            >
+                variant="ghost"
+                size="icon"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className={menuTextClass}>
+
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </Button>
           </div>
@@ -326,61 +326,61 @@ export default function Layout({ children, currentPageName }) {
 
       {/* Mobile Menu */}
       <AnimatePresence>
-        {mobileMenuOpen && (
+        {mobileMenuOpen &&
           <motion.div
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'tween' }}
             className="lg:hidden fixed inset-0 z-40 pt-16 flex flex-col"
-            style={{ backgroundColor: menuColor }}
-          >
+            style={{ backgroundColor: menuColor }}>
+
             <nav className="flex-1 p-6 space-y-1 overflow-y-auto">
               {menuGroups.map((group) => {
                 const isCollapsed = collapsedGroups.includes(group.id);
-                
+
                 return (
                   <div key={group.id} className="mb-2">
-                    {group.title && (
-                      <button
-                        onClick={() => toggleGroup(group.id)}
-                        className={`w-full px-2 py-2 mt-4 mb-1 text-xs font-bold uppercase tracking-wider ${group.color} ${group.bgColor} rounded-lg flex items-center justify-between hover:opacity-80 transition-opacity`}
-                      >
+                    {group.title &&
+                    <button
+                      onClick={() => toggleGroup(group.id)}
+                      className={`w-full px-2 py-2 mt-4 mb-1 text-xs font-bold uppercase tracking-wider ${group.color} ${group.bgColor} rounded-lg flex items-center justify-between hover:opacity-80 transition-opacity`}>
+
                         <span>{group.title}</span>
                         {isCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                       </button>
-                    )}
+                    }
 
                     <AnimatePresence>
-                      {(!isCollapsed || !group.title) && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 'auto', opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          className="overflow-hidden space-y-1"
-                        >
+                      {(!isCollapsed || !group.title) &&
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden space-y-1">
+
                           {group.items.map((item) => {
-                            // Check permissions/modules
-                            if (item.adminOnly && !isAdmin) return null;
-                            if (item.requiresBibleBeliever && !isBibleBeliever) return null;
-                            if (item.moduleId && !enabledModules.includes(item.moduleId) && !item.alwaysShow) return null;
+                          // Check permissions/modules
+                          if (item.adminOnly && !isAdmin) return null;
+                          if (item.requiresBibleBeliever && !isBibleBeliever) return null;
+                          if (item.moduleId && !enabledModules.includes(item.moduleId) && !item.alwaysShow) return null;
 
-                            const Icon = item.icon;
-                            const isActive = currentPageName === item.path;
-                            const isExpanded = expandedSections.includes(item.name);
-                            const hasActiveSubItem = isSubItemActive(item);
+                          const Icon = item.icon;
+                          const isActive = currentPageName === item.path;
+                          const isExpanded = expandedSections.includes(item.name);
+                          const hasActiveSubItem = isSubItemActive(item);
 
-                            // Section (Dropdown)
-                            if (item.isSection) {
-                              const isLocked = item.requiresTikTokAccess && !hasTikTokAccess;
-                              return (
-                                <div key={item.name}>
+                          // Section (Dropdown)
+                          if (item.isSection) {
+                            const isLocked = item.requiresTikTokAccess && !hasTikTokAccess;
+                            return (
+                              <div key={item.name}>
                                   <button
-                                    onClick={() => isLocked ? setShowAccessGate(true) : toggleSection(item.name)}
-                                    className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
-                                      hasActiveSubItem ? menuActiveClass : `${menuTextClass} ${menuHoverClass}`
-                                    }`}
-                                  >
+                                  onClick={() => isLocked ? setShowAccessGate(true) : toggleSection(item.name)}
+                                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
+                                  hasActiveSubItem ? menuActiveClass : `${menuTextClass} ${menuHoverClass}`}`
+                                  }>
+
                                     <div className="flex items-center gap-3">
                                       <Icon className="w-5 h-5" />
                                       <span className="font-medium">{item.name}</span>
@@ -389,180 +389,180 @@ export default function Layout({ children, currentPageName }) {
                                     {!isLocked && (isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />)}
                                   </button>
                                   
-                                  {isExpanded && !isLocked && (
-                                    <div className="ml-4 mt-1 space-y-1">
-                                      {item.subItems?.map(sub => (
-                                        sub.externalUrl ? (
-                                          <a
-                                            key={sub.name}
-                                            href={sub.externalUrl}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className={`flex items-center gap-3 px-4 py-2 rounded-xl text-sm ${menuTextClass} ${menuHoverClass}`}
-                                          >
+                                  {isExpanded && !isLocked &&
+                                <div className="ml-4 mt-1 space-y-1">
+                                      {item.subItems?.map((sub) =>
+                                  sub.externalUrl ?
+                                  <a
+                                    key={sub.name}
+                                    href={sub.externalUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className={`flex items-center gap-3 px-4 py-2 rounded-xl text-sm ${menuTextClass} ${menuHoverClass}`}>
+
                                             <sub.icon className="w-4 h-4" />
                                             <span>{sub.name}</span>
                                             <span className="text-xs opacity-50">↗</span>
-                                          </a>
-                                        ) : (
-                                          <Link
-                                            key={sub.path}
-                                            to={createPageUrl(sub.path)}
-                                            onClick={() => setMobileMenuOpen(false)}
-                                            className={`flex items-center gap-3 px-4 py-2 rounded-xl text-sm ${
-                                              currentPageName === sub.path 
-                                                ? (isMenuDark ? 'text-white bg-white/10' : 'text-teal-700 bg-teal-50')
-                                                : `${menuTextClass} ${menuHoverClass}`
-                                            }`}
-                                          >
+                                          </a> :
+
+                                  <Link
+                                    key={sub.path}
+                                    to={createPageUrl(sub.path)}
+                                    onClick={() => setMobileMenuOpen(false)}
+                                    className={`flex items-center gap-3 px-4 py-2 rounded-xl text-sm ${
+                                    currentPageName === sub.path ?
+                                    isMenuDark ? 'text-white bg-white/10' : 'text-teal-700 bg-teal-50' :
+                                    `${menuTextClass} ${menuHoverClass}`}`
+                                    }>
+
                                             <sub.icon className="w-4 h-4" />
                                             <span>{sub.name}</span>
                                           </Link>
-                                        )
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
-                              );
-                            }
 
-                            // Standard Link
-                            if (item.externalUrl) {
-                              return (
-                                <a
-                                  key={item.name}
-                                  href={item.externalUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${menuTextClass} ${menuHoverClass}`}
-                                >
+                                  )}
+                                    </div>
+                                }
+                                </div>);
+
+                          }
+
+                          // Standard Link
+                          if (item.externalUrl) {
+                            return (
+                              <a
+                                key={item.name}
+                                href={item.externalUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${menuTextClass} ${menuHoverClass}`}>
+
                                   <Icon className="w-5 h-5" />
                                   <span className="font-medium">{item.name}</span>
                                   <span className="text-xs opacity-50">↗</span>
-                                </a>
-                              );
-                            }
+                                </a>);
 
-                            return (
-                              <Link
-                                key={item.path}
-                                to={createPageUrl(item.path)}
-                                onClick={() => setMobileMenuOpen(false)}
-                                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                                  isActive 
-                                    ? 'text-white shadow-lg'
-                                    : `${menuTextClass} ${menuHoverClass}`
-                                }`}
-                                style={isActive ? { background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` } : {}}
-                              >
+                          }
+
+                          return (
+                            <Link
+                              key={item.path}
+                              to={createPageUrl(item.path)}
+                              onClick={() => setMobileMenuOpen(false)}
+                              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                              isActive ?
+                              'text-white shadow-lg' :
+                              `${menuTextClass} ${menuHoverClass}`}`
+                              }
+                              style={isActive ? { background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` } : {}}>
+
                                 <Icon className="w-5 h-5" />
                                 <span className="font-medium">{item.name}</span>
-                              </Link>
-                            );
-                          })}
+                              </Link>);
+
+                        })}
                         </motion.div>
-                      )}
+                      }
                     </AnimatePresence>
-                  </div>
-                );
+                  </div>);
+
               })}
 
-              {user && (
-                <div className={`pt-6 mt-6 border-t ${menuBorderClass}`}>
+              {user &&
+              <div className={`pt-6 mt-6 border-t ${menuBorderClass}`}>
                   <button
-                    onClick={() => {
-                      const accounts = JSON.parse(localStorage.getItem('savedAccounts') || '[]');
-                      const currentEmail = user.email;
+                  onClick={() => {
+                    const accounts = JSON.parse(localStorage.getItem('savedAccounts') || '[]');
+                    const currentEmail = user.email;
 
-                      let message = 'ACCOUNT MANAGER\n\n';
-                      if (accounts.length > 0) {
-                        message += 'Saved Accounts:\n';
-                        accounts.forEach((acc, idx) => {
-                          const isCurrent = acc.email === currentEmail;
-                          message += `${idx + 1}. ${acc.email}${isCurrent ? ' (current)' : ''}\n`;
-                        });
-                        message += '\n';
+                    let message = 'ACCOUNT MANAGER\n\n';
+                    if (accounts.length > 0) {
+                      message += 'Saved Accounts:\n';
+                      accounts.forEach((acc, idx) => {
+                        const isCurrent = acc.email === currentEmail;
+                        message += `${idx + 1}. ${acc.email}${isCurrent ? ' (current)' : ''}\n`;
+                      });
+                      message += '\n';
+                    }
+
+                    message += 'Options:\n';
+                    message += '1. Add this account to saved list\n';
+                    message += '2. Switch to different account\n';
+                    message += '3. Remove saved account\n';
+                    message += '4. Cancel\n\n';
+                    message += 'Enter number:';
+
+                    const choice = prompt(message);
+
+                    if (choice === '1') {
+                      const exists = accounts.find((a) => a.email === currentEmail);
+                      if (!exists) {
+                        accounts.push({ email: currentEmail, name: user.full_name });
+                        localStorage.setItem('savedAccounts', JSON.stringify(accounts));
+                        alert('Account saved! You can now switch between accounts easily.');
+                      } else {
+                        alert('This account is already saved.');
                       }
-
-                      message += 'Options:\n';
-                      message += '1. Add this account to saved list\n';
-                      message += '2. Switch to different account\n';
-                      message += '3. Remove saved account\n';
-                      message += '4. Cancel\n\n';
-                      message += 'Enter number:';
-
-                      const choice = prompt(message);
-
-                      if (choice === '1') {
-                        const exists = accounts.find(a => a.email === currentEmail);
-                        if (!exists) {
-                          accounts.push({ email: currentEmail, name: user.full_name });
-                          localStorage.setItem('savedAccounts', JSON.stringify(accounts));
-                          alert('Account saved! You can now switch between accounts easily.');
-                        } else {
-                          alert('This account is already saved.');
-                        }
-                      } else if (choice === '2') {
-                        if (accounts.length === 0) {
-                          alert('No saved accounts. Add accounts first!');
-                          return;
-                        }
-                        const accountsList = accounts.map((acc, idx) => `${idx + 1}. ${acc.email}`).join('\n');
-                        const selection = prompt(`Select account:\n${accountsList}\n\nEnter number:`);
-                        const selectedIdx = parseInt(selection) - 1;
-                        if (selectedIdx >= 0 && selectedIdx < accounts.length) {
-                          base44.auth.logout(createPageUrl('Home') + '?email=' + accounts[selectedIdx].email);
-                        }
-                      } else if (choice === '3') {
-                        if (accounts.length === 0) {
-                          alert('No saved accounts to remove.');
-                          return;
-                        }
-                        const accountsList = accounts.map((acc, idx) => `${idx + 1}. ${acc.email}`).join('\n');
-                        const selection = prompt(`Remove account:\n${accountsList}\n\nEnter number:`);
-                        const selectedIdx = parseInt(selection) - 1;
-                        if (selectedIdx >= 0 && selectedIdx < accounts.length) {
-                          accounts.splice(selectedIdx, 1);
-                          localStorage.setItem('savedAccounts', JSON.stringify(accounts));
-                          alert('Account removed from saved list.');
-                        }
+                    } else if (choice === '2') {
+                      if (accounts.length === 0) {
+                        alert('No saved accounts. Add accounts first!');
+                        return;
                       }
-                    }}
-                    className={`w-full flex items-center justify-between gap-2 mb-4 px-2 py-2 rounded-lg ${menuHoverClass}`}
-                  >
+                      const accountsList = accounts.map((acc, idx) => `${idx + 1}. ${acc.email}`).join('\n');
+                      const selection = prompt(`Select account:\n${accountsList}\n\nEnter number:`);
+                      const selectedIdx = parseInt(selection) - 1;
+                      if (selectedIdx >= 0 && selectedIdx < accounts.length) {
+                        base44.auth.logout(createPageUrl('Home') + '?email=' + accounts[selectedIdx].email);
+                      }
+                    } else if (choice === '3') {
+                      if (accounts.length === 0) {
+                        alert('No saved accounts to remove.');
+                        return;
+                      }
+                      const accountsList = accounts.map((acc, idx) => `${idx + 1}. ${acc.email}`).join('\n');
+                      const selection = prompt(`Remove account:\n${accountsList}\n\nEnter number:`);
+                      const selectedIdx = parseInt(selection) - 1;
+                      if (selectedIdx >= 0 && selectedIdx < accounts.length) {
+                        accounts.splice(selectedIdx, 1);
+                        localStorage.setItem('savedAccounts', JSON.stringify(accounts));
+                        alert('Account removed from saved list.');
+                      }
+                    }
+                  }}
+                  className={`w-full flex items-center justify-between gap-2 mb-4 px-2 py-2 rounded-lg ${menuHoverClass}`}>
+
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                       <div className="flex-1 min-w-0">
                         <p className={`text-sm font-medium truncate ${menuTextClass}`}>{preferences?.nickname || user.full_name || user.email}</p>
                         <p className={`text-xs truncate ${menuSubtextClass}`}>{user.email}</p>
                       </div>
                     </div>
-                    <img 
-                      src={preferences?.profile_image_url || `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'%3E%3C/path%3E%3Ccircle cx='12' cy='7' r='4'%3E%3C/circle%3E%3C/svg%3E`} 
-                      alt="Profile" 
-                      className="w-10 h-10 rounded-full object-cover border-2 border-gray-300 flex-shrink-0"
-                    />
+                    <img
+                    src={preferences?.profile_image_url || `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'%3E%3C/path%3E%3Ccircle cx='12' cy='7' r='4'%3E%3C/circle%3E%3C/svg%3E`}
+                    alt="Profile"
+                    className="w-10 h-10 rounded-full object-cover border-2 border-gray-300 flex-shrink-0" />
+
                   </button>
 
                   <div className="space-y-2">
                     <Button
-                      onClick={handleLogout}
-                      size="sm"
-                      className={`w-full justify-start ${isMenuDark ? 'bg-gray-700 text-gray-100 hover:bg-gray-600' : 'bg-gray-800 text-white hover:bg-gray-700'}`}
-                    >
+                    onClick={handleLogout}
+                    size="sm"
+                    className={`w-full justify-start ${isMenuDark ? 'bg-gray-700 text-gray-100 hover:bg-gray-600' : 'bg-gray-800 text-white hover:bg-gray-700'}`}>
+
                       <LogOut className="w-4 h-4 mr-2" /> Log Out
                     </Button>
                   </div>
 
-                  {soundcloudPosition === 'menu' && soundcloudUrl && (
-                    <div className="mt-4 pt-4 border-t" style={{ borderColor: menuBorderClass }}>
+                  {soundcloudPosition === 'menu' && soundcloudUrl &&
+                <div className="mt-4 pt-4 border-t" style={{ borderColor: menuBorderClass }}>
                       <SoundCloudPlayer playlistUrl={soundcloudUrl} isMenuDark={isMenuDark} />
                     </div>
-                  )}
+                }
                 </div>
-              )}
+              }
             </nav>
           </motion.div>
-        )}
+          }
       </AnimatePresence>
 
       {/* Desktop Sidebar */}
@@ -571,15 +571,15 @@ export default function Layout({ children, currentPageName }) {
           <div className="mb-8">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-3">
-                <img 
-                  src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6924840d3628eabd1d7f8247/e225113d4_Untitleddesign.png" 
-                  alt="Let's Thrive!" 
-                  className="w-10 h-10"
-                />
-                <h1 
-                  className="text-2xl font-bold bg-clip-text text-transparent whitespace-nowrap"
-                  style={{ backgroundImage: `linear-gradient(to right, ${primaryColor}, ${accentColor})` }}
-                >
+                <img
+                    src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6924840d3628eabd1d7f8247/e225113d4_Untitleddesign.png"
+                    alt="Let's Thrive!"
+                    className="w-10 h-10" />
+
+                <h1
+                    className="text-2xl font-bold bg-clip-text text-transparent whitespace-nowrap"
+                    style={{ backgroundImage: `linear-gradient(to right, ${primaryColor}, ${accentColor})` }}>
+
                   Let's Thrive!
                 </h1>
               </div>
@@ -590,28 +590,28 @@ export default function Layout({ children, currentPageName }) {
 
           <nav className="flex-1 space-y-1 overflow-y-auto custom-scrollbar">
             {menuGroups.map((group) => {
-              const isCollapsed = collapsedGroups.includes(group.id);
-              
-              return (
-                <div key={group.id} className="mb-2">
-                  {group.title && (
+                const isCollapsed = collapsedGroups.includes(group.id);
+
+                return (
+                  <div key={group.id} className="mb-2">
+                  {group.title &&
                     <button
-                      onClick={() => toggleGroup(group.id)}
-                      className={`w-full px-2 py-2 mt-4 mb-1 text-xs font-bold uppercase tracking-wider ${group.color} ${group.bgColor} rounded-lg flex items-center justify-between hover:opacity-80 transition-opacity`}
-                    >
+                      onClick={() => toggleGroup(group.id)} className="bg-purple-500/10 text-purple-400 mt-1 mb-1 px-2 py-2 text-xs font-bold uppercase tracking-wider rounded-lg w-full flex items-center justify-between hover:opacity-80 transition-opacity">
+
+
                       <span>{group.title}</span>
                       {isCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                     </button>
-                  )}
+                    }
 
                   <AnimatePresence>
-                    {(!isCollapsed || !group.title) && (
+                    {(!isCollapsed || !group.title) &&
                       <motion.div
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        className="overflow-hidden space-y-1"
-                      >
+                        className="overflow-hidden space-y-1">
+
                         {group.items.map((item) => {
                           // Check permissions/modules
                           if (item.adminOnly && !isAdmin) return null;
@@ -631,9 +631,9 @@ export default function Layout({ children, currentPageName }) {
                                 <button
                                   onClick={() => isLocked ? setShowAccessGate(true) : toggleSection(item.name)}
                                   className={`w-full flex items-center justify-between px-4 py-2 rounded-xl transition-all ${
-                                    hasActiveSubItem ? menuActiveClass : `${menuTextClass} ${menuHoverClass}`
-                                  }`}
-                                >
+                                  hasActiveSubItem ? menuActiveClass : `${menuTextClass} ${menuHoverClass}`}`
+                                  }>
+
                                   <div className="flex items-center gap-3">
                                     <Icon className="w-5 h-5" />
                                     <span className="font-medium">{item.name}</span>
@@ -642,40 +642,40 @@ export default function Layout({ children, currentPageName }) {
                                   {!isLocked && (isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />)}
                                 </button>
                                 
-                                {isExpanded && !isLocked && (
-                                  <div className="ml-4 mt-1 space-y-1">
-                                    {item.subItems?.map(sub => (
-                                      sub.externalUrl ? (
-                                        <a
-                                          key={sub.name}
-                                          href={sub.externalUrl}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className={`flex items-center gap-3 px-4 py-2 rounded-xl text-sm ${menuTextClass} ${menuHoverClass}`}
-                                        >
+                                {isExpanded && !isLocked &&
+                                <div className="ml-4 mt-1 space-y-1">
+                                    {item.subItems?.map((sub) =>
+                                  sub.externalUrl ?
+                                  <a
+                                    key={sub.name}
+                                    href={sub.externalUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className={`flex items-center gap-3 px-4 py-2 rounded-xl text-sm ${menuTextClass} ${menuHoverClass}`}>
+
                                           <sub.icon className="w-4 h-4" />
                                           <span>{sub.name}</span>
                                           <span className="text-xs opacity-50">↗</span>
-                                        </a>
-                                      ) : (
-                                        <Link
-                                          key={sub.path}
-                                          to={createPageUrl(sub.path)}
-                                          className={`flex items-center gap-3 px-4 py-2 rounded-xl text-sm ${
-                                            currentPageName === sub.path 
-                                              ? (isMenuDark ? 'text-white bg-white/10' : 'text-teal-700 bg-teal-50')
-                                              : `${menuTextClass} ${menuHoverClass}`
-                                          }`}
-                                        >
+                                        </a> :
+
+                                  <Link
+                                    key={sub.path}
+                                    to={createPageUrl(sub.path)}
+                                    className={`flex items-center gap-3 px-4 py-2 rounded-xl text-sm ${
+                                    currentPageName === sub.path ?
+                                    isMenuDark ? 'text-white bg-white/10' : 'text-teal-700 bg-teal-50' :
+                                    `${menuTextClass} ${menuHoverClass}`}`
+                                    }>
+
                                           <sub.icon className="w-4 h-4" />
                                           <span>{sub.name}</span>
                                         </Link>
-                                      )
-                                    ))}
+
+                                  )}
                                   </div>
-                                )}
-                              </div>
-                            );
+                                }
+                              </div>);
+
                           }
 
                           // Standard Link
@@ -686,133 +686,133 @@ export default function Layout({ children, currentPageName }) {
                                 href={item.externalUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-all ${menuTextClass} ${menuHoverClass}`}
-                              >
+                                className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-all ${menuTextClass} ${menuHoverClass}`}>
+
                                 <Icon className="w-5 h-5" />
                                 <span className="font-medium">{item.name}</span>
                                 <span className="text-xs opacity-50">↗</span>
-                              </a>
-                            );
+                              </a>);
+
                           }
 
                           return (
                             <Link
                               key={item.path}
-                              to={createPageUrl(item.path)}
-                              className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-all ${
-                                isActive 
-                                  ? 'text-white shadow-lg'
-                                  : `${menuTextClass} ${menuHoverClass}`
-                              }`}
-                              style={isActive ? { background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` } : {}}
-                            >
+                              to={createPageUrl(item.path)} className="text-white px-4 rounded-xl flex items-center gap-3 transition-all shadow-lg"
+
+
+
+
+
+                              style={isActive ? { background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` } : {}}>
+
                               <Icon className="w-5 h-5" />
                               <span className="font-medium">{item.name}</span>
-                            </Link>
-                          );
+                            </Link>);
+
                         })}
                       </motion.div>
-                    )}
+                      }
                   </AnimatePresence>
-                </div>
-              );
-            })}
+                </div>);
+
+              })}
           </nav>
 
           {/* Footer & SoundCloud */}
-          {user && (
-          <div className={`pt-6 mt-6 border-t ${menuBorderClass}`}>
+          {user &&
+            <div className={`pt-6 mt-6 border-t ${menuBorderClass}`}>
             <button
-              onClick={() => {
-                const accounts = JSON.parse(localStorage.getItem('savedAccounts') || '[]');
-                const currentEmail = user.email;
+                onClick={() => {
+                  const accounts = JSON.parse(localStorage.getItem('savedAccounts') || '[]');
+                  const currentEmail = user.email;
 
-                let message = 'ACCOUNT MANAGER\n\n';
-                if (accounts.length > 0) {
-                  message += 'Saved Accounts:\n';
-                  accounts.forEach((acc, idx) => {
-                    const isCurrent = acc.email === currentEmail;
-                    message += `${idx + 1}. ${acc.email}${isCurrent ? ' (current)' : ''}\n`;
-                  });
-                  message += '\n';
-                }
+                  let message = 'ACCOUNT MANAGER\n\n';
+                  if (accounts.length > 0) {
+                    message += 'Saved Accounts:\n';
+                    accounts.forEach((acc, idx) => {
+                      const isCurrent = acc.email === currentEmail;
+                      message += `${idx + 1}. ${acc.email}${isCurrent ? ' (current)' : ''}\n`;
+                    });
+                    message += '\n';
+                  }
 
-                message += 'Options:\n';
-                message += '1. Add this account to saved list\n';
-                message += '2. Switch to different account\n';
-                message += '3. Remove saved account\n';
-                message += '4. Cancel\n\n';
-                message += 'Enter number:';
+                  message += 'Options:\n';
+                  message += '1. Add this account to saved list\n';
+                  message += '2. Switch to different account\n';
+                  message += '3. Remove saved account\n';
+                  message += '4. Cancel\n\n';
+                  message += 'Enter number:';
 
-                const choice = prompt(message);
+                  const choice = prompt(message);
 
-                if (choice === '1') {
-                  const exists = accounts.find(a => a.email === currentEmail);
-                  if (!exists) {
-                    accounts.push({ email: currentEmail, name: user.full_name });
-                    localStorage.setItem('savedAccounts', JSON.stringify(accounts));
-                    alert('Account saved! You can now switch between accounts easily.');
-                  } else {
-                    alert('This account is already saved.');
+                  if (choice === '1') {
+                    const exists = accounts.find((a) => a.email === currentEmail);
+                    if (!exists) {
+                      accounts.push({ email: currentEmail, name: user.full_name });
+                      localStorage.setItem('savedAccounts', JSON.stringify(accounts));
+                      alert('Account saved! You can now switch between accounts easily.');
+                    } else {
+                      alert('This account is already saved.');
+                    }
+                  } else if (choice === '2') {
+                    if (accounts.length === 0) {
+                      alert('No saved accounts. Add accounts first!');
+                      return;
+                    }
+                    const accountsList = accounts.map((acc, idx) => `${idx + 1}. ${acc.email}`).join('\n');
+                    const selection = prompt(`Select account:\n${accountsList}\n\nEnter number:`);
+                    const selectedIdx = parseInt(selection) - 1;
+                    if (selectedIdx >= 0 && selectedIdx < accounts.length) {
+                      base44.auth.logout(createPageUrl('Home') + '?email=' + accounts[selectedIdx].email);
+                    }
+                  } else if (choice === '3') {
+                    if (accounts.length === 0) {
+                      alert('No saved accounts to remove.');
+                      return;
+                    }
+                    const accountsList = accounts.map((acc, idx) => `${idx + 1}. ${acc.email}`).join('\n');
+                    const selection = prompt(`Remove account:\n${accountsList}\n\nEnter number:`);
+                    const selectedIdx = parseInt(selection) - 1;
+                    if (selectedIdx >= 0 && selectedIdx < accounts.length) {
+                      accounts.splice(selectedIdx, 1);
+                      localStorage.setItem('savedAccounts', JSON.stringify(accounts));
+                      alert('Account removed from saved list.');
+                    }
                   }
-                } else if (choice === '2') {
-                  if (accounts.length === 0) {
-                    alert('No saved accounts. Add accounts first!');
-                    return;
-                  }
-                  const accountsList = accounts.map((acc, idx) => `${idx + 1}. ${acc.email}`).join('\n');
-                  const selection = prompt(`Select account:\n${accountsList}\n\nEnter number:`);
-                  const selectedIdx = parseInt(selection) - 1;
-                  if (selectedIdx >= 0 && selectedIdx < accounts.length) {
-                    base44.auth.logout(createPageUrl('Home') + '?email=' + accounts[selectedIdx].email);
-                  }
-                } else if (choice === '3') {
-                  if (accounts.length === 0) {
-                    alert('No saved accounts to remove.');
-                    return;
-                  }
-                  const accountsList = accounts.map((acc, idx) => `${idx + 1}. ${acc.email}`).join('\n');
-                  const selection = prompt(`Remove account:\n${accountsList}\n\nEnter number:`);
-                  const selectedIdx = parseInt(selection) - 1;
-                  if (selectedIdx >= 0 && selectedIdx < accounts.length) {
-                    accounts.splice(selectedIdx, 1);
-                    localStorage.setItem('savedAccounts', JSON.stringify(accounts));
-                    alert('Account removed from saved list.');
-                  }
-                }
-              }}
-              className={`w-full flex items-center justify-between gap-2 mb-4 px-2 py-2 rounded-lg ${menuHoverClass}`}
-            >
+                }}
+                className={`w-full flex items-center justify-between gap-2 mb-4 px-2 py-2 rounded-lg ${menuHoverClass}`}>
+
               <div className="flex items-center gap-2 flex-1 min-w-0">
                 <div className="flex-1 min-w-0">
                   <p className={`text-sm font-medium truncate ${menuTextClass}`}>{preferences?.nickname || user.full_name || user.email}</p>
                   <p className={`text-xs truncate ${menuSubtextClass}`}>{user.email}</p>
                 </div>
               </div>
-              <img 
-                src={preferences?.profile_image_url || `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'%3E%3C/path%3E%3Ccircle cx='12' cy='7' r='4'%3E%3C/circle%3E%3C/svg%3E`} 
-                alt="Profile" 
-                className="w-10 h-10 rounded-full object-cover border-2 border-gray-300 flex-shrink-0"
-              />
+              <img
+                  src={preferences?.profile_image_url || `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'%3E%3C/path%3E%3Ccircle cx='12' cy='7' r='4'%3E%3C/circle%3E%3C/svg%3E`}
+                  alt="Profile"
+                  className="w-10 h-10 rounded-full object-cover border-2 border-gray-300 flex-shrink-0" />
+
             </button>
 
             <div className="space-y-2">
               <Button
-                onClick={handleLogout}
-                size="sm"
-                className={`w-full justify-start ${isMenuDark ? 'bg-gray-700 text-gray-100 hover:bg-gray-600' : 'bg-gray-800 text-white hover:bg-gray-700'}`}
-              >
+                  onClick={handleLogout}
+                  size="sm"
+                  className={`w-full justify-start ${isMenuDark ? 'bg-gray-700 text-gray-100 hover:bg-gray-600' : 'bg-gray-800 text-white hover:bg-gray-700'}`}>
+
                 <LogOut className="w-4 h-4 mr-2" /> Log Out
               </Button>
             </div>
 
-              {soundcloudPosition === 'menu' && soundcloudUrl && (
-                <div className="mt-4 pt-4 border-t" style={{ borderColor: menuBorderClass }}>
+              {soundcloudPosition === 'menu' && soundcloudUrl &&
+              <div className="mt-4 pt-4 border-t" style={{ borderColor: menuBorderClass }}>
                   <SoundCloudPlayer playlistUrl={soundcloudUrl} isMenuDark={isMenuDark} />
                 </div>
-              )}
+              }
             </div>
-          )}
+            }
         </div>
 
         {/* Main Content Area */}
@@ -827,37 +827,37 @@ export default function Layout({ children, currentPageName }) {
         </div>
 
       {/* Floating Elements */}
-      {soundcloudPosition === 'menu' && soundcloudUrl && (
-        <MobileSoundCloudPopup 
+      {soundcloudPosition === 'menu' && soundcloudUrl &&
+        <MobileSoundCloudPopup
           playlistUrl={soundcloudUrl}
           primaryColor={primaryColor}
-          accentColor={accentColor}
-        />
-      )}
+          accentColor={accentColor} />
 
-      <TikTokAccessGate 
-        isOpen={showAccessGate} 
-        onClose={() => setShowAccessGate(false)} 
-      />
+        }
+
+      <TikTokAccessGate
+          isOpen={showAccessGate}
+          onClose={() => setShowAccessGate(false)} />
+
 
       <FloatingHelpButton pageName={currentPageName} userEmail={user?.email} />
 
-      {user && effectiveEmail && preferences && (
-        <QuickActionsBarV2 
+      {user && effectiveEmail && preferences &&
+        <QuickActionsBarV2
           preferences={preferences}
           primaryColor={primaryColor}
-          accentColor={accentColor}
-        />
-      )}
+          accentColor={accentColor} />
 
-      {soundcloudPosition === 'floating' && soundcloudUrl && (
-        <FloatingSoundCloudPlayer 
+        }
+
+      {soundcloudPosition === 'floating' && soundcloudUrl &&
+        <FloatingSoundCloudPlayer
           playlistUrl={soundcloudUrl}
           primaryColor={primaryColor}
-          accentColor={accentColor}
-        />
-      )}
+          accentColor={accentColor} />
+
+        }
     </div>
-    </>
-  );
+    </>);
+
 }
