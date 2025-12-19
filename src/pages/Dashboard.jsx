@@ -307,16 +307,18 @@ export default function Dashboard() {
         <div className="max-w-7xl mx-auto space-y-8">
         {/* Daily Motivation Banner - AT THE TOP */}
         <DailyMotivationBanner
+          key={prefKey} // Force re-render when prefs change
           greetingTypes={preferences?.greeting_types || [preferences?.greeting_type || 'positive_quote']}
           userName={user?.full_name?.split(' ')[0] || 'Friend'}
           struggles={preferences?.mental_health_struggles || []}
           goals={preferences?.improvement_goals || []}
-          isBibleBeliever={preferences?.is_bible_believer || preferences?.greeting_type === 'scripture'}
+          isBibleBeliever={preferences?.enable_bible_options !== false}
           userEmail={user?.email}
           bibleVersion={preferences?.bible_version || 'NIV'}
-          motivationTone={preferences?.motivation_tone || 'uplifting'}
+          motivationTone={preferences?.content_tone ? preferences.content_tone.join(', ') : 'humorous'}
           primaryColor={primaryColor}
           accentColor={preferences?.accent_color || '#bd84f5'}
+          preferences={preferences}
         />
 
         {/* Urgent Events - Battles, Training, Important Events */}
