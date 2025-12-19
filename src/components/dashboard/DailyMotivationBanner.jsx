@@ -31,7 +31,9 @@ export default function DailyMotivationBanner({
   isBibleBeliever = false,
   userEmail,
   bibleVersion = 'NIV',
-  motivationTone = 'uplifting'
+  motivationTone = 'uplifting',
+  primaryColor = '#1fd2ea',
+  accentColor = '#bd84f5'
 }) {
   const queryClient = useQueryClient();
   const scrollRef = useRef(null);
