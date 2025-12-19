@@ -69,7 +69,15 @@ export default function Pricing() {
 
     setLoading(true);
     try {
-      const response = await base44.functions.invoke('createCheckout', { plan_type: planType });
+      // Pass the success URL to redirect back to
+      const successUrl = `${window.location.origin}/SubscriptionSuccess?session_id={CHECKOUT_SESSION_ID}`;
+      const cancelUrl = window.location.href;
+      
+      const response = await base44.functions.invoke('createCheckout', { 
+        plan_type: planType,
+        success_url: successUrl,
+        cancel_url: cancelUrl
+      });
       if (response.data?.url) {
         window.location.href = response.data.url;
       }
