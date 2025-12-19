@@ -83,6 +83,12 @@ export default function Dashboard() {
     enabled: !!user,
   });
 
+  // Force re-render when preferences change to update motivation banner
+  const [prefKey, setPrefKey] = useState(0);
+  useEffect(() => {
+    setPrefKey(prev => prev + 1);
+  }, [preferences]);
+
   // Admin check
   const realUserEmail = user?.email ? user.email.toLowerCase() : '';
   const adminEmails = ['pixelnutscreative@gmail.com', 'pixel@thrivenut.app'];
