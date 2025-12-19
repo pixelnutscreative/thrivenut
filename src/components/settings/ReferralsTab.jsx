@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Share2, Copy, Gift, DollarSign, Award, Sparkles, AlertTriangle, Plus } from 'lucide-react';
+import { Loader2, Share2, Copy, Gift, DollarSign, Award, Sparkles, AlertTriangle, Plus, Trash2, Save, Lightbulb } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function ReferralsTab({ userEmail, primaryColor, accentColor }) {
@@ -110,13 +110,16 @@ export default function ReferralsTab({ userEmail, primaryColor, accentColor }) {
 
   // Content Generator State
   const [genFeature, setGenFeature] = useState('Overview');
+  const [customFeature, setCustomFeature] = useState('');
   const [genType, setGenType] = useState('social_caption');
   const [generatedContent, setGeneratedContent] = useState('');
+  const [savingContent, setSavingContent] = useState(false);
   
   const generateContentMutation = useMutation({
     mutationFn: async () => {
+      const featureToUse = genFeature === 'Custom' ? customFeature : genFeature;
       const res = await base44.functions.invoke('generateMarketingContent', {
-        feature: genFeature,
+        feature: featureToUse,
         contentType: genType,
         targetAudience: 'creators'
       });
@@ -124,6 +127,42 @@ export default function ReferralsTab({ userEmail, primaryColor, accentColor }) {
     },
     onSuccess: (data) => {
       setGeneratedContent(data);
+    }
+  });
+
+  // Fetch saved referral content
+  const { data: savedReferralContent = [] } = useQuery({
+    queryKey: ['savedReferralContent'],
+    queryFn: async () => {
+      return await base44.entities.SavedMotivation.filter({ 
+        category: 'Thrive Referrals' 
+      }, '-created_date');
+    }
+  });
+
+  const saveContentMutation = useMutation({
+    mutationFn: async (content) => {
+      const featureToUse = genFeature === 'Custom' ? customFeature : genFeature;
+      await base44.entities.SavedMotivation.create({
+        content: content,
+        type: 'ai_generated',
+        category: 'Thrive Referrals',
+        notes: `Generated for feature: ${featureToUse} (${genType})`,
+        used_for_content: false
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['savedReferralContent'] });
+      // Optional: Toast success
+    }
+  });
+
+  const deleteContentMutation = useMutation({
+    mutationFn: async (id) => {
+      await base44.entities.SavedMotivation.delete(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['savedReferralContent'] });
     }
   });
 
@@ -338,9 +377,22 @@ export default function ReferralsTab({ userEmail, primaryColor, accentColor }) {
                   <SelectItem value="Journal & Mental Health">Journal & Mental Health</SelectItem>
                   <SelectItem value="My Stuff">My Resources Organization</SelectItem>
                   <SelectItem value="Finance">Finance & Budgeting</SelectItem>
+                  <SelectItem value="Custom">✨ Custom Feature / Topic</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+            
+            {genFeature === 'Custom' && (
+              <div className="col-span-1 md:col-span-2 space-y-2">
+                <Label>Describe the Feature or Topic</Label>
+                <Input 
+                  placeholder="e.g. My morning routine with the app, How I use the water tracker, etc."
+                  value={customFeature}
+                  onChange={(e) => setCustomFeature(e.target.value)}
+                />
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label>Content Type</Label>
               <Select value={genType} onValueChange={setGenType}>
@@ -381,26 +433,85 @@ export default function ReferralsTab({ userEmail, primaryColor, accentColor }) {
               className="mt-4 p-4 bg-white rounded-lg border border-purple-200 shadow-sm relative"
             >
               <div className="absolute top-2 right-2">
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => {
-                    navigator.clipboard.writeText(generatedContent);
-                    setCopySuccess(true);
-                    setTimeout(() => setCopySuccess(false), 2000);
-                  }}
-                  className="h-8 w-8 p-0"
-                >
-                  {copySuccess ? <span className="text-green-500 font-bold">✓</span> : <Copy className="w-4 h-4 text-gray-400" />}
-                </Button>
-              </div>
-              <pre className="whitespace-pre-wrap font-sans text-sm text-gray-800 pr-8">
+                <div className="flex gap-1">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      saveContentMutation.mutate(generatedContent);
+                    }}
+                    disabled={saveContentMutation.isPending}
+                    className="h-8 w-8 p-0 hover:bg-purple-100 hover:text-purple-600"
+                    title="Save to Content Ideas"
+                  >
+                    {saveContentMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      navigator.clipboard.writeText(generatedContent);
+                      setCopySuccess(true);
+                      setTimeout(() => setCopySuccess(false), 2000);
+                    }}
+                    className="h-8 w-8 p-0 hover:bg-purple-100 hover:text-purple-600"
+                    title="Copy to Clipboard"
+                  >
+                    {copySuccess ? <span className="text-green-500 font-bold">✓</span> : <Copy className="w-4 h-4" />}
+                  </Button>
+                </div>
+                </div>
+                <pre className="whitespace-pre-wrap font-sans text-sm text-gray-800 pr-8">
                 {generatedContent}
-              </pre>
-            </motion.div>
-          )}
-        </CardContent>
-      </Card>
+                </pre>
+                </motion.div>
+                )}
+
+                {/* Saved Content List */}
+                {savedReferralContent.length > 0 && (
+                <div className="mt-6 border-t pt-4">
+                <h4 className="text-sm font-semibold mb-3 flex items-center gap-2 text-gray-700">
+                <Lightbulb className="w-4 h-4 text-amber-500" />
+                Saved Referral Content ({savedReferralContent.length})
+                </h4>
+                <div className="space-y-3 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
+                {savedReferralContent.map((item) => (
+                  <div key={item.id} className="p-3 bg-white rounded-lg border border-gray-100 hover:border-purple-200 transition-colors group relative">
+                    <p className="text-xs text-gray-600 line-clamp-3 pr-6 font-sans whitespace-pre-wrap">
+                      {item.content}
+                    </p>
+                    {item.notes && <p className="text-[10px] text-gray-400 mt-1 italic">{item.notes}</p>}
+
+                    <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 rounded">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          navigator.clipboard.writeText(item.content);
+                          // Visual feedback could be added here
+                        }}
+                        className="h-6 w-6 p-0 hover:text-purple-600"
+                        title="Copy"
+                      >
+                        <Copy className="w-3 h-3" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => deleteContentMutation.mutate(item.id)}
+                        className="h-6 w-6 p-0 hover:text-red-600"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                </div>
+                </div>
+                )}
+                </CardContent>
+                </Card>
 
       {/* Referral Link Section */}
       <Card>
