@@ -66,17 +66,17 @@ export default function LoveAwaySpinner({ giveaway, onClose }) {
     const winningEntry = pool[randomIndex];
 
     if (mode === 'wheel') {
-        // Wheel Logic
-        // We need to match the consolidated segments logic
-        const consolidated = {};
+        // Wheel Logic - Match consolidated segments
+        const consolidated = new Map();
         entries.forEach(e => {
-            if (!consolidated[e.username]) {
-                consolidated[e.username] = { ...e, totalWeight: 0 };
+            const username = e.username || 'Unknown';
+            if (!consolidated.has(username)) {
+                consolidated.set(username, { ...e, username, totalWeight: 0 });
             }
-            consolidated[e.username].totalWeight += (e.final_entry_count || 1);
+            consolidated.get(username).totalWeight += (e.final_entry_count || 1);
         });
         
-        const uniqueEntries = Object.values(consolidated);
+        const uniqueEntries = Array.from(consolidated.values());
         const totalWeight = uniqueEntries.reduce((sum, e) => sum + e.totalWeight, 0);
 
         // Find the segment that corresponds to the winner
@@ -86,7 +86,6 @@ export default function LoveAwaySpinner({ giveaway, onClose }) {
         
         for (const entry of uniqueEntries) {
             const angleSize = (entry.totalWeight / totalWeight) * 360;
-            // Check if this consolidated entry matches the winner username
             if (entry.username === winningEntry.username) {
                 winnerStartAngle = currentAngle;
                 winnerEndAngle = currentAngle + angleSize;
@@ -97,7 +96,7 @@ export default function LoveAwaySpinner({ giveaway, onClose }) {
         
         const winnerCenter = (winnerStartAngle + winnerEndAngle) / 2;
         const wedgeSize = winnerEndAngle - winnerStartAngle;
-        const jitter = (Math.random() * wedgeSize * 0.6) - (wedgeSize * 0.3); // Safe jitter
+        const jitter = (Math.random() * wedgeSize * 0.6) - (wedgeSize * 0.3); 
         
         const stopAngle = 360 * 8 + (360 - winnerCenter + jitter) - 90; 
         
@@ -145,36 +144,48 @@ export default function LoveAwaySpinner({ giveaway, onClose }) {
 
   // Build weighted segments - MEMOIZED
   const segments = React.useMemo(() => {
-    // 1. Consolidate entries by username so randy appears once but bigger
-    const consolidated = {};
+    // 1. Consolidate entries by username using Map to avoid key collisions
+    const consolidated = new Map();
+    
     entries.forEach(e => {
-        if (!consolidated[e.username]) {
-            consolidated[e.username] = { ...e, totalWeight: 0, ids: [] };
+        const username = e.username || 'Unknown';
+        if (!consolidated.has(username)) {
+            consolidated.set(username, { 
+                ...e, 
+                username, // Ensure username is explicit
+                totalWeight: 0, 
+                ids: [] 
+            });
         }
-        consolidated[e.username].totalWeight += (e.final_entry_count || 1);
-        consolidated[e.username].ids.push(e.id);
+        const record = consolidated.get(username);
+        record.totalWeight += (e.final_entry_count || 1);
+        record.ids.push(e.id);
+        
         // Prefer the one with a color set
-        if (e.favorite_color && !consolidated[e.username].favorite_color) {
-            consolidated[e.username].favorite_color = e.favorite_color;
+        if (e.favorite_color && (!record.favorite_color || record.favorite_color === '#000000')) {
+            record.favorite_color = e.favorite_color;
         }
     });
     
-    const uniqueEntries = Object.values(consolidated);
+    const uniqueEntries = Array.from(consolidated.values());
     const totalWeight = uniqueEntries.reduce((sum, e) => sum + e.totalWeight, 0);
     let currentAngle = 0;
     
     return uniqueEntries.map((entry, idx) => {
-        const angleSize = (entry.totalWeight / totalWeight) * 360;
+        const angleSize = totalWeight > 0 ? (entry.totalWeight / totalWeight) * 360 : 0;
         const start = currentAngle;
         currentAngle += angleSize;
         
         // Use vibrant palette cyclically if no favorite color
         const paletteIndex = idx % vibrantColors.length;
         const vibrantColor = vibrantColors[paletteIndex];
+        
+        // Ensure color is valid
+        const finalColor = (entry.favorite_color && entry.favorite_color !== '#000000') ? entry.favorite_color : vibrantColor;
 
         return {
             ...entry,
-            color: entry.favorite_color || vibrantColor,
+            color: finalColor,
             startAngle: start,
             angleSize: angleSize
         };
@@ -209,18 +220,20 @@ export default function LoveAwaySpinner({ giveaway, onClose }) {
               }}
               style={{ border: '8px solid #fff' }}
             >
-              {segments.map((segment, index) => {
-                // Using conic-gradient for variable sized segments is easier than clip-path
-                return (
-                  <div
-                    key={segment.id}
-                    className="absolute inset-0"
-                    style={{
-                      background: `conic-gradient(${segment.color} ${segment.startAngle}deg, ${segment.color} ${segment.startAngle + segment.angleSize}deg, transparent 0)`,
-                      borderRadius: '50%'
-                    }}
-                  >
-                    {/* Label */}
+               {/* Single Conic Gradient Background for better rendering */}
+               <div 
+                  className="absolute inset-0 w-full h-full"
+                  style={{
+                    background: `conic-gradient(from 0deg, ${segments.map(s => `${s.color} ${s.startAngle}deg ${s.startAngle + s.angleSize}deg`).join(', ')})`
+                  }}
+               />
+
+               {/* Labels Layer */}
+              {segments.map((segment) => (
+                <div 
+                    key={segment.username}
+                    className="absolute inset-0 w-full h-full"
+                >
                     <div 
                       className="absolute w-full h-full flex items-start justify-center pt-4"
                       style={{
@@ -232,9 +245,8 @@ export default function LoveAwaySpinner({ giveaway, onClose }) {
                         {segment.final_entry_count > 1 && ` (x${segment.final_entry_count})`}
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                </div>
+              ))}
             </motion.div>
 
             {/* Center Button */}
@@ -256,7 +268,7 @@ export default function LoveAwaySpinner({ giveaway, onClose }) {
           <div className="mt-8 flex items-center justify-center gap-12 text-center">
             <div>
               <p className="text-3xl font-bold text-purple-600">{new Set(entries.map(e => e.username)).size}</p>
-              <p className="text-sm text-gray-500 uppercase tracking-wide">Participants</p>
+              <p className="text-sm text-gray-500 uppercase tracking-wide">Unique People</p>
             </div>
             <div>
               <p className="text-3xl font-bold text-blue-600">
