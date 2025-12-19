@@ -42,99 +42,6 @@ export default function LoveAwaySpinner({ giveaway, onClose }) {
     }
   });
 
-  // Build weighted entry pool
-  const buildEntryPool = () => {
-    const pool = [];
-    entries.forEach(entry => {
-      const entryCount = entry.final_entry_count || 1;
-      for (let i = 0; i < entryCount; i++) {
-        pool.push(entry);
-      }
-    });
-    return pool;
-  };
-
-  const handleSpin = () => {
-    // Weighted random selection
-    const pool = buildEntryPool();
-    if (pool.length === 0) return;
-
-    setSpinning(true);
-    setWinner(null);
-    
-    const randomIndex = Math.floor(Math.random() * pool.length);
-    const winningEntry = pool[randomIndex];
-
-    if (mode === 'wheel') {
-        // Wheel Logic - Match consolidated segments
-        const consolidated = new Map();
-        entries.forEach(e => {
-            const username = e.username || 'Unknown';
-            if (!consolidated.has(username)) {
-                consolidated.set(username, { ...e, username, totalWeight: 0 });
-            }
-            consolidated.get(username).totalWeight += (e.final_entry_count || 1);
-        });
-        
-        const uniqueEntries = Array.from(consolidated.values());
-        const totalWeight = uniqueEntries.reduce((sum, e) => sum + e.totalWeight, 0);
-
-        // Find the segment that corresponds to the winner
-        let currentAngle = 0;
-        let winnerStartAngle = 0;
-        let winnerEndAngle = 0;
-        
-        for (const entry of uniqueEntries) {
-            const angleSize = (entry.totalWeight / totalWeight) * 360;
-            if (entry.username === winningEntry.username) {
-                winnerStartAngle = currentAngle;
-                winnerEndAngle = currentAngle + angleSize;
-                break;
-            }
-            currentAngle += angleSize;
-        }
-        
-        const winnerCenter = (winnerStartAngle + winnerEndAngle) / 2;
-        const wedgeSize = winnerEndAngle - winnerStartAngle;
-        const jitter = (Math.random() * wedgeSize * 0.6) - (wedgeSize * 0.3); 
-        
-        const stopAngle = 360 * 8 + (360 - winnerCenter + jitter) - 90; 
-        
-        setRotation(stopAngle);
-        setTimeout(() => finishSpin(winningEntry), 8000);
-    } 
-    else if (mode === 'fishbowl') {
-        // Fish Bowl Logic - Shuffle animation
-        let shuffles = 0;
-        const shuffleInterval = setInterval(() => {
-            setFishBowlWinnerIndex(Math.floor(Math.random() * entries.length));
-            shuffles++;
-            if (shuffles > 40) { // Stop after ~4 seconds
-                clearInterval(shuffleInterval);
-                finishSpin(winningEntry);
-            }
-        }, 100);
-    }
-    else if (mode === 'vertical') {
-        // Vertical Wheel Logic (Price is Right style)
-        // Just scroll very far down to the winner
-        // We'll duplicate the list many times
-        const itemHeight = 60; 
-        const winnerIndex = entries.findIndex(e => e.id === winningEntry.id);
-        const loops = 15;
-        // Target offset
-        const finalOffset = (entries.length * itemHeight * loops) + (winnerIndex * itemHeight);
-        setVerticalOffset(finalOffset);
-        setTimeout(() => finishSpin(winningEntry), 6000);
-    }
-  };
-
-  const finishSpin = (winningEntry) => {
-    setWinner(winningEntry);
-    setSpinning(false);
-    selectWinnerMutation.mutate(winningEntry);
-  };
-
   // FUN & VIBRANT PALETTE
   const vibrantColors = [
       '#FF0055', '#00CCFF', '#CCFF00', '#FF00CC', '#00FF66', 
@@ -173,10 +80,10 @@ export default function LoveAwaySpinner({ giveaway, onClose }) {
     // Ensure total weight is calculated correctly
     const totalWeight = uniqueEntries.reduce((sum, e) => sum + (e.totalWeight || 0), 0);
     
-    let currentAngle = 0;
-    
     // Sort to keep consistent order
     uniqueEntries.sort((a, b) => a.username.localeCompare(b.username));
+
+    let currentAngle = 0;
 
     return uniqueEntries.map((entry, idx) => {
         // Safe division
@@ -200,6 +107,68 @@ export default function LoveAwaySpinner({ giveaway, onClose }) {
     });
   }, [entries]);
 
+  const handleSpin = () => {
+    if (entries.length === 0) return;
+
+    setSpinning(true);
+    setWinner(null);
+    
+    // Weighted selection from segments
+    const totalWeight = segments.reduce((sum, s) => sum + s.totalWeight, 0);
+    let random = Math.random() * totalWeight;
+    let winningSegment = segments[segments.length - 1];
+    
+    for (const segment of segments) {
+        if (random < segment.totalWeight) {
+            winningSegment = segment;
+            break;
+        }
+        random -= segment.totalWeight;
+    }
+
+    if (mode === 'wheel') {
+        // Wheel Logic
+        const winnerStartAngle = winningSegment.startAngle;
+        const winnerEndAngle = winningSegment.startAngle + winningSegment.angleSize;
+        
+        const winnerCenter = (winnerStartAngle + winnerEndAngle) / 2;
+        const wedgeSize = winningSegment.angleSize;
+        const jitter = (Math.random() * wedgeSize * 0.6) - (wedgeSize * 0.3); 
+        
+        const stopAngle = 360 * 8 + (360 - winnerCenter + jitter) - 90; 
+        
+        setRotation(stopAngle);
+        setTimeout(() => finishSpin(winningSegment), 8000);
+    } 
+    else if (mode === 'fishbowl') {
+        // Fish Bowl Logic
+        let shuffles = 0;
+        const shuffleInterval = setInterval(() => {
+            setFishBowlWinnerIndex(Math.floor(Math.random() * segments.length));
+            shuffles++;
+            if (shuffles > 40) { 
+                clearInterval(shuffleInterval);
+                finishSpin(winningSegment);
+            }
+        }, 100);
+    }
+    else if (mode === 'vertical') {
+        // Vertical Logic
+        const itemHeight = 60; 
+        const winnerIndex = segments.findIndex(e => e.username === winningSegment.username);
+        const loops = 15;
+        const finalOffset = (segments.length * itemHeight * loops) + (winnerIndex * itemHeight);
+        setVerticalOffset(finalOffset);
+        setTimeout(() => finishSpin(winningSegment), 6000);
+    }
+  };
+
+  const finishSpin = (winningEntry) => {
+    setWinner(winningEntry);
+    setSpinning(false);
+    selectWinnerMutation.mutate(winningEntry);
+  };
+
   return (
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl">
@@ -210,88 +179,165 @@ export default function LoveAwaySpinner({ giveaway, onClose }) {
           </DialogTitle>
         </DialogHeader>
 
-        <div className="py-8">
-          {/* Spinner Wheel */}
-          <div className="relative w-full max-w-md mx-auto aspect-square">
-            {/* Pointer (Blue Pin with Star) */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-5 z-20 pointer-events-none filter drop-shadow-xl">
-              <div className="relative">
-                {/* Pin Body */}
-                <div className="w-12 h-14 bg-blue-500 rounded-full rounded-br-none transform -rotate-45 flex items-center justify-center border-4 border-white shadow-lg">
-                   {/* Star Icon inside (rotated back) */}
-                   <div className="transform rotate-45">
-                       <svg 
-                           xmlns="http://www.w3.org/2000/svg" 
-                           viewBox="0 0 24 24" 
-                           fill="white" 
-                           stroke="none" 
-                           className="w-5 h-5"
-                       >
-                           <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                       </svg>
-                   </div>
-                </div>
-              </div>
-            </div>
+        <div className="py-4">
+          <Tabs defaultValue="wheel" onValueChange={setMode} className="w-full mb-6">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="wheel" disabled={spinning}><Disc className="w-4 h-4 mr-2" /> Classic Wheel</TabsTrigger>
+              <TabsTrigger value="fishbowl" disabled={spinning}><Fish className="w-4 h-4 mr-2" /> Fish Bowl</TabsTrigger>
+              <TabsTrigger value="vertical" disabled={spinning}><ArrowDownUp className="w-4 h-4 mr-2" /> Vertical Spin</TabsTrigger>
+            </TabsList>
+          </Tabs>
 
-            {/* Wheel */}
-            <motion.div
-              className="w-full h-full rounded-full overflow-hidden shadow-2xl relative"
-              animate={{ rotate: rotation }}
-              transition={{
-                duration: 5,
-                ease: [0.17, 0.67, 0.3, 0.99]
-              }}
-              style={{ border: '8px solid #fff' }}
-            >
-               {/* Single Conic Gradient Background for better rendering */}
-               <div 
-                  className="absolute inset-0 w-full h-full"
-                  style={{
-                    background: `conic-gradient(from 0deg, ${segments.map(s => `${s.color} ${s.startAngle}deg ${s.startAngle + s.angleSize}deg`).join(', ')})`
-                  }}
-               />
-
-               {/* Labels Layer */}
-              {segments.map((segment) => (
-                <div 
-                    key={segment.username}
-                    className="absolute inset-0 w-full h-full"
-                >
-                    <div 
-                      className="absolute w-full h-full flex items-start justify-center pt-4"
-                      style={{
-                        transform: `rotate(${segment.startAngle + segment.angleSize / 2}deg)`
-                      }}
-                    >
-                      <div className="text-white font-bold text-xs" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>
-                        {segment.username}
-                        {segment.final_entry_count > 1 && ` (x${segment.final_entry_count})`}
-                      </div>
+          {/* MODE: CLASSIC WHEEL */}
+          {mode === 'wheel' && (
+            <div className="relative w-full max-w-md mx-auto aspect-square">
+                {/* Pointer (Blue Pin with Star) */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-5 z-20 pointer-events-none filter drop-shadow-xl">
+                <div className="relative">
+                    <div className="w-12 h-14 bg-blue-500 rounded-full rounded-br-none transform -rotate-45 flex items-center justify-center border-4 border-white shadow-lg">
+                        <div className="transform rotate-45">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" stroke="none" className="w-5 h-5">
+                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                            </svg>
+                        </div>
                     </div>
                 </div>
-              ))}
-            </motion.div>
+                </div>
 
-            {/* Center Button */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <Button
-                onClick={handleSpin}
-                disabled={spinning || winner || entries.length === 0}
-                className="w-24 h-24 rounded-full shadow-lg text-lg font-bold z-20"
-                style={{
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                {/* Wheel */}
+                <motion.div
+                className="w-full h-full rounded-full overflow-hidden shadow-2xl relative"
+                animate={{ rotate: rotation }}
+                transition={{
+                    duration: 8,
+                    ease: [0.15, 0, 0.15, 1] 
                 }}
-              >
-                {spinning ? '...' : 'SPIN'}
-              </Button>
+                >
+                <div 
+                    className="absolute inset-0 w-full h-full"
+                    style={{
+                        background: `conic-gradient(from 0deg, ${segments.map(s => `${s.color} ${s.startAngle}deg ${s.startAngle + s.angleSize}deg`).join(', ')})`,
+                        borderRadius: '50%'
+                    }}
+                />
+
+                {segments.map((segment) => (
+                    <div 
+                        key={segment.username}
+                        className="absolute w-full h-full flex justify-center pt-4 left-0 top-0 pointer-events-none"
+                        style={{
+                            transform: `rotate(${segment.startAngle + segment.angleSize / 2}deg)`
+                        }}
+                    >
+                        <div className="text-white font-bold text-xs transform -translate-y-1" style={{ textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}>
+                            {segment.angleSize > 10 ? (
+                                <span className="block transform rotate-180" style={{ writingMode: 'vertical-rl' }}>
+                                    {segment.username.substring(0, 15)}
+                                </span>
+                            ) : '.'}
+                        </div>
+                    </div>
+                ))}
+                </motion.div>
+
+                {/* Center Button */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="w-20 h-20 bg-white rounded-full shadow-xl flex items-center justify-center z-20 pointer-events-auto">
+                        <Button
+                            onClick={handleSpin}
+                            disabled={spinning || winner || entries.length === 0}
+                            className="w-16 h-16 rounded-full shadow-inner text-sm font-bold p-0"
+                            style={{
+                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                            }}
+                        >
+                            {spinning ? '...' : 'SPIN'}
+                        </Button>
+                    </div>
+                </div>
             </div>
-          </div>
+          )}
+
+          {/* MODE: FISH BOWL */}
+          {mode === 'fishbowl' && (
+             <div className="relative w-full max-w-md mx-auto aspect-square bg-blue-50 rounded-full border-4 border-blue-200 overflow-hidden shadow-inner flex items-center justify-center">
+                <div className="absolute inset-0 bg-blue-100/50 backdrop-blur-sm z-0"></div>
+                
+                <AnimatePresence>
+                    {!spinning && !winner && (
+                        <div className="z-10 text-center">
+                            <Fish className="w-16 h-16 text-blue-400 mx-auto mb-2" />
+                            <Button onClick={handleSpin} className="bg-blue-500 hover:bg-blue-600">
+                                Reach in Bowl
+                            </Button>
+                        </div>
+                    )}
+                </AnimatePresence>
+
+                {spinning && (
+                    <div className="absolute inset-0 flex items-center justify-center z-10">
+                        <motion.div
+                            key={fishBowlWinnerIndex}
+                            initial={{ scale: 0.5, opacity: 0, y: 50 }}
+                            animate={{ scale: 1.2, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.5, opacity: 0, y: -50 }}
+                            className="text-3xl font-bold text-blue-800"
+                        >
+                            {segments[fishBowlWinnerIndex]?.username}
+                        </motion.div>
+                    </div>
+                )}
+             </div>
+          )}
+
+          {/* MODE: VERTICAL SPIN */}
+          {mode === 'vertical' && (
+             <div className="relative w-full max-w-sm mx-auto h-80 bg-gray-100 rounded-xl border-4 border-gray-300 overflow-hidden shadow-inner">
+                 <div className="absolute top-1/2 left-0 right-0 h-16 -mt-8 bg-yellow-400/30 border-y-2 border-yellow-500 z-10 pointer-events-none backdrop-blur-[1px]"></div>
+                 <div className="absolute top-1/2 right-2 -mt-3 text-yellow-600 z-20 font-bold text-2xl">◄</div>
+                 <div className="absolute top-1/2 left-2 -mt-3 text-yellow-600 z-20 font-bold text-2xl">►</div>
+
+                 <div className="h-full overflow-hidden relative">
+                    <motion.div
+                        className="absolute w-full"
+                        animate={{ y: -verticalOffset }}
+                        transition={{ duration: 6, ease: [0.15, 0, 0.15, 1] }}
+                        style={{ top: '50%', marginTop: '-30px' }} 
+                    >
+                        {[...Array(20)].map((_, i) => (
+                            <div key={i}>
+                                {segments.map((entry) => (
+                                    <div 
+                                        key={`${i}-${entry.username}`} 
+                                        className="h-[60px] flex items-center justify-center text-lg font-bold border-b border-gray-200"
+                                        style={{ backgroundColor: entry.color ? `${entry.color}20` : 'white' }}
+                                    >
+                                        <div 
+                                            className="w-4 h-4 rounded-full mr-2" 
+                                            style={{ backgroundColor: entry.color }}
+                                        />
+                                        {entry.username}
+                                    </div>
+                                ))}
+                            </div>
+                        ))}
+                    </motion.div>
+                 </div>
+
+                 {!spinning && !winner && (
+                    <div className="absolute bottom-4 left-0 right-0 flex justify-center z-20">
+                        <Button onClick={handleSpin} className="w-full mx-4 shadow-lg bg-green-600 hover:bg-green-700">
+                            SPIN THE REEL
+                        </Button>
+                    </div>
+                 )}
+             </div>
+          )}
 
           {/* Entry Stats */}
           <div className="mt-8 flex items-center justify-center gap-12 text-center">
             <div>
-              <p className="text-3xl font-bold text-purple-600">{new Set(entries.map(e => e.username)).size}</p>
+              <p className="text-3xl font-bold text-purple-600">{segments.length}</p>
               <p className="text-sm text-gray-500 uppercase tracking-wide">Unique People</p>
             </div>
             <div>
@@ -317,7 +363,7 @@ export default function LoveAwaySpinner({ giveaway, onClose }) {
                 <div className="mt-4 flex items-center justify-center gap-2 text-sm">
                   <Sparkles className="w-4 h-4" />
                   <span>
-                    {winner.final_entry_count} {winner.final_entry_count === 1 ? 'entry' : 'entries'}
+                    {winner.totalWeight} {winner.totalWeight === 1 ? 'entry' : 'entries'}
                   </span>
                 </div>
               </motion.div>
