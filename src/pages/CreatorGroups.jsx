@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Users, Plus, Settings, Video, AlertCircle, ArrowLeft, Loader2, Building, Home, Heart, Sparkles, Brain, Briefcase, Calendar, MessageSquare, FileText, Bell } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Users, Plus, Settings, Video, AlertCircle, ArrowLeft, Loader2, Building, Home, Heart, Sparkles, Brain, Briefcase, Calendar, MessageSquare, FileText, Bell, Eye, EyeOff, Link as LinkIcon, ExternalLink, Clock } from 'lucide-react';
 import { useTheme } from '../components/shared/useTheme';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import GroupTrainingTab from '../components/groups/GroupTrainingTab';
@@ -92,9 +93,84 @@ export default function CreatorGroups() {
     }
   });
 
+  // Handle Invite Link
+  const inviteCode = searchParams.get('invite');
+  const joinMutation = useMutation({
+    mutationFn: async (code) => {
+      const groups = await base44.entities.CreatorGroup.filter({ invite_code: code });
+      if (groups.length === 0) throw new Error('Invalid invite code');
+      const group = groups[0];
+      
+      const existing = await base44.entities.CreatorGroupMember.filter({ group_id: group.id, user_email: user.email });
+      if (existing.length > 0) return { group, existing: true };
+
+      await base44.entities.CreatorGroupMember.create({
+        group_id: group.id,
+        user_email: user.email,
+        role: 'member',
+        status: 'pending',
+        joined_date: new Date().toISOString()
+      });
+      return { group, existing: false };
+    },
+    onSuccess: ({ group, existing }) => {
+      if (existing) alert('You are already a member of this group!');
+      else alert('Request to join sent! An admin will approve you shortly.');
+      
+      queryClient.invalidateQueries(['myGroupMemberships']);
+      setSearchParams({ id: group.id }); // Go to dashboard (might be restricted view if pending)
+    },
+    onError: () => alert('Invalid invite code or error joining.')
+  });
+
+  useEffect(() => {
+    if (inviteCode && user?.email) {
+      if (window.confirm('Do you want to join this group?')) {
+        joinMutation.mutate(inviteCode);
+      } else {
+        // Remove invite param if they cancel
+        setSearchParams({});
+      }
+    }
+  }, [inviteCode, user]);
+
   const activeGroup = groups.find(g => g.id === activeGroupId);
   const activeMembership = myMemberships.find(m => m.group_id === activeGroupId);
   const isAdmin = activeMembership && ['owner', 'admin', 'manager'].includes(activeMembership.role);
+  const isPending = activeMembership?.status === 'pending';
+
+  // Preferences Query
+  const { data: groupPrefs } = useQuery({
+    queryKey: ['groupPrefs', user?.email, activeGroupId],
+    queryFn: async () => {
+      if (!user?.email || !activeGroupId) return null;
+      const res = await base44.entities.UserGroupPreference.filter({ user_email: user.email, group_id: activeGroupId });
+      return res[0] || { hidden_tabs: [], tab_order: [] };
+    },
+    enabled: !!activeGroupId
+  });
+
+  const updatePrefsMutation = useMutation({
+    mutationFn: async (newPrefs) => {
+      if (groupPrefs?.id) {
+        return base44.entities.UserGroupPreference.update(groupPrefs.id, newPrefs);
+      } else {
+        return base44.entities.UserGroupPreference.create({ 
+          user_email: user.email, 
+          group_id: activeGroupId, 
+          ...newPrefs 
+        });
+      }
+    },
+    onSuccess: () => queryClient.invalidateQueries(['groupPrefs', user?.email, activeGroupId])
+  });
+
+  // Shortcuts Query
+  const { data: shortcuts = [] } = useQuery({
+    queryKey: ['groupShortcuts', activeGroupId],
+    queryFn: () => base44.entities.GroupShortcut.filter({ group_id: activeGroupId }, 'sort_order'),
+    enabled: !!activeGroupId
+  });
 
   if (isLoading) {
     return <div className="flex justify-center items-center h-screen"><Loader2 className="w-8 h-8 animate-spin text-purple-600" /></div>;
@@ -132,6 +208,26 @@ export default function CreatorGroups() {
       default: return 'COMMUNITY';
     }
   };
+
+  const availableTabs = [
+    { id: 'feed', label: 'Feed', icon: Bell, color: 'purple' },
+    { id: 'events', label: 'Events', icon: Calendar, color: 'pink' },
+    { id: 'qna', label: 'Q&A', icon: MessageSquare, color: 'teal' },
+    { id: 'resources', label: 'Resources', icon: FileText, color: 'amber' },
+    { id: 'training', label: 'Training', icon: Video, color: 'blue' },
+    { id: 'members', label: 'Members', icon: Users, color: 'orange' },
+    { id: 'requests', label: 'Requests', icon: AlertCircle, color: 'gray' },
+  ];
+
+  const toggleTabVisibility = (tabId) => {
+    const hidden = groupPrefs?.hidden_tabs || [];
+    const newHidden = hidden.includes(tabId) 
+      ? hidden.filter(id => id !== tabId)
+      : [...hidden, tabId];
+    updatePrefsMutation.mutate({ hidden_tabs: newHidden });
+  };
+
+  const visibleTabs = availableTabs.filter(t => !(groupPrefs?.hidden_tabs || []).includes(t.id));
 
   // LIST VIEW
   if (!activeGroup) {
@@ -267,10 +363,25 @@ export default function CreatorGroups() {
   const GroupHeaderIcon = getGroupIcon(activeGroup.type);
   const groupColorClass = getGroupColorClass(activeGroup.type);
 
+  if (isPending) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center space-y-4">
+        <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center">
+          <Clock className="w-8 h-8" />
+        </div>
+        <h2 className="text-2xl font-bold">Membership Pending</h2>
+        <p className="text-gray-500 max-w-md">
+          You have requested to join <strong>{activeGroup.name}</strong>. An admin needs to approve your request before you can access the dashboard.
+        </p>
+        <Button variant="outline" onClick={() => setSearchParams({})}>Back to My Groups</Button>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50/50">
       {/* Header */}
-      <div className="bg-white border-b sticky top-0 z-10 px-6 py-4">
+      <div className="bg-white border-b sticky top-0 z-10 px-6 py-4 shadow-sm">
         <div className="max-w-6xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" onClick={() => setSearchParams({})}>
@@ -284,45 +395,104 @@ export default function CreatorGroups() {
               <p className="text-xs text-gray-500">Dashboard • {getGroupLabel(activeGroup.type)}</p>
             </div>
           </div>
-          <div className="flex gap-2">
-            <div className="text-right hidden sm:block">
-              <p className="text-xs font-medium text-gray-900">Invite Code</p>
-              <code className="text-xs bg-gray-100 px-2 py-1 rounded">{activeGroup.invite_code}</code>
-            </div>
+          <div className="flex items-center gap-3">
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="hidden sm:flex">
+                  <Eye className="w-4 h-4 mr-2" /> Customize View
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Customize Dashboard</DialogTitle>
+                </DialogHeader>
+                <div className="py-4 space-y-3">
+                  <p className="text-sm text-gray-500 mb-2">Toggle visibility of sections on your dashboard.</p>
+                  {availableTabs.map(tab => {
+                    const isHidden = (groupPrefs?.hidden_tabs || []).includes(tab.id);
+                    const Icon = tab.icon;
+                    return (
+                      <div key={tab.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2 rounded-md bg-${tab.color}-100 text-${tab.color}-700`}>
+                            <Icon className="w-4 h-4" />
+                          </div>
+                          <span className="font-medium">{tab.label}</span>
+                        </div>
+                        <Switch checked={!isHidden} onCheckedChange={() => toggleTabVisibility(tab.id)} />
+                      </div>
+                    );
+                  })}
+                </div>
+              </DialogContent>
+            </Dialog>
+            
+            {isAdmin && (
+              <div className="text-right hidden sm:block">
+                <code className="text-xs bg-gray-100 px-2 py-1 rounded block text-center mb-1">Code: {activeGroup.invite_code}</code>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto p-6">
-        <Tabs defaultValue="feed" className="space-y-6">
-          <TabsList className="bg-white border p-1 rounded-xl h-auto flex-wrap gap-1">
-            <TabsTrigger value="feed" className="px-4 py-2 rounded-lg data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700">
-              <Bell className="w-4 h-4 mr-2" /> Feed
-            </TabsTrigger>
-            <TabsTrigger value="events" className="px-4 py-2 rounded-lg data-[state=active]:bg-pink-100 data-[state=active]:text-pink-700">
-              <Calendar className="w-4 h-4 mr-2" /> Events
-            </TabsTrigger>
-            <TabsTrigger value="qna" className="px-4 py-2 rounded-lg data-[state=active]:bg-teal-100 data-[state=active]:text-teal-700">
-              <MessageSquare className="w-4 h-4 mr-2" /> Q&A
-            </TabsTrigger>
-            <TabsTrigger value="resources" className="px-4 py-2 rounded-lg data-[state=active]:bg-amber-100 data-[state=active]:text-amber-700">
-              <FileText className="w-4 h-4 mr-2" /> Resources
-            </TabsTrigger>
-            <TabsTrigger value="training" className="px-4 py-2 rounded-lg data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700">
-              <Video className="w-4 h-4 mr-2" /> Training
-            </TabsTrigger>
-            <TabsTrigger value="members" className="px-4 py-2 rounded-lg data-[state=active]:bg-orange-100 data-[state=active]:text-orange-700">
-              <Users className="w-4 h-4 mr-2" /> Members
-            </TabsTrigger>
-            <TabsTrigger value="requests" className="px-4 py-2 rounded-lg data-[state=active]:bg-gray-100 data-[state=active]:text-gray-700">
-              <AlertCircle className="w-4 h-4 mr-2" /> Requests
-            </TabsTrigger>
-            {isAdmin && (
-              <TabsTrigger value="settings" className="px-4 py-2 rounded-lg data-[state=active]:bg-gray-800 data-[state=active]:text-white">
-                <Settings className="w-4 h-4 mr-2" /> Settings
-              </TabsTrigger>
-            )}
-          </TabsList>
+      <div className="max-w-6xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
+        
+        {/* Shortcuts Sidebar (if any) */}
+        {shortcuts.length > 0 && (
+          <div className="lg:col-span-1 space-y-6">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm uppercase text-gray-500 font-bold flex items-center gap-2">
+                  <LinkIcon className="w-4 h-4" /> Quick Links
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {shortcuts.map(shortcut => (
+                  <a 
+                    key={shortcut.id} 
+                    href={shortcut.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 transition-colors border border-transparent hover:border-gray-200"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                      <ExternalLink className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-sm truncate">{shortcut.title}</div>
+                      <div className="text-xs text-gray-400 truncate">{new URL(shortcut.url).hostname}</div>
+                    </div>
+                  </a>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        <div className={shortcuts.length > 0 ? "lg:col-span-3" : "lg:col-span-4"}>
+          <Tabs defaultValue="feed" className="space-y-6">
+            <TabsList className="bg-white border p-1 rounded-xl h-auto flex-wrap gap-1 w-full justify-start">
+              {visibleTabs.map(tab => {
+                const Icon = tab.icon;
+                return (
+                  <TabsTrigger 
+                    key={tab.id} 
+                    value={tab.id} 
+                    className={`px-4 py-2 rounded-lg data-[state=active]:bg-${tab.color}-100 data-[state=active]:text-${tab.color}-700`}
+                  >
+                    <Icon className="w-4 h-4 mr-2" /> {tab.label}
+                  </TabsTrigger>
+                );
+              })}
+              {/* Show hidden count or generic "See All" if many hidden? For now customizable via modal */}
+              
+              {isAdmin && (
+                <TabsTrigger value="settings" className="px-4 py-2 rounded-lg data-[state=active]:bg-gray-800 data-[state=active]:text-white ml-auto">
+                  <Settings className="w-4 h-4 mr-2" /> Settings
+                </TabsTrigger>
+              )}
+            </TabsList>
 
           <TabsContent value="feed" className="focus-visible:outline-none">
             <GroupFeedTab group={activeGroup} currentUser={user} myMembership={activeMembership} isAdmin={isAdmin} />
