@@ -15,6 +15,14 @@ export default function LoveAwayEntriesList({ giveawayId }) {
   const [editMultiplier, setEditMultiplier] = useState(1);
   const [editColor, setEditColor] = useState('#000000');
 
+  // Helper for nice colors
+  const getRandomHex = () => {
+    const letters = '456789ABC'; // Muted/Pastel-ish range
+    // Actually, simple random hex is easier and "good enough" for now, or use HSL-to-Hex logic if strict.
+    // Let's use a simpler "random bright color" logic:
+    return '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+  };
+
   const { data: entries = [] } = useQuery({
     queryKey: ['loveawayEntries', giveawayId],
     queryFn: () => base44.entities.LoveAwayEntry.filter({ loveaway_id: giveawayId }, '-created_date'),
@@ -26,8 +34,8 @@ export default function LoveAwayEntriesList({ giveawayId }) {
       const contacts = await base44.entities.TikTokContact.filter({ username: username });
       const contact = contacts[0];
       
-      // Generate random pastel color if none found
-      const randomColor = `hsl(${Math.floor(Math.random() * 360)}, 70%, 60%)`;
+      // Generate random color if none found
+      const randomColor = getRandomHex();
 
       return base44.entities.LoveAwayEntry.create({
         loveaway_id: giveawayId,
@@ -167,7 +175,7 @@ export default function LoveAwayEntriesList({ giveawayId }) {
                         size="sm" 
                         onClick={() => {
                             // Quick color shuffle if missing
-                            const randomColor = `hsl(${Math.floor(Math.random() * 360)}, 70%, 60%)`;
+                            const randomColor = getRandomHex();
                             updateMultiplierMutation.mutate({ 
                                 id: entry.id, 
                                 multiplier: entry.multiplier || entry.final_entry_count || 1,
