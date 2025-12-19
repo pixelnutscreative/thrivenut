@@ -24,45 +24,42 @@ export default function DashboardGoalsSection({ userEmail }) {
 
   return (
     <>
-      <Card className="shadow-lg border-0 bg-gradient-to-br from-purple-50 to-pink-50">
-        <CardHeader className="pb-3">
+      <Card className="shadow-sm border border-gray-100 bg-white">
+        <CardHeader className="pb-2 pt-4 px-4">
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Target className="w-5 h-5 text-purple-600" />
-              Active Goals
+            <CardTitle className="flex items-center gap-2 text-lg font-bold text-gray-900">
+              <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center">
+                <Target className="w-4 h-4 text-purple-600" />
+              </div>
+              Goals Progress
             </CardTitle>
             <Link to={createPageUrl('Goals')}>
-              <Button variant="outline" size="sm" className="h-8">
-                <ExternalLink className="w-3 h-3 mr-1" />
-                View All
+              <Button variant="ghost" size="sm" className="h-8 text-gray-400 hover:text-gray-600">
+                View All <ChevronRight className="w-4 h-4 ml-1" />
               </Button>
             </Link>
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-2">
-            {goals.map((goal) => {
+        <CardContent className="px-4 pb-4">
+          <div className="space-y-4">
+            {goals.slice(0, 3).map((goal) => {
               const progress = goal.target_value && goal.current_value
                 ? Math.round((goal.current_value / goal.target_value) * 100)
                 : 0;
 
               return (
-                <motion.button
-                  key={goal.id}
-                  onClick={() => setSelectedGoal(goal)}
-                  whileHover={{ scale: 1.05 }}
-                  className="p-3 bg-white rounded-lg border-2 border-purple-200 hover:border-purple-400 transition-all shadow-sm flex flex-col items-center gap-1 min-w-[80px]"
-                >
-                  <Target className="w-6 h-6 text-purple-600" />
-                  <span className="text-xs font-medium text-gray-700 text-center line-clamp-2">
-                    {goal.title}
-                  </span>
-                  {goal.target_value && (
-                    <Badge variant="outline" className="text-xs">
-                      {progress}%
-                    </Badge>
-                  )}
-                </motion.button>
+                <div key={goal.id} className="space-y-1 cursor-pointer" onClick={() => setSelectedGoal(goal)}>
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium text-gray-800 text-sm">{goal.title}</span>
+                    <span className="text-gray-400 text-sm">{progress}%</span>
+                  </div>
+                  <div className="w-full bg-gray-100 rounded-full h-2">
+                    <div 
+                      className="bg-purple-500 h-2 rounded-full transition-all duration-500"
+                      style={{ width: `${Math.min(100, progress)}%` }}
+                    />
+                  </div>
+                </div>
               );
             })}
           </div>

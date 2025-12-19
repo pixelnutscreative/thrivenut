@@ -19,6 +19,7 @@ import UrgentEventsCard from '../components/dashboard/UrgentEventsCard';
 import CalendarIntegrationCard from '../components/dashboard/CalendarIntegrationCard';
 import DashboardGoalsSection from '../components/dashboard/DashboardGoalsSection';
 import DashboardTasksSection from '../components/dashboard/DashboardTasksSection';
+import DashboardHabitsSection from '../components/dashboard/DashboardHabitsSection';
 import OnboardingModal from '../components/onboarding/OnboardingModal';
 import { format, startOfWeek, addDays } from 'date-fns';
 import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
@@ -317,7 +318,7 @@ export default function Dashboard() {
         />
 
         {/* Urgent Events - Battles, Training, Important Events */}
-        <UrgentEventsCard 
+        {/* <UrgentEventsCard 
           events={urgentEvents} 
           publicCalendarEvents={todaysPublicEvents}
           alertColor={preferences?.urgent_alert_color || 'red'}
@@ -325,10 +326,10 @@ export default function Dashboard() {
             updatePreferencesMutation.mutate({ urgent_alert_color: color });
           }}
           userEmail={effectiveEmail}
-        />
+        /> */}
 
-        {/* My Day Section - All daily tasks unified */}
-        <MyDaySection
+        {/* My Day Section - All daily tasks unified - HIDDEN FOR CLEAN LAYOUT */}
+        {/* <MyDaySection
           selfCareLog={selfCareLog}
           onToggleTask={(taskId, value) => selfCareMutation.mutate({ taskId, value })}
           onUpdateMealNotes={(noteKey, value) => mealNotesMutation.mutate({ noteKey, value })}
@@ -343,16 +344,19 @@ export default function Dashboard() {
               queryClient.invalidateQueries({ queryKey: ['preferences'] });
             }
           }}
-        />
+        /> */}
 
-        {/* Tasks Section */}
-        <DashboardTasksSection 
-          userEmail={effectiveEmail} 
-          viewMode={preferences?.dashboard_view_mode || 'detailed'}
-        />
+        {/* Clean Dashboard Grid */}
+        <div className="space-y-6">
+          <DashboardTasksSection 
+            userEmail={effectiveEmail} 
+            viewMode={preferences?.dashboard_view_mode || 'detailed'}
+          />
 
-        {/* Active Goals Section - Full Card View */}
-        <DashboardGoalsSection userEmail={effectiveEmail} />
+          <DashboardGoalsSection userEmail={effectiveEmail} />
+          
+          <DashboardHabitsSection userEmail={effectiveEmail} />
+        </div>
 
         {/* Calendar Integration - Google Calendar & Pixel Nuts Events */}
         {(!preferences?.google_calendar_connected) && (
