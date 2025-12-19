@@ -13,6 +13,7 @@ export default function LoveAwayEntriesList({ giveawayId }) {
   const [newEntryUsername, setNewEntryUsername] = useState('');
   const [editingEntry, setEditingEntry] = useState(null);
   const [editMultiplier, setEditMultiplier] = useState(1);
+  const [editColor, setEditColor] = useState('#000000');
 
   const { data: entries = [] } = useQuery({
     queryKey: ['loveawayEntries', giveawayId],
@@ -25,11 +26,14 @@ export default function LoveAwayEntriesList({ giveawayId }) {
       const contacts = await base44.entities.TikTokContact.filter({ username: username });
       const contact = contacts[0];
       
+      // Generate random pastel color if none found
+      const randomColor = `hsl(${Math.floor(Math.random() * 360)}, 70%, 60%)`;
+
       return base44.entities.LoveAwayEntry.create({
         loveaway_id: giveawayId,
         username: username,
         contact_id: contact?.id,
-        favorite_color: contact?.color || null,
+        favorite_color: contact?.color || randomColor,
         entry_date: new Date().toISOString(),
         base_entries: 1,
         final_entry_count: 1
@@ -43,10 +47,11 @@ export default function LoveAwayEntriesList({ giveawayId }) {
   });
 
   const updateMultiplierMutation = useMutation({
-    mutationFn: async ({ id, multiplier }) => {
+    mutationFn: async ({ id, multiplier, color }) => {
       return base44.entities.LoveAwayEntry.update(id, {
         multiplier: multiplier,
-        final_entry_count: multiplier // Assuming base is 1 for manual
+        final_entry_count: multiplier,
+        favorite_color: color
       });
     },
     onSuccess: () => {
@@ -114,6 +119,12 @@ export default function LoveAwayEntriesList({ giveawayId }) {
                   <TableCell>
                     {editingEntry === entry.id ? (
                       <div className="flex items-center gap-2">
+                        <input
+                           type="color"
+                           value={editColor}
+                           onChange={(e) => setEditColor(e.target.value)}
+                           className="w-8 h-8 rounded cursor-pointer border-none p-0 bg-transparent"
+                        />
                         <Input 
                           type="number" 
                           value={editMultiplier} 
@@ -121,7 +132,7 @@ export default function LoveAwayEntriesList({ giveawayId }) {
                           className="w-20 h-8"
                           min="1"
                         />
-                        <Button size="sm" size="icon" onClick={() => updateMultiplierMutation.mutate({ id: entry.id, multiplier: editMultiplier })}>
+                        <Button size="sm" size="icon" onClick={() => updateMultiplierMutation.mutate({ id: entry.id, multiplier: editMultiplier, color: editColor })}>
                           <Save className="w-4 h-4" />
                         </Button>
                         <Button size="sm" variant="ghost" size="icon" onClick={() => setEditingEntry(null)}>
@@ -146,9 +157,26 @@ export default function LoveAwayEntriesList({ giveawayId }) {
                       onClick={() => {
                         setEditingEntry(entry.id);
                         setEditMultiplier(entry.multiplier || entry.final_entry_count || 1);
+                        setEditColor(entry.favorite_color || '#000000');
                       }}
                     >
                       <Edit2 className="w-4 h-4 text-gray-500" />
+                    </Button>
+                    <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => {
+                            // Quick color shuffle if missing
+                            const randomColor = `hsl(${Math.floor(Math.random() * 360)}, 70%, 60%)`;
+                            updateMultiplierMutation.mutate({ 
+                                id: entry.id, 
+                                multiplier: entry.multiplier || entry.final_entry_count || 1,
+                                color: randomColor
+                            });
+                        }}
+                        title="Randomize Color"
+                    >
+                        <span className="w-4 h-4 rounded-full border border-gray-300 block" style={{ backgroundColor: entry.favorite_color || 'transparent' }}></span>
                     </Button>
                     <Button 
                       variant="ghost" 

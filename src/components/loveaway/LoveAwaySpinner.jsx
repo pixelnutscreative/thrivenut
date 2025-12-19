@@ -142,23 +142,36 @@ export default function LoveAwaySpinner({ giveaway, onClose }) {
     }, spinDuration);
   };
 
-  // Build weighted segments
-  const totalWeight = entries.reduce((sum, e) => sum + (e.final_entry_count || 1), 0);
-  let currentAngle = 0;
-  
-  const segments = entries.map(entry => {
-    const weight = entry.final_entry_count || 1;
-    const angleSize = (weight / totalWeight) * 360;
-    const start = currentAngle;
-    currentAngle += angleSize;
+  // Build weighted segments - MEMOIZED to prevent flickering colors
+  const segments = React.useMemo(() => {
+    const totalWeight = entries.reduce((sum, e) => sum + (e.final_entry_count || 1), 0);
+    let currentAngle = 0;
     
-    return {
-      ...entry,
-      color: entry.favorite_color || `hsl(${Math.random() * 360}, 70%, 60%)`,
-      startAngle: start,
-      angleSize: angleSize
-    };
-  });
+    return entries.map(entry => {
+        const weight = entry.final_entry_count || 1;
+        const angleSize = (weight / totalWeight) * 360;
+        const start = currentAngle;
+        currentAngle += angleSize;
+        
+        // Use a consistent random color based on username if missing
+        const consistentRandomColor = () => {
+            let hash = 0;
+            const str = entry.username || 'unknown';
+            for (let i = 0; i < str.length; i++) {
+                hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const hue = Math.abs(hash % 360);
+            return `hsl(${hue}, 70%, 60%)`;
+        };
+
+        return {
+        ...entry,
+        color: entry.favorite_color || consistentRandomColor(),
+        startAngle: start,
+        angleSize: angleSize
+        };
+    });
+  }, [entries]);
 
   return (
     <Dialog open={true} onOpenChange={onClose}>

@@ -231,7 +231,7 @@ export default function LoveAway() {
                       <LoveAwayEntriesList giveawayId={giveaway.id} />
                     </DialogContent>
                   </Dialog>
-                  {giveaway.status === 'active' && (
+                  {(giveaway.status === 'active' || giveaway.status === 'upcoming') && (
                     <Button
                       size="sm"
                       className="flex-1"
