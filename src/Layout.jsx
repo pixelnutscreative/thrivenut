@@ -11,8 +11,8 @@ import {
   Palette, Eye, Bookmark, HandMetal, PawPrint, Search, MousePointerClick,
   Calendar, Sun, Cross, Smile, FileText, StickyNote, Tablet, HelpCircle,
   MessageCircle, Briefcase, DollarSign, Activity, Wallet, Swords, Lightbulb, Zap,
-  Image as ImageIcon } from
-'lucide-react';
+  Image as ImageIcon 
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import TikTokAccessGate from './components/access/TikTokAccessGate';
 import ImpersonationBanner, { getEffectiveUserEmail, isImpersonating } from './components/admin/ImpersonationBanner';
