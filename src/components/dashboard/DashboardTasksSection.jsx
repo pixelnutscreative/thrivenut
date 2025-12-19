@@ -8,7 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { 
-  CheckCircle, Circle, Clock, AlertTriangle, ChevronDown, ChevronUp, 
+  CheckCircle, Circle, Clock, AlertTriangle, ChevronDown, ChevronUp, ChevronRight,
   FileText, ExternalLink, Calendar, Plus
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
