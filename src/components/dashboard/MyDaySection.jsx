@@ -1159,8 +1159,8 @@ export default function MyDaySection({
             </div>
           )}
 
-          {/* Standard Wellness Grid */}
-          <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-12 lg:grid-cols-14 gap-3 md:gap-2">
+          {/* Standard Wellness Grid - Using Flex to prevent huge circles */}
+          <div className="flex flex-wrap gap-3">
             {allTasks.filter(t => !t.hasTime && !skippedTasks.includes(t.id)).map((task) => {
               const Icon = task.icon;
               const isComplete = isTaskComplete(task);
@@ -1172,14 +1172,14 @@ export default function MyDaySection({
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={() => handleToggleTask(task)}
-                  className={`aspect-square rounded-full flex items-center justify-center border-2 transition-all shadow-sm ${
+                  className={`w-12 h-12 rounded-full flex items-center justify-center border-2 transition-all shadow-sm flex-shrink-0 ${
                     isComplete 
                       ? `${activeColor.border} ${activeColor.bg} ${activeColor.text}`
                       : 'border-gray-200 bg-white hover:border-purple-300 text-gray-500'
                   }`}
                   title={task.label}
                 >
-                  <Icon className={`w-5 h-5 md:w-4 md:h-4 ${isComplete ? activeColor.text : task.color}`} />
+                  <Icon className={`w-5 h-5 ${isComplete ? activeColor.text : task.color}`} />
                 </motion.button>
               );
             })}
