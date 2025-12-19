@@ -275,13 +275,7 @@ export default function Dashboard() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['preferences'] }),
   });
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
-      </div>
-    );
-  }
+
 
   const latestMood = todaysMoodLogs && todaysMoodLogs.length > 0 
     ? todaysMoodLogs[todaysMoodLogs.length - 1].mood 
@@ -415,6 +409,14 @@ export default function Dashboard() {
         return null;
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+      </div>
+    );
+  }
 
   return (
     <>
