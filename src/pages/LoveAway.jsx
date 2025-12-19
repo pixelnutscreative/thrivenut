@@ -6,15 +6,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Gift, Sparkles, Trophy, Users, Settings, Play, X, Edit } from 'lucide-react';
+import { Plus, Gift, Sparkles, Trophy, Users, Settings, Play, X, Edit, Archive, Trash2, History, RotateCcw } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
 import { useTheme } from '../components/shared/useTheme';
 import LoveAwaySpinner from '../components/loveaway/LoveAwaySpinner';
 import LoveAwayEntriesList from '../components/loveaway/LoveAwayEntriesList';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 export default function LoveAway() {
   const queryClient = useQueryClient();
@@ -31,6 +33,7 @@ export default function LoveAway() {
     required_gift_name: '',
     minimum_gift_value: 0,
     entries_per_action: 1,
+    entry_mode: 'tiktok',
     multipliers_enabled: {},
     multiplier_values: {
       superfan: 3,
@@ -50,10 +53,16 @@ export default function LoveAway() {
     status: 'upcoming'
   });
 
+  const [showHistory, setShowHistory] = useState(false);
+
   const { data: loveAways = [] } = useQuery({
     queryKey: ['loveAways'],
     queryFn: () => base44.entities.LoveAway.list('-created_date'),
   });
+
+  // Filter out archived unless showing history
+  const activeLoveAways = loveAways.filter(l => l.status !== 'archived');
+  const pastWinners = loveAways.filter(l => l.status === 'winner_selected' || l.winner_username);
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.LoveAway.create(data),
@@ -68,6 +77,7 @@ export default function LoveAway() {
         required_gift_name: '',
         minimum_gift_value: 0,
         entries_per_action: 1,
+        entry_mode: 'tiktok',
         multipliers_enabled: {},
         multiplier_values: {
           superfan: 3,
@@ -114,11 +124,22 @@ export default function LoveAway() {
     createMutation.mutate(formData);
   };
 
+  const updateStatusMutation = useMutation({
+    mutationFn: ({ id, status }) => base44.entities.LoveAway.update(id, { status }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['loveAways'] })
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => base44.entities.LoveAway.delete(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['loveAways'] })
+  });
+
   const statusColors = {
     upcoming: 'bg-blue-100 text-blue-700',
     active: 'bg-green-100 text-green-700',
     closed: 'bg-gray-100 text-gray-700',
-    winner_selected: 'bg-purple-100 text-purple-700'
+    winner_selected: 'bg-purple-100 text-purple-700',
+    archived: 'bg-gray-200 text-gray-500'
   };
 
   return (
@@ -129,60 +150,101 @@ export default function LoveAway() {
             <h1 className={`text-3xl font-bold ${textClass}`}>Love Away</h1>
             <p className="text-gray-500 mt-1">Manage giveaways and pick random winners</p>
           </div>
-          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-            <DialogTrigger asChild>
-              <Button style={{ backgroundColor: primaryColor }}>
-                <Plus className="w-4 h-4 mr-2" />
-                New Love Away
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Create Love Away Giveaway</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <Input
-                  placeholder="Giveaway Title"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                />
-                <Textarea
-                  placeholder="Prize Description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  rows={3}
-                />
-                <Input
-                  placeholder="Prize Value (e.g., $100, Custom Mug)"
-                  value={formData.prize_value}
-                  onChange={(e) => setFormData({ ...formData, prize_value: e.target.value })}
-                />
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowHistory(!showHistory)}>
+              <History className="w-4 h-4 mr-2" />
+              {showHistory ? 'Hide History' : 'Winners History'}
+            </Button>
+            <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+              <DialogTrigger asChild>
+                <Button style={{ backgroundColor: primaryColor }}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  New Love Away
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Create Love Away Giveaway</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                     <Label>Entry Mode</Label>
+                     <div className="flex gap-4">
+                        <div 
+                          className={`flex-1 p-4 rounded-lg border-2 cursor-pointer transition-all ${formData.entry_mode === 'tiktok' ? 'border-purple-500 bg-purple-50' : 'border-gray-200'}`}
+                          onClick={() => setFormData({...formData, entry_mode: 'tiktok'})}
+                        >
+                            <div className="font-bold mb-1">TikTok Users</div>
+                            <div className="text-xs text-gray-500">Search by TikTok username. Good for live giveaways.</div>
+                        </div>
+                        <div 
+                          className={`flex-1 p-4 rounded-lg border-2 cursor-pointer transition-all ${formData.entry_mode === 'generic' ? 'border-purple-500 bg-purple-50' : 'border-gray-200'}`}
+                          onClick={() => setFormData({...formData, entry_mode: 'generic'})}
+                        >
+                            <div className="font-bold mb-1">Generic / Manual</div>
+                            <div className="text-xs text-gray-500">Enter any name (Grandma, Joe, Email). Good for offline/mixed.</div>
+                        </div>
+                     </div>
+                  </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">How to Enter (Optional Notes)</label>
+                  <Input
+                    placeholder="Giveaway Title"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  />
                   <Textarea
-                    placeholder="e.g. Send a rose, Share the live..."
+                    placeholder="Prize Description (e.g. 1-on-1 Call, Gift Card, Mystery Box)"
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    rows={2}
+                    rows={3}
                   />
-                </div>
+                  <Input
+                    placeholder="Prize Value (e.g., $100, Priceless)"
+                    value={formData.prize_value}
+                    onChange={(e) => setFormData({ ...formData, prize_value: e.target.value })}
+                  />
 
-                <div className="p-4 bg-purple-50 rounded-lg text-sm text-purple-800">
-                  <p>✨ <strong>Simplified!</strong> You can manually add entries and multiply them (2x, 3x, 10x) directly in the Entries list.</p>
+                  <Button onClick={handleCreate} className="w-full" style={{ backgroundColor: primaryColor }}>
+                    Create Giveaway
+                  </Button>
                 </div>
-
-                <Button onClick={handleCreate} className="w-full" style={{ backgroundColor: primaryColor }}>
-                  Create Giveaway
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
+
+        {/* Winners History Panel */}
+        {showHistory && (
+          <Card className="mb-6 bg-purple-50 border-purple-200">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Trophy className="w-5 h-5 text-yellow-600" />
+                Winners Hall of Fame
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {pastWinners.map(winner => (
+                   <div key={winner.id} className="bg-white p-4 rounded-lg shadow-sm border flex items-center justify-between">
+                      <div>
+                          <div className="font-bold text-gray-800">{winner.winner_username}</div>
+                          <div className="text-xs text-gray-500">{winner.title}</div>
+                          <div className="text-xs text-purple-600 mt-1">Won: {winner.prize_value}</div>
+                      </div>
+                      <Trophy className="w-8 h-8 text-yellow-300 opacity-50" />
+                   </div>
+                ))}
+                {pastWinners.length === 0 && (
+                  <div className="col-span-full text-center text-gray-500 py-4">No winners recorded yet!</div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Active/Upcoming Giveaways */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {loveAways.map(giveaway => (
+          {activeLoveAways.map(giveaway => (
             <Card key={giveaway.id} className={cardBgClass}>
               <CardHeader>
                 <div className="flex items-start justify-between">
@@ -195,10 +257,65 @@ export default function LoveAway() {
                       {giveaway.status.replace('_', ' ')}
                     </Badge>
                   </div>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Settings className="w-4 h-4 text-gray-500" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-40 p-1">
+                      <div className="space-y-1">
+                        {giveaway.status !== 'archived' && (
+                            <button 
+                                className="w-full text-left px-2 py-1.5 text-sm hover:bg-gray-100 rounded flex items-center gap-2"
+                                onClick={() => updateStatusMutation.mutate({ id: giveaway.id, status: 'archived' })}
+                            >
+                                <Archive className="w-4 h-4" /> Archive
+                            </button>
+                        )}
+                        {giveaway.status === 'archived' && (
+                            <button 
+                                className="w-full text-left px-2 py-1.5 text-sm hover:bg-gray-100 rounded flex items-center gap-2"
+                                onClick={() => updateStatusMutation.mutate({ id: giveaway.id, status: 'active' })}
+                            >
+                                <RotateCcw className="w-4 h-4" /> Restore
+                            </button>
+                        )}
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <button className="w-full text-left px-2 py-1.5 text-sm hover:bg-red-50 text-red-600 rounded flex items-center gap-2">
+                                <Trash2 className="w-4 h-4" /> Delete
+                            </button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete Giveaway?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will permanently delete "{giveaway.title}" and all its entries. This cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction 
+                                className="bg-red-600 hover:bg-red-700"
+                                onClick={() => deleteMutation.mutate(giveaway.id)}
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
                 <p className="text-sm text-gray-600">{giveaway.description}</p>
+                <div className="flex items-center gap-2 text-xs text-gray-500 bg-gray-50 p-2 rounded">
+                    {giveaway.entry_mode === 'generic' ? <Users className="w-3 h-3" /> : <Gift className="w-3 h-3" />}
+                    Type: {giveaway.entry_mode === 'generic' ? 'Manual/Generic' : 'TikTok Users'}
+                </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-500">Prize Value:</span>
                   <span className="font-semibold">{giveaway.prize_value}</span>

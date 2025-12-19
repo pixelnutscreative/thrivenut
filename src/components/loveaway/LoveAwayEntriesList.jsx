@@ -12,6 +12,15 @@ export default function LoveAwayEntriesList({ giveawayId }) {
   const queryClient = useQueryClient();
   const [newEntryUsername, setNewEntryUsername] = useState('');
   const [editingEntry, setEditingEntry] = useState(null);
+
+  // Fetch giveaway details to know mode
+  const { data: loveAway } = useQuery({
+    queryKey: ['loveAway', giveawayId],
+    queryFn: async () => {
+        const items = await base44.entities.LoveAway.filter({ id: giveawayId });
+        return items[0];
+    }
+  });
   const [editMultiplier, setEditMultiplier] = useState(1);
   const [editColor, setEditColor] = useState('#000000');
 
@@ -30,18 +39,32 @@ export default function LoveAwayEntriesList({ giveawayId }) {
 
   const addEntryMutation = useMutation({
     mutationFn: async (username) => {
-      // Try to find contact for color
-      const contacts = await base44.entities.TikTokContact.filter({ username: username });
-      const contact = contacts[0];
-      
+      // Clean up username input
+      const cleanName = username.trim();
+      let contactId = null;
+      let favColor = null;
+
+      // Only search TikTok if in TikTok mode
+      if (loveAway?.entry_mode !== 'generic') {
+         // Try to find contact
+         const searchName = cleanName.startsWith('@') ? cleanName.substring(1) : cleanName;
+         try {
+            const contacts = await base44.entities.TikTokContact.filter({ username: searchName });
+            if (contacts && contacts[0]) {
+                contactId = contacts[0].id;
+                favColor = contacts[0].color;
+            }
+         } catch (e) { console.log("Contact search failed", e); }
+      }
+
       // Generate random color if none found
       const randomColor = getRandomHex();
 
       return base44.entities.LoveAwayEntry.create({
         loveaway_id: giveawayId,
-        username: username,
-        contact_id: contact?.id,
-        favorite_color: contact?.color || randomColor,
+        username: cleanName, // Store as entered
+        contact_id: contactId,
+        favorite_color: favColor || randomColor,
         entry_date: new Date().toISOString(),
         base_entries: 1,
         final_entry_count: 1
@@ -81,7 +104,7 @@ export default function LoveAwayEntriesList({ giveawayId }) {
     <div className="space-y-4">
       <div className="flex gap-2">
         <Input 
-          placeholder="Enter username to add..." 
+          placeholder={loveAway?.entry_mode === 'generic' ? "Enter Name (Grandma, Joe, etc)..." : "Enter TikTok Username..."}
           value={newEntryUsername}
           onChange={(e) => setNewEntryUsername(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && newEntryUsername && addEntryMutation.mutate(newEntryUsername)}
@@ -90,7 +113,7 @@ export default function LoveAwayEntriesList({ giveawayId }) {
           onClick={() => addEntryMutation.mutate(newEntryUsername)}
           disabled={!newEntryUsername || addEntryMutation.isPending}
         >
-          <Plus className="w-4 h-4 mr-2" /> Add Entry
+          <Plus className="w-4 h-4 mr-2" /> Add
         </Button>
       </div>
 

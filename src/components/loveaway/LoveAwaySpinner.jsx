@@ -3,15 +3,19 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Trophy, Sparkles, X } from 'lucide-react';
+import { Trophy, Sparkles, X, Fish, ArrowDownUp, Disc } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function LoveAwaySpinner({ giveaway, onClose }) {
   const queryClient = useQueryClient();
   const [spinning, setSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
+  const [verticalOffset, setVerticalOffset] = useState(0);
   const [winner, setWinner] = useState(null);
+  const [mode, setMode] = useState('wheel'); // wheel, fishbowl, vertical
+  const [fishBowlWinnerIndex, setFishBowlWinnerIndex] = useState(null);
 
   const { data: entries = [] } = useQuery({
     queryKey: ['loveawayEntries', giveaway.id],
@@ -56,90 +60,69 @@ export default function LoveAwaySpinner({ giveaway, onClose }) {
     if (pool.length === 0) return;
 
     setSpinning(true);
+    setWinner(null);
     
-    // Determine winner instantly (but show animation)
     const randomIndex = Math.floor(Math.random() * pool.length);
     const winningEntry = pool[randomIndex];
-    
-    // Calculate rotation to land on the winner
-    // We need to find the segment corresponding to the winner
-    // Since segments are mapped from entries, let's find the winning entry's index in entries array
-    // Wait, multiple entries might be same person. But `pool` has replicates.
-    // The visual wheel uses `segments` which is unique entries.
-    // We need to pick a winner based on weight, then spin to THAT person's segment.
-    
-    const winnerSegmentIndex = entries.findIndex(e => e.id === winningEntry.id);
-    if (winnerSegmentIndex === -1) return; // Should not happen
 
-    const segmentCount = entries.length;
-    const segmentAngle = 360 / segmentCount;
-    
-    // Calculate angle to land on this segment
-    // Segment 0 is at 0 degrees (top? right?)
-    // Usually 0 is right (3 o'clock) in CSS rotate, but depends on setup.
-    // Let's assume standard CSS rotation. 
-    // Target angle = -(index * segmentAngle + segmentAngle/2)
-    // Add multiple full rotations (e.g. 10 rounds = 3600)
-    // Add random jitter within the segment
-    
-    const spinRotations = 10 + Math.random() * 5; // 10-15 rotations
-    const targetAngle = (winnerSegmentIndex * segmentAngle) + (segmentAngle / 2);
-    // Adjust for the pointer being at top (270deg or -90deg) vs 0 (right)
-    // If pointer is top, we need to rotate so target is at top.
-    
-    // Let's just do a big spin and force result
-    // Actually user said "it has to go round and round and the person cannot stop it"
-    // "it's got to be completely random"
-    
-    const finalRotation = 3600 + (360 - targetAngle) + 90; // +90 to align with top pointer if 0 is right?
-    // Let's simplfy: Just spin a lot random amount, calculate winner based on where it lands?
-    // NO, weighted probability is harder to visualize if segments are equal size.
-    // If I show equal segments but use weighted probability, visual doesn't match physics.
-    // IF I want visual to match: segments should be sized by weight.
-    
-    // Let's resize segments based on weight!
-    
-    // But for now, let's keep logic simple: 
-    // 1. Determine winner by weight (done)
-    // 2. Spin to that winner's segment
-    
-    const spinDuration = 8000; // 8 seconds
-    const extraSpins = 360 * 10;
-    // Calculate angle to land on winner
-    // Winner index i. Center of wedge is i*wedge + wedge/2.
-    // We want this angle to be at 270 deg (top) or whatever pointer is.
-    // If pointer is top (270 deg), we need to rotate: 270 - center_angle.
-    // And add full spins.
-    
-    // Visual logic handled in rendering
-    
-    // New logic with sized segments:
-    const totalWeight = entries.reduce((sum, e) => sum + (e.final_entry_count || 1), 0);
-    let currentAngle = 0;
-    let winnerStartAngle = 0;
-    let winnerEndAngle = 0;
-    
-    entries.forEach(e => {
-        const weight = e.final_entry_count || 1;
-        const angle = (weight / totalWeight) * 360;
-        if (e.id === winningEntry.id) {
-            winnerStartAngle = currentAngle;
-            winnerEndAngle = currentAngle + angle;
-        }
-        currentAngle += angle;
-    });
-    
-    const winnerCenter = (winnerStartAngle + winnerEndAngle) / 2;
-    // We want winnerCenter to end up at -90 (top)
-    const stopAngle = 360 * 10 + (360 - winnerCenter) - 90; 
-    
-    setRotation(stopAngle);
+    if (mode === 'wheel') {
+        // Wheel Logic
+        const totalWeight = entries.reduce((sum, e) => sum + (e.final_entry_count || 1), 0);
+        let currentAngle = 0;
+        let winnerStartAngle = 0;
+        let winnerEndAngle = 0;
+        
+        entries.forEach(e => {
+            const weight = e.final_entry_count || 1;
+            const angle = (weight / totalWeight) * 360;
+            if (e.id === winningEntry.id) {
+                winnerStartAngle = currentAngle;
+                winnerEndAngle = currentAngle + angle;
+            }
+            currentAngle += angle;
+        });
+        
+        const winnerCenter = (winnerStartAngle + winnerEndAngle) / 2;
+        // Target -90 deg (top pointer)
+        // Add random jitter within the wedge to make it look organic
+        const wedgeSize = winnerEndAngle - winnerStartAngle;
+        const jitter = (Math.random() * wedgeSize * 0.8) - (wedgeSize * 0.4); 
+        
+        const stopAngle = 360 * 8 + (360 - winnerCenter + jitter) - 90; 
+        
+        setRotation(stopAngle);
+        setTimeout(() => finishSpin(winningEntry), 8000);
+    } 
+    else if (mode === 'fishbowl') {
+        // Fish Bowl Logic - Shuffle animation
+        let shuffles = 0;
+        const shuffleInterval = setInterval(() => {
+            setFishBowlWinnerIndex(Math.floor(Math.random() * entries.length));
+            shuffles++;
+            if (shuffles > 40) { // Stop after ~4 seconds
+                clearInterval(shuffleInterval);
+                finishSpin(winningEntry);
+            }
+        }, 100);
+    }
+    else if (mode === 'vertical') {
+        // Vertical Wheel Logic (Price is Right style)
+        // Just scroll very far down to the winner
+        // We'll duplicate the list many times
+        const itemHeight = 60; 
+        const winnerIndex = entries.findIndex(e => e.id === winningEntry.id);
+        const loops = 15;
+        // Target offset
+        const finalOffset = (entries.length * itemHeight * loops) + (winnerIndex * itemHeight);
+        setVerticalOffset(finalOffset);
+        setTimeout(() => finishSpin(winningEntry), 6000);
+    }
+  };
 
-    setTimeout(() => {
-      setWinner(winningEntry);
-      setSpinning(false);
-      selectWinnerMutation.mutate(winningEntry);
-    }, spinDuration);
+  const finishSpin = (winningEntry) => {
+    setWinner(winningEntry);
+    setSpinning(false);
+    selectWinnerMutation.mutate(winningEntry);
   };
 
   // Build weighted segments - MEMOIZED to prevent flickering colors
@@ -147,26 +130,18 @@ export default function LoveAwaySpinner({ giveaway, onClose }) {
     const totalWeight = entries.reduce((sum, e) => sum + (e.final_entry_count || 1), 0);
     let currentAngle = 0;
     
-    return entries.map(entry => {
+    return entries.map((entry, idx) => {
         const weight = entry.final_entry_count || 1;
         const angleSize = (weight / totalWeight) * 360;
         const start = currentAngle;
         currentAngle += angleSize;
         
-        // Use a consistent random color based on username if missing
-        const consistentRandomColor = () => {
-            let hash = 0;
-            const str = entry.username || 'unknown';
-            for (let i = 0; i < str.length; i++) {
-                hash = str.charCodeAt(i) + ((hash << 5) - hash);
-            }
-            const hue = Math.abs(hash % 360);
-            return `hsl(${hue}, 70%, 60%)`;
-        };
+        // Fallback color if somehow missing (should be handled in addEntry but safe to have here)
+        const fallbackColor = `hsl(${(idx * 137.5) % 360}, 70%, 60%)`; // Golden angle approximation for distinct colors
 
         return {
         ...entry,
-        color: entry.favorite_color || consistentRandomColor(),
+        color: entry.favorite_color || fallbackColor,
         startAngle: start,
         angleSize: angleSize
         };
