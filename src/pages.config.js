@@ -1,3 +1,4 @@
+import AIImageGenerator from './pages/AIImageGenerator';
 import ActivityTracker from './pages/ActivityTracker';
 import Admin from './pages/Admin';
 import AdminImpersonate from './pages/AdminImpersonate';
@@ -71,11 +72,11 @@ import WaterHistory from './pages/WaterHistory';
 import WeeklyGifterGallery from './pages/WeeklyGifterGallery';
 import Wellness from './pages/Wellness';
 import WorkSchedules from './pages/WorkSchedules';
-import AIImageGenerator from './pages/AIImageGenerator';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
+    "AIImageGenerator": AIImageGenerator,
     "ActivityTracker": ActivityTracker,
     "Admin": Admin,
     "AdminImpersonate": AdminImpersonate,
@@ -149,7 +150,6 @@ export const PAGES = {
     "WeeklyGifterGallery": WeeklyGifterGallery,
     "Wellness": Wellness,
     "WorkSchedules": WorkSchedules,
-    "AIImageGenerator": AIImageGenerator,
 }
 
 export const pagesConfig = {

@@ -8,12 +8,17 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Users, Plus, Settings, Video, AlertCircle, ArrowLeft, Loader2, Building, Home, Heart, Sparkles, Brain, Briefcase, Search } from 'lucide-react';
+import { Users, Plus, Settings, Video, AlertCircle, ArrowLeft, Loader2, Building, Home, Heart, Sparkles, Brain, Briefcase, Calendar, MessageSquare, FileText, Bell } from 'lucide-react';
 import { useTheme } from '../components/shared/useTheme';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import GroupTrainingTab from '../components/groups/GroupTrainingTab';
 import GroupRequestsTab from '../components/groups/GroupRequestsTab';
 import GroupMembersTab from '../components/groups/GroupMembersTab';
+import GroupFeedTab from '../components/groups/GroupFeedTab';
+import GroupQnATab from '../components/groups/GroupQnATab';
+import GroupEventsTab from '../components/groups/GroupEventsTab';
+import GroupResourcesTab from '../components/groups/GroupResourcesTab';
+import GroupSettingsTab from '../components/groups/GroupSettingsTab';
 
 export default function CreatorGroups() {
   const { user, preferences } = useTheme();
@@ -289,23 +294,51 @@ export default function CreatorGroups() {
       </div>
 
       <div className="max-w-6xl mx-auto p-6">
-        <Tabs defaultValue="training" className="space-y-6">
-          <TabsList className="bg-white border p-1 rounded-xl h-auto flex-wrap">
-            <TabsTrigger value="training" className="px-6 py-2 rounded-lg data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700">
+        <Tabs defaultValue="feed" className="space-y-6">
+          <TabsList className="bg-white border p-1 rounded-xl h-auto flex-wrap gap-1">
+            <TabsTrigger value="feed" className="px-4 py-2 rounded-lg data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700">
+              <Bell className="w-4 h-4 mr-2" /> Feed
+            </TabsTrigger>
+            <TabsTrigger value="events" className="px-4 py-2 rounded-lg data-[state=active]:bg-pink-100 data-[state=active]:text-pink-700">
+              <Calendar className="w-4 h-4 mr-2" /> Events
+            </TabsTrigger>
+            <TabsTrigger value="qna" className="px-4 py-2 rounded-lg data-[state=active]:bg-teal-100 data-[state=active]:text-teal-700">
+              <MessageSquare className="w-4 h-4 mr-2" /> Q&A
+            </TabsTrigger>
+            <TabsTrigger value="resources" className="px-4 py-2 rounded-lg data-[state=active]:bg-amber-100 data-[state=active]:text-amber-700">
+              <FileText className="w-4 h-4 mr-2" /> Resources
+            </TabsTrigger>
+            <TabsTrigger value="training" className="px-4 py-2 rounded-lg data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700">
               <Video className="w-4 h-4 mr-2" /> Training
             </TabsTrigger>
-            <TabsTrigger value="requests" className="px-6 py-2 rounded-lg data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700">
-              <AlertCircle className="w-4 h-4 mr-2" /> Requests
-            </TabsTrigger>
-            <TabsTrigger value="members" className="px-6 py-2 rounded-lg data-[state=active]:bg-orange-100 data-[state=active]:text-orange-700">
+            <TabsTrigger value="members" className="px-4 py-2 rounded-lg data-[state=active]:bg-orange-100 data-[state=active]:text-orange-700">
               <Users className="w-4 h-4 mr-2" /> Members
             </TabsTrigger>
+            <TabsTrigger value="requests" className="px-4 py-2 rounded-lg data-[state=active]:bg-gray-100 data-[state=active]:text-gray-700">
+              <AlertCircle className="w-4 h-4 mr-2" /> Requests
+            </TabsTrigger>
             {isAdmin && (
-              <TabsTrigger value="settings" className="px-6 py-2 rounded-lg data-[state=active]:bg-gray-100 data-[state=active]:text-gray-900">
+              <TabsTrigger value="settings" className="px-4 py-2 rounded-lg data-[state=active]:bg-gray-800 data-[state=active]:text-white">
                 <Settings className="w-4 h-4 mr-2" /> Settings
               </TabsTrigger>
             )}
           </TabsList>
+
+          <TabsContent value="feed" className="focus-visible:outline-none">
+            <GroupFeedTab group={activeGroup} currentUser={user} myMembership={activeMembership} isAdmin={isAdmin} />
+          </TabsContent>
+
+          <TabsContent value="events" className="focus-visible:outline-none">
+            <GroupEventsTab group={activeGroup} currentUser={user} myMembership={activeMembership} isAdmin={isAdmin} />
+          </TabsContent>
+
+          <TabsContent value="qna" className="focus-visible:outline-none">
+            <GroupQnATab group={activeGroup} currentUser={user} myMembership={activeMembership} isAdmin={isAdmin} />
+          </TabsContent>
+
+          <TabsContent value="resources" className="focus-visible:outline-none">
+            <GroupResourcesTab group={activeGroup} currentUser={user} myMembership={activeMembership} isAdmin={isAdmin} />
+          </TabsContent>
 
           <TabsContent value="training" className="focus-visible:outline-none">
             <GroupTrainingTab group={activeGroup} currentUser={user} isAdmin={isAdmin} />
@@ -319,17 +352,11 @@ export default function CreatorGroups() {
             <GroupMembersTab group={activeGroup} currentUser={user} isAdmin={isAdmin} />
           </TabsContent>
 
-          <TabsContent value="settings" className="focus-visible:outline-none">
-            <Card>
-              <CardHeader>
-                <CardTitle>Group Settings</CardTitle>
-                <CardDescription>Manage your group details.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-500 text-sm">Settings coming soon. Use the 'Members' tab to manage invites.</p>
-              </CardContent>
-            </Card>
-          </TabsContent>
+          {isAdmin && (
+            <TabsContent value="settings" className="focus-visible:outline-none">
+              <GroupSettingsTab group={activeGroup} />
+            </TabsContent>
+          )}
         </Tabs>
       </div>
     </div>

@@ -3,10 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'; // Assuming you might have these or use divs
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'; // Optional
 import { Badge } from '@/components/ui/badge';
-import { Trash2, UserPlus, Mail } from 'lucide-react';
+import { Trash2, UserPlus, Shield } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -29,7 +27,7 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
       group_id: group.id,
       user_email: data.email,
       role: data.role,
-      status: 'invited', // Or active directly if we trust email
+      status: 'active', // Simplifying for now
       joined_date: new Date().toISOString()
     }),
     onSuccess: () => {
@@ -41,6 +39,11 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
 
   const removeMutation = useMutation({
     mutationFn: (id) => base44.entities.CreatorGroupMember.delete(id),
+    onSuccess: () => queryClient.invalidateQueries(['groupMembers', group.id])
+  });
+
+  const updateLevelMutation = useMutation({
+    mutationFn: ({ id, level }) => base44.entities.CreatorGroupMember.update(id, { level }),
     onSuccess: () => queryClient.invalidateQueries(['groupMembers', group.id])
   });
 
@@ -69,19 +72,16 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
               <div className="space-y-2">
                 <Label>Role</Label>
                 <Select value={inviteRole} onValueChange={setInviteRole}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="member">Member</SelectItem>
-                    <SelectItem value="creator">Creator</SelectItem>
                     <SelectItem value="admin">Admin</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <DialogFooter>
-              <Button onClick={() => inviteMutation.mutate({ email: inviteEmail, role: inviteRole })} disabled={!inviteEmail}>Send Invite</Button>
+              <Button onClick={() => inviteMutation.mutate({ email: inviteEmail, role: inviteRole })} disabled={!inviteEmail}>Add Member</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -89,17 +89,18 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
 
       <div className="bg-white rounded-lg border shadow-sm">
         <div className="grid grid-cols-12 gap-4 p-4 border-b bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
-          <div className="col-span-5">Member</div>
-          <div className="col-span-3">Role</div>
+          <div className="col-span-4">Member</div>
+          <div className="col-span-2">Role</div>
+          <div className="col-span-3">Level</div>
           <div className="col-span-2">Status</div>
-          <div className="col-span-2 text-right">Actions</div>
+          <div className="col-span-1 text-right"></div>
         </div>
         {members.length === 0 ? (
           <div className="p-8 text-center text-gray-500">No members found</div>
         ) : (
           members.map(member => (
             <div key={member.id} className="grid grid-cols-12 gap-4 p-4 border-b last:border-0 items-center text-sm">
-              <div className="col-span-5 flex items-center gap-3">
+              <div className="col-span-4 flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-bold text-xs">
                   {member.user_email[0].toUpperCase()}
                 </div>
@@ -107,8 +108,26 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
                   <p className="font-medium truncate">{member.user_email}</p>
                 </div>
               </div>
-              <div className="col-span-3">
+              <div className="col-span-2">
                 <Badge variant="outline" className="capitalize">{member.role}</Badge>
+              </div>
+              <div className="col-span-3">
+                {isAdmin && group.member_levels?.length > 0 ? (
+                  <Select 
+                    value={member.level || 'none'} 
+                    onValueChange={v => updateLevelMutation.mutate({ id: member.id, level: v === 'none' ? null : v })}
+                  >
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue placeholder="Assign Level" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No Level</SelectItem>
+                      {group.member_levels.map(l => <SelectItem key={l} value={l}>{l}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  member.level && <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">{member.level}</Badge>
+                )}
               </div>
               <div className="col-span-2">
                 <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
@@ -117,9 +136,9 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
                   {member.status}
                 </span>
               </div>
-              <div className="col-span-2 text-right">
-                {member.role !== 'owner' && (
-                  <Button variant="ghost" size="icon" className="text-gray-400 hover:text-red-500" onClick={() => removeMutation.mutate(member.id)}>
+              <div className="col-span-1 text-right">
+                {isAdmin && member.role !== 'owner' && (
+                  <Button variant="ghost" size="icon" className="text-gray-400 hover:text-red-500 h-8 w-8" onClick={() => removeMutation.mutate(member.id)}>
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 )}
