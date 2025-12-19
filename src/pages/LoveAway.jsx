@@ -90,39 +90,6 @@ export default function LoveAway() {
       setEditingGiveaway(null);
     },
   });
-    mutationFn: (data) => base44.entities.LoveAway.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['loveAways'] });
-      setShowCreateDialog(false);
-      setFormData({
-        title: '',
-        description: '',
-        prize_value: '',
-        entry_methods: [],
-        required_gift_name: '',
-        minimum_gift_value: 0,
-        entries_per_action: 1,
-        entry_mode: 'tiktok',
-        multipliers_enabled: {},
-        multiplier_values: {
-          superfan: 3,
-          subscriber: 2,
-          mod: 2,
-          early_bird_first_10: 2,
-          early_bird_first_50: 1.5,
-          during_live: 3,
-          first_hour: 2,
-          loyalty_1_year: 1.5,
-          loyalty_6_months: 1.25,
-          referral_per_friend: 5,
-          streak_combo: 2
-        },
-        start_date: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
-        end_date: '',
-        status: 'upcoming'
-      });
-    }
-  });
 
   const entryMethods = [
     { value: 'purchase', label: 'Purchase During Live' },
