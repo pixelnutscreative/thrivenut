@@ -171,7 +171,10 @@ ${type === 'scripture'
   const TypeIcon = typeConfig?.icon || Sparkles;
 
   return (
-    <Card className="overflow-hidden bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 text-white shadow-xl">
+    <Card 
+      className="overflow-hidden text-white shadow-xl"
+      style={{ backgroundImage: `linear-gradient(to right, ${primaryColor}, ${accentColor})` }}
+    >
       <div className="p-3">
         {/* Compact Header - Type badge and controls only */}
         <div className="flex items-center justify-between mb-2">
