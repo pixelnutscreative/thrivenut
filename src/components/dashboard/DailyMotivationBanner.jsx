@@ -7,6 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { Sparkles, BookOpen, RefreshCw, ChevronLeft, ChevronRight, Heart, Bookmark, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createPageUrl } from '../../utils';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Clock } from 'lucide-react';
 
 const greetingTypeLabels = {
   scripture: { label: 'Scripture', icon: BookOpen, color: 'bg-purple-100 text-purple-700' },
@@ -33,7 +36,8 @@ export default function DailyMotivationBanner({
   bibleVersion = 'NIV',
   motivationTone = 'uplifting',
   primaryColor = '#1fd2ea',
-  accentColor = '#bd84f5'
+  accentColor = '#bd84f5',
+  preferences
 }) {
   const queryClient = useQueryClient();
   const scrollRef = useRef(null);
@@ -41,6 +45,24 @@ export default function DailyMotivationBanner({
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [savedId, setSavedId] = useState(null);
+  const [showHistory, setShowHistory] = useState(false);
+
+  const logGeneration = async (items) => {
+    if (userEmail) {
+      try {
+        const logs = items.map(m => ({
+          content: m.text,
+          type: m.type,
+          tone: Array.isArray(preferences?.content_tone) ? preferences.content_tone.join(', ') : (preferences?.content_tone || 'humorous'),
+          reference: m.reference || '',
+          created_by: userEmail
+        }));
+        await Promise.all(logs.map(l => base44.entities.ContentGenerationLog.create(l)));
+      } catch (e) {
+        console.error("Failed to log history", e);
+      }
+    }
+  };
 
   // Season and month context for relevant content
   const getSeasonContext = () => {
