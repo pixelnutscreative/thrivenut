@@ -179,7 +179,6 @@ export default function Layout({ children, currentPageName }) {
     { name: 'Affiliate Programs', icon: DollarSign, path: 'AffiliateCampaigns' },
     { name: 'Content Ideas', icon: Lightbulb, path: 'SavedMotivations', moduleId: 'motivations' },
     { name: 'Content Marketplace', icon: Briefcase, path: 'ContentMarketplace', highlight: true },
-    { name: 'AI Image Generator', icon: ImageIcon, path: 'AIImageGenerator' },
     { name: 'Create AI Music', icon: Music, isSection: true, subItems: [
       { name: 'Sunny Songbird', icon: Sun, path: 'SongGenerator' },
       { name: "Ping & Pong's Silly Songs", icon: Smile, externalUrl: 'https://sillysongs.pixelnutscreative.com' },
