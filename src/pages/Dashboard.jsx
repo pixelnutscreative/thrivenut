@@ -315,6 +315,8 @@ export default function Dashboard() {
           userEmail={user?.email}
           bibleVersion={preferences?.bible_version || 'NIV'}
           motivationTone={preferences?.motivation_tone || 'uplifting'}
+          primaryColor={primaryColor}
+          accentColor={preferences?.accent_color || '#bd84f5'}
         />
 
         {/* Urgent Events - Battles, Training, Important Events */}
