@@ -67,26 +67,37 @@ export default function LoveAwaySpinner({ giveaway, onClose }) {
 
     if (mode === 'wheel') {
         // Wheel Logic
-        const totalWeight = entries.reduce((sum, e) => sum + (e.final_entry_count || 1), 0);
+        // We need to match the consolidated segments logic
+        const consolidated = {};
+        entries.forEach(e => {
+            if (!consolidated[e.username]) {
+                consolidated[e.username] = { ...e, totalWeight: 0 };
+            }
+            consolidated[e.username].totalWeight += (e.final_entry_count || 1);
+        });
+        
+        const uniqueEntries = Object.values(consolidated);
+        const totalWeight = uniqueEntries.reduce((sum, e) => sum + e.totalWeight, 0);
+
+        // Find the segment that corresponds to the winner
         let currentAngle = 0;
         let winnerStartAngle = 0;
         let winnerEndAngle = 0;
         
-        entries.forEach(e => {
-            const weight = e.final_entry_count || 1;
-            const angle = (weight / totalWeight) * 360;
-            if (e.id === winningEntry.id) {
+        for (const entry of uniqueEntries) {
+            const angleSize = (entry.totalWeight / totalWeight) * 360;
+            // Check if this consolidated entry matches the winner username
+            if (entry.username === winningEntry.username) {
                 winnerStartAngle = currentAngle;
-                winnerEndAngle = currentAngle + angle;
+                winnerEndAngle = currentAngle + angleSize;
+                break;
             }
-            currentAngle += angle;
-        });
+            currentAngle += angleSize;
+        }
         
         const winnerCenter = (winnerStartAngle + winnerEndAngle) / 2;
-        // Target -90 deg (top pointer)
-        // Add random jitter within the wedge to make it look organic
         const wedgeSize = winnerEndAngle - winnerStartAngle;
-        const jitter = (Math.random() * wedgeSize * 0.8) - (wedgeSize * 0.4); 
+        const jitter = (Math.random() * wedgeSize * 0.6) - (wedgeSize * 0.3); // Safe jitter
         
         const stopAngle = 360 * 8 + (360 - winnerCenter + jitter) - 90; 
         
@@ -125,25 +136,47 @@ export default function LoveAwaySpinner({ giveaway, onClose }) {
     selectWinnerMutation.mutate(winningEntry);
   };
 
-  // Build weighted segments - MEMOIZED to prevent flickering colors
+  // FUN & VIBRANT PALETTE
+  const vibrantColors = [
+      '#FF0055', '#00CCFF', '#CCFF00', '#FF00CC', '#00FF66', 
+      '#FF6600', '#6600FF', '#00FFCC', '#FFCC00', '#CC00FF',
+      '#FF3366', '#33CCFF', '#CCFF33', '#FF33CC', '#33FF66'
+  ];
+
+  // Build weighted segments - MEMOIZED
   const segments = React.useMemo(() => {
-    const totalWeight = entries.reduce((sum, e) => sum + (e.final_entry_count || 1), 0);
+    // 1. Consolidate entries by username so randy appears once but bigger
+    const consolidated = {};
+    entries.forEach(e => {
+        if (!consolidated[e.username]) {
+            consolidated[e.username] = { ...e, totalWeight: 0, ids: [] };
+        }
+        consolidated[e.username].totalWeight += (e.final_entry_count || 1);
+        consolidated[e.username].ids.push(e.id);
+        // Prefer the one with a color set
+        if (e.favorite_color && !consolidated[e.username].favorite_color) {
+            consolidated[e.username].favorite_color = e.favorite_color;
+        }
+    });
+    
+    const uniqueEntries = Object.values(consolidated);
+    const totalWeight = uniqueEntries.reduce((sum, e) => sum + e.totalWeight, 0);
     let currentAngle = 0;
     
-    return entries.map((entry, idx) => {
-        const weight = entry.final_entry_count || 1;
-        const angleSize = (weight / totalWeight) * 360;
+    return uniqueEntries.map((entry, idx) => {
+        const angleSize = (entry.totalWeight / totalWeight) * 360;
         const start = currentAngle;
         currentAngle += angleSize;
         
-        // Fallback color if somehow missing (should be handled in addEntry but safe to have here)
-        const fallbackColor = `hsl(${(idx * 137.5) % 360}, 70%, 60%)`; // Golden angle approximation for distinct colors
+        // Use vibrant palette cyclically if no favorite color
+        const paletteIndex = idx % vibrantColors.length;
+        const vibrantColor = vibrantColors[paletteIndex];
 
         return {
-        ...entry,
-        color: entry.favorite_color || fallbackColor,
-        startAngle: start,
-        angleSize: angleSize
+            ...entry,
+            color: entry.favorite_color || vibrantColor,
+            startAngle: start,
+            angleSize: angleSize
         };
     });
   }, [entries]);
@@ -220,22 +253,16 @@ export default function LoveAwaySpinner({ giveaway, onClose }) {
           </div>
 
           {/* Entry Stats */}
-          <div className="mt-8 grid grid-cols-3 gap-4 text-center">
+          <div className="mt-8 flex items-center justify-center gap-12 text-center">
             <div>
-              <p className="text-2xl font-bold text-purple-600">{entries.length}</p>
-              <p className="text-sm text-gray-500">Participants</p>
+              <p className="text-3xl font-bold text-purple-600">{new Set(entries.map(e => e.username)).size}</p>
+              <p className="text-sm text-gray-500 uppercase tracking-wide">Participants</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-blue-600">
+              <p className="text-3xl font-bold text-blue-600">
                 {entries.reduce((sum, e) => sum + (e.final_entry_count || 1), 0)}
               </p>
-              <p className="text-sm text-gray-500">Total Entries</p>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-green-600">
-                {entries.filter(e => e.multipliers_applied?.length > 0).length}
-              </p>
-              <p className="text-sm text-gray-500">With Multipliers</p>
+              <p className="text-sm text-gray-500 uppercase tracking-wide">Total Entries</p>
             </div>
           </div>
 
