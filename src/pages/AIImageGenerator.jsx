@@ -3,15 +3,55 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Image as ImageIcon, Download, Copy, RefreshCw } from 'lucide-react';
+import { Loader2, Image as ImageIcon, Download, Copy, RefreshCw, Sparkles, Share2, Wand2 } from 'lucide-react';
 import { useTheme } from '../components/shared/useTheme';
 
 export default function AIImageGenerator() {
   const { bgClass } = useTheme();
   const [prompt, setPrompt] = useState('');
   const [loading, setLoading] = useState(false);
+  const [enhancing, setEnhancing] = useState(false);
   const [resultUrl, setResultUrl] = useState(null);
   const [error, setError] = useState(null);
+
+  const handleEnhance = async () => {
+    if (!prompt.trim()) return;
+    setEnhancing(true);
+    try {
+      const response = await base44.integrations.Core.InvokeLLM({
+        prompt: `You are an expert AI image prompt engineer. Rewrite the following user idea into a highly detailed, descriptive, and artistic image generation prompt suitable for DALL-E 3 or Midjourney. Focus on lighting, style, composition, and mood. Keep it under 800 characters. \n\nUser Idea: ${prompt}`,
+      });
+      if (response) {
+        setPrompt(response.replace(/^"|"$/g, '')); // Remove quotes if present
+      }
+    } catch (err) {
+      console.error(err);
+      setError('Failed to enhance prompt. Please try again.');
+    } finally {
+      setEnhancing(false);
+    }
+  };
+
+  const handleCopyPrompt = () => {
+    navigator.clipboard.writeText(prompt);
+    // You might want a toast here, but alert is simple for now or just visual feedback
+  };
+
+  const handleSharePrompt = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'AI Image Prompt',
+          text: prompt,
+        });
+      } catch (err) {
+        console.log('Share failed:', err);
+      }
+    } else {
+      handleCopyPrompt();
+      alert('Share not supported on this device, copied to clipboard instead.');
+    }
+  };
 
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
@@ -53,12 +93,52 @@ export default function AIImageGenerator() {
               <CardTitle className="text-lg">Describe your image</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Textarea
-                placeholder="A futuristic city with flying cars at sunset, cyberpunk style..."
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                className="min-h-[150px] resize-none text-base"
-              />
+              <div className="relative">
+                <Textarea
+                  placeholder="Describe your idea simply (e.g., 'a cat in space')..."
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  className="min-h-[150px] resize-none text-base pb-12"
+                />
+                <div className="absolute bottom-2 right-2 flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={handleCopyPrompt}
+                    disabled={!prompt}
+                    className="h-8 w-8 p-0 hover:bg-gray-100"
+                    title="Copy Prompt"
+                  >
+                    <Copy className="w-4 h-4 text-gray-500" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={handleSharePrompt}
+                    disabled={!prompt}
+                    className="h-8 w-8 p-0 hover:bg-gray-100"
+                    title="Share Prompt"
+                  >
+                    <Share2 className="w-4 h-4 text-gray-500" />
+                  </Button>
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleEnhance}
+                  disabled={enhancing || !prompt.trim()}
+                  variant="outline"
+                  className="flex-1 border-purple-200 text-purple-700 hover:bg-purple-50"
+                >
+                  {enhancing ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Wand2 className="w-4 h-4 mr-2" />
+                  )}
+                  Magic Enhance
+                </Button>
+              </div>
               
               {error && (
                 <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg">
