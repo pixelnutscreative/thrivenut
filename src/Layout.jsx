@@ -596,8 +596,8 @@ export default function Layout({ children, currentPageName }) {
                   <div key={group.id} className="mb-2">
                   {group.title &&
                     <button
-                      onClick={() => toggleGroup(group.id)} className="bg-purple-500/10 text-purple-400 mt-1 mb-1 px-2 py-2 text-xs font-bold uppercase tracking-wider rounded-lg w-full flex items-center justify-between hover:opacity-80 transition-opacity">
-
+                      onClick={() => toggleGroup(group.id)}
+                      className={`w-full px-2 py-2 mt-4 mb-1 text-xs font-bold uppercase tracking-wider ${group.color} ${group.bgColor} rounded-lg flex items-center justify-between hover:opacity-80 transition-opacity`}>
 
                       <span>{group.title}</span>
                       {isCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
@@ -698,16 +698,16 @@ export default function Layout({ children, currentPageName }) {
                           return (
                             <Link
                               key={item.path}
-                              to={createPageUrl(item.path)} className="text-white px-4 rounded-xl flex items-center gap-3 transition-all shadow-lg"
-
-
-
-
-
+                              to={createPageUrl(item.path)}
+                              className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-all ${
+                              isActive ?
+                              'text-white shadow-lg' :
+                              `${menuTextClass} ${menuHoverClass}`}`
+                              }
                               style={isActive ? { background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` } : {}}>
 
                               <Icon className="w-5 h-5" />
-                              <span className="font-medium">{item.name}</span>
+                              <span className="text-sm font-medium">{item.name}</span>
                             </Link>);
 
                         })}
