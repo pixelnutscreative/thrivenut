@@ -186,6 +186,7 @@ export default function Layout({ children, currentPageName }) {
       { name: 'Holy Hitmakers', icon: Music, path: 'HolyHitmakers', requiresBibleBeliever: true }]
     },
     { name: 'Social Media Suite', icon: Share2, isSection: true, moduleId: 'tiktok', requiresTikTokAccess: true, subItems: [
+      { name: 'Social Shortcuts', icon: Link, path: 'SocialShortcuts' },
       { name: 'Social Engagement', icon: MousePointerClick, path: 'TikTokEngagement' },
       { name: 'Creator Contacts', icon: Users, path: 'TikTokContacts' },
       { name: 'Content Calendar', icon: Calendar, path: 'LiveSchedule' },
