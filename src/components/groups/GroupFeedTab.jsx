@@ -20,6 +20,7 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({ title: '', content: '', is_pinned: false, is_public: false, target_levels: [] });
+  const [showHidden, setShowHidden] = useState(false);
   const canPostPublicly = isAdmin || preferences?.can_create_public_ads;
 
   // 1. Fetch Posts
@@ -174,7 +175,9 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
 
     // Filter by visibility (admin or matching level) AND not hidden
     const visible = allItems.filter(item => {
-      if (hiddenIds.includes(item.id)) return false;
+      // If showing hidden, allow hidden items (but still check visibility rules)
+      if (!showHidden && hiddenIds.includes(item.id)) return false;
+      
       if (isAdmin) return true;
       if (!item.target_levels || item.target_levels.length === 0) return true;
       return item.target_levels.includes(myMembership?.level);
@@ -190,8 +193,18 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
 
   return (
     <div className="space-y-6">
+      <div className="flex justify-end gap-2">
+        <Button 
+          variant={showHidden ? "secondary" : "ghost"} 
+          size="sm"
+          onClick={() => setShowHidden(!showHidden)}
+          className="text-gray-500"
+        >
+          {showHidden ? <Eye className="w-4 h-4 mr-2" /> : <EyeOff className="w-4 h-4 mr-2" />}
+          {showHidden ? "Hide Hidden Items" : "Show Hidden Items"}
+        </Button>
+      
       {isAdmin && (
-        <div className="flex justify-end">
           <Dialog open={isDialogOpen} onOpenChange={(open) => !open && handleCloseDialog()}>
             <DialogTrigger asChild>
               <Button onClick={() => setIsDialogOpen(true)}><Plus className="w-4 h-4 mr-2" /> New Post</Button>
@@ -259,8 +272,9 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
               </div>
             </DialogContent>
           </Dialog>
-        </div>
+          </Dialog>
       )}
+      </div>
 
       <div className="space-y-4">
         {feedItems.length === 0 ? (
@@ -291,11 +305,11 @@ function FeedItemCard({ item, isAdmin, currentUser, onEdit, onDelete, onHide, on
 
   const getIcon = () => {
     switch(item.type) {
-      case 'post': return <MessageSquare className="w-4 h-4 text-blue-500" />;
-      case 'event': return <Calendar className="w-4 h-4 text-green-500" />;
-      case 'resource': return <LinkIcon className="w-4 h-4 text-purple-500" />;
-      case 'training': return <Video className="w-4 h-4 text-red-500" />;
-      default: return <FileText className="w-4 h-4" />;
+      case 'post': return <MessageSquare className="w-5 h-5 text-blue-500" />;
+      case 'event': return <Calendar className="w-5 h-5 text-green-500" />;
+      case 'resource': return <LinkIcon className="w-5 h-5 text-purple-500" />;
+      case 'training': return <Video className="w-5 h-5 text-red-500" />;
+      default: return <FileText className="w-5 h-5" />;
     }
   };
 

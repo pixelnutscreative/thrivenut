@@ -18,7 +18,7 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [formData, setFormData] = useState({ question: '', details: '', target_levels: [], target_users: [] });
+  const [formData, setFormData] = useState({ question: '', details: '', answer: '', target_levels: [], target_users: [] });
 
   const { data: qnas = [] } = useQuery({
     queryKey: ['groupQnA', group.id],
@@ -64,6 +64,7 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
     setFormData({
       question: qna.question,
       details: qna.details || '',
+      answer: qna.answer || '',
       target_levels: qna.target_levels || [],
       target_users: qna.target_users || []
     });
@@ -73,7 +74,7 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
     setEditingId(null);
-    setFormData({ question: '', details: '', target_levels: [], target_users: [] });
+    setFormData({ question: '', details: '', answer: '', target_levels: [], target_users: [] });
   };
 
   const handleSubmit = () => {
@@ -141,15 +142,27 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
                 value={formData.question} 
                 onChange={e => setFormData({...formData, question: e.target.value})} 
               />
-              <div className="h-48 mb-12">
+              <div className="h-32 mb-12">
                 <ReactQuill 
                   theme="snow" 
                   value={formData.details} 
                   onChange={v => setFormData({...formData, details: v})} 
-                  className="h-36"
-                  placeholder="Add more details..."
+                  className="h-24"
+                  placeholder="Add more details (optional)..."
                 />
               </div>
+
+              {isAdmin && (
+                <div className="h-32 mb-12">
+                  <ReactQuill 
+                    theme="snow" 
+                    value={formData.answer} 
+                    onChange={v => setFormData({...formData, answer: v})} 
+                    className="h-24"
+                    placeholder="Write or edit answer..."
+                  />
+                </div>
+              )}
               
               {isAdmin && (
                 <div className="space-y-4 border-t pt-4">

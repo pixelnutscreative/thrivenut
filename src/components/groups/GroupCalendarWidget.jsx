@@ -40,57 +40,23 @@ export default function GroupCalendarWidget({ group, myMembership, isAdmin }) {
         </CardTitle>
       </CardHeader>
       <CardContent className="px-4 pb-4">
-        <div className="mb-4 bg-white/10 rounded-lg p-2">
-            <Calendar
-                mode="single"
-                selected={date}
-                onSelect={setDate}
-                className="rounded-md border-0 text-white w-full flex justify-center p-0"
-                classNames={{
-                    head_cell: "text-white/60 font-normal text-[0.8rem]",
-                    cell: "h-8 w-8 text-center text-sm p-0 relative [&:has([aria-selected])]:bg-purple-600 first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
-                    day: "h-8 w-8 p-0 font-normal aria-selected:opacity-100 text-white hover:bg-white/20 rounded-full",
-                    day_selected: "bg-purple-600 text-white hover:bg-purple-600 hover:text-white focus:bg-purple-600 focus:text-white",
-                    day_today: "bg-white/20 text-white",
-                    caption: "text-sm py-1 mb-2",
-                    nav_button: "h-6 w-6 bg-transparent hover:bg-white/20 text-white p-0 opacity-70 hover:opacity-100"
-                }}
-                modifiers={{
-                    hasEvent: activeDates
-                }}
-                modifiersStyles={{
-                    hasEvent: { fontWeight: 'bold', textDecoration: 'underline decoration-purple-400' }
-                }}
-            />
-        </div>
-
-        <div className="space-y-2">
-            {eventsOnSelectedDate.length > 0 ? (
-                <>
-                    <p className="text-xs font-semibold text-white/60 mb-1">Events on {format(date || new Date(), 'MMM d')}:</p>
-                    {eventsOnSelectedDate.map(event => (
-                        <div key={event.id} className="text-sm bg-white/10 p-2 rounded border border-white/10">
-                            <div className="font-bold">{event.title}</div>
-                            <div className="text-xs text-white/70">{format(new Date(event.start_time), 'h:mm a')}</div>
+        <div className="space-y-3">
+            {nextEvents.length > 0 ? nextEvents.map(event => (
+                <div key={event.id} className="text-sm bg-white/10 p-3 rounded-lg border border-white/10 flex items-center justify-between group hover:bg-white/20 transition-colors">
+                    <div>
+                        <div className="font-bold text-white mb-1">{event.title}</div>
+                        <div className="text-xs text-white/70 flex items-center gap-2">
+                            <span className="bg-purple-500/30 px-1.5 py-0.5 rounded">
+                                {format(new Date(event.start_time), 'MMM d')}
+                            </span>
+                            <span>{format(new Date(event.start_time), 'h:mm a')}</span>
                         </div>
-                    ))}
-                </>
-            ) : (
-                <>
-                    <p className="text-xs font-semibold text-white/60 mb-1">Next Up:</p>
-                    {nextEvents.length > 0 ? nextEvents.map(event => (
-                        <div key={event.id} className="text-sm bg-white/10 p-2 rounded border border-white/10 flex items-center justify-between">
-                            <div>
-                                <div className="font-bold truncate max-w-[140px]">{event.title}</div>
-                                <div className="text-xs text-white/70">
-                                    {format(new Date(event.start_time), 'MMM d, h:mm a')}
-                                </div>
-                            </div>
-                        </div>
-                    )) : (
-                        <div className="text-xs text-white/40 italic">No upcoming events</div>
-                    )}
-                </>
+                    </div>
+                </div>
+            )) : (
+                <div className="text-sm text-white/40 italic text-center py-4 bg-white/5 rounded-lg">
+                    No upcoming events
+                </div>
             )}
         </div>
       </CardContent>

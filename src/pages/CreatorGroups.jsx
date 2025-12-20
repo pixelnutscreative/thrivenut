@@ -161,7 +161,8 @@ export default function CreatorGroups() {
         group_id: group.id,
         user_email: user.email,
         role: 'member',
-        status: 'pending',
+        status: 'active',
+        level: 'Invited',
         joined_date: new Date().toISOString()
       });
       return { group, existing: false };
@@ -299,7 +300,10 @@ export default function CreatorGroups() {
     updatePrefsMutation.mutate({ hidden_tabs: newHidden });
   };
 
-  const visibleTabs = availableTabs.filter(t => !(groupPrefs?.hidden_tabs || []).includes(t.id));
+  const visibleTabs = availableTabs.filter(t => {
+    if (t.id === 'members' && !isAdmin) return false;
+    return !(groupPrefs?.hidden_tabs || []).includes(t.id);
+  });
 
   // LIST VIEW
   if (!activeGroup) {
