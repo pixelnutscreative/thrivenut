@@ -33,28 +33,30 @@ export default function GroupCalendarWidget({ group, myMembership, isAdmin }) {
     .slice(0, 3);
 
   return (
-    <Card className="border-0 shadow-lg bg-white/5 backdrop-blur-sm text-white">
+    <Card className="border-0 shadow-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
       <CardHeader className="pb-2 pt-4 px-4">
-        <CardTitle className="text-sm font-bold uppercase tracking-wider text-white/80 flex items-center gap-2">
-            Upcoming Events
+        <CardTitle className="text-lg font-bold uppercase tracking-wider text-gray-700 dark:text-gray-200 flex items-center gap-2">
+            <Clock className="w-6 h-6 text-purple-600" /> Upcoming Events
         </CardTitle>
       </CardHeader>
       <CardContent className="px-4 pb-4">
         <div className="space-y-3">
             {nextEvents.length > 0 ? nextEvents.map(event => (
-                <div key={event.id} className="text-sm bg-white/10 p-3 rounded-lg border border-white/10 flex items-center justify-between group hover:bg-white/20 transition-colors">
+                <div key={event.id} className="text-sm bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg border border-gray-100 dark:border-gray-700 flex items-center justify-between group hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                     <div>
-                        <div className="font-bold text-white mb-1">{event.title}</div>
-                        <div className="text-xs text-white/70 flex items-center gap-2">
-                            <span className="bg-purple-500/30 px-1.5 py-0.5 rounded">
+                        <div className="font-bold text-gray-900 dark:text-white mb-1 text-base">{event.title}</div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                            <span className="bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded font-medium">
                                 {format(new Date(event.start_time), 'MMM d')}
                             </span>
-                            <span>{format(new Date(event.start_time), 'h:mm a')}</span>
+                            <span className="flex items-center gap-1">
+                                <Clock className="w-4 h-4" /> {format(new Date(event.start_time), 'h:mm a')}
+                            </span>
                         </div>
                     </div>
                 </div>
             )) : (
-                <div className="text-sm text-white/40 italic text-center py-4 bg-white/5 rounded-lg">
+                <div className="text-sm text-gray-400 italic text-center py-6 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
                     No upcoming events
                 </div>
             )}
