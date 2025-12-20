@@ -5,6 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Calendar } from '@/components/ui/calendar';
 import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Clock } from 'lucide-react';
 import { isSameDay, parseISO, format } from 'date-fns';
 
 export default function GroupCalendarWidget({ group, myMembership, isAdmin }) {
