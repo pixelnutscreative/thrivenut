@@ -342,11 +342,7 @@ export default function Dashboard() {
       <div className={`min-h-screen ${bgClass} p-4 md:p-8`}>
         <div className="max-w-7xl mx-auto space-y-8">
           
-          <div className="flex justify-end">
-            <Button variant="ghost" size="sm" onClick={() => setShowCustomizeModal(true)}>
-              <Settings className="w-4 h-4 mr-2" /> Customize Dashboard
-            </Button>
-          </div>
+          {/* Customizer removed as requested */}
 
           <DragDropContext onDragEnd={onDragEnd}>
             <Droppable droppableId="dashboard-grid" direction="horizontal">
