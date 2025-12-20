@@ -9,12 +9,18 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Video, FileText, Link as LinkIcon, Plus, Check, X, ExternalLink } from 'lucide-react';
+import { Video, FileText, Link as LinkIcon, Plus, Check, X, ExternalLink, Pencil, Trash2 } from 'lucide-react';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
+import LevelSelector from './LevelSelector';
 
 export default function GroupResourcesTab({ group, currentUser, myMembership, isAdmin }) {
   const queryClient = useQueryClient();
-  const [isSubmitOpen, setIsSubmitOpen] = useState(false);
-  const [newResource, setNewResource] = useState({ title: '', description: '', type: 'link', url: '' });
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [formData, setFormData] = useState({ 
+    title: '', description: '', type: 'link', url: '', target_levels: [] 
+  });
 
   const { data: resources = [] } = useQuery({
     queryKey: ['groupResources', group.id],
@@ -26,14 +32,26 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
       ...data, 
       group_id: group.id, 
       submitted_by: currentUser.email,
-      status: isAdmin ? 'approved' : 'pending', // Admins auto-approve their own
+      status: isAdmin ? 'approved' : 'pending', 
       approved_by: isAdmin ? currentUser.email : null
     }),
     onSuccess: () => {
       queryClient.invalidateQueries(['groupResources', group.id]);
-      setIsSubmitOpen(false);
-      setNewResource({ title: '', description: '', type: 'link', url: '' });
+      handleCloseDialog();
     }
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (data) => base44.entities.GroupResource.update(editingId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['groupResources', group.id]);
+      handleCloseDialog();
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => base44.entities.GroupResource.delete(id),
+    onSuccess: () => queryClient.invalidateQueries(['groupResources', group.id])
   });
 
   const reviewMutation = useMutation({
@@ -43,6 +61,32 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
     }),
     onSuccess: () => queryClient.invalidateQueries(['groupResources', group.id])
   });
+
+  const handleEdit = (resource) => {
+    setEditingId(resource.id);
+    setFormData({
+      title: resource.title,
+      description: resource.description || '',
+      type: resource.type,
+      url: resource.url,
+      target_levels: resource.target_levels || []
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+    setEditingId(null);
+    setFormData({ title: '', description: '', type: 'link', url: '', target_levels: [] });
+  };
+
+  const handleSubmit = () => {
+    if (editingId) {
+      updateMutation.mutate(formData);
+    } else {
+      submitMutation.mutate(formData);
+    }
+  };
 
   const approvedResources = resources.filter(r => r.status === 'approved');
   const pendingResources = resources.filter(r => r.status === 'pending');
@@ -65,16 +109,16 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold">Shared Resources</h3>
-        <Dialog open={isSubmitOpen} onOpenChange={setIsSubmitOpen}>
+        <Dialog open={isDialogOpen} onOpenChange={(open) => !open && handleCloseDialog()}>
           <DialogTrigger asChild>
-            <Button><Plus className="w-4 h-4 mr-2" /> Share Resource</Button>
+            <Button onClick={() => setIsDialogOpen(true)}><Plus className="w-4 h-4 mr-2" /> Share Resource</Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Share with Group</DialogTitle>
+              <DialogTitle>{editingId ? 'Edit Resource' : 'Share with Group'}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-4">
-              <Select value={newResource.type} onValueChange={v => setNewResource({...newResource, type: v})}>
+              <Select value={formData.type} onValueChange={v => setFormData({...formData, type: v})}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="video">YouTube Video</SelectItem>
@@ -82,12 +126,29 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
                   <SelectItem value="link">Other Link</SelectItem>
                 </SelectContent>
               </Select>
-              <Input placeholder="Title" value={newResource.title} onChange={e => setNewResource({...newResource, title: e.target.value})} />
-              <Input placeholder="URL" value={newResource.url} onChange={e => setNewResource({...newResource, url: e.target.value})} />
-              <Textarea placeholder="Why is this helpful?" value={newResource.description} onChange={e => setNewResource({...newResource, description: e.target.value})} />
+              <Input placeholder="Title" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
+              <Input placeholder="URL" value={formData.url} onChange={e => setFormData({...formData, url: e.target.value})} />
               
-              <Button onClick={() => submitMutation.mutate(newResource)} disabled={!newResource.url} className="w-full">
-                {isAdmin ? 'Add Resource' : 'Submit for Review'}
+              <div className="h-48 mb-12">
+                <ReactQuill 
+                  theme="snow" 
+                  value={formData.description} 
+                  onChange={v => setFormData({...formData, description: v})} 
+                  className="h-36"
+                  placeholder="Why is this helpful?"
+                />
+              </div>
+
+              {isAdmin && (
+                <LevelSelector 
+                  group={group} 
+                  selectedLevels={formData.target_levels} 
+                  onChange={(levels) => setFormData({...formData, target_levels: levels})} 
+                />
+              )}
+              
+              <Button onClick={handleSubmit} disabled={!formData.url || !formData.title} className="w-full">
+                {editingId ? 'Update Resource' : (isAdmin ? 'Add Resource' : 'Submit for Review')}
               </Button>
             </div>
           </DialogContent>
@@ -108,8 +169,20 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
               <CardContent className="p-4 flex gap-4 items-start">
                 <div className="p-3 bg-gray-100 rounded-lg">{getIcon(resource.type)}</div>
                 <div className="flex-1">
-                  <h4 className="font-semibold">{resource.title}</h4>
-                  <p className="text-sm text-gray-600 line-clamp-2">{resource.description}</p>
+                  <div className="flex justify-between">
+                    <h4 className="font-semibold">{resource.title}</h4>
+                    {isAdmin && (
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => handleEdit(resource)} className="text-gray-500 h-6 w-6 p-0 hover:text-purple-600">
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => deleteMutation.mutate(resource.id)} className="text-red-500 h-6 w-6 p-0">
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                  <div className="prose prose-sm text-gray-600 line-clamp-3 max-w-none" dangerouslySetInnerHTML={{ __html: resource.description }} />
                   <a 
                     href={resource.url} 
                     target="_blank" 
