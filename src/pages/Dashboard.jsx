@@ -280,6 +280,14 @@ export default function Dashboard() {
         return <SpecialEventsCard contacts={tiktokContacts} />;
       case 'subscribed_events':
         return <SubscribedEventsSection userEmail={user?.email} primaryColor={primaryColor} />;
+      case 'crypto_ticker':
+        return (
+          <CryptoTickerWidget 
+            key="crypto_ticker"
+            preferences={preferences}
+            onUpdatePreferences={updatePreferencesMutation.mutate}
+          />
+        );
       default:
         return null;
     }

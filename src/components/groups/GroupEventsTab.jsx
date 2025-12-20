@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Calendar, Clock, MapPin, Link as LinkIcon, Plus, Trash2, Pencil } from 'lucide-react';
+import { Calendar, Clock, MapPin, Link as LinkIcon, Plus, Trash2, Pencil, Share2, CalendarPlus } from 'lucide-react';
 import { format } from 'date-fns';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
@@ -191,17 +191,39 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
                   )}
                 </div>
                 <div className="prose prose-sm text-gray-600 mt-1 max-w-none" dangerouslySetInnerHTML={{ __html: event.description }} />
-                <div className="flex gap-4 mt-3 text-sm text-gray-500">
-                  {event.link && (
-                    <a href={event.link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-blue-600 hover:underline">
-                      <LinkIcon className="w-4 h-4" /> Join Link
-                    </a>
-                  )}
-                  {event.location && (
-                    <div className="flex items-center gap-1">
-                      <MapPin className="w-4 h-4" /> {event.location}
-                    </div>
-                  )}
+                
+                <div className="mt-4 pt-4 border-t flex flex-wrap gap-2 justify-between items-center">
+                  <div className="flex gap-4 text-sm text-gray-500">
+                    {event.link && (
+                      <a href={event.link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-blue-600 hover:underline">
+                        <LinkIcon className="w-4 h-4" /> Join Link
+                      </a>
+                    )}
+                    {event.location && (
+                      <div className="flex items-center gap-1">
+                        <MapPin className="w-4 h-4" /> {event.location}
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="gap-2 text-purple-600 border-purple-200 hover:bg-purple-50"
+                      onClick={() => handleAddToMyDay(event)}
+                    >
+                      <CalendarPlus className="w-3 h-3" /> Add to My Day
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      className="gap-2 text-gray-500"
+                      onClick={() => handleShare(event)}
+                    >
+                      <Share2 className="w-3 h-3" /> Share
+                    </Button>
+                  </div>
                 </div>
               </div>
             </CardContent>
