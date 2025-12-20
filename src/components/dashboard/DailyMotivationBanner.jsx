@@ -208,7 +208,7 @@ ${type === 'scripture'
   return (
     <Card 
       className="overflow-hidden text-white shadow-xl"
-      style={{ backgroundImage: `linear-gradient(to right, ${primaryColor}, ${accentColor})` }}
+      style={{ backgroundImage: `linear-gradient(to bottom right, ${primaryColor}, ${accentColor})` }}
     >
       <div className="p-3">
         {/* Compact Header - Type badge and controls only */}

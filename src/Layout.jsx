@@ -253,7 +253,8 @@ export default function Layout({ children, currentPageName }) {
   };
 
   // --- STYLES ---
-  const bgClass = 'bg-gradient-to-br from-teal-50 via-purple-50 to-blue-50 text-gray-900';
+  // Using a very light version of the primary/accent colors for the background
+  const bgClass = 'bg-gradient-to-br from-[var(--primary-color)]/5 via-white to-[var(--accent-color)]/5 text-gray-900';
 
   const sidebarStyle = {
     backgroundColor: menuColor,
