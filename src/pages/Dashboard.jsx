@@ -8,7 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Loader2, LogOut, ChevronDown, ChevronRight, Settings, Calendar, Eye, EyeOff } from 'lucide-react';
+import { Loader2, LogOut, ChevronDown, ChevronRight, Settings, Calendar, Eye, EyeOff, GripHorizontal } from 'lucide-react';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
 import DashboardCustomizer from '../components/dashboard/DashboardCustomizer';
 import MyDaySection from '../components/dashboard/MyDaySection';
