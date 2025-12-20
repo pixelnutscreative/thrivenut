@@ -151,7 +151,7 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
                 />
               )}
               
-              <Button onClick={handleSubmit} disabled={!formData.url || !formData.title} className="w-full">
+              <Button onClick={handleSubmit} disabled={!formData.title || (formData.type !== 'text' && !formData.url)} className="w-full">
                 {editingId ? 'Update Resource' : (isAdmin ? 'Add Resource' : 'Submit for Review')}
               </Button>
             </div>
