@@ -220,7 +220,9 @@ export default function Dashboard() {
   const saveLayout = (newLayout) => {
     setLayout(newLayout);
     updatePreferencesMutation.mutate({ dashboard_layout: newLayout });
-    setShowCustomizeModal(false);
+    // Keep modal open or close? Typically keep for show/hide, but maybe close.
+    // The dialog handles internal state updates via onUpdateLayout which calls this.
+    // We don't need to close it on every toggle.
   };
 
   const onDragEnd = (result) => {
