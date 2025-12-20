@@ -10,7 +10,9 @@ import { useTheme } from '../components/shared/useTheme';
 import { format } from 'date-fns';
 
 import { Brain, Trash2, Save, Plus, Tag, Search, Check, ListFilter, Sparkles, Loader2, X, RefreshCw } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import HabitConfigModal from '../components/brain-dump/HabitConfigModal';
 
 export default function BrainDump() {
   const { bgClass, textClass, cardBgClass, primaryColor, accentColor, user } = useTheme();
@@ -33,6 +35,9 @@ export default function BrainDump() {
     enabled: !!user?.email
   });
 
+  const [habitConfigOpen, setHabitConfigOpen] = useState(false);
+  const [currentHabitItem, setCurrentHabitItem] = useState(null);
+
   const analyzeBrainDump = async () => {
     if (dumps.length === 0) return;
     setIsAnalyzing(true);
@@ -48,7 +53,9 @@ export default function BrainDump() {
         - type (one of: 'task', 'goal', 'habit', 'note', 'event')
         - suggested_title (clear, actionable title)
         - suggested_category (e.g. Work, Personal, Health)
-        - reasoning (brief why)`,
+        - reasoning (brief why)
+        
+        For habits, identify if there's any implied frequency (e.g. "every monday" -> specific_days, "daily" -> daily).`,
         response_json_schema: {
           type: "object",
           properties: {
@@ -78,7 +85,14 @@ export default function BrainDump() {
     }
   };
 
-  const processAnalysisItem = async (item) => {
+  const processAnalysisItem = async (item, habitConfig = null) => {
+    // If it's a habit and no config provided, open config modal
+    if (item.type === 'habit' && !habitConfig) {
+      setCurrentHabitItem(item);
+      setHabitConfigOpen(true);
+      return;
+    }
+
     // Convert logic based on type
     try {
       if (item.type === 'task') {
@@ -86,16 +100,32 @@ export default function BrainDump() {
       } else if (item.type === 'goal') {
         await base44.entities.Goal.create({ title: item.suggested_title, category: item.suggested_category, created_by: user.email });
       } else if (item.type === 'habit') {
-        await base44.entities.Habit.create({ title: item.suggested_title, category: item.suggested_category, created_by: user.email });
+        const habitData = habitConfig || { name: item.suggested_title, frequency: 'daily' };
+        await base44.entities.Habit.create({ 
+          name: habitData.name, 
+          frequency: habitData.frequency,
+          target_days: habitData.target_days || [],
+          monthly_date: habitData.monthly_date,
+          created_by: user.email 
+        });
       } else if (item.type === 'event') {
         await base44.entities.ExternalEvent.create({ title: item.suggested_title, date: new Date().toISOString().split('T')[0], created_by: user.email });
+      } else if (item.type === 'note') {
+        await base44.entities.QuickNote.create({ content: item.suggested_title, created_by: user.email });
       }
+      
       // Mark original dump as processed
       await base44.entities.BrainDump.update(item.original_id, { is_processed: true });
       
       // Update local state
       setAnalysisResults(prev => prev.filter(r => r.original_id !== item.original_id));
       queryClient.invalidateQueries(['brainDumps']);
+      
+      // Reset habit state if needed
+      if (habitConfig) {
+        setHabitConfigOpen(false);
+        setCurrentHabitItem(null);
+      }
     } catch (err) {
       console.error(err);
     }
@@ -200,13 +230,34 @@ export default function BrainDump() {
                         <p className="font-medium text-gray-900">{item.suggested_title}</p>
                         <p className="text-xs text-gray-500 mt-1">{item.reasoning}</p>
                       </div>
-                      <Button 
-                        size="sm" 
-                        onClick={() => processAnalysisItem(item)}
-                        className="bg-indigo-500 hover:bg-indigo-600 text-white"
-                      >
-                        Confirm
-                      </Button>
+                      <div className="flex gap-2">
+                        <Select 
+                          value={item.type} 
+                          onValueChange={(val) => {
+                            const newResults = [...analysisResults];
+                            newResults[idx].type = val;
+                            setAnalysisResults(newResults);
+                          }}
+                        >
+                          <SelectTrigger className="h-8 w-[100px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="task">Task</SelectItem>
+                            <SelectItem value="goal">Goal</SelectItem>
+                            <SelectItem value="habit">Habit</SelectItem>
+                            <SelectItem value="note">Note</SelectItem>
+                            <SelectItem value="event">Event</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Button 
+                          size="sm" 
+                          onClick={() => processAnalysisItem(item)}
+                          className="bg-indigo-500 hover:bg-indigo-600 text-white"
+                        >
+                          Confirm
+                        </Button>
+                      </div>
                     </CardContent>
                   </Card>
                 ))
@@ -214,6 +265,13 @@ export default function BrainDump() {
             </div>
           </DialogContent>
         </Dialog>
+
+        <HabitConfigModal 
+          open={habitConfigOpen} 
+          onOpenChange={setHabitConfigOpen}
+          initialData={currentHabitItem}
+          onConfirm={(config) => processAnalysisItem(currentHabitItem, config)}
+        />
 
         <Card className={`${cardBgClass} border-indigo-200 shadow-md`}>
           <CardContent className="p-6 space-y-4">
