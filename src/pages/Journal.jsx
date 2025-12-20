@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { BookOpen, Calendar, Sparkles, Brain, Shield, ChevronDown, ChevronUp, Search, Plus, X, Eye, EyeOff, Filter, ArrowUpDown, Music, History, Trash2, RotateCcw, ExternalLink } from 'lucide-react';
+import { BookOpen, Calendar, Sparkles, Brain, Shield, ChevronDown, ChevronUp, Search, Plus, X, Eye, EyeOff, Filter, ArrowUpDown, Music, History, Trash2, RotateCcw, ExternalLink, Type, Star } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import AIReframingCard from '../components/journal/AIReframingCard';
@@ -38,6 +38,30 @@ const entryTypes = [
   { value: 'gratitude', label: 'Gratitude', description: 'What are you thankful for?' },
   { value: 'reflection', label: 'Reflection', description: 'Looking back and learning' },
   { value: 'poetry', label: 'Poem / Lyrics', description: 'Express yourself with verse or song' }
+];
+
+// Curated Google Fonts
+const JOURNAL_FONTS = [
+  { name: 'Inter', family: 'sans-serif' },
+  { name: 'Dancing Script', family: 'cursive' },
+  { name: 'Pacifico', family: 'cursive' },
+  { name: 'Caveat', family: 'cursive' },
+  { name: 'Shadows Into Light', family: 'cursive' },
+  { name: 'Indie Flower', family: 'cursive' },
+  { name: 'Kalam', family: 'cursive' },
+  { name: 'Sacramento', family: 'cursive' },
+  { name: 'Courier Prime', family: 'monospace' },
+  { name: 'Special Elite', family: 'cursive' },
+  { name: 'Lora', family: 'serif' },
+  { name: 'Merriweather', family: 'serif' },
+  { name: 'Nunito', family: 'sans-serif' },
+  { name: 'Quicksand', family: 'sans-serif' },
+  { name: 'Patrick Hand', family: 'cursive' },
+  { name: 'Amatic SC', family: 'cursive' },
+  { name: 'Architects Daughter', family: 'cursive' },
+  { name: 'Playfair Display', family: 'serif' },
+  { name: 'Roboto Mono', family: 'monospace' },
+  { name: 'Coming Soon', family: 'cursive' },
 ];
 
 export default function Journal() {
@@ -71,11 +95,22 @@ export default function Journal() {
     ai_reframe_enabled: false,
     is_encrypted: false,
     music_style: '',
-    revisions: []
+    revisions: [],
+    font: 'Inter'
   });
   
   const [showRevisions, setShowRevisions] = useState(false);
   const [currentEntryId, setCurrentEntryId] = useState(null);
+  const [showFontPicker, setShowFontPicker] = useState(false);
+
+  // Load fonts
+  React.useEffect(() => {
+    const link = document.createElement('link');
+    link.href = `https://fonts.googleapis.com/css2?family=Amatic+SC:wght@400;700&family=Architects+Daughter&family=Caveat:wght@400;700&family=Coming+Soon&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Dancing+Script:wght@400;700&family=Indie+Flower&family=Kalam:wght@300;400;700&family=Lora:ital,wght@0,400;0,700;1,400&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Pacifico&family=Patrick+Hand&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Quicksand:wght@300..700&family=Roboto+Mono:ital,wght@0,100..700;1,100..700&family=Sacramento&family=Shadows+Into+Light&family=Special+Elite&display=swap`;
+    link.rel = 'stylesheet';
+    document.head.appendChild(link);
+    return () => document.head.removeChild(link);
+  }, []);
 
   React.useEffect(() => {
     const loadUser = async () => {
@@ -116,7 +151,8 @@ export default function Journal() {
         entry_type: 'general',
         ai_reframe_enabled: preferences?.enable_ai_journaling !== false,
         music_style: '',
-        revisions: []
+        revisions: [],
+        font: preferences?.recent_journal_fonts?.[0] || 'Inter'
       });
       setCurrentEntryId(null);
       setShowAIReframe(false);
@@ -125,6 +161,43 @@ export default function Journal() {
       setIsCustomMood(false);
     },
   });
+
+  const updatePreferencesMutation = useMutation({
+    mutationFn: async (data) => {
+      if (preferences?.id) {
+        return await base44.entities.UserPreferences.update(preferences.id, data);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['preferences'] });
+    }
+  });
+
+  const toggleFavoriteFont = (fontName) => {
+    const favorites = preferences?.favorite_journal_fonts || [];
+    let newFavorites;
+    if (favorites.includes(fontName)) {
+      newFavorites = favorites.filter(f => f !== fontName);
+    } else {
+      newFavorites = [...favorites, fontName];
+    }
+    setPreferences(prev => ({ ...prev, favorite_journal_fonts: newFavorites }));
+    updatePreferencesMutation.mutate({ favorite_journal_fonts: newFavorites });
+  };
+
+  const selectFont = (fontName) => {
+    setFormData(prev => ({ ...prev, font: fontName }));
+    
+    // Update recent fonts
+    const recents = preferences?.recent_journal_fonts || [];
+    const newRecents = [fontName, ...recents.filter(f => f !== fontName)].slice(0, 5);
+    
+    // Optimistically update
+    setPreferences(prev => ({ ...prev, recent_journal_fonts: newRecents }));
+    updatePreferencesMutation.mutate({ recent_journal_fonts: newRecents });
+    
+    setShowFontPicker(false);
+  };
 
   const updateEntryMutation = useMutation({
     mutationFn: async ({ id, data }) => {
@@ -149,11 +222,6 @@ export default function Journal() {
 
   const restoreRevisionMutation = useMutation({
     mutationFn: async ({ id, revision }) => {
-      // When restoring, we don't necessarily create a NEW revision of the current state unless we want to.
-      // For simplicity, we just update the main fields with revision data.
-      // But user might want to keep the "bad" version they are replacing as a revision? 
-      // The user said "go back if they like how it was before". 
-      // Let's just update the content/title/style.
       return await base44.entities.JournalEntry.update(id, {
         content: revision.content,
         title: revision.title,
@@ -162,11 +230,6 @@ export default function Journal() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['journalEntries'] });
-      // Update form data if we are editing this entry
-      if (currentEntryId) {
-         // This might need more complex state management if we are in the edit modal.
-         // For now, assuming revisions are viewed from the list or edit modal.
-      }
     }
   });
 
@@ -215,7 +278,8 @@ export default function Journal() {
       ai_reframe_enabled: entry.ai_reframe_enabled,
       is_encrypted: entry.is_encrypted,
       music_style: entry.music_style || '',
-      revisions: entry.revisions || []
+      revisions: entry.revisions || [],
+      font: entry.font || 'Inter' // Fallback for old entries
     });
     setCurrentEntryId(entry.id);
     setIsAddModalOpen(true);
@@ -318,7 +382,8 @@ export default function Journal() {
                 entry_type: 'general',
                 ai_reframe_enabled: preferences?.enable_ai_journaling !== false,
                 music_style: '',
-                revisions: []
+                revisions: [],
+                font: preferences?.recent_journal_fonts?.[0] || 'Inter'
               });
               setCurrentEntryId(null);
               setIsAddModalOpen(true);
@@ -419,12 +484,108 @@ export default function Journal() {
 
         {/* Entry Modal */}
         <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-          <DialogContent className={`max-w-3xl max-h-[90vh] overflow-y-auto ${isDark ? 'bg-gray-900 border-gray-800' : ''}`}>
-            <DialogHeader>
+          <DialogContent className={`max-w-4xl max-h-[90vh] overflow-y-auto ${isDark ? 'bg-gray-900 border-gray-800' : ''}`}>
+            <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <DialogTitle className={`flex items-center gap-2 ${textClass}`}>
                 <Sparkles className="w-5 h-5 text-amber-500" />
-                New Entry
+                {currentEntryId ? 'Edit Entry' : 'New Entry'}
               </DialogTitle>
+              
+              <div className="flex items-center gap-3 pr-8">
+                {/* Font Picker Toggle */}
+                <div className="relative">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setShowFontPicker(!showFontPicker)}
+                    className="flex items-center gap-2 border border-dashed border-gray-300"
+                  >
+                    <Type className="w-4 h-4" />
+                    <span style={{ fontFamily: formData.font }}>{formData.font}</span>
+                    <ChevronDown className="w-3 h-3 opacity-50" />
+                  </Button>
+                  
+                  {showFontPicker && (
+                    <div className="absolute top-full right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-200 z-50 p-2 max-h-80 overflow-y-auto">
+                      {/* Favorites */}
+                      {(preferences?.favorite_journal_fonts || []).length > 0 && (
+                        <div className="mb-2">
+                          <div className="text-xs font-semibold text-gray-400 px-2 mb-1">Favorites</div>
+                          {preferences.favorite_journal_fonts.map(fontName => (
+                            <button
+                              key={fontName}
+                              onClick={() => selectFont(fontName)}
+                              className={`w-full text-left px-2 py-1.5 rounded hover:bg-purple-50 flex items-center justify-between group ${formData.font === fontName ? 'bg-purple-50 text-purple-700' : 'text-gray-700'}`}
+                            >
+                              <span style={{ fontFamily: fontName }}>{fontName}</span>
+                              <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" onClick={(e) => { e.stopPropagation(); toggleFavoriteFont(fontName); }} />
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {/* Recent */}
+                      {(preferences?.recent_journal_fonts || []).length > 0 && (
+                        <div className="mb-2 border-t pt-2">
+                          <div className="text-xs font-semibold text-gray-400 px-2 mb-1">Recent</div>
+                          {preferences.recent_journal_fonts.filter(f => !(preferences?.favorite_journal_fonts || []).includes(f)).map(fontName => (
+                            <button
+                              key={fontName}
+                              onClick={() => selectFont(fontName)}
+                              className={`w-full text-left px-2 py-1.5 rounded hover:bg-purple-50 flex items-center justify-between group ${formData.font === fontName ? 'bg-purple-50 text-purple-700' : 'text-gray-700'}`}
+                            >
+                              <span style={{ fontFamily: fontName }}>{fontName}</span>
+                              <Star className="w-3 h-3 text-gray-300 hover:text-yellow-400 group-hover:block hidden" onClick={(e) => { e.stopPropagation(); toggleFavoriteFont(fontName); }} />
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* All Fonts */}
+                      <div className="border-t pt-2">
+                        <div className="text-xs font-semibold text-gray-400 px-2 mb-1">All Fonts</div>
+                        {JOURNAL_FONTS.map(font => (
+                          <button
+                            key={font.name}
+                            onClick={() => selectFont(font.name)}
+                            className={`w-full text-left px-2 py-1.5 rounded hover:bg-purple-50 flex items-center justify-between group ${formData.font === font.name ? 'bg-purple-50 text-purple-700' : 'text-gray-700'}`}
+                          >
+                            <span style={{ fontFamily: font.name }} className="text-base">{font.name}</span>
+                            <Star 
+                              className={`w-3 h-3 hover:text-yellow-400 ${
+                                (preferences?.favorite_journal_fonts || []).includes(font.name) 
+                                ? 'fill-yellow-400 text-yellow-400' 
+                                : 'text-gray-300 hidden group-hover:block'
+                              }`} 
+                              onClick={(e) => { e.stopPropagation(); toggleFavoriteFont(font.name); }} 
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Encryption Toggle - Moved to Header */}
+                <div className="flex items-center gap-2">
+                  <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all ${
+                    formData.is_encrypted 
+                      ? 'bg-green-100 border-green-200 text-green-800' 
+                      : 'bg-gray-100 border-gray-200 text-gray-500 hover:bg-gray-200'
+                  }`}>
+                    <Shield className="w-3 h-3" />
+                    <Label htmlFor="encrypt-toggle" className="text-xs cursor-pointer font-medium">
+                      {formData.is_encrypted ? 'Encrypted' : 'Encrypt'}
+                    </Label>
+                    <Switch
+                      id="encrypt-toggle"
+                      checked={formData.is_encrypted}
+                      onCheckedChange={(c) => setFormData(prev => ({ ...prev, is_encrypted: c, ai_reframe_enabled: !c && prev.ai_reframe_enabled }))}
+                      className="scale-75 origin-right"
+                    />
+                  </div>
+                </div>
+              </div>
             </DialogHeader>
             
             <div className="space-y-4 py-4">
@@ -846,7 +1007,11 @@ export default function Journal() {
                             </div>
                           )
                         ) : (
-                          <div onClick={() => openEdit(entry)} className="cursor-pointer hover:opacity-80 transition-opacity">
+                          <div 
+                            onClick={() => openEdit(entry)} 
+                            className="cursor-pointer hover:opacity-80 transition-opacity"
+                            style={{ fontFamily: entry.font || 'Inter' }}
+                          >
                             <p className={`${isDark ? 'text-gray-300' : 'text-gray-700'} whitespace-pre-wrap leading-relaxed`}>
                               {entry.content}
                             </p>
