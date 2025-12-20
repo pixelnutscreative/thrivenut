@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { BookOpen, Calendar, Sparkles, Brain, Shield, ChevronDown, ChevronUp, Search, Plus, X, Eye, EyeOff, Filter, ArrowUpDown, Music } from 'lucide-react';
+import { BookOpen, Calendar, Sparkles, Brain, Shield, ChevronDown, ChevronUp, Search, Plus, X, Eye, EyeOff, Filter, ArrowUpDown, Music, History, Trash2, RotateCcw, ExternalLink } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import AIReframingCard from '../components/journal/AIReframingCard';
@@ -69,8 +69,13 @@ export default function Journal() {
     mood_tag: 'reflective',
     entry_type: 'general',
     ai_reframe_enabled: false,
-    is_encrypted: false
+    is_encrypted: false,
+    music_style: '',
+    revisions: []
   });
+  
+  const [showRevisions, setShowRevisions] = useState(false);
+  const [currentEntryId, setCurrentEntryId] = useState(null);
 
   React.useEffect(() => {
     const loadUser = async () => {
@@ -109,8 +114,11 @@ export default function Journal() {
         content: '',
         mood_tag: 'reflective',
         entry_type: 'general',
-        ai_reframe_enabled: preferences?.enable_ai_journaling !== false
+        ai_reframe_enabled: preferences?.enable_ai_journaling !== false,
+        music_style: '',
+        revisions: []
       });
+      setCurrentEntryId(null);
       setShowAIReframe(false);
       setIsAddModalOpen(false);
       setCustomMood('');
@@ -120,11 +128,63 @@ export default function Journal() {
 
   const updateEntryMutation = useMutation({
     mutationFn: async ({ id, data }) => {
+      // Fetch current entry to save as revision
+      const currentEntry = entries.find(e => e.id === id);
+      if (currentEntry) {
+        const newRevision = {
+          date: new Date().toISOString(),
+          content: currentEntry.content,
+          title: currentEntry.title,
+          music_style: currentEntry.music_style
+        };
+        const updatedRevisions = [...(currentEntry.revisions || []), newRevision];
+        data.revisions = updatedRevisions;
+      }
       return await base44.entities.JournalEntry.update(id, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['journalEntries'] });
     },
+  });
+
+  const restoreRevisionMutation = useMutation({
+    mutationFn: async ({ id, revision }) => {
+      // When restoring, we don't necessarily create a NEW revision of the current state unless we want to.
+      // For simplicity, we just update the main fields with revision data.
+      // But user might want to keep the "bad" version they are replacing as a revision? 
+      // The user said "go back if they like how it was before". 
+      // Let's just update the content/title/style.
+      return await base44.entities.JournalEntry.update(id, {
+        content: revision.content,
+        title: revision.title,
+        music_style: revision.music_style
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['journalEntries'] });
+      // Update form data if we are editing this entry
+      if (currentEntryId) {
+         // This might need more complex state management if we are in the edit modal.
+         // For now, assuming revisions are viewed from the list or edit modal.
+      }
+    }
+  });
+
+  const deleteRevisionsMutation = useMutation({
+    mutationFn: async ({ id, revisionIndex = null, deleteAll = false }) => {
+      const entry = entries.find(e => e.id === id);
+      if (!entry) return;
+      
+      let newRevisions = [];
+      if (!deleteAll) {
+        newRevisions = entry.revisions.filter((_, index) => index !== revisionIndex);
+      }
+      
+      return await base44.entities.JournalEntry.update(id, { revisions: newRevisions });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['journalEntries'] });
+    }
   });
 
   const handleSubmit = () => {
@@ -136,8 +196,29 @@ export default function Journal() {
     if (formData.is_encrypted) {
       setShowEncryptionModal(true);
     } else {
-      createEntryMutation.mutate(submissionData);
+      if (currentEntryId) {
+        updateEntryMutation.mutate({ id: currentEntryId, data: submissionData });
+        setIsAddModalOpen(false);
+      } else {
+        createEntryMutation.mutate(submissionData);
+      }
     }
+  };
+
+  const openEdit = (entry) => {
+    setFormData({
+      date: entry.date,
+      title: entry.title || '',
+      content: entry.content,
+      mood_tag: entry.mood_tag || 'reflective',
+      entry_type: entry.entry_type || 'general',
+      ai_reframe_enabled: entry.ai_reframe_enabled,
+      is_encrypted: entry.is_encrypted,
+      music_style: entry.music_style || '',
+      revisions: entry.revisions || []
+    });
+    setCurrentEntryId(entry.id);
+    setIsAddModalOpen(true);
   };
 
   const handleEncryptionComplete = (key) => {
@@ -228,7 +309,20 @@ export default function Journal() {
           </motion.div>
           
           <Button 
-            onClick={() => setIsAddModalOpen(true)}
+            onClick={() => {
+              setFormData({
+                date: format(new Date(), 'yyyy-MM-dd'),
+                title: '',
+                content: '',
+                mood_tag: 'reflective',
+                entry_type: 'general',
+                ai_reframe_enabled: preferences?.enable_ai_journaling !== false,
+                music_style: '',
+                revisions: []
+              });
+              setCurrentEntryId(null);
+              setIsAddModalOpen(true);
+            }}
             className="bg-purple-600 hover:bg-purple-700 text-white"
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -443,6 +537,18 @@ export default function Journal() {
                 />
               </div>
 
+              {isPoetryMode && (
+                <div className="space-y-2">
+                  <label className={`text-sm font-medium ${textClass}`}>Music Style (for Suno)</label>
+                  <Input
+                    placeholder="e.g. Upbeat Pop, Sad Piano Jazz, Heavy Metal..."
+                    value={formData.music_style || ''}
+                    onChange={(e) => setFormData({...formData, music_style: e.target.value})}
+                    className={isDark ? 'bg-gray-700 border-gray-600' : ''}
+                  />
+                </div>
+              )}
+
               <div className="space-y-2">
                 <label className={`text-sm font-medium ${textClass}`}>
                   {isVentingMode ? "Let it all out... (this is a safe space)" : "Your thoughts..."}
@@ -515,16 +621,121 @@ export default function Journal() {
               </AnimatePresence>
             </div>
 
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>Cancel</Button>
-              <Button 
-                onClick={handleSubmit}
-                disabled={!formData.content.trim() || createEntryMutation.isPending}
-                className="bg-purple-600 hover:bg-purple-700"
-              >
-                Save Entry
-              </Button>
+            <DialogFooter className="flex justify-between sm:justify-between items-center w-full">
+              <div className="flex gap-2">
+                {currentEntryId && (formData.revisions?.length > 0) && (
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowRevisions(!showRevisions)}
+                    className="border-purple-200 text-purple-700 hover:bg-purple-50"
+                  >
+                    <History className="w-4 h-4 mr-2" />
+                    {showRevisions ? 'Hide Revisions' : `View Revisions (${formData.revisions.length})`}
+                  </Button>
+                )}
+                {isPoetryMode && (
+                  <a href="https://suno.com/invite/@iamnikolewithak" target="_blank" rel="noopener noreferrer">
+                    <Button variant="outline" className="border-pink-200 text-pink-700 hover:bg-pink-50">
+                      <Music className="w-4 h-4 mr-2" />
+                      Create in Suno
+                    </Button>
+                  </a>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>Cancel</Button>
+                <Button 
+                  onClick={handleSubmit}
+                  disabled={!formData.content.trim() || createEntryMutation.isPending}
+                  className="bg-purple-600 hover:bg-purple-700"
+                >
+                  {currentEntryId ? 'Update Entry' : 'Save Entry'}
+                </Button>
+              </div>
             </DialogFooter>
+
+            {/* Revisions Panel */}
+            <AnimatePresence>
+              {showRevisions && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="border-t border-gray-200 mt-4 pt-4"
+                >
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-bold text-gray-700">Revision History</h3>
+                    <Button 
+                      variant="destructive" 
+                      size="sm"
+                      onClick={() => {
+                        if (confirm('Are you sure you want to delete ALL revisions?')) {
+                          deleteRevisionsMutation.mutate({ id: currentEntryId, deleteAll: true });
+                          setFormData(prev => ({ ...prev, revisions: [] }));
+                        }
+                      }}
+                    >
+                      Delete All
+                    </Button>
+                  </div>
+                  <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
+                    {formData.revisions?.slice().reverse().map((rev, index) => {
+                      const originalIndex = formData.revisions.length - 1 - index;
+                      return (
+                        <div key={index} className="p-3 bg-gray-50 rounded-lg border border-gray-200 text-sm">
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <span className="font-medium text-gray-700">
+                                {format(new Date(rev.date), 'MMM d, yyyy h:mm a')}
+                              </span>
+                              {rev.title && <span className="block text-xs text-gray-500">Title: {rev.title}</span>}
+                            </div>
+                            <div className="flex gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0 text-blue-600"
+                                title="Restore this version"
+                                onClick={() => {
+                                  if (confirm('Replace current content with this revision?')) {
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      content: rev.content,
+                                      title: rev.title || prev.title,
+                                      music_style: rev.music_style || prev.music_style
+                                    }));
+                                  }
+                                }}
+                              >
+                                <RotateCcw className="w-3 h-3" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0 text-red-600"
+                                title="Delete revision"
+                                onClick={() => {
+                                  deleteRevisionsMutation.mutate({ id: currentEntryId, revisionIndex: originalIndex });
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    revisions: prev.revisions.filter((_, i) => i !== originalIndex)
+                                  }));
+                                }}
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          </div>
+                          <div className="text-gray-600 line-clamp-2 italic border-l-2 border-gray-300 pl-2">
+                            {rev.content}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </DialogContent>
         </Dialog>
 
@@ -565,7 +776,12 @@ export default function Journal() {
                               {format(new Date(entry.date), 'MMM d, yyyy')}
                             </p>
                             {entry.title && (
-                              <h3 className={`text-lg font-bold ${textClass} line-clamp-1`}>{entry.title}</h3>
+                              <h3 
+                                className={`text-lg font-bold ${textClass} line-clamp-1 cursor-pointer hover:underline`}
+                                onClick={() => openEdit(entry)}
+                              >
+                                {entry.title}
+                              </h3>
                             )}
                           </div>
                           <div className="flex flex-col items-end gap-1">
@@ -630,9 +846,11 @@ export default function Journal() {
                             </div>
                           )
                         ) : (
-                          <p className={`${isDark ? 'text-gray-300' : 'text-gray-700'} whitespace-pre-wrap leading-relaxed`}>
-                            {entry.content}
-                          </p>
+                          <div onClick={() => openEdit(entry)} className="cursor-pointer hover:opacity-80 transition-opacity">
+                            <p className={`${isDark ? 'text-gray-300' : 'text-gray-700'} whitespace-pre-wrap leading-relaxed`}>
+                              {entry.content}
+                            </p>
+                          </div>
                         )}
 
                         {/* Show AI suggestions if they exist */}
