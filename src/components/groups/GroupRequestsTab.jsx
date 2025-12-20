@@ -114,16 +114,31 @@ export default function GroupRequestsTab({ group, currentUser, myMembership, isA
     }
   });
 
+  const updateSettingsMutation = useMutation({
+    mutationFn: (newSettings) => {
+        const updatedGroupSettings = { ...group.settings, request_permissions: newSettings };
+        return base44.entities.CreatorGroup.update(group.id, { settings: updatedGroupSettings });
+    },
+    onSuccess: () => {
+        queryClient.invalidateQueries(['creatorGroups']); // Refresh group to get new settings
+        setIsSettingsOpen(false);
+    }
+  });
+
+  // Permission Check
+  const canCreate = isAdmin || (
+      requestSettings.enabled && (
+          (!requestSettings.allowed_levels?.length && !requestSettings.allowed_users?.length) ||
+          requestSettings.allowed_levels?.includes(myMembership?.level) ||
+          requestSettings.allowed_users?.includes(currentUser.email)
+      )
+  );
+
   // Filtering
   const visibleRequests = requests.filter(req => {
-    if (isAdmin) return true; // Admins see all? Or only those assigned? 
-    // Usually admins see all support requests.
-    // If "Access Control" restricts visibility, maybe some admins are restricted?
-    // Assuming "Admin-configurable request visibility" means Admins configure who can see it.
-    // The Creator of the request should always see it.
+    if (isAdmin) return true; 
     if (req.user_email === currentUser.email) return true;
     
-    // Check permissions for others
     const levelMatch = req.target_levels?.includes(myMembership?.level);
     const userMatch = req.target_users?.includes(currentUser.email);
     
@@ -133,15 +148,62 @@ export default function GroupRequestsTab({ group, currentUser, myMembership, isA
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h3 className="text-xl font-bold">Support & Requests</h3>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button><Plus className="w-4 h-4 mr-2" /> New Request</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Submit Request</DialogTitle>
-            </DialogHeader>
+        <div className="flex items-center gap-2">
+            <h3 className="text-xl font-bold">Support & Requests</h3>
+            {isAdmin && (
+                <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+                    <DialogTrigger asChild>
+                        <Button variant="ghost" size="icon"><Settings className="w-5 h-5" /></Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader><DialogTitle>Request Settings</DialogTitle></DialogHeader>
+                        <div className="space-y-4 py-4">
+                            <div className="flex items-center justify-between">
+                                <span className="font-medium">Enable Requests</span>
+                                <input 
+                                    type="checkbox" 
+                                    checked={requestSettings.enabled} 
+                                    onChange={e => setRequestSettings({...requestSettings, enabled: e.target.checked})} 
+                                    className="h-5 w-5"
+                                />
+                            </div>
+                            
+                            {requestSettings.enabled && (
+                                <>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Allowed Levels (Empty = All)</label>
+                                        <LevelSelector 
+                                            group={group} 
+                                            selectedLevels={requestSettings.allowed_levels || []} 
+                                            onChange={levels => setRequestSettings({...requestSettings, allowed_levels: levels})} 
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Allowed Members (Empty = All)</label>
+                                        <MemberSelector 
+                                            group={group} 
+                                            selectedUsers={requestSettings.allowed_users || []} 
+                                            onChange={users => setRequestSettings({...requestSettings, allowed_users: users})} 
+                                        />
+                                    </div>
+                                </>
+                            )}
+                            <Button onClick={() => updateSettingsMutation.mutate(requestSettings)} className="w-full">Save Settings</Button>
+                        </div>
+                    </DialogContent>
+                </Dialog>
+            )}
+        </div>
+
+        {canCreate && (
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+                <Button><Plus className="w-4 h-4 mr-2" /> New Request</Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                <DialogTitle>Submit Request</DialogTitle>
+                </DialogHeader>
             <div className="space-y-4 py-4">
               <Input 
                 placeholder="Title" 
