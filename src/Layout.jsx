@@ -77,6 +77,20 @@ export default function Layout({ children, currentPageName }) {
   const adminEmails = ['pixelnutscreative@gmail.com', 'pixel@thrivenut.app'];
   const isAdmin = realUserEmail && adminEmails.includes(realUserEmail);
 
+  // Fetch My Groups for Menu
+  const { data: myMenuGroups = [] } = useQuery({
+    queryKey: ['myMenuGroups', effectiveEmail],
+    queryFn: async () => {
+      if (!effectiveEmail) return [];
+      const memberships = await base44.entities.CreatorGroupMember.filter({ user_email: effectiveEmail, status: 'active' });
+      if (memberships.length === 0) return [];
+      
+      const details = await Promise.all(memberships.map(m => base44.entities.CreatorGroup.filter({ id: m.group_id })));
+      return details.flat().filter(g => g && g.status === 'active');
+    },
+    enabled: !!effectiveEmail
+  });
+
   // Permissions
   const hasTikTokAccess = isAdmin || preferences?.tiktok_access_approved;
   // Determine if Bible features are enabled (default to true if undefined)
@@ -116,6 +130,20 @@ export default function Layout({ children, currentPageName }) {
     items: [
     { name: getDashboardName(), icon: LayoutDashboard, path: 'Dashboard', alwaysShow: true },
     { name: preferences?.my_resources_label || 'My Stuff', icon: Bookmark, path: 'MyResources' },
+    { 
+      name: 'My Groups', 
+      icon: Users, 
+      isSection: true,
+      alwaysShow: true,
+      subItems: [
+         { name: 'Browse Groups', icon: Search, path: 'CreatorGroups?mode=browse' },
+         ...myMenuGroups.map(g => ({
+           name: g.name,
+           icon: Users,
+           path: `CreatorGroups?id=${g.id}`
+         }))
+      ]
+    },
     { name: "Pixel's Place", icon: Sparkles, path: 'PixelsParadise', alwaysShow: true }]
 
   },
@@ -204,7 +232,6 @@ export default function Layout({ children, currentPageName }) {
     color: 'text-pink-400', // Hot Pink
     bgColor: 'bg-pink-500/10',
     items: [
-    { name: 'My Groups', icon: Users, path: 'CreatorGroups', alwaysShow: true },
     { name: 'Settings', icon: Settings, path: 'Settings', alwaysShow: true },
     { name: 'Support', icon: HelpCircle, path: 'Support', alwaysShow: true },
     { name: 'Admin Panel', icon: UserCog, path: 'Admin', adminOnly: true },
@@ -241,7 +268,14 @@ export default function Layout({ children, currentPageName }) {
 
   const isSubItemActive = (item) => {
     if (item.subItems) {
-      return item.subItems.some((sub) => sub.path === currentPageName);
+      return item.subItems.some((sub) => {
+         // Check exact path match or if path contains query params, check against location
+         if (sub.path.includes('?')) {
+             const [path, search] = sub.path.split('?');
+             return path === currentPageName && location.search.includes(search);
+         }
+         return sub.path === currentPageName;
+      });
     }
     return false;
   };
