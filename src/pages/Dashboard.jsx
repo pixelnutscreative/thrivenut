@@ -239,6 +239,17 @@ export default function Dashboard() {
     updatePreferencesMutation.mutate({ dashboard_layout: updatedLayout });
   };
 
+  const toggleWidgetWidth = (widgetId) => {
+    const updatedLayout = layout.map(item => {
+      if (item.id === widgetId) {
+        return { ...item, width: item.width === 'full' ? 'half' : 'full' };
+      }
+      return item;
+    });
+    setLayout(updatedLayout);
+    updatePreferencesMutation.mutate({ dashboard_layout: updatedLayout });
+  };
+
   const renderWidget = (widget) => {
     if (!widget.visible) return null;
 
