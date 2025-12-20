@@ -91,7 +91,6 @@ export default function CreatorGroups() {
 
   const createGroupMutation = useMutation({
     mutationFn: async ({ name, type }) => {
-      // 1. Create Group
       const group = await base44.entities.CreatorGroup.create({
         name,
         owner_email: user.email,
@@ -99,7 +98,6 @@ export default function CreatorGroups() {
         status: 'active',
         type
       });
-      // 2. Add Owner as Member
       await base44.entities.CreatorGroupMember.create({
         group_id: group.id,
         user_email: user.email,
@@ -107,7 +105,6 @@ export default function CreatorGroups() {
         status: 'active',
         joined_date: new Date().toISOString()
       });
-      // Wait a moment to ensure database consistency before refetching
       await new Promise(resolve => setTimeout(resolve, 800));
       return group;
     },
@@ -146,7 +143,7 @@ export default function CreatorGroups() {
       else alert('Request to join sent! An admin will approve you shortly.');
       
       queryClient.invalidateQueries(['myGroupMemberships']);
-      setSearchParams({ id: group.id }); // Go to dashboard (might be restricted view if pending)
+      setSearchParams({ id: group.id }); 
     },
     onError: () => alert('Invalid invite code or error joining.')
   });
@@ -156,7 +153,6 @@ export default function CreatorGroups() {
       if (window.confirm('Do you want to join this group?')) {
         joinMutation.mutate(inviteCode);
       } else {
-        // Remove invite param if they cancel
         setSearchParams({});
       }
     }
@@ -171,7 +167,6 @@ export default function CreatorGroups() {
   const referralCode = searchParams.get('ref');
   useEffect(() => {
     if (inviteCode && referralCode && user?.email) {
-      // Track referral
       base44.functions.invoke('trackReferral', { 
         code: referralCode, 
         event: 'group_join',
@@ -532,8 +527,6 @@ export default function CreatorGroups() {
         <CryptoTickerWidget 
           portfolio={activeGroup.crypto_tickers || []}
           onUpdatePortfolio={(tickers, newColor) => {
-             // Handle both tickers update and color update if provided
-             // Assuming newColor is passed if color changed
              const updateData = { crypto_tickers: tickers };
              if (newColor) {
                updateData.settings = { ...(activeGroup.settings || {}), ticker_color: newColor };
@@ -592,7 +585,6 @@ export default function CreatorGroups() {
                   </TabsTrigger>
                 );
               })}
-              {/* Show hidden count or generic "See All" if many hidden? For now customizable via modal */}
               
               {isAdmin && (
                 <TabsTrigger value="settings" className="px-4 py-2 rounded-lg data-[state=active]:bg-gray-800 data-[state=active]:text-white ml-auto">
