@@ -186,15 +186,17 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
                       </div>
                     )}
                   </div>
-                  <div className="prose prose-sm text-gray-600 line-clamp-3 max-w-none" dangerouslySetInnerHTML={{ __html: resource.description }} />
-                  <a 
-                    href={resource.url} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="inline-flex items-center gap-1 text-sm text-purple-600 mt-2 hover:underline"
-                  >
-                    Open Resource <ExternalLink className="w-3 h-3" />
-                  </a>
+                  <div className="prose prose-sm text-gray-600 max-w-none" dangerouslySetInnerHTML={{ __html: resource.description }} />
+                  {resource.url && (
+                    <a 
+                      href={resource.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="inline-flex items-center gap-1 text-sm text-purple-600 mt-2 hover:underline"
+                    >
+                      Open Resource <ExternalLink className="w-3 h-3" />
+                    </a>
+                  )}
                   {resource.submitted_by && isAdmin && (
                     <p className="text-xs text-gray-400 mt-2">Shared by: {resource.submitted_by}</p>
                   )}
