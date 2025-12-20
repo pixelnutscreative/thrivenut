@@ -11,13 +11,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { HelpCircle, CheckCircle, Clock, XCircle, ChevronRight, MessageCircle, Pencil, Trash2 } from 'lucide-react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
-import LevelSelector from './LevelSelector';
+import VisibilityControl from './VisibilityControl';
 
 export default function GroupQnATab({ group, currentUser, myMembership, isAdmin }) {
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [formData, setFormData] = useState({ question: '', details: '', target_levels: [] });
+  const [formData, setFormData] = useState({ 
+    question: '', 
+    details: '', 
+    visible_to_levels: [], 
+    visible_to_specific_emails: [] 
+  });
 
   const { data: qnas = [] } = useQuery({
     queryKey: ['groupQnA', group.id],
@@ -55,7 +60,8 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
     setFormData({
       question: qna.question,
       details: qna.details || '',
-      target_levels: qna.target_levels || []
+      visible_to_levels: qna.visible_to_levels || [],
+      visible_to_specific_emails: qna.visible_to_specific_emails || []
     });
     setIsDialogOpen(true);
   };
@@ -63,29 +69,60 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
     setEditingId(null);
-    setFormData({ question: '', details: '', target_levels: [] });
+    setFormData({ question: '', details: '', visible_to_levels: [], visible_to_specific_emails: [] });
   };
 
   const handleSubmit = () => {
+    // If not admin, force empty visibility (public to group) or default?
+    // Actually users usually just ask. Admins set visibility.
+    // If user is editing, they shouldn't change visibility if they are not admin.
+    const data = { ...formData };
+    if (!isAdmin && !editingId) {
+       delete data.visible_to_levels;
+       delete data.visible_to_specific_emails;
+    }
+
     if (editingId) {
-      updateMutation.mutate(formData);
+      updateMutation.mutate(data);
     } else {
-      askMutation.mutate(formData);
+      askMutation.mutate(data);
     }
   };
 
   const answerMutation = useMutation({
-    mutationFn: ({ id, answer, status }) => base44.entities.GroupQnA.update(id, { 
-      answer, 
-      status, 
-      answered_by: currentUser.email,
-      answered_date: new Date().toISOString()
-    }),
-    onSuccess: () => queryClient.invalidateQueries(['groupQnA', group.id])
+    mutationFn: ({ id, answer, status, visible_to_levels, visible_to_specific_emails }) => 
+      base44.entities.GroupQnA.update(id, { 
+        answer, 
+        status, 
+        answered_by: currentUser.email,
+        answered_date: new Date().toISOString(),
+        visible_to_levels,
+        visible_to_specific_emails
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['groupQnA', group.id]);
+      // Notify user
+      // Note: We'd need the question asker's email to notify efficiently
+    }
   });
 
   // Filter visibility
-  const publishedQnA = qnas.filter(q => q.status === 'published');
+  const isVisible = (q) => {
+    if (isAdmin) return true;
+    if (q.asked_by === currentUser.email) return true;
+    
+    const hasLevels = q.visible_to_levels && q.visible_to_levels.length > 0;
+    const hasEmails = q.visible_to_specific_emails && q.visible_to_specific_emails.length > 0;
+    
+    if (!hasLevels && !hasEmails) return true; // Public to group if no restrictions
+    
+    if (hasLevels && q.visible_to_levels.includes(myMembership?.level)) return true;
+    if (hasEmails && q.visible_to_specific_emails.includes(currentUser.email)) return true;
+    
+    return false;
+  };
+
+  const publishedQnA = qnas.filter(q => q.status === 'published' && isVisible(q));
   const myPendingQnA = qnas.filter(q => q.status === 'pending' && q.asked_by === currentUser.email);
   const adminPendingQnA = isAdmin ? qnas.filter(q => q.status === 'pending') : [];
 
@@ -117,12 +154,13 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
                 />
               </div>
               
-              {/* Only admins see level selector for Q&A questions (usually when editing) */}
               {isAdmin && (
-                <LevelSelector 
-                  group={group} 
-                  selectedLevels={formData.target_levels} 
-                  onChange={(levels) => setFormData({...formData, target_levels: levels})} 
+                <VisibilityControl 
+                  group={group}
+                  selectedLevels={formData.visible_to_levels}
+                  selectedEmails={formData.visible_to_specific_emails}
+                  onLevelsChange={l => setFormData({...formData, visible_to_levels: l})}
+                  onEmailsChange={e => setFormData({...formData, visible_to_specific_emails: e})}
                 />
               )}
 
@@ -163,12 +201,22 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
                 {q.details && (
                   <div className="text-sm text-gray-600 ml-6 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: q.details }} />
                 )}
-                <div className="bg-green-50 p-3 rounded-lg ml-6 border border-green-100">
-                  <div className="font-medium text-green-800 flex gap-2 mb-1">
-                    <span className="text-green-600">A:</span> Answer
+                {q.answer && (
+                  <div className="bg-green-50 p-3 rounded-lg ml-6 border border-green-100">
+                    <div className="font-medium text-green-800 flex gap-2 mb-1">
+                      <span className="text-green-600">A:</span> Answer
+                    </div>
+                    <div className="text-sm text-gray-800 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: q.answer }} />
                   </div>
-                  <div className="text-sm text-gray-800 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: q.answer }} />
-                </div>
+                )}
+                
+                {isAdmin && (q.visible_to_levels?.length > 0 || q.visible_to_specific_emails?.length > 0) && (
+                  <div className="mt-2 text-[10px] text-gray-400 ml-6 flex gap-2">
+                    <span className="font-bold">Visible to:</span>
+                    {q.visible_to_levels?.length > 0 && <span>Levels: {q.visible_to_levels.join(', ')}</span>}
+                    {q.visible_to_specific_emails?.length > 0 && <span>Users: {q.visible_to_specific_emails.length}</span>}
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}
@@ -178,7 +226,7 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
         {isAdmin && (
           <TabsContent value="pending" className="space-y-4 mt-4">
             {adminPendingQnA.map(q => (
-              <AdminAnswerCard key={q.id} qna={q} onAnswer={answerMutation.mutate} />
+              <AdminAnswerCard key={q.id} qna={q} group={group} onAnswer={answerMutation.mutate} />
             ))}
             {adminPendingQnA.length === 0 && <div className="text-center py-8 text-gray-500">No pending questions.</div>}
           </TabsContent>
@@ -201,8 +249,10 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
   );
 }
 
-function AdminAnswerCard({ qna, onAnswer }) {
+function AdminAnswerCard({ qna, group, onAnswer }) {
   const [answer, setAnswer] = useState('');
+  const [visibleToLevels, setVisibleToLevels] = useState(qna.visible_to_levels || []);
+  const [visibleToEmails, setVisibleToEmails] = useState(qna.visible_to_specific_emails || []);
   
   return (
     <Card>
@@ -221,11 +271,31 @@ function AdminAnswerCard({ qna, onAnswer }) {
             placeholder="Write your answer..."
           />
         </div>
+        
+        <VisibilityControl 
+          group={group}
+          selectedLevels={visibleToLevels}
+          selectedEmails={visibleToEmails}
+          onLevelsChange={setVisibleToLevels}
+          onEmailsChange={setVisibleToEmails}
+          className="mb-4"
+        />
+
         <div className="flex gap-2 justify-end">
           <Button variant="outline" size="sm" onClick={() => onAnswer({ id: qna.id, status: 'rejected' })} className="text-red-500">
             Reject
           </Button>
-          <Button size="sm" onClick={() => onAnswer({ id: qna.id, answer, status: 'published' })} disabled={!answer}>
+          <Button 
+            size="sm" 
+            onClick={() => onAnswer({ 
+              id: qna.id, 
+              answer, 
+              status: 'published',
+              visible_to_levels: visibleToLevels,
+              visible_to_specific_emails: visibleToEmails
+            })} 
+            disabled={!answer}
+          >
             Publish Answer
           </Button>
         </div>
