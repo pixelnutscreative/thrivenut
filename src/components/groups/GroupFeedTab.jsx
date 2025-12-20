@@ -304,11 +304,11 @@ function FeedItemCard({ item, isAdmin, currentUser, onEdit, onDelete, onHide, on
 
   const getIcon = () => {
     switch(item.type) {
-      case 'post': return <MessageSquare className="w-5 h-5 text-blue-500" />;
-      case 'event': return <Calendar className="w-5 h-5 text-green-500" />;
-      case 'resource': return <LinkIcon className="w-5 h-5 text-purple-500" />;
-      case 'training': return <Video className="w-5 h-5 text-red-500" />;
-      default: return <FileText className="w-5 h-5" />;
+      case 'post': return <MessageSquare className="w-6 h-6 text-blue-500" />;
+      case 'event': return <Calendar className="w-6 h-6 text-green-500" />;
+      case 'resource': return <LinkIcon className="w-6 h-6 text-purple-500" />;
+      case 'training': return <Video className="w-6 h-6 text-red-500" />;
+      default: return <FileText className="w-6 h-6" />;
     }
   };
 
