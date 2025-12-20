@@ -348,7 +348,16 @@ export default function Dashboard() {
       <div className={`min-h-screen ${bgClass} p-4 md:p-8`}>
         <div className="max-w-7xl mx-auto space-y-8">
           
-          {/* Customizer removed as requested */}
+          <div className="flex justify-end mb-4">
+             <Button 
+               variant="outline" 
+               size="sm" 
+               onClick={() => setShowManageModal(true)}
+               className="gap-2"
+             >
+               <Settings className="w-4 h-4" /> Manage Widgets
+             </Button>
+          </div>
 
           <DragDropContext onDragEnd={onDragEnd}>
             <Droppable droppableId="dashboard-grid" direction="horizontal">
@@ -417,11 +426,12 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <DashboardCustomizer
-        isOpen={showCustomizeModal}
-        onClose={() => setShowCustomizeModal(false)}
-        currentLayout={layout}
-        onSave={saveLayout}
+      <ManageWidgetsDialog
+        isOpen={showManageModal}
+        onClose={() => setShowManageModal(false)}
+        layout={layout}
+        onUpdateLayout={saveLayout}
+        userEmail={user?.email}
       />
     </>
   );
