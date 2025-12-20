@@ -123,11 +123,15 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
                 <SelectContent>
                   <SelectItem value="video">YouTube Video</SelectItem>
                   <SelectItem value="article">Article / Blog</SelectItem>
-                  <SelectItem value="link">Other Link</SelectItem>
+                  <SelectItem value="link">Website Link</SelectItem>
+                  <SelectItem value="text">Message / Contact Info</SelectItem>
                 </SelectContent>
               </Select>
               <Input placeholder="Title" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
-              <Input placeholder="URL" value={formData.url} onChange={e => setFormData({...formData, url: e.target.value})} />
+              
+              {formData.type !== 'text' && (
+                <Input placeholder="URL (https://...)" value={formData.url} onChange={e => setFormData({...formData, url: e.target.value})} />
+              )}
               
               <div className="h-48 mb-12">
                 <ReactQuill 
