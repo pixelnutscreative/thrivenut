@@ -5,9 +5,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { 
-  ArrowUp, ArrowDown, Eye, EyeOff, GripVertical, RefreshCw, Check, X 
+  Eye, EyeOff, GripVertical, RefreshCw, LayoutTemplate, Columns 
 } from 'lucide-react';
-import { motion, Reorder } from 'framer-motion';
+import { Reorder, useDragControls } from 'framer-motion';
 
 const WIDGET_LABELS = {
   daily_motivation: 'Daily Motivation',
@@ -22,26 +22,30 @@ const WIDGET_LABELS = {
 };
 
 const DEFAULT_LAYOUT = [
-  { id: 'daily_motivation', visible: true, order: 0 },
-  { id: 'my_day', visible: true, order: 1 },
-  { id: 'tasks', visible: true, order: 2 },
-  { id: 'goals', visible: true, order: 3 },
-  { id: 'habits', visible: true, order: 4 },
-  { id: 'calendar_integration', visible: true, order: 5 },
-  { id: 'special_events', visible: true, order: 6 },
-  { id: 'subscribed_events', visible: true, order: 7 }
+  { id: 'daily_motivation', visible: true, order: 0, width: 'full' },
+  { id: 'my_day', visible: true, order: 1, width: 'full' },
+  { id: 'tasks', visible: true, order: 2, width: 'half' },
+  { id: 'goals', visible: true, order: 3, width: 'half' },
+  { id: 'habits', visible: true, order: 4, width: 'half' },
+  { id: 'calendar_integration', visible: true, order: 5, width: 'half' },
+  { id: 'special_events', visible: true, order: 6, width: 'half' },
+  { id: 'subscribed_events', visible: true, order: 7, width: 'half' }
 ];
 
 export default function DashboardCustomizer({ isOpen, onClose, currentLayout, onSave }) {
   const [layout, setLayout] = useState([]);
 
   useEffect(() => {
-    if (isOpen && currentLayout) {
-      // Ensure all defaults are present
-      const merged = [...currentLayout];
+    if (isOpen) {
+      // Ensure all defaults are present and have default widths if missing
+      const merged = [...(currentLayout || [])];
       DEFAULT_LAYOUT.forEach(def => {
-        if (!merged.find(p => p.id === def.id)) {
+        const existing = merged.find(p => p.id === def.id);
+        if (!existing) {
           merged.push(def);
+        } else if (!existing.width) {
+          // Add default width if missing from existing layout
+          existing.width = def.width;
         }
       });
       // Sort by order
@@ -50,21 +54,15 @@ export default function DashboardCustomizer({ isOpen, onClose, currentLayout, on
     }
   }, [isOpen, currentLayout]);
 
-  const handleMove = (index, direction) => {
-    const newLayout = [...layout];
-    if (direction === 'up' && index > 0) {
-      [newLayout[index], newLayout[index - 1]] = [newLayout[index - 1], newLayout[index]];
-    } else if (direction === 'down' && index < newLayout.length - 1) {
-      [newLayout[index], newLayout[index + 1]] = [newLayout[index + 1], newLayout[index]];
-    }
-    // Re-index orders
-    const ordered = newLayout.map((item, i) => ({ ...item, order: i }));
-    setLayout(ordered);
-  };
-
-  const handleToggle = (id) => {
+  const handleToggleVisibility = (id) => {
     setLayout(prev => prev.map(item => 
       item.id === id ? { ...item, visible: !item.visible } : item
+    ));
+  };
+
+  const handleToggleWidth = (id) => {
+    setLayout(prev => prev.map(item => 
+      item.id === id ? { ...item, width: item.width === 'full' ? 'half' : 'full' } : item
     ));
   };
 
@@ -73,7 +71,9 @@ export default function DashboardCustomizer({ isOpen, onClose, currentLayout, on
   };
 
   const handleSave = () => {
-    onSave(layout);
+    // Re-index orders based on current array position
+    const ordered = layout.map((item, i) => ({ ...item, order: i }));
+    onSave(ordered);
     onClose();
   };
 
@@ -81,70 +81,85 @@ export default function DashboardCustomizer({ isOpen, onClose, currentLayout, on
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md max-h-[80vh] overflow-hidden flex flex-col bg-white">
+      <DialogContent className="max-w-xl max-h-[85vh] overflow-hidden flex flex-col bg-white">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             Customize Dashboard
           </DialogTitle>
           <DialogDescription>
-            Show, hide, and reorder your dashboard sections.
+            Drag to reorder. Toggle visibility and width (full/half).
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto pr-2 py-2 space-y-3">
-          {layout.map((widget, index) => {
-            if (!widget || !widget.id) return null;
-            
-            return (
-              <motion.div
-                key={widget.id}
-                layoutId={widget.id}
-                initial={false}
-                className={`flex items-center justify-between p-3 rounded-xl border-2 transition-all ${
-                  widget.visible 
-                    ? 'border-purple-100 bg-purple-50/50' 
-                    : 'border-gray-100 bg-gray-50 opacity-70'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex flex-col gap-1">
-                    <button
-                      onClick={() => handleMove(index, 'up')}
-                      disabled={index === 0}
-                      className="p-1 hover:bg-gray-200 rounded-md disabled:opacity-30 transition-colors"
-                    >
-                      <ArrowUp className="w-3 h-3 text-gray-500" />
-                    </button>
-                    <button
-                      onClick={() => handleMove(index, 'down')}
-                      disabled={index === layout.length - 1}
-                      className="p-1 hover:bg-gray-200 rounded-md disabled:opacity-30 transition-colors"
-                    >
-                      <ArrowDown className="w-3 h-3 text-gray-500" />
-                    </button>
+        <div className="flex-1 overflow-y-auto pr-2 py-2">
+          <Reorder.Group axis="y" values={layout} onReorder={setLayout} className="space-y-2">
+            {layout.map((widget) => {
+              if (!widget || !widget.id) return null;
+              
+              return (
+                <Reorder.Item
+                  key={widget.id}
+                  value={widget}
+                  className={`flex items-center justify-between p-3 rounded-xl border-2 bg-white transition-colors ${
+                    widget.visible ? 'border-gray-200' : 'border-gray-100 opacity-60'
+                  }`}
+                >
+                  <div className="flex items-center gap-3 flex-1">
+                    <GripVertical className="w-5 h-5 text-gray-400 cursor-grab active:cursor-grabbing" />
+                    
+                    <div className="flex flex-col">
+                      <p className={`font-medium text-sm ${widget.visible ? 'text-gray-900' : 'text-gray-500'}`}>
+                        {WIDGET_LABELS[widget.id] || widget.id.replace(/_/g, ' ')}
+                      </p>
+                    </div>
                   </div>
-                  
-                  <div>
-                    <p className={`font-medium text-sm ${widget.visible ? 'text-gray-900' : 'text-gray-500'}`}>
-                      {WIDGET_LABELS[widget.id] || widget.id.replace(/_/g, ' ')}
-                    </p>
-                  </div>
-                </div>
 
-                <div className="flex items-center gap-3">
-                  <div className={`p-1.5 rounded-full ${
-                    widget.visible ? 'bg-green-100 text-green-600' : 'bg-gray-200 text-gray-400'
-                  }`}>
-                    {widget.visible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                  <div className="flex items-center gap-2">
+                    {/* Width Toggle */}
+                    <div className="flex bg-gray-100 rounded-lg p-1 mr-2">
+                      <button
+                        onClick={() => widget.visible && handleToggleWidth(widget.id)}
+                        disabled={!widget.visible}
+                        className={`p-1.5 rounded-md transition-all ${
+                          widget.width === 'half' 
+                            ? 'bg-white shadow-sm text-gray-900' 
+                            : 'text-gray-400 hover:text-gray-600'
+                        }`}
+                        title="Half Width"
+                      >
+                        <Columns className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => widget.visible && handleToggleWidth(widget.id)}
+                        disabled={!widget.visible}
+                        className={`p-1.5 rounded-md transition-all ${
+                          widget.width === 'full' 
+                            ? 'bg-white shadow-sm text-gray-900' 
+                            : 'text-gray-400 hover:text-gray-600'
+                        }`}
+                        title="Full Width"
+                      >
+                        <LayoutTemplate className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    {/* Visibility Toggle */}
+                    <div className="flex items-center gap-2 pl-2 border-l border-gray-200">
+                      {widget.visible ? (
+                        <Eye className="w-4 h-4 text-gray-500" />
+                      ) : (
+                        <EyeOff className="w-4 h-4 text-gray-300" />
+                      )}
+                      <Switch 
+                        checked={widget.visible} 
+                        onCheckedChange={() => handleToggleVisibility(widget.id)}
+                      />
+                    </div>
                   </div>
-                  <Switch 
-                    checked={widget.visible} 
-                    onCheckedChange={() => handleToggle(widget.id)}
-                  />
-                </div>
-              </motion.div>
-            );
-          })}
+                </Reorder.Item>
+              );
+            })}
+          </Reorder.Group>
         </div>
 
         <DialogFooter className="flex-col sm:flex-row gap-2 pt-4 border-t mt-2">

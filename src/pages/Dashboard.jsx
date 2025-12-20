@@ -36,21 +36,14 @@ export default function Dashboard() {
   
   const { bgClass, textClass, cardBgClass, primaryColor } = useTheme();
 
-  // Get current week's Monday
-  const getCurrentWeekStart = () => {
-    return format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd');
-  };
-
   useEffect(() => {
     const checkAuth = async () => {
       try {
         const userData = await base44.auth.me();
         setUser(userData);
 
-        // Verify user activity on each dashboard visit
         base44.functions.invoke('verifyRealUser', {}).catch(() => {});
 
-        // Check if user is pre-approved and auto-grant TikTok access
         if (userData?.email) {
           const prefs = await base44.entities.UserPreferences.filter({ user_email: userData.email }, '-updated_date');
           if (prefs[0] && !prefs[0].tiktok_access_approved) {
@@ -62,9 +55,7 @@ export default function Dashboard() {
               if (preApproved.length > 0) {
                 await base44.entities.UserPreferences.update(prefs[0].id, { tiktok_access_approved: true });
               }
-            } catch (e) {
-              // Ignore - user may not have access to PreApprovedEmail entity
-            }
+            } catch (e) {}
           }
         }
       } catch (error) {
@@ -84,89 +75,39 @@ export default function Dashboard() {
     enabled: !!user,
   });
 
-  // Force re-render when preferences change to update motivation banner
   const [prefKey, setPrefKey] = useState(0);
   useEffect(() => {
     setPrefKey(prev => prev + 1);
   }, [preferences]);
 
-  // Admin check
   const realUserEmail = user?.email ? user.email.toLowerCase() : '';
   const adminEmails = ['pixelnutscreative@gmail.com', 'pixel@thrivenut.app'];
   const isAdmin = adminEmails.includes(realUserEmail);
 
-  // Check if onboarding should show AND initialize referral tracking
   useEffect(() => {
     if (user && preferences !== undefined) {
       const hasCompletedOnboarding = preferences?.onboarding_completed || 
                                      localStorage.getItem(`onboarding_completed_${user.email}`) === 'true' ||
-                                     isAdmin; // Admins never see onboarding
+                                     isAdmin;
       setShowOnboarding(!hasCompletedOnboarding);
 
-      // CRITICAL: Always try to initialize referral code for new users (tracks signup)
       if (!hasCompletedOnboarding) {
-        // Get referral code from storage
         let referralCode = sessionStorage.getItem('referral_code');
         if (!referralCode) {
           try {
             const storedData = localStorage.getItem('referral_data');
             if (storedData) {
               const parsed = JSON.parse(storedData);
-              const expiresAt = new Date(parsed.expiresAt);
-              if (expiresAt > new Date()) {
+              if (new Date(parsed.expiresAt) > new Date()) {
                 referralCode = parsed.code;
               }
             }
           } catch (e) {}
         }
-
-        // Initialize referral tracking
-        base44.functions.invoke('initializeReferralCode', { 
-          referral_code: referralCode 
-        }).catch(() => {});
+        base44.functions.invoke('initializeReferralCode', { referral_code: referralCode }).catch(() => {});
       }
     }
   }, [user, preferences]);
-
-  const contentGoal = null; // Removed feature
-
-
-
-  const { data: todaysWater } = useQuery({
-    queryKey: ['waterToday', format(new Date(), 'yyyy-MM-dd')],
-    queryFn: async () => {
-      const logs = await base44.entities.WaterLog.filter({ 
-        date: format(new Date(), 'yyyy-MM-dd'),
-        created_by: user.email 
-      });
-      return logs[0] || null;
-    },
-    enabled: !!user,
-  });
-
-  const { data: todaysMoodLogs } = useQuery({
-    queryKey: ['moodToday', format(new Date(), 'yyyy-MM-dd')],
-    queryFn: async () => {
-      const logs = await base44.entities.MoodLog.filter({ 
-        date: format(new Date(), 'yyyy-MM-dd'),
-        created_by: user.email 
-      });
-      return logs;
-    },
-    enabled: !!user,
-  });
-
-  const { data: todaysJournal } = useQuery({
-    queryKey: ['journalToday', format(new Date(), 'yyyy-MM-dd')],
-    queryFn: async () => {
-      const entries = await base44.entities.JournalEntry.filter({ 
-        date: format(new Date(), 'yyyy-MM-dd'),
-        created_by: user.email 
-      });
-      return entries[0] || null;
-    },
-    enabled: !!user,
-  });
 
   const { data: selfCareLog } = useQuery({
     queryKey: ['selfCareToday', format(new Date(), 'yyyy-MM-dd')],
@@ -180,43 +121,12 @@ export default function Dashboard() {
     enabled: !!user,
   });
 
-  // Get effective email for impersonation support
   const effectiveEmail = user ? getEffectiveUserEmail(user.email) : null;
 
   const { data: tiktokContacts = [] } = useQuery({
     queryKey: ['tiktokContacts', effectiveEmail],
     queryFn: () => base44.entities.TikTokContact.filter({ created_by: effectiveEmail }),
     enabled: !!effectiveEmail,
-  });
-
-  // Fetch urgent events for today
-  const { data: urgentEvents = [] } = useQuery({
-    queryKey: ['urgentEvents', effectiveEmail],
-    queryFn: async () => {
-      const today = format(new Date(), 'yyyy-MM-dd');
-      const tomorrow = format(addDays(new Date(), 1), 'yyyy-MM-dd');
-      const events = await base44.entities.ExternalEvent.filter({ created_by: effectiveEmail });
-      return events.filter(e => e.is_urgent && (e.date === today || e.date === tomorrow));
-    },
-    enabled: !!effectiveEmail,
-  });
-
-  // Fetch public calendar events
-  const { data: publicCalendarData } = useQuery({
-    queryKey: ['publicCalendar'],
-    queryFn: async () => {
-      const response = await base44.functions.invoke('fetchPublicCalendar');
-      return response.data;
-    },
-    enabled: !!user,
-    staleTime: 1000 * 60 * 30, // Cache for 30 minutes
-  });
-
-  const todaysPublicEvents = (publicCalendarData?.events || []).filter(event => {
-    const eventDate = event.start.split(' ')[0];
-    const today = format(new Date(), 'yyyy-MM-dd');
-    const tomorrow = format(addDays(new Date(), 1), 'yyyy-MM-dd');
-    return eventDate === today || eventDate === tomorrow;
   });
 
   const updatePreferencesMutation = useMutation({
@@ -236,10 +146,7 @@ export default function Dashboard() {
       if (selfCareLog) {
         return await base44.entities.DailySelfCareLog.update(selfCareLog.id, { [taskId]: value });
       } else {
-        return await base44.entities.DailySelfCareLog.create({ 
-          date: today, 
-          [taskId]: value 
-        });
+        return await base44.entities.DailySelfCareLog.create({ date: today, [taskId]: value });
       }
     },
     onSuccess: () => {
@@ -253,10 +160,7 @@ export default function Dashboard() {
       if (selfCareLog) {
         return await base44.entities.DailySelfCareLog.update(selfCareLog.id, { [noteKey]: value });
       } else {
-        return await base44.entities.DailySelfCareLog.create({ 
-          date: today, 
-          [noteKey]: value 
-        });
+        return await base44.entities.DailySelfCareLog.create({ date: today, [noteKey]: value });
       }
     },
     onSuccess: () => {
@@ -264,9 +168,6 @@ export default function Dashboard() {
     },
   });
 
-
-
-  // Toggle Google Calendar
   const toggleGoogleCalendarMutation = useMutation({
     mutationFn: async (enabled) => {
       if (preferences?.id) {
@@ -276,49 +177,40 @@ export default function Dashboard() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['preferences'] }),
   });
 
-
-
-  const latestMood = todaysMoodLogs && todaysMoodLogs.length > 0 
-    ? todaysMoodLogs[todaysMoodLogs.length - 1].mood 
-    : null;
-
-  // Dashboard section visibility
   const toggleSectionCollapse = (sectionId) => {
     setCollapsedSections(prev => 
-      prev.includes(sectionId) 
-        ? prev.filter(s => s !== sectionId)
-        : [...prev, sectionId]
+      prev.includes(sectionId) ? prev.filter(s => s !== sectionId) : [...prev, sectionId]
     );
   };
 
   const isSectionCollapsed = (sectionId) => collapsedSections.includes(sectionId);
 
-  // Widget Layout Logic
   const [showCustomizeModal, setShowCustomizeModal] = useState(false);
+  
   const defaultLayout = [
-    { id: 'daily_motivation', visible: true, order: 0 },
-    { id: 'my_day', visible: true, order: 1 },
-    { id: 'tasks', visible: true, order: 2 },
-    { id: 'goals', visible: true, order: 3 },
-    { id: 'habits', visible: true, order: 4 },
-    { id: 'calendar_integration', visible: true, order: 5 },
-    { id: 'special_events', visible: true, order: 6 },
-    { id: 'subscribed_events', visible: true, order: 7 }
+    { id: 'daily_motivation', visible: true, order: 0, width: 'full' },
+    { id: 'my_day', visible: true, order: 1, width: 'full' },
+    { id: 'tasks', visible: true, order: 2, width: 'half' },
+    { id: 'goals', visible: true, order: 3, width: 'half' },
+    { id: 'habits', visible: true, order: 4, width: 'half' },
+    { id: 'calendar_integration', visible: true, order: 5, width: 'half' },
+    { id: 'special_events', visible: true, order: 6, width: 'half' },
+    { id: 'subscribed_events', visible: true, order: 7, width: 'half' }
   ];
 
   const layout = useMemo(() => {
     const prefLayout = preferences?.dashboard_layout || [];
-    // Merge with default to ensure all widgets exist (in case of new ones)
     const merged = [...prefLayout];
     defaultLayout.forEach(def => {
-      if (!merged.find(p => p.id === def.id)) {
+      const existing = merged.find(p => p.id === def.id);
+      if (!existing) {
         merged.push(def);
+      } else if (!existing.width) {
+        existing.width = def.width;
       }
     });
     return merged.sort((a, b) => a.order - b.order);
   }, [preferences?.dashboard_layout]);
-
-  const [tempLayout, setTempLayout] = useState(layout);
 
   const saveLayout = (newLayout) => {
     updatePreferencesMutation.mutate({ dashboard_layout: newLayout });
@@ -421,13 +313,21 @@ export default function Dashboard() {
             </Button>
           </div>
 
-          {layout.map(widget => (
-            <div key={widget.id}>
-              {renderWidget(widget)}
-            </div>
-          ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 grid-flow-row-dense">
+            {layout.map(widget => (
+              <div 
+                key={widget.id} 
+                className={
+                  widget.width === 'full' 
+                    ? 'col-span-1 md:col-span-2' 
+                    : 'col-span-1'
+                }
+              >
+                {renderWidget(widget)}
+              </div>
+            ))}
+          </div>
 
-          {/* Notion Task Picker - Only for admin account */}
           {user?.email?.toLowerCase() === 'pixelnutscreative@gmail.com' && (
             <Collapsible open={!isSectionCollapsed('notion-tasks')}>
               <CollapsibleTrigger 
@@ -445,7 +345,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Customize Dashboard Modal */}
       <DashboardCustomizer
         isOpen={showCustomizeModal}
         onClose={() => setShowCustomizeModal(false)}
