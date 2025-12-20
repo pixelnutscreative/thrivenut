@@ -33,26 +33,6 @@ export default function CryptoTickerWidget({ portfolio = [], onUpdatePortfolio, 
     onUpdatePortfolio(updated);
   };
 
-  const handleAddCoin = () => {
-    if (!newCoin.symbol) return;
-    const updated = [...portfolio, { 
-      symbol: newCoin.symbol.toUpperCase(), 
-      amount: parseFloat(newCoin.amount) || 0 
-    }];
-    updatePortfolioMutation.mutate(updated);
-  };
-
-  const handleRemoveCoin = (index) => {
-    const updated = portfolio.filter((_, i) => i !== index);
-    updatePortfolioMutation.mutate(updated);
-  };
-
-  const handleUpdateAmount = (index, amount) => {
-    const updated = [...portfolio];
-    updated[index].amount = parseFloat(amount) || 0;
-    updatePortfolioMutation.mutate(updated);
-  };
-
   return (
     <Card className="shadow-lg border-0 bg-gradient-to-br from-indigo-900 to-slate-900 text-white overflow-hidden">
       <CardHeader className="pb-2">
