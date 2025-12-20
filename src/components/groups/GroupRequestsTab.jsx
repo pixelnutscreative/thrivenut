@@ -20,6 +20,10 @@ export default function GroupRequestsTab({ group, currentUser, myMembership, isA
     title: '', description: '', type: 'support', target_levels: [], target_users: [] 
   });
   const [messageInput, setMessageInput] = useState('');
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [requestSettings, setRequestSettings] = useState(group.settings?.request_permissions || { 
+    enabled: true, allowed_levels: [], allowed_users: [] 
+  });
 
   // 1. Fetch Requests
   const { data: requests = [] } = useQuery({
