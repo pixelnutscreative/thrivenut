@@ -364,11 +364,24 @@ export default function Dashboard() {
                               : 'col-span-1'
                           }`}
                         >
-                          <div 
-                            {...provided.dragHandleProps}
-                            className="absolute top-2 right-2 z-10 p-1.5 bg-white/80 dark:bg-black/50 backdrop-blur-sm rounded-md shadow-sm opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing hover:bg-white dark:hover:bg-black/70"
-                          >
-                            <GripHorizontal className="w-4 h-4 text-gray-500" />
+                          <div className="absolute top-2 right-2 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button
+                              onClick={() => toggleWidgetWidth(widget.id)}
+                              className="p-1.5 bg-white/80 dark:bg-black/50 backdrop-blur-sm rounded-md shadow-sm hover:bg-white dark:hover:bg-black/70 cursor-pointer"
+                              title={widget.width === 'full' ? "Make half width" : "Make full width (Double Wide!)"}
+                            >
+                              {widget.width === 'full' ? (
+                                <Minimize2 className="w-4 h-4 text-gray-500" />
+                              ) : (
+                                <Maximize2 className="w-4 h-4 text-gray-500" />
+                              )}
+                            </button>
+                            <div 
+                              {...provided.dragHandleProps}
+                              className="p-1.5 bg-white/80 dark:bg-black/50 backdrop-blur-sm rounded-md shadow-sm cursor-grab active:cursor-grabbing hover:bg-white dark:hover:bg-black/70"
+                            >
+                              <GripHorizontal className="w-4 h-4 text-gray-500" />
+                            </div>
                           </div>
                           {renderWidget(widget)}
                         </div>
