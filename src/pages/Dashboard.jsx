@@ -22,6 +22,7 @@ import DashboardGoalsSection from '../components/dashboard/DashboardGoalsSection
 import DashboardTasksSection from '../components/dashboard/DashboardTasksSection';
 import DashboardHabitsSection from '../components/dashboard/DashboardHabitsSection';
 import OnboardingModal from '../components/onboarding/OnboardingModal';
+import CryptoTickerWidget from '../components/widgets/CryptoTickerWidget';
 import { format, startOfWeek, addDays } from 'date-fns';
 import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
 import { useTheme } from '../components/shared/useTheme';
