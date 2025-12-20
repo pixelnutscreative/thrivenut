@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Twitter, Facebook, Linkedin, Mail, Copy, Smartphone, Link as LinkIcon, Check } from 'lucide-react';
+import { Twitter, Facebook, Linkedin, Mail, Copy, Smartphone, Link as LinkIcon, Check, FileText } from 'lucide-react';
 
 export default function ShareDialog({ open, onOpenChange, item }) {
   const [copied, setCopied] = useState(false);
