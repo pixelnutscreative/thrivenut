@@ -244,6 +244,14 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
                     selectedLevels={formData.target_levels} 
                     onChange={(levels) => setFormData({...formData, target_levels: levels})} 
                   />
+
+                  {/* Add per-event visibility toggle for users in Feed Tab as well if it's an event */}
+                  {/* Although typically events are handled in Events Tab, user asked for "Per-event visibility toggle for users" 
+                      This might apply to posts too if unified, but usually Events Tab. 
+                      Let's leave Feed Tab simple unless we merge functionalities. 
+                      Actually, Feed Tab handles Posts/Events creation in some versions or view. 
+                      Here we are just editing Posts. Events are in GroupEventsTab.
+                  */}
                 </div>
                 <Button onClick={handleSubmit} disabled={!formData.title} className="w-full bg-indigo-600 hover:bg-indigo-700">
                   {editingId ? 'Update Post' : 'Post'}

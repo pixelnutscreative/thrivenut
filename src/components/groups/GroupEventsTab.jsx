@@ -10,13 +10,14 @@ import { format } from 'date-fns';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import LevelSelector from './LevelSelector';
+import MemberSelector from './MemberSelector';
 
 export default function GroupEventsTab({ group, currentUser, myMembership, isAdmin }) {
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({ 
-    title: '', description: '', start_time: '', link: '', location: '', target_levels: [] 
+    title: '', description: '', start_time: '', link: '', location: '', target_levels: [], target_users: [] 
   });
 
   const { data: events = [] } = useQuery({
@@ -119,16 +120,17 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
       start_time: event.start_time,
       link: event.link || '',
       location: event.location || '',
-      target_levels: event.target_levels || []
-    });
-    setIsDialogOpen(true);
-  };
+      target_levels: event.target_levels || [],
+      target_users: event.target_users || []
+      });
+      setIsDialogOpen(true);
+      };
 
-  const handleCloseDialog = () => {
-    setIsDialogOpen(false);
-    setEditingId(null);
-    setFormData({ title: '', description: '', start_time: '', link: '', location: '', target_levels: [] });
-  };
+      const handleCloseDialog = () => {
+      setIsDialogOpen(false);
+      setEditingId(null);
+      setFormData({ title: '', description: '', start_time: '', link: '', location: '', target_levels: [], target_users: [] });
+      };
 
   const handleSubmit = () => {
     if (editingId) {
@@ -140,8 +142,9 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
 
   const visibleEvents = events.filter(event => {
     if (isAdmin) return true;
-    if (!event.target_levels || event.target_levels.length === 0) return true;
-    return event.target_levels.includes(myMembership?.level);
+    const levelMatch = !event.target_levels || event.target_levels.length === 0 || event.target_levels.includes(myMembership?.level);
+    const userMatch = !event.target_users || event.target_users.length === 0 || event.target_users.includes(myMembership?.user_email);
+    return levelMatch && userMatch;
   });
 
   return (
@@ -177,7 +180,16 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
                   selectedLevels={formData.target_levels} 
                   onChange={(levels) => setFormData({...formData, target_levels: levels})} 
                 />
-                
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Specific Users (Optional)</label>
+                  <MemberSelector
+                      group={group}
+                      selectedUsers={formData.target_users}
+                      onChange={(users) => setFormData({...formData, target_users: users})}
+                  />
+                </div>
+
                 <Button onClick={handleSubmit} disabled={!formData.title} className="w-full">
                   {editingId ? 'Update Event' : 'Create Event'}
                 </Button>
