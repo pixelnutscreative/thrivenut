@@ -11,7 +11,8 @@ import { Label } from '@/components/ui/label';
 import { Loader2, LogOut, ChevronDown, ChevronRight, Settings, Calendar, Eye, EyeOff, GripHorizontal, Maximize2, Minimize2 } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
-import DashboardCustomizer from '../components/dashboard/DashboardCustomizer';
+import ManageWidgetsDialog from '../components/dashboard/ManageWidgetsDialog';
+import GroupWidget from '../components/dashboard/GroupWidget';
 import MyDaySection from '../components/dashboard/MyDaySection';
 import DailyMotivationBanner from '../components/dashboard/DailyMotivationBanner';
 import SpecialEventsCard from '../components/dashboard/SpecialEventsCard';
