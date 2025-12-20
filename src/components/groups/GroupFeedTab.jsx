@@ -403,10 +403,12 @@ function FeedItemCard({ item, isAdmin, currentUser, onEdit, onDelete, onHide, on
 
         {item.type === 'resource' && (
           <div className="text-sm text-gray-600 space-y-2">
-            <p>{item.description}</p>
-            <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:underline flex items-center gap-1">
-              <LinkIcon className="w-3 h-3" /> Open Resource
-            </a>
+            <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: item.description }} />
+            {item.url && (
+              <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:underline flex items-center gap-1">
+                <LinkIcon className="w-3 h-3" /> Open Resource
+              </a>
+            )}
           </div>
         )}
 
