@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MessageSquare, Plus, CheckCircle, Clock, XCircle, Send, Bell } from 'lucide-react';
+import { MessageSquare, Plus, CheckCircle, Clock, XCircle, Send, Bell, Settings } from 'lucide-react';
 import LevelSelector from './LevelSelector';
 import MemberSelector from './MemberSelector';
 
