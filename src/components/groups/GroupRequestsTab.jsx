@@ -9,25 +9,22 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertCircle, MessageSquare, Check, X } from 'lucide-react';
+import { AlertCircle, MessageSquare, Check, X, Send, Eye } from 'lucide-react';
 import { format } from 'date-fns';
+import VisibilityControl from './VisibilityControl';
 
-export default function GroupRequestsTab({ group, currentUser, isAdmin }) {
+export default function GroupRequestsTab({ group, currentUser, isAdmin, myMembership }) {
   const queryClient = useQueryClient();
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [activeRequest, setActiveRequest] = useState(null); // For detail view
   const [newRequest, setNewRequest] = useState({ title: '', description: '', type: 'help_needed' });
+  const [messageInput, setMessageInput] = useState('');
 
   const { data: requests = [] } = useQuery({
     queryKey: ['groupRequests', group.id],
     queryFn: async () => {
-      // If admin, show all. If member, show own.
-      // Base44 filter is simple. Admin needs to see all.
-      // For now we fetch all and filter in frontend if needed, or rely on API.
-      // Assuming 'open' permissions for group members to see requests? Or private?
-      // Usually support tickets are private between user and admin.
       const allRequests = await base44.entities.GroupRequest.filter({ group_id: group.id }, '-created_date');
-      if (isAdmin) return allRequests;
-      return allRequests.filter(r => r.user_email === currentUser.email);
+      return allRequests;
     }
   });
 
@@ -36,19 +33,55 @@ export default function GroupRequestsTab({ group, currentUser, isAdmin }) {
       ...data, 
       group_id: group.id, 
       user_email: currentUser.email,
-      status: 'open'
+      status: 'open',
+      messages: [],
+      visible_to_levels: [],
+      visible_to_emails: []
     }),
     onSuccess: () => {
       queryClient.invalidateQueries(['groupRequests', group.id]);
       setIsAddOpen(false);
       setNewRequest({ title: '', description: '', type: 'help_needed' });
+      // Notify Admin? (Optional, skipping for now to keep simple)
     }
   });
 
-  const updateStatusMutation = useMutation({
-    mutationFn: ({ id, status, resolution_notes }) => 
-      base44.entities.GroupRequest.update(id, { status, resolution_notes }),
+  const updateRequestMutation = useMutation({
+    mutationFn: (data) => base44.entities.GroupRequest.update(data.id, data),
     onSuccess: () => queryClient.invalidateQueries(['groupRequests', group.id])
+  });
+
+  const sendMessageMutation = useMutation({
+    mutationFn: async ({ id, content, currentMessages }) => {
+      const newMessage = {
+        sender_email: currentUser.email,
+        content,
+        timestamp: new Date().toISOString()
+      };
+      const updatedMessages = [...(currentMessages || []), newMessage];
+      await base44.entities.GroupRequest.update(id, { messages: updatedMessages });
+      
+      // Notify
+      const request = requests.find(r => r.id === id);
+      const recipient = request.user_email === currentUser.email ? 'admin' : request.user_email; 
+      // If admin replying, notify user. If user replying, notify admin (owner).
+      
+      if (recipient !== 'admin') {
+         await base44.entities.Notification.create({
+            user_email: recipient,
+            title: `Update on Request: ${request.title}`,
+            message: `New message from ${currentUser.email}`,
+            type: 'request_update',
+            link: `/creator-groups?id=${group.id}&tab=requests`,
+            is_read: false,
+            created_at: new Date().toISOString()
+         });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['groupRequests', group.id]);
+      setMessageInput('');
+    }
   });
 
   const getStatusColor = (status) => {
@@ -69,6 +102,22 @@ export default function GroupRequestsTab({ group, currentUser, isAdmin }) {
       default: return 'Other';
     }
   };
+
+  const isVisible = (req) => {
+    if (isAdmin) return true;
+    if (req.user_email === currentUser.email) return true;
+    
+    // Check custom visibility
+    const hasLevels = req.visible_to_levels && req.visible_to_levels.length > 0;
+    const hasEmails = req.visible_to_emails && req.visible_to_emails.length > 0;
+    
+    if (hasLevels && req.visible_to_levels.includes(myMembership?.level)) return true;
+    if (hasEmails && req.visible_to_emails.includes(currentUser.email)) return true;
+    
+    return false;
+  };
+
+  const filteredRequests = requests.filter(isVisible);
 
   return (
     <div className="space-y-6">
@@ -122,13 +171,13 @@ export default function GroupRequestsTab({ group, currentUser, isAdmin }) {
       </div>
 
       <div className="space-y-4">
-        {requests.length === 0 ? (
+        {filteredRequests.length === 0 ? (
           <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-lg border border-dashed">
             No requests found.
           </div>
         ) : (
-          requests.map(request => (
-            <Card key={request.id}>
+          filteredRequests.map(request => (
+            <Card key={request.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setActiveRequest(request)}>
               <CardContent className="p-4">
                 <div className="flex justify-between items-start mb-2">
                   <div className="flex gap-2 items-center">
@@ -136,51 +185,135 @@ export default function GroupRequestsTab({ group, currentUser, isAdmin }) {
                     <Badge className={getStatusColor(request.status)} variant="secondary">
                       {request.status.replace('_', ' ').toUpperCase()}
                     </Badge>
+                    {request.messages?.length > 0 && (
+                      <Badge variant="secondary" className="bg-purple-100 text-purple-700">
+                        <MessageSquare className="w-3 h-3 mr-1" /> {request.messages.length}
+                      </Badge>
+                    )}
                   </div>
                   <span className="text-xs text-gray-400">
-                    {request.created_date ? format(new Date(request.created_date), 'MMM d, yyyy') : 'Just now'}
+                    {request.created_date ? format(new Date(request.created_date), 'MMM d') : 'Just now'}
                   </span>
                 </div>
                 
                 <h4 className="font-semibold text-gray-900">{request.title}</h4>
-                <p className="text-sm text-gray-600 mt-1 whitespace-pre-wrap">{request.description}</p>
-                
-                {isAdmin && (
-                  <div className="mt-4 pt-4 border-t flex items-center justify-between bg-gray-50 -mx-4 -mb-4 p-4">
-                    <div className="text-xs text-gray-500">
-                      Submitted by: <span className="font-medium text-gray-700">{request.user_email}</span>
-                    </div>
-                    <div className="flex gap-2">
-                      {request.status === 'open' && (
-                        <Button size="sm" variant="outline" onClick={() => updateStatusMutation.mutate({ id: request.id, status: 'in_progress' })}>
-                          Mark In Progress
-                        </Button>
-                      )}
-                      {request.status !== 'resolved' && (
-                        <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white" onClick={() => updateStatusMutation.mutate({ id: request.id, status: 'resolved' })}>
-                          Resolve
-                        </Button>
-                      )}
-                      {request.status !== 'closed' && (
-                        <Button size="sm" variant="ghost" onClick={() => updateStatusMutation.mutate({ id: request.id, status: 'closed' })}>
-                          Close
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                )}
-                
-                {request.resolution_notes && (
-                  <div className="mt-4 bg-green-50 p-3 rounded-md border border-green-100">
-                    <p className="text-xs font-bold text-green-800 mb-1">Resolution Note:</p>
-                    <p className="text-sm text-green-700">{request.resolution_notes}</p>
-                  </div>
-                )}
+                <div className="flex justify-between items-end mt-2">
+                   <p className="text-sm text-gray-600 line-clamp-2 flex-1 mr-4">{request.description}</p>
+                   <div className="text-xs text-gray-400">{request.user_email}</div>
+                </div>
               </CardContent>
             </Card>
           ))
         )}
       </div>
+
+      {/* Detail Modal */}
+      {activeRequest && (
+        <Dialog open={!!activeRequest} onOpenChange={(open) => !open && setActiveRequest(null)}>
+          <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col p-0 gap-0">
+            <div className="p-6 border-b">
+              <div className="flex justify-between items-start mb-2">
+                <DialogTitle className="text-xl">{activeRequest.title}</DialogTitle>
+                <Badge className={getStatusColor(activeRequest.status)}>{activeRequest.status.replace('_', ' ').toUpperCase()}</Badge>
+              </div>
+              <div className="text-sm text-gray-500 flex gap-4">
+                <span>Type: {getTypeLabel(activeRequest.type)}</span>
+                <span>Submitted by: {activeRequest.user_email}</span>
+                <span>Date: {activeRequest.created_date ? format(new Date(activeRequest.created_date), 'PPP p') : ''}</span>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h5 className="text-sm font-bold text-gray-700 mb-2">Description</h5>
+                <p className="text-sm text-gray-800 whitespace-pre-wrap">{activeRequest.description}</p>
+              </div>
+
+              {/* Messages Area */}
+              <div className="space-y-4">
+                <h5 className="text-sm font-bold text-gray-700 flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4" /> Discussion
+                </h5>
+                {(activeRequest.messages || []).map((msg, idx) => (
+                  <div key={idx} className={`flex flex-col ${msg.sender_email === currentUser.email ? 'items-end' : 'items-start'}`}>
+                    <div className={`max-w-[80%] rounded-lg p-3 text-sm ${
+                      msg.sender_email === currentUser.email 
+                        ? 'bg-purple-100 text-purple-900 rounded-tr-none' 
+                        : 'bg-white border border-gray-200 rounded-tl-none'
+                    }`}>
+                      <p>{msg.content}</p>
+                    </div>
+                    <span className="text-[10px] text-gray-400 mt-1">
+                      {msg.sender_email === currentUser.email ? 'You' : msg.sender_email} • {format(new Date(msg.timestamp), 'p')}
+                    </span>
+                  </div>
+                ))}
+                {(activeRequest.messages || []).length === 0 && (
+                  <p className="text-sm text-gray-400 italic text-center py-4">No messages yet.</p>
+                )}
+              </div>
+            </div>
+
+            <div className="p-4 border-t bg-gray-50 flex flex-col gap-4">
+              <div className="flex gap-2">
+                <Input 
+                  placeholder="Type a message..." 
+                  value={messageInput}
+                  onChange={e => setMessageInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && messageInput && sendMessageMutation.mutate({ 
+                    id: activeRequest.id, 
+                    content: messageInput, 
+                    currentMessages: activeRequest.messages 
+                  })}
+                />
+                <Button 
+                  size="icon" 
+                  onClick={() => sendMessageMutation.mutate({ 
+                    id: activeRequest.id, 
+                    content: messageInput, 
+                    currentMessages: activeRequest.messages 
+                  })}
+                  disabled={!messageInput}
+                >
+                  <Send className="w-4 h-4" />
+                </Button>
+              </div>
+
+              {isAdmin && (
+                <div className="flex items-center justify-between pt-2 border-t border-gray-200 mt-2">
+                  <div className="flex-1 mr-4">
+                     {/* Admin Visibility Control inside modal */}
+                     <VisibilityControl 
+                       group={group}
+                       className="border-0 p-0 bg-transparent"
+                       selectedLevels={activeRequest.visible_to_levels || []}
+                       selectedEmails={activeRequest.visible_to_emails || []}
+                       onLevelsChange={(l) => updateRequestMutation.mutate({ id: activeRequest.id, visible_to_levels: l })}
+                       onEmailsChange={(e) => updateRequestMutation.mutate({ id: activeRequest.id, visible_to_emails: e })}
+                     />
+                  </div>
+                  <div className="flex gap-2 shrink-0">
+                    <Select 
+                      value={activeRequest.status} 
+                      onValueChange={(v) => updateRequestMutation.mutate({ id: activeRequest.id, status: v })}
+                    >
+                      <SelectTrigger className="w-32">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="open">Open</SelectItem>
+                        <SelectItem value="in_progress">In Progress</SelectItem>
+                        <SelectItem value="resolved">Resolved</SelectItem>
+                        <SelectItem value="closed">Closed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
