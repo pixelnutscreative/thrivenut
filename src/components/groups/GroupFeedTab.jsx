@@ -136,14 +136,24 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
             <Pin className="w-4 h-4" /> Pinned
           </h3>
           {pinnedPosts.map(post => (
-            <PostCard key={post.id} post={post} isAdmin={isAdmin} onDelete={() => deleteMutation.mutate(post.id)} />
+            <PostCard 
+              key={post.id} 
+              post={{...post, onEdit: () => handleEdit(post)}} 
+              isAdmin={isAdmin} 
+              onDelete={() => deleteMutation.mutate(post.id)} 
+            />
           ))}
         </div>
       )}
 
       <div className="space-y-4">
         {regularPosts.map(post => (
-          <PostCard key={post.id} post={post} isAdmin={isAdmin} onDelete={() => deleteMutation.mutate(post.id)} />
+          <PostCard 
+            key={post.id} 
+            post={{...post, onEdit: () => handleEdit(post)}} 
+            isAdmin={isAdmin} 
+            onDelete={() => deleteMutation.mutate(post.id)} 
+          />
         ))}
         {visiblePosts.length === 0 && (
           <div className="text-center py-12 text-gray-500">No posts yet.</div>
