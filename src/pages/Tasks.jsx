@@ -65,8 +65,12 @@ export default function Tasks() {
   });
 
   const { data: familyMembers = [] } = useQuery({
-    queryKey: ['familyMembers'],
-    queryFn: () => base44.entities.FamilyMember.filter({ is_active: true }, 'name'),
+    queryKey: ['familyMembers', user?.email],
+    queryFn: async () => {
+      if (!user?.email) return [];
+      return await base44.entities.FamilyMember.filter({ is_active: true, created_by: user.email }, 'name');
+    },
+    enabled: !!user?.email
   });
 
   const createMutation = useMutation({

@@ -11,7 +11,7 @@ import { useTheme } from '../components/shared/useTheme';
 import CleaningTasks from './CleaningTasks';
 
 export default function Household() {
-  const { bgClass, textClass, cardBgClass } = useTheme();
+  const { bgClass, textClass, cardBgClass, user } = useTheme();
   const [activeTab, setActiveTab] = useState('cleaning');
   const queryClient = useQueryClient();
   const [newRule, setNewRule] = useState('');
@@ -19,11 +19,13 @@ export default function Household() {
   // Fetch household rules (stored as a special entity type or just reuse QuickNotes with a category?)
   // Let's reuse QuickNotes with category 'Household Rule' for simplicity
   const { data: rules = [] } = useQuery({
-    queryKey: ['householdRules'],
+    queryKey: ['householdRules', user?.email],
     queryFn: async () => {
-      const results = await base44.entities.QuickNote.filter({ type: 'household_rule' });
+      if (!user?.email) return [];
+      const results = await base44.entities.QuickNote.filter({ type: 'household_rule', created_by: user.email });
       return results;
-    }
+    },
+    enabled: !!user?.email
   });
 
   const createRuleMutation = useMutation({

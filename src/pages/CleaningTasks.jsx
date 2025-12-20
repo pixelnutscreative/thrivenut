@@ -15,7 +15,7 @@ import { useTheme } from '../components/shared/useTheme';
 
 export default function CleaningTasks({ embedded = false }) {
   const queryClient = useQueryClient();
-  const { isDark, bgClass, primaryColor, textClass, cardBgClass } = useTheme();
+  const { isDark, bgClass, primaryColor, textClass, cardBgClass, user } = useTheme();
   const [showDialog, setShowDialog] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -32,13 +32,21 @@ export default function CleaningTasks({ embedded = false }) {
   });
 
   const { data: tasks = [] } = useQuery({
-    queryKey: ['cleaningTasks'],
-    queryFn: () => base44.entities.CleaningTask.list('room'),
+    queryKey: ['cleaningTasks', user?.email],
+    queryFn: async () => {
+      if (!user?.email) return [];
+      return await base44.entities.CleaningTask.filter({ created_by: user.email }, 'room');
+    },
+    enabled: !!user?.email
   });
 
   const { data: familyMembers = [] } = useQuery({
-    queryKey: ['familyMembers'],
-    queryFn: () => base44.entities.FamilyMember.filter({ is_active: true }, 'name'),
+    queryKey: ['familyMembers', user?.email],
+    queryFn: async () => {
+      if (!user?.email) return [];
+      return await base44.entities.FamilyMember.filter({ is_active: true, created_by: user.email }, 'name');
+    },
+    enabled: !!user?.email
   });
 
   const createMutation = useMutation({
