@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { BookOpen, Calendar, Sparkles, Brain, Shield, ChevronDown, ChevronUp, Search, Plus, X } from 'lucide-react';
+import { BookOpen, Calendar, Sparkles, Brain, Shield, ChevronDown, ChevronUp, Search, Plus, X, Eye, EyeOff, Filter, ArrowUpDown, Music } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import AIReframingCard from '../components/journal/AIReframingCard';
@@ -36,7 +36,8 @@ const entryTypes = [
   { value: 'general', label: 'General', description: 'Regular journal entry' },
   { value: 'venting', label: 'Venting', description: 'Let it all out - AI can help reframe' },
   { value: 'gratitude', label: 'Gratitude', description: 'What are you thankful for?' },
-  { value: 'reflection', label: 'Reflection', description: 'Looking back and learning' }
+  { value: 'reflection', label: 'Reflection', description: 'Looking back and learning' },
+  { value: 'poetry', label: 'Poem / Lyrics', description: 'Express yourself with verse or song' }
 ];
 
 export default function Journal() {
@@ -54,6 +55,12 @@ export default function Journal() {
   const [searchTerm, setSearchTerm] = useState('');
   const [customMood, setCustomMood] = useState('');
   const [isCustomMood, setIsCustomMood] = useState(false);
+  
+  // Sorting and Filtering
+  const [showHidden, setShowHidden] = useState(false);
+  const [sortOrder, setSortOrder] = useState('newest'); // newest, oldest
+  const [filterMood, setFilterMood] = useState('all');
+  const [filterType, setFilterType] = useState('all');
 
   const [formData, setFormData] = useState({
     date: format(new Date(), 'yyyy-MM-dd'),
@@ -174,19 +181,36 @@ export default function Journal() {
   };
 
   const isVentingMode = formData.entry_type === 'venting';
+  const isPoetryMode = formData.entry_type === 'poetry';
 
   const { isDark, bgClass, textClass, cardBgClass, subtextClass } = useTheme();
 
-  // Filter entries
-  const filteredEntries = (entries || []).filter(entry => {
-    if (!searchTerm) return true;
-    const term = searchTerm.toLowerCase();
-    return (
-      entry.title?.toLowerCase().includes(term) ||
-      entry.content?.toLowerCase().includes(term) ||
-      entry.mood_tag?.toLowerCase().includes(term)
-    );
-  });
+  // Filter and Sort entries
+  const filteredEntries = (entries || [])
+    .filter(entry => {
+      // Search filter
+      const term = searchTerm.toLowerCase();
+      const matchesSearch = !searchTerm || 
+        entry.title?.toLowerCase().includes(term) ||
+        entry.content?.toLowerCase().includes(term) ||
+        entry.mood_tag?.toLowerCase().includes(term);
+        
+      // Mood filter
+      const matchesMood = filterMood === 'all' || entry.mood_tag === filterMood;
+      
+      // Type filter
+      const matchesType = filterType === 'all' || entry.entry_type === filterType;
+      
+      // Hidden filter
+      const matchesHidden = showHidden ? entry.is_hidden : !entry.is_hidden;
+      
+      return matchesSearch && matchesMood && matchesType && matchesHidden;
+    })
+    .sort((a, b) => {
+      const dateA = new Date(a.date);
+      const dateB = new Date(b.date);
+      return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
+    });
 
   return (
     <div className={`min-h-screen ${bgClass} p-4 md:p-8`}>
@@ -212,15 +236,82 @@ export default function Journal() {
           </Button>
         </div>
 
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <Input 
-            placeholder="Search entries..." 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className={`pl-9 ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white'}`}
-          />
+        {/* Controls Bar: Search, Filter, Sort, View Hidden */}
+        <div className="space-y-4">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input 
+                placeholder="Search entries..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className={`pl-9 ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white'}`}
+              />
+            </div>
+            
+            <div className="flex flex-wrap gap-2">
+              {/* Type Filter */}
+              <Select value={filterType} onValueChange={setFilterType}>
+                <SelectTrigger className={`w-[130px] ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white'}`}>
+                  <Filter className="w-3 h-3 mr-2 text-gray-500" />
+                  <SelectValue placeholder="Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  {entryTypes.map(t => (
+                    <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Mood Filter */}
+              <Select value={filterMood} onValueChange={setFilterMood}>
+                <SelectTrigger className={`w-[130px] ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white'}`}>
+                  <SelectValue placeholder="Mood" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Moods</SelectItem>
+                  {moodTags.map(t => (
+                    <SelectItem key={t.value} value={t.value}>
+                      <span className="mr-2">{t.emoji}</span>{t.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Sort Order */}
+              <Select value={sortOrder} onValueChange={setSortOrder}>
+                <SelectTrigger className={`w-[130px] ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white'}`}>
+                  <ArrowUpDown className="w-3 h-3 mr-2 text-gray-500" />
+                  <SelectValue placeholder="Sort" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="newest">Newest First</SelectItem>
+                  <SelectItem value="oldest">Oldest First</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Show Hidden Toggle */}
+              <Button
+                variant={showHidden ? "secondary" : "outline"}
+                onClick={() => setShowHidden(!showHidden)}
+                className={showHidden ? "bg-purple-100 text-purple-700 border-purple-200" : `${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white'}`}
+                title={showHidden ? "Viewing Hidden Entries" : "View Hidden Entries"}
+              >
+                {showHidden ? <Eye className="w-4 h-4 mr-2" /> : <EyeOff className="w-4 h-4 mr-2" />}
+                {showHidden ? 'Hidden' : 'Hidden'}
+              </Button>
+            </div>
+          </div>
+          
+          {showHidden && (
+            <Alert className="bg-purple-50 border-purple-200">
+              <Eye className="w-4 h-4 text-purple-600" />
+              <AlertDescription className="text-purple-800">
+                You are viewing hidden entries. Toggle "Hidden" off to see your main journal.
+              </AlertDescription>
+            </Alert>
+          )}
         </div>
 
         {/* Disclaimer */}
@@ -269,6 +360,15 @@ export default function Journal() {
                   <AlertDescription className={`text-sm ${isDark ? 'text-amber-300' : 'text-amber-800'}`}>
                     <strong>Venting Mode:</strong> Let it all out! After you write, AI can help you 
                     gain perspective and reframe negative thoughts. This is a safe space. 💜
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {isPoetryMode && (
+                <Alert className={isDark ? 'bg-pink-900/30 border-pink-700' : 'bg-pink-50 border-pink-200'}>
+                  <Music className={`w-4 h-4 ${isDark ? 'text-pink-400' : 'text-pink-600'}`} />
+                  <AlertDescription className={`text-sm ${isDark ? 'text-pink-300' : 'text-pink-800'}`}>
+                    <strong>Poetry & Lyrics:</strong> Let your creativity flow! Write a poem, song lyrics, or just play with words. 🎵
                   </AlertDescription>
                 </Alert>
               )}
@@ -350,12 +450,14 @@ export default function Journal() {
                 <Textarea
                   placeholder={isVentingMode 
                     ? "Write whatever's on your mind. Don't hold back. No one will judge you here..."
+                    : isPoetryMode
+                    ? "Roses are red, violets are blue...\nWrite your masterpiece here."
                     : "What's on your mind today?"
                   }
                   value={formData.content}
                   onChange={(e) => setFormData({...formData, content: e.target.value})}
-                  rows={8}
-                  className={`resize-none ${isDark ? 'bg-gray-700 border-gray-600' : ''}`}
+                  rows={12}
+                  className={`resize-none ${isDark ? 'bg-gray-700 border-gray-600' : ''} ${isPoetryMode ? 'font-serif italic text-lg leading-relaxed' : ''}`}
                 />
               </div>
 
@@ -477,6 +579,20 @@ export default function Journal() {
                               </Badge>
                             )}
                           </div>
+                          
+                          {/* Hide/Unhide Button */}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-gray-400 hover:text-purple-600"
+                            title={entry.is_hidden ? "Unhide Entry" : "Hide Entry"}
+                            onClick={() => updateEntryMutation.mutate({ 
+                              id: entry.id, 
+                              data: { is_hidden: !entry.is_hidden } 
+                            })}
+                          >
+                            {entry.is_hidden ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                          </Button>
                         </div>
                         {entry.is_encrypted ? (
                           decryptedContent[entry.id] ? (
