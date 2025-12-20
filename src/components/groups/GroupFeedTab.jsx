@@ -272,7 +272,6 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
               </div>
             </DialogContent>
           </Dialog>
-          </Dialog>
       )}
       </div>
 
