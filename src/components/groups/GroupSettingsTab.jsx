@@ -37,6 +37,7 @@ export default function GroupSettingsTab({ group }) {
     <div className="space-y-6">
       <GroupNameSettings group={group} />
       <GroupShortcutsSettings group={group} />
+      <DeleteGroupSettings group={group} />
       <Card>
         <CardHeader>
           <CardTitle>Member Levels & Roles</CardTitle>
@@ -107,6 +108,51 @@ function GroupNameSettings({ group }) {
         <div className="flex justify-end">
           <Button onClick={() => updateMutation.mutate({ name, description })} disabled={!name}>Update Details</Button>
         </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function DeleteGroupSettings({ group }) {
+  const queryClient = useQueryClient();
+  const [confirmName, setConfirmName] = useState('');
+  
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      await base44.entities.CreatorGroup.delete(group.id);
+      // Also delete members? Ideally backend handles cascade, but let's be safe
+      const members = await base44.entities.CreatorGroupMember.filter({ group_id: group.id });
+      await Promise.all(members.map(m => base44.entities.CreatorGroupMember.delete(m.id)));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['myGroupMemberships']);
+      queryClient.invalidateQueries(['myGroupsDetails']);
+      window.location.href = '/creator-groups';
+    }
+  });
+
+  return (
+    <Card className="border-red-200">
+      <CardHeader>
+        <CardTitle className="text-red-600">Danger Zone</CardTitle>
+        <CardDescription>Delete this group permanently.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label>Type group name to confirm</Label>
+          <Input 
+            value={confirmName} 
+            onChange={e => setConfirmName(e.target.value)} 
+            placeholder={group.name}
+          />
+        </div>
+        <Button 
+          variant="destructive" 
+          disabled={confirmName !== group.name || deleteMutation.isPending}
+          onClick={() => deleteMutation.mutate()}
+        >
+          {deleteMutation.isPending ? 'Deleting...' : 'Delete Group'}
+        </Button>
       </CardContent>
     </Card>
   );

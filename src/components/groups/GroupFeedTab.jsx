@@ -62,7 +62,22 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
 
   // --- Mutations ---
   const createPostMutation = useMutation({
-    mutationFn: (data) => base44.entities.GroupPost.create({ ...data, group_id: group.id, author_email: currentUser.email }),
+    mutationFn: async (data) => {
+      const post = await base44.entities.GroupPost.create({ ...data, group_id: group.id, author_email: currentUser.email });
+      
+      // Send notification
+      await base44.entities.Notification.create({
+        user_email: 'all_group_members:' + group.id, // Marker for backend processing if exists, otherwise this is a placeholder
+        title: `New Post in ${group.name}`,
+        message: data.title,
+        type: 'group_post',
+        link: `/creator-groups?id=${group.id}&tab=feed`,
+        is_read: false,
+        created_at: new Date().toISOString()
+      });
+      
+      return post;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['groupPosts', group.id]);
       handleCloseDialog();

@@ -7,27 +7,31 @@ import { Input } from '@/components/ui/input';
 import { Plus, Trash2, TrendingUp, Coins, RefreshCw } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
-export default function CryptoTickerWidget({ preferences, onUpdatePreferences }) {
-  const queryClient = useQueryClient();
+export default function CryptoTickerWidget({ portfolio = [], onUpdatePortfolio, title = "Crypto Tracker" }) {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [newCoin, setNewCoin] = useState({ symbol: '', amount: '' });
-  
-  const portfolio = preferences?.crypto_portfolio || [];
 
-  const updatePortfolioMutation = useMutation({
-    mutationFn: async (newPortfolio) => {
-      if (preferences?.id) {
-        return await base44.entities.UserPreferences.update(preferences.id, {
-          crypto_portfolio: newPortfolio
-        });
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(['preferences']);
-      setIsAddOpen(false);
-      setNewCoin({ symbol: '', amount: '' });
-    }
-  });
+  const handleAddCoin = () => {
+    if (!newCoin.symbol) return;
+    const updated = [...portfolio, { 
+      symbol: newCoin.symbol.toUpperCase(), 
+      amount: parseFloat(newCoin.amount) || 0 
+    }];
+    onUpdatePortfolio(updated);
+    setIsAddOpen(false);
+    setNewCoin({ symbol: '', amount: '' });
+  };
+
+  const handleRemoveCoin = (index) => {
+    const updated = portfolio.filter((_, i) => i !== index);
+    onUpdatePortfolio(updated);
+  };
+
+  const handleUpdateAmount = (index, amount) => {
+    const updated = [...portfolio];
+    updated[index].amount = parseFloat(amount) || 0;
+    onUpdatePortfolio(updated);
+  };
 
   const handleAddCoin = () => {
     if (!newCoin.symbol) return;
@@ -55,7 +59,7 @@ export default function CryptoTickerWidget({ preferences, onUpdatePreferences })
         <div className="flex justify-between items-center">
           <CardTitle className="flex items-center gap-2 text-lg">
             <Coins className="w-5 h-5 text-yellow-400" />
-            Crypto Tracker
+            {title}
           </CardTitle>
           <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
             <DialogTrigger asChild>

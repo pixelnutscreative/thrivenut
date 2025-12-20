@@ -15,11 +15,24 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('member');
 
+  // Fetch Referral Code
+  const { data: referralLink } = useQuery({
+    queryKey: ['myReferralLink', currentUser?.email],
+    queryFn: async () => {
+      const links = await base44.entities.ReferralLink.filter({ user_email: currentUser.email, is_active: true });
+      return links[0];
+    },
+    enabled: !!currentUser?.email
+  });
+
   // Copy link functionality
-  const inviteLink = `${window.location.origin}/creator-groups?invite=${group.invite_code}`;
+  const baseUrl = window.location.origin;
+  const referralParam = referralLink ? `&ref=${referralLink.code}` : '';
+  const inviteLink = `${baseUrl}/creator-groups?invite=${group.invite_code}${referralParam}`;
+  
   const copyLink = () => {
     navigator.clipboard.writeText(inviteLink);
-    alert('Invite link copied to clipboard!');
+    alert('Invite link copied to clipboard! (Referral tracking included)');
   };
 
   const { data: members = [] } = useQuery({

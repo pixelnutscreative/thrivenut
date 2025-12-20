@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Users, Plus, Settings, Video, AlertCircle, ArrowLeft, Loader2, Building, Home, Heart, Sparkles, Brain, Briefcase, Calendar, MessageSquare, FileText, Bell, Eye, EyeOff, Link as LinkIcon, ExternalLink, Clock } from 'lucide-react';
+import { Users, Plus, Settings, Video, AlertCircle, ArrowLeft, Loader2, Building, Home, Heart, Sparkles, Brain, Briefcase, Calendar, MessageSquare, FileText, Bell, Eye, EyeOff, Link as LinkIcon, ExternalLink, Clock, Trash2, Filter } from 'lucide-react';
 import { useTheme } from '../components/shared/useTheme';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import GroupTrainingTab from '../components/groups/GroupTrainingTab';
@@ -20,6 +20,7 @@ import GroupQnATab from '../components/groups/GroupQnATab';
 import GroupEventsTab from '../components/groups/GroupEventsTab';
 import GroupResourcesTab from '../components/groups/GroupResourcesTab';
 import GroupSettingsTab from '../components/groups/GroupSettingsTab';
+import CryptoTickerWidget from '../components/widgets/CryptoTickerWidget';
 
 export default function CreatorGroups() {
   const { user, preferences } = useTheme();
@@ -138,6 +139,25 @@ export default function CreatorGroups() {
   const activeMembership = myMemberships.find(m => m.group_id === activeGroupId);
   const isAdmin = activeMembership && ['owner', 'admin', 'manager'].includes(activeMembership.role);
   const isPending = activeMembership?.status === 'pending';
+
+  // Handle Referrals when joining
+  const referralCode = searchParams.get('ref');
+  useEffect(() => {
+    if (inviteCode && referralCode && user?.email) {
+      // Track referral
+      base44.functions.invoke('trackReferral', { 
+        code: referralCode, 
+        event: 'group_join',
+        details: { group_id: activeGroupId || 'pending_invite' }
+      }).catch(err => console.error('Referral track error:', err));
+    }
+  }, [inviteCode, referralCode, user]);
+
+  // Update Group Crypto
+  const updateGroupMutation = useMutation({
+    mutationFn: (data) => base44.entities.CreatorGroup.update(activeGroupId, data),
+    onSuccess: () => queryClient.invalidateQueries(['myGroupsDetails'])
+  });
 
   // Preferences Query
   const { data: groupPrefs } = useQuery({
@@ -438,9 +458,16 @@ export default function CreatorGroups() {
 
       <div className="max-w-6xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
         
-        {/* Shortcuts Sidebar (if any) */}
-        {shortcuts.length > 0 && (
-          <div className="lg:col-span-1 space-y-6">
+        {/* Shortcuts & Crypto Sidebar */}
+        <div className="lg:col-span-1 space-y-6">
+          {/* Crypto Ticker for Group */}
+          <CryptoTickerWidget 
+            portfolio={activeGroup.crypto_tickers || []}
+            onUpdatePortfolio={(tickers) => updateGroupMutation.mutate({ crypto_tickers: tickers })}
+            title="Group Tickers"
+          />
+
+          {shortcuts.length > 0 && (
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm uppercase text-gray-500 font-bold flex items-center gap-2">
@@ -467,10 +494,10 @@ export default function CreatorGroups() {
                 ))}
               </CardContent>
             </Card>
-          </div>
-        )}
+          )}
+        </div>
 
-        <div className={shortcuts.length > 0 ? "lg:col-span-3" : "lg:col-span-4"}>
+        <div className="lg:col-span-3">
           <Tabs defaultValue="feed" className="space-y-6">
             <TabsList className="bg-white border p-1 rounded-xl h-auto flex-wrap gap-1 w-full justify-start">
               {visibleTabs.map(tab => {
