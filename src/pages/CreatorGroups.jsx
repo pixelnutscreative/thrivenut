@@ -22,6 +22,7 @@ import GroupEventsTab from '../components/groups/GroupEventsTab';
 import GroupResourcesTab from '../components/groups/GroupResourcesTab';
 import GroupSettingsTab from '../components/groups/GroupSettingsTab';
 import CryptoTickerWidget from '../components/widgets/CryptoTickerWidget';
+import GroupCalendarWidget from '../components/groups/GroupCalendarWidget';
 
 export default function CreatorGroups() {
   const { user, preferences } = useTheme();
@@ -638,6 +639,9 @@ export default function CreatorGroups() {
         
         {/* Shortcuts & Crypto Sidebar */}
         <div className="lg:col-span-1 space-y-6">
+          {/* Calendar Widget */}
+          <GroupCalendarWidget group={activeGroup} myMembership={activeMembership} isAdmin={isAdmin} />
+
           {/* Crypto Ticker for Group */}
           <CryptoTickerWidget 
             portfolio={activeGroup.crypto_tickers || []}

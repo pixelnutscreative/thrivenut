@@ -12,12 +12,13 @@ import { HelpCircle, CheckCircle, Clock, XCircle, ChevronRight, MessageCircle, P
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import LevelSelector from './LevelSelector';
+import MemberSelector from './MemberSelector';
 
 export default function GroupQnATab({ group, currentUser, myMembership, isAdmin }) {
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [formData, setFormData] = useState({ question: '', details: '', target_levels: [] });
+  const [formData, setFormData] = useState({ question: '', details: '', target_levels: [], target_users: [] });
 
   const { data: qnas = [] } = useQuery({
     queryKey: ['groupQnA', group.id],
@@ -34,6 +35,14 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
     onSuccess: () => {
       queryClient.invalidateQueries(['groupQnA', group.id]);
       handleCloseDialog();
+      // Notify admins
+      base44.functions.invoke('notifyGroupMembers', {
+        group_id: group.id,
+        title: `New Q&A Question`,
+        message: `${currentUser.email} asked: ${formData.question}`,
+        type: 'qna_question',
+        link: `/CreatorGroups?id=${group.id}&tab=qna`
+      });
     }
   });
 
@@ -55,7 +64,8 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
     setFormData({
       question: qna.question,
       details: qna.details || '',
-      target_levels: qna.target_levels || []
+      target_levels: qna.target_levels || [],
+      target_users: qna.target_users || []
     });
     setIsDialogOpen(true);
   };
@@ -63,7 +73,7 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
     setEditingId(null);
-    setFormData({ question: '', details: '', target_levels: [] });
+    setFormData({ question: '', details: '', target_levels: [], target_users: [] });
   };
 
   const handleSubmit = () => {
@@ -75,17 +85,41 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
   };
 
   const answerMutation = useMutation({
-    mutationFn: ({ id, answer, status }) => base44.entities.GroupQnA.update(id, { 
-      answer, 
-      status, 
-      answered_by: currentUser.email,
-      answered_date: new Date().toISOString()
-    }),
+    mutationFn: async ({ id, answer, status, originalQna }) => {
+        await base44.entities.GroupQnA.update(id, { 
+            answer, 
+            status, 
+            answered_by: currentUser.email,
+            answered_date: new Date().toISOString()
+        });
+
+        if (status === 'published' && originalQna) {
+            // Notify the asker
+            await base44.functions.invoke('notifyGroupMembers', {
+                group_id: group.id,
+                target_email: originalQna.asked_by,
+                title: `Your Question was Answered!`,
+                message: `Answer to: ${originalQna.question}`,
+                type: 'qna_answer',
+                link: `/CreatorGroups?id=${group.id}&tab=qna`
+            });
+        }
+    },
     onSuccess: () => queryClient.invalidateQueries(['groupQnA', group.id])
   });
 
   // Filter visibility
-  const publishedQnA = qnas.filter(q => q.status === 'published');
+  const visibleQnA = qnas.filter(q => {
+    if (isAdmin) return true;
+    if (q.asked_by === currentUser.email) return true;
+    
+    const levelMatch = !q.target_levels || q.target_levels.length === 0 || q.target_levels.includes(myMembership?.level);
+    const userMatch = !q.target_users || q.target_users.length === 0 || q.target_users.includes(myMembership?.user_email);
+    
+    return levelMatch && userMatch;
+  });
+
+  const publishedQnA = visibleQnA.filter(q => q.status === 'published');
   const myPendingQnA = qnas.filter(q => q.status === 'pending' && q.asked_by === currentUser.email);
   const adminPendingQnA = isAdmin ? qnas.filter(q => q.status === 'pending') : [];
 
@@ -117,16 +151,26 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
                 />
               </div>
               
-              {/* Only admins see level selector for Q&A questions (usually when editing) */}
               {isAdmin && (
-                <LevelSelector 
-                  group={group} 
-                  selectedLevels={formData.target_levels} 
-                  onChange={(levels) => setFormData({...formData, target_levels: levels})} 
-                />
+                <div className="space-y-4 border-t pt-4">
+                    <h4 className="text-sm font-semibold">Visibility Control</h4>
+                    <LevelSelector 
+                      group={group} 
+                      selectedLevels={formData.target_levels} 
+                      onChange={(levels) => setFormData({...formData, target_levels: levels})} 
+                    />
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium">Specific Users (Optional)</label>
+                        <MemberSelector
+                            group={group}
+                            selectedUsers={formData.target_users}
+                            onChange={(users) => setFormData({...formData, target_users: users})}
+                        />
+                    </div>
+                </div>
               )}
 
-              <Button onClick={handleSubmit} disabled={!formData.question} className="w-full">
+              <Button onClick={handleSubmit} disabled={!formData.question} className="w-full mt-4">
                 {editingId ? 'Update Question' : 'Submit Question'}
               </Button>
             </div>
@@ -178,7 +222,7 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
         {isAdmin && (
           <TabsContent value="pending" className="space-y-4 mt-4">
             {adminPendingQnA.map(q => (
-              <AdminAnswerCard key={q.id} qna={q} onAnswer={answerMutation.mutate} />
+              <AdminAnswerCard key={q.id} qna={q} onAnswer={(data) => answerMutation.mutate({...data, originalQna: q})} />
             ))}
             {adminPendingQnA.length === 0 && <div className="text-center py-8 text-gray-500">No pending questions.</div>}
           </TabsContent>
