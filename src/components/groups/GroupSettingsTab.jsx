@@ -127,7 +127,9 @@ function DeleteGroupSettings({ group }) {
     onSuccess: () => {
       queryClient.invalidateQueries(['myGroupMemberships']);
       queryClient.invalidateQueries(['myGroupsDetails']);
-      window.location.href = '/creator-groups';
+      // Force redirect by reloading or navigate
+      // Since we are in a tab inside the page, we need to go back to main list
+      window.location.href = '/creator-groups'; 
     }
   });
 
