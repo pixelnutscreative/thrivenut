@@ -217,6 +217,7 @@ export default function Dashboard() {
   }, [preferences?.dashboard_layout]);
 
   const saveLayout = (newLayout) => {
+    setLayout(newLayout);
     updatePreferencesMutation.mutate({ dashboard_layout: newLayout });
     setShowCustomizeModal(false);
   };
