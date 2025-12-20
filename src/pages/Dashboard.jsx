@@ -200,7 +200,9 @@ export default function Dashboard() {
     { id: 'subscribed_events', visible: true, order: 7, width: 'half' }
   ];
 
-  const layout = useMemo(() => {
+  const [layout, setLayout] = useState([]);
+
+  useEffect(() => {
     const prefLayout = preferences?.dashboard_layout || [];
     const merged = [...prefLayout];
     defaultLayout.forEach(def => {
@@ -211,12 +213,29 @@ export default function Dashboard() {
         existing.width = def.width;
       }
     });
-    return merged.sort((a, b) => a.order - b.order);
+    setLayout(merged.sort((a, b) => a.order - b.order));
   }, [preferences?.dashboard_layout]);
 
   const saveLayout = (newLayout) => {
     updatePreferencesMutation.mutate({ dashboard_layout: newLayout });
     setShowCustomizeModal(false);
+  };
+
+  const onDragEnd = (result) => {
+    if (!result.destination) return;
+
+    const newLayout = Array.from(layout);
+    const [reorderedItem] = newLayout.splice(result.source.index, 1);
+    newLayout.splice(result.destination.index, 0, reorderedItem);
+
+    // Update orders
+    const updatedLayout = newLayout.map((item, index) => ({
+      ...item,
+      order: index
+    }));
+
+    setLayout(updatedLayout);
+    updatePreferencesMutation.mutate({ dashboard_layout: updatedLayout });
   };
 
   const renderWidget = (widget) => {
