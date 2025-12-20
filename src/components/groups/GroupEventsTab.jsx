@@ -27,20 +27,18 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
   const createMutation = useMutation({
     mutationFn: async (data) => {
       const event = await base44.entities.GroupEvent.create({ ...data, group_id: group.id, created_by: currentUser.email });
-      // Create notification
-      await base44.entities.Notification.create({
-        user_email: 'all_group_members:' + group.id, // Special handler or function needed for this, but standard pattern for now
-        title: `New Event in ${group.name}`,
-        message: `New event: ${data.title}`,
-        type: 'group_event',
-        link: `/creator-groups?id=${group.id}&tab=events`,
-        is_read: false,
-        created_at: new Date().toISOString()
-      });
-      // Also manually fan out if 'all_group_members' isn't supported by backend trigger? 
-      // Assuming backend function 'notifyGroup' is better, but here we'll just create a general notification if the system supports it.
-      // If not, we should probably iterate members or leave it for now as "Add Notifications" was the request.
-      // Let's assume we need to actually create a notification record.
+      // Send notifications to group members
+      try {
+        await base44.functions.invoke('notifyGroupMembers', {
+          group_id: group.id,
+          title: `New Event: ${group.name}`,
+          message: `New event scheduled: ${data.title}`,
+          type: 'group_event',
+          link: `/CreatorGroups?id=${group.id}&tab=events`
+        });
+      } catch (err) {
+        console.error("Failed to send notifications", err);
+      }
       return event;
     },
     onSuccess: () => {

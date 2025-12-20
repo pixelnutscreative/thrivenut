@@ -65,16 +65,18 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
     mutationFn: async (data) => {
       const post = await base44.entities.GroupPost.create({ ...data, group_id: group.id, author_email: currentUser.email });
       
-      // Send notification
-      await base44.entities.Notification.create({
-        user_email: 'all_group_members:' + group.id, // Marker for backend processing if exists, otherwise this is a placeholder
-        title: `New Post in ${group.name}`,
-        message: data.title,
-        type: 'group_post',
-        link: `/creator-groups?id=${group.id}&tab=feed`,
-        is_read: false,
-        created_at: new Date().toISOString()
-      });
+      // Send notifications to group members
+      try {
+        await base44.functions.invoke('notifyGroupMembers', {
+          group_id: group.id,
+          title: `New Post: ${group.name}`,
+          message: data.title,
+          type: 'group_post',
+          link: `/CreatorGroups?id=${group.id}&tab=feed`
+        });
+      } catch (err) {
+        console.error("Failed to send notifications", err);
+      }
       
       return post;
     },

@@ -28,7 +28,8 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
   // Copy link functionality
   const baseUrl = window.location.origin;
   const referralParam = referralLink ? `&ref=${referralLink.code}` : '';
-  const inviteLink = `${baseUrl}/creator-groups?invite=${group.invite_code}${referralParam}`;
+  // Ensure we use the correct page URL (capitalized as per file name)
+  const inviteLink = `${baseUrl}/CreatorGroups?invite=${group.invite_code}${referralParam}`;
   
   const copyLink = () => {
     navigator.clipboard.writeText(inviteLink);
