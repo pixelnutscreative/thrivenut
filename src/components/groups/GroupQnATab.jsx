@@ -164,7 +164,7 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
                   <div className="font-medium text-green-800 flex gap-2 mb-1">
                     <span className="text-green-600">A:</span> Answer
                   </div>
-                  <div className="text-sm text-gray-800 whitespace-pre-wrap">{q.answer}</div>
+                  <div className="text-sm text-gray-800 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: q.answer }} />
                 </div>
               </CardContent>
             </Card>
@@ -206,14 +206,18 @@ function AdminAnswerCard({ qna, onAnswer }) {
       <CardHeader className="pb-2">
         <CardTitle className="text-base">{qna.question}</CardTitle>
         <p className="text-xs text-gray-500">Asked by {qna.asked_by}</p>
-        {qna.details && <p className="text-sm mt-2">{qna.details}</p>}
+        {qna.details && <div className="text-sm mt-2 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: qna.details }} />}
       </CardHeader>
       <CardContent className="space-y-3">
-        <Textarea 
-          placeholder="Write your answer..." 
-          value={answer} 
-          onChange={e => setAnswer(e.target.value)} 
-        />
+        <div className="h-48 mb-12">
+          <ReactQuill 
+            theme="snow" 
+            value={answer} 
+            onChange={setAnswer} 
+            className="h-36"
+            placeholder="Write your answer..."
+          />
+        </div>
         <div className="flex gap-2 justify-end">
           <Button variant="outline" size="sm" onClick={() => onAnswer({ id: qna.id, status: 'rejected' })} className="text-red-500">
             Reject
