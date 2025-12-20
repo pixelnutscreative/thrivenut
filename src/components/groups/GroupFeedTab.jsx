@@ -7,16 +7,16 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Pin, MessageSquare, Trash2 } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
+import { Plus, Pin, MessageSquare, Trash2, Pencil } from 'lucide-react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
+import LevelSelector from './LevelSelector';
 
 export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin }) {
   const queryClient = useQueryClient();
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [newPost, setNewPost] = useState({ title: '', content: '', is_pinned: false, target_levels: [] });
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [formData, setFormData] = useState({ title: '', content: '', is_pinned: false, target_levels: [] });
 
   const { data: posts = [] } = useQuery({
     queryKey: ['groupPosts', group.id],
@@ -27,8 +27,15 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
     mutationFn: (data) => base44.entities.GroupPost.create({ ...data, group_id: group.id, author_email: currentUser.email }),
     onSuccess: () => {
       queryClient.invalidateQueries(['groupPosts', group.id]);
-      setIsCreateOpen(false);
-      setNewPost({ title: '', content: '', is_pinned: false, target_levels: [] });
+      handleCloseDialog();
+    }
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (data) => base44.entities.GroupPost.update(editingId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['groupPosts', group.id]);
+      handleCloseDialog();
     }
   });
 
@@ -36,6 +43,31 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
     mutationFn: (id) => base44.entities.GroupPost.delete(id),
     onSuccess: () => queryClient.invalidateQueries(['groupPosts', group.id])
   });
+
+  const handleEdit = (post) => {
+    setEditingId(post.id);
+    setFormData({
+      title: post.title,
+      content: post.content || '',
+      is_pinned: post.is_pinned || false,
+      target_levels: post.target_levels || []
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+    setEditingId(null);
+    setFormData({ title: '', content: '', is_pinned: false, target_levels: [] });
+  };
+
+  const handleSubmit = () => {
+    if (editingId) {
+      updateMutation.mutate(formData);
+    } else {
+      createMutation.mutate(formData);
+    }
+  };
 
   // Filter posts based on visibility
   const visiblePosts = posts.filter(post => {
@@ -51,57 +83,47 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
     <div className="space-y-6">
       {isAdmin && (
         <div className="flex justify-end">
-          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+          <Dialog open={isDialogOpen} onOpenChange={(open) => !open && handleCloseDialog()}>
             <DialogTrigger asChild>
-              <Button><Plus className="w-4 h-4 mr-2" /> New Post</Button>
+              <Button onClick={() => setIsDialogOpen(true)}><Plus className="w-4 h-4 mr-2" /> New Post</Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Create Announcement</DialogTitle>
+                <DialogTitle>{editingId ? 'Edit Post' : 'Create Announcement'}</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <Input 
                   placeholder="Title" 
-                  value={newPost.title} 
-                  onChange={e => setNewPost({...newPost, title: e.target.value})} 
+                  value={formData.title} 
+                  onChange={e => setFormData({...formData, title: e.target.value})} 
                 />
                 <div className="h-64 mb-12">
                   <ReactQuill 
                     theme="snow" 
-                    value={newPost.content} 
-                    onChange={v => setNewPost({...newPost, content: v})} 
+                    value={formData.content} 
+                    onChange={v => setFormData({...formData, content: v})} 
                     className="h-48"
                   />
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="space-y-4">
                   <label className="flex items-center gap-2 text-sm">
                     <input 
                       type="checkbox" 
-                      checked={newPost.is_pinned} 
-                      onChange={e => setNewPost({...newPost, is_pinned: e.target.checked})} 
+                      checked={formData.is_pinned} 
+                      onChange={e => setFormData({...formData, is_pinned: e.target.checked})} 
                     />
                     Pin to top
                   </label>
-                  {group.member_levels?.length > 0 && (
-                    <div className="flex-1">
-                      <Select 
-                        value={newPost.target_levels[0] || 'all'} 
-                        onValueChange={v => setNewPost({...newPost, target_levels: v === 'all' ? [] : [v]})}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Target Audience" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">Everyone</SelectItem>
-                          {group.member_levels.map(level => (
-                            <SelectItem key={level} value={level}>{level} Only</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
+                  
+                  <LevelSelector 
+                    group={group} 
+                    selectedLevels={formData.target_levels} 
+                    onChange={(levels) => setFormData({...formData, target_levels: levels})} 
+                  />
                 </div>
-                <Button onClick={() => createMutation.mutate(newPost)} disabled={!newPost.title} className="w-full">Post</Button>
+                <Button onClick={handleSubmit} disabled={!formData.title} className="w-full">
+                  {editingId ? 'Update Post' : 'Post'}
+                </Button>
               </div>
             </DialogContent>
           </Dialog>
@@ -145,7 +167,14 @@ function PostCard({ post, isAdmin, onDelete }) {
           </div>
         </div>
         {isAdmin && (
-          <Button variant="ghost" size="sm" onClick={onDelete} className="text-red-500 hover:bg-red-50"><Trash2 className="w-4 h-4" /></Button>
+          <div className="flex gap-1">
+            <Button variant="ghost" size="sm" onClick={post.onEdit} className="text-gray-500 hover:text-purple-600">
+              <Pencil className="w-4 h-4" />
+            </Button>
+            <Button variant="ghost" size="sm" onClick={onDelete} className="text-red-500 hover:bg-red-50">
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </div>
         )}
       </CardHeader>
       <CardContent>
