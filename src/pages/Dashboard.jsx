@@ -317,6 +317,9 @@ export default function Dashboard() {
       case 'crypto_ticker':
         return null; // Moved to Creator Groups
       default:
+        if (widget.type === 'group') {
+          return <GroupWidget widget={widget} userEmail={user?.email} />;
+        }
         return null;
     }
   };
