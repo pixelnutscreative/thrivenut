@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MessageSquare, Plus, CheckCircle, Clock, XCircle, Send, Bell, Settings } from 'lucide-react';
 import LevelSelector from './LevelSelector';
@@ -249,6 +250,7 @@ export default function GroupRequestsTab({ group, currentUser, myMembership, isA
             </div>
           </DialogContent>
         </Dialog>
+      )}
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
