@@ -45,6 +45,51 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
     onSuccess: () => queryClient.invalidateQueries(['groupEvents', group.id])
   });
 
+  const addToMyDayMutation = useMutation({
+    mutationFn: async ({ event, isUrgent }) => {
+      // Create ExternalEvent for My Day
+      return await base44.entities.ExternalEvent.create({
+        title: event.title,
+        description: `Group Event: ${group.name}\n\n${event.description || ''}`,
+        date: event.start_time.split('T')[0],
+        time: new Date(event.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }), // HH:mm
+        platform: 'Other',
+        url: event.link || window.location.href,
+        location: event.location,
+        is_urgent: isUrgent,
+        created_by: currentUser.email
+      });
+    },
+    onSuccess: () => {
+      alert('Event added to My Day!');
+      queryClient.invalidateQueries(['manualEventsToday']);
+    }
+  });
+
+  const handleShare = async (event) => {
+    const shareData = {
+      title: event.title,
+      text: `Check out this event in ${group.name}: ${event.title}`,
+      url: window.location.href, // Or a deep link if possible
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        console.error('Error sharing:', err);
+      }
+    } else {
+      navigator.clipboard.writeText(`${shareData.text}\n${shareData.url}`);
+      alert('Link copied to clipboard!');
+    }
+  };
+
+  const handleAddToMyDay = (event) => {
+    const isUrgent = window.confirm('Mark this event as URGENT? (It will appear at the top of your dashboard)');
+    addToMyDayMutation.mutate({ event, isUrgent });
+  };
+
   const handleEdit = (event) => {
     setEditingId(event.id);
     setFormData({

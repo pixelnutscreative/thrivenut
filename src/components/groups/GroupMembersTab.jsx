@@ -62,6 +62,16 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
   const pendingMembers = members.filter(m => m.status === 'pending');
   const activeMembers = members.filter(m => m.status !== 'pending');
 
+  if (!isAdmin && myMembership?.role !== 'owner') {
+    return (
+      <div className="p-8 text-center text-gray-500 bg-gray-50 rounded-lg">
+        <h3 className="text-lg font-semibold">Members</h3>
+        <p>Member list is only visible to admins.</p>
+        <p className="mt-2 text-sm">{activeMembers.length} Active Members</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-purple-50 p-4 rounded-xl border border-purple-100">

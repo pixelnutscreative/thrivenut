@@ -117,11 +117,14 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
                 />
               </div>
               
-              <LevelSelector 
-                group={group} 
-                selectedLevels={formData.target_levels} 
-                onChange={(levels) => setFormData({...formData, target_levels: levels})} 
-              />
+              {/* Only admins see level selector for Q&A questions (usually when editing) */}
+              {isAdmin && (
+                <LevelSelector 
+                  group={group} 
+                  selectedLevels={formData.target_levels} 
+                  onChange={(levels) => setFormData({...formData, target_levels: levels})} 
+                />
+              )}
 
               <Button onClick={handleSubmit} disabled={!formData.question} className="w-full">
                 {editingId ? 'Update Question' : 'Submit Question'}
