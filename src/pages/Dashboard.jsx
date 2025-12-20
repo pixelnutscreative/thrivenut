@@ -336,20 +336,42 @@ export default function Dashboard() {
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 grid-flow-row-dense">
-            {layout.map(widget => (
-              <div 
-                key={widget.id} 
-                className={
-                  widget.width === 'full' 
-                    ? 'col-span-1 md:col-span-2' 
-                    : 'col-span-1'
-                }
-              >
-                {renderWidget(widget)}
-              </div>
-            ))}
-          </div>
+          <DragDropContext onDragEnd={onDragEnd}>
+            <Droppable droppableId="dashboard-grid" direction="horizontal">
+              {(provided) => (
+                <div 
+                  {...provided.droppableProps}
+                  ref={provided.innerRef}
+                  className="grid grid-cols-1 md:grid-cols-2 gap-6 grid-flow-row-dense"
+                >
+                  {layout.map((widget, index) => (
+                    <Draggable key={widget.id} draggableId={widget.id} index={index}>
+                      {(provided) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          className={`relative group ${
+                            widget.width === 'full' 
+                              ? 'col-span-1 md:col-span-2' 
+                              : 'col-span-1'
+                          }`}
+                        >
+                          <div 
+                            {...provided.dragHandleProps}
+                            className="absolute top-2 right-2 z-10 p-1.5 bg-white/80 dark:bg-black/50 backdrop-blur-sm rounded-md shadow-sm opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing hover:bg-white dark:hover:bg-black/70"
+                          >
+                            <GripHorizontal className="w-4 h-4 text-gray-500" />
+                          </div>
+                          {renderWidget(widget)}
+                        </div>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </DragDropContext>
 
           {user?.email?.toLowerCase() === 'pixelnutscreative@gmail.com' && (
             <Collapsible open={!isSectionCollapsed('notion-tasks')}>
