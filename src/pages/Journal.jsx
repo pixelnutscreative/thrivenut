@@ -11,7 +11,11 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { BookOpen, Calendar, Sparkles, Brain, Shield, ChevronDown, ChevronUp, Search, Plus, X, Eye, EyeOff, Filter, ArrowUpDown, Music, History, Trash2, RotateCcw, ExternalLink, Type, Star, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { 
+  BookOpen, Calendar, Sparkles, Brain, Shield, ChevronDown, ChevronUp, Search, 
+  Plus, X, Eye, EyeOff, Filter, ArrowUpDown, Music, History, Trash2, RotateCcw, 
+  ExternalLink, Type, Star, Image as ImageIcon, Loader2 
+} from 'lucide-react';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import AIReframingCard from '../components/journal/AIReframingCard';
