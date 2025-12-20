@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { BookOpen, Calendar, Sparkles, Brain, Shield, ChevronDown, ChevronUp, Search, Plus, X, Eye, EyeOff, Filter, ArrowUpDown, Music, History, Trash2, RotateCcw, ExternalLink, Type, Star } from 'lucide-react';
+import { BookOpen, Calendar, Sparkles, Brain, Shield, ChevronDown, ChevronUp, Search, Plus, X, Eye, EyeOff, Filter, ArrowUpDown, Music, History, Trash2, RotateCcw, ExternalLink, Type, Star, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import AIReframingCard from '../components/journal/AIReframingCard';
@@ -96,12 +96,18 @@ export default function Journal() {
     is_encrypted: false,
     music_style: '',
     revisions: [],
-    font: 'Inter'
+    font: 'Inter',
+    summary: '',
+    background_image: ''
   });
   
   const [showRevisions, setShowRevisions] = useState(false);
   const [currentEntryId, setCurrentEntryId] = useState(null);
   const [showFontPicker, setShowFontPicker] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+
+  // Check AI Access
+  const hasAIAccess = user?.role === 'admin' || preferences?.has_annual_ai_plan || !!preferences?.ai_platform;
 
   // Load fonts
   React.useEffect(() => {
@@ -152,7 +158,9 @@ export default function Journal() {
         ai_reframe_enabled: preferences?.enable_ai_journaling !== false,
         music_style: '',
         revisions: [],
-        font: preferences?.recent_journal_fonts?.[0] || 'Inter'
+        font: preferences?.recent_journal_fonts?.[0] || 'Inter',
+        summary: '',
+        background_image: ''
       });
       setCurrentEntryId(null);
       setShowAIReframe(false);
@@ -197,6 +205,22 @@ export default function Journal() {
     updatePreferencesMutation.mutate({ recent_journal_fonts: newRecents });
     
     setShowFontPicker(false);
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      setFormData(prev => ({ ...prev, background_image: file_url }));
+    } catch (error) {
+      console.error("Upload failed", error);
+      alert("Failed to upload image. Please try again.");
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const updateEntryMutation = useMutation({
@@ -279,7 +303,9 @@ export default function Journal() {
       is_encrypted: entry.is_encrypted,
       music_style: entry.music_style || '',
       revisions: entry.revisions || [],
-      font: entry.font || 'Inter' // Fallback for old entries
+      font: entry.font || 'Inter', // Fallback for old entries
+      summary: entry.summary || '',
+      background_image: entry.background_image || ''
     });
     setCurrentEntryId(entry.id);
     setIsAddModalOpen(true);
@@ -383,7 +409,9 @@ export default function Journal() {
                 ai_reframe_enabled: preferences?.enable_ai_journaling !== false,
                 music_style: '',
                 revisions: [],
-                font: preferences?.recent_journal_fonts?.[0] || 'Inter'
+                font: preferences?.recent_journal_fonts?.[0] || 'Inter',
+                summary: '',
+                background_image: ''
               });
               setCurrentEntryId(null);
               setIsAddModalOpen(true);
@@ -698,6 +726,16 @@ export default function Journal() {
                 />
               </div>
 
+              <div className="space-y-2">
+                <label className={`text-sm font-medium ${textClass}`}>Summary (Optional)</label>
+                <Input
+                  placeholder="A short summary so you can easily find this later..."
+                  value={formData.summary || ''}
+                  onChange={(e) => setFormData({...formData, summary: e.target.value})}
+                  className={isDark ? 'bg-gray-700 border-gray-600' : ''}
+                />
+              </div>
+
               {isPoetryMode && (
                 <div className="space-y-2">
                   <label className={`text-sm font-medium ${textClass}`}>Music Style (for Suno)</label>
@@ -946,30 +984,37 @@ export default function Journal() {
                             )}
                           </div>
                           <div className="flex flex-col items-end gap-1">
+                            {/* Hide/Unhide Button */}
+                            <Button
+                              size="sm"
+                              className={`h-7 w-7 p-0 transition-colors ${
+                                entry.is_hidden 
+                                  ? 'bg-gray-200 text-gray-500 hover:bg-gray-300' 
+                                  : 'text-white shadow-sm'
+                              }`}
+                              style={!entry.is_hidden ? { backgroundColor: preferences?.favorite_color || '#9333ea' } : {}}
+                              title={entry.is_hidden ? "Hidden (Click to Unhide)" : "Visible (Click to Hide)"}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                updateEntryMutation.mutate({ 
+                                  id: entry.id, 
+                                  data: { is_hidden: !entry.is_hidden } 
+                                });
+                              }}
+                            >
+                              {entry.is_hidden ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                            </Button>
+
                             {entryType && entryType.value !== 'general' && (
-                              <Badge variant="outline" className="text-[10px]">{entryType.label}</Badge>
+                              <Badge variant="outline" className="text-[10px] mt-1">{entryType.label}</Badge>
                             )}
                             {displayMood && (
-                              <Badge className={`${displayMood.color} border-0 text-[10px]`}>
+                              <Badge className={`${displayMood.color} border-0 text-[10px] mt-1`}>
                                 <span className="mr-1">{displayMood.emoji}</span>
                                 {displayMood.label}
                               </Badge>
                             )}
                           </div>
-                          
-                          {/* Hide/Unhide Button */}
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 text-gray-400 hover:text-purple-600"
-                            title={entry.is_hidden ? "Unhide Entry" : "Hide Entry"}
-                            onClick={() => updateEntryMutation.mutate({ 
-                              id: entry.id, 
-                              data: { is_hidden: !entry.is_hidden } 
-                            })}
-                          >
-                            {entry.is_hidden ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
-                          </Button>
                         </div>
                         {entry.is_encrypted ? (
                           decryptedContent[entry.id] ? (
@@ -1009,12 +1054,21 @@ export default function Journal() {
                         ) : (
                           <div 
                             onClick={() => openEdit(entry)} 
-                            className="cursor-pointer hover:opacity-80 transition-opacity"
-                            style={{ fontFamily: entry.font || 'Inter' }}
+                            className="cursor-pointer hover:opacity-80 transition-opacity flex-1"
                           >
-                            <p className={`${isDark ? 'text-gray-300' : 'text-gray-700'} whitespace-pre-wrap leading-relaxed`}>
-                              {entry.content}
-                            </p>
+                             {/* Summary View */}
+                             {entry.summary ? (
+                                <div>
+                                  <p className={`font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'} mb-2`}>Summary:</p>
+                                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'} line-clamp-3 italic`}>
+                                    "{entry.summary}"
+                                  </p>
+                                </div>
+                             ) : (
+                                <p className={`${isDark ? 'text-gray-300' : 'text-gray-700'} whitespace-pre-wrap leading-relaxed line-clamp-4`} style={{ fontFamily: entry.font || 'Inter' }}>
+                                  {entry.content}
+                                </p>
+                             )}
                           </div>
                         )}
 
