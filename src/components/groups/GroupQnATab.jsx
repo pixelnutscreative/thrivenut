@@ -8,13 +8,16 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { HelpCircle, CheckCircle, Clock, XCircle, ChevronRight, MessageCircle } from 'lucide-react';
+import { HelpCircle, CheckCircle, Clock, XCircle, ChevronRight, MessageCircle, Pencil, Trash2 } from 'lucide-react';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
+import LevelSelector from './LevelSelector';
 
 export default function GroupQnATab({ group, currentUser, myMembership, isAdmin }) {
   const queryClient = useQueryClient();
-  const [askOpen, setAskOpen] = useState(false);
-  const [question, setQuestion] = useState('');
-  const [details, setDetails] = useState('');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [formData, setFormData] = useState({ question: '', details: '', target_levels: [] });
 
   const { data: qnas = [] } = useQuery({
     queryKey: ['groupQnA', group.id],
@@ -30,11 +33,46 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
     }),
     onSuccess: () => {
       queryClient.invalidateQueries(['groupQnA', group.id]);
-      setAskOpen(false);
-      setQuestion('');
-      setDetails('');
+      handleCloseDialog();
     }
   });
+
+  const updateMutation = useMutation({
+    mutationFn: (data) => base44.entities.GroupQnA.update(editingId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['groupQnA', group.id]);
+      handleCloseDialog();
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => base44.entities.GroupQnA.delete(id),
+    onSuccess: () => queryClient.invalidateQueries(['groupQnA', group.id])
+  });
+
+  const handleEdit = (qna) => {
+    setEditingId(qna.id);
+    setFormData({
+      question: qna.question,
+      details: qna.details || '',
+      target_levels: qna.target_levels || []
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+    setEditingId(null);
+    setFormData({ question: '', details: '', target_levels: [] });
+  };
+
+  const handleSubmit = () => {
+    if (editingId) {
+      updateMutation.mutate(formData);
+    } else {
+      askMutation.mutate(formData);
+    }
+  };
 
   const answerMutation = useMutation({
     mutationFn: ({ id, answer, status }) => base44.entities.GroupQnA.update(id, { 
@@ -55,30 +93,38 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold">Community Q&A</h3>
-        <Dialog open={askOpen} onOpenChange={setAskOpen}>
+        <Dialog open={isDialogOpen} onOpenChange={(open) => !open && handleCloseDialog()}>
           <DialogTrigger asChild>
-            <Button><HelpCircle className="w-4 h-4 mr-2" /> Ask a Question</Button>
+            <Button onClick={() => setIsDialogOpen(true)}><HelpCircle className="w-4 h-4 mr-2" /> Ask a Question</Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Ask the Community</DialogTitle>
+              <DialogTitle>{editingId ? 'Edit Question' : 'Ask the Community'}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <Input 
                 placeholder="What's your question?" 
-                value={question} 
-                onChange={e => setQuestion(e.target.value)} 
+                value={formData.question} 
+                onChange={e => setFormData({...formData, question: e.target.value})} 
               />
-              <Textarea 
-                placeholder="Add more details..." 
-                value={details} 
-                onChange={e => setDetails(e.target.value)} 
+              <div className="h-48 mb-12">
+                <ReactQuill 
+                  theme="snow" 
+                  value={formData.details} 
+                  onChange={v => setFormData({...formData, details: v})} 
+                  className="h-36"
+                  placeholder="Add more details..."
+                />
+              </div>
+              
+              <LevelSelector 
+                group={group} 
+                selectedLevels={formData.target_levels} 
+                onChange={(levels) => setFormData({...formData, target_levels: levels})} 
               />
-              <p className="text-xs text-gray-500">
-                Questions are reviewed by admins before being published to the group.
-              </p>
-              <Button onClick={() => askMutation.mutate({ question, details })} disabled={!question} className="w-full">
-                Submit Question
+
+              <Button onClick={handleSubmit} disabled={!formData.question} className="w-full">
+                {editingId ? 'Update Question' : 'Submit Question'}
               </Button>
             </div>
           </DialogContent>
@@ -96,10 +142,24 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
           {publishedQnA.map(q => (
             <Card key={q.id}>
               <CardContent className="p-4 space-y-3">
-                <div className="font-semibold text-lg flex gap-2">
-                  <span className="text-purple-600">Q:</span> {q.question}
+                <div className="flex justify-between items-start">
+                  <div className="font-semibold text-lg flex gap-2">
+                    <span className="text-purple-600">Q:</span> {q.question}
+                  </div>
+                  {(isAdmin || q.asked_by === currentUser.email) && (
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="sm" onClick={() => handleEdit(q)} className="text-gray-500 h-6 w-6 p-0 hover:text-purple-600">
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => deleteMutation.mutate(q.id)} className="text-red-500 h-6 w-6 p-0">
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
-                {q.details && <p className="text-sm text-gray-600 ml-6">{q.details}</p>}
+                {q.details && (
+                  <div className="text-sm text-gray-600 ml-6 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: q.details }} />
+                )}
                 <div className="bg-green-50 p-3 rounded-lg ml-6 border border-green-100">
                   <div className="font-medium text-green-800 flex gap-2 mb-1">
                     <span className="text-green-600">A:</span> Answer
