@@ -9,9 +9,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Users, Plus, Settings, Video, AlertCircle, ArrowLeft, Loader2, Building, Home, Heart, Sparkles, Brain, Briefcase, Calendar, MessageSquare, FileText, Bell, Eye, EyeOff, Link as LinkIcon, ExternalLink, Clock, Trash2, Filter } from 'lucide-react';
+import { Users, Plus, Settings, Video, AlertCircle, ArrowLeft, Loader2, Building, Home, Heart, Sparkles, Brain, Briefcase, Calendar, MessageSquare, FileText, Bell, Eye, EyeOff, Link as LinkIcon, ExternalLink, Clock, Trash2, Filter, LayoutGrid, List } from 'lucide-react';
 import { useTheme } from '../components/shared/useTheme';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import GroupTrainingTab from '../components/groups/GroupTrainingTab';
 import GroupRequestsTab from '../components/groups/GroupRequestsTab';
 import GroupMembersTab from '../components/groups/GroupMembersTab';
@@ -30,6 +31,8 @@ export default function CreatorGroups() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
   const [newGroupType, setNewGroupType] = useState('community');
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'table'
+  const [showHidden, setShowHidden] = useState(false);
 
   // Admin Check
   const realUserEmail = user?.email ? user.email.toLowerCase() : '';
@@ -60,6 +63,54 @@ export default function CreatorGroups() {
       return results.filter(Boolean);
     },
     enabled: myMemberships.length > 0
+  });
+
+  // Fetch all group preferences for visibility
+  const { data: allGroupPrefs = [], refetch: refetchAllPrefs } = useQuery({
+    queryKey: ['allGroupPrefs', user?.email],
+    queryFn: async () => {
+      if (!user?.email) return [];
+      return await base44.entities.UserGroupPreference.filter({ user_email: user.email });
+    },
+    enabled: !!user?.email
+  });
+
+  const toggleGroupVisibilityMutation = useMutation({
+    mutationFn: async ({ groupId, isHidden }) => {
+      const existing = allGroupPrefs.find(p => p.group_id === groupId);
+      if (existing) {
+        return base44.entities.UserGroupPreference.update(existing.id, { is_hidden_from_list: isHidden });
+      } else {
+        return base44.entities.UserGroupPreference.create({
+          user_email: user.email,
+          group_id: groupId,
+          is_hidden_from_list: isHidden
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['allGroupPrefs']);
+    }
+  });
+
+  const deleteGroupMutation = useMutation({
+    mutationFn: async (groupId) => {
+      // First verify ownership/admin
+      const group = groups.find(g => g.id === groupId);
+      if (!group || group.owner_email !== user.email) {
+        throw new Error("Unauthorized");
+      }
+      // Delete group
+      await base44.entities.CreatorGroup.delete(groupId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['myGroupsDetails']);
+      queryClient.invalidateQueries(['myGroupMemberships']);
+      // If we were on that group page, go back to list
+      if (activeGroupId) {
+        setSearchParams({});
+      }
+    }
   });
 
   const createGroupMutation = useMutation({
@@ -251,130 +302,257 @@ export default function CreatorGroups() {
 
   // LIST VIEW
   if (!activeGroup) {
+    const visibleGroups = groups.filter(g => {
+      const pref = allGroupPrefs.find(p => p.group_id === g.id);
+      return showHidden || !pref?.is_hidden_from_list;
+    });
+
     return (
       <div className="p-6 max-w-5xl mx-auto space-y-8">
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center flex-wrap gap-4">
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <Users className="w-7 h-7 text-purple-600" /> My Groups
             </h1>
             <p className="text-gray-600 mt-1">Connect, learn, and grow with your squads.</p>
           </div>
-          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" /> Create Group
+          <div className="flex items-center gap-2">
+             <div className="flex bg-gray-100 p-1 rounded-lg">
+              <Button 
+                size="sm" 
+                variant={viewMode === 'grid' ? 'white' : 'ghost'} 
+                className={`h-8 px-2 ${viewMode === 'grid' ? 'bg-white shadow-sm' : ''}`}
+                onClick={() => setViewMode('grid')}
+              >
+                <LayoutGrid className="w-4 h-4" />
               </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create New Group</DialogTitle>
-              </DialogHeader>
-              <div className="py-4 space-y-4">
-                <div className="space-y-2">
-                  <Label>Group Type</Label>
-                  <Select value={newGroupType} onValueChange={setNewGroupType}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="community">
-                        <div className="flex items-center gap-2">
-                          <Users className="w-4 h-4" /> Community / Friends
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="family">
-                        <div className="flex items-center gap-2">
-                          <Home className="w-4 h-4" /> Family
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="collective">
-                        <div className="flex items-center gap-2">
-                          <Sparkles className="w-4 h-4" /> Creative Collective
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="mastermind">
-                        <div className="flex items-center gap-2">
-                          <Brain className="w-4 h-4" /> Mastermind Group
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="project">
-                        <div className="flex items-center gap-2">
-                          <Briefcase className="w-4 h-4" /> Project Team
-                        </div>
-                      </SelectItem>
-                      {canCreateAgency && (
-                        <SelectItem value="agency">
+              <Button 
+                size="sm" 
+                variant={viewMode === 'table' ? 'white' : 'ghost'}
+                className={`h-8 px-2 ${viewMode === 'table' ? 'bg-white shadow-sm' : ''}`}
+                onClick={() => setViewMode('table')}
+              >
+                <List className="w-4 h-4" />
+              </Button>
+            </div>
+            
+            <Button 
+              size="sm" 
+              variant={showHidden ? "secondary" : "outline"} 
+              onClick={() => setShowHidden(!showHidden)}
+              title={showHidden ? "Hide Hidden Groups" : "Show All Groups"}
+            >
+              {showHidden ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </Button>
+
+            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="w-4 h-4 mr-2" /> Create Group
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Create New Group</DialogTitle>
+                </DialogHeader>
+                <div className="py-4 space-y-4">
+                  <div className="space-y-2">
+                    <Label>Group Type</Label>
+                    <Select value={newGroupType} onValueChange={setNewGroupType}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="community">
                           <div className="flex items-center gap-2">
-                            <Building className="w-4 h-4" /> Creative Agency / Business
+                            <Users className="w-4 h-4" /> Community / Friends
                           </div>
                         </SelectItem>
-                      )}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-gray-500">
-                    {newGroupType === 'agency' 
-                      ? 'Official business groups for agencies, coaching, or brands. This creates your Agency entity.' 
-                      : 'Create a space for collaboration, sharing, and growth.'}
-                  </p>
+                        <SelectItem value="family">
+                          <div className="flex items-center gap-2">
+                            <Home className="w-4 h-4" /> Family
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="collective">
+                          <div className="flex items-center gap-2">
+                            <Sparkles className="w-4 h-4" /> Creative Collective
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="mastermind">
+                          <div className="flex items-center gap-2">
+                            <Brain className="w-4 h-4" /> Mastermind Group
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="project">
+                          <div className="flex items-center gap-2">
+                            <Briefcase className="w-4 h-4" /> Project Team
+                          </div>
+                        </SelectItem>
+                        {canCreateAgency && (
+                          <SelectItem value="agency">
+                            <div className="flex items-center gap-2">
+                              <Building className="w-4 h-4" /> Creative Agency / Business
+                            </div>
+                          </SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-gray-500">
+                      {newGroupType === 'agency' 
+                        ? 'Official business groups for agencies, coaching, or brands. This creates your Agency entity.' 
+                        : 'Create a space for collaboration, sharing, and growth.'}
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Group Name</Label>
+                    <Input 
+                      value={newGroupName} 
+                      onChange={(e) => setNewGroupName(e.target.value)} 
+                      placeholder="e.g. The Treehouse" 
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label>Group Name</Label>
-                  <Input 
-                    value={newGroupName} 
-                    onChange={(e) => setNewGroupName(e.target.value)} 
-                    placeholder="e.g. The Treehouse" 
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button onClick={() => createGroupMutation.mutate({ name: newGroupName, type: newGroupType })} disabled={!newGroupName}>
-                  Create Group
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+                <DialogFooter>
+                  <Button onClick={() => createGroupMutation.mutate({ name: newGroupName, type: newGroupType })} disabled={!newGroupName}>
+                    Create Group
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {groups.map(group => {
-            const GroupIcon = getGroupIcon(group.type);
-            const colorClass = getGroupColorClass(group.type);
-            
-            return (
-              <Card key={group.id} className="hover:shadow-lg transition-all cursor-pointer group" onClick={() => setSearchParams({ id: group.id })}>
-                <CardContent className="p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-xl ${colorClass}`}>
-                      {group.logo_url ? <img src={group.logo_url} alt="" className="w-full h-full object-cover rounded-xl" /> : group.name[0]}
+        {viewMode === 'grid' ? (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {visibleGroups.map(group => {
+              const GroupIcon = getGroupIcon(group.type);
+              const colorClass = getGroupColorClass(group.type);
+              const pref = allGroupPrefs.find(p => p.group_id === group.id);
+              const isHidden = pref?.is_hidden_from_list;
+              
+              return (
+                <Card key={group.id} className={`hover:shadow-lg transition-all cursor-pointer group ${isHidden ? 'opacity-60 bg-gray-50' : ''}`} onClick={() => setSearchParams({ id: group.id })}>
+                  <CardContent className="p-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-xl ${colorClass}`}>
+                        {group.logo_url ? <img src={group.logo_url} alt="" className="w-full h-full object-cover rounded-xl" /> : group.name[0]}
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${colorClass.replace('text-', 'text-opacity-80 text-').replace('bg-', 'bg-opacity-50 bg-')}`}>
+                          {getGroupLabel(group.type)}
+                        </span>
+                        {group.owner_email === user?.email && (
+                          <span className="text-[10px] border px-2 py-0.5 rounded-full text-gray-500">Owner</span>
+                        )}
+                        {isHidden && (
+                          <span className="text-[10px] bg-gray-200 px-2 py-0.5 rounded-full text-gray-500 flex items-center gap-1">
+                            <EyeOff className="w-3 h-3" /> Hidden
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex flex-col items-end gap-1">
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${colorClass.replace('text-', 'text-opacity-80 text-').replace('bg-', 'bg-opacity-50 bg-')}`}>
-                        {getGroupLabel(group.type)}
-                      </span>
-                      {group.owner_email === user?.email && (
-                        <span className="text-[10px] border px-2 py-0.5 rounded-full text-gray-500">Owner</span>
-                      )}
+                    <h3 className="text-xl font-bold mb-2 group-hover:text-purple-600 transition-colors">{group.name}</h3>
+                    <p className="text-sm text-gray-500 line-clamp-2 mb-4">{group.description || 'No description yet.'}</p>
+                    <div className="text-xs text-gray-400 flex items-center gap-1">
+                      <GroupIcon className="w-3 h-3" /> Click to enter dashboard
                     </div>
-                  </div>
-                  <h3 className="text-xl font-bold mb-2 group-hover:text-purple-600 transition-colors">{group.name}</h3>
-                  <p className="text-sm text-gray-500 line-clamp-2 mb-4">{group.description || 'No description yet.'}</p>
-                  <div className="text-xs text-gray-400 flex items-center gap-1">
-                    <GroupIcon className="w-3 h-3" /> Click to enter dashboard
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-          {groups.length === 0 && (
-            <div className="col-span-full text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed">
-              <Users className="w-12 h-12 mx-auto text-gray-300 mb-3" />
-              <h3 className="text-lg font-medium text-gray-900">No Groups Yet</h3>
-              <p className="text-gray-500 mb-4">Join a group or create your own to get started.</p>
-              <Button variant="outline" onClick={() => setIsCreateOpen(true)}>Create Your First Group</Button>
-            </div>
-          )}
-        </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        ) : (
+          <Card>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {visibleGroups.map(group => {
+                  const pref = allGroupPrefs.find(p => p.group_id === group.id);
+                  const isHidden = pref?.is_hidden_from_list;
+                  const isOwner = group.owner_email === user?.email;
+
+                  return (
+                    <TableRow key={group.id} className={isHidden ? 'opacity-60 bg-gray-50' : ''}>
+                      <TableCell className="font-medium cursor-pointer" onClick={() => setSearchParams({ id: group.id })}>
+                        <div className="flex items-center gap-3">
+                           <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm ${getGroupColorClass(group.type)}`}>
+                              {group.name[0]}
+                           </div>
+                           {group.name}
+                        </div>
+                      </TableCell>
+                      <TableCell>{getGroupLabel(group.type)}</TableCell>
+                      <TableCell>
+                        {isOwner ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                            Owner
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                            Member
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                           <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleGroupVisibilityMutation.mutate({ groupId: group.id, isHidden: !isHidden });
+                              }}
+                              title={isHidden ? "Show Group" : "Hide Group"}
+                           >
+                              {isHidden ? <EyeOff className="w-4 h-4 text-gray-400" /> : <Eye className="w-4 h-4 text-gray-400" />}
+                           </Button>
+                           {isOwner && (
+                             <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (window.confirm(`Are you sure you want to delete ${group.name}? This cannot be undone.`)) {
+                                    deleteGroupMutation.mutate(group.id);
+                                  }
+                                }}
+                                className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                             >
+                                <Trash2 className="w-4 h-4" />
+                             </Button>
+                           )}
+                           <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => setSearchParams({ id: group.id })}
+                           >
+                              Open
+                           </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </Card>
+        )}
+
+        {visibleGroups.length === 0 && (
+          <div className="col-span-full text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed">
+            <Users className="w-12 h-12 mx-auto text-gray-300 mb-3" />
+            <h3 className="text-lg font-medium text-gray-900">No Groups Found</h3>
+            <p className="text-gray-500 mb-4">{showHidden ? "No groups match your filters." : "You haven't joined any groups yet."}</p>
+            <Button variant="outline" onClick={() => setIsCreateOpen(true)}>Create Your First Group</Button>
+          </div>
+        )}
       </div>
     );
   }
