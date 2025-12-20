@@ -10,6 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Loader2, LogOut, ChevronDown, ChevronRight, Settings, Calendar, Eye, EyeOff } from 'lucide-react';
 
+import DashboardCustomizer from '../components/dashboard/DashboardCustomizer';
 import MyDaySection from '../components/dashboard/MyDaySection';
 import DailyMotivationBanner from '../components/dashboard/DailyMotivationBanner';
 import SpecialEventsCard from '../components/dashboard/SpecialEventsCard';
@@ -319,27 +320,9 @@ export default function Dashboard() {
 
   const [tempLayout, setTempLayout] = useState(layout);
 
-  const saveLayout = () => {
-    updatePreferencesMutation.mutate({ dashboard_layout: tempLayout });
+  const saveLayout = (newLayout) => {
+    updatePreferencesMutation.mutate({ dashboard_layout: newLayout });
     setShowCustomizeModal(false);
-  };
-
-  const moveWidget = (index, direction) => {
-    const newLayout = [...tempLayout];
-    if (direction === 'up' && index > 0) {
-      [newLayout[index], newLayout[index - 1]] = [newLayout[index - 1], newLayout[index]];
-      // Update order properties
-      newLayout.forEach((w, i) => w.order = i);
-      setTempLayout(newLayout);
-    } else if (direction === 'down' && index < newLayout.length - 1) {
-      [newLayout[index], newLayout[index + 1]] = [newLayout[index + 1], newLayout[index]];
-      newLayout.forEach((w, i) => w.order = i);
-      setTempLayout(newLayout);
-    }
-  };
-
-  const toggleWidgetVisibility = (id) => {
-    setTempLayout(prev => prev.map(w => w.id === id ? { ...w, visible: !w.visible } : w));
   };
 
   const renderWidget = (widget) => {
@@ -433,7 +416,7 @@ export default function Dashboard() {
         <div className="max-w-7xl mx-auto space-y-8">
           
           <div className="flex justify-end">
-            <Button variant="ghost" size="sm" onClick={() => { setTempLayout(layout); setShowCustomizeModal(true); }}>
+            <Button variant="ghost" size="sm" onClick={() => setShowCustomizeModal(true)}>
               <Settings className="w-4 h-4 mr-2" /> Customize Dashboard
             </Button>
           </div>
@@ -463,51 +446,12 @@ export default function Dashboard() {
       </div>
 
       {/* Customize Dashboard Modal */}
-      {showCustomizeModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <Card className="w-full max-w-md bg-white">
-            <CardHeader>
-              <CardTitle>Customize Dashboard</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-gray-500">Toggle visibility and reorder sections.</p>
-              <div className="space-y-2 max-h-[60vh] overflow-y-auto">
-                {tempLayout.map((widget, index) => (
-                  <div key={widget.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="flex flex-col gap-1">
-                        <button 
-                          onClick={() => moveWidget(index, 'up')} 
-                          disabled={index === 0}
-                          className="text-gray-400 hover:text-gray-600 disabled:opacity-30"
-                        >
-                          <ChevronUp className="w-4 h-4" />
-                        </button>
-                        <button 
-                          onClick={() => moveWidget(index, 'down')} 
-                          disabled={index === tempLayout.length - 1}
-                          className="text-gray-400 hover:text-gray-600 disabled:opacity-30"
-                        >
-                          <ChevronDown className="w-4 h-4" />
-                        </button>
-                      </div>
-                      <span className="font-medium capitalize">{widget.id.replace(/_/g, ' ')}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {widget.visible ? <Eye className="w-4 h-4 text-green-500" /> : <EyeOff className="w-4 h-4 text-gray-400" />}
-                      <Switch checked={widget.visible} onCheckedChange={() => toggleWidgetVisibility(widget.id)} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="flex justify-end gap-2 pt-4">
-                <Button variant="outline" onClick={() => setShowCustomizeModal(false)}>Cancel</Button>
-                <Button onClick={saveLayout} className="bg-purple-600 hover:bg-purple-700">Save Layout</Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      <DashboardCustomizer
+        isOpen={showCustomizeModal}
+        onClose={() => setShowCustomizeModal(false)}
+        currentLayout={layout}
+        onSave={saveLayout}
+      />
     </>
   );
 }
