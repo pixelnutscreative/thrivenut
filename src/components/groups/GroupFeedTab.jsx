@@ -6,16 +6,21 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Pin, MessageSquare, Trash2, Pencil, Calendar, Link as LinkIcon, Video, CheckCircle, EyeOff, FileText, Check, Circle } from 'lucide-react';
+import { Plus, Pin, MessageSquare, Trash2, Pencil, Calendar, Link as LinkIcon, Video, CheckCircle, EyeOff, FileText, Check, Circle, Share2, CalendarPlus, MoreHorizontal, Globe } from 'lucide-react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import LevelSelector from './LevelSelector';
+import ShareDialog from './ShareDialog';
+import AddToDayDialog from './AddToDayDialog';
+import { useTheme } from '../shared/useTheme';
 
 export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin }) {
+  const { preferences } = useTheme();
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [formData, setFormData] = useState({ title: '', content: '', is_pinned: false, target_levels: [] });
+  const [formData, setFormData] = useState({ title: '', content: '', is_pinned: false, is_public: false, target_levels: [] });
+  const canPostPublicly = isAdmin || preferences?.can_create_public_ads;
 
   // 1. Fetch Posts
   const { data: posts = [] } = useQuery({
@@ -138,6 +143,7 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
       title: post.title,
       content: post.content || '',
       is_pinned: post.is_pinned || false,
+      is_public: post.is_public || false,
       target_levels: post.target_levels || []
     });
     setIsDialogOpen(true);
@@ -146,7 +152,7 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
     setEditingId(null);
-    setFormData({ title: '', content: '', is_pinned: false, target_levels: [] });
+    setFormData({ title: '', content: '', is_pinned: false, is_public: false, target_levels: [] });
   };
 
   const handleSubmit = () => {
@@ -209,14 +215,29 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
                   />
                 </div>
                 <div className="space-y-4">
-                  <label className="flex items-center gap-2 text-sm">
-                    <input 
-                      type="checkbox" 
-                      checked={formData.is_pinned} 
-                      onChange={e => setFormData({...formData, is_pinned: e.target.checked})} 
-                    />
-                    Pin to top
-                  </label>
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-2 text-sm cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={formData.is_pinned} 
+                        onChange={e => setFormData({...formData, is_pinned: e.target.checked})} 
+                        className="rounded border-gray-300"
+                      />
+                      Pin to top
+                    </label>
+                    
+                    {canPostPublicly && (
+                      <label className="flex items-center gap-2 text-sm cursor-pointer text-indigo-600 font-medium">
+                        <input 
+                          type="checkbox" 
+                          checked={formData.is_public} 
+                          onChange={e => setFormData({...formData, is_public: e.target.checked})} 
+                          className="rounded border-indigo-300"
+                        />
+                        <Globe className="w-3 h-3" /> Make Public (Ad)
+                      </label>
+                    )}
+                  </div>
                   
                   <LevelSelector 
                     group={group} 
@@ -224,7 +245,7 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
                     onChange={(levels) => setFormData({...formData, target_levels: levels})} 
                   />
                 </div>
-                <Button onClick={handleSubmit} disabled={!formData.title} className="w-full">
+                <Button onClick={handleSubmit} disabled={!formData.title} className="w-full bg-indigo-600 hover:bg-indigo-700">
                   {editingId ? 'Update Post' : 'Post'}
                 </Button>
               </div>
@@ -257,6 +278,9 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
 }
 
 function FeedItemCard({ item, isAdmin, currentUser, onEdit, onDelete, onHide, onToggleComplete, isCompleted }) {
+  const [shareOpen, setShareOpen] = useState(false);
+  const [addToDayOpen, setAddToDayOpen] = useState(false);
+
   const getIcon = () => {
     switch(item.type) {
       case 'post': return <MessageSquare className="w-4 h-4 text-blue-500" />;
@@ -279,6 +303,9 @@ function FeedItemCard({ item, isAdmin, currentUser, onEdit, onDelete, onHide, on
 
   return (
     <Card className={`transition-all hover:shadow-md ${item.is_pinned ? 'border-l-4 border-l-blue-500' : ''}`}>
+      <ShareDialog open={shareOpen} onOpenChange={setShareOpen} item={item} />
+      <AddToDayDialog open={addToDayOpen} onOpenChange={setAddToDayOpen} item={item} user={currentUser} />
+
       <CardHeader className="pb-2 flex flex-row justify-between items-start">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -286,6 +313,7 @@ function FeedItemCard({ item, isAdmin, currentUser, onEdit, onDelete, onHide, on
               {getIcon()} {getLabel()}
             </Badge>
             {item.is_pinned && <Badge className="bg-blue-100 text-blue-700 text-[10px]"><Pin className="w-3 h-3 mr-1" /> Pinned</Badge>}
+            {item.is_public && <Badge className="bg-indigo-100 text-indigo-700 text-[10px]"><Globe className="w-3 h-3 mr-1" /> Public</Badge>}
             <span className="text-xs text-gray-400">{new Date(item.created_date).toLocaleDateString()}</span>
           </div>
           <CardTitle className="text-lg">{item.title}</CardTitle>
@@ -296,32 +324,44 @@ function FeedItemCard({ item, isAdmin, currentUser, onEdit, onDelete, onHide, on
           )}
         </div>
         
-        <div className="flex gap-1">
+        <div className="flex gap-1 items-center">
+          {/* Unified Action Buttons */}
+          <Button variant="ghost" size="sm" onClick={() => setAddToDayOpen(true)} title="Add to My Day" className="h-8 w-8 p-0 text-gray-500 hover:text-green-600">
+            <CalendarPlus className="w-4 h-4" />
+          </Button>
+          
+          <Button variant="ghost" size="sm" onClick={() => setShareOpen(true)} title="Share" className="h-8 w-8 p-0 text-gray-500 hover:text-blue-600">
+            <Share2 className="w-4 h-4" />
+          </Button>
+
           {item.type === 'training' && (
             <Button 
-              variant={isCompleted ? "default" : "outline"} 
+              variant={isCompleted ? "ghost" : "ghost"} 
               size="sm" 
               onClick={onToggleComplete} 
-              className={`h-8 gap-1 ${isCompleted ? 'bg-green-600 hover:bg-green-700' : ''}`}
+              title={isCompleted ? "Mark Incomplete" : "Mark Complete"}
+              className={`h-8 w-8 p-0 ${isCompleted ? 'text-green-600' : 'text-gray-400 hover:text-gray-600'}`}
             >
-              {isCompleted ? <Check className="w-3 h-3" /> : <Circle className="w-3 h-3" />}
-              {isCompleted ? 'Completed' : 'Mark Complete'}
+              <CheckCircle className="w-4 h-4" />
             </Button>
           )}
 
-          <Button variant="ghost" size="sm" onClick={onHide} className="text-gray-400 hover:text-gray-600 h-8 w-8 p-0" title="Hide from feed">
-            <EyeOff className="w-4 h-4" />
-          </Button>
-
-          {isAdmin && item.type === 'post' && (
-            <>
-              <Button variant="ghost" size="sm" onClick={onEdit} className="text-gray-400 hover:text-purple-600 h-8 w-8 p-0">
-                <Pencil className="w-4 h-4" />
-              </Button>
-              <Button variant="ghost" size="sm" onClick={onDelete} className="text-gray-400 hover:text-red-500 h-8 w-8 p-0">
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            </>
+          {isAdmin && (
+            <div className="flex gap-1 ml-2 pl-2 border-l">
+                {item.type === 'post' && (
+                    <>
+                    <Button variant="ghost" size="sm" onClick={onEdit} className="text-gray-400 hover:text-purple-600 h-8 w-8 p-0">
+                        <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={onDelete} className="text-gray-400 hover:text-red-500 h-8 w-8 p-0">
+                        <Trash2 className="w-4 h-4" />
+                    </Button>
+                    </>
+                )}
+                <Button variant="ghost" size="sm" onClick={onHide} className="text-gray-400 hover:text-gray-600 h-8 w-8 p-0" title="Hide from feed">
+                    <EyeOff className="w-4 h-4" />
+                </Button>
+            </div>
           )}
         </div>
       </CardHeader>
