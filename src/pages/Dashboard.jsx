@@ -188,7 +188,7 @@ export default function Dashboard() {
 
   const isSectionCollapsed = (sectionId) => collapsedSections.includes(sectionId);
 
-  const [showCustomizeModal, setShowCustomizeModal] = useState(false);
+  const [showManageModal, setShowManageModal] = useState(false);
   
   const defaultLayout = [
     { id: 'daily_motivation', visible: true, order: 0, width: 'full' },
