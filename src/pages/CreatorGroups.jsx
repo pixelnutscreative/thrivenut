@@ -528,14 +528,26 @@ export default function CreatorGroups() {
         
         {/* Shortcuts & Crypto Sidebar */}
         <div className="lg:col-span-1 space-y-6">
-          {/* Crypto Ticker for Group */}
-          <CryptoTickerWidget 
-            portfolio={activeGroup.crypto_tickers || []}
-            onUpdatePortfolio={(tickers) => updateGroupMutation.mutate({ crypto_tickers: tickers })}
-            title="Group Tickers"
-          />
+        {/* Crypto Ticker for Group */}
+        <CryptoTickerWidget 
+          portfolio={activeGroup.crypto_tickers || []}
+          onUpdatePortfolio={(tickers, newColor) => {
+             // Handle both tickers update and color update if provided
+             // Assuming newColor is passed if color changed
+             const updateData = { crypto_tickers: tickers };
+             if (newColor) {
+               updateData.settings = { ...(activeGroup.settings || {}), ticker_color: newColor };
+             }
+             updateGroupMutation.mutate(updateData);
+          }}
+          title="Group Tickers"
+          isAdmin={isAdmin}
+          userHoldings={groupPrefs?.crypto_holdings || []}
+          onUpdateUserHoldings={(holdings) => updatePrefsMutation.mutate({ crypto_holdings: holdings })}
+          bgColor={activeGroup.settings?.ticker_color}
+        />
 
-          {shortcuts.length > 0 && (
+        {shortcuts.length > 0 && (
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm uppercase text-gray-500 font-bold flex items-center gap-2">
