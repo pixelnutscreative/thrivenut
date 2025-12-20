@@ -9,9 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Users, Plus, Settings, Video, AlertCircle, ArrowLeft, Loader2, Building, Home, Heart, Sparkles, Brain, Briefcase, Calendar, MessageSquare, FileText, Bell, Eye, EyeOff, Link as LinkIcon, ExternalLink, Clock, Trash2, Filter, LayoutList, LayoutGrid } from 'lucide-react';
+import { Users, Plus, Settings, Video, AlertCircle, ArrowLeft, Loader2, Building, Home, Heart, Sparkles, Brain, Briefcase, Calendar, MessageSquare, FileText, Bell, Eye, EyeOff, Link as LinkIcon, ExternalLink, Clock, Trash2, Filter } from 'lucide-react';
 import { useTheme } from '../components/shared/useTheme';
-import GroupTableView from '../components/groups/GroupTableView';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import GroupTrainingTab from '../components/groups/GroupTrainingTab';
 import GroupRequestsTab from '../components/groups/GroupRequestsTab';
@@ -31,32 +30,6 @@ export default function CreatorGroups() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
   const [newGroupType, setNewGroupType] = useState('community');
-  const [viewMode, setViewMode] = useState('grid'); // grid | table
-  const [hiddenGroups, setHiddenGroups] = useState(() => JSON.parse(localStorage.getItem('hiddenGroups') || '[]'));
-
-  const toggleGroupVisibility = (ids, hide) => {
-    let newHidden;
-    if (hide) {
-      newHidden = [...new Set([...hiddenGroups, ...ids])];
-    } else {
-      newHidden = hiddenGroups.filter(id => !ids.includes(id));
-    }
-    setHiddenGroups(newHidden);
-    localStorage.setItem('hiddenGroups', JSON.stringify(newHidden));
-  };
-
-  const handleBulkDelete = async (ids) => {
-    if (!window.confirm(`Are you sure you want to delete ${ids.length} groups? This cannot be undone.`)) return;
-    
-    for (const id of ids) {
-       await base44.entities.CreatorGroup.delete(id);
-       // Basic cascade clean up
-       const members = await base44.entities.CreatorGroupMember.filter({ group_id: id });
-       await Promise.all(members.map(m => base44.entities.CreatorGroupMember.delete(m.id)));
-    }
-    queryClient.invalidateQueries(['myGroupMemberships']);
-    queryClient.invalidateQueries(['myGroupsDetails']);
-  };
 
   // Admin Check
   const realUserEmail = user?.email ? user.email.toLowerCase() : '';
@@ -91,6 +64,7 @@ export default function CreatorGroups() {
 
   const createGroupMutation = useMutation({
     mutationFn: async ({ name, type }) => {
+      // 1. Create Group
       const group = await base44.entities.CreatorGroup.create({
         name,
         owner_email: user.email,
@@ -98,6 +72,7 @@ export default function CreatorGroups() {
         status: 'active',
         type
       });
+      // 2. Add Owner as Member
       await base44.entities.CreatorGroupMember.create({
         group_id: group.id,
         user_email: user.email,
@@ -105,6 +80,7 @@ export default function CreatorGroups() {
         status: 'active',
         joined_date: new Date().toISOString()
       });
+      // Wait a moment to ensure database consistency before refetching
       await new Promise(resolve => setTimeout(resolve, 800));
       return group;
     },
@@ -143,7 +119,7 @@ export default function CreatorGroups() {
       else alert('Request to join sent! An admin will approve you shortly.');
       
       queryClient.invalidateQueries(['myGroupMemberships']);
-      setSearchParams({ id: group.id }); 
+      setSearchParams({ id: group.id }); // Go to dashboard (might be restricted view if pending)
     },
     onError: () => alert('Invalid invite code or error joining.')
   });
@@ -153,6 +129,7 @@ export default function CreatorGroups() {
       if (window.confirm('Do you want to join this group?')) {
         joinMutation.mutate(inviteCode);
       } else {
+        // Remove invite param if they cancel
         setSearchParams({});
       }
     }
@@ -167,6 +144,7 @@ export default function CreatorGroups() {
   const referralCode = searchParams.get('ref');
   useEffect(() => {
     if (inviteCode && referralCode && user?.email) {
+      // Track referral
       base44.functions.invoke('trackReferral', { 
         code: referralCode, 
         event: 'group_join',
@@ -282,31 +260,12 @@ export default function CreatorGroups() {
             </h1>
             <p className="text-gray-600 mt-1">Connect, learn, and grow with your squads.</p>
           </div>
-          <div className="flex gap-2">
-            <div className="bg-white rounded-lg border p-1 flex">
-              <Button 
-                variant={viewMode === 'grid' ? 'secondary' : 'ghost'} 
-                size="icon" 
-                className="h-8 w-8" 
-                onClick={() => setViewMode('grid')}
-              >
-                <LayoutGrid className="w-4 h-4" />
+          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="w-4 h-4 mr-2" /> Create Group
               </Button>
-              <Button 
-                variant={viewMode === 'table' ? 'secondary' : 'ghost'} 
-                size="icon" 
-                className="h-8 w-8" 
-                onClick={() => setViewMode('table')}
-              >
-                <LayoutList className="w-4 h-4" />
-              </Button>
-            </div>
-            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="w-4 h-4 mr-2" /> Create Group
-                </Button>
-              </DialogTrigger>
+            </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Create New Group</DialogTitle>
@@ -377,67 +336,45 @@ export default function CreatorGroups() {
           </Dialog>
         </div>
 
-        {viewMode === 'table' ? (
-          <GroupTableView 
-            groups={groups.filter(g => !hiddenGroups.includes(g.id))} 
-            myMemberships={myMemberships}
-            onDelete={handleBulkDelete}
-            onToggleVisibility={toggleGroupVisibility}
-            hiddenGroupIds={hiddenGroups}
-          />
-        ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {groups.filter(g => !hiddenGroups.includes(g.id)).map(group => {
-              const GroupIcon = getGroupIcon(group.type);
-              const colorClass = getGroupColorClass(group.type);
-              
-              return (
-                <Card key={group.id} className="hover:shadow-lg transition-all cursor-pointer group" onClick={() => setSearchParams({ id: group.id })}>
-                  <CardContent className="p-6">
-                    <div className="flex justify-between items-start mb-4">
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-xl ${colorClass}`}>
-                        {group.logo_url ? <img src={group.logo_url} alt="" className="w-full h-full object-cover rounded-xl" /> : group.name[0]}
-                      </div>
-                      <div className="flex flex-col items-end gap-1">
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${colorClass.replace('text-', 'text-opacity-80 text-').replace('bg-', 'bg-opacity-50 bg-')}`}>
-                          {getGroupLabel(group.type)}
-                        </span>
-                        {group.owner_email === user?.email && (
-                          <span className="text-[10px] border px-2 py-0.5 rounded-full text-gray-500">Owner</span>
-                        )}
-                      </div>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {groups.map(group => {
+            const GroupIcon = getGroupIcon(group.type);
+            const colorClass = getGroupColorClass(group.type);
+            
+            return (
+              <Card key={group.id} className="hover:shadow-lg transition-all cursor-pointer group" onClick={() => setSearchParams({ id: group.id })}>
+                <CardContent className="p-6">
+                  <div className="flex justify-between items-start mb-4">
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-xl ${colorClass}`}>
+                      {group.logo_url ? <img src={group.logo_url} alt="" className="w-full h-full object-cover rounded-xl" /> : group.name[0]}
                     </div>
-                    <h3 className="text-xl font-bold mb-2 group-hover:text-purple-600 transition-colors">{group.name}</h3>
-                    <p className="text-sm text-gray-500 line-clamp-2 mb-4">{group.description || 'No description yet.'}</p>
-                    <div className="text-xs text-gray-400 flex items-center gap-1">
-                      <GroupIcon className="w-3 h-3" /> Click to enter dashboard
+                    <div className="flex flex-col items-end gap-1">
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${colorClass.replace('text-', 'text-opacity-80 text-').replace('bg-', 'bg-opacity-50 bg-')}`}>
+                        {getGroupLabel(group.type)}
+                      </span>
+                      {group.owner_email === user?.email && (
+                        <span className="text-[10px] border px-2 py-0.5 rounded-full text-gray-500">Owner</span>
+                      )}
                     </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-            {groups.filter(g => !hiddenGroups.includes(g.id)).length === 0 && (
-              <div className="col-span-full text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed">
-                <Users className="w-12 h-12 mx-auto text-gray-300 mb-3" />
-                <h3 className="text-lg font-medium text-gray-900">
-                  {groups.length > 0 ? 'All groups hidden' : 'No Groups Yet'}
-                </h3>
-                <p className="text-gray-500 mb-4">
-                  {groups.length > 0 ? 'Use table view to unhide groups.' : 'Join a group or create your own to get started.'}
-                </p>
-                <Button variant="outline" onClick={() => setIsCreateOpen(true)}>Create Your First Group</Button>
-              </div>
-            )}
-          </div>
-        )}
-        
-        {hiddenGroups.length > 0 && viewMode === 'grid' && (
-          <div className="mt-8 text-center">
-            <Button variant="ghost" size="sm" onClick={() => setViewMode('table')}>
-              <EyeOff className="w-4 h-4 mr-2" /> {hiddenGroups.length} hidden groups (View in Table)
-            </Button>
-          </div>
-        )}
+                  </div>
+                  <h3 className="text-xl font-bold mb-2 group-hover:text-purple-600 transition-colors">{group.name}</h3>
+                  <p className="text-sm text-gray-500 line-clamp-2 mb-4">{group.description || 'No description yet.'}</p>
+                  <div className="text-xs text-gray-400 flex items-center gap-1">
+                    <GroupIcon className="w-3 h-3" /> Click to enter dashboard
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+          {groups.length === 0 && (
+            <div className="col-span-full text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed">
+              <Users className="w-12 h-12 mx-auto text-gray-300 mb-3" />
+              <h3 className="text-lg font-medium text-gray-900">No Groups Yet</h3>
+              <p className="text-gray-500 mb-4">Join a group or create your own to get started.</p>
+              <Button variant="outline" onClick={() => setIsCreateOpen(true)}>Create Your First Group</Button>
+            </div>
+          )}
+        </div>
       </div>
     );
   }
@@ -523,24 +460,14 @@ export default function CreatorGroups() {
         
         {/* Shortcuts & Crypto Sidebar */}
         <div className="lg:col-span-1 space-y-6">
-        {/* Crypto Ticker for Group */}
-        <CryptoTickerWidget 
-          portfolio={activeGroup.crypto_tickers || []}
-          onUpdatePortfolio={(tickers, newColor) => {
-             const updateData = { crypto_tickers: tickers };
-             if (newColor) {
-               updateData.settings = { ...(activeGroup.settings || {}), ticker_color: newColor };
-             }
-             updateGroupMutation.mutate(updateData);
-          }}
-          title="Group Tickers"
-          isAdmin={isAdmin}
-          userHoldings={groupPrefs?.crypto_holdings || []}
-          onUpdateUserHoldings={(holdings) => updatePrefsMutation.mutate({ crypto_holdings: holdings })}
-          bgColor={activeGroup.settings?.ticker_color}
-        />
+          {/* Crypto Ticker for Group */}
+          <CryptoTickerWidget 
+            portfolio={activeGroup.crypto_tickers || []}
+            onUpdatePortfolio={(tickers) => updateGroupMutation.mutate({ crypto_tickers: tickers })}
+            title="Group Tickers"
+          />
 
-        {shortcuts.length > 0 && (
+          {shortcuts.length > 0 && (
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm uppercase text-gray-500 font-bold flex items-center gap-2">
@@ -585,6 +512,7 @@ export default function CreatorGroups() {
                   </TabsTrigger>
                 );
               })}
+              {/* Show hidden count or generic "See All" if many hidden? For now customizable via modal */}
               
               {isAdmin && (
                 <TabsTrigger value="settings" className="px-4 py-2 rounded-lg data-[state=active]:bg-gray-800 data-[state=active]:text-white ml-auto">
