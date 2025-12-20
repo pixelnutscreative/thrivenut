@@ -29,6 +29,7 @@ export default function CreatorGroups() {
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeGroupId = searchParams.get('id');
+  const browseMode = searchParams.get('mode') === 'browse';
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
   const [newGroupType, setNewGroupType] = useState('community');
@@ -51,7 +52,7 @@ export default function CreatorGroups() {
     enabled: !!user?.email
   });
 
-  // Fetch group details for my memberships
+  // Fetch group details for my memberships (for list view)
   const { data: groups = [] } = useQuery({
     queryKey: ['myGroupsDetails', myMemberships],
     queryFn: async () => {
@@ -63,7 +64,26 @@ export default function CreatorGroups() {
       const results = await Promise.all(groupPromises);
       return results.filter(Boolean);
     },
-    enabled: myMemberships.length > 0
+    enabled: myMemberships.length > 0 && !activeGroupId && !browseMode
+  });
+
+  // Fetch specific active group (even if not a member, for preview/join)
+  const { data: fetchedActiveGroup } = useQuery({
+    queryKey: ['activeGroup', activeGroupId],
+    queryFn: async () => {
+      const res = await base44.entities.CreatorGroup.filter({ id: activeGroupId });
+      return res[0];
+    },
+    enabled: !!activeGroupId
+  });
+
+  // Fetch all groups for browse mode
+  const { data: browseGroups = [] } = useQuery({
+    queryKey: ['browseGroups'],
+    queryFn: async () => {
+      return await base44.entities.CreatorGroup.filter({ status: 'active' });
+    },
+    enabled: browseMode && !activeGroupId
   });
 
   // Fetch all group preferences for visibility
@@ -188,10 +208,11 @@ export default function CreatorGroups() {
     }
   }, [inviteCode, user]);
 
-  const activeGroup = groups.find(g => g.id === activeGroupId);
+  const activeGroup = fetchedActiveGroup || groups.find(g => g.id === activeGroupId);
   const activeMembership = myMemberships.find(m => m.group_id === activeGroupId);
   const isAdmin = activeMembership && ['owner', 'admin', 'manager'].includes(activeMembership.role);
   const isPending = activeMembership?.status === 'pending';
+  const isMember = !!activeMembership && activeMembership.status === 'active';
 
   // Handle Referrals when joining
   const referralCode = searchParams.get('ref');
@@ -305,9 +326,9 @@ export default function CreatorGroups() {
     return !(groupPrefs?.hidden_tabs || []).includes(t.id);
   });
 
-  // LIST VIEW
+  // LIST OR BROWSE VIEW
   if (!activeGroup) {
-    const visibleGroups = groups.filter(g => {
+    const displayedGroups = browseMode ? browseGroups : groups.filter(g => {
       const pref = allGroupPrefs.find(p => p.group_id === g.id);
       return showHidden || !pref?.is_hidden_from_list;
     });
@@ -317,9 +338,11 @@ export default function CreatorGroups() {
         <div className="flex justify-between items-center flex-wrap gap-4">
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
-              <Users className="w-7 h-7 text-purple-600" /> My Groups
+              <Users className="w-7 h-7 text-purple-600" /> {browseMode ? 'Browse Groups' : 'My Groups'}
             </h1>
-            <p className="text-gray-600 mt-1">Connect, learn, and grow with your squads.</p>
+            <p className="text-gray-600 mt-1">
+              {browseMode ? 'Discover new communities to join.' : 'Connect, learn, and grow with your squads.'}
+            </p>
           </div>
           <div className="flex items-center gap-2">
              <div className="flex bg-gray-100 p-1 rounded-lg">
@@ -429,11 +452,13 @@ export default function CreatorGroups() {
 
         {viewMode === 'grid' ? (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {visibleGroups.map(group => {
+            {displayedGroups.map(group => {
               const GroupIcon = getGroupIcon(group.type);
               const colorClass = getGroupColorClass(group.type);
               const pref = allGroupPrefs.find(p => p.group_id === group.id);
               const isHidden = pref?.is_hidden_from_list;
+              const membership = myMemberships.find(m => m.group_id === group.id);
+              const isMember = !!membership;
               
               return (
                 <Card key={group.id} className={`hover:shadow-lg transition-all cursor-pointer group ${isHidden ? 'opacity-60 bg-gray-50' : ''}`} onClick={() => setSearchParams({ id: group.id })}>
@@ -449,6 +474,9 @@ export default function CreatorGroups() {
                         {group.owner_email === user?.email && (
                           <span className="text-[10px] border px-2 py-0.5 rounded-full text-gray-500">Owner</span>
                         )}
+                        {!isMember && browseMode && (
+                           <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">New</span>
+                        )}
                         {isHidden && (
                           <span className="text-[10px] bg-gray-200 px-2 py-0.5 rounded-full text-gray-500 flex items-center gap-1">
                             <EyeOff className="w-3 h-3" /> Hidden
@@ -459,7 +487,11 @@ export default function CreatorGroups() {
                     <h3 className="text-xl font-bold mb-2 group-hover:text-purple-600 transition-colors">{group.name}</h3>
                     <p className="text-sm text-gray-500 line-clamp-2 mb-4">{group.description || 'No description yet.'}</p>
                     <div className="text-xs text-gray-400 flex items-center gap-1">
-                      <GroupIcon className="w-3 h-3" /> Click to enter dashboard
+                      {isMember ? (
+                        <><GroupIcon className="w-3 h-3" /> Enter Dashboard</>
+                      ) : (
+                        <><Eye className="w-3 h-3" /> View Details</>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -473,15 +505,17 @@ export default function CreatorGroups() {
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Type</TableHead>
-                  <TableHead>Role</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {visibleGroups.map(group => {
+                {displayedGroups.map(group => {
                   const pref = allGroupPrefs.find(p => p.group_id === group.id);
                   const isHidden = pref?.is_hidden_from_list;
                   const isOwner = group.owner_email === user?.email;
+                  const membership = myMemberships.find(m => m.group_id === group.id);
+                  const isMember = !!membership;
 
                   return (
                     <TableRow key={group.id} className={isHidden ? 'opacity-60 bg-gray-50' : ''}>
@@ -499,25 +533,31 @@ export default function CreatorGroups() {
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
                             Owner
                           </span>
-                        ) : (
+                        ) : isMember ? (
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                             Member
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            Discover
                           </span>
                         )}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
-                           <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleGroupVisibilityMutation.mutate({ groupId: group.id, isHidden: !isHidden });
-                              }}
-                              title={isHidden ? "Show Group" : "Hide Group"}
-                           >
-                              {isHidden ? <EyeOff className="w-4 h-4 text-gray-400" /> : <Eye className="w-4 h-4 text-gray-400" />}
-                           </Button>
+                           {isMember && (
+                             <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleGroupVisibilityMutation.mutate({ groupId: group.id, isHidden: !isHidden });
+                                }}
+                                title={isHidden ? "Show Group" : "Hide Group"}
+                             >
+                                {isHidden ? <EyeOff className="w-4 h-4 text-gray-400" /> : <Eye className="w-4 h-4 text-gray-400" />}
+                             </Button>
+                           )}
                            {isOwner && (
                              <Button
                                 variant="ghost"
@@ -538,7 +578,7 @@ export default function CreatorGroups() {
                               size="sm" 
                               onClick={() => setSearchParams({ id: group.id })}
                            >
-                              Open
+                              {isMember ? 'Open' : 'View'}
                            </Button>
                         </div>
                       </TableCell>
@@ -550,7 +590,7 @@ export default function CreatorGroups() {
           </Card>
         )}
 
-        {visibleGroups.length === 0 && (
+        {displayedGroups.length === 0 && (
           <div className="col-span-full text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed">
             <Users className="w-12 h-12 mx-auto text-gray-300 mb-3" />
             <h3 className="text-lg font-medium text-gray-900">No Groups Found</h3>
@@ -587,7 +627,7 @@ export default function CreatorGroups() {
       <div className="bg-white border-b sticky top-0 z-10 px-6 py-4 shadow-sm">
         <div className="max-w-6xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => setSearchParams({})}>
+            <Button variant="ghost" size="icon" onClick={() => setSearchParams(browseMode ? { mode: 'browse' } : {})}>
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div>
@@ -595,10 +635,22 @@ export default function CreatorGroups() {
                 {activeGroup.name}
                 <GroupHeaderIcon className={`w-5 h-5 ${groupColorClass.split(' ')[1]}`} />
               </h1>
-              <p className="text-xs text-gray-500">Dashboard • {getGroupLabel(activeGroup.type)}</p>
+              <p className="text-xs text-gray-500">
+                 {isMember ? 'Dashboard' : 'Preview'} • {getGroupLabel(activeGroup.type)}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-3">
+             {!isMember && (
+                <div className="flex items-center gap-2">
+                   <Button onClick={() => {
+                     const code = prompt("Enter invite code to join:");
+                     if (code) joinMutation.mutate(code);
+                   }}>
+                     Enter Invite Code
+                   </Button>
+                </div>
+             )}
             <Dialog>
               <DialogTrigger asChild>
                 <Button variant="outline" size="sm" className="hidden sm:flex">
