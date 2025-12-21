@@ -46,10 +46,12 @@ export default function GroupTrainingTab({ group, currentUser, isAdmin }) {
   });
 
   const { data: completions = [] } = useQuery({
-    queryKey: ['myCompletions', group.id, currentUser.email],
+    queryKey: ['myCompletions', group.id, currentUser?.email],
     queryFn: async () => {
-      return await base44.entities.GroupTrainingCompletion.filter({ user_email: currentUser.email });
-    }
+      if (!currentUser?.email) return [];
+      return await base44.entities.GroupTrainingCompletion.filter({ user_email: currentUser?.email });
+    },
+    enabled: !!currentUser?.email
   });
 
   const completedIds = completions.map(c => c.training_id);
@@ -60,7 +62,7 @@ export default function GroupTrainingTab({ group, currentUser, isAdmin }) {
             return base44.entities.GroupTraining.update(editingId, {
                 ...data,
                 video_url: data.resource_type === 'video' ? data.resource_url : '',
-                edited_by: currentUser.email,
+                edited_by: currentUser?.email,
                 edited_at: new Date().toISOString()
             });
         } else {
@@ -145,7 +147,7 @@ export default function GroupTrainingTab({ group, currentUser, isAdmin }) {
       } else {
         return await base44.entities.GroupTrainingCompletion.create({
           training_id: moduleId,
-          user_email: currentUser.email,
+          user_email: currentUser?.email,
           completed_date: new Date().toISOString()
         });
       }
@@ -382,7 +384,7 @@ export default function GroupTrainingTab({ group, currentUser, isAdmin }) {
                         {module.description && <p className="text-sm text-gray-600">{module.description}</p>}
                         {module.edited_by && (
                             <p className="text-xs text-purple-400 italic">
-                                Edited by {module.edited_by === currentUser.email ? 'you' : module.edited_by} on {new Date(module.edited_at).toLocaleDateString()}
+                                Edited by {module.edited_by === currentUser?.email ? 'you' : module.edited_by} on {new Date(module.edited_at).toLocaleDateString()}
                             </p>
                         )}
                         

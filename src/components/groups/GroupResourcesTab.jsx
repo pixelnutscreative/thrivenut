@@ -31,9 +31,9 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
     mutationFn: (data) => base44.entities.GroupResource.create({ 
       ...data, 
       group_id: group.id, 
-      submitted_by: currentUser.email,
+      submitted_by: currentUser?.email,
       status: isAdmin ? 'approved' : 'pending', 
-      approved_by: isAdmin ? currentUser.email : null
+      approved_by: isAdmin ? currentUser?.email : null
     }),
     onSuccess: () => {
       queryClient.invalidateQueries(['groupResources', group.id]);
@@ -44,7 +44,7 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
   const updateMutation = useMutation({
     mutationFn: (data) => base44.entities.GroupResource.update(editingId, {
       ...data,
-      edited_by: currentUser.email,
+      edited_by: currentUser?.email,
       edited_at: new Date().toISOString()
     }),
     onSuccess: () => {
@@ -61,7 +61,7 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
   const reviewMutation = useMutation({
     mutationFn: ({ id, status }) => base44.entities.GroupResource.update(id, { 
       status, 
-      approved_by: currentUser.email 
+      approved_by: currentUser?.email 
     }),
     onSuccess: () => queryClient.invalidateQueries(['groupResources', group.id])
   });
@@ -207,7 +207,7 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
                     )}
                     {resource.edited_by && (
                       <p className="italic text-purple-400">
-                        Edited by {resource.edited_by === currentUser.email ? 'you' : resource.edited_by} on {new Date(resource.edited_at).toLocaleDateString()}
+                        Edited by {resource.edited_by === currentUser?.email ? 'you' : resource.edited_by} on {new Date(resource.edited_at).toLocaleDateString()}
                       </p>
                     )}
                   </div>

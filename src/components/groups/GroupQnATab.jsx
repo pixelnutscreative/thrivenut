@@ -29,7 +29,7 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
     mutationFn: (data) => base44.entities.GroupQnA.create({ 
       ...data, 
       group_id: group.id, 
-      asked_by: currentUser.email,
+      asked_by: currentUser?.email,
       status: 'pending'
     }),
     onSuccess: () => {
@@ -39,7 +39,7 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
       base44.functions.invoke('notifyGroupMembers', {
         group_id: group.id,
         title: `New Q&A Question`,
-        message: `${currentUser.email} asked: ${formData.question}`,
+        message: `${currentUser?.email} asked: ${formData.question}`,
         type: 'qna_question',
         link: `/CreatorGroups?id=${group.id}&tab=qna`
       });
@@ -49,7 +49,7 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
   const updateMutation = useMutation({
     mutationFn: (data) => base44.entities.GroupQnA.update(editingId, {
       ...data,
-      edited_by: currentUser.email,
+      edited_by: currentUser?.email,
       edited_at: new Date().toISOString()
     }),
     onSuccess: () => {
@@ -94,7 +94,7 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
         await base44.entities.GroupQnA.update(id, { 
             answer, 
             status, 
-            answered_by: currentUser.email,
+            answered_by: currentUser?.email,
             answered_date: new Date().toISOString()
         });
 
@@ -116,7 +116,7 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
   // Filter visibility
   const visibleQnA = qnas.filter(q => {
     if (isAdmin) return true;
-    if (q.asked_by === currentUser.email) return true;
+    if (q.asked_by === currentUser?.email) return true;
     
     const levelMatch = !q.target_levels || q.target_levels.length === 0 || q.target_levels.includes(myMembership?.level);
     const userMatch = !q.target_users || q.target_users.length === 0 || q.target_users.includes(myMembership?.user_email);
@@ -125,7 +125,7 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
   });
 
   const publishedQnA = visibleQnA.filter(q => q.status === 'published');
-  const myPendingQnA = qnas.filter(q => q.status === 'pending' && q.asked_by === currentUser.email);
+  const myPendingQnA = qnas.filter(q => q.status === 'pending' && q.asked_by === currentUser?.email);
   const adminPendingQnA = isAdmin ? qnas.filter(q => q.status === 'pending') : [];
 
   return (
@@ -210,7 +210,7 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
                   <div className="font-semibold text-lg flex gap-2">
                     <span className="text-purple-600">Q:</span> {q.question}
                   </div>
-                  {(isAdmin || q.asked_by === currentUser.email) && (
+                  {(isAdmin || q.asked_by === currentUser?.email) && (
                     <div className="flex gap-1">
                       <Button variant="ghost" size="sm" onClick={() => handleEdit(q)} className="text-gray-500 h-6 w-6 p-0 hover:text-purple-600">
                         <Pencil className="w-4 h-4" />
@@ -226,7 +226,7 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
                 )}
                 {q.edited_by && (
                   <p className="text-xs text-purple-400 italic ml-6 mt-1">
-                    Edited by {q.edited_by === currentUser.email ? 'you' : q.edited_by} on {new Date(q.edited_at).toLocaleDateString()}
+                    Edited by {q.edited_by === currentUser?.email ? 'you' : q.edited_by} on {new Date(q.edited_at).toLocaleDateString()}
                   </p>
                 )}
                 <div className="bg-green-50 p-3 rounded-lg ml-6 border border-green-100">

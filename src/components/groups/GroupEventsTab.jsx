@@ -27,7 +27,7 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
-      const event = await base44.entities.GroupEvent.create({ ...data, group_id: group.id, created_by: currentUser.email });
+      const event = await base44.entities.GroupEvent.create({ ...data, group_id: group.id, created_by: currentUser?.email });
       // Send notifications to group members
       try {
         await base44.functions.invoke('notifyGroupMembers', {
@@ -51,7 +51,7 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
   const updateMutation = useMutation({
     mutationFn: (data) => base44.entities.GroupEvent.update(editingId, {
       ...data,
-      edited_by: currentUser.email,
+      edited_by: currentUser?.email,
       edited_at: new Date().toISOString()
     }),
     onSuccess: () => {
@@ -83,7 +83,7 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
         url: event.link || window.location.href,
         location: event.location,
         is_urgent: isUrgent,
-        created_by: currentUser.email
+        created_by: currentUser?.email
       });
     },
     onSuccess: () => {
@@ -231,7 +231,7 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
                 
                 {event.edited_by && (
                   <p className="text-xs text-purple-400 italic mt-2">
-                    Edited by {event.edited_by === currentUser.email ? 'you' : event.edited_by} on {new Date(event.edited_at).toLocaleDateString()}
+                    Edited by {event.edited_by === currentUser?.email ? 'you' : event.edited_by} on {new Date(event.edited_at).toLocaleDateString()}
                   </p>
                 )}
 

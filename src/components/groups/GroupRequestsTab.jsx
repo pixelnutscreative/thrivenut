@@ -47,21 +47,21 @@ export default function GroupRequestsTab({ group, currentUser, myMembership, isA
         if (editingId) {
             return base44.entities.GroupRequest.update(editingId, {
                 ...data,
-                edited_by: currentUser.email,
+                edited_by: currentUser?.email,
                 edited_at: new Date().toISOString()
             });
         } else {
             const newRequest = await base44.entities.GroupRequest.create({
                 ...data,
                 group_id: group.id,
-                user_email: currentUser.email,
+                user_email: currentUser?.email,
                 status: 'pending'
             });
             // Notify admins
             await base44.functions.invoke('notifyGroupMembers', {
                 group_id: group.id,
                 title: `New Request: ${newRequest.title}`,
-                message: `${currentUser.email} submitted a new request.`,
+                message: `${currentUser?.email} submitted a new request.`,
                 type: 'support_request',
                 link: `/CreatorGroups?id=${group.id}&tab=requests`
             });
@@ -93,7 +93,7 @@ export default function GroupRequestsTab({ group, currentUser, myMembership, isA
     onSuccess: (updated) => {
       queryClient.invalidateQueries(['groupRequests', group.id]);
       // Notify user if admin updated it
-      if (isAdmin && updated.user_email !== currentUser.email) {
+      if (isAdmin && updated.user_email !== currentUser?.email) {
           base44.functions.invoke('notifyGroupMembers', {
             group_id: group.id,
             title: `Request Updated: ${updated.title}`,
@@ -110,7 +110,7 @@ export default function GroupRequestsTab({ group, currentUser, myMembership, isA
       if (!messageInput.trim()) return;
       await base44.entities.GroupRequestMessage.create({
         request_id: activeRequest.id,
-        user_email: currentUser.email,
+        user_email: currentUser?.email,
         content: messageInput,
         is_admin_reply: isAdmin
       });
@@ -155,17 +155,17 @@ export default function GroupRequestsTab({ group, currentUser, myMembership, isA
       requestSettings.enabled && (
           (!requestSettings.allowed_levels?.length && !requestSettings.allowed_users?.length) ||
           requestSettings.allowed_levels?.includes(myMembership?.level) ||
-          requestSettings.allowed_users?.includes(currentUser.email)
+          requestSettings.allowed_users?.includes(currentUser?.email)
       )
   );
 
   // Filtering
   const visibleRequests = requests.filter(req => {
     if (isAdmin) return true; 
-    if (req.user_email === currentUser.email) return true;
+    if (req.user_email === currentUser?.email) return true;
     
     const levelMatch = req.target_levels?.includes(myMembership?.level);
-    const userMatch = req.target_users?.includes(currentUser.email);
+    const userMatch = req.target_users?.includes(currentUser?.email);
     
     return levelMatch || userMatch;
   });
@@ -300,11 +300,11 @@ export default function GroupRequestsTab({ group, currentUser, myMembership, isA
               <div className="mt-2 flex flex-col gap-1">
                  <div className="flex gap-2">
                     <Badge variant="outline" className="text-[10px]">{req.type}</Badge>
-                    {req.user_email === currentUser.email && <Badge variant="outline" className="text-[10px] bg-blue-50 text-blue-600">My Request</Badge>}
+                    {req.user_email === currentUser?.email && <Badge variant="outline" className="text-[10px] bg-blue-50 text-blue-600">My Request</Badge>}
                  </div>
                  {req.edited_by && (
                     <span className="text-[10px] text-purple-400 italic">
-                        Edited by {req.edited_by === currentUser.email ? 'you' : req.edited_by} on {new Date(req.edited_at).toLocaleDateString()}
+                        Edited by {req.edited_by === currentUser?.email ? 'you' : req.edited_by} on {new Date(req.edited_at).toLocaleDateString()}
                     </span>
                  )}
               </div>
@@ -362,9 +362,9 @@ export default function GroupRequestsTab({ group, currentUser, myMembership, isA
             </div>
 
             {messages.map(msg => (
-                <div key={msg.id} className={`flex ${msg.user_email === currentUser.email ? 'justify-end' : 'justify-start'}`}>
+                <div key={msg.id} className={`flex ${msg.user_email === currentUser?.email ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[80%] rounded-lg p-3 ${
-                        msg.user_email === currentUser.email 
+                        msg.user_email === currentUser?.email 
                         ? 'bg-blue-600 text-white' 
                         : msg.is_admin_reply 
                             ? 'bg-purple-100 text-purple-900 border border-purple-200' 
@@ -372,7 +372,7 @@ export default function GroupRequestsTab({ group, currentUser, myMembership, isA
                     }`}>
                         <div className="flex justify-between items-center gap-4 mb-1">
                             <span className="text-[10px] opacity-70 font-semibold">
-                                {msg.user_email === currentUser.email ? 'You' : msg.user_email}
+                                {msg.user_email === currentUser?.email ? 'You' : msg.user_email}
                                 {msg.is_admin_reply && ' (Admin)'}
                             </span>
                             <span className="text-[10px] opacity-50">{new Date(msg.created_date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
