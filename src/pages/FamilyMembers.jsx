@@ -110,6 +110,13 @@ export default function FamilyMembers() {
     setViewMode('mine');
   };
 
+  const handleKidMode = (member) => {
+    if (confirm(`Switch to Kid Mode for ${member.nickname || member.name}?`)) {
+      sessionStorage.setItem('kid_mode_id', member.id);
+      window.location.href = '/KidsDashboard';
+    }
+  };
+
   const handleEdit = async (member) => {
     setEditingMember(member);
     
@@ -234,6 +241,18 @@ export default function FamilyMembers() {
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-3">
+                    {member.is_child_account && (
+                      <div className="mb-2">
+                        <Button 
+                          onClick={() => handleKidMode(member)}
+                          className="w-full bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold"
+                          size="sm"
+                        >
+                          <Sparkles className="w-4 h-4 mr-2" />
+                          Launch Kid Mode
+                        </Button>
+                      </div>
+                    )}
                     <div className="flex items-center gap-2 text-sm">
                       <span className="font-medium capitalize">{member.relationship.replace('_', ' ')}</span>
                       {member.age && <span className="text-gray-500">• Age {member.age}</span>}
@@ -346,6 +365,20 @@ export default function FamilyMembers() {
                         </p>
                       )}
                     </div>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 bg-yellow-50 border border-yellow-200 rounded-lg mb-4">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-5 h-5 text-yellow-600" />
+                      <div>
+                        <Label className="cursor-pointer font-bold text-yellow-800">Enable Kid Mode?</Label>
+                        <p className="text-xs text-yellow-700">Allows switching to a simplified dashboard for this child.</p>
+                      </div>
+                    </div>
+                    <Switch 
+                      checked={formData.is_child_account} 
+                      onCheckedChange={(c) => setFormData({ ...formData, is_child_account: c, is_managed: c })} 
+                    />
                   </div>
 
                   <div className="flex gap-4">
