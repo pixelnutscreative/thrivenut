@@ -39,6 +39,16 @@ const MODULES = [
   { id: 'mental_health', label: 'Mental Health' }
 ];
 
+const PAGES = [
+  'Dashboard', 'Goals', 'VisionBoard', 'Journal', 'Finance', 
+  'People', 'CareReminders', 'PetCare', 'PrayerRequests', 
+  'HolyHitmakers', 'BibleResources', 'MentalHealth', 'Wellness', 
+  'Supplements', 'Medications', 'ActivityTracker', 'ContentCreatorHub',
+  'ContentMarketplace', 'SongGenerator', 'SocialShortcuts', 
+  'TikTokEngagement', 'TikTokContacts', 'LiveSchedule', 'BattlePrep',
+  'LiveEngagement', 'WeeklyGifterGallery', 'LoveAway', 'PictionaryHelper'
+];
+
 const GROUP_TYPES = [
   { value: 'none', label: 'None (Standard)' },
   { value: 'personal', label: 'Personal (Friends/Family)' },
@@ -280,29 +290,57 @@ export default function AdminPackagesContent() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label>Included Modules/Features</Label>
-                <div className="grid grid-cols-2 gap-2 p-4 border rounded-lg max-h-48 overflow-y-auto">
-                  {MODULES.map(module => (
-                    <div key={module.id} className="flex items-center space-x-2">
-                      <Checkbox 
-                        id={`mod-${module.id}`}
-                        checked={editingPackage.included_modules.includes(module.id)}
-                        onCheckedChange={(checked) => {
-                          const current = editingPackage.included_modules;
-                          setEditingPackage({
-                            ...editingPackage,
-                            included_modules: checked 
-                              ? [...current, module.id]
-                              : current.filter(m => m !== module.id)
-                          });
-                        }}
-                      />
-                      <label htmlFor={`mod-${module.id}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                        {module.label}
-                      </label>
-                    </div>
-                  ))}
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Included Modules/Features</Label>
+                  <div className="grid grid-cols-1 gap-2 p-4 border rounded-lg max-h-48 overflow-y-auto bg-white">
+                    {MODULES.map(module => (
+                      <div key={module.id} className="flex items-center space-x-2">
+                        <Checkbox 
+                          id={`mod-${module.id}`}
+                          checked={editingPackage.included_modules.includes(module.id)}
+                          onCheckedChange={(checked) => {
+                            const current = editingPackage.included_modules;
+                            setEditingPackage({
+                              ...editingPackage,
+                              included_modules: checked 
+                                ? [...current, module.id]
+                                : current.filter(m => m !== module.id)
+                            });
+                          }}
+                        />
+                        <label htmlFor={`mod-${module.id}`} className="text-sm font-medium leading-none cursor-pointer">
+                          {module.label}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Specific Pages (Optional)</Label>
+                  <div className="grid grid-cols-1 gap-2 p-4 border rounded-lg max-h-48 overflow-y-auto bg-white">
+                    {PAGES.map(page => (
+                      <div key={page} className="flex items-center space-x-2">
+                        <Checkbox 
+                          id={`page-${page}`}
+                          checked={editingPackage.included_pages?.includes(page)}
+                          onCheckedChange={(checked) => {
+                            const current = editingPackage.included_pages || [];
+                            setEditingPackage({
+                              ...editingPackage,
+                              included_pages: checked 
+                                ? [...current, page]
+                                : current.filter(p => p !== page)
+                            });
+                          }}
+                        />
+                        <label htmlFor={`page-${page}`} className="text-sm font-medium leading-none cursor-pointer">
+                          {page}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
 
