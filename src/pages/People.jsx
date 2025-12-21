@@ -346,7 +346,8 @@ export default function People() {
       c.real_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       c.nickname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       c.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.display_name?.toLowerCase().includes(searchTerm.toLowerCase());
+      c.display_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.email?.toLowerCase().includes(searchTerm.toLowerCase());
     
     // Default to "Friends" if IRL and not business
     const isBusiness = c.role?.includes('client') || c.role?.includes('lead') || c.businesses?.length > 0;
@@ -362,7 +363,8 @@ export default function People() {
       c.real_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       c.nickname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       c.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.display_name?.toLowerCase().includes(searchTerm.toLowerCase());
+      c.display_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.email?.toLowerCase().includes(searchTerm.toLowerCase());
     
     // Business logic
     const isBusiness = c.role?.includes('client') || c.role?.includes('lead') || c.businesses?.length > 0;
