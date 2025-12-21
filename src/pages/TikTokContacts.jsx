@@ -51,6 +51,8 @@ const textRoles = {
 
 const roleConfig = { ...iconRoles, ...textRoles };
 
+const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
 // Live stream type categories for filtering
 const liveTypeCategories = [
   { label: 'Collaboration', types: ['Co-Host', 'Multi-Guest', 'Battle'] },
@@ -853,6 +855,7 @@ export default function TikTokContacts() {
           <DialogHeader>
             <DialogTitle>Edit Engagement Schedule</DialogTitle>
           </DialogHeader>
+          
           {scheduleContact && (
             <div className="space-y-4 py-4">
               <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg">
@@ -866,12 +869,8 @@ export default function TikTokContacts() {
               <div className="space-y-2">
                 <Label>Frequency</Label>
                 <Select 
-                  value={scheduleContact.engagement_frequency || 'multiple_per_week'} 
-                  onValueChange={(v) => {
-                    base44.entities.TikTokContact.update(scheduleContact.id, { engagement_frequency: v });
-                    queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] });
-                    setScheduleContact({...scheduleContact, engagement_frequency: v});
-                  }}
+                  value={scheduleForm.engagement_frequency} 
+                  onValueChange={(v) => setScheduleForm({ ...scheduleForm, engagement_frequency: v })}
                 >
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -882,40 +881,57 @@ export default function TikTokContacts() {
                 </Select>
               </div>
 
-              {scheduleContact.engagement_frequency === 'multiple_per_week' && (
+              {scheduleForm.engagement_frequency === 'multiple_per_week' && (
                 <div className="space-y-2">
                   <Label>Days</Label>
                   <div className="flex flex-wrap gap-2">
-                    {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map(day => {
-                      const isSelected = scheduleContact.engagement_days?.includes(day);
-                      return (
-                        <Badge
-                          key={day}
-                          variant={isSelected ? 'default' : 'outline'}
-                          className="cursor-pointer"
-                          onClick={() => {
-                            const currentDays = scheduleContact.engagement_days || [];
-                            const newDays = isSelected 
-                              ? currentDays.filter(d => d !== day)
-                              : [...currentDays, day];
-                            base44.entities.TikTokContact.update(scheduleContact.id, { engagement_days: newDays });
-                            queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] });
-                            setScheduleContact({...scheduleContact, engagement_days: newDays});
-                          }}
-                        >
-                          {day.slice(0, 3)}
-                        </Badge>
-                      );
-                    })}
+                    {daysOfWeek.map(day => (
+                      <Badge
+                        key={day}
+                        variant={scheduleForm.engagement_days.includes(day) ? 'default' : 'outline'}
+                        className="cursor-pointer"
+                        onClick={() => toggleDay(day)}
+                      >
+                        {day.slice(0, 3)}
+                      </Badge>
+                    ))}
                   </div>
                 </div>
               )}
-              
-              <div className="pt-4 flex justify-end">
-                 <Button onClick={() => setScheduleModalOpen(false)}>Done</Button>
-              </div>
+
+              {scheduleForm.engagement_frequency === 'monthly' && (
+                <div className="space-y-2">
+                  <Label>Day of Month</Label>
+                  <Select 
+                    value={String(scheduleForm.engagement_day_of_month || 1)} 
+                    onValueChange={(v) => setScheduleForm({ ...scheduleForm, engagement_day_of_month: parseInt(v) })}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                        <SelectItem key={day} value={String(day)}>
+                          {day === 1 ? '1st' : day === 2 ? '2nd' : day === 3 ? '3rd' : `${day}th`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
           )}
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setScheduleModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSaveSchedule}
+              disabled={updateMutation.isPending}
+              className="bg-purple-600 hover:bg-purple-700"
+            >
+              {updateMutation.isPending ? 'Saving...' : 'Save Schedule'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
