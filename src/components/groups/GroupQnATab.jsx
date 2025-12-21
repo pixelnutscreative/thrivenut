@@ -47,7 +47,11 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data) => base44.entities.GroupQnA.update(editingId, data),
+    mutationFn: (data) => base44.entities.GroupQnA.update(editingId, {
+      ...data,
+      edited_by: currentUser.email,
+      edited_at: new Date().toISOString()
+    }),
     onSuccess: () => {
       queryClient.invalidateQueries(['groupQnA', group.id]);
       handleCloseDialog();
@@ -219,6 +223,11 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
                 </div>
                 {q.details && (
                   <div className="text-sm text-gray-600 ml-6 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: q.details }} />
+                )}
+                {q.edited_by && (
+                  <p className="text-xs text-purple-400 italic ml-6 mt-1">
+                    Edited by {q.edited_by === currentUser.email ? 'you' : q.edited_by} on {new Date(q.edited_at).toLocaleDateString()}
+                  </p>
                 )}
                 <div className="bg-green-50 p-3 rounded-lg ml-6 border border-green-100">
                   <div className="font-medium text-green-800 flex gap-2 mb-1">
