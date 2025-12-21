@@ -778,11 +778,15 @@ export default function AdminAIToolsContent() {
 
       {/* Add/Edit Platform User Dialog */}
       <Dialog open={showAddUser || !!editingUser} onOpenChange={() => { setShowAddUser(false); setEditingUser(null); }}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{editingUser ? 'Edit' : 'Add'} Platform User</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
+        <DialogContent className="max-w-lg max-h-[90vh] flex flex-col p-0 gap-0">
+          <div className="p-6 pb-2">
+            <DialogHeader>
+              <DialogTitle>{editingUser ? 'Edit' : 'Add'} Platform User</DialogTitle>
+            </DialogHeader>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto px-6 py-2">
+            <div className="space-y-4">
             <div className="space-y-2">
               <Label>User Name</Label>
               <Input
@@ -1018,21 +1022,25 @@ export default function AdminAIToolsContent() {
                 Link this platform user to their creator contact card
               </p>
             </div>
+            </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setShowAddUser(false); setEditingUser(null); }}>
-              Cancel
-            </Button>
-            <Button 
-              onClick={() => editingUser 
-                ? updatePlatformUserMutation.mutate({ id: editingUser.id, data: editingUser })
-                : createPlatformUserMutation.mutate(newUser)
-              }
-              disabled={!(editingUser?.user_email || newUser.user_email) || createPlatformUserMutation.isPending || updatePlatformUserMutation.isPending}
-            >
-              {editingUser ? 'Save Changes' : 'Add User'}
-            </Button>
-          </DialogFooter>
+          
+          <div className="p-6 pt-2 border-t mt-auto">
+            <DialogFooter>
+              <Button variant="outline" onClick={() => { setShowAddUser(false); setEditingUser(null); }}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={() => editingUser 
+                  ? updatePlatformUserMutation.mutate({ id: editingUser.id, data: editingUser })
+                  : createPlatformUserMutation.mutate(newUser)
+                }
+                disabled={!(editingUser?.user_email || newUser.user_email) || createPlatformUserMutation.isPending || updatePlatformUserMutation.isPending}
+              >
+                {editingUser ? 'Save Changes' : 'Add User'}
+              </Button>
+            </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
