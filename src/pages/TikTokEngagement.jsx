@@ -157,7 +157,10 @@ export default function TikTokEngagement() {
   };
 
   const handleSaveSchedule = () => {
-    if (!editingSchedule) return;
+    if (!editingSchedule || !editingSchedule.id) {
+      console.error("No valid editing schedule ID found");
+      return;
+    }
     updateScheduleMutation.mutate({
       id: editingSchedule.id,
       data: scheduleForm,

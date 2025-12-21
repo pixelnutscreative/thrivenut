@@ -82,6 +82,11 @@ export default function People() {
   const defaultFormTab = 'personal'; // My People opens to Personal tab
   const [formData, setFormData] = useState(defaultFormData);
   const [user, setUser] = useState(null);
+  
+  // Family/Contact Type State
+  const [contactType, setContactType] = useState('contact'); // 'contact' or 'family'
+  const [viewMode, setViewMode] = useState('mine'); // 'mine' or 'theirs'
+  const [linkedProfile, setLinkedProfile] = useState(null);
 
   useEffect(() => {
     base44.auth.me().then(setUser);
@@ -99,6 +104,28 @@ export default function People() {
     queryKey: ['familyMembers', effectiveEmail],
     queryFn: () => base44.entities.FamilyMember.filter({ is_active: true, created_by: effectiveEmail }, 'name'),
     enabled: !!effectiveEmail,
+  });
+
+  // Family Member Mutations
+  const createFamilyMutation = useMutation({
+    mutationFn: (data) => base44.entities.FamilyMember.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['familyMembers'] });
+      closeModal();
+    }
+  });
+
+  const updateFamilyMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.FamilyMember.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['familyMembers'] });
+      closeModal();
+    }
+  });
+
+  const deleteFamilyMutation = useMutation({
+    mutationFn: (id) => base44.entities.FamilyMember.update(id, { is_active: false }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['familyMembers'] }),
   });
 
   const { data: categories = [] } = useQuery({
@@ -177,29 +204,79 @@ export default function People() {
     setEditingContact(null);
     setFormData(defaultFormData);
     setFormTab(defaultFormTab);
+    setContactType('contact');
+    setViewMode('mine');
+    setLinkedProfile(null);
   };
 
-  const handleEdit = (contact) => {
+  const handleEdit = async (contact, type = 'contact') => {
     setEditingContact(contact);
+    setContactType(type);
+    
+    // Check if it's a family member to set up linked profile data
+    if (type === 'family' && contact.linked_user_email) {
+      try {
+        const res = await base44.functions.invoke('profile', { action: 'get_profile', email: contact.linked_user_email });
+        if (res.data.found && res.data.profile) {
+          setLinkedProfile(res.data.profile);
+        }
+      } catch (e) {
+        console.error("Failed to fetch linked profile", e);
+      }
+    }
+
     setFormData({
       ...defaultFormData,
-      ...contact
+      ...contact,
+      // Ensure nested objects exist for family members
+      clothing_sizes: contact.clothing_sizes || {},
+      beauty_profile: contact.beauty_profile || {},
+      style_profile: contact.style_profile || {},
+      food_profile: contact.food_profile || {},
+      wish_list: contact.wish_list || [],
+      memorable_moments: contact.memorable_moments || []
     });
-    setFormTab(defaultFormTab);
+    
+    // Default tab logic
+    if (type === 'family') {
+      setFormTab('family_basic');
+    } else {
+      setFormTab(defaultFormTab);
+    }
+    
     setShowModal(true);
   };
 
   const handleSubmit = () => {
-    const cleanData = {
-      ...formData,
-      username: (formData.username || '').replace('@', '').trim(),
-      is_irl_contact: true // Always mark as IRL when created from My People
-    };
-    
-    if (editingContact) {
-      updateMutation.mutate({ id: editingContact.id, data: cleanData });
+    if (contactType === 'family') {
+      // Family Member Submission
+      const familyData = {
+        ...formData,
+        age: formData.age ? parseInt(formData.age) : null,
+        // Ensure standard fields map correctly
+        name: formData.name || formData.real_name || formData.nickname,
+        created_by: effectiveEmail
+      };
+      
+      if (editingContact) {
+        updateFamilyMutation.mutate({ id: editingContact.id, data: familyData });
+      } else {
+        createFamilyMutation.mutate(familyData);
+      }
     } else {
-      createMutation.mutate(cleanData);
+      // Standard Contact Submission
+      const cleanData = {
+        ...formData,
+        username: (formData.username || '').replace('@', '').trim(),
+        is_irl_contact: true, // Always mark as IRL when created from My People
+        created_by: effectiveEmail
+      };
+      
+      if (editingContact) {
+        updateMutation.mutate({ id: editingContact.id, data: cleanData });
+      } else {
+        createMutation.mutate(cleanData);
+      }
     }
   };
 
@@ -315,8 +392,11 @@ export default function People() {
                 <Card className={`relative overflow-hidden ${cardBgClass} hover:shadow-md transition-shadow`}>
                   <div className="h-2" style={{ backgroundColor: contact.favorite_color || '#FF69B4' }} />
                   <div className="absolute top-4 right-3 flex items-center gap-1">
-                    <button onClick={() => window.location.href = '/FamilyMembers'} className={`p-1 ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} rounded`}>
+                    <button onClick={() => handleEdit(contact, 'family')} className={`p-1 ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} rounded`}>
                       <Edit className={`w-4 h-4 ${isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'}`} />
+                    </button>
+                    <button onClick={() => { if (confirm('Delete this family member?')) deleteFamilyMutation.mutate(contact.id); }} className={`p-1 ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} rounded`}>
+                      <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-500" />
                     </button>
                   </div>
                   <CardContent className="p-4">
@@ -412,13 +492,23 @@ export default function People() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => window.location.href = '/FamilyMembers'}>
+              <DropdownMenuItem onClick={() => {
+                setContactType('family');
+                setFormData({ ...defaultFormData, relationship: 'child', is_child_account: true }); // Default to child for ease
+                setFormTab('family_basic');
+                setShowModal(true);
+              }}>
                 <Users2 className="w-4 h-4 mr-2" />
-                Add Family Member (Detailed)
+                Add Child / Family
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setShowModal(true)}>
+              <DropdownMenuItem onClick={() => {
+                setContactType('contact');
+                setFormData(defaultFormData);
+                setFormTab('personal');
+                setShowModal(true);
+              }}>
                 <UserPlus className="w-4 h-4 mr-2" />
-                Add Friend/Contact (Simple)
+                Add Friend / Contact
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -512,77 +602,179 @@ export default function People() {
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            <ContactFormHeader
-              formData={formData}
-              setFormData={setFormData}
-              onSave={handleSubmit}
-              isSaving={createMutation.isPending || updateMutation.isPending}
-              isEditing={!!editingContact}
-              sharedClubs={sharedClubs}
-              onAddSharedClub={(name) => addSharedClubMutation.mutate(name)}
-            />
+            {/* View Toggle for Linked Profiles */}
+            {linkedProfile && (
+              <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg border border-purple-200 mb-4">
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${viewMode === 'theirs' ? 'bg-purple-600' : 'bg-gray-400'}`} />
+                  <span className="text-sm font-medium text-purple-900">
+                    {viewMode === 'theirs' ? `Viewing ${linkedProfile.nickname || 'Linked User'}'s Profile` : 'Editing My Notes'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 bg-white rounded-lg p-1 border">
+                  <button
+                    onClick={() => setViewMode('mine')}
+                    className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
+                      viewMode === 'mine' ? 'bg-purple-100 text-purple-700' : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    My View
+                  </button>
+                  <button
+                    onClick={() => setViewMode('theirs')}
+                    className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
+                      viewMode === 'theirs' ? 'bg-purple-100 text-purple-700' : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    Their View
+                  </button>
+                </div>
+              </div>
+            )}
 
-            <Tabs value={formTab} onValueChange={setFormTab}>
-              <TabsList className="w-full grid grid-cols-5">
-                <TabsTrigger value="personal" className="data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700 text-xs px-1">
-                  Personal
-                </TabsTrigger>
-                <TabsTrigger value="favorites" className="data-[state=active]:bg-pink-100 data-[state=active]:text-pink-700 text-xs px-1">
-                  Favorites
-                </TabsTrigger>
-                <TabsTrigger value="moments" className="data-[state=active]:bg-indigo-100 data-[state=active]:text-indigo-700 text-xs px-1">
-                  Moments
-                </TabsTrigger>
-                <TabsTrigger value="business" className="data-[state=active]:bg-amber-100 data-[state=active]:text-amber-700 text-xs px-1">
-                  Business
-                </TabsTrigger>
-                <TabsTrigger value="tiktok" className="data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700 text-xs px-1">
-                  TikTok
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="personal" className="mt-4">
-                <PersonalTabContent
+            {contactType === 'contact' ? (
+              <>
+                <ContactFormHeader
                   formData={formData}
                   setFormData={setFormData}
+                  onSave={handleSubmit}
+                  isSaving={createMutation.isPending || updateMutation.isPending}
+                  isEditing={!!editingContact}
+                  sharedClubs={sharedClubs}
+                  onAddSharedClub={(name) => addSharedClubMutation.mutate(name)}
                 />
-              </TabsContent>
 
-              <TabsContent value="favorites" className="mt-4">
-                <ProfileFavoritesTab
-                  formData={formData}
-                  setFormData={setFormData}
-                  linkedEmail={formData.linked_user_email || formData.claimed_by_email} // Support both standard link and tiktok claim link
-                />
-              </TabsContent>
+                <Tabs value={formTab} onValueChange={setFormTab}>
+                  <TabsList className="w-full grid grid-cols-5">
+                    <TabsTrigger value="personal" className="data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700 text-xs px-1">Personal</TabsTrigger>
+                    <TabsTrigger value="favorites" className="data-[state=active]:bg-pink-100 data-[state=active]:text-pink-700 text-xs px-1">Favorites</TabsTrigger>
+                    <TabsTrigger value="moments" className="data-[state=active]:bg-indigo-100 data-[state=active]:text-indigo-700 text-xs px-1">Moments</TabsTrigger>
+                    <TabsTrigger value="business" className="data-[state=active]:bg-amber-100 data-[state=active]:text-amber-700 text-xs px-1">Business</TabsTrigger>
+                    <TabsTrigger value="tiktok" className="data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700 text-xs px-1">TikTok</TabsTrigger>
+                  </TabsList>
 
-              <TabsContent value="moments" className="mt-4">
-                <MomentsTabContent
-                  formData={formData}
-                  setFormData={setFormData}
-                />
-              </TabsContent>
+                  <TabsContent value="personal" className="mt-4">
+                    <PersonalTabContent formData={formData} setFormData={setFormData} />
+                  </TabsContent>
+                  <TabsContent value="favorites" className="mt-4">
+                    <ProfileFavoritesTab formData={formData} setFormData={setFormData} linkedEmail={formData.linked_user_email || formData.claimed_by_email} />
+                  </TabsContent>
+                  <TabsContent value="moments" className="mt-4">
+                    <MomentsTabContent formData={formData} setFormData={setFormData} />
+                  </TabsContent>
+                  <TabsContent value="business" className="mt-4">
+                    <BusinessTabContent formData={formData} setFormData={setFormData} />
+                  </TabsContent>
+                  <TabsContent value="tiktok" className="mt-4">
+                    <TikTokTabContent 
+                      formData={formData} 
+                      setFormData={setFormData} 
+                      contacts={contacts} 
+                      categories={categories} 
+                      savedCustomRoles={savedCustomRoles} 
+                      onSaveCustomRole={(role) => saveCustomRoleMutation.mutate(role)} 
+                      editingContactId={editingContact?.id}
+                      onQuickAddContact={handleQuickAddContact}
+                    />
+                  </TabsContent>
+                </Tabs>
+              </>
+            ) : (
+              // FAMILY MEMBER FORM
+              <>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="font-bold text-lg text-purple-800">
+                    {editingContact ? `Edit ${formData.name || 'Family Member'}` : 'Add Family Member'}
+                  </h3>
+                  <Button onClick={handleSubmit} disabled={createFamilyMutation.isPending || updateFamilyMutation.isPending} className="bg-purple-600 text-white">
+                    {(createFamilyMutation.isPending || updateFamilyMutation.isPending) ? 'Saving...' : 'Save Profile'}
+                  </Button>
+                </div>
 
-              <TabsContent value="business" className="mt-4">
-                <BusinessTabContent
-                  formData={formData}
-                  setFormData={setFormData}
-                />
-              </TabsContent>
+                <Tabs value={formTab} onValueChange={setFormTab}>
+                  <TabsList className="w-full grid grid-cols-3">
+                    <TabsTrigger value="family_basic" className="text-xs">Basic Info</TabsTrigger>
+                    <TabsTrigger value="family_favorites" className="text-xs">Favorites & Style</TabsTrigger>
+                    <TabsTrigger value="family_moments" className="text-xs">Moments</TabsTrigger>
+                  </TabsList>
 
-              <TabsContent value="tiktok" className="mt-4">
-                <TikTokTabContent
-                  formData={formData}
-                  setFormData={setFormData}
-                  contacts={contacts}
-                  categories={categories}
-                  savedCustomRoles={savedCustomRoles}
-                  onSaveCustomRole={(role) => saveCustomRoleMutation.mutate(role)}
-                  editingContactId={editingContact?.id}
-                  onQuickAddContact={handleQuickAddContact}
-                />
-              </TabsContent>
-            </Tabs>
+                  <TabsContent value="family_basic" className="mt-4 space-y-4">
+                    <div className="flex gap-4">
+                      <div className="flex-1 space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>Name</Label>
+                            <Input value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} placeholder="Full Name" />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Nickname</Label>
+                            <Input value={formData.nickname} onChange={(e) => setFormData({...formData, nickname: e.target.value})} placeholder="Nickname" />
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>Relationship</Label>
+                            <Select value={formData.relationship} onValueChange={(v) => setFormData({ ...formData, relationship: v })}>
+                              <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="child">Child</SelectItem>
+                                <SelectItem value="spouse">Spouse</SelectItem>
+                                <SelectItem value="parent">Parent</SelectItem>
+                                <SelectItem value="sibling">Sibling</SelectItem>
+                                <SelectItem value="close_friend">Close Friend</SelectItem>
+                                <SelectItem value="other">Other</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Age</Label>
+                            <Input type="number" value={formData.age} onChange={(e) => setFormData({...formData, age: e.target.value})} />
+                          </div>
+                        </div>
+
+                        {formData.relationship === 'child' && (
+                          <div className="flex items-center justify-between p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                            <div>
+                              <Label className="font-bold text-yellow-800">Enable Kid Mode?</Label>
+                              <p className="text-xs text-yellow-700">Creates a simplified dashboard for them.</p>
+                            </div>
+                            <Switch 
+                              checked={formData.is_child_account} 
+                              onCheckedChange={(c) => setFormData({ ...formData, is_child_account: c })} 
+                            />
+                          </div>
+                        )}
+
+                        <div className="space-y-2">
+                          <Label>Linked Thrive Account (Email)</Label>
+                          <Input 
+                            value={formData.linked_user_email} 
+                            onChange={(e) => setFormData({...formData, linked_user_email: e.target.value})} 
+                            placeholder="user@example.com" 
+                          />
+                          <p className="text-xs text-gray-500">Links their wishlist and preferences if they have an account.</p>
+                        </div>
+                      </div>
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="family_favorites" className="mt-4">
+                    <ProfileFavoritesTab 
+                      formData={formData} 
+                      setFormData={setFormData}
+                      isProfile={false}
+                      linkedProfileData={viewMode === 'theirs' ? linkedProfile : null}
+                      linkedEmail={formData.linked_user_email}
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="family_moments" className="mt-4">
+                    <MomentsTabContent formData={formData} setFormData={setFormData} />
+                  </TabsContent>
+                </Tabs>
+              </>
+            )}
           </div>
         </DialogContent>
       </Dialog>

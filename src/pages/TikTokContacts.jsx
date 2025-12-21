@@ -259,6 +259,14 @@ export default function TikTokContacts() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] }),
   });
 
+  const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
+  const [scheduleContact, setScheduleContact] = useState(null);
+  
+  const handleOpenSchedule = (contact) => {
+    setScheduleContact(contact);
+    setScheduleModalOpen(true);
+  };
+
 
 
   const closeModal = () => {
@@ -474,12 +482,19 @@ export default function TikTokContacts() {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  toggleFeatureMutation.mutate({ id: contact.id, field: 'engagement_enabled', currentValue: contact.engagement_enabled });
+                  if (!contact.engagement_enabled) {
+                    // Enable it first, then open schedule
+                    toggleFeatureMutation.mutate({ id: contact.id, field: 'engagement_enabled', currentValue: false });
+                    handleOpenSchedule(contact);
+                  } else {
+                    // Just open schedule
+                    handleOpenSchedule(contact);
+                  }
                 }}
                 className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs transition-all cursor-pointer hover:scale-105 ${
                   contact.engagement_enabled ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
                 }`}
-                title="Engagement Tracking"
+                title="Configure Engagement Schedule"
               >
                 <Sparkles className={`w-3 h-3 ${contact.engagement_enabled ? 'fill-purple-500' : ''}`} />
                 <span className="font-medium">Engage</span>
@@ -827,6 +842,78 @@ export default function TikTokContacts() {
           >
             Done
           </Button>
+        </DialogContent>
+      </Dialog>
+
+      {/* Engagement Schedule Modal */}
+      <Dialog open={scheduleModalOpen} onOpenChange={setScheduleModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Engagement Schedule</DialogTitle>
+          </DialogHeader>
+          {scheduleContact && (
+            <div className="space-y-4 py-4">
+              <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg">
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: scheduleContact.color || '#8B5CF6' }} />
+                <div>
+                  <p className="font-semibold">@{scheduleContact.username}</p>
+                  <p className="text-sm text-gray-500">{scheduleContact.engagement_enabled ? 'Tracking Active' : 'Tracking Paused'}</p>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Frequency</Label>
+                <Select 
+                  value={scheduleContact.engagement_frequency || 'multiple_per_week'} 
+                  onValueChange={(v) => {
+                    base44.entities.TikTokContact.update(scheduleContact.id, { engagement_frequency: v });
+                    queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] });
+                    setScheduleContact({...scheduleContact, engagement_frequency: v});
+                  }}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="daily">Daily</SelectItem>
+                    <SelectItem value="multiple_per_week">Specific Days</SelectItem>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {scheduleContact.engagement_frequency === 'multiple_per_week' && (
+                <div className="space-y-2">
+                  <Label>Days</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map(day => {
+                      const isSelected = scheduleContact.engagement_days?.includes(day);
+                      return (
+                        <Badge
+                          key={day}
+                          variant={isSelected ? 'default' : 'outline'}
+                          className="cursor-pointer"
+                          onClick={() => {
+                            const currentDays = scheduleContact.engagement_days || [];
+                            const newDays = isSelected 
+                              ? currentDays.filter(d => d !== day)
+                              : [...currentDays, day];
+                            base44.entities.TikTokContact.update(scheduleContact.id, { engagement_days: newDays });
+                            queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] });
+                            setScheduleContact({...scheduleContact, engagement_days: newDays});
+                          }}
+                        >
+                          {day.slice(0, 3)}
+                        </Badge>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+              
+              <div className="pt-4 flex justify-end">
+                 <Button onClick={() => setScheduleModalOpen(false)}>Done</Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
