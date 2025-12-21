@@ -37,7 +37,7 @@ export default function CreatorGroups() {
   const [showHidden, setShowHidden] = useState(false);
 
   // Admin Check
-  const realUserEmail = user?.email ? user.email.toLowerCase() : '';
+  const realUserEmail = user?.email ? user?.email.toLowerCase() : '';
   const adminEmails = ['pixelnutscreative@gmail.com', 'pixel@thrivenut.app'];
   const isSuperAdmin = realUserEmail && adminEmails.includes(realUserEmail);
   const canCreateAgency = isSuperAdmin || preferences?.can_create_agency;
@@ -47,7 +47,7 @@ export default function CreatorGroups() {
     queryKey: ['myGroupMemberships', user?.email],
     queryFn: async () => {
       if (!user?.email) return [];
-      return await base44.entities.CreatorGroupMember.filter({ user_email: user.email });
+      return await base44.entities.CreatorGroupMember.filter({ user_email: user?.email });
     },
     enabled: !!user?.email
   });
@@ -91,7 +91,7 @@ export default function CreatorGroups() {
     queryKey: ['allGroupPrefs', user?.email],
     queryFn: async () => {
       if (!user?.email) return [];
-      return await base44.entities.UserGroupPreference.filter({ user_email: user.email });
+      return await base44.entities.UserGroupPreference.filter({ user_email: user?.email });
     },
     enabled: !!user?.email
   });
@@ -103,7 +103,7 @@ export default function CreatorGroups() {
         return base44.entities.UserGroupPreference.update(existing.id, { is_hidden_from_list: isHidden });
       } else {
         return base44.entities.UserGroupPreference.create({
-          user_email: user.email,
+          user_email: user?.email,
           group_id: groupId,
           is_hidden_from_list: isHidden
         });
@@ -118,7 +118,7 @@ export default function CreatorGroups() {
     mutationFn: async (groupId) => {
       // First verify ownership/admin
       const group = groups.find(g => g.id === groupId);
-      if (!group || group.owner_email !== user.email) {
+      if (!group || group.owner_email !== user?.email) {
         throw new Error("Unauthorized");
       }
       // Delete group
@@ -139,7 +139,7 @@ export default function CreatorGroups() {
       // 1. Create Group
       const group = await base44.entities.CreatorGroup.create({
         name,
-        owner_email: user.email,
+        owner_email: user?.email,
         invite_code: Math.random().toString(36).substring(7).toUpperCase(),
         status: 'active',
         type
@@ -147,7 +147,7 @@ export default function CreatorGroups() {
       // 2. Add Owner as Member
       await base44.entities.CreatorGroupMember.create({
         group_id: group.id,
-        user_email: user.email,
+        user_email: user?.email,
         role: 'owner',
         status: 'active',
         joined_date: new Date().toISOString()
@@ -174,12 +174,12 @@ export default function CreatorGroups() {
       if (groups.length === 0) throw new Error('Invalid invite code');
       const group = groups[0];
       
-      const existing = await base44.entities.CreatorGroupMember.filter({ group_id: group.id, user_email: user.email });
+      const existing = await base44.entities.CreatorGroupMember.filter({ group_id: group.id, user_email: user?.email });
       if (existing.length > 0) return { group, existing: true };
 
       await base44.entities.CreatorGroupMember.create({
         group_id: group.id,
-        user_email: user.email,
+        user_email: user?.email,
         role: 'member',
         status: 'active',
         level: 'Invited',
@@ -238,7 +238,7 @@ export default function CreatorGroups() {
     queryKey: ['groupPrefs', user?.email, activeGroupId],
     queryFn: async () => {
       if (!user?.email || !activeGroupId) return null;
-      const res = await base44.entities.UserGroupPreference.filter({ user_email: user.email, group_id: activeGroupId });
+      const res = await base44.entities.UserGroupPreference.filter({ user_email: user?.email, group_id: activeGroupId });
       return res[0] || { hidden_tabs: [], tab_order: [] };
     },
     enabled: !!activeGroupId
@@ -250,7 +250,7 @@ export default function CreatorGroups() {
         return base44.entities.UserGroupPreference.update(groupPrefs.id, newPrefs);
       } else {
         return base44.entities.UserGroupPreference.create({ 
-          user_email: user.email, 
+          user_email: user?.email, 
           group_id: activeGroupId, 
           ...newPrefs 
         });
