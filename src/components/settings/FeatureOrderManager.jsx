@@ -30,6 +30,12 @@ const allFeatures = [
   // Creator Suite
   { id: 'tiktok', name: 'Social Media Suite', description: 'Full creator toolkit', requiresTikTokAccess: true },
   { id: 'motivations', name: 'Content Ideas', description: 'Saved inspirations' },
+  { id: 'content_marketplace', name: 'Content Marketplace', description: 'Buy & sell designs' },
+  { id: 'affiliate', name: 'Affiliate Programs', description: 'Track your links' },
+  { id: 'my_resources', name: 'My Resources', description: 'Saved files & links' },
+  
+  // Parenting
+  { id: 'parenting', name: 'Parenting & Kids', description: 'Child journals & controls' },
 ];
 
 export default function FeatureOrderManager({ enabledModules, onChange }) {

@@ -12,7 +12,26 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Check for "Nuts and Bots" or "AI Tools" subscription (Unlimited Kids)
+    // We check the AIPlatformUser entity or UserPreferences
+    const [platformUser] = await base44.entities.AIPlatformUser.filter({ 
+      user_email: user.email,
+      subscription_status: 'active'
+    });
+
+    const [prefs] = await base44.entities.UserPreferences.filter({ user_email: user.email });
+
+    // Allow if they have a platform subscription OR are an admin/special user
+    const hasUnlimitedKids = 
+      (platformUser && ['lets_go_nuts', 'both', 'pixels_toolbox'].includes(platformUser.platform)) ||
+      (prefs && (prefs.is_superfan || prefs.is_trusted_creator)); // Or any other flag
+
     const { quantity = 1 } = await req.json();
+
+    // If eligible, bypass payment
+    if (hasUnlimitedKids) {
+       return Response.json({ url: `${req.headers.get('origin')}/FamilyMembers?success=true` });
+    }
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],

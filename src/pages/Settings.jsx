@@ -315,42 +315,36 @@ export default function Settings() {
           navigate(`#${v}`); 
         }} className="w-full">
           <TabsList className="grid grid-cols-5 md:grid-cols-9 gap-1 mb-6 bg-transparent h-auto">
-            <TabsTrigger value="profile" className="flex flex-col items-center gap-1 h-auto py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
-              <User className="w-4 h-4" />
-              <span className="text-[10px] font-medium">Profile</span>
-            </TabsTrigger>
-
-            <TabsTrigger value="appearance" className="flex flex-col items-center gap-1 h-auto py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
-              <Palette className="w-4 h-4" />
-              <span className="text-[10px] font-medium">Theme</span>
-            </TabsTrigger>
-            <TabsTrigger value="features" className="flex flex-col items-center gap-1 h-auto py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
-              <Layers className="w-4 h-4" />
-              <span className="text-[10px] font-medium">Features</span>
-            </TabsTrigger>
-            <TabsTrigger value="dashboard" className="flex flex-col items-center gap-1 h-auto py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
-              <CalendarIcon className="w-4 h-4" />
-              <span className="text-[10px] font-medium">Dash</span>
-            </TabsTrigger>
-            <TabsTrigger value="preferences" className="flex flex-col items-center gap-1 h-auto py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
-              <Sliders className="w-4 h-4" />
-              <span className="text-[10px] font-medium">Prefs</span>
-            </TabsTrigger>
-
-            <TabsTrigger value="widgets-v2" className="flex flex-col items-center gap-1 h-auto py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
-              <PuzzleIcon className="w-4 h-4" />
-              <span className="text-[10px] font-medium">Widgets</span>
-            </TabsTrigger>
-
-            <TabsTrigger value="bible" className="flex flex-col items-center gap-1 h-auto py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
-              <BookOpen className="w-4 h-4" />
-              <span className="text-[10px] font-medium">Bible</span>
-            </TabsTrigger>
-            <TabsTrigger value="referrals" className="flex flex-col items-center gap-1 h-auto py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white">
-              <Share2 className="w-4 h-4" />
-              <span className="text-[10px] font-medium">Share</span>
-            </TabsTrigger>
-
+            {['profile', 'appearance', 'features', 'dashboard', 'preferences', 'widgets-v2', 'bible', 'referrals'].map(tab => {
+              let icon, label;
+              switch(tab) {
+                case 'profile': icon = <User className="w-4 h-4" />; label = 'Profile'; break;
+                case 'appearance': icon = <Palette className="w-4 h-4" />; label = 'Theme'; break;
+                case 'features': icon = <Layers className="w-4 h-4" />; label = 'Features'; break;
+                case 'dashboard': icon = <CalendarIcon className="w-4 h-4" />; label = 'Dash'; break;
+                case 'preferences': icon = <Sliders className="w-4 h-4" />; label = 'Prefs'; break;
+                case 'widgets-v2': icon = <PuzzleIcon className="w-4 h-4" />; label = 'Widgets'; break;
+                case 'bible': icon = <BookOpen className="w-4 h-4" />; label = 'Bible'; break;
+                case 'referrals': icon = <Share2 className="w-4 h-4" />; label = 'Share'; break;
+              }
+              
+              const isActive = activeTab === tab;
+              
+              return (
+                <TabsTrigger 
+                  key={tab}
+                  value={tab} 
+                  className="flex flex-col items-center gap-1 h-auto py-2 data-[state=active]:text-white transition-all duration-300"
+                  style={isActive ? { 
+                    backgroundImage: `linear-gradient(to right, ${primaryColor}, ${accentColor})`,
+                    border: 'none'
+                  } : {}}
+                >
+                  {icon}
+                  <span className="text-[10px] font-medium">{label}</span>
+                </TabsTrigger>
+              );
+            })}
           </TabsList>
 
           {/* PROFILE TAB */}
