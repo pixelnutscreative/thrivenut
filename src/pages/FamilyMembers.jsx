@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Users, Plus, Calendar, Trash2, Edit, Save, Gift, Shirt, Palette, Heart, Check, ExternalLink, Camera, Sparkles, MessageCircle, Music, Utensils, Coffee, TriangleAlert, User, Eye, Globe } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -21,7 +21,7 @@ import MomentsTabContent from '../components/contacts/MomentsTabContent';
 
 export default function FamilyMembers() {
   const queryClient = useQueryClient();
-  const { bgClass, textClass, cardBgClass } = useTheme();
+  const { bgClass, textClass, cardBgClass, user } = useTheme();
   
   const [showForm, setShowForm] = useState(false);
   const [editingMember, setEditingMember] = useState(null);
@@ -53,10 +53,16 @@ export default function FamilyMembers() {
   });
 
   const { data: familyMembers = [], isLoading } = useQuery({
-    queryKey: ['familyMembers'],
+    queryKey: ['familyMembers', user?.email],
     queryFn: async () => {
-      return await base44.entities.FamilyMember.filter({ is_active: true }, 'name');
-    }
+      if (!user?.email) return [];
+      // Filter by created_by to ensure privacy (only show members created by this user)
+      return await base44.entities.FamilyMember.filter({ 
+        is_active: true, 
+        created_by: user.email 
+      }, 'name');
+    },
+    enabled: !!user?.email
   });
 
   const createMemberMutation = useMutation({
@@ -187,11 +193,22 @@ export default function FamilyMembers() {
               Manage My Profile
             </Button>
             <Button
-              onClick={() => { resetForm(); setShowForm(true); }}
+              onClick={() => { 
+                resetForm(); 
+                setFormData(prev => ({ ...prev, relationship: 'child', is_child_account: true }));
+                setShowForm(true); 
+              }}
               className="bg-gradient-to-r from-purple-600 to-pink-600 text-white"
             >
+              <Sparkles className="w-4 h-4 mr-2" />
+              Add Child
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => { resetForm(); setShowForm(true); }}
+            >
               <Plus className="w-4 h-4 mr-2" />
-              Add Person
+              Add Other
             </Button>
           </div>
         </div>
@@ -536,6 +553,19 @@ export default function FamilyMembers() {
             
             {/* REDO TABS FOR FAMILY MEMBERS TO MATCH PEOPLE.JS STRUCTURE */}
             {/* Using a new simplified tab structure for FamilyMembers to align with People.js */}
+            <DialogFooter className="mt-8 pt-4 border-t">
+              <Button variant="outline" onClick={() => setShowForm(false)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleSubmit}
+                disabled={!formData.name}
+                className="bg-gradient-to-r from-purple-600 to-pink-600 text-white"
+              >
+                <Save className="w-4 h-4 mr-2" />
+                {editingMember ? 'Save Changes' : 'Create Profile'}
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
