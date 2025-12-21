@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { CheckCircle, Circle, Play, ExternalLink, Trash2, FileText, Mic, Video, Link as LinkIcon, Search, SortAsc, SortDesc, Upload, FileAudio } from 'lucide-react';
+import { CheckCircle, Circle, Play, ExternalLink, Trash2, Pencil, FileText, Mic, Video, Link as LinkIcon, Search, SortAsc, SortDesc, Upload, FileAudio } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -22,12 +22,13 @@ const VOICEOVER_TOOLS = [
 
 export default function GroupTrainingTab({ group, currentUser, isAdmin }) {
   const queryClient = useQueryClient();
-  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOrder, setSortOrder] = useState('newest'); // newest, oldest, a-z
   const [uploading, setUploading] = useState(false);
   
-  const [newTraining, setNewTraining] = useState({ 
+  const [formData, setFormData] = useState({ 
     title: '', 
     description: '', 
     content: '',
@@ -53,20 +54,44 @@ export default function GroupTrainingTab({ group, currentUser, isAdmin }) {
 
   const completedIds = completions.map(c => c.training_id);
 
-  const addMutation = useMutation({
-    mutationFn: (data) => base44.entities.GroupTraining.create({ 
-        ...data, 
-        group_id: group.id, 
-        active: true,
-        // Legacy support mapping
-        video_url: data.resource_type === 'video' ? data.resource_url : ''
-    }),
+  const saveMutation = useMutation({
+    mutationFn: (data) => {
+        if (editingId) {
+            return base44.entities.GroupTraining.update(editingId, {
+                ...data,
+                video_url: data.resource_type === 'video' ? data.resource_url : '',
+                edited_by: currentUser.email,
+                edited_at: new Date().toISOString()
+            });
+        } else {
+            return base44.entities.GroupTraining.create({ 
+                ...data, 
+                group_id: group.id, 
+                active: true,
+                video_url: data.resource_type === 'video' ? data.resource_url : ''
+            });
+        }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['groupTraining', group.id]);
-      setIsAddOpen(false);
-      setNewTraining({ title: '', description: '', content: '', resource_url: '', resource_type: 'video', category: '' });
+      setIsDialogOpen(false);
+      setEditingId(null);
+      setFormData({ title: '', description: '', content: '', resource_url: '', resource_type: 'video', category: '' });
     }
   });
+
+  const handleEdit = (module) => {
+    setEditingId(module.id);
+    setFormData({
+        title: module.title,
+        description: module.description || '',
+        content: module.content || '',
+        resource_url: module.resource_url || module.video_url || '',
+        resource_type: module.resource_type || 'video',
+        category: module.category || ''
+    });
+    setIsDialogOpen(true);
+  };
 
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
@@ -159,36 +184,42 @@ export default function GroupTrainingTab({ group, currentUser, isAdmin }) {
           </Select>
           
           {isAdmin && (
-            <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+            <Dialog open={isDialogOpen} onOpenChange={(open) => {
+                setIsDialogOpen(open);
+                if (!open) {
+                    setEditingId(null);
+                    setFormData({ title: '', description: '', content: '', resource_url: '', resource_type: 'video', category: '' });
+                }
+            }}>
               <DialogTrigger asChild>
-                <Button>Add Training</Button>
+                <Button onClick={() => setIsDialogOpen(true)}>Add Training</Button>
               </DialogTrigger>
               <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle>Add New Training Module</DialogTitle>
+                  <DialogTitle>{editingId ? 'Edit Training Module' : 'Add New Training Module'}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                   <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label>Title</Label>
-                        <Input value={newTraining.title} onChange={e => setNewTraining({...newTraining, title: e.target.value})} placeholder="Module Title" />
+                        <Input value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} placeholder="Module Title" />
                       </div>
                       <div className="space-y-2">
                         <Label>Category (Optional)</Label>
-                        <Input value={newTraining.category} onChange={e => setNewTraining({...newTraining, category: e.target.value})} placeholder="e.g. Basics, Advanced" />
+                        <Input value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} placeholder="e.g. Basics, Advanced" />
                       </div>
                   </div>
                   
                   <div className="space-y-2">
                     <Label>Short Description</Label>
-                    <Textarea value={newTraining.description} onChange={e => setNewTraining({...newTraining, description: e.target.value})} placeholder="What will they learn?" rows={2} />
+                    <Textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} placeholder="What will they learn?" rows={2} />
                   </div>
 
                   <div className="space-y-2">
                     <Label>Content Type</Label>
                     <Select 
-                        value={newTraining.resource_type} 
-                        onValueChange={(val) => setNewTraining({...newTraining, resource_type: val})}
+                        value={formData.resource_type} 
+                        onValueChange={(val) => setFormData({...formData, resource_type: val})}
                     >
                         <SelectTrigger>
                             <SelectValue />
@@ -204,26 +235,26 @@ export default function GroupTrainingTab({ group, currentUser, isAdmin }) {
                     </Select>
                   </div>
 
-                  {newTraining.resource_type !== 'text' && (
+                  {formData.resource_type !== 'text' && (
                       <div className="space-y-2 bg-slate-50 p-4 rounded-lg border">
                           <Label>
-                              {newTraining.resource_type === 'video' ? 'Video URL' : 
-                               newTraining.resource_type === 'link' ? 'External Link URL' : 
+                              {formData.resource_type === 'video' ? 'Video URL' : 
+                               formData.resource_type === 'link' ? 'External Link URL' : 
                                'File URL / Upload'}
                           </Label>
                           <div className="flex gap-2">
                             <Input 
-                                value={newTraining.resource_url} 
-                                onChange={e => setNewTraining({...newTraining, resource_url: e.target.value})} 
-                                placeholder={newTraining.resource_type === 'video' ? 'https://youtube.com/...' : 'https://...'} 
+                                value={formData.resource_url} 
+                                onChange={e => setFormData({...formData, resource_url: e.target.value})} 
+                                placeholder={formData.resource_type === 'video' ? 'https://youtube.com/...' : 'https://...'} 
                             />
-                            {['pdf', 'audio', 'mixed'].includes(newTraining.resource_type) && (
+                            {['pdf', 'audio', 'mixed'].includes(formData.resource_type) && (
                                 <div className="relative">
                                     <input
                                         type="file"
                                         id="file-upload"
                                         className="hidden"
-                                        accept={newTraining.resource_type === 'audio' ? 'audio/*' : newTraining.resource_type === 'pdf' ? '.pdf' : '*/*'}
+                                        accept={formData.resource_type === 'audio' ? 'audio/*' : formData.resource_type === 'pdf' ? '.pdf' : '*/*'}
                                         onChange={handleFileUpload}
                                     />
                                     <Button 
@@ -244,15 +275,15 @@ export default function GroupTrainingTab({ group, currentUser, isAdmin }) {
                     <Label>Content / Notes</Label>
                     <ReactQuill 
                         theme="snow" 
-                        value={newTraining.content} 
-                        onChange={v => setNewTraining({...newTraining, content: v})} 
+                        value={formData.content} 
+                        onChange={v => setFormData({...formData, content: v})} 
                         className="h-40 mb-12"
                         placeholder="Add detailed content, notes, or instructions..."
                     />
                   </div>
 
                   {/* Voiceover Tools Helper */}
-                  {(newTraining.resource_type === 'audio' || newTraining.resource_type === 'mixed') && (
+                  {(formData.resource_type === 'audio' || formData.resource_type === 'mixed') && (
                       <div className="mt-4 p-3 bg-indigo-50 rounded-lg border border-indigo-100">
                           <p className="text-xs font-semibold text-indigo-800 mb-2 flex items-center gap-1">
                               <Mic className="w-3 h-3" /> Need a Voiceover?
@@ -276,8 +307,8 @@ export default function GroupTrainingTab({ group, currentUser, isAdmin }) {
 
                 </div>
                 <DialogFooter>
-                  <Button onClick={() => addMutation.mutate(newTraining)} disabled={!newTraining.title || uploading}>
-                    {uploading ? 'Uploading...' : 'Add Module'}
+                  <Button onClick={() => saveMutation.mutate(formData)} disabled={!formData.title || uploading}>
+                    {uploading ? 'Uploading...' : (editingId ? 'Save Changes' : 'Add Module')}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -337,13 +368,23 @@ export default function GroupTrainingTab({ group, currentUser, isAdmin }) {
                                 <h4 className={`text-lg font-semibold ${isCompleted ? 'text-green-900' : 'text-gray-900'}`}>{module.title}</h4>
                             </div>
                             {isAdmin && (
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-red-500" onClick={() => deleteMutation.mutate(module.id)}>
-                                <Trash2 className="w-4 h-4" />
-                                </Button>
+                                <div className="flex gap-1">
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-purple-600" onClick={() => handleEdit(module)}>
+                                        <Pencil className="w-4 h-4" />
+                                    </Button>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-red-500" onClick={() => deleteMutation.mutate(module.id)}>
+                                        <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                </div>
                             )}
                         </div>
                         
                         {module.description && <p className="text-sm text-gray-600">{module.description}</p>}
+                        {module.edited_by && (
+                            <p className="text-xs text-purple-400 italic">
+                                Edited by {module.edited_by === currentUser.email ? 'you' : module.edited_by} on {new Date(module.edited_at).toLocaleDateString()}
+                            </p>
+                        )}
                         
                         {/* Resource Preview / Actions */}
                         <div className="flex flex-wrap gap-2 pt-1">
