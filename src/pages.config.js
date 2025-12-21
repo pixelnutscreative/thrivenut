@@ -33,6 +33,7 @@ import HolyHitmakers from './pages/HolyHitmakers';
 import Home from './pages/Home';
 import Household from './pages/Household';
 import Journal from './pages/Journal';
+import KidsDashboard from './pages/KidsDashboard';
 import KidsJournal from './pages/KidsJournal';
 import LiveEngagement from './pages/LiveEngagement';
 import LiveSchedule from './pages/LiveSchedule';
@@ -73,7 +74,6 @@ import WaterHistory from './pages/WaterHistory';
 import WeeklyGifterGallery from './pages/WeeklyGifterGallery';
 import Wellness from './pages/Wellness';
 import WorkSchedules from './pages/WorkSchedules';
-import KidsDashboard from './pages/KidsDashboard';
 import __Layout from './Layout.jsx';
 
 
@@ -113,6 +113,7 @@ export const PAGES = {
     "Home": Home,
     "Household": Household,
     "Journal": Journal,
+    "KidsDashboard": KidsDashboard,
     "KidsJournal": KidsJournal,
     "LiveEngagement": LiveEngagement,
     "LiveSchedule": LiveSchedule,
@@ -153,7 +154,6 @@ export const PAGES = {
     "WeeklyGifterGallery": WeeklyGifterGallery,
     "Wellness": Wellness,
     "WorkSchedules": WorkSchedules,
-    "KidsDashboard": KidsDashboard,
 }
 
 export const pagesConfig = {

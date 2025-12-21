@@ -21,6 +21,7 @@ import AdminContentReview from '../components/admin/AdminContentReview';
 import DuplicateContactMerger from '../components/admin/DuplicateContactMerger';
 import AdminPreApprovedEmailsContent from '../components/admin/AdminPreApprovedEmailsContent';
 import AdminUserPermissions from '../components/admin/AdminUserPermissions';
+import AdminDuplicateCleanup from '../components/admin/AdminDuplicateCleanup';
 import AdminMenuContent from '../components/admin/AdminMenuContent';
 import AdminPixelsPlaceContent from '../components/admin/AdminPixelsPlaceContent';
 import AdminAIToolsContent from '../components/admin/AdminAIToolsContent';
@@ -91,6 +92,7 @@ export default function Admin() {
                       <TabsTrigger value="permissions">Permissions</TabsTrigger>
                       <TabsTrigger value="superfan">SuperFan</TabsTrigger>
                       <TabsTrigger value="queue">Queue</TabsTrigger>
+                      <TabsTrigger value="cleanup">Cleanup</TabsTrigger>
                       <TabsTrigger value="impersonate">Impersonate</TabsTrigger>
                     </TabsList>
                   </div>
@@ -99,6 +101,7 @@ export default function Admin() {
                   <TabsContent value="permissions"><AdminUserPermissions /></TabsContent>
                   <TabsContent value="superfan"><AdminSuperFanContent /></TabsContent>
                   <TabsContent value="queue"><AdminSuperFanQueue /></TabsContent>
+                  <TabsContent value="cleanup"><AdminDuplicateCleanup /></TabsContent>
                   <TabsContent value="impersonate"><AdminImpersonateContent /></TabsContent>
                 </Tabs>
               </CardContent>

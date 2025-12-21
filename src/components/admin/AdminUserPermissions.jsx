@@ -19,8 +19,8 @@ export default function AdminUserPermissions() {
       // Fetch users with their preferences
       // Note: We need UserPreferences to check permissions
       const prefs = await base44.entities.UserPreferences.list('-created_date', 100);
-      // Filter out corrupt records without emails
-      return prefs.filter(u => u.user_email); 
+      // Filter out corrupt records without emails and hidden records
+      return prefs.filter(u => u.user_email && !u.is_hidden_admin && !u.soft_deleted_at); 
     },
   });
 
