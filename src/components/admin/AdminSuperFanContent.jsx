@@ -108,13 +108,26 @@ export default function AdminSuperFanContent() {
       const cleaned = tiktokUsername.replace('@', '').trim().toLowerCase();
       const existing = preApprovedList.find(p => p.tiktok_username?.toLowerCase() === cleaned);
       if (existing) throw new Error('Already in list');
-      return await base44.entities.PreApprovedSuperFan.create({
+      
+      await base44.entities.PreApprovedSuperFan.create({
         tiktok_username: cleaned,
         added_date: new Date().toISOString()
       });
+
+      // Also auto-grant access to any existing users with this username
+      const matchingPrefs = allPreferences.filter(p => 
+        p.tiktok_username?.toLowerCase() === cleaned && !p.tiktok_access_approved
+      );
+      
+      if (matchingPrefs.length > 0) {
+        await Promise.all(matchingPrefs.map(pref => 
+          base44.entities.UserPreferences.update(pref.id, { tiktok_access_approved: true })
+        ));
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['preApprovedSuperFans'] });
+      queryClient.invalidateQueries({ queryKey: ['allUserPreferences'] });
       setNewUserTikTok('');
     },
   });
