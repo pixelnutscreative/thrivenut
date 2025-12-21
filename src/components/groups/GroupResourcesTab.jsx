@@ -42,7 +42,11 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data) => base44.entities.GroupResource.update(editingId, data),
+    mutationFn: (data) => base44.entities.GroupResource.update(editingId, {
+      ...data,
+      edited_by: currentUser.email,
+      edited_at: new Date().toISOString()
+    }),
     onSuccess: () => {
       queryClient.invalidateQueries(['groupResources', group.id]);
       handleCloseDialog();
@@ -197,9 +201,16 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
                       Open Resource <ExternalLink className="w-3 h-3" />
                     </a>
                   )}
-                  {resource.submitted_by && isAdmin && (
-                    <p className="text-xs text-gray-400 mt-2">Shared by: {resource.submitted_by}</p>
-                  )}
+                  <div className="text-xs text-gray-400 mt-2 space-y-1">
+                    {resource.submitted_by && isAdmin && (
+                      <p>Shared by: {resource.submitted_by}</p>
+                    )}
+                    {resource.edited_by && (
+                      <p className="italic text-purple-400">
+                        Edited by {resource.edited_by === currentUser.email ? 'you' : resource.edited_by} on {new Date(resource.edited_at).toLocaleDateString()}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -223,6 +234,9 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
                       <a href={resource.url} target="_blank" className="text-blue-600 underline text-sm truncate block max-w-md">{resource.url}</a>
                     </div>
                     <div className="flex gap-2">
+                      <Button size="sm" variant="outline" onClick={() => handleEdit(resource)} className="text-gray-600 border-gray-200 bg-white">
+                        <Pencil className="w-4 h-4 mr-1" /> Edit
+                      </Button>
                       <Button size="sm" variant="outline" onClick={() => reviewMutation.mutate({ id: resource.id, status: 'rejected' })} className="text-red-600 border-red-200 bg-white">
                         <X className="w-4 h-4 mr-1" /> Reject
                       </Button>
