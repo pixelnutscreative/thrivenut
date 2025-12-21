@@ -709,11 +709,11 @@ export default function People() {
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-2">
                             <Label>Name</Label>
-                            <Input value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} placeholder="Full Name" />
+                            <Input value={formData.name || ''} onChange={(e) => setFormData({...formData, name: e.target.value})} placeholder="Full Name" />
                           </div>
                           <div className="space-y-2">
                             <Label>Nickname</Label>
-                            <Input value={formData.nickname} onChange={(e) => setFormData({...formData, nickname: e.target.value})} placeholder="Nickname" />
+                            <Input value={formData.nickname || ''} onChange={(e) => setFormData({...formData, nickname: e.target.value})} placeholder="Nickname" />
                           </div>
                         </div>
                         
