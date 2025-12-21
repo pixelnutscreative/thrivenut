@@ -29,7 +29,7 @@ export default function AdminSuperFanContent() {
 
   const { data: allPreferences = [] } = useQuery({
     queryKey: ['allUserPreferences'],
-    queryFn: () => base44.entities.UserPreferences.list(),
+    queryFn: () => base44.entities.UserPreferences.list(undefined, 1000),
   });
 
   const { data: preApprovedList = [] } = useQuery({
@@ -219,7 +219,7 @@ export default function AdminSuperFanContent() {
           </div>
 
           <Card>
-            <CardHeader><CardTitle className="text-lg">Users with Access ({usersWithAccess.length})</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-lg">Manage User Access (Total: {allPreferences.length} | Active: {usersWithAccess.length})</CardTitle></CardHeader>
             <CardContent className="space-y-2">
               {filteredPreferences.length === 0 ? <p className="text-gray-500 text-center py-4">No users found</p> : filteredPreferences.map(pref => (
                 <div key={pref.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
