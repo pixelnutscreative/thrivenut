@@ -29,7 +29,10 @@ export default function AdminSuperFanContent() {
 
   const { data: allPreferences = [] } = useQuery({
     queryKey: ['allUserPreferences'],
-    queryFn: () => base44.entities.UserPreferences.list(undefined, 2000),
+    queryFn: async () => {
+      const prefs = await base44.entities.UserPreferences.list(undefined, 2000);
+      return prefs.filter(p => p.user_email);
+    },
   });
 
   const { data: preApprovedList = [] } = useQuery({

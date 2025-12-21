@@ -18,7 +18,9 @@ export default function AdminUserPermissions() {
     queryFn: async () => {
       // Fetch users with their preferences
       // Note: We need UserPreferences to check permissions
-      return await base44.entities.UserPreferences.list('-created_date', 100); 
+      const prefs = await base44.entities.UserPreferences.list('-created_date', 100);
+      // Filter out corrupt records without emails
+      return prefs.filter(u => u.user_email); 
     },
   });
 
