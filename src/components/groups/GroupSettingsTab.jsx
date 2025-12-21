@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { X, Plus, Save, Link as LinkIcon, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
+import { X, Plus, Save, Link as LinkIcon, Trash2, ArrowUp, ArrowDown, ChevronDown, ChevronRight, AlertTriangle } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 export default function GroupSettingsTab({ group }) {
   const queryClient = useQueryClient();
@@ -37,7 +38,7 @@ export default function GroupSettingsTab({ group }) {
     <div className="space-y-6">
       <GroupNameSettings group={group} />
       <GroupShortcutsSettings group={group} />
-      <DeleteGroupSettings group={group} />
+      
       <Card>
         <CardHeader>
           <CardTitle>Member Levels & Roles</CardTitle>
@@ -74,6 +75,8 @@ export default function GroupSettingsTab({ group }) {
           </div>
         </CardContent>
       </Card>
+
+      <DeleteGroupSettings group={group} />
     </div>
   );
 }
@@ -116,11 +119,11 @@ function GroupNameSettings({ group }) {
 function DeleteGroupSettings({ group }) {
   const queryClient = useQueryClient();
   const [confirmName, setConfirmName] = useState('');
+  const [isOpen, setIsOpen] = useState(false);
   
   const deleteMutation = useMutation({
     mutationFn: async () => {
       await base44.entities.CreatorGroup.delete(group.id);
-      // Also delete members? Ideally backend handles cascade, but let's be safe
       const members = await base44.entities.CreatorGroupMember.filter({ group_id: group.id });
       await Promise.all(members.map(m => base44.entities.CreatorGroupMember.delete(m.id)));
     },
@@ -132,28 +135,44 @@ function DeleteGroupSettings({ group }) {
   });
 
   return (
-    <Card className="border-red-200">
-      <CardHeader>
-        <CardTitle className="text-red-600">Danger Zone</CardTitle>
-        <CardDescription>Delete this group permanently.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label>Type group name to confirm</Label>
-          <Input 
-            value={confirmName} 
-            onChange={e => setConfirmName(e.target.value)} 
-            placeholder={group.name}
-          />
-        </div>
-        <Button 
-          variant="destructive" 
-          disabled={confirmName !== group.name || deleteMutation.isPending}
-          onClick={() => deleteMutation.mutate()}
-        >
-          {deleteMutation.isPending ? 'Deleting...' : 'Delete Group'}
-        </Button>
-      </CardContent>
+    <Card className="border-red-200 shadow-sm">
+        <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+            <CollapsibleTrigger className="w-full">
+                <CardHeader className="flex flex-row items-center justify-between p-6 cursor-pointer hover:bg-red-50/50 transition-colors">
+                    <div className="text-left">
+                        <CardTitle className="text-red-600 flex items-center gap-2">
+                            <AlertTriangle className="w-5 h-5" /> Danger Zone
+                        </CardTitle>
+                        <CardDescription>Permanently delete this group and all its data.</CardDescription>
+                    </div>
+                    {isOpen ? <ChevronDown className="w-5 h-5 text-red-400" /> : <ChevronRight className="w-5 h-5 text-red-400" />}
+                </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+                <CardContent className="space-y-4 pt-0">
+                    <div className="p-4 bg-red-50 rounded-lg border border-red-100 text-red-800 text-sm">
+                        Warning: This action cannot be undone. All posts, events, resources, and memberships will be lost forever.
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Type group name to confirm</Label>
+                        <Input 
+                            value={confirmName} 
+                            onChange={e => setConfirmName(e.target.value)} 
+                            placeholder={group.name}
+                            className="border-red-200 focus-visible:ring-red-500"
+                        />
+                    </div>
+                    <Button 
+                        variant="destructive" 
+                        disabled={confirmName !== group.name || deleteMutation.isPending}
+                        onClick={() => deleteMutation.mutate()}
+                        className="w-full"
+                    >
+                        {deleteMutation.isPending ? 'Deleting...' : 'Delete Group'}
+                    </Button>
+                </CardContent>
+            </CollapsibleContent>
+        </Collapsible>
     </Card>
   );
 }
