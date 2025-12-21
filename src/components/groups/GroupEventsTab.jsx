@@ -49,7 +49,11 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data) => base44.entities.GroupEvent.update(editingId, data),
+    mutationFn: (data) => base44.entities.GroupEvent.update(editingId, {
+      ...data,
+      edited_by: currentUser.email,
+      edited_at: new Date().toISOString()
+    }),
     onSuccess: () => {
       queryClient.invalidateQueries(['groupEvents', group.id]);
       handleCloseDialog();
@@ -225,6 +229,12 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
                 </div>
                 <div className="prose prose-sm text-gray-600 mt-1 max-w-none" dangerouslySetInnerHTML={{ __html: event.description }} />
                 
+                {event.edited_by && (
+                  <p className="text-xs text-purple-400 italic mt-2">
+                    Edited by {event.edited_by === currentUser.email ? 'you' : event.edited_by} on {new Date(event.edited_at).toLocaleDateString()}
+                  </p>
+                )}
+
                 <div className="mt-4 pt-4 border-t flex flex-wrap gap-2 justify-between items-center">
                   <div className="flex gap-4 text-sm text-gray-500">
                     {event.link && (
