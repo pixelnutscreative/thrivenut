@@ -475,7 +475,7 @@ function OnboardingModal({ isOpen, user, onComplete }) {
         </div>
 
         {/* Progress indicator */}
-        <div className="flex gap-1 justify-center">
+        <div className="flex gap-1 justify-center mb-2">
           {[1, 2, 3, 4, 5].map(s => (
             <div
               key={s}
@@ -484,6 +484,20 @@ function OnboardingModal({ isOpen, user, onComplete }) {
               }`}
             />
           ))}
+        </div>
+
+        {/* Escape Hatch */}
+        <div className="text-center pt-2">
+          <button 
+            onClick={() => {
+              // Force completion in local storage
+              localStorage.setItem(`onboarding_completed_${user?.email}`, 'true');
+              onComplete();
+            }}
+            className="text-[10px] text-gray-400 hover:text-gray-600 underline"
+          >
+            I've already done this (Skip)
+          </button>
         </div>
       </DialogContent>
     </Dialog>
