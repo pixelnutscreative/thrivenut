@@ -782,7 +782,7 @@ export default function AdminAIToolsContent() {
           <DialogHeader>
             <DialogTitle>{editingUser ? 'Edit' : 'Add'} Platform User</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto px-1">
             <div className="space-y-2">
               <Label>User Name</Label>
               <Input
