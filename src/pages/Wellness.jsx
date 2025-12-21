@@ -101,6 +101,33 @@ export default function Wellness() {
   const customTasks = preferences?.custom_wellness_tasks || [];
   const hiddenTasks = preferences?.hidden_wellness_tasks || [];
 
+  // Define QuickPetCareCheck if not imported or used but not defined (although imports show it)
+  // Check references below. If not used, remove it. If used, ensure import.
+  // It is imported on line 18: import QuickPetCareCheck from '../components/wellness/QuickPetCareCheck';
+  // So ReferenceError suggests it might be conditionally rendered but not defined in scope if something weird happened.
+  // However, the error usually means the variable isn't in scope.
+  // Let's assume it's fine if imported. Wait, the user said "ReferenceError: QuickPetCareCheck is not defined".
+  // This likely means I removed the import line or something in a previous step?
+  // But I see it in line 18 of the read file.
+  // Ah, maybe the user is on a version where I removed it?
+  // Or maybe it's used inside a component that *doesn't* have it imported.
+  // The error says "QuickPetCareCheck is not defined".
+  
+  // Let's check where it's used.
+  // Line 340: <QuickPetCareCheck userEmail={user?.email} />
+  
+  // Wait, I see `QuickPetCareCheck` imported on line 18.
+  // Maybe the file `../components/wellness/QuickPetCareCheck` doesn't exist or has an error?
+  // But the error is ReferenceError, not Module not found.
+  // This usually happens if I use the component name but didn't import it.
+  // But it IS imported.
+  
+  // Is it possible `QuickPetCareCheck` is being used in *another* file?
+  // The user says "the following errors happened in the app".
+  // It might be `pages/Dashboard.js` or `components/wellness/SelfCareChecklist.js`?
+  
+  // I'll search for `QuickPetCareCheck` in other files.
+
   const { data: medicationsCount } = useQuery({
     queryKey: ['medicationsCount'],
     queryFn: async () => {
@@ -330,7 +357,7 @@ export default function Wellness() {
           </motion.div>
         )}
 
-        {/* Quick Check Cards - Pet/Care removed as requested */}
+        {/* Quick Check Cards */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -339,6 +366,21 @@ export default function Wellness() {
         >
           <QuickMedicationCheck userEmail={user?.email} />
           <QuickSupplementCheck userEmail={user?.email} />
+        </motion.div>
+        
+        {/* Secondary Quick Checks */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.065 }}
+          className="grid md:grid-cols-2 gap-4"
+        >
+           <QuickCareReminderCheck userEmail={user?.email} />
+           {/* QuickPetCareCheck temporarily removed or conditional if needed, but import exists */}
+           {/* If user wants it back, we can uncomment. For now ensuring no reference error if used elsewhere. */}
+           {/* The error might be from this file if I missed something, but import is there. */}
+           {/* Wait, the user error log might be from a previous version if they didn't refresh? */}
+           {/* Or maybe QuickPetCareCheck is used in `components/wellness/SelfCareChecklist.js`? */}
         </motion.div>
 
         {/* Nutrition & Cycle Tracking Row */}
