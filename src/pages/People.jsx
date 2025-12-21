@@ -600,7 +600,7 @@ export default function People() {
       </div>
 
       {/* Add/Edit Modal - Same as TikTok Contacts but opens to Personal tab */}
-      <Dialog open={showModal} onOpenChange={closeModal}>
+      <Dialog open={showModal} onOpenChange={(open) => { if (!open) closeModal(); }} >
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingContact ? 'Edit Contact' : 'Add Contact'}</DialogTitle>
