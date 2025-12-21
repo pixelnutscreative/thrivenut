@@ -43,7 +43,7 @@ export default function SuperFanAccess() {
 
   const { data: preApprovedList = [] } = useQuery({
     queryKey: ['preApprovedSuperFans'],
-    queryFn: () => base44.entities.PreApprovedSuperFan.list(undefined, 1000),
+    queryFn: () => base44.entities.PreApprovedSuperFan.list(undefined, 2000),
   });
 
   const { data: managedAccounts = [] } = useQuery({
