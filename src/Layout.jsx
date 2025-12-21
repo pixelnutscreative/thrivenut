@@ -96,6 +96,7 @@ export default function Layout({ children, currentPageName }) {
   // Determine if Bible features are enabled (default to true if undefined)
   const isBibleBeliever = preferences?.enable_bible_options !== false;
   const enabledModules = preferences?.enabled_modules || ['tiktok', 'gifter', 'goals', 'tasks', 'wellness', 'supplements', 'medications', 'pets', 'care_reminders', 'people', 'journal', 'mental_health', 'finance', 'activity', 'motivations'];
+  const isKidMode = preferences?.default_landing_page === 'KidsJournal';
 
   // --- THEME HANDLING ---
   const primaryColor = preferences?.primary_color || '#1fd2ea';
@@ -169,6 +170,7 @@ export default function Layout({ children, currentPageName }) {
     bgColor: 'bg-cyan-500/10',
     items: [
     { name: 'My People', icon: Users, path: 'People', moduleId: 'people' },
+    { name: 'Kid Controls', icon: Lock, path: 'KidControls', alwaysShow: true },
     { name: 'Care Reminders', icon: Bell, path: 'CareReminders', moduleId: 'care_reminders' },
     { name: 'Pet Care', icon: PawPrint, path: 'PetCare', moduleId: 'pets' }]
 
