@@ -778,7 +778,7 @@ export default function AdminAIToolsContent() {
 
       {/* Add/Edit Platform User Dialog */}
       <Dialog open={showAddUser || !!editingUser} onOpenChange={() => { setShowAddUser(false); setEditingUser(null); }}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingUser ? 'Edit' : 'Add'} Platform User</DialogTitle>
           </DialogHeader>
