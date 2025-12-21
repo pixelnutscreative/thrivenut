@@ -19,7 +19,7 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
   const { data: referralLink } = useQuery({
     queryKey: ['myReferralLink', currentUser?.email],
     queryFn: async () => {
-      const links = await base44.entities.ReferralLink.filter({ user_email: currentUser.email, is_active: true });
+      const links = await base44.entities.ReferralLink.filter({ user_email: currentUser?.email, is_active: true });
       return links[0];
     },
     enabled: !!currentUser?.email

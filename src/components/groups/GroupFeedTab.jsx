@@ -48,17 +48,17 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
   });
 
   const { data: completions = [] } = useQuery({
-    queryKey: ['myCompletions', group.id, currentUser.email],
-    queryFn: () => base44.entities.GroupTrainingCompletion.filter({ user_email: currentUser.email }),
+    queryKey: ['myCompletions', group.id, currentUser?.email],
+    queryFn: () => base44.entities.GroupTrainingCompletion.filter({ user_email: currentUser?.email }),
   });
   
   // 5. Fetch Hidden Preferences
   const { data: userGroupPref } = useQuery({
-    queryKey: ['userGroupPref', group.id, currentUser.email],
+    queryKey: ['userGroupPref', group.id, currentUser?.email],
     queryFn: async () => {
       const prefs = await base44.entities.UserGroupPreference.filter({ 
         group_id: group.id, 
-        user_email: currentUser.email 
+        user_email: currentUser?.email 
       });
       return prefs[0] || null;
     }
@@ -69,7 +69,7 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
   // --- Mutations ---
   const createPostMutation = useMutation({
     mutationFn: async (data) => {
-      const post = await base44.entities.GroupPost.create({ ...data, group_id: group.id, author_email: currentUser.email });
+      const post = await base44.entities.GroupPost.create({ ...data, group_id: group.id, author_email: currentUser?.email });
       
       // Send notifications to group members
       try {
@@ -113,7 +113,7 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
       } else {
         return base44.entities.UserGroupPreference.create({
           group_id: group.id,
-          user_email: currentUser.email,
+          user_email: currentUser?.email,
           hidden_feed_items: newHidden
         });
       }
@@ -129,7 +129,7 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
       } else {
         return base44.entities.GroupTrainingCompletion.create({
           training_id: trainingId,
-          user_email: currentUser.email,
+          user_email: currentUser?.email,
           completed_date: new Date().toISOString()
         });
       }
