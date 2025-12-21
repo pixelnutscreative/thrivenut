@@ -253,6 +253,18 @@ export default function FamilyMembers() {
                         </Button>
                       </div>
                     )}
+                    {member.is_child_account && (
+                      <div className="mb-2">
+                         <Button 
+                           onClick={() => window.location.href = '/KidsJournal'}
+                           className="w-full bg-purple-100 hover:bg-purple-200 text-purple-700 font-bold"
+                           size="sm"
+                         >
+                           <BookOpen className="w-4 h-4 mr-2" />
+                           Open Journal
+                         </Button>
+                      </div>
+                    )}
                     <div className="flex items-center gap-2 text-sm">
                       <span className="font-medium capitalize">{member.relationship.replace('_', ' ')}</span>
                       {member.age && <span className="text-gray-500">• Age {member.age}</span>}
