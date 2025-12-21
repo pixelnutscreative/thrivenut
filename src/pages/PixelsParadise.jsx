@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ExternalLink, Zap, Bot, Users, Play, Download, Sparkles } from 'lucide-react';
+import { ExternalLink, Zap, Bot, Users, Play, Download, Sparkles, Upload } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import DigitalTwinGallery from '@/components/DigitalTwinGallery';
 
@@ -93,50 +93,16 @@ export default function PixelsParadise() {
                         </div>
                     </div>
                     
-                    {/* Upload button wrapper to handle the "make it go away" logic via DigitalTwinGallery component inside a modal or similar? 
-                        User asked: "let's add a button to it that says (upload your digital twin pics, so people can upload theirs and then that box will go away and display under a NEW section below that says Digital Twin Gallery" 
-                        The DigitalTwinGallery component handles the upload. I will render it inside a Dialog or just use the component's upload button logic.
-                        Wait, if I use the DigitalTwinGallery component, it shows the gallery. 
-                        The user wants this "Have you created..." banner to be REPLACED by the gallery once they have it.
-                        So if !hasDigitalTwin, show banner with upload button.
-                    */}
-                    <div className="bg-white rounded-lg p-1">
-                         <DigitalTwinGallery /> 
-                         {/* 
-                            Wait, DigitalTwinGallery has the gallery AND the upload button.
-                            If I put it here, it will show the gallery inside the banner? That might look weird.
-                            The user said: "that box will go away and display under a NEW section below that says Digital Twin Gallery"
-                            
-                            So:
-                            If !hasDigitalTwin: Show Banner (with Upload Button).
-                            If hasDigitalTwin: Show Gallery Section.
-                            
-                            But the upload logic is inside DigitalTwinGallery.
-                            I should probably expose the Upload Dialog trigger separately?
-                            Or just render a custom button here that opens the upload dialog?
-                            
-                            I'll modify DigitalTwinGallery to accept a 'mode' or just use it as is but hide the gallery part if requested?
-                            Actually, the DigitalTwinGallery component I wrote handles the upload and updates the flag.
-                            So I can just use the upload logic here.
-                            
-                            I'll modify the DigitalTwinGallery component to be just the gallery + upload button in header.
-                            Here I want JUST the upload button, but styled differently.
-                            
-                            For simplicity, I will include the DigitalTwinGallery component below, but only if hasDigitalTwin.
-                            AND here in the banner, I'll add a button that opens the SAME upload dialog.
-                            
-                            To do that cleanly, I should have put the upload dialog in a separate component or exported it.
-                            But I'll just use the DigitalTwinGallery component's logic by rendering it conditionally.
-                            
-                            Actually, the user said: "add a button to it that says (upload your digital twin pics... and then that box will go away and display under a NEW section below"
-                            
-                            So:
-                            1. Banner visible if !hasDigitalTwin.
-                            2. Button in banner opens Upload Modal.
-                            3. After upload, hasDigitalTwin becomes true.
-                            4. Banner disappears.
-                            5. Gallery appears below.
-                         */}
+                    <div className="bg-white/20 backdrop-blur-md rounded-xl p-2">
+                        <DigitalTwinGallery 
+                            mode="upload" 
+                            customTrigger={
+                                <Button className="bg-white text-purple-600 hover:bg-white/90 font-bold border-none shadow-md">
+                                    <Upload className="w-4 h-4 mr-2" />
+                                    Upload Your Digital Twin
+                                </Button>
+                            }
+                        />
                     </div>
                 </div>
             </motion.div>
