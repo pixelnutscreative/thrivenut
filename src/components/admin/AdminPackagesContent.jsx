@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
+import { PlusCircle, X } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -115,7 +116,11 @@ export default function AdminPackagesContent() {
       sale_price: 0,
       group_type: 'none',
       max_groups: 1,
-      sort_order: 0
+      sort_order: 0,
+      features_list: [],
+      badge_text: '',
+      highlight_color: 'purple',
+      button_text: 'Get Started'
     });
     setIsDialogOpen(true);
   };
@@ -381,14 +386,92 @@ export default function AdminPackagesContent() {
               <div className="space-y-2">
                 <Label>Sort Order</Label>
                 <Input 
-                  type="number"
-                  value={editingPackage.sort_order}
-                  onChange={(e) => setEditingPackage({...editingPackage, sort_order: e.target.value})}
+                type="number"
+                value={editingPackage.sort_order}
+                onChange={(e) => setEditingPackage({...editingPackage, sort_order: e.target.value})}
                 />
-              </div>
+                </div>
 
-            </div>
-          )}
+                <div className="space-y-4 border-t pt-4">
+                <h3 className="font-semibold">Homepage Display Options</h3>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Badge Text (Optional)</Label>
+                  <Input 
+                    value={editingPackage.badge_text || ''} 
+                    onChange={(e) => setEditingPackage({...editingPackage, badge_text: e.target.value})}
+                    placeholder="e.g. BEST VALUE"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Highlight Color</Label>
+                  <Select 
+                    value={editingPackage.highlight_color || 'purple'} 
+                    onValueChange={(v) => setEditingPackage({...editingPackage, highlight_color: v})}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="purple">Purple (Default)</SelectItem>
+                      <SelectItem value="teal">Teal (Deal)</SelectItem>
+                      <SelectItem value="amber">Amber (Bundle)</SelectItem>
+                      <SelectItem value="pink">Pink</SelectItem>
+                      <SelectItem value="blue">Blue</SelectItem>
+                      <SelectItem value="green">Green</SelectItem>
+                      <SelectItem value="red">Red</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                </div>
+
+                <div className="space-y-2">
+                <Label>Button Text</Label>
+                <Input 
+                  value={editingPackage.button_text || ''} 
+                  onChange={(e) => setEditingPackage({...editingPackage, button_text: e.target.value})}
+                  placeholder="e.g. Get Started"
+                />
+                </div>
+
+                <div className="space-y-2">
+                <Label>Features List (Bullet Points)</Label>
+                <div className="space-y-2">
+                  {(editingPackage.features_list || []).map((feature, idx) => (
+                    <div key={idx} className="flex gap-2">
+                      <Input 
+                        value={feature} 
+                        onChange={(e) => {
+                          const newList = [...(editingPackage.features_list || [])];
+                          newList[idx] = e.target.value;
+                          setEditingPackage({...editingPackage, features_list: newList});
+                        }}
+                      />
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => {
+                          const newList = (editingPackage.features_list || []).filter((_, i) => i !== idx);
+                          setEditingPackage({...editingPackage, features_list: newList});
+                        }}
+                      >
+                        <X className="w-4 h-4 text-gray-500" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setEditingPackage({...editingPackage, features_list: [...(editingPackage.features_list || []), '']})}
+                  >
+                    <PlusCircle className="w-4 h-4 mr-2" /> Add Feature Bullet
+                  </Button>
+                </div>
+                </div>
+                </div>
+
+                </div>
+                )}
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>

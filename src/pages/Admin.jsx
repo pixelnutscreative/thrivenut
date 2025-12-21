@@ -27,6 +27,7 @@ import AdminAIToolsContent from '../components/admin/AdminAIToolsContent';
 import AdminReferralSystem from '../components/admin/AdminReferralSystem';
 import AdminReferralCommissionsContent from '../components/admin/AdminReferralCommissionsContent';
 import AdminNotificationsContent from '../components/admin/AdminNotificationsContent';
+import AdminHomepageFeatures from '../components/admin/AdminHomepageFeatures';
 import AdminAnnouncementsContent from '../components/admin/AdminAnnouncementsContent';
 import AdminBibleContent from '../components/admin/AdminBibleContent';
 import AdminMentalHealthContent from '../components/admin/AdminMentalHealthContent';
