@@ -496,10 +496,10 @@ export default function Tasks() {
                       <SelectValue placeholder="Assign to..." />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">Not Assigned</SelectItem>
+                      <SelectItem value="none">Me (No Assignment)</SelectItem>
                       {familyMembers.map(member => (
                         <SelectItem key={member.id} value={member.id}>
-                          {member.name}
+                          {member.nickname || member.name} {member.is_child_account ? ' (Kid)' : ''}
                         </SelectItem>
                       ))}
                     </SelectContent>
