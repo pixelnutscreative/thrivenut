@@ -29,7 +29,7 @@ export default function AdminSuperFanContent() {
 
   const { data: allPreferences = [] } = useQuery({
     queryKey: ['allUserPreferences'],
-    queryFn: () => base44.entities.UserPreferences.list(undefined, 1000),
+    queryFn: () => base44.entities.UserPreferences.list(undefined, 2000),
   });
 
   const { data: preApprovedList = [] } = useQuery({
@@ -115,14 +115,16 @@ export default function AdminSuperFanContent() {
       });
 
       // Also auto-grant access to any existing users with this username
-      const matchingPrefs = allPreferences.filter(p => 
-        p.tiktok_username?.toLowerCase() === cleaned && !p.tiktok_access_approved
-      );
+      // Fetch from backend to ensure we catch everyone
+      const matchingPrefs = await base44.entities.UserPreferences.filter({ tiktok_username: cleaned });
       
       if (matchingPrefs.length > 0) {
-        await Promise.all(matchingPrefs.map(pref => 
-          base44.entities.UserPreferences.update(pref.id, { tiktok_access_approved: true })
-        ));
+        const toUpdate = matchingPrefs.filter(p => !p.tiktok_access_approved);
+        if (toUpdate.length > 0) {
+          await Promise.all(toUpdate.map(pref => 
+            base44.entities.UserPreferences.update(pref.id, { tiktok_access_approved: true })
+          ));
+        }
       }
     },
     onSuccess: () => {
