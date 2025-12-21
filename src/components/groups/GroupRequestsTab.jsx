@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MessageSquare, Plus, CheckCircle, Clock, XCircle, Send, Bell, Settings } from 'lucide-react';
+import { MessageSquare, Plus, CheckCircle, Clock, XCircle, Send, Bell, Settings, Pencil } from 'lucide-react';
 import LevelSelector from './LevelSelector';
 import MemberSelector from './MemberSelector';
 
@@ -17,6 +17,7 @@ export default function GroupRequestsTab({ group, currentUser, myMembership, isA
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [activeRequest, setActiveRequest] = useState(null); // For chat/details
+  const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({ 
     title: '', description: '', type: 'support', target_levels: [], target_users: [] 
   });
@@ -41,28 +42,51 @@ export default function GroupRequestsTab({ group, currentUser, myMembership, isA
   });
 
   // Mutations
-  const createRequestMutation = useMutation({
-    mutationFn: (data) => base44.entities.GroupRequest.create({
-      ...data,
-      group_id: group.id,
-      user_email: currentUser.email,
-      status: 'pending'
-    }),
-    onSuccess: async (newRequest) => {
+  const saveRequestMutation = useMutation({
+    mutationFn: async (data) => {
+        if (editingId) {
+            return base44.entities.GroupRequest.update(editingId, {
+                ...data,
+                edited_by: currentUser.email,
+                edited_at: new Date().toISOString()
+            });
+        } else {
+            const newRequest = await base44.entities.GroupRequest.create({
+                ...data,
+                group_id: group.id,
+                user_email: currentUser.email,
+                status: 'pending'
+            });
+            // Notify admins
+            await base44.functions.invoke('notifyGroupMembers', {
+                group_id: group.id,
+                title: `New Request: ${newRequest.title}`,
+                message: `${currentUser.email} submitted a new request.`,
+                type: 'support_request',
+                link: `/CreatorGroups?id=${group.id}&tab=requests`
+            });
+            return newRequest;
+        }
+    },
+    onSuccess: () => {
       queryClient.invalidateQueries(['groupRequests', group.id]);
       setIsDialogOpen(false);
+      setEditingId(null);
       setFormData({ title: '', description: '', type: 'support', target_levels: [], target_users: [] });
-      
-      // Notify admins
-      await base44.functions.invoke('notifyGroupMembers', {
-        group_id: group.id,
-        title: `New Request: ${newRequest.title}`,
-        message: `${currentUser.email} submitted a new request.`,
-        type: 'support_request',
-        link: `/CreatorGroups?id=${group.id}&tab=requests`
-      });
     }
   });
+
+  const handleEdit = (req) => {
+      setEditingId(req.id);
+      setFormData({
+          title: req.title,
+          description: req.description,
+          type: req.type,
+          target_levels: req.target_levels || [],
+          target_users: req.target_users || []
+      });
+      setIsDialogOpen(true);
+  };
 
   const updateStatusMutation = useMutation({
     mutationFn: ({ id, status }) => base44.entities.GroupRequest.update(id, { status }),
@@ -197,13 +221,19 @@ export default function GroupRequestsTab({ group, currentUser, myMembership, isA
         </div>
 
         {canCreate && (
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <Dialog open={isDialogOpen} onOpenChange={(open) => {
+                setIsDialogOpen(open);
+                if (!open) {
+                    setEditingId(null);
+                    setFormData({ title: '', description: '', type: 'support', target_levels: [], target_users: [] });
+                }
+            }}>
             <DialogTrigger asChild>
                 <Button><Plus className="w-4 h-4 mr-2" /> New Request</Button>
             </DialogTrigger>
             <DialogContent>
                 <DialogHeader>
-                <DialogTitle>Submit Request</DialogTitle>
+                <DialogTitle>{editingId ? 'Edit Request' : 'Submit Request'}</DialogTitle>
                 </DialogHeader>
             <div className="space-y-4 py-4">
               <Input 
@@ -244,8 +274,8 @@ export default function GroupRequestsTab({ group, currentUser, myMembership, isA
                 </div>
               )}
 
-              <Button onClick={() => createRequestMutation.mutate(formData)} disabled={!formData.title} className="w-full">
-                Submit
+              <Button onClick={() => saveRequestMutation.mutate(formData)} disabled={!formData.title} className="w-full">
+                {editingId ? 'Save Changes' : 'Submit'}
               </Button>
             </div>
           </DialogContent>
@@ -267,16 +297,30 @@ export default function GroupRequestsTab({ group, currentUser, myMembership, isA
             </CardHeader>
             <CardContent className="flex-1">
               <p className="text-sm text-gray-600 line-clamp-3">{req.description}</p>
-              <div className="mt-2 flex gap-2">
-                 <Badge variant="outline" className="text-[10px]">{req.type}</Badge>
-                 {req.user_email === currentUser.email && <Badge variant="outline" className="text-[10px] bg-blue-50 text-blue-600">My Request</Badge>}
+              <div className="mt-2 flex flex-col gap-1">
+                 <div className="flex gap-2">
+                    <Badge variant="outline" className="text-[10px]">{req.type}</Badge>
+                    {req.user_email === currentUser.email && <Badge variant="outline" className="text-[10px] bg-blue-50 text-blue-600">My Request</Badge>}
+                 </div>
+                 {req.edited_by && (
+                    <span className="text-[10px] text-purple-400 italic">
+                        Edited by {req.edited_by === currentUser.email ? 'you' : req.edited_by} on {new Date(req.edited_at).toLocaleDateString()}
+                    </span>
+                 )}
               </div>
             </CardContent>
-            <CardFooter className="border-t pt-4 flex justify-between">
-              <Button variant="ghost" size="sm" onClick={() => setActiveRequest(req)}>
-                <MessageSquare className="w-4 h-4 mr-2" /> 
-                {isAdmin ? 'Manage' : 'View'}
-              </Button>
+            <CardFooter className="border-t pt-4 flex flex-wrap gap-2 justify-between">
+              <div className="flex gap-2">
+                  <Button variant="ghost" size="sm" onClick={() => setActiveRequest(req)}>
+                    <MessageSquare className="w-4 h-4 mr-2" /> 
+                    {isAdmin ? 'Manage' : 'View'}
+                  </Button>
+                  {isAdmin && (
+                      <Button variant="ghost" size="sm" onClick={() => handleEdit(req)}>
+                          <Pencil className="w-4 h-4" />
+                      </Button>
+                  )}
+              </div>
               {isAdmin && req.status !== 'resolved' && (
                 <Button 
                     variant="outline" 
