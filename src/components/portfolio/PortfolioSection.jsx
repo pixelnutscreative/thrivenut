@@ -61,6 +61,17 @@ export default function PortfolioSection({ userEmail, isAuthenticated, primaryCo
     enabled: !!userEmail
   });
 
+  const { data: aiUser } = useQuery({
+    queryKey: ['aiPlatformUser', userEmail],
+    queryFn: async () => {
+      if (!userEmail) return null;
+      // Get effective email if impersonating? userEmail passed here is effective email
+      const users = await base44.entities.AIPlatformUser.filter({ user_email: userEmail });
+      return users[0] || null;
+    },
+    enabled: !!userEmail
+  });
+
   // Fetch approved portfolio items
   const { data: portfolioItems = [] } = useQuery({
     queryKey: ['creatorPortfolio'],
@@ -76,7 +87,8 @@ export default function PortfolioSection({ userEmail, isAuthenticated, primaryCo
 
   const createItemMutation = useMutation({
     mutationFn: (data) => {
-      const isTrusted = userProfile?.is_trusted_creator;
+      // Check trust in both UserProfile and AIPlatformUser
+      const isTrusted = userProfile?.is_trusted_creator || aiUser?.is_trusted_creator;
       return base44.entities.CreatorPortfolio.create({
         ...data,
         approval_status: isTrusted ? 'approved' : 'pending',
@@ -333,8 +345,11 @@ export default function PortfolioSection({ userEmail, isAuthenticated, primaryCo
             {/* Image URL Input (for image, nutpal, image_with_text types) */}
             {(formData.content_type === 'image' || formData.content_type === 'nutpal' || formData.content_type === 'image_with_text') && (
               <div>
-                <Label>Image URL</Label>
-                <p className="text-xs text-gray-500 mb-2">Paste the URL of your creation from the AI tool (e.g., from Midjourney, Ideogram, etc.)</p>
+                <Label>Image</Label>
+                <p className="text-xs text-gray-500 mb-2">
+                  Paste the URL from your AI tool (Right click image {'>'} Copy Image Address). 
+                  If that doesn't work, upload the file directly to Thrive's cloud.
+                </p>
                 <div className="space-y-2">
                   <div className="flex gap-2">
                     <Input
@@ -347,11 +362,28 @@ export default function PortfolioSection({ userEmail, isAuthenticated, primaryCo
                           image_urls: url ? [url] : []
                         });
                       }}
+                      className="flex-1"
                     />
+                    <label className="flex items-center justify-center px-4 py-2 border rounded-md cursor-pointer hover:bg-gray-50">
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        onChange={handleImageUpload}
+                        disabled={uploadingImage}
+                      />
+                      {uploadingImage ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                    </label>
                   </div>
                   {formData.image_urls.length > 0 && (
                     <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-100 border">
                       <img src={formData.image_urls[0]} alt="Preview" className="w-full h-full object-contain" />
+                      <button 
+                        onClick={() => removeImage(0)}
+                        className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
                     </div>
                   )}
                 </div>

@@ -12,7 +12,7 @@ export default function AdminNutPalsContent() {
   const queryClient = useQueryClient();
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
-  const [formData, setFormData] = useState({ name: '', images: [], sort_order: 100, is_active: true });
+  const [formData, setFormData] = useState({ name: '', images: [], sort_order: 100, is_active: true, soundcloud_url: '' });
   const [uploading, setUploading] = useState(false);
 
   const { data: nutpals = [], isLoading } = useQuery({
@@ -44,7 +44,7 @@ export default function AdminNutPalsContent() {
   });
 
   const resetForm = () => {
-    setFormData({ name: '', images: [], sort_order: 100, is_active: true });
+    setFormData({ name: '', images: [], sort_order: 100, is_active: true, soundcloud_url: '' });
   };
 
   const handleImageUpload = async (e) => {
@@ -82,7 +82,8 @@ export default function AdminNutPalsContent() {
       name: item.name || '',
       images: item.images || [],
       sort_order: item.sort_order || 100,
-      is_active: item.is_active !== false
+      is_active: item.is_active !== false,
+      soundcloud_url: item.soundcloud_url || ''
     });
   };
 
@@ -167,6 +168,16 @@ export default function AdminNutPalsContent() {
                 value={formData.sort_order}
                 onChange={(e) => setFormData({ ...formData, sort_order: parseInt(e.target.value) || 100 })}
               />
+            </div>
+
+            <div>
+              <Label>SoundCloud Song URL</Label>
+              <Input
+                placeholder="https://soundcloud.com/..."
+                value={formData.soundcloud_url}
+                onChange={(e) => setFormData({ ...formData, soundcloud_url: e.target.value })}
+              />
+              <p className="text-xs text-gray-500 mt-1">Plays when opening this NutPal's gallery</p>
             </div>
 
             <div>

@@ -73,7 +73,22 @@ export default function AdminPlatformConfig() {
             </div>
           </div>
         </div>
-      </CardContent>
+
+        <div className="space-y-4 pt-6 border-t">
+          <Label className="text-lg font-semibold">NutPals Gallery</Label>
+          <div className="space-y-2">
+            <Label>Default Song URL (SoundCloud)</Label>
+            <div className="flex gap-2">
+              <Input 
+                placeholder="https://soundcloud.com/..." 
+                defaultValue={getConfigValue('default_nutpal_song')}
+                onBlur={(e) => updateConfigMutation.mutate({ key: 'default_nutpal_song', value: e.target.value })}
+              />
+            </div>
+            <p className="text-xs text-gray-500">Plays in NutPal gallery if no specific song is set for the style.</p>
+          </div>
+        </div>
+      </CardContent
     </Card>
   );
 }

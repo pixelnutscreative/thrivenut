@@ -53,6 +53,7 @@ export default function AdminAIToolsContent() {
     has_nuts_and_bots: false,
     has_digital_twin: false,
     includes_social_access: false,
+    is_trusted_creator: false,
     tiktok_contact_id: ''
   });
 
@@ -887,6 +888,20 @@ export default function AdminAIToolsContent() {
                   onCheckedChange={(checked) => editingUser 
                     ? setEditingUser({ ...editingUser, includes_social_access: checked })
                     : setNewUser({ ...newUser, includes_social_access: checked })
+                  }
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="font-medium text-green-800">Trusted Creator</Label>
+                  <p className="text-xs text-green-600 mt-1">Bypass approval for Pixel's Place submissions</p>
+                </div>
+                <Switch
+                  checked={editingUser?.is_trusted_creator || newUser.is_trusted_creator}
+                  onCheckedChange={(checked) => editingUser 
+                    ? setEditingUser({ ...editingUser, is_trusted_creator: checked })
+                    : setNewUser({ ...newUser, is_trusted_creator: checked })
                   }
                 />
               </div>
