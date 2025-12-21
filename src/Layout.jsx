@@ -405,10 +405,14 @@ export default function Layout({ children, currentPageName }) {
                         className="overflow-hidden space-y-1">
 
                           {group.items.map((item) => {
-                          // Check permissions/modules
-                          if (item.adminOnly && !isAdmin) return null;
-                          if (item.requiresBibleBeliever && !isBibleBeliever) return null;
-                          if (item.moduleId && !enabledModules.includes(item.moduleId) && !item.alwaysShow) return null;
+                            // Check permissions/modules
+                            if (item.adminOnly && !isAdmin) return null;
+                            if (isKidMode) {
+                              if (!item.moduleId) return null;
+                              if (!enabledModules.includes(item.moduleId)) return null;
+                            }
+                            if (item.requiresBibleBeliever && !isBibleBeliever) return null;
+                            if (!isKidMode && item.moduleId && !enabledModules.includes(item.moduleId) && !item.alwaysShow) return null;
 
                           const Icon = item.icon;
                           const isActive = currentPageName === item.path;
@@ -660,8 +664,12 @@ export default function Layout({ children, currentPageName }) {
                         {group.items.map((item) => {
                           // Check permissions/modules
                           if (item.adminOnly && !isAdmin) return null;
+                          if (isKidMode) {
+                            if (!item.moduleId) return null;
+                            if (!enabledModules.includes(item.moduleId)) return null;
+                          }
                           if (item.requiresBibleBeliever && !isBibleBeliever) return null;
-                          if (item.moduleId && !enabledModules.includes(item.moduleId) && !item.alwaysShow) return null;
+                          if (!isKidMode && item.moduleId && !enabledModules.includes(item.moduleId) && !item.alwaysShow) return null;
 
                           const Icon = item.icon;
                           const isActive = currentPageName === item.path;
