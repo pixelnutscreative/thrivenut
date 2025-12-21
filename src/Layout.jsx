@@ -323,8 +323,15 @@ export default function Layout({ children, currentPageName }) {
 
   const soundcloudPosition = preferences?.soundcloud_player_position || 'menu';
 
-  return (
-    <>
+  // Redirect kids to KidsJournal on login (from Home/Dashboard)
+  useEffect(() => {
+    if (isKidMode && (currentPageName === 'Dashboard' || currentPageName === 'Home')) {
+      navigate(createPageUrl('KidsJournal'));
+    }
+  }, [isKidMode, currentPageName]);
+
+   return (
+     <>
       <AnnouncementBar />
       <div
         className={`min-h-screen ${bgClass} ${currentlyImpersonating ? 'pt-10' : ''}`}
