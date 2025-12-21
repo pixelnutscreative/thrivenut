@@ -332,7 +332,8 @@ export default function People() {
   // Categorize Contacts
   const familyContacts = familyMembers.filter(c => 
     c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    c.nickname?.toLowerCase().includes(searchTerm.toLowerCase())
+    c.nickname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    c.linked_user_email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const friendsContacts = contacts.filter(c => {
