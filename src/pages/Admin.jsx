@@ -30,6 +30,7 @@ import AdminNotificationsContent from '../components/admin/AdminNotificationsCon
 import AdminAnnouncementsContent from '../components/admin/AdminAnnouncementsContent';
 import AdminBibleContent from '../components/admin/AdminBibleContent';
 import AdminMentalHealthContent from '../components/admin/AdminMentalHealthContent';
+import AdminPackagesContent from '../components/admin/AdminPackagesContent';
 
 const ADMIN_EMAILS = ['pixelnutscreative@gmail.com', 'pixel@thrivenut.app'];
 
@@ -73,6 +74,7 @@ export default function Admin() {
             <TabsTrigger value="users" className="text-sm font-semibold">Users</TabsTrigger>
             <TabsTrigger value="support" className="text-sm font-semibold">Support</TabsTrigger>
             <TabsTrigger value="content" className="text-sm font-semibold">Content</TabsTrigger>
+            <TabsTrigger value="billing" className="text-sm font-semibold">Billing</TabsTrigger>
             <TabsTrigger value="app" className="text-sm font-semibold">App</TabsTrigger>
             <TabsTrigger value="referrals" className="text-sm font-semibold">Referrals</TabsTrigger>
           </TabsList>
@@ -148,6 +150,15 @@ export default function Admin() {
                   <TabsContent value="categories"><AdminCategoriesContent /></TabsContent>
                   <TabsContent value="mentalhealth"><AdminMentalHealthContent /></TabsContent>
                 </Tabs>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* BILLING TAB */}
+          <TabsContent value="billing" className="mt-0">
+            <Card>
+              <CardContent className="p-6">
+                <AdminPackagesContent />
               </CardContent>
             </Card>
           </TabsContent>
