@@ -47,6 +47,7 @@ import MyLists from './pages/MyLists';
 import MyProfile from './pages/MyProfile';
 import MyResources from './pages/MyResources';
 import NotificationHistory from './pages/NotificationHistory';
+import ParentChildSetup from './pages/ParentChildSetup';
 import People from './pages/People';
 import PetCare from './pages/PetCare';
 import PictionaryHelper from './pages/PictionaryHelper';
@@ -74,7 +75,6 @@ import WaterHistory from './pages/WaterHistory';
 import WeeklyGifterGallery from './pages/WeeklyGifterGallery';
 import Wellness from './pages/Wellness';
 import WorkSchedules from './pages/WorkSchedules';
-import ParentChildSetup from './pages/ParentChildSetup';
 import __Layout from './Layout.jsx';
 
 
@@ -128,6 +128,7 @@ export const PAGES = {
     "MyProfile": MyProfile,
     "MyResources": MyResources,
     "NotificationHistory": NotificationHistory,
+    "ParentChildSetup": ParentChildSetup,
     "People": People,
     "PetCare": PetCare,
     "PictionaryHelper": PictionaryHelper,
@@ -155,7 +156,6 @@ export const PAGES = {
     "WeeklyGifterGallery": WeeklyGifterGallery,
     "Wellness": Wellness,
     "WorkSchedules": WorkSchedules,
-    "ParentChildSetup": ParentChildSetup,
 }
 
 export const pagesConfig = {

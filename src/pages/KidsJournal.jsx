@@ -11,7 +11,7 @@ import {
   Smile, Sun, Cloud, CloudRain, CloudLightning, Pencil, Heart, 
   Utensils, Moon, Activity, Droplet, BookOpen, Calendar, 
   ChevronLeft, ChevronRight, CheckCircle2, Star, Target, 
-  ListTodo, PawPrint, School, RefreshCw
+  ListTodo, PawPrint, School, RefreshCw, Check
 } from 'lucide-react';
 import { format, subDays, addDays, isSameDay, parseISO } from 'date-fns';
 import { useTheme } from '../components/shared/useTheme';
@@ -32,8 +32,17 @@ export default function KidsJournal() {
     queryKey: ['myFamilyProfile', user?.email],
     queryFn: async () => {
       if (!user?.email) return null;
+      
+      // 1. Check for Parent-initiated Kid Mode
+      const kidModeId = sessionStorage.getItem('kid_mode_id');
+      if (kidModeId) {
+        const members = await base44.entities.FamilyMember.filter({ id: kidModeId });
+        return members[0] || null;
+      }
+
+      // 2. Check for Linked Child Account
       const members = await base44.entities.FamilyMember.filter({ linked_user_email: user.email });
-      return members[0];
+      return members[0] || null;
     },
     enabled: !!user?.email
   });
@@ -45,14 +54,34 @@ export default function KidsJournal() {
 
   // 1. Journal Entry
   const { data: journalEntry } = useQuery({
-    queryKey: ['kidsJournal', date, user?.email],
+    queryKey: ['kidsJournal', date, user?.email, familyProfile?.id],
     queryFn: async () => {
       if (!user?.email) return null;
-      const entries = await base44.entities.JournalEntry.filter({ 
+      
+      const filter = { 
         date: date, 
-        created_by: user.email, 
         is_kids_journal: true 
-      });
+      };
+
+      // If in Kid Mode or using family profile, filter by that member ID preferably
+      if (familyProfile?.id) {
+        filter.family_member_id = familyProfile.id;
+      } else {
+        filter.created_by = user.email;
+      }
+
+      const entries = await base44.entities.JournalEntry.filter(filter);
+      
+      // Fallback: check legacy entries created by email if checking by family_id yielded nothing
+      if (entries.length === 0 && familyProfile?.id) {
+         const legacyEntries = await base44.entities.JournalEntry.filter({ 
+            date: date, 
+            created_by: user.email, 
+            is_kids_journal: true 
+         });
+         return legacyEntries[0] || null;
+      }
+
       return entries[0] || null;
     },
     enabled: !!user?.email
@@ -164,6 +193,7 @@ export default function KidsJournal() {
       const payload = {
         date: date,
         created_by: user.email,
+        family_member_id: familyProfile?.id, // Link to family member
         is_kids_journal: true,
         content: `Kids Journal Entry: ${data.happened_today}`,
         mood: data.feeling,
