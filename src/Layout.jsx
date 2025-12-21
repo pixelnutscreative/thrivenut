@@ -269,6 +269,7 @@ export default function Layout({ children, currentPageName }) {
   const isSubItemActive = (item) => {
     if (item.subItems) {
       return item.subItems.some((sub) => {
+         if (!sub.path) return false;
          // Check exact path match or if path contains query params, check against location
          if (sub.path.includes('?')) {
              const [path, search] = sub.path.split('?');
