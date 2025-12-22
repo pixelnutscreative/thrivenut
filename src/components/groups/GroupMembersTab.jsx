@@ -91,11 +91,6 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
     onSuccess: () => queryClient.invalidateQueries(['groupMembers', group.id])
   });
 
-  const updateRoleMutation = useMutation({
-    mutationFn: ({ id, role }) => base44.entities.CreatorGroupMember.update(id, { role }),
-    onSuccess: () => queryClient.invalidateQueries(['groupMembers', group.id])
-  });
-
   const dedupedMembers = React.useMemo(() => {
     const map = {};
     members.forEach((m) => {
