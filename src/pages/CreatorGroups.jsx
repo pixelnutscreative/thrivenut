@@ -328,10 +328,12 @@ export default function CreatorGroups() {
 
   // LIST OR BROWSE VIEW
   if (!activeGroup) {
-    const displayedGroups = browseMode ? browseGroups : groups.filter(g => {
-      const pref = allGroupPrefs.find(p => p.group_id === g.id);
-      return showHidden || !pref?.is_hidden_from_list;
-    });
+    const displayedGroups = browseMode 
+      ? browseGroups.filter(g => g.allow_public_discovery === true || isSuperAdmin || g.owner_email === user?.email)
+      : groups.filter(g => {
+          const pref = allGroupPrefs.find(p => p.group_id === g.id);
+          return showHidden || !pref?.is_hidden_from_list;
+        });
 
     return (
       <div className="p-6 max-w-5xl mx-auto space-y-8">
@@ -617,6 +619,26 @@ export default function CreatorGroups() {
           You have requested to join <strong>{activeGroup.name}</strong>. An admin needs to approve your request before you can access the dashboard.
         </p>
         <Button variant="outline" onClick={() => setSearchParams({})}>Back to My Groups</Button>
+      </div>
+    );
+  }
+
+  // Private group guard (no preview unless discoverable or admin/owner)
+  if (!isMember && !isAdmin && !isSuperAdmin && activeGroup.owner_email !== user?.email && activeGroup.allow_public_discovery !== true) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center space-y-4">
+        <div className="w-16 h-16 bg-gray-100 text-gray-600 rounded-full flex items-center justify-center">
+          <Lock className="w-8 h-8" />
+        </div>
+        <h2 className="text-2xl font-bold">This group is private</h2>
+        <p className="text-gray-500 max-w-md">You must be invited to view this group. Enter an invite code or go back.</p>
+        <div className="flex gap-2">
+          <Button onClick={() => {
+            const code = prompt('Enter invite code to join:');
+            if (code) joinMutation.mutate(code);
+          }}>Enter Invite Code</Button>
+          <Button variant="outline" onClick={() => setSearchParams({})}>Back</Button>
+        </div>
       </div>
     );
   }

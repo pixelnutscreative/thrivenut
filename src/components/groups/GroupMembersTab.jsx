@@ -44,13 +44,26 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
   });
 
   const inviteMutation = useMutation({
-    mutationFn: (data) => base44.entities.CreatorGroupMember.create({
-      group_id: group.id,
-      user_email: data.email,
-      role: data.role,
-      status: 'pending', // Invite via email -> pending until they accept/login? Or just active if manual add. Let's say manual add is active.
-      joined_date: new Date().toISOString()
-    }),
+    mutationFn: async (data) => {
+      const email = (data.email || '').trim().toLowerCase();
+      if (!email) throw new Error('Email required');
+      const existing = await base44.entities.CreatorGroupMember.filter({ group_id: group.id, user_email: email });
+      if (existing.length > 0) {
+        // Upsert: promote to active and update role
+        return base44.entities.CreatorGroupMember.update(existing[0].id, {
+          role: data.role,
+          status: 'active',
+          joined_date: existing[0].joined_date || new Date().toISOString()
+        });
+      }
+      return base44.entities.CreatorGroupMember.create({
+        group_id: group.id,
+        user_email: email,
+        role: data.role,
+        status: 'active',
+        joined_date: new Date().toISOString()
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['groupMembers', group.id]);
       setIsInviteOpen(false);
@@ -73,8 +86,19 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
     onSuccess: () => queryClient.invalidateQueries(['groupMembers', group.id])
   });
 
-  const pendingMembers = members.filter(m => m.status === 'pending');
-  const activeMembers = members.filter(m => m.status !== 'pending');
+  const dedupedMembers = React.useMemo(() => {
+    const map = {};
+    members.forEach((m) => {
+      const key = (m.user_email || '').toLowerCase();
+      const prev = map[key];
+      if (!prev) map[key] = m;
+      else if (prev.status !== 'active' && m.status === 'active') map[key] = m;
+    });
+    return Object.values(map);
+  }, [members]);
+
+  const pendingMembers = dedupedMembers.filter(m => m.status === 'pending');
+  const activeMembers = dedupedMembers.filter(m => m.status !== 'pending');
 
   if (!isAdmin && myMembership?.role !== 'owner') {
     return (
