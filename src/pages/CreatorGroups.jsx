@@ -181,7 +181,7 @@ export default function CreatorGroups() {
         group_id: group.id,
         user_email: user?.email,
         role: 'member',
-        status: 'active',
+        status: 'pending',
         level: 'Invited',
         joined_date: new Date().toISOString()
       });
@@ -721,11 +721,13 @@ export default function CreatorGroups() {
           <GroupCalendarWidget group={activeGroup} myMembership={activeMembership} isAdmin={isAdmin} />
 
           {/* Crypto Ticker for Group */}
-          <CryptoTickerWidget 
-            portfolio={activeGroup.crypto_tickers || []}
-            onUpdatePortfolio={(tickers) => updateGroupMutation.mutate({ crypto_tickers: tickers })}
-            title="Group Tickers"
-          />
+          {activeGroup.settings?.hide_ticker !== true && (
+            <CryptoTickerWidget 
+              portfolio={activeGroup.crypto_tickers || []}
+              onUpdatePortfolio={(tickers) => updateGroupMutation.mutate({ crypto_tickers: tickers })}
+              title="Group Tickers"
+            />
+          )}
 
           {shortcuts.length > 0 && (
             <Card>

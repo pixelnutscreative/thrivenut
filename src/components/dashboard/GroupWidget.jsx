@@ -45,7 +45,7 @@ export default function GroupWidget({ widget, userEmail }) {
 
   const showEvents = !config?.hideEvents;
   const showFeed = !config?.hideFeed;
-  const showTicker = !config?.hideTicker && group.crypto_tickers?.length > 0;
+  const showTicker = !config?.hideTicker && group.crypto_tickers?.length > 0 && group.settings?.hide_ticker !== true;
 
   return (
     <Card className="h-full flex flex-col hover:shadow-md transition-shadow">

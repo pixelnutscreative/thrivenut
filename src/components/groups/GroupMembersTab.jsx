@@ -86,6 +86,16 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
     onSuccess: () => queryClient.invalidateQueries(['groupMembers', group.id])
   });
 
+  const updateRoleMutation = useMutation({
+    mutationFn: ({ id, role }) => base44.entities.CreatorGroupMember.update(id, { role }),
+    onSuccess: () => queryClient.invalidateQueries(['groupMembers', group.id])
+  });
+
+  const updateRoleMutation = useMutation({
+    mutationFn: ({ id, role }) => base44.entities.CreatorGroupMember.update(id, { role }),
+    onSuccess: () => queryClient.invalidateQueries(['groupMembers', group.id])
+  });
+
   const dedupedMembers = React.useMemo(() => {
     const map = {};
     members.forEach((m) => {
@@ -205,7 +215,24 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
                 </div>
               </div>
               <div className="col-span-2">
-                <Badge variant="outline" className="capitalize">{member.role}</Badge>
+                {isAdmin && group.owner_email === currentUser?.email ? (
+                  <Select 
+                    value={member.role || 'member'} 
+                    onValueChange={v => updateRoleMutation.mutate({ id: member.id, role: v })}
+                    disabled={member.role === 'owner'}
+                  >
+                    <SelectTrigger className="h-8 text-xs capitalize">
+                      <SelectValue placeholder="Select Role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="member">Member</SelectItem>
+                      <SelectItem value="manager">Manager</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Badge variant="outline" className="capitalize">{member.role}</Badge>
+                )}
               </div>
               <div className="col-span-3">
                 {isAdmin && group.member_levels?.length > 0 ? (
@@ -229,14 +256,28 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
                 <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
                   member.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
                 }`}>
-                  {member.status}
+                  {member.status === 'invited' ? 'pending' : member.status}
                 </span>
               </div>
               <div className="col-span-1 text-right">
                 {isAdmin && member.role !== 'owner' && (
-                  <Button variant="ghost" size="icon" className="text-gray-400 hover:text-red-500 h-8 w-8" onClick={() => removeMutation.mutate(member.id)}>
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="ghost" size="icon" className="text-gray-400 hover:text-red-500 h-8 w-8">
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Remove member?</DialogTitle>
+                      </DialogHeader>
+                      <div className="py-2 text-sm">Are you sure you want to remove {member.user_email} from this group?</div>
+                      <DialogFooter>
+                        <Button variant="outline">Cancel</Button>
+                        <Button variant="destructive" onClick={() => removeMutation.mutate(member.id)}>Remove</Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
                 )}
               </div>
             </div>

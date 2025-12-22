@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { X, Plus, Save, Link as LinkIcon, Trash2, ArrowUp, ArrowDown, ChevronDown, ChevronRight, AlertTriangle } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -73,6 +75,34 @@ export default function GroupSettingsTab({ group }) {
               {updateMutation.isPending ? 'Saving...' : 'Save Levels'}
             </Button>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Crypto Ticker</CardTitle>
+          <CardDescription>Show or hide the group ticker in the sidebar.</CardDescription>
+        </CardHeader>
+        <CardContent className="flex items-center justify-between">
+          <span className="text-sm text-gray-600">Show ticker on dashboard</span>
+          <Switch
+            checked={!(group.settings?.hide_ticker === true)}
+            onCheckedChange={(checked) => updateMutation.mutate({ settings: { ...(group.settings || {}), hide_ticker: !checked } })}
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Crypto Ticker</CardTitle>
+          <CardDescription>Show or hide the group ticker in the sidebar.</CardDescription>
+        </CardHeader>
+        <CardContent className="flex items-center justify-between">
+          <span className="text-sm text-gray-600">Show ticker on dashboard</span>
+          <Switch
+            checked={!(group.settings?.hide_ticker === true)}
+            onCheckedChange={(checked) => updateMutation.mutate({ settings: { ...(group.settings || {}), hide_ticker: !checked } })}
+          />
         </CardContent>
       </Card>
 
