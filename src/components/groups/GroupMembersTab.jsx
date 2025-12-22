@@ -102,6 +102,8 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
     return Object.values(map);
   }, [members]);
 
+  const myMembership = React.useMemo(() => dedupedMembers.find(m => (m.user_email || '').toLowerCase() === (currentUser?.email || '').toLowerCase()) || null, [dedupedMembers, currentUser]);
+  const myMembership = React.useMemo(() => dedupedMembers.find(m => (m.user_email || '').toLowerCase() === (currentUser?.email || '').toLowerCase()) || null, [dedupedMembers, currentUser]);
   const pendingMembers = dedupedMembers.filter(m => m.status === 'pending');
   const activeMembers = dedupedMembers.filter(m => m.status !== 'pending');
 
