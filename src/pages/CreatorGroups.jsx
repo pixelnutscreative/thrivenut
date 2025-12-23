@@ -86,6 +86,19 @@ export default function CreatorGroups() {
     enabled: browseMode && !activeGroupId
   });
 
+  // Group Types (admin-configurable)
+  const { data: groupTypes = [] } = useQuery({
+    queryKey: ['groupTypes'],
+    queryFn: () => base44.entities.GroupType.filter({ is_active: true }, 'sort_order')
+  });
+
+  // Ensure default selection when custom types exist
+  useEffect(() => {
+    if (groupTypes.length > 0 && !groupTypes.some(t => t.key === newGroupType)) {
+      setNewGroupType(groupTypes[0].key);
+    }
+  }, [groupTypes]);
+
   // Fetch all group preferences for visibility
   const { data: allGroupPrefs = [], refetch: refetchAllPrefs } = useQuery({
     queryKey: ['allGroupPrefs', user?.email],
@@ -282,6 +295,8 @@ export default function CreatorGroups() {
   };
 
   const getGroupColorClass = (type) => {
+    const t = (groupTypes || []).find(gt => gt.key === type);
+    if (t?.badge_class) return t.badge_class;
     switch (type) {
       case 'agency': return 'bg-purple-100 text-purple-600';
       case 'family': return 'bg-green-100 text-green-600';
@@ -293,6 +308,8 @@ export default function CreatorGroups() {
   };
 
   const getGroupLabel = (type) => {
+    const t = (groupTypes || []).find(gt => gt.key === type);
+    if (t?.name) return t.name.toUpperCase();
     switch (type) {
       case 'agency': return 'AGENCY';
       case 'family': return 'FAMILY';
@@ -321,7 +338,10 @@ export default function CreatorGroups() {
     updatePrefsMutation.mutate({ hidden_tabs: newHidden });
   };
 
+  const typeConfig = (groupTypes || []).find(gt => gt.key === activeGroup?.type);
+  const allowed = typeConfig?.enabled_tabs && typeConfig.enabled_tabs.length > 0 ? new Set(typeConfig.enabled_tabs) : null;
   const visibleTabs = availableTabs.filter(t => {
+    if (allowed && !allowed.has(t.id)) return false;
     if (t.id === 'members' && !isAdmin) return false;
     return !(groupPrefs?.hidden_tabs || []).includes(t.id);
   });
@@ -393,37 +413,49 @@ export default function CreatorGroups() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="community">
-                          <div className="flex items-center gap-2">
-                            <Users className="w-4 h-4" /> Community / Friends
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="family">
-                          <div className="flex items-center gap-2">
-                            <Home className="w-4 h-4" /> Family
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="collective">
-                          <div className="flex items-center gap-2">
-                            <Sparkles className="w-4 h-4" /> Creative Collective
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="mastermind">
-                          <div className="flex items-center gap-2">
-                            <Brain className="w-4 h-4" /> Mastermind Group
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="project">
-                          <div className="flex items-center gap-2">
-                            <Briefcase className="w-4 h-4" /> Project Team
-                          </div>
-                        </SelectItem>
-                        {canCreateAgency && (
-                          <SelectItem value="agency">
-                            <div className="flex items-center gap-2">
-                              <Building className="w-4 h-4" /> Creative Agency / Business
-                            </div>
-                          </SelectItem>
+                        {groupTypes.length > 0 ? (
+                          groupTypes.map(t => (
+                            <SelectItem key={t.key} value={t.key}>
+                              <div className="flex items-center gap-2">
+                                <Users className="w-4 h-4" /> {t.name}
+                              </div>
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <>
+                            <SelectItem value="community">
+                              <div className="flex items-center gap-2">
+                                <Users className="w-4 h-4" /> Community / Friends
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="family">
+                              <div className="flex items-center gap-2">
+                                <Home className="w-4 h-4" /> Family
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="collective">
+                              <div className="flex items-center gap-2">
+                                <Sparkles className="w-4 h-4" /> Creative Collective
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="mastermind">
+                              <div className="flex items-center gap-2">
+                                <Brain className="w-4 h-4" /> Mastermind Group
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="project">
+                              <div className="flex items-center gap-2">
+                                <Briefcase className="w-4 h-4" /> Project Team
+                              </div>
+                            </SelectItem>
+                            {canCreateAgency && (
+                              <SelectItem value="agency">
+                                <div className="flex items-center gap-2">
+                                  <Building className="w-4 h-4" /> Creative Agency / Business
+                                </div>
+                              </SelectItem>
+                            )}
+                          </>
                         )}
                       </SelectContent>
                     </Select>
@@ -685,7 +717,7 @@ export default function CreatorGroups() {
                 </DialogHeader>
                 <div className="py-4 space-y-3">
                   <p className="text-sm text-gray-500 mb-2">Toggle visibility of sections on your dashboard.</p>
-                  {availableTabs.map(tab => {
+                  {(typeConfig?.enabled_tabs?.length ? availableTabs.filter(t => typeConfig.enabled_tabs.includes(t.id)) : availableTabs).map(tab => {
                     const isHidden = (groupPrefs?.hidden_tabs || []).includes(tab.id);
                     const Icon = tab.icon;
                     return (

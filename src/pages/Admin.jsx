@@ -30,6 +30,7 @@ import AdminReferralCommissionsContent from '../components/admin/AdminReferralCo
 import AdminNotificationsContent from '../components/admin/AdminNotificationsContent';
 import AdminHomepageFeatures from '../components/admin/AdminHomepageFeatures';
 import AdminGroupsContent from '../components/admin/AdminGroupsContent.jsx';
+import AdminGroupTypesContent from '../components/admin/AdminGroupTypesContent.jsx';
 import AdminAnnouncementsContent from '../components/admin/AdminAnnouncementsContent';
 import AdminBibleContent from '../components/admin/AdminBibleContent';
 import AdminMentalHealthContent from '../components/admin/AdminMentalHealthContent';
@@ -183,6 +184,7 @@ export default function Admin() {
                       <TabsTrigger value="notifications">Notifications</TabsTrigger>
                       <TabsTrigger value="announcements">Announcements</TabsTrigger>
                       <TabsTrigger value="groups">Groups</TabsTrigger>
+<TabsTrigger value="groupTypes">Group Types</TabsTrigger>
                     </TabsList>
                   </div>
                   
@@ -194,6 +196,7 @@ export default function Admin() {
                   <TabsContent value="notifications"><AdminNotificationsContent userEmail={user?.email} /></TabsContent>
                   <TabsContent value="announcements"><AdminAnnouncementsContent /></TabsContent>
                   <TabsContent value="groups"><AdminGroupsContent /></TabsContent>
+<TabsContent value="groupTypes"><AdminGroupTypesContent /></TabsContent>
                 </Tabs>
               </CardContent>
             </Card>
