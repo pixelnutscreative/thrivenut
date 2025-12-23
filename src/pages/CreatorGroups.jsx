@@ -866,7 +866,6 @@ export default function CreatorGroups() {
           )}
         </Tabs>
       </div>
-    </div>
-    </div>
-  );
-}
+      </div>
+      );
+      }
