@@ -232,11 +232,12 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
             <DialogTrigger asChild>
               <Button onClick={() => setIsDialogOpen(true)}><Plus className="w-4 h-4 mr-2" /> Add Event</Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-2xl max-h-[90vh]">
               <DialogHeader>
                 <DialogTitle>{editingId ? 'Edit Event' : 'Add Group Event'}</DialogTitle>
               </DialogHeader>
-              <div className="space-y-4 py-4">
+              <div className="flex-1 overflow-y-auto py-4">
+              <div className="space-y-4">
                 <Input placeholder="Event Title" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
                 
                 <div className="h-48 mb-12">
@@ -374,13 +375,14 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
                   />
                 </div>
 
-                <DialogFooter>
+              </div>
+              </div>
+                <DialogFooter className="mt-auto">
                   <Button onClick={handleSubmit} disabled={!formData.title}>
                     {editingId ? 'Update Event' : 'Create Event'}
                   </Button>
                   <Button variant="outline" onClick={handleCloseDialog}>Cancel</Button>
                 </DialogFooter>
-              </div>
             </DialogContent>
           </Dialog>
         </div>
