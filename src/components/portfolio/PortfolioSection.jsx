@@ -308,7 +308,7 @@ export default function PortfolioSection({ userEmail, isAuthenticated, primaryCo
                         { id: 'custom', name: 'Custom / New Style' }
                       ].map(style => (
                         <SelectItem key={style.id} value={style.id}>{style.name}</SelectItem>
-                      )))}
+                      )))}}
                                         </SelectContent>
                   </Select>
                 </div>
@@ -326,7 +326,7 @@ export default function PortfolioSection({ userEmail, isAuthenticated, primaryCo
                         'Midjourney','DALL·E','Canva','Adobe Firefly','Stable Diffusion','Suno','ElevenLabs','Other'
                       ].map(name => (
                         <SelectItem key={name} value={name}>{name}</SelectItem>
-                      )))}
+                      )))}}
                     </SelectContent>
                   </Select>
                 </div>
