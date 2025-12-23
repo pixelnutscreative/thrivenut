@@ -92,7 +92,7 @@ export default function AdminGroupTypesContent() {
   };
 
   const handleSave = () => {
-    const payload = { ...form, key: (form.key || form.name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$|/g, '') };
+    const payload = { ...form, key: (form.key || form.name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') };
     if (!payload.name || !payload.key) return alert('Name and key are required');
     if (editing) updateMutation.mutate({ id: editing.id, data: payload }); else createMutation.mutate(payload);
   };

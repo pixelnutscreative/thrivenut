@@ -340,6 +340,7 @@ export default function CreatorGroups() {
 
   const typeConfig = (groupTypes || []).find(gt => gt.key === activeGroup?.type);
   const allowed = typeConfig?.enabled_tabs && typeConfig.enabled_tabs.length > 0 ? new Set(typeConfig.enabled_tabs) : null;
+  const defaultTab = allowed && !allowed.has('feed') ? (Array.from(allowed)[0] || 'feed') : 'feed';
   const visibleTabs = availableTabs.filter(t => {
     if (allowed && !allowed.has(t.id)) return false;
     if (t.id === 'members' && !isAdmin) return false;
@@ -792,7 +793,7 @@ export default function CreatorGroups() {
         </div>
 
         <div className="lg:col-span-3">
-          <Tabs defaultValue="feed" className="space-y-6">
+          <Tabs defaultValue={defaultTab} className="space-y-6">
             <TabsList className="bg-white border p-1 rounded-xl h-auto flex-wrap gap-1 w-full justify-start">
               {visibleTabs.map(tab => {
                 const Icon = tab.icon;
@@ -815,35 +816,49 @@ export default function CreatorGroups() {
               )}
             </TabsList>
 
-          <TabsContent value="feed" className="focus-visible:outline-none">
-            <GroupFeedTab group={activeGroup} currentUser={user} myMembership={activeMembership} isAdmin={isAdmin} />
-          </TabsContent>
+          {(!allowed || allowed.has('feed')) && (
+            <TabsContent value="feed" className="focus-visible:outline-none">
+              <GroupFeedTab group={activeGroup} currentUser={user} myMembership={activeMembership} isAdmin={isAdmin} />
+            </TabsContent>
+          )}
 
-          <TabsContent value="events" className="focus-visible:outline-none">
-            <GroupEventsTab group={activeGroup} currentUser={user} myMembership={activeMembership} isAdmin={isAdmin} />
-          </TabsContent>
+          {(!allowed || allowed.has('events')) && (
+            <TabsContent value="events" className="focus-visible:outline-none">
+              <GroupEventsTab group={activeGroup} currentUser={user} myMembership={activeMembership} isAdmin={isAdmin} />
+            </TabsContent>
+          )}
 
-          <TabsContent value="qna" className="focus-visible:outline-none">
-            <GroupQnATab group={activeGroup} currentUser={user} myMembership={activeMembership} isAdmin={isAdmin} />
-          </TabsContent>
+          {(!allowed || allowed.has('qna')) && (
+            <TabsContent value="qna" className="focus-visible:outline-none">
+              <GroupQnATab group={activeGroup} currentUser={user} myMembership={activeMembership} isAdmin={isAdmin} />
+            </TabsContent>
+          )}
 
-          <TabsContent value="resources" className="focus-visible:outline-none">
-            <GroupResourcesTab group={activeGroup} currentUser={user} myMembership={activeMembership} isAdmin={isAdmin} />
-          </TabsContent>
+          {(!allowed || allowed.has('resources')) && (
+            <TabsContent value="resources" className="focus-visible:outline-none">
+              <GroupResourcesTab group={activeGroup} currentUser={user} myMembership={activeMembership} isAdmin={isAdmin} />
+            </TabsContent>
+          )}
 
-          <TabsContent value="training" className="focus-visible:outline-none">
-            <GroupTrainingTab group={activeGroup} currentUser={user} isAdmin={isAdmin} />
-          </TabsContent>
+          {(!allowed || allowed.has('training')) && (
+            <TabsContent value="training" className="focus-visible:outline-none">
+              <GroupTrainingTab group={activeGroup} currentUser={user} isAdmin={isAdmin} />
+            </TabsContent>
+          )}
 
-          <TabsContent value="requests" className="focus-visible:outline-none">
-            <GroupRequestsTab group={activeGroup} currentUser={user} isAdmin={isAdmin} />
-          </TabsContent>
+          {(!allowed || allowed.has('requests')) && (
+            <TabsContent value="requests" className="focus-visible:outline-none">
+              <GroupRequestsTab group={activeGroup} currentUser={user} isAdmin={isAdmin} />
+            </TabsContent>
+          )}
 
-          <TabsContent value="members" className="focus-visible:outline-none">
-            <GroupMembersTab group={activeGroup} currentUser={user} isAdmin={isAdmin} />
-          </TabsContent>
+          {(!allowed || allowed.has('members')) && (
+            <TabsContent value="members" className="focus-visible:outline-none">
+              <GroupMembersTab group={activeGroup} currentUser={user} isAdmin={isAdmin} />
+            </TabsContent>
+          )}
 
-          {isAdmin && (
+          {isAdmin && (!allowed || allowed.has('members')) && (
             <TabsContent value="settings" className="focus-visible:outline-none">
               <GroupSettingsTab group={activeGroup} />
             </TabsContent>
