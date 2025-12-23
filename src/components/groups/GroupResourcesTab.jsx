@@ -117,12 +117,11 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
           <DialogTrigger asChild>
             <Button onClick={() => setIsDialogOpen(true)}><Plus className="w-4 h-4 mr-2" /> Share Resource</Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh]">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingId ? 'Edit Resource' : 'Share with Group'}</DialogTitle>
             </DialogHeader>
-            <div className="flex-1 overflow-y-auto py-4">
-            <div className="space-y-4">
+            <div className="space-y-4 py-4">
               <Select value={formData.type} onValueChange={v => setFormData({...formData, type: v})}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -156,14 +155,13 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
                 />
               )}
               
-              </div>
-            </div>
-              <DialogFooter className="mt-auto">
+              <DialogFooter>
                 <Button variant="outline" onClick={handleCloseDialog}>Cancel</Button>
                 <Button onClick={handleSubmit} disabled={!formData.title || (formData.type !== 'text' && !formData.url)}>
                   {editingId ? 'Update Resource' : (isAdmin ? 'Add Resource' : 'Submit for Review')}
                 </Button>
               </DialogFooter>
+            </div>
           </DialogContent>
         </Dialog>
       </div>
