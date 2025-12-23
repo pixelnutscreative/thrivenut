@@ -28,7 +28,12 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
     target_users: []
   });
 
-  const { data: events = [] } = useQuery({
+  // Recurrence controls
+  const [repeatWeekly, setRepeatWeekly] = useState(false);
+  const [repeatDays, setRepeatDays] = useState([]);
+  const [repeatWeeks, setRepeatWeeks] = useState(8);
+
+   const { data: events = [] } = useQuery({
     queryKey: ['groupEvents', group.id],
     queryFn: () => base44.entities.GroupEvent.filter({ group_id: group.id }, 'start_time'),
   });
