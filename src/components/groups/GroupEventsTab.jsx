@@ -159,7 +159,42 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
       };
 
   const handleSubmit = () => {
-    const occ = (formData.occurrences || []).filter(o => o.start_time);
+    let occ = (formData.occurrences || []).filter(o => o.start_time);
+
+    // If repeating weekly, generate future sessions based on first occurrence
+    if (repeatWeekly && repeatDays.length > 0 && occ.length > 0 && occ[0].start_time) {
+      const first = new Date(occ[0].start_time);
+      const endFirst = occ[0].end_time ? new Date(occ[0].end_time) : null;
+      const durationMs = endFirst ? (endFirst - first) : 0;
+
+      // Find the Sunday of the week for the first date
+      const weekStart = new Date(first);
+      weekStart.setHours(0,0,0,0);
+      weekStart.setDate(first.getDate() - first.getDay());
+
+      const hours = first.getHours();
+      const minutes = first.getMinutes();
+
+      const generated = [];
+      for (let w = 0; w < repeatWeeks; w++) {
+        for (const d of repeatDays) {
+          const dt = new Date(weekStart);
+          dt.setDate(weekStart.getDate() + d + w * 7);
+          dt.setHours(hours, minutes, 0, 0);
+          const startIso = new Date(dt).toISOString();
+          const endIso = durationMs > 0 ? new Date(dt.getTime() + durationMs).toISOString() : '';
+          generated.push({ start_time: startIso, end_time: endIso });
+        }
+      }
+
+      // Ensure the very first is present (avoid duplicates)
+      const all = [...generated, ...occ];
+      // Deduplicate by start_time
+      const map = new Map();
+      all.forEach(o => { if (o.start_time) map.set(o.start_time, o); });
+      occ = Array.from(map.values()).sort((a,b) => new Date(a.start_time) - new Date(b.start_time));
+    }
+
     const primary = occ[0] || { start_time: formData.start_time, end_time: formData.end_time };
     const toSubmit = {
       ...formData,
@@ -167,6 +202,7 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
       end_time: primary?.end_time || '',
       occurrences: occ
     };
+
     if (editingId) {
       updateMutation.mutate(toSubmit);
     } else {
@@ -255,6 +291,51 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
                   >
                     + Add another date/time
                   </Button>
+                </div>
+
+                <div className="space-y-3 border-t pt-4">
+                  <label className="text-sm font-medium">Repeat</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      id="repeat-weekly"
+                      type="checkbox"
+                      checked={repeatWeekly}
+                      onChange={(e) => setRepeatWeekly(e.target.checked)}
+                    />
+                    <label htmlFor="repeat-weekly" className="text-sm">Repeat weekly</label>
+                  </div>
+
+                  {repeatWeekly && (
+                    <div className="space-y-3">
+                      <div className="flex flex-wrap gap-2">
+                        {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((d, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                              setRepeatDays((prev) => prev.includes(idx) ? prev.filter(x => x !== idx) : [...prev, idx]);
+                            }}
+                            className={`px-3 py-1 rounded border text-sm ${repeatDays.includes(idx) ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-gray-700 border-gray-200'}`}
+                          >
+                            {d}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-600">Generate</span>
+                        <Input
+                          type="number"
+                          min={1}
+                          max={26}
+                          value={repeatWeeks}
+                          onChange={(e) => setRepeatWeeks(Math.max(1, Math.min(26, parseInt(e.target.value || '1'))))}
+                          className="w-20"
+                        />
+                        <span className="text-sm text-gray-600">weeks of sessions</span>
+                      </div>
+                      <p className="text-xs text-gray-500">We’ll keep the same time as your first session and create upcoming weekly sessions on the selected days.</p>
+                    </div>
+                  )}
                 </div>
                 <Input placeholder="Link (Zoom, etc)" value={formData.link} onChange={e => setFormData({...formData, link: e.target.value})} />
                 <Input placeholder="Location (Optional)" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} />
