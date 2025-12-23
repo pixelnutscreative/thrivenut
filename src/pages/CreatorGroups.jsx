@@ -672,8 +672,7 @@ export default function CreatorGroups() {
           }}>Enter Invite Code</Button>
           <Button variant="outline" onClick={() => setSearchParams({})}>Back</Button>
         </div>
-      </div>
-    );
+        );
   }
 
   return (
