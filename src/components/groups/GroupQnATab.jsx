@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { HelpCircle, CheckCircle, Clock, XCircle, ChevronRight, MessageCircle, Pencil, Trash2, Lock, Globe } from 'lucide-react';
 import ReactQuill from 'react-quill';
@@ -187,9 +187,12 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
                 </div>
               )}
 
-              <Button onClick={handleSubmit} disabled={!formData.question} className="w-full mt-4">
-                {editingId ? 'Update Question' : 'Submit Question'}
-              </Button>
+              <DialogFooter>
+                <Button variant="outline" onClick={handleCloseDialog}>Cancel</Button>
+                <Button onClick={handleSubmit} disabled={!formData.question}>
+                  {editingId ? 'Update Question/Answer' : 'Submit Question'}
+                </Button>
+              </DialogFooter>
             </div>
           </DialogContent>
         </Dialog>

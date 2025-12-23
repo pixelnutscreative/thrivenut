@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Calendar, MapPin, Link as LinkIcon, Plus, Trash2, Pencil, Share2, CalendarPlus } from 'lucide-react';
 import { format } from 'date-fns';
@@ -194,9 +194,12 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
                   />
                 </div>
 
-                <Button onClick={handleSubmit} disabled={!formData.title} className="w-full">
-                  {editingId ? 'Update Event' : 'Create Event'}
-                </Button>
+                <DialogFooter>
+                  <Button variant="outline" onClick={handleCloseDialog}>Cancel</Button>
+                  <Button onClick={handleSubmit} disabled={!formData.title}>
+                    {editingId ? 'Update Event' : 'Create Event'}
+                  </Button>
+                </DialogFooter>
               </div>
             </DialogContent>
           </Dialog>

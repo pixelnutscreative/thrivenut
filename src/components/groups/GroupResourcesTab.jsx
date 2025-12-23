@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Video, FileText, Link as LinkIcon, Plus, Check, X, ExternalLink, Pencil, Trash2 } from 'lucide-react';
@@ -155,9 +155,12 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
                 />
               )}
               
-              <Button onClick={handleSubmit} disabled={!formData.title || (formData.type !== 'text' && !formData.url)} className="w-full">
-                {editingId ? 'Update Resource' : (isAdmin ? 'Add Resource' : 'Submit for Review')}
-              </Button>
+              <DialogFooter>
+                <Button variant="outline" onClick={handleCloseDialog}>Cancel</Button>
+                <Button onClick={handleSubmit} disabled={!formData.title || (formData.type !== 'text' && !formData.url)}>
+                  {editingId ? 'Update Resource' : (isAdmin ? 'Add Resource' : 'Submit for Review')}
+                </Button>
+              </DialogFooter>
             </div>
           </DialogContent>
         </Dialog>
