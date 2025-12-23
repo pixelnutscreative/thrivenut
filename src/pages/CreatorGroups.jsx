@@ -867,5 +867,6 @@ export default function CreatorGroups() {
       </div>
     </div>
   </div>
+</div>
   );
 }
