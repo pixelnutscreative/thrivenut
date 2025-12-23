@@ -16,8 +16,16 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [formData, setFormData] = useState({ 
-    title: '', description: '', start_time: '', link: '', location: '', target_levels: [], target_users: [] 
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    start_time: '',
+    end_time: '',
+    occurrences: [{ start_time: '', end_time: '' }],
+    link: '',
+    location: '',
+    target_levels: [],
+    target_users: []
   });
 
   const { data: events = [] } = useQuery({
@@ -122,25 +130,47 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
       title: event.title,
       description: event.description || '',
       start_time: event.start_time,
+      end_time: event.end_time || '',
+      occurrences: (event.occurrences && event.occurrences.length > 0)
+        ? event.occurrences
+        : [{ start_time: event.start_time || '', end_time: event.end_time || '' }],
       link: event.link || '',
       location: event.location || '',
       target_levels: event.target_levels || [],
       target_users: event.target_users || []
-      });
-      setIsDialogOpen(true);
-      };
+    });
+    setIsDialogOpen(true);
+  };
 
       const handleCloseDialog = () => {
       setIsDialogOpen(false);
       setEditingId(null);
-      setFormData({ title: '', description: '', start_time: '', link: '', location: '', target_levels: [], target_users: [] });
+      setFormData({
+        title: '',
+        description: '',
+        start_time: '',
+        end_time: '',
+        occurrences: [{ start_time: '', end_time: '' }],
+        link: '',
+        location: '',
+        target_levels: [],
+        target_users: []
+      });
       };
 
   const handleSubmit = () => {
+    const occ = (formData.occurrences || []).filter(o => o.start_time);
+    const primary = occ[0] || { start_time: formData.start_time, end_time: formData.end_time };
+    const toSubmit = {
+      ...formData,
+      start_time: primary?.start_time || '',
+      end_time: primary?.end_time || '',
+      occurrences: occ
+    };
     if (editingId) {
-      updateMutation.mutate(formData);
+      updateMutation.mutate(toSubmit);
     } else {
-      createMutation.mutate(formData);
+      createMutation.mutate(toSubmit);
     }
   };
 
@@ -175,7 +205,57 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
                   />
                 </div>
 
-                <Input type="datetime-local" value={formData.start_time} onChange={e => setFormData({...formData, start_time: e.target.value})} />
+                <div className="space-y-3">
+                  <label className="text-sm font-medium">Event Dates & Times</label>
+                  {(formData.occurrences || []).map((occ, idx) => (
+                    <div key={idx} className="grid grid-cols-1 sm:grid-cols-2 gap-2 items-center">
+                      <Input
+                        type="datetime-local"
+                        value={occ.start_time}
+                        onChange={e => {
+                          const occurrences = [...(formData.occurrences || [])];
+                          occurrences[idx] = { ...occurrences[idx], start_time: e.target.value };
+                          setFormData({ ...formData, occurrences });
+                        }}
+                        placeholder="Start"
+                      />
+                      <Input
+                        type="datetime-local"
+                        value={occ.end_time || ''}
+                        onChange={e => {
+                          const occurrences = [...(formData.occurrences || [])];
+                          occurrences[idx] = { ...occurrences[idx], end_time: e.target.value };
+                          setFormData({ ...formData, occurrences });
+                        }}
+                        placeholder="End (optional)"
+                      />
+                      <div className="sm:col-span-2 flex justify-end">
+                        {(formData.occurrences || []).length > 1 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-500"
+                            onClick={() => {
+                              const occurrences = (formData.occurrences || []).filter((_, i) => i !== idx);
+                              setFormData({ ...formData, occurrences });
+                            }}
+                          >
+                            Remove
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setFormData({ ...formData, occurrences: [...(formData.occurrences || []), { start_time: '', end_time: '' }] })}
+                  >
+                    + Add another date/time
+                  </Button>
+                </div>
                 <Input placeholder="Link (Zoom, etc)" value={formData.link} onChange={e => setFormData({...formData, link: e.target.value})} />
                 <Input placeholder="Location (Optional)" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} />
                 
@@ -236,6 +316,19 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
                   <p className="text-xs text-purple-400 italic mt-2">
                     Edited by {event.edited_by === currentUser?.email ? 'you' : event.edited_by} on {new Date(event.edited_at).toLocaleDateString()}
                   </p>
+                )}
+
+                {Array.isArray(event.occurrences) && event.occurrences.length > 1 && (
+                  <div className="mt-2 text-sm text-gray-600">
+                    <div className="font-medium">Other sessions:</div>
+                    <ul className="list-disc ml-5">
+                      {event.occurrences.slice(1).map((o, i) => (
+                        <li key={i}>
+                          {o.start_time ? `${format(new Date(o.start_time), 'EEE, MMM d, h:mm a')}${o.end_time ? ` - ${format(new Date(o.end_time), 'h:mm a')}` : ''}` : ''}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
 
                 <div className="mt-4 pt-4 border-t flex flex-wrap gap-2 justify-between items-center">
