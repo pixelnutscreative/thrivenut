@@ -367,23 +367,23 @@ function FeedItemCard({ item, isAdmin, currentUser, onEdit, onDelete, onHide, on
             </Button>
           )}
 
-          {isAdmin && (
-            <div className="flex gap-1 ml-2 pl-2 border-l">
-                {item.type === 'post' && (
-                    <>
-                    <Button variant="ghost" size="sm" onClick={onEdit} className="text-gray-400 hover:text-purple-600 h-8 w-8 p-0">
-                        <Pencil className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={onDelete} className="text-gray-400 hover:text-red-500 h-8 w-8 p-0">
-                        <Trash2 className="w-4 h-4" />
-                    </Button>
-                    </>
-                )}
-                <Button variant="ghost" size="sm" onClick={onHide} className="text-gray-400 hover:text-gray-600 h-8 w-8 p-0" title="Hide from feed">
-                    <EyeOff className="w-4 h-4" />
+          <div className="flex gap-1 ml-2 pl-2 border-l">
+            {(item.type === 'post' && (isAdmin || item.author_email === currentUser?.email)) && (
+              <>
+                <Button variant="ghost" size="sm" onClick={onEdit} className="text-gray-400 hover:text-purple-600 h-8 w-8 p-0" title="Edit">
+                  <Pencil className="w-4 h-4" />
                 </Button>
-            </div>
-          )}
+                {(isAdmin || item.author_email === currentUser?.email) && (
+                  <Button variant="ghost" size="sm" onClick={onDelete} className="text-gray-400 hover:text-red-500 h-8 w-8 p-0" title="Delete">
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                )}
+              </>
+            )}
+            <Button variant="ghost" size="sm" onClick={onHide} className="text-gray-400 hover:text-gray-600 h-8 w-8 p-0" title="Hide from feed">
+              <EyeOff className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>

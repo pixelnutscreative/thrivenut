@@ -32,6 +32,7 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
   const [repeatWeekly, setRepeatWeekly] = useState(false);
   const [repeatDays, setRepeatDays] = useState([]);
   const [repeatWeeks, setRepeatWeeks] = useState(8);
+  const [repeatNoEnd, setRepeatNoEnd] = useState(false);
 
    const { data: events = [] } = useQuery({
     queryKey: ['groupEvents', group.id],
@@ -181,7 +182,8 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
       const minutes = first.getMinutes();
 
       const generated = [];
-      for (let w = 0; w < repeatWeeks; w++) {
+      const weeksToGenerate = repeatNoEnd ? 52 : repeatWeeks;
+      for (let w = 0; w < weeksToGenerate; w++) {
         for (const d of repeatDays) {
           const dt = new Date(weekStart);
           dt.setDate(weekStart.getDate() + d + w * 7);
@@ -326,17 +328,29 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
                           </button>
                         ))}
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-600">Generate</span>
-                        <Input
-                          type="number"
-                          min={1}
-                          max={26}
-                          value={repeatWeeks}
-                          onChange={(e) => setRepeatWeeks(Math.max(1, Math.min(26, parseInt(e.target.value || '1'))))}
-                          className="w-20"
-                        />
-                        <span className="text-sm text-gray-600">weeks of sessions</span>
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-gray-600">Generate</span>
+                          <Input
+                            type="number"
+                            min={1}
+                            max={52}
+                            disabled={repeatNoEnd}
+                            value={repeatWeeks}
+                            onChange={(e) => setRepeatWeeks(Math.max(1, Math.min(52, parseInt(e.target.value || '1'))))}
+                            className="w-20"
+                          />
+                          <span className="text-sm text-gray-600">weeks of sessions</span>
+                        </div>
+                        <label className="flex items-center gap-2 text-sm cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={repeatNoEnd}
+                            onChange={(e) => setRepeatNoEnd(e.target.checked)}
+                            className="rounded border-gray-300"
+                          />
+                          No end
+                        </label>
                       </div>
                       <p className="text-xs text-gray-500">We’ll keep the same time as your first session and create upcoming weekly sessions on the selected days.</p>
                     </div>

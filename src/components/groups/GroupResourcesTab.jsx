@@ -182,14 +182,16 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
                 <div className="flex-1">
                   <div className="flex justify-between">
                     <h4 className="font-semibold">{resource.title}</h4>
-                    {isAdmin && (
+                    {(isAdmin || resource.submitted_by === currentUser?.email) && (
                       <div className="flex gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => handleEdit(resource)} className="text-gray-500 h-6 w-6 p-0 hover:text-purple-600">
+                        <Button variant="ghost" size="sm" onClick={() => handleEdit(resource)} className="text-gray-500 h-6 w-6 p-0 hover:text-purple-600" title="Edit">
                           <Pencil className="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => deleteMutation.mutate(resource.id)} className="text-red-500 h-6 w-6 p-0">
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        {isAdmin && (
+                          <Button variant="ghost" size="sm" onClick={() => deleteMutation.mutate(resource.id)} className="text-red-500 h-6 w-6 p-0" title="Delete">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        )}
                       </div>
                     )}
                   </div>
