@@ -671,10 +671,10 @@ export default function CreatorGroups() {
             if (code) joinMutation.mutate(code);
           }}>Enter Invite Code</Button>
           <Button variant="outline" onClick={() => setSearchParams({})}>Back</Button>
-          </div>
-          </div>
-          );
-          }
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50/50">
