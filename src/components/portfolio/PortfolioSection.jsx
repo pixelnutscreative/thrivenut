@@ -37,8 +37,7 @@ export default function PortfolioSection({ userEmail, isAuthenticated, primaryCo
     external_link: '',
     tags: [],
     is_nutpal: false,
-    style_id: '',
-    prompt_used: ''
+    style_id: ''
   });
   const [uploadingImage, setUploadingImage] = useState(false);
 
@@ -145,8 +144,7 @@ export default function PortfolioSection({ userEmail, isAuthenticated, primaryCo
       external_link: '',
       tags: [],
       is_nutpal: false,
-      style_id: '',
-      prompt_used: ''
+      style_id: ''
     });
   };
 
@@ -179,7 +177,7 @@ export default function PortfolioSection({ userEmail, isAuthenticated, primaryCo
           <div className="flex items-start justify-between gap-2 mb-2">
             <Badge className="text-xs" style={{ backgroundColor: `${primaryColor}20`, color: primaryColor }}>
               <Icon className="w-3 h-3 mr-1" />
-              {item.is_nutpal ? (`NutPal – ${(nutPalStyles.find(s => s.id === item.style_id)?.name || 'Unknown')}`) : (item.ai_tool_name || 'AI Tool')}
+              {item.is_nutpal ? 'NutPal' : item.ai_tool_name}
             </Badge>
             {item.is_featured && (
               <Badge className="bg-yellow-100 text-yellow-700 text-xs">⭐ Featured</Badge>
@@ -300,16 +298,11 @@ export default function PortfolioSection({ userEmail, isAuthenticated, primaryCo
                       <SelectValue placeholder="Select style..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {(nutPalStyles && nutPalStyles.length > 0 ? nutPalStyles.map(style => (
+                      {nutPalStyles.map(style => (
                         <SelectItem key={style.id} value={style.id}>{style.name}</SelectItem>
-                      )) : [
-                        { id: 'classic', name: 'Classic NutPal' },
-                        { id: 'pixel', name: 'Pixel Style' },
-                        { id: 'custom', name: 'Custom / New Style' }
-                      ].map(style => (
-                        <SelectItem key={style.id} value={style.id}>{style.name}</SelectItem>
-                      ))) }
-                                        </SelectContent>
+                      ))}
+                      <SelectItem value="custom">Custom / New Style</SelectItem>
+                    </SelectContent>
                   </Select>
                 </div>
               ) : (
@@ -320,13 +313,10 @@ export default function PortfolioSection({ userEmail, isAuthenticated, primaryCo
                       <SelectValue placeholder="Select tool..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {(aiTools && aiTools.length > 0 ? aiTools.map(tool => (
+                      {aiTools.map(tool => (
                         <SelectItem key={tool.id} value={tool.tool_name}>{tool.tool_name}</SelectItem>
-                      )) : [
-                        'Midjourney','DALL·E','Canva','Adobe Firefly','Stable Diffusion','Suno','ElevenLabs','Other'
-                      ].map(name => (
-                        <SelectItem key={name} value={name}>{name}</SelectItem>
-                      ))) }
+                      ))}
+                      <SelectItem value="Other">Other</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -348,16 +338,6 @@ export default function PortfolioSection({ userEmail, isAuthenticated, primaryCo
                 placeholder="Tell us about it! What inspired you? How did you make it?"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                rows={3}
-              />
-            </div>
-
-            <div>
-              <Label>Prompt Used (Optional)</Label>
-              <Textarea
-                placeholder="Paste the prompt you used to generate this..."
-                value={formData.prompt_used}
-                onChange={(e) => setFormData({ ...formData, prompt_used: e.target.value })}
                 rows={3}
               />
             </div>
@@ -499,17 +479,10 @@ export default function PortfolioSection({ userEmail, isAuthenticated, primaryCo
                     {selectedItem.description}
                   </p>
                 </div>
-
-                {selectedItem.prompt_used && (
-                  <div className="p-3 bg-gray-50 rounded-lg">
-                    <p className="text-xs font-semibold text-gray-500 mb-1">Prompt</p>
-                    <p className={`text-sm italic ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{selectedItem.prompt_used}</p>
-                  </div>
-                )}
                 
                 <div className="flex items-center gap-2 flex-wrap">
                   <Badge style={{ backgroundColor: `${primaryColor}20`, color: primaryColor }}>
-                    {selectedItem.is_nutpal ? `NutPal – ${(nutPalStyles.find(s => s.id === selectedItem.style_id)?.name || 'Unknown')}` : (selectedItem.ai_tool_name || 'AI Tool')}
+                    {selectedItem.is_nutpal ? 'NutPal' : selectedItem.ai_tool_name}
                   </Badge>
                   {selectedItem.tags?.map(tag => (
                     <Badge key={tag} variant="outline" className="text-xs">
