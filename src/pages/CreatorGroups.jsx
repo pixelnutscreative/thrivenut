@@ -802,7 +802,7 @@ export default function CreatorGroups() {
                   <TabsTrigger 
                     key={tab.id} 
                     value={tab.id} 
-                    className={`px-4 py-2 rounded-lg data-[state=active]:bg-${tab.color}-100 data-[state=active]:text-${tab.color}-700 ${enabled ? '' : 'opacity-40 pointer-events-none'}`
+                    className={`px-4 py-2 rounded-lg data-[state=active]:bg-${tab.color}-100 data-[state=active]:text-${tab.color}-700 ${enabled ? '' : 'opacity-40 pointer-events-none'}`}
                   >
                     <Icon className="w-4 h-4 mr-2" /> {tab.label}
                   </TabsTrigger>
