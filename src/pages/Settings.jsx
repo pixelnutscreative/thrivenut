@@ -79,6 +79,7 @@ export default function Settings() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [saveStatus, setSaveStatus] = useState('idle'); // idle, saving, saved, error
+  const isSavingAll = saveStatus === 'saving';
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('profile');
   const [expandedTabs, setExpandedTabs] = useState(['profile']);
