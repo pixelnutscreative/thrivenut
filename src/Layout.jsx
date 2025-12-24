@@ -170,7 +170,7 @@ export default function Layout({ children, currentPageName }) {
     bgColor: 'bg-cyan-500/10',
     items: [
     { name: 'My People', icon: Users, path: 'People', moduleId: 'people' },
-    { name: 'Kid Controls', icon: Lock, path: 'KidControls', alwaysShow: true },
+    { name: 'Kid Controls', icon: Lock, path: 'KidControls', moduleId: 'parenting' },
     { name: 'Care Reminders', icon: Bell, path: 'CareReminders', moduleId: 'care_reminders' },
     { name: 'Pet Care', icon: PawPrint, path: 'PetCare', moduleId: 'pets' }]
 
