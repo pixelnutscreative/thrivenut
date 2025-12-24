@@ -5,13 +5,14 @@ import { Button } from '@/components/ui/button.jsx';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Save, User, Palette, Layers, MessageSquare, Zap, BookOpen, Shirt, Gift, Share2, Sparkles, Plus, Trash2, Briefcase, Check, Code, ExternalLink, UserX, Calendar as CalendarIcon, Sliders, PuzzleIcon } from 'lucide-react';
+import { Loader2, Save, User, Palette, Layers, MessageSquare, Zap, BookOpen, Shirt, Gift, Share2, Sparkles, Plus, Trash2, Briefcase, Check, Code, ExternalLink, UserX, Calendar as CalendarIcon, Sliders, PuzzleIcon, ChevronDown } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import ColorPicker from '../components/shared/ColorPicker';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { motion } from 'framer-motion';
 import { debounce } from 'lodash';
 
@@ -26,6 +27,8 @@ import MoodEmojiSettings from '../components/settings/MoodEmojiSettings';
 import WidgetSettingsV2 from '../components/settings/WidgetSettingsV2';
 import ReferralsTab from '../components/settings/ReferralsTab';
 import AccountDeletionTab from '../components/settings/AccountDeletionTab';
+import AIPersonalitySettings from '../components/settings/AIPersonalitySettings';
+import AddressingPreferences from '../components/settings/AddressingPreferences';
 import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
 import { useTheme } from '../components/shared/useTheme';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -145,12 +148,30 @@ export default function Settings() {
     live_stream_types: [],
     live_agency: '',
     shop_agency: '',
-    started_going_live: ''
+    started_going_live: '',
+    clubs: [],
+    custom_clubs: []
   });
 
   useEffect(() => {
     if (preferences) {
-      setPrefData(preferences.data || preferences);
+      // Initialize with fetched preferences, ensuring all new fields are present
+      setPrefData({
+        nickname: '',
+        user_timezone: '',
+        time_format: '12h',
+        default_landing_page: 'Dashboard',
+        greeting_types: [],
+        ai_personality_tone: 'humorous',
+        custom_ai_tone_details: '',
+        address_as: 'you',
+        custom_bible_translation: '',
+        enable_morning_reading: false,
+        enable_night_reading: false,
+        enable_morning_prayer: false,
+        enable_night_prayer: false,
+        ...preferences
+      });
     }
   }, [preferences]);
 
@@ -230,11 +251,13 @@ export default function Settings() {
   const handleSave = async () => {
     const promises = [];
     
-    if (Object.keys(prefData).length > 0 && preferences) {
+    // Always save if we have data, regardless of whether record exists (mutation handles create)
+    if (prefData && Object.keys(prefData).length > 0) {
       promises.push(updatePreferencesMutation.mutateAsync(prefData));
     }
     
-    if (profileData && (profileData.social_links || profileData.clothing_sizes || profileData.wish_list)) {
+    // Always save profile data
+    if (profileData) {
       promises.push(updateUserProfileMutation.mutateAsync(profileData));
     }
     
@@ -382,16 +405,16 @@ export default function Settings() {
                                 real_name: user?.full_name,
                                 image_url: prefData.profile_image_url,
                                 color: profileData.favorite_color,
-                                clubs: profileData.clubs,
-                                custom_clubs: profileData.custom_clubs
+                                clubs: profileData.clubs || [],
+                                custom_clubs: profileData.custom_clubs || []
                               }} 
                               setFormData={(newData) => {
                                 setProfileData(prev => ({
                                   ...prev,
                                   nickname: newData.nickname,
                                   favorite_color: newData.color,
-                                  clubs: newData.clubs,
-                                  custom_clubs: newData.custom_clubs
+                                  clubs: newData.clubs || [],
+                                  custom_clubs: newData.custom_clubs || []
                                 }));
                                 if (newData.image_url !== prefData.profile_image_url) {
                                   setPrefData(prev => ({ ...prev, profile_image_url: newData.image_url }));
@@ -436,6 +459,7 @@ export default function Settings() {
                                   setFormData={(newData) => setProfileData(prev => ({ ...prev, ...newData }))}
                                   isProfile={true}
                                 />
+                                <AddressingPreferences formData={prefData} setFormData={setPrefData} />
                                 <Card>
                                   <CardContent className="pt-6 flex items-center justify-between">
                                     <div>
@@ -506,7 +530,15 @@ export default function Settings() {
 
                     {/* Delete Account Section */}
                 <div className="mt-8 pt-8 border-t border-gray-200">
-                  <AccountDeletionTab userEmail={effectiveEmail} />
+                  <Collapsible>
+                    <CollapsibleTrigger className="flex items-center justify-between w-full p-4 font-semibold text-lg hover:bg-gray-50 transition-colors rounded-t-lg">
+                      <h2>Delete Account</h2>
+                      <ChevronDown className="w-5 h-5 data-[state=open]:rotate-180 transition-transform" />
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <AccountDeletionTab userEmail={effectiveEmail} />
+                    </CollapsibleContent>
+                  </Collapsible>
                 </div>
               </CardContent>
             </Card>
@@ -554,40 +586,6 @@ export default function Settings() {
                 {updatePreferencesMutation.isPending ? 'Saving...' : 'Save Changes'}
               </Button>
             </div>
-            <Card className="mb-4">
-              <CardHeader>
-                <CardTitle className="text-base">Daily Greeting Types</CardTitle>
-                <CardDescription>Select which types of daily messages you want to see</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {greetingTypeOptions.map(greeting => {
-                  const isSelected = prefData.greeting_types?.includes(greeting.id);
-                  return (
-                    <div
-                      key={greeting.id}
-                      onClick={() => {
-                        const current = prefData.greeting_types || [];
-                        const newTypes = isSelected
-                          ? current.filter(t => t !== greeting.id)
-                          : [...current, greeting.id];
-                        if (newTypes.length > 0) {
-                          setPrefData({ ...prefData, greeting_types: newTypes, greeting_type: newTypes[0] });
-                        }
-                      }}
-                      className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                        isSelected ? 'border-purple-500 bg-purple-50' : 'border-gray-200 hover:border-purple-300'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <Checkbox checked={isSelected} />
-                        <span>{greeting.icon}</span>
-                        <span className="font-medium">{greeting.name}</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </CardContent>
-            </Card>
             <DashboardPreferences formData={prefData} setFormData={setPrefData} />
           </TabsContent>
 
@@ -599,7 +597,12 @@ export default function Settings() {
                 {updatePreferencesMutation.isPending ? 'Saving...' : 'Save Changes'}
               </Button>
             </div>
+            <AIPersonalitySettings formData={prefData} setFormData={setPrefData} />
             <Card className="mb-4">
+              <CardHeader>
+                <CardTitle className="text-base">General Preferences</CardTitle>
+                <CardDescription>Time, language, and other general settings.</CardDescription>
+              </CardHeader>
               <CardContent className="pt-6 space-y-4">
                 <div>
                   <Label className="mb-2 block">Timezone</Label>
