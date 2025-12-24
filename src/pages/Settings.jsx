@@ -77,8 +77,7 @@ export default function Settings() {
   const location = useLocation();
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
-  const [saveMessage, setSaveMessage] = useState('');
-  const [isSavingAll, setIsSavingAll] = useState(false);
+  const [saveStatus, setSaveStatus] = useState('idle'); // idle, saving, saved, error
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('profile');
   const [expandedTabs, setExpandedTabs] = useState(['profile']);
@@ -223,8 +222,6 @@ export default function Settings() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['preferences'] });
-      setSaveMessage('Saved!');
-      setTimeout(() => setSaveMessage(''), 2000);
     },
   });
 
@@ -242,19 +239,14 @@ export default function Settings() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['userProfile'] });
       queryClient.invalidateQueries({ queryKey: ['userProfile', effectiveEmail] });
-      setSaveMessage('Saved!');
-      setTimeout(() => setSaveMessage(''), 2000);
     },
     onError: (error) => {
       console.error('Save error:', error);
-      setSaveMessage('Error saving!');
-      setTimeout(() => setSaveMessage(''), 3000);
     }
   });
 
   const handleSave = async () => {
-    setIsSavingAll(true);
-    setSaveMessage('');
+    setSaveStatus('saving');
     const promises = [];
     
     // Always save if we have data, regardless of whether record exists (mutation handles create)
@@ -270,15 +262,42 @@ export default function Settings() {
     try {
       if (promises.length > 0) {
         await Promise.all(promises);
-        setSaveMessage('Saved!');
-        setTimeout(() => setSaveMessage(''), 2000);
+        setSaveStatus('saved');
+        setTimeout(() => setSaveStatus('idle'), 3000);
+      } else {
+        setSaveStatus('idle');
       }
     } catch (error) {
       console.error("Error saving settings:", error);
-      setSaveMessage('Error saving!');
-    } finally {
-      setIsSavingAll(false);
+      setSaveStatus('error');
+      setTimeout(() => setSaveStatus('idle'), 3000);
     }
+  };
+
+  const getSaveButtonText = () => {
+    switch (saveStatus) {
+      case 'saving': return 'Saving...';
+      case 'saved': return 'Saved!';
+      case 'error': return 'Error!';
+      default: return 'Save Changes';
+    }
+  };
+
+  const getSaveButtonIcon = () => {
+    if (saveStatus === 'saving') return <Loader2 className="w-4 h-4 mr-2 animate-spin" />;
+    if (saveStatus === 'saved') return <Check className="w-4 h-4 mr-2" />;
+    return <Save className="w-4 h-4 mr-2" />;
+  };
+
+  const getSaveButtonVariant = () => {
+    if (saveStatus === 'saved') return 'default'; // Or a success color if we had one defined in variants
+    if (saveStatus === 'error') return 'destructive';
+    return 'default';
+  };
+
+  const getSaveButtonStyle = () => {
+    if (saveStatus === 'saved') return { backgroundColor: '#22c55e', borderColor: '#22c55e' }; // Green-500
+    return {};
   };
 
   const updateProfileNested = (category, field, value) => {
@@ -332,18 +351,7 @@ export default function Settings() {
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold text-gray-800">Settings</h1>
           <div className="flex items-center gap-2">
-            {saveMessage && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0 }}
-                className="px-3 py-1.5 bg-green-100 text-green-800 rounded-lg text-sm font-medium flex items-center gap-1"
-              >
-                <Check className="w-3 h-3" />
-                {saveMessage}
-              </motion.div>
-            )}
-
+            {/* Save status is now on the buttons */}
           </div>
         </div>
 
@@ -388,9 +396,14 @@ export default function Settings() {
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle>Profile</CardTitle>
-                  <Button onClick={handleSave} disabled={isSavingAll}>
-                    <Save className="w-4 h-4 mr-2" />
-                    {isSavingAll ? 'Saving...' : 'Save'}
+                  <Button 
+                    onClick={handleSave} 
+                    disabled={saveStatus === 'saving'}
+                    style={getSaveButtonStyle()}
+                    className={saveStatus === 'saved' ? 'text-white' : ''}
+                  >
+                    {getSaveButtonIcon()}
+                    {getSaveButtonText()}
                   </Button>
                 </div>
               </CardHeader>
