@@ -78,6 +78,7 @@ export default function Settings() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [saveMessage, setSaveMessage] = useState('');
+  const [isSavingAll, setIsSavingAll] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('profile');
   const [expandedTabs, setExpandedTabs] = useState(['profile']);
@@ -252,6 +253,8 @@ export default function Settings() {
   });
 
   const handleSave = async () => {
+    setIsSavingAll(true);
+    setSaveMessage('');
     const promises = [];
     
     // Always save if we have data, regardless of whether record exists (mutation handles create)
@@ -264,8 +267,17 @@ export default function Settings() {
       promises.push(updateUserProfileMutation.mutateAsync(profileData));
     }
     
-    if (promises.length > 0) {
-      await Promise.all(promises);
+    try {
+      if (promises.length > 0) {
+        await Promise.all(promises);
+        setSaveMessage('Saved!');
+        setTimeout(() => setSaveMessage(''), 2000);
+      }
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      setSaveMessage('Error saving!');
+    } finally {
+      setIsSavingAll(false);
     }
   };
 
@@ -341,14 +353,13 @@ export default function Settings() {
           navigate(`#${v}`); 
         }} className="w-full">
           <TabsList className="grid grid-cols-4 md:grid-cols-8 gap-1 mb-6 bg-transparent h-auto">
-            {['profile', 'features', 'dashboard', 'preferences', 'widgets-v2', 'bible'].map(tab => {
+            {['profile', 'features', 'dashboard', 'preferences', 'bible'].map(tab => {
               let icon, label;
               switch(tab) {
                 case 'profile': icon = <User className="w-4 h-4" />; label = 'Profile'; break;
-                case 'features': icon = <Layers className="w-4 h-4" />; label = 'Features'; break;
+                case 'features': icon = <PuzzleIcon className="w-4 h-4" />; label = 'Customize'; break;
                 case 'dashboard': icon = <CalendarIcon className="w-4 h-4" />; label = 'Dash'; break;
                 case 'preferences': icon = <Sliders className="w-4 h-4" />; label = 'Prefs'; break;
-                case 'widgets-v2': icon = <PuzzleIcon className="w-4 h-4" />; label = 'Widgets'; break;
                 case 'bible': icon = <BookOpen className="w-4 h-4" />; label = 'Bible'; break;
               }
               
@@ -547,20 +558,44 @@ export default function Settings() {
 
 
 
-          {/* FEATURES TAB */}
+          {/* CUSTOMIZE TAB (Combined Features + Widgets) */}
           <TabsContent value="features">
-            <Card>
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle>Features</CardTitle>
-                  <Button onClick={handleSave} disabled={updatePreferencesMutation.isPending}>
-                    <Save className="w-4 h-4 mr-2" />
-                    {updatePreferencesMutation.isPending ? 'Saving...' : 'Save'}
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent><FeatureOrderManager enabledModules={prefData.enabled_modules} onChange={(updates) => setPrefData({ ...prefData, ...updates })} /></CardContent>
-            </Card>
+            <div className="flex justify-end mb-4">
+              <Button onClick={handleSave} disabled={isSavingAll}>
+                <Save className="w-4 h-4 mr-2" />
+                {isSavingAll ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </div>
+
+            <div className="space-y-6">
+              {/* Quick Actions / Widgets Section */}
+              <WidgetSettingsV2 formData={prefData} setFormData={setPrefData} />
+
+              {/* Collapsible Features Section */}
+              <Card>
+                <Collapsible>
+                  <CollapsibleTrigger className="w-full">
+                    <CardHeader className="pb-3 hover:bg-gray-50 transition-colors rounded-t-xl cursor-pointer">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                           <Layers className="w-5 h-5 text-purple-600" />
+                           <div>
+                             <CardTitle className="text-lg">Enable / Disable Features</CardTitle>
+                             <CardDescription>Control which modules appear in your menu</CardDescription>
+                           </div>
+                        </div>
+                        <ChevronDown className="w-5 h-5 text-gray-400 transition-transform duration-200 data-[state=open]:rotate-180" />
+                      </div>
+                    </CardHeader>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <CardContent className="pt-0">
+                      <FeatureOrderManager enabledModules={prefData.enabled_modules} onChange={(updates) => setPrefData({ ...prefData, ...updates })} />
+                    </CardContent>
+                  </CollapsibleContent>
+                </Collapsible>
+              </Card>
+            </div>
           </TabsContent>
 
           {/* DASHBOARD TAB */}
