@@ -150,8 +150,13 @@ import React, { useState } from 'react';
        // Auto-assign "Uncategorized" if empty
        const finalCategories = data.categories.length > 0 ? data.categories : ['Uncategorized'];
        
+       // Clean URL if it's just protocol
+       let cleanUrl = data.url;
+       if (cleanUrl === 'https://' || cleanUrl === 'http://') cleanUrl = '';
+
        const payload = {
          ...data,
+         url: cleanUrl,
          categories: finalCategories,
          category: finalCategories[0], // Sync primary category
          user_email: user.email
@@ -546,11 +551,32 @@ import React, { useState } from 'react';
                </div>
                <div>
                  <Label>URL (Optional)</Label>
-                 <Input 
-                   value={formData.url} 
-                   onChange={(e) => setFormData({...formData, url: e.target.value})}
-                   placeholder="https://..."
-                 />
+                 <div className="flex gap-2">
+                   <Select
+                     value={formData.url.startsWith('http://') ? 'http://' : 'https://'}
+                     onValueChange={(v) => {
+                       const cleanPath = formData.url.replace(/^https?:\/\//, '');
+                       setFormData({ ...formData, url: v + cleanPath });
+                     }}
+                   >
+                     <SelectTrigger className="w-[100px]">
+                       <SelectValue />
+                     </SelectTrigger>
+                     <SelectContent position="popper" className="z-[1000]">
+                       <SelectItem value="https://">https://</SelectItem>
+                       <SelectItem value="http://">http://</SelectItem>
+                     </SelectContent>
+                   </Select>
+                   <Input 
+                     value={formData.url.replace(/^https?:\/\//, '')} 
+                     onChange={(e) => {
+                       const protocol = formData.url.startsWith('http://') ? 'http://' : 'https://';
+                       setFormData({ ...formData, url: protocol + e.target.value });
+                     }}
+                     placeholder="www.example.com"
+                     className="flex-1"
+                   />
+                 </div>
                </div>
                <div>
                  <Label className="mb-2 block">Categories</Label>
@@ -582,7 +608,7 @@ import React, { useState } from 'react';
                        <SelectTrigger className="flex-1">
                          <SelectValue placeholder="Select Category..." />
                        </SelectTrigger>
-                       <SelectContent className="max-h-[200px]">
+                       <SelectContent position="popper" className="max-h-[200px] z-[1000]">
                          {allCategories.map(cat => (
                            <SelectItem key={cat} value={cat}>
                              <div className="flex items-center gap-2">
@@ -765,17 +791,17 @@ import React, { useState } from 'react';
                      <SelectTrigger>
                        <SelectValue />
                      </SelectTrigger>
-                     <SelectContent>
-                      <SelectItem value="private">
-                        <div className="flex items-center gap-2">
-                          <Lock className="w-4 h-4" /> Private
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="group">
-                        <div className="flex items-center gap-2">
-                          <Building className="w-4 h-4" /> Share to Group(s)
-                        </div>
-                      </SelectItem>
+                     <SelectContent position="popper" className="z-[1000]">
+                       <SelectItem value="private">
+                         <div className="flex items-center gap-2">
+                           <Lock className="w-4 h-4" /> Private
+                         </div>
+                       </SelectItem>
+                       <SelectItem value="group">
+                         <div className="flex items-center gap-2">
+                           <Building className="w-4 h-4" /> Share to Group(s)
+                         </div>
+                       </SelectItem>
                      </SelectContent>
                    </Select>
                  </div>
