@@ -4,7 +4,6 @@ import { Dialog, DialogContent, DialogTrigger, DialogTitle } from '@/components/
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Pipette, Copy, Heart, Plus, Trash2, ChevronDown, Check, X } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
@@ -241,8 +240,6 @@ export default function ColorPicker({ color, onChange, label, className }) {
         setInternalColor(hex);
         setHsb(hexToHsb(hex));
         if (onChange) onChange(hex);
-      } else {
-        // Just update local input state if needed, but for now we sync strictly
       }
     }
   };
@@ -259,163 +256,152 @@ export default function ColorPicker({ color, onChange, label, className }) {
         </button>
       </DialogTrigger>
       <DialogContent className="w-80 sm:max-w-[360px] p-4" hideCloseButton={false}>
-        <DialogTitle className="text-center mb-2">Pick a Color</DialogTitle>
-        
-        <Tabs defaultValue="wheel" className="w-full">
-          <div className="flex items-center justify-between mb-4">
-            <TabsList className="h-8">
-              <TabsTrigger value="wheel" className="text-xs h-7">Wheel</TabsTrigger>
-              <TabsTrigger value="crayons" className="text-xs h-7">Crayons</TabsTrigger>
-            </TabsList>
-            <Button variant="ghost" size="sm" onClick={handleEyeDropper} className="h-7 px-2 text-xs gap-1">
-              <Pipette className="w-3 h-3" /> Pick
-            </Button>
+        <div className="flex items-center justify-between mb-2">
+          <DialogTitle className="text-base font-semibold">Pick a Color</DialogTitle>
+          <Button variant="ghost" size="sm" onClick={handleEyeDropper} className="h-7 px-2 text-xs gap-1">
+            <Pipette className="w-3 h-3" /> Pick
+          </Button>
+        </div>
+
+        {/* Custom Interactive Color Wheel */}
+        <div className="flex justify-center mb-5">
+          <div 
+            ref={wheelRef}
+            className="relative w-48 h-48 rounded-full shadow-md cursor-crosshair touch-none"
+            style={{
+              background: `
+                radial-gradient(circle, white, transparent 100%),
+                conic-gradient(red, yellow, lime, aqua, blue, magenta, red)
+              `
+            }}
+            onMouseDown={(e) => { setIsDraggingWheel(true); handleWheelMove(e); }}
+            onTouchStart={(e) => { setIsDraggingWheel(true); handleWheelMove(e); }}
+          >
+            {/* Thumb */}
+            <div 
+              className="absolute w-6 h-6 rounded-full border-2 border-white shadow-md pointer-events-none"
+              style={{
+                left: `${indicatorX}%`,
+                top: `${indicatorY}%`,
+                transform: 'translate(-50%, -50%)',
+                backgroundColor: internalColor
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Brightness Slider (Dark to Light) */}
+        <div className="space-y-1.5 mb-5">
+          <div className="flex justify-between text-[10px] text-gray-400 uppercase font-medium tracking-wider">
+            <span>Dark</span>
+            <span>Brightness</span>
+            <span>Light</span>
+          </div>
+          <div 
+            ref={sliderRef}
+            className="h-6 rounded-full w-full relative cursor-pointer border border-gray-200 overflow-hidden touch-none shadow-inner"
+            style={{ 
+              background: `linear-gradient(to right, #000000, ${hsbToHex(hsb.h, hsb.s, 100)})` 
+            }}
+            onMouseDown={(e) => { setIsDraggingSlider(true); handleSliderMove(e); }}
+            onTouchStart={(e) => { setIsDraggingSlider(true); handleSliderMove(e); }}
+          >
+            <div 
+              className="absolute top-0 bottom-0 w-2 bg-white border-x border-gray-300 shadow-sm pointer-events-none"
+              style={{ left: `${hsb.b}%`, transform: 'translateX(-50%)' }}
+            />
+          </div>
+        </div>
+
+        {/* Values Input */}
+        <div className="space-y-3 pt-2 border-t">
+          <div className="flex gap-1 mb-2">
+            <Button size="xs" variant={mode === 'hex' ? 'secondary' : 'ghost'} onClick={() => setMode('hex')} className="flex-1 h-6 text-[10px]">HEX</Button>
+            <Button size="xs" variant={mode === 'rgb' ? 'secondary' : 'ghost'} onClick={() => setMode('rgb')} className="flex-1 h-6 text-[10px]">RGB</Button>
+            <Button size="xs" variant={mode === 'hsb' ? 'secondary' : 'ghost'} onClick={() => setMode('hsb')} className="flex-1 h-6 text-[10px]">HSB</Button>
           </div>
 
-          <TabsContent value="wheel" className="space-y-5">
-            {/* Custom Interactive Color Wheel */}
-            <div className="flex justify-center">
-              <div 
-                ref={wheelRef}
-                className="relative w-48 h-48 rounded-full shadow-md cursor-crosshair touch-none"
-                style={{
-                  background: `
-                    radial-gradient(circle, white, transparent 100%),
-                    conic-gradient(red, yellow, lime, aqua, blue, magenta, red)
-                  `
-                }}
-                onMouseDown={(e) => { setIsDraggingWheel(true); handleWheelMove(e); }}
-                onTouchStart={(e) => { setIsDraggingWheel(true); handleWheelMove(e); }}
-              >
-                {/* Thumb */}
-                <div 
-                  className="absolute w-6 h-6 rounded-full border-2 border-white shadow-md pointer-events-none"
-                  style={{
-                    left: `${indicatorX}%`,
-                    top: `${indicatorY}%`,
-                    transform: 'translate(-50%, -50%)',
-                    backgroundColor: internalColor
-                  }}
-                />
-              </div>
+          {mode === 'hex' && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-mono text-gray-500">#</span>
+              <Input 
+                defaultValue={internalColor.replace('#', '')} 
+                onBlur={handleHexChange}
+                className="font-mono uppercase h-8"
+                maxLength={6}
+              />
+              <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => navigator.clipboard.writeText(internalColor)}>
+                <Copy className="w-3 h-3" />
+              </Button>
             </div>
+          )}
 
-            {/* Brightness Slider (Dark to Light) */}
-            <div className="space-y-1.5">
-              <div className="flex justify-between text-[10px] text-gray-400 uppercase font-medium tracking-wider">
-                <span>Dark</span>
-                <span>Brightness</span>
-                <span>Light</span>
-              </div>
-              <div 
-                ref={sliderRef}
-                className="h-6 rounded-full w-full relative cursor-pointer border border-gray-200 overflow-hidden touch-none shadow-inner"
-                style={{ 
-                  background: `linear-gradient(to right, #000000, ${hsbToHex(hsb.h, hsb.s, 100)})` 
-                }}
-                onMouseDown={(e) => { setIsDraggingSlider(true); handleSliderMove(e); }}
-                onTouchStart={(e) => { setIsDraggingSlider(true); handleSliderMove(e); }}
-              >
-                <div 
-                  className="absolute top-0 bottom-0 w-2 bg-white border-x border-gray-300 shadow-sm pointer-events-none"
-                  style={{ left: `${hsb.b}%`, transform: 'translateX(-50%)' }}
-                />
-              </div>
-            </div>
-
-            {/* Values Input */}
-            <div className="space-y-3 pt-2 border-t">
-              <div className="flex gap-1 mb-2">
-                <Button size="xs" variant={mode === 'hex' ? 'secondary' : 'ghost'} onClick={() => setMode('hex')} className="flex-1 h-6 text-[10px]">HEX</Button>
-                <Button size="xs" variant={mode === 'rgb' ? 'secondary' : 'ghost'} onClick={() => setMode('rgb')} className="flex-1 h-6 text-[10px]">RGB</Button>
-                <Button size="xs" variant={mode === 'hsb' ? 'secondary' : 'ghost'} onClick={() => setMode('hsb')} className="flex-1 h-6 text-[10px]">HSB</Button>
-              </div>
-
-              {mode === 'hex' && (
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono text-gray-500">#</span>
-                  <Input 
-                    defaultValue={internalColor.replace('#', '')} 
-                    onBlur={handleHexChange}
-                    className="font-mono uppercase h-8"
-                    maxLength={6}
-                  />
-                  <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => navigator.clipboard.writeText(internalColor)}>
-                    <Copy className="w-3 h-3" />
-                  </Button>
-                </div>
-              )}
-
-              {mode === 'rgb' && (() => {
-                const rgb = hsbToRgb(hsb.h, hsb.s, hsb.b);
-                return (
-                  <div className="grid grid-cols-3 gap-2">
-                    {['r', 'g', 'b'].map(k => (
-                      <div key={k} className="flex flex-col items-center">
-                        <div className="text-[10px] text-gray-400 uppercase mb-1">{k}</div>
-                        <div className="w-full h-8 flex items-center justify-center bg-gray-50 rounded border border-gray-200 text-xs font-mono">
-                          {rgb[k]}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                );
-              })()}
-
-              {mode === 'hsb' && (
-                <div className="grid grid-cols-3 gap-2">
-                  {['h', 's', 'b'].map(k => (
-                    <div key={k} className="flex flex-col items-center">
-                      <div className="text-[10px] text-gray-400 uppercase mb-1">{k}</div>
-                      <div className="w-full h-8 flex items-center justify-center bg-gray-50 rounded border border-gray-200 text-xs font-mono">
-                        {hsb[k]}
-                      </div>
+          {mode === 'rgb' && (() => {
+            const rgb = hsbToRgb(hsb.h, hsb.s, hsb.b);
+            return (
+              <div className="grid grid-cols-3 gap-2">
+                {['r', 'g', 'b'].map(k => (
+                  <div key={k} className="flex flex-col items-center">
+                    <div className="text-[10px] text-gray-400 uppercase mb-1">{k}</div>
+                    <div className="w-full h-8 flex items-center justify-center bg-gray-50 rounded border border-gray-200 text-xs font-mono">
+                      {rgb[k]}
                     </div>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+
+          {mode === 'hsb' && (
+            <div className="grid grid-cols-3 gap-2">
+              {['h', 's', 'b'].map(k => (
+                <div key={k} className="flex flex-col items-center">
+                  <div className="text-[10px] text-gray-400 uppercase mb-1">{k}</div>
+                  <div className="w-full h-8 flex items-center justify-center bg-gray-50 rounded border border-gray-200 text-xs font-mono">
+                    {hsb[k]}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Crayola Dropdown (Simplified) */}
+        <div className="pt-4 border-t border-gray-100 mt-2">
+          <Popover open={crayolaOpen} onOpenChange={setCrayolaOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="w-full justify-between font-normal text-gray-600">
+                <span className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded-full border border-gray-200" style={{ backgroundColor: internalColor }} />
+                  {CRAYOLA_COLORS.find(c => c.hex.toLowerCase() === internalColor.toLowerCase())?.name || "Choose Crayola Color..."}
+                </span>
+                <ChevronDown className="w-4 h-4 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64 p-0 z-[9999]" align="start">
+              <ScrollArea className="h-72">
+                <div className="p-2 space-y-1">
+                  {CRAYOLA_COLORS.map(color => (
+                    <button
+                      key={color.name}
+                      onClick={() => {
+                        setInternalColor(color.hex);
+                        setHsb(hexToHsb(color.hex));
+                        if(onChange) onChange(color.hex);
+                        setCrayolaOpen(false);
+                      }}
+                      className="w-full flex items-center gap-3 p-2 hover:bg-gray-100 rounded-md transition-colors text-left"
+                    >
+                      <div className="w-6 h-6 rounded-full border border-gray-200 shadow-sm" style={{ backgroundColor: color.hex }} />
+                      <span className="text-sm text-gray-700">{color.name}</span>
+                      {internalColor.toLowerCase() === color.hex.toLowerCase() && <Check className="w-4 h-4 text-purple-600 ml-auto" />}
+                    </button>
                   ))}
                 </div>
-              )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="crayons">
-            <div className="pt-2 border-t border-gray-100">
-              <Popover open={crayolaOpen} onOpenChange={setCrayolaOpen}>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-between font-normal text-gray-600">
-                    <span className="flex items-center gap-2">
-                      <div className="w-4 h-4 rounded-full border border-gray-200" style={{ backgroundColor: internalColor }} />
-                      {CRAYOLA_COLORS.find(c => c.hex.toLowerCase() === internalColor.toLowerCase())?.name || "Choose Crayola Color..."}
-                    </span>
-                    <ChevronDown className="w-4 h-4 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-64 p-0" align="start">
-                  <ScrollArea className="h-72">
-                    <div className="p-2 space-y-1">
-                      {CRAYOLA_COLORS.map(color => (
-                        <button
-                          key={color.name}
-                          onClick={() => {
-                            setInternalColor(color.hex);
-                            setHsb(hexToHsb(color.hex));
-                            if(onChange) onChange(color.hex);
-                            setCrayolaOpen(false);
-                          }}
-                          className="w-full flex items-center gap-3 p-2 hover:bg-gray-100 rounded-md transition-colors text-left"
-                        >
-                          <div className="w-6 h-6 rounded-full border border-gray-200 shadow-sm" style={{ backgroundColor: color.hex }} />
-                          <span className="text-sm text-gray-700">{color.name}</span>
-                          {internalColor.toLowerCase() === color.hex.toLowerCase() && <Check className="w-4 h-4 text-purple-600 ml-auto" />}
-                        </button>
-                      ))}
-                    </div>
-                  </ScrollArea>
-                </PopoverContent>
-              </Popover>
-
-            </div>
-          </TabsContent>
-        </Tabs>
+              </ScrollArea>
+            </PopoverContent>
+          </Popover>
+        </div>
 
         {/* Favorites Section */}
         <div className="pt-4 border-t border-gray-100 mt-4">
