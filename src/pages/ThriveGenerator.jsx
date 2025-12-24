@@ -9,7 +9,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Sparkles, Image as ImageIcon, Copy, Download, Save, RefreshCw, Lightbulb, Trash2 } from 'lucide-react';
 import { useTheme } from '../components/shared/useTheme';
-import { motion } from 'framer-motion';
 
 const CATEGORY = 'thrive';
 
@@ -18,10 +17,13 @@ export default function ThriveGenerator() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('generate');
   
-  // Generator State (Matching the old ReferralsTab logic)
+  // Generator State
   const [genFeature, setGenFeature] = useState('Overview');
   const [customFeature, setCustomFeature] = useState('');
   const [genType, setGenType] = useState('social_caption');
+  const [targetAudience, setTargetAudience] = useState('Entrepreneurs');
+  const [tone, setTone] = useState('Pixel Style (Humorous)');
+  
   const [generatedContent, setGeneratedContent] = useState('');
   const [copySuccess, setCopySuccess] = useState(false);
 
@@ -49,11 +51,6 @@ export default function ThriveGenerator() {
     queryFn: async () => {
       const user = await base44.auth.me();
       if (!user) return [];
-      // Filter strictly for this category if possible, or filter client side.
-      // Assuming we tag them or just show all for now, but better to filter.
-      // Since Thrive Generator doesn't use ContentGeneratorTool entity in this hardcoded version, 
-      // we might not find matching tool_ids. 
-      // We will save new history with a special tool_name "Thrive Generator".
       const allHistory = await base44.entities.GeneratedContentHistory.filter({ user_email: user.email }, '-created_date');
       return allHistory.filter(h => h.tool_name === 'Thrive Generator' || h.tool_id === 'thrive-gen');
     }
@@ -84,17 +81,13 @@ export default function ThriveGenerator() {
       const res = await base44.functions.invoke('generateMarketingContent', {
         feature: featureToUse,
         contentType: genType,
-        targetAudience: 'creators' // Defaulting as per previous tab
+        targetAudience: targetAudience,
+        tone: tone
       });
       return res.data?.content;
     },
     onSuccess: async (data) => {
       setGeneratedContent(data);
-      
-      // Save to NEW history structure automatically? 
-      // The old tab didn't auto-save to history, it had a "Save" button. 
-      // New requested flow usually implies auto-save history or explicit.
-      // Let's auto-save to history for convenience in the "Studio" model.
       
       const user = await base44.auth.me();
       const featureToUse = genFeature === 'Custom' ? customFeature : genFeature;
@@ -105,7 +98,7 @@ export default function ThriveGenerator() {
         tool_name: 'Thrive Generator',
         content: data,
         content_type: 'text',
-        inputs: { feature: featureToUse, type: genType }
+        inputs: { feature: featureToUse, type: genType, audience: targetAudience, tone: tone }
       });
       queryClient.invalidateQueries({ queryKey: ['generatedHistory'] });
     }
@@ -119,7 +112,7 @@ export default function ThriveGenerator() {
         content: content,
         type: 'ai_generated',
         category: 'Thrive Referrals',
-        notes: `Generated for feature: ${featureToUse} (${genType})`,
+        notes: `Generated for: ${featureToUse} (${genType}) - ${tone}`,
         used_for_content: false
       });
     },
@@ -170,10 +163,11 @@ export default function ThriveGenerator() {
                 <div className="lg:col-span-1 space-y-4">
                   <Card className="border-teal-200">
                     <CardHeader>
-                      <CardTitle>Generator Settings</CardTitle>
+                      <CardTitle>Tool Settings</CardTitle>
                       <CardDescription>Select what you want to promote</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
+                      {/* Feature Selection */}
                       <div className="space-y-2">
                         <Label>Feature to Highlight</Label>
                         <Select value={genFeature} onValueChange={setGenFeature}>
@@ -206,6 +200,7 @@ export default function ThriveGenerator() {
                         </div>
                       )}
 
+                      {/* Content Type */}
                       <div className="space-y-2">
                         <Label>Content Type</Label>
                         <Select value={genType} onValueChange={setGenType}>
@@ -222,8 +217,43 @@ export default function ThriveGenerator() {
                         </Select>
                       </div>
 
+                      {/* Target Audience */}
+                      <div className="space-y-2">
+                        <Label>Target Audience</Label>
+                        <Select value={targetAudience} onValueChange={setTargetAudience}>
+                          <SelectTrigger className="bg-white">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Entrepreneurs">Entrepreneurs</SelectItem>
+                            <SelectItem value="Creators">Content Creators</SelectItem>
+                            <SelectItem value="Neurodivergent Minds">Neurodivergent Minds</SelectItem>
+                            <SelectItem value="Moms">Moms / Parents</SelectItem>
+                            <SelectItem value="Students">Students</SelectItem>
+                            <SelectItem value="Busy Professionals">Busy Professionals</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Tone */}
+                      <div className="space-y-2">
+                        <Label>Tone</Label>
+                        <Select value={tone} onValueChange={setTone}>
+                          <SelectTrigger className="bg-white">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Pixel Style (Humorous)">Pixel Style (Humorous)</SelectItem>
+                            <SelectItem value="Professional">Professional</SelectItem>
+                            <SelectItem value="Encouraging">Encouraging & Warm</SelectItem>
+                            <SelectItem value="Sassy/Edgy">Sassy / Edgy</SelectItem>
+                            <SelectItem value="Neurospicy Friendly">Neurospicy Friendly</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
                       <Button 
-                        className="w-full bg-teal-600 hover:bg-teal-700 text-white"
+                        className="w-full bg-teal-600 hover:bg-teal-700 text-white mt-2"
                         onClick={() => generateMutation.mutate()}
                         disabled={generateMutation.isPending}
                       >
@@ -243,7 +273,7 @@ export default function ThriveGenerator() {
                     <CardContent>
                       {generatedContent ? (
                         <div className="space-y-4">
-                           <div className="p-4 bg-gray-50 rounded-lg whitespace-pre-wrap font-sans text-sm border border-teal-100">
+                           <div className="p-6 bg-gray-50 rounded-lg whitespace-pre-wrap font-sans text-sm border border-teal-100 shadow-inner">
                              {generatedContent}
                            </div>
                            
@@ -267,7 +297,7 @@ export default function ThriveGenerator() {
                       ) : (
                         <div className="flex flex-col items-center justify-center h-full text-gray-400 py-12">
                           <Sparkles className="w-12 h-12 mb-4 opacity-20" />
-                          <p>Select a feature and type to generate magic!</p>
+                          <p>Select your settings and click Generate to see magic happen!</p>
                         </div>
                       )}
                     </CardContent>

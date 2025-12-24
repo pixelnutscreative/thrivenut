@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Brain, Image as ImageIcon, Copy, Download, Sparkles } from 'lucide-react';
+import { Loader2, Brain, Image as ImageIcon, Copy, Download, Sparkles, Save, Trash2 } from 'lucide-react';
 import { useTheme } from '../components/shared/useTheme';
+import { Badge } from '@/components/ui/badge';
 
 const CATEGORY = 'ai';
 
@@ -19,28 +19,14 @@ export default function AIToolsGenerator() {
   const [activeTab, setActiveTab] = useState('generate');
   
   // Generator State
-  const [selectedToolId, setSelectedToolId] = useState('');
-  const [inputs, setInputs] = useState({});
-  const [generatedResult, setGeneratedResult] = useState(null);
+  const [genFeature, setGenFeature] = useState('Dreamy Nut');
+  const [customFeature, setCustomFeature] = useState('');
+  const [genType, setGenType] = useState('social_caption');
+  const [targetAudience, setTargetAudience] = useState('Digital Artists');
+  const [tone, setTone] = useState('Pixel Style (Humorous)');
 
-  // Fetch Tools
-  const { data: tools = [] } = useQuery({
-    queryKey: ['generatorTools', CATEGORY],
-    queryFn: async () => {
-      const all = await base44.entities.ContentGeneratorTool.filter({ category: CATEGORY, is_active: true });
-      return all;
-    }
-  });
-
-  // Automatically select Dreamy Nut if available and nothing selected
-  React.useEffect(() => {
-    if (!selectedToolId && tools.length > 0) {
-      const dreamy = tools.find(t => t.name === 'Dreamy Nut');
-      if (dreamy) setSelectedToolId(dreamy.id);
-    }
-  }, [tools, selectedToolId]);
-
-  const selectedTool = tools.find(t => t.id === selectedToolId);
+  const [generatedContent, setGeneratedContent] = useState('');
+  const [copySuccess, setCopySuccess] = useState(false);
 
   // Fetch Assets
   const { data: assets = [] } = useQuery({
@@ -57,39 +43,34 @@ export default function AIToolsGenerator() {
       const user = await base44.auth.me();
       if (!user) return [];
       const allHistory = await base44.entities.GeneratedContentHistory.filter({ user_email: user.email }, '-created_date');
-      const toolIds = tools.map(t => t.id);
-      return allHistory.filter(h => toolIds.includes(h.tool_id));
-    },
-    enabled: tools.length > 0
+      return allHistory.filter(h => h.tool_name === 'AI Tools Generator' || h.tool_id === 'ai-gen');
+    }
   });
 
   // Mutations
   const generateMutation = useMutation({
     mutationFn: async () => {
-      if (!selectedTool) return;
-      
-      let prompt = selectedTool.prompt_template;
-      Object.keys(inputs).forEach(key => {
-        prompt = prompt.replace(new RegExp(`{{${key}}}`, 'g'), inputs[key] || '');
-      });
-
+      const featureToUse = genFeature === 'Custom' ? customFeature : genFeature;
       const res = await base44.functions.invoke('generateMarketingContent', {
-        prompt,
-        type: selectedTool.output_type,
-        toolId: selectedTool.id
+        feature: featureToUse,
+        contentType: genType,
+        targetAudience: targetAudience,
+        tone: tone
       });
-      return res.data;
+      return res.data?.content;
     },
     onSuccess: async (data) => {
-      setGeneratedResult(data);
+      setGeneratedContent(data);
       const user = await base44.auth.me();
+      const featureToUse = genFeature === 'Custom' ? customFeature : genFeature;
+      
       await base44.entities.GeneratedContentHistory.create({
         user_email: user.email,
-        tool_id: selectedTool.id,
-        tool_name: selectedTool.name,
-        content: data.content,
-        content_type: selectedTool.output_type,
-        inputs: inputs
+        tool_id: 'ai-gen',
+        tool_name: 'AI Tools Generator',
+        content: data,
+        content_type: 'text',
+        inputs: { feature: featureToUse, type: genType, audience: targetAudience, tone: tone }
       });
       queryClient.invalidateQueries({ queryKey: ['generatedHistory'] });
     }
@@ -127,77 +108,97 @@ export default function AIToolsGenerator() {
                 <div className="lg:col-span-1 space-y-4">
                   <Card className="border-pink-200">
                     <CardHeader>
-                      <CardTitle>AI Tool</CardTitle>
+                      <CardTitle>Generator Settings</CardTitle>
+                      <CardDescription>Select tool to promote</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <div>
-                        <Label>Select Character</Label>
-                        <Select value={selectedToolId} onValueChange={(v) => {
-                          setSelectedToolId(v);
-                          setInputs({});
-                          setGeneratedResult(null);
-                        }}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Choose..." />
+                      {/* Feature/Tool */}
+                      <div className="space-y-2">
+                        <Label>AI Tool to Highlight</Label>
+                        <Select value={genFeature} onValueChange={setGenFeature}>
+                          <SelectTrigger className="bg-white">
+                            <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {tools.map(tool => (
-                              <SelectItem key={tool.id} value={tool.id}>
-                                {tool.icon} {tool.name}
-                              </SelectItem>
-                            ))}
+                            <SelectItem value="Dreamy Nut">Dreamy Nut (Image Gen)</SelectItem>
+                            <SelectItem value="Poet Nut">Poet Nut (Writing)</SelectItem>
+                            <SelectItem value="Pixel's AI Toolbox Overview">Toolbox Overview</SelectItem>
+                            <SelectItem value="Custom">✨ Custom Tool / Topic</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
 
-                      {selectedTool && (
-                        <div className="space-y-4 pt-4 border-t">
-                          <p className="text-sm text-gray-500 italic">{selectedTool.description}</p>
-                          
-                          {selectedTool.input_fields?.map(field => (
-                            <div key={field.name}>
-                              <Label>{field.label}</Label>
-                              {field.type === 'select' ? (
-                                <Select 
-                                  value={inputs[field.name] || ''} 
-                                  onValueChange={(v) => setInputs({...inputs, [field.name]: v})}
-                                >
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select..." />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {field.options?.map(opt => (
-                                      <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              ) : field.type === 'textarea' ? (
-                                <Textarea 
-                                  placeholder={field.placeholder}
-                                  value={inputs[field.name] || ''}
-                                  onChange={(e) => setInputs({...inputs, [field.name]: e.target.value})}
-                                  className="min-h-[100px]"
-                                />
-                              ) : (
-                                <Input 
-                                  placeholder={field.placeholder}
-                                  value={inputs[field.name] || ''}
-                                  onChange={(e) => setInputs({...inputs, [field.name]: e.target.value})}
-                                />
-                              )}
-                            </div>
-                          ))}
-
-                          <Button 
-                            className="w-full bg-pink-600 hover:bg-pink-700 text-white"
-                            onClick={() => generateMutation.mutate()}
-                            disabled={generateMutation.isPending}
-                          >
-                            {generateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}
-                            Create Magic
-                          </Button>
+                      {genFeature === 'Custom' && (
+                        <div className="space-y-2">
+                          <Label>Describe the Tool/Topic</Label>
+                          <Input 
+                            placeholder="e.g. AI Video Generators"
+                            value={customFeature}
+                            onChange={(e) => setCustomFeature(e.target.value)}
+                          />
                         </div>
                       )}
+
+                      {/* Content Type */}
+                      <div className="space-y-2">
+                        <Label>Content Type</Label>
+                        <Select value={genType} onValueChange={setGenType}>
+                          <SelectTrigger className="bg-white">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="social_caption">Social Media Caption</SelectItem>
+                            <SelectItem value="short_script">Short Video Script (Reels/TikTok)</SelectItem>
+                            <SelectItem value="story_idea">Story/Post Idea</SelectItem>
+                            <SelectItem value="email_blurb">Email Newsletter Blurb</SelectItem>
+                            <SelectItem value="dm_script">Direct Message Script</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Audience */}
+                      <div className="space-y-2">
+                        <Label>Target Audience</Label>
+                        <Select value={targetAudience} onValueChange={setTargetAudience}>
+                          <SelectTrigger className="bg-white">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Digital Artists">Digital Artists</SelectItem>
+                            <SelectItem value="Content Creators">Content Creators</SelectItem>
+                            <SelectItem value="Writers">Writers / Bloggers</SelectItem>
+                            <SelectItem value="Business Owners">Business Owners</SelectItem>
+                            <SelectItem value="Tech Enthusiasts">Tech Enthusiasts</SelectItem>
+                            <SelectItem value="Beginners">AI Beginners</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Tone */}
+                      <div className="space-y-2">
+                        <Label>Tone</Label>
+                        <Select value={tone} onValueChange={setTone}>
+                          <SelectTrigger className="bg-white">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Pixel Style (Humorous)">Pixel Style (Humorous)</SelectItem>
+                            <SelectItem value="Professional">Professional</SelectItem>
+                            <SelectItem value="Encouraging">Encouraging & Warm</SelectItem>
+                            <SelectItem value="Sassy/Edgy">Sassy / Edgy</SelectItem>
+                            <SelectItem value="Neurospicy Friendly">Neurospicy Friendly</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <Button 
+                        className="w-full bg-pink-600 hover:bg-pink-700 text-white mt-2"
+                        onClick={() => generateMutation.mutate()}
+                        disabled={generateMutation.isPending}
+                      >
+                        {generateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}
+                        Create Magic
+                      </Button>
                     </CardContent>
                   </Card>
                 </div>
@@ -205,28 +206,23 @@ export default function AIToolsGenerator() {
                 <div className="lg:col-span-2">
                   <Card className="h-full min-h-[400px] border-pink-100 bg-pink-50/30">
                     <CardHeader>
-                      <CardTitle>Output</CardTitle>
+                      <CardTitle>Result</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      {generatedResult ? (
+                      {generatedContent ? (
                         <div className="space-y-4">
-                           {selectedTool?.output_type === 'image' ? (
-                             <img src={generatedResult.content} alt="Generated" className="w-full rounded-xl shadow-lg border-4 border-white" />
-                           ) : (
-                             <div className="p-6 bg-white rounded-xl shadow-sm border border-pink-100 font-serif text-lg leading-relaxed whitespace-pre-wrap">
-                               {generatedResult.content}
-                             </div>
-                           )}
+                           <div className="p-6 bg-white rounded-xl shadow-sm border border-pink-100 font-sans text-sm whitespace-pre-wrap">
+                             {generatedContent}
+                           </div>
                            
                            <div className="flex gap-2 justify-end">
-                             <Button variant="outline" onClick={() => navigator.clipboard.writeText(generatedResult.content)}>
-                               <Copy className="w-4 h-4 mr-2" /> Copy
+                             <Button variant="outline" onClick={() => {
+                               navigator.clipboard.writeText(generatedContent);
+                               setCopySuccess(true);
+                               setTimeout(() => setCopySuccess(false), 2000);
+                             }}>
+                               {copySuccess ? <span className="flex items-center gap-1">✓ Copied</span> : <><Copy className="w-4 h-4 mr-2" /> Copy</>}
                              </Button>
-                             {selectedTool?.output_type === 'image' && (
-                               <Button variant="outline" onClick={() => window.open(generatedResult.content, '_blank')}>
-                                 <Download className="w-4 h-4 mr-2" /> Download
-                               </Button>
-                             )}
                            </div>
                         </div>
                       ) : (
@@ -242,7 +238,6 @@ export default function AIToolsGenerator() {
             </TabsContent>
 
             <TabsContent value="library">
-               {/* Same library structure, customized for AI Tools assets */}
                <div className="grid md:grid-cols-3 gap-6">
                 {assets.length === 0 ? (
                   <div className="col-span-3 text-center py-12 text-gray-500">
@@ -272,25 +267,27 @@ export default function AIToolsGenerator() {
             </TabsContent>
 
             <TabsContent value="history">
-              {/* Reuse History List */}
               <div className="space-y-4">
-                {history.map(item => (
-                  <Card key={item.id}>
-                    <CardContent className="p-4 flex gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-xs font-bold text-pink-600">{item.tool_name}</span>
-                          <span className="text-xs text-gray-400">{new Date(item.created_date).toLocaleDateString()}</span>
-                        </div>
-                        {item.content_type === 'image' ? (
-                          <img src={item.content} alt="Historical" className="w-48 h-48 object-cover rounded-lg" />
-                        ) : (
+                {history.length === 0 ? (
+                  <div className="text-center py-12 text-gray-500">No history yet.</div>
+                ) : (
+                  history.map(item => (
+                    <Card key={item.id}>
+                      <CardContent className="p-4 flex gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Badge variant="outline" className="border-pink-300 text-pink-700">{item.inputs?.feature || item.tool_name}</Badge>
+                            <span className="text-xs text-gray-400">{new Date(item.created_date).toLocaleDateString()}</span>
+                          </div>
                           <p className="text-sm text-gray-700 line-clamp-3">{item.content}</p>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                        </div>
+                        <Button size="sm" variant="ghost" onClick={() => navigator.clipboard.writeText(item.content)}>
+                          <Copy className="w-4 h-4" />
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
               </div>
             </TabsContent>
           </div>
