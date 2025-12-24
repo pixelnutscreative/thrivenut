@@ -24,6 +24,11 @@ export default function AddressingPreferences({ formData, setFormData }) {
             <SelectItem value="my_love">My Love</SelectItem>
             <SelectItem value="darling">Darling</SelectItem>
             <SelectItem value="sweetie">Sweetie</SelectItem>
+            <SelectItem value="queen">Queen</SelectItem>
+            <SelectItem value="king">King</SelectItem>
+            <SelectItem value="princess">Princess</SelectItem>
+            <SelectItem value="prince">Prince</SelectItem>
+            <SelectItem value="pauper">Pauper</SelectItem>
           </SelectContent>
         </Select>
       </CardContent>

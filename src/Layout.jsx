@@ -987,7 +987,8 @@ export default function Layout({ children, currentPageName }) {
         <MobileSoundCloudPopup
           playlistUrl={soundcloudUrl}
           primaryColor={primaryColor}
-          accentColor={accentColor} />
+          accentColor={accentColor}
+          isHidden={mobileMenuOpen} />
 
         }
 

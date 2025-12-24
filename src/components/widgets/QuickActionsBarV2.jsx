@@ -260,17 +260,14 @@ export default function QuickActionsBarV2({
           })}
         </div>
 
-        {/* Settings Gear */}
-        <div className="pl-4 border-l border-gray-200 ml-4 flex flex-col items-center justify-center">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate('/Settings#widgets-v2')}
-            className="rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600"
+        {/* Settings Gear inline */}
+        <div className="flex flex-col items-center gap-2 group cursor-pointer ml-4" onClick={() => navigate('/Settings#widgets-v2')}>
+          <div 
+            className={`${currentSize.container} rounded-full flex items-center justify-center text-white shadow-lg transition-transform group-hover:scale-110 group-active:scale-95 bg-gray-400`}
           >
-            <SettingsIcon className="w-5 h-5" />
-          </Button>
-          <span className="text-[10px] text-gray-400 mt-1">Config</span>
+            <SettingsIcon className={currentSize.icon} />
+          </div>
+          <span className="text-[10px] font-medium text-gray-500 group-hover:text-gray-800">Config</span>
         </div>
       </div>
 
