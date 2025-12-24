@@ -388,9 +388,9 @@ export default function Settings() {
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle>Profile</CardTitle>
-                  <Button onClick={handleSave} disabled={updatePreferencesMutation.isPending || updateUserProfileMutation.isPending}>
+                  <Button onClick={handleSave} disabled={isSavingAll}>
                     <Save className="w-4 h-4 mr-2" />
-                    {updatePreferencesMutation.isPending || updateUserProfileMutation.isPending ? 'Saving...' : 'Save'}
+                    {isSavingAll ? 'Saving...' : 'Save'}
                   </Button>
                 </div>
               </CardHeader>
@@ -601,9 +601,9 @@ export default function Settings() {
           {/* DASHBOARD TAB */}
           <TabsContent value="dashboard">
             <div className="flex justify-end mb-4">
-              <Button onClick={handleSave} disabled={updatePreferencesMutation.isPending}>
+              <Button onClick={handleSave} disabled={isSavingAll}>
                 <Save className="w-4 h-4 mr-2" />
-                {updatePreferencesMutation.isPending ? 'Saving...' : 'Save Changes'}
+                {isSavingAll ? 'Saving...' : 'Save Changes'}
               </Button>
             </div>
             <DashboardPreferences formData={prefData} setFormData={setPrefData} />
@@ -612,9 +612,9 @@ export default function Settings() {
           {/* PREFERENCES TAB */}
           <TabsContent value="preferences">
             <div className="flex justify-end mb-4">
-              <Button onClick={handleSave} disabled={updatePreferencesMutation.isPending}>
+              <Button onClick={handleSave} disabled={isSavingAll}>
                 <Save className="w-4 h-4 mr-2" />
-                {updatePreferencesMutation.isPending ? 'Saving...' : 'Save Changes'}
+                {isSavingAll ? 'Saving...' : 'Save Changes'}
               </Button>
             </div>
             
@@ -890,23 +890,14 @@ export default function Settings() {
 
 
 
-          {/* WIDGETS V2 TAB */}
-          <TabsContent value="widgets-v2" id="widgets-v2">
-            <div className="flex justify-end mb-4">
-              <Button onClick={handleSave} disabled={updatePreferencesMutation.isPending}>
-                <Save className="w-4 h-4 mr-2" />
-                {updatePreferencesMutation.isPending ? 'Saving...' : 'Save Changes'}
-              </Button>
-            </div>
-            <WidgetSettingsV2 formData={prefData} setFormData={setPrefData} />
-          </TabsContent>
+
 
           {/* BIBLE TAB */}
           <TabsContent value="bible">
             <div className="flex justify-end mb-4">
-              <Button onClick={handleSave} disabled={updatePreferencesMutation.isPending}>
+              <Button onClick={handleSave} disabled={isSavingAll}>
                 <Save className="w-4 h-4 mr-2" />
-                {updatePreferencesMutation.isPending ? 'Saving...' : 'Save Changes'}
+                {isSavingAll ? 'Saving...' : 'Save Changes'}
               </Button>
             </div>
             <Card>
