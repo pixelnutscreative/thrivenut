@@ -19,9 +19,9 @@ const WIDGET_LABELS = {
   special_events: 'Special Events',
   subscribed_events: 'Subscribed Events',
   notion_tasks: 'Notion Tasks',
-  group_highlights: 'Highlights (Birthdays/Anniversaries)',
-  upcoming_battles: 'Upcoming Battles',
-  live_creators: 'Live Creators Today'
+  special_dates: 'Special Dates (Birthdays)',
+  tiktok_battles: 'TikTok Battles',
+  live_schedule: 'Live Schedule (Contacts)'
 };
 
 const DEFAULT_LAYOUT = [
@@ -33,9 +33,9 @@ const DEFAULT_LAYOUT = [
   { id: 'calendar_integration', visible: true, order: 5, width: 'half' },
   { id: 'special_events', visible: true, order: 6, width: 'half' },
   { id: 'subscribed_events', visible: true, order: 7, width: 'half' },
-  { id: 'group_highlights', visible: false, order: 8, width: 'half' },
-  { id: 'upcoming_battles', visible: false, order: 9, width: 'half' },
-  { id: 'live_creators', visible: false, order: 10, width: 'half' }
+  { id: 'special_dates', visible: true, order: 8, width: 'half' },
+  { id: 'tiktok_battles', visible: true, order: 9, width: 'half' },
+  { id: 'live_schedule', visible: true, order: 10, width: 'half' }
 ];
 
 export default function DashboardCustomizer({ isOpen, onClose, currentLayout, onSave }) {

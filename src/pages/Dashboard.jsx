@@ -26,9 +26,9 @@ import DashboardHabitsSection from '../components/dashboard/DashboardHabitsSecti
 import OnboardingModal from '../components/onboarding/OnboardingModal';
 import CryptoTickerWidget from '../components/widgets/CryptoTickerWidget';
 import GreetingCard from '../components/dashboard/GreetingCard';
-import GroupHighlightsWidget from '../components/widgets/GroupHighlightsWidget';
-import UpcomingBattlesWidget from '../components/widgets/UpcomingBattlesWidget';
-import LiveCreatorsWidget from '../components/widgets/LiveCreatorsWidget';
+import SpecialDatesWidget from '../components/dashboard/SpecialDatesWidget';
+import TikTokBattlesWidget from '../components/dashboard/TikTokBattlesWidget';
+import LiveScheduleWidget from '../components/dashboard/LiveScheduleWidget';
 import { format, startOfWeek, addDays } from 'date-fns';
 import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
 import { useTheme } from '../components/shared/useTheme';
@@ -207,9 +207,9 @@ export default function Dashboard() {
     { id: 'calendar_integration', visible: true, order: 5, width: 'half' },
     { id: 'special_events', visible: true, order: 6, width: 'half' },
     { id: 'subscribed_events', visible: true, order: 7, width: 'half' },
-    { id: 'group_highlights', visible: false, order: 8, width: 'half' },
-    { id: 'upcoming_battles', visible: false, order: 9, width: 'half' },
-    { id: 'live_creators', visible: false, order: 10, width: 'half' }
+    { id: 'special_dates', visible: true, order: 8, width: 'half' },
+    { id: 'tiktok_battles', visible: true, order: 9, width: 'half' },
+    { id: 'live_schedule', visible: true, order: 10, width: 'half' }
   ];
 
   const [layout, setLayout] = useState([]);
@@ -244,6 +244,8 @@ export default function Dashboard() {
     if (widget.id === 'my_day' && !enabledModules.includes('wellness')) return false;
     if (widget.id === 'special_events' && !enabledModules.includes('people')) return false;
     if (widget.id === 'daily_motivation' && !enabledModules.includes('motivations')) return false;
+    if (widget.id === 'special_dates' && !enabledModules.includes('people')) return false;
+    if ((widget.id === 'tiktok_battles' || widget.id === 'live_schedule') && !enabledModules.includes('tiktok')) return false;
     if (widget.id === 'crypto_ticker') return false; 
     
     return true;
@@ -343,12 +345,12 @@ export default function Dashboard() {
         return <SpecialEventsCard contacts={tiktokContacts} />;
       case 'subscribed_events':
         return <SubscribedEventsSection userEmail={user?.email} primaryColor={primaryColor} />;
-      case 'group_highlights':
-        return <GroupHighlightsWidget userEmail={effectiveEmail} />;
-      case 'upcoming_battles':
-        return <UpcomingBattlesWidget />;
-      case 'live_creators':
-        return <LiveCreatorsWidget />;
+      case 'special_dates':
+        return <SpecialDatesWidget userEmail={effectiveEmail} />;
+      case 'tiktok_battles':
+        return <TikTokBattlesWidget userEmail={effectiveEmail} />;
+      case 'live_schedule':
+        return <LiveScheduleWidget userEmail={effectiveEmail} />;
       case 'crypto_ticker':
         return null; // Moved to Creator Groups
       default:
