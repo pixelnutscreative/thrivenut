@@ -25,7 +25,7 @@ import QuickActionsSettings from '../components/settings/QuickActionsSettings';
 import SoundCloudSettings from '../components/settings/SoundCloudSettings';
 import MoodEmojiSettings from '../components/settings/MoodEmojiSettings';
 import WidgetSettingsV2 from '../components/settings/WidgetSettingsV2';
-import ReferralsTab from '../components/settings/ReferralsTab';
+// ReferralsTab removed
 import AccountDeletionTab from '../components/settings/AccountDeletionTab';
 import AIPersonalitySettings from '../components/settings/AIPersonalitySettings';
 import AddressingPreferences from '../components/settings/AddressingPreferences';
@@ -336,12 +336,12 @@ export default function Settings() {
         </div>
 
         <Tabs value={activeTab} onValueChange={(v) => { 
-          handleSave(); 
+          // Auto-save removed
           setActiveTab(v); 
           navigate(`#${v}`); 
         }} className="w-full">
           <TabsList className="grid grid-cols-4 md:grid-cols-8 gap-1 mb-6 bg-transparent h-auto">
-            {['profile', 'features', 'dashboard', 'preferences', 'widgets-v2', 'bible', 'referrals'].map(tab => {
+            {['profile', 'features', 'dashboard', 'preferences', 'widgets-v2', 'bible'].map(tab => {
               let icon, label;
               switch(tab) {
                 case 'profile': icon = <User className="w-4 h-4" />; label = 'Profile'; break;
@@ -350,7 +350,6 @@ export default function Settings() {
                 case 'preferences': icon = <Sliders className="w-4 h-4" />; label = 'Prefs'; break;
                 case 'widgets-v2': icon = <PuzzleIcon className="w-4 h-4" />; label = 'Widgets'; break;
                 case 'bible': icon = <BookOpen className="w-4 h-4" />; label = 'Bible'; break;
-                case 'referrals': icon = <Share2 className="w-4 h-4" />; label = 'Share'; break;
               }
               
               const isActive = activeTab === tab;
@@ -977,14 +976,7 @@ export default function Settings() {
             </Card>
           </TabsContent>
 
-          {/* REFERRALS TAB */}
-          <TabsContent value="referrals">
-            <ReferralsTab 
-              userEmail={effectiveEmail} 
-              primaryColor={primaryColor}
-              accentColor={accentColor}
-            />
-          </TabsContent>
+
 
 
 

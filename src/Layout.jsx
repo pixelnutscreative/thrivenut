@@ -206,7 +206,7 @@ export default function Layout({ children, currentPageName }) {
     bgColor: 'bg-orange-500/10',
     items: [
     { name: 'Content Creator Center', icon: Target, path: 'ContentCreatorHub' },
-    { name: 'Affiliate Programs', icon: DollarSign, path: 'AffiliateCampaigns' },
+    // Affiliate Programs moved to Share & Earn
     { name: 'Content Ideas', icon: Lightbulb, path: 'SavedMotivations', moduleId: 'motivations' },
     { name: 'Content Marketplace', icon: Briefcase, path: 'ContentMarketplace', highlight: true },
     { name: 'Create AI Music', icon: Music, isSection: true, subItems: [
@@ -229,16 +229,16 @@ export default function Layout({ children, currentPageName }) {
 
   },
   {
-    id: 'support',
-    title: 'Support & Settings',
+    id: 'share_earn',
+    title: 'Share & Earn',
     color: 'text-pink-400', // Hot Pink
     bgColor: 'bg-pink-500/10',
     items: [
-    { name: 'Settings', icon: Settings, path: 'Settings', alwaysShow: true },
-    { name: 'Support', icon: HelpCircle, path: 'Support', alwaysShow: true },
-    { name: 'Admin Panel', icon: UserCog, path: 'Admin', adminOnly: true },
-    { name: 'Community Map', icon: Share2, path: 'CommunityMap', adminOnly: true }]
-
+      { name: 'Links & Dashboard', icon: Share2, path: 'AffiliateCampaigns' },
+      { name: 'Thrive Content', icon: Sparkles, path: 'ThriveGenerator' },
+      { name: "Pixel's AI Toolbox", icon: Brain, path: 'AIToolsGenerator' },
+      { name: 'Nuts + Bots Content', icon: MessageCircle, path: 'NutsBotsGenerator' }
+    ]
   }];
 
 
@@ -598,12 +598,41 @@ export default function Layout({ children, currentPageName }) {
 
                   </button>
 
-                  <div className="space-y-2">
+                  <div className="flex items-center gap-1 mt-2">
                     <Button
-                    onClick={handleLogout}
-                    size="sm"
-                    className={`w-full justify-start ${isMenuDark ? 'bg-gray-700 text-gray-100 hover:bg-gray-600' : 'bg-gray-800 text-white hover:bg-gray-700'}`}>
-
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => navigate(createPageUrl('Settings'))}
+                      className={isMenuDark ? 'text-gray-400 hover:text-white hover:bg-white/10' : 'text-gray-500 hover:bg-gray-100'}
+                      title="Settings"
+                    >
+                      <Settings className="w-5 h-5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => navigate(createPageUrl('Support'))}
+                      className={isMenuDark ? 'text-gray-400 hover:text-white hover:bg-white/10' : 'text-gray-500 hover:bg-gray-100'}
+                      title="Support"
+                    >
+                      <HelpCircle className="w-5 h-5" />
+                    </Button>
+                    {isAdmin && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => navigate(createPageUrl('Admin'))}
+                        className={isMenuDark ? 'text-gray-400 hover:text-white hover:bg-white/10' : 'text-gray-500 hover:bg-gray-100'}
+                        title="Admin Panel"
+                      >
+                        <UserCog className="w-5 h-5" />
+                      </Button>
+                    )}
+                    <Button
+                      onClick={handleLogout}
+                      size="sm"
+                      className={`flex-1 justify-center ${isMenuDark ? 'bg-gray-700 text-gray-100 hover:bg-gray-600' : 'bg-gray-800 text-white hover:bg-gray-700'}`}
+                    >
                       <LogOut className="w-4 h-4 mr-2" /> Log Out
                     </Button>
                   </div>
@@ -855,12 +884,41 @@ export default function Layout({ children, currentPageName }) {
 
             </button>
 
-            <div className="space-y-2">
+            <div className="flex items-center gap-1 mt-2">
               <Button
-                  onClick={handleLogout}
-                  size="sm"
-                  className={`w-full justify-start ${isMenuDark ? 'bg-gray-700 text-gray-100 hover:bg-gray-600' : 'bg-gray-800 text-white hover:bg-gray-700'}`}>
-
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate(createPageUrl('Settings'))}
+                className={isMenuDark ? 'text-gray-400 hover:text-white hover:bg-white/10' : 'text-gray-500 hover:bg-gray-100'}
+                title="Settings"
+              >
+                <Settings className="w-5 h-5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate(createPageUrl('Support'))}
+                className={isMenuDark ? 'text-gray-400 hover:text-white hover:bg-white/10' : 'text-gray-500 hover:bg-gray-100'}
+                title="Support"
+              >
+                <HelpCircle className="w-5 h-5" />
+              </Button>
+              {isAdmin && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => navigate(createPageUrl('Admin'))}
+                  className={isMenuDark ? 'text-gray-400 hover:text-white hover:bg-white/10' : 'text-gray-500 hover:bg-gray-100'}
+                  title="Admin Panel"
+                >
+                  <UserCog className="w-5 h-5" />
+                </Button>
+              )}
+              <Button
+                onClick={handleLogout}
+                size="sm"
+                className={`flex-1 justify-center ${isMenuDark ? 'bg-gray-700 text-gray-100 hover:bg-gray-600' : 'bg-gray-800 text-white hover:bg-gray-700'}`}
+              >
                 <LogOut className="w-4 h-4 mr-2" /> Log Out
               </Button>
             </div>
