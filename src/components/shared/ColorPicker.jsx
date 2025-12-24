@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Dialog, DialogContent, DialogTrigger, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -247,8 +248,8 @@ export default function ColorPicker({ color, onChange, label, className }) {
   };
 
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
-      <PopoverTrigger asChild>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
         <button className={`flex items-center gap-2 group ${className}`} type="button">
           <div 
             className="w-8 h-8 rounded-full shadow-sm ring-2 ring-white ring-offset-1 ring-offset-gray-200 transition-transform group-hover:scale-110" 
@@ -256,8 +257,9 @@ export default function ColorPicker({ color, onChange, label, className }) {
           />
           {label && <span className="text-sm text-gray-600">{label}</span>}
         </button>
-      </PopoverTrigger>
-      <PopoverContent className="w-80 p-4" align="start" sideOffset={8}>
+      </DialogTrigger>
+      <DialogContent className="w-80 sm:max-w-[360px] p-4" hideCloseButton={false}>
+        <DialogTitle className="text-center mb-2">Pick a Color</DialogTitle>
         
         <Tabs defaultValue="wheel" className="w-full">
           <div className="flex items-center justify-between mb-4">
@@ -471,7 +473,7 @@ export default function ColorPicker({ color, onChange, label, className }) {
             )}
           </div>
         </div>
-      </PopoverContent>
-    </Popover>
+      </DialogContent>
+    </Dialog>
   );
 }
