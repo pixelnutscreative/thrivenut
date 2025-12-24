@@ -1,6 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
+import { useTheme } from '../shared/useTheme';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -21,7 +23,9 @@ const VOICEOVER_TOOLS = [
 ];
 
 export default function GroupTrainingTab({ group, currentUser, isAdmin }) {
+  const { preferences } = useTheme();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -44,6 +48,20 @@ export default function GroupTrainingTab({ group, currentUser, isAdmin }) {
       return modules;
     }
   });
+
+  // Handle Edit from URL
+  useEffect(() => {
+    const editId = searchParams.get('editId');
+    if (editId && trainingModules.length > 0 && !isDialogOpen && !editingId) {
+      const module = trainingModules.find(m => m.id === editId);
+      if (module) {
+        handleEdit(module);
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete('editId');
+        setSearchParams(newParams);
+      }
+    }
+  }, [searchParams, trainingModules]);
 
   const { data: completions = [] } = useQuery({
     queryKey: ['myCompletions', group.id, currentUser?.email],
@@ -194,7 +212,13 @@ export default function GroupTrainingTab({ group, currentUser, isAdmin }) {
                 }
             }}>
               <DialogTrigger asChild>
-                <Button onClick={() => setIsDialogOpen(true)}>Add Training</Button>
+                <Button 
+                  onClick={() => setIsDialogOpen(true)}
+                  className="text-white hover:opacity-90"
+                  style={{ backgroundColor: preferences?.primary_color }}
+                >
+                  Add Training
+                </Button>
               </DialogTrigger>
               <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
