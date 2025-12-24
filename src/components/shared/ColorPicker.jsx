@@ -381,7 +381,7 @@ export default function ColorPicker({ color, onChange, label, className }) {
             <div className="pt-2 border-t border-gray-100">
               <Popover open={crayolaOpen} onOpenChange={setCrayolaOpen}>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-between font-normal text-gray-600 mb-2">
+                  <Button variant="outline" className="w-full justify-between font-normal text-gray-600">
                     <span className="flex items-center gap-2">
                       <div className="w-4 h-4 rounded-full border border-gray-200" style={{ backgroundColor: internalColor }} />
                       {CRAYOLA_COLORS.find(c => c.hex.toLowerCase() === internalColor.toLowerCase())?.name || "Choose Crayola Color..."}
@@ -412,22 +412,7 @@ export default function ColorPicker({ color, onChange, label, className }) {
                   </ScrollArea>
                 </PopoverContent>
               </Popover>
-              <div className="grid grid-cols-5 gap-3 p-2 bg-gray-50 rounded-lg">
-                {CRAYOLA_COLORS.slice(0, 15).map(c => (
-                  <div key={c.name} className="flex flex-col items-center">
-                    <button
-                      className={`w-4 h-12 rounded-full shadow-sm transition-transform hover:scale-110 focus:outline-none ${internalColor.toLowerCase() === c.hex.toLowerCase() ? 'ring-2 ring-purple-500 ring-offset-1 scale-110' : ''}`}
-                      style={{ backgroundColor: c.hex }}
-                      onClick={() => {
-                        setInternalColor(c.hex);
-                        setHsb(hexToHsb(c.hex));
-                        if(onChange) onChange(c.hex);
-                      }}
-                      title={c.name}
-                    />
-                  </div>
-                ))}
-              </div>
+
             </div>
           </TabsContent>
         </Tabs>
