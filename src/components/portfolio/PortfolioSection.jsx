@@ -278,7 +278,7 @@ export default function PortfolioSection({ userEmail, isAuthenticated, primaryCo
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-[200]">
                     <SelectItem value="nutpal">🐿️ NutPal Character</SelectItem>
                     <SelectItem value="image">🖼️ Image</SelectItem>
                     <SelectItem value="text">📝 Text/Poem</SelectItem>
@@ -297,7 +297,7 @@ export default function PortfolioSection({ userEmail, isAuthenticated, primaryCo
                     <SelectTrigger>
                       <SelectValue placeholder="Select style..." />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="z-[200]">
                       {nutPalStyles.map(style => (
                         <SelectItem key={style.id} value={style.id}>{style.name}</SelectItem>
                       ))}
@@ -312,7 +312,7 @@ export default function PortfolioSection({ userEmail, isAuthenticated, primaryCo
                     <SelectTrigger>
                       <SelectValue placeholder="Select tool..." />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="z-[200]">
                       {aiTools.map(tool => (
                         <SelectItem key={tool.id} value={tool.tool_name}>{tool.tool_name}</SelectItem>
                       ))}
