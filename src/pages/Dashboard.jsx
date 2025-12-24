@@ -112,6 +112,8 @@ export default function Dashboard() {
     }
   }, [user, preferences]);
 
+  const enabledModules = preferences?.enabled_modules || [];
+
   const { data: selfCareLog } = useQuery({
     queryKey: ['selfCareToday', format(new Date(), 'yyyy-MM-dd')],
     queryFn: async () => {
@@ -121,7 +123,7 @@ export default function Dashboard() {
       });
       return logs[0] || null;
     },
-    enabled: !!user,
+    enabled: !!user && enabledModules.includes('wellness'),
   });
 
   const effectiveEmail = user ? getEffectiveUserEmail(user.email) : null;
@@ -129,7 +131,7 @@ export default function Dashboard() {
   const { data: tiktokContacts = [] } = useQuery({
     queryKey: ['tiktokContacts', effectiveEmail],
     queryFn: () => base44.entities.TikTokContact.filter({ created_by: effectiveEmail }),
-    enabled: !!effectiveEmail,
+    enabled: !!effectiveEmail && enabledModules.includes('people'),
   });
 
   const updatePreferencesMutation = useMutation({
@@ -255,6 +257,15 @@ export default function Dashboard() {
 
   const renderWidget = (widget) => {
     if (!widget.visible) return null;
+    const enabledModules = preferences?.enabled_modules || [];
+
+    // Module-based visibility checks
+    if (widget.id === 'tasks' && !enabledModules.includes('tasks')) return null;
+    if (widget.id === 'goals' && !enabledModules.includes('goals')) return null;
+    if (widget.id === 'habits' && !enabledModules.includes('habits')) return null;
+    if (widget.id === 'my_day' && !enabledModules.includes('wellness')) return null;
+    if (widget.id === 'special_events' && !enabledModules.includes('people')) return null;
+    if (widget.id === 'daily_motivation' && !enabledModules.includes('motivations')) return null;
 
     switch (widget.id) {
       case 'daily_motivation':
