@@ -77,6 +77,9 @@ export default function AdminNotificationsContent() {
     mutationFn: (id) => base44.entities.Notification.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    },
+    onError: (error) => {
+      alert(`Failed to delete: ${error.message}`);
     }
   });
 
