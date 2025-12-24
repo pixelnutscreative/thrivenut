@@ -146,13 +146,13 @@ export function MobileSoundCloudPopup({ playlistUrl, primaryColor, accentColor }
 
   return (
     <>
-      {/* Trigger Button - Bottom Right */}
+      {/* Trigger Button - Bottom Right (shifted up to avoid Help button) */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="lg:hidden fixed bottom-4 right-4 w-14 h-14 rounded-full shadow-lg flex items-center justify-center z-40"
+        className="lg:hidden fixed bottom-24 right-4 w-12 h-12 rounded-full shadow-lg flex items-center justify-center z-40"
         style={{ background: `linear-gradient(135deg, ${primaryColor}, ${accentColor})` }}
       >
-        <Music className="w-6 h-6 text-white" />
+        <Music className="w-5 h-5 text-white" />
       </button>
 
       {/* Backdrop */}

@@ -998,7 +998,7 @@ export default function Layout({ children, currentPageName }) {
 
       <FloatingHelpButton pageName={currentPageName} userEmail={user?.email} />
 
-      {user && effectiveEmail && preferences &&
+      {user && effectiveEmail && preferences && !mobileMenuOpen &&
         <QuickActionsBarV2
           preferences={preferences}
           primaryColor={primaryColor}
