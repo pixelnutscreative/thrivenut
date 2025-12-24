@@ -99,6 +99,7 @@ export default function ColorPicker({ color, onChange, label, className }) {
   const [mode, setMode] = useState('hex');
   const [isOpen, setIsOpen] = useState(false);
   const [crayolaOpen, setCrayolaOpen] = useState(false);
+  const [crayolaSearch, setCrayolaSearch] = useState('');
   const [isDraggingWheel, setIsDraggingWheel] = useState(false);
   const [isDraggingSlider, setIsDraggingSlider] = useState(false);
   
@@ -143,7 +144,15 @@ export default function ColorPicker({ color, onChange, label, className }) {
     const radius = rect.width / 2;
     const saturation = Math.min(100, Math.max(0, (dist / radius) * 100));
     
-    updateColorFromHsb({ ...hsb, h: Math.round(angle), s: Math.round(saturation) });
+    // Adjust angle to match CSS conic-gradient (Red at top)
+    // Math.atan2: 0 is Right, -90 is Top.
+    // CSS Conic: 0 is Top.
+    // We want -90 -> 0, 0 -> 90, 90 -> 180, 180 -> 270.
+    let hue = angle + 90;
+    if (hue < 0) hue += 360;
+    if (hue >= 360) hue -= 360;
+
+    updateColorFromHsb({ ...hsb, h: Math.round(hue), s: Math.round(saturation) });
   }, [hsb]);
 
   // --- Slider Interaction ---
@@ -226,7 +235,9 @@ export default function ColorPicker({ color, onChange, label, className }) {
   });
 
   // Calculate indicator position on wheel
-  const angleRad = hsb.h * (Math.PI / 180);
+  // Reverse the +90 degree shift for display
+  const displayAngle = hsb.h - 90;
+  const angleRad = displayAngle * (Math.PI / 180);
   const radiusPercent = hsb.s / 100;
   const indicatorX = 50 + (Math.cos(angleRad) * radiusPercent * 50);
   const indicatorY = 50 + (Math.sin(angleRad) * radiusPercent * 50);
@@ -379,9 +390,18 @@ export default function ColorPicker({ color, onChange, label, className }) {
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-64 p-0 z-[9999]" align="start">
+              <div className="p-2 border-b sticky top-0 bg-white z-10">
+                <Input 
+                  placeholder="Search colors..." 
+                  value={crayolaSearch}
+                  onChange={(e) => setCrayolaSearch(e.target.value)}
+                  className="h-8 text-xs"
+                  autoFocus
+                />
+              </div>
               <ScrollArea className="h-72">
                 <div className="p-2 space-y-1">
-                  {CRAYOLA_COLORS.map(color => (
+                  {CRAYOLA_COLORS.filter(c => c.name.toLowerCase().includes(crayolaSearch.toLowerCase())).map(color => (
                     <button
                       key={color.name}
                       onClick={() => {
@@ -389,14 +409,18 @@ export default function ColorPicker({ color, onChange, label, className }) {
                         setHsb(hexToHsb(color.hex));
                         if(onChange) onChange(color.hex);
                         setCrayolaOpen(false);
+                        setCrayolaSearch('');
                       }}
                       className="w-full flex items-center gap-3 p-2 hover:bg-gray-100 rounded-md transition-colors text-left"
                     >
-                      <div className="w-6 h-6 rounded-full border border-gray-200 shadow-sm" style={{ backgroundColor: color.hex }} />
-                      <span className="text-sm text-gray-700">{color.name}</span>
-                      {internalColor.toLowerCase() === color.hex.toLowerCase() && <Check className="w-4 h-4 text-purple-600 ml-auto" />}
+                      <div className="w-6 h-6 rounded-full border border-gray-200 shadow-sm shrink-0" style={{ backgroundColor: color.hex }} />
+                      <span className="text-sm text-gray-700 truncate">{color.name}</span>
+                      {internalColor.toLowerCase() === color.hex.toLowerCase() && <Check className="w-4 h-4 text-purple-600 ml-auto shrink-0" />}
                     </button>
                   ))}
+                  {CRAYOLA_COLORS.filter(c => c.name.toLowerCase().includes(crayolaSearch.toLowerCase())).length === 0 && (
+                    <div className="text-xs text-gray-400 text-center py-4">No colors found</div>
+                  )}
                 </div>
               </ScrollArea>
             </PopoverContent>

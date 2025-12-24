@@ -602,7 +602,7 @@ export default function Layout({ children, currentPageName }) {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => navigate(createPageUrl('Settings'))}
+                      onClick={() => { navigate(createPageUrl('Settings')); setMobileMenuOpen(false); }}
                       className={isMenuDark ? 'text-gray-400 hover:text-white hover:bg-white/10' : 'text-gray-500 hover:bg-gray-100'}
                       title="Settings"
                     >
@@ -611,7 +611,7 @@ export default function Layout({ children, currentPageName }) {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => navigate(createPageUrl('Support'))}
+                      onClick={() => { navigate(createPageUrl('Support')); setMobileMenuOpen(false); }}
                       className={isMenuDark ? 'text-gray-400 hover:text-white hover:bg-white/10' : 'text-gray-500 hover:bg-gray-100'}
                       title="Support"
                     >
@@ -621,7 +621,7 @@ export default function Layout({ children, currentPageName }) {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => navigate(createPageUrl('Admin'))}
+                        onClick={() => { navigate(createPageUrl('Admin')); setMobileMenuOpen(false); }}
                         className={isMenuDark ? 'text-gray-400 hover:text-white hover:bg-white/10' : 'text-gray-500 hover:bg-gray-100'}
                         title="Admin Panel"
                       >
