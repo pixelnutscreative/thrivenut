@@ -4,6 +4,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { RotateCcw } from 'lucide-react';
+import ColorPicker from '../shared/ColorPicker';
 
 // Default colors
 const DEFAULT_PRIMARY = '#1fd2ea';
@@ -89,11 +90,9 @@ export default function ThemeSelector({ themeData, onChange }) {
           <div className="space-y-2">
             <Label className="text-sm">Primary Color</Label>
             <div className="flex gap-2">
-              <Input
-                type="color"
-                value={primaryColor}
-                onChange={(e) => setPrimaryColor(e.target.value)}
-                className="w-16 h-10 p-1 cursor-pointer"
+              <ColorPicker
+                color={primaryColor}
+                onChange={(val) => setPrimaryColor(val)}
               />
               <Input
                 type="text"
@@ -108,11 +107,9 @@ export default function ThemeSelector({ themeData, onChange }) {
           <div className="space-y-2">
             <Label className="text-sm">Accent Color</Label>
             <div className="flex gap-2">
-              <Input
-                type="color"
-                value={accentColor}
-                onChange={(e) => setAccentColor(e.target.value)}
-                className="w-16 h-10 p-1 cursor-pointer"
+              <ColorPicker
+                color={accentColor}
+                onChange={(val) => setAccentColor(val)}
               />
               <Input
                 type="text"
