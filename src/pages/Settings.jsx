@@ -190,6 +190,7 @@ export default function Settings() {
           share_recovery: true,
           share_military: true,
           share_color: true,
+          share_creator_info: true,
           ...userProfile.privacy_settings
         },
         phonetic: userProfile.phonetic || '',
@@ -200,7 +201,9 @@ export default function Settings() {
         live_stream_types: userProfile.live_stream_types || [],
         live_agency: userProfile.live_agency || '',
         shop_agency: userProfile.shop_agency || '',
-        started_going_live: userProfile.started_going_live || ''
+        started_going_live: userProfile.started_going_live || '',
+        clubs: userProfile.clubs || [],
+        custom_clubs: userProfile.custom_clubs || []
       });
     }
   }, [userProfile]);
