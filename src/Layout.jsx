@@ -332,6 +332,12 @@ export default function Layout({ children, currentPageName }) {
 
    return (
      <>
+      <style>{`
+        :root {
+          --primary-color: ${primaryColor};
+          --accent-color: ${accentColor};
+        }
+      `}</style>
       <AnnouncementBar />
       <div
         className={`min-h-screen ${bgClass} ${currentlyImpersonating ? 'pt-10' : ''}`}
