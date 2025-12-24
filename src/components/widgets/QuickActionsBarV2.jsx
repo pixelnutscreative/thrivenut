@@ -53,7 +53,10 @@ export default function QuickActionsBarV2({
   const [openModal, setOpenModal] = useState(null);
 
   const actionsToDisplay = useMemo(() => {
-    if (!preferences || !preferences.quick_actions) return baseBuiltInActions.map(a => ({...a, Icon: iconMap[a.icon]}));
+    // If no preferences or empty quick_actions, show ALL built-in actions by default
+    if (!preferences || !preferences.quick_actions || preferences.quick_actions.length === 0) {
+      return baseBuiltInActions.map(a => ({...a, Icon: iconMap[a.icon]}));
+    }
 
     const allActions = [];
 
@@ -177,8 +180,8 @@ export default function QuickActionsBarV2({
   };
 
   const barBg = preferences?.quick_actions_bar_color || 'rgba(255, 255, 255, 0.9)';
-  const iconSize = preferences?.quick_actions_icon_size || 'medium';
-  const barHeight = preferences?.quick_actions_bar_height || 'standard';
+  const iconSize = preferences?.quick_actions_icon_size || 'small';
+  const barHeight = preferences?.quick_actions_bar_height || 'compact';
 
   // Define size classes
   const sizeClasses = {

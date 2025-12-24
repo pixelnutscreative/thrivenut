@@ -86,11 +86,16 @@ export default function WidgetSettingsV2({ formData, setFormData }) {
   const [newEmoji, setNewEmoji] = useState('');
   const [newLabel, setNewLabel] = useState('');
 
-  const quickActions = formData.quick_actions || ['mood', 'water', 'food', 'note'];
+  // Defaults if null/undefined, ensuring "all items" by default if empty preference
+  const quickActions = (!formData.quick_actions || formData.quick_actions.length === 0) 
+    ? builtInActions.map(a => a.id) 
+    : formData.quick_actions;
+    
   const customActions = formData.custom_quick_actions || [];
   const barColor = formData.quick_actions_bar_color || 'rgba(255, 255, 255, 0.9)';
-  const iconSize = formData.quick_actions_icon_size || 'medium';
-  const barHeight = formData.quick_actions_bar_height || 'standard';
+  // Update defaults: small, compact
+  const iconSize = formData.quick_actions_icon_size || 'small';
+  const barHeight = formData.quick_actions_bar_height || 'compact';
 
   const filteredIcons = iconLibrary.filter(icon => icon.toLowerCase().includes(iconSearch.toLowerCase()));
 
