@@ -76,6 +76,10 @@ import WaterHistory from './pages/WaterHistory';
 import WeeklyGifterGallery from './pages/WeeklyGifterGallery';
 import Wellness from './pages/Wellness';
 import WorkSchedules from './pages/WorkSchedules';
+import ShareDashboard from './pages/ShareDashboard';
+import ThriveGenerator from './pages/ThriveGenerator';
+import AIToolsGenerator from './pages/AIToolsGenerator';
+import NutsBotsGenerator from './pages/NutsBotsGenerator';
 import __Layout from './Layout.jsx';
 
 
@@ -158,6 +162,10 @@ export const PAGES = {
     "WeeklyGifterGallery": WeeklyGifterGallery,
     "Wellness": Wellness,
     "WorkSchedules": WorkSchedules,
+    "ShareDashboard": ShareDashboard,
+    "ThriveGenerator": ThriveGenerator,
+    "AIToolsGenerator": AIToolsGenerator,
+    "NutsBotsGenerator": NutsBotsGenerator,
 }
 
 export const pagesConfig = {
