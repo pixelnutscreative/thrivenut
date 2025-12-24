@@ -24,8 +24,10 @@ export default function NotificationBell({ userEmail, isDark = false }) {
       
       // Filter based on user's TikTok access
       const prefs = await base44.entities.UserPreferences.filter({ user_email: userEmail });
-      const hasTikTokAccess = prefs[0]?.tiktok_access_approved;
+      const hasTikTokAccess = (prefs && prefs[0]) ? prefs[0].tiktok_access_approved : false;
       
+      if (!notifs) return [];
+
       return notifs.filter(n => {
         // Targeted notification
         if (n.user_email) {

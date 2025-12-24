@@ -16,6 +16,12 @@ Deno.serve(async (req) => {
              return Response.json({ error: "No symbols provided" }, { status: 400 });
         }
 
+        // Filter valid symbols
+        const validSymbols = symbols.filter(s => typeof s === 'string');
+        if (validSymbols.length === 0) {
+             return Response.json({ prices: {} });
+        }
+
         // CoinGecko requires IDs, not symbols. We'll do a basic mapping for common ones
         // or try to search. For reliability, let's just use a fixed mapping for now
         // and default to 0 for unknown.
@@ -60,8 +66,8 @@ Deno.serve(async (req) => {
         };
         
         // Filter for known ids
-        const ids = symbols.map(s => symbolMap[s.toUpperCase()]).filter(Boolean);
-        const unknownSymbols = symbols.filter(s => !symbolMap[s.toUpperCase()]);
+        const ids = validSymbols.map(s => symbolMap[s.toUpperCase()]).filter(Boolean);
+        const unknownSymbols = validSymbols.filter(s => !symbolMap[s.toUpperCase()]);
 
         let prices = {};
 
