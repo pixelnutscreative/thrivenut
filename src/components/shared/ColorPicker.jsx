@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogTrigger, DialogTitle } from '@/components/
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Pipette, Copy, Heart, Plus, Trash2, ChevronDown, Check, X } from 'lucide-react';
+import { Pipette, Copy, Heart, Check, X, ChevronDown } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
@@ -106,22 +106,34 @@ export default function ColorPicker({ color, onChange, label, className }) {
   const wheelRef = useRef(null);
   const sliderRef = useRef(null);
   
+  // Use Refs for state to avoid re-binding event listeners on every frame
+  const hsbRef = useRef(hsb);
+  const onChangeRef = useRef(onChange);
+
   const { preferences } = useTheme();
   const queryClient = useQueryClient();
 
   useEffect(() => {
     if (color) {
       setInternalColor(color);
-      setHsb(hexToHsb(color));
+      const newHsb = hexToHsb(color);
+      setHsb(newHsb);
+      hsbRef.current = newHsb;
     }
   }, [color]);
 
-  const updateColorFromHsb = (newHsb) => {
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
+  // Stable update function
+  const updateColorFromHsb = useCallback((newHsb) => {
     const newHex = hsbToHex(newHsb.h, newHsb.s, newHsb.b);
     setInternalColor(newHex);
     setHsb(newHsb);
-    if (onChange) onChange(newHex);
-  };
+    hsbRef.current = newHsb; // Keep ref in sync
+    if (onChangeRef.current) onChangeRef.current(newHex);
+  }, []);
 
   // --- Wheel Interaction ---
   const handleWheelMove = useCallback((e) => {
@@ -129,8 +141,10 @@ export default function ColorPicker({ color, onChange, label, className }) {
     const rect = wheelRef.current.getBoundingClientRect();
     const centerX = rect.width / 2;
     const centerY = rect.height / 2;
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    
+    // Support both mouse and touch events
+    const clientX = e.touches && e.touches.length > 0 ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches && e.touches.length > 0 ? e.touches[0].clientY : e.clientY;
     
     const x = clientX - rect.left - centerX;
     const y = clientY - rect.top - centerY;
@@ -144,27 +158,28 @@ export default function ColorPicker({ color, onChange, label, className }) {
     const radius = rect.width / 2;
     const saturation = Math.min(100, Math.max(0, (dist / radius) * 100));
     
-    // Adjust angle to match CSS conic-gradient (Red at top)
-    // Math.atan2: 0 is Right, -90 is Top.
-    // CSS Conic: 0 is Top.
-    // We want -90 -> 0, 0 -> 90, 90 -> 180, 180 -> 270.
+    // Adjust angle to match CSS conic-gradient
     let hue = angle + 90;
     if (hue < 0) hue += 360;
     if (hue >= 360) hue -= 360;
 
-    updateColorFromHsb({ ...hsb, h: Math.round(hue), s: Math.round(saturation) });
-  }, [hsb]);
+    // Use current brightness from ref
+    const currentB = hsbRef.current.b;
+    updateColorFromHsb({ h: Math.round(hue), s: Math.round(saturation), b: currentB });
+  }, [updateColorFromHsb]);
 
   // --- Slider Interaction ---
   const handleSliderMove = useCallback((e) => {
     if (!sliderRef.current) return;
     const rect = sliderRef.current.getBoundingClientRect();
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    
+    const clientX = e.touches && e.touches.length > 0 ? e.touches[0].clientX : e.clientX;
     const x = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
     
-    // Slider determines Brightness (0 = Black, 100 = Full Color)
-    updateColorFromHsb({ ...hsb, b: Math.round(x * 100) });
-  }, [hsb]);
+    // Use current Hue/Sat from ref
+    const { h, s } = hsbRef.current;
+    updateColorFromHsb({ h, s, b: Math.round(x * 100) });
+  }, [updateColorFromHsb]);
 
   // --- Event Listeners for Dragging ---
   useEffect(() => {
@@ -174,14 +189,20 @@ export default function ColorPicker({ color, onChange, label, className }) {
     };
     
     const handleMove = (e) => {
-      if (isDraggingWheel) handleWheelMove(e);
-      if (isDraggingSlider) handleSliderMove(e);
+      if (isDraggingWheel) {
+        if(e.cancelable) e.preventDefault(); // Prevent scrolling on mobile
+        handleWheelMove(e);
+      }
+      if (isDraggingSlider) {
+        if(e.cancelable) e.preventDefault();
+        handleSliderMove(e);
+      }
     };
 
     if (isDraggingWheel || isDraggingSlider) {
       window.addEventListener('mousemove', handleMove);
       window.addEventListener('mouseup', handleUp);
-      window.addEventListener('touchmove', handleMove);
+      window.addEventListener('touchmove', handleMove, { passive: false });
       window.addEventListener('touchend', handleUp);
     }
 
@@ -204,7 +225,9 @@ export default function ColorPicker({ color, onChange, label, className }) {
     try {
       const result = await eyeDropper.open();
       setInternalColor(result.sRGBHex);
-      setHsb(hexToHsb(result.sRGBHex));
+      const newHsb = hexToHsb(result.sRGBHex);
+      setHsb(newHsb);
+      hsbRef.current = newHsb;
       if (onChange) onChange(result.sRGBHex);
     } catch (e) {
       // User cancelled
@@ -235,7 +258,6 @@ export default function ColorPicker({ color, onChange, label, className }) {
   });
 
   // Calculate indicator position on wheel
-  // Reverse the +90 degree shift for display
   const displayAngle = hsb.h - 90;
   const angleRad = displayAngle * (Math.PI / 180);
   const radiusPercent = hsb.s / 100;
@@ -249,7 +271,9 @@ export default function ColorPicker({ color, onChange, label, className }) {
       if (val.length === 6) {
         const hex = `#${val}`;
         setInternalColor(hex);
-        setHsb(hexToHsb(hex));
+        const newHsb = hexToHsb(hex);
+        setHsb(newHsb);
+        hsbRef.current = newHsb;
         if (onChange) onChange(hex);
       }
     }
@@ -286,7 +310,11 @@ export default function ColorPicker({ color, onChange, label, className }) {
               `
             }}
             onMouseDown={(e) => { setIsDraggingWheel(true); handleWheelMove(e); }}
-            onTouchStart={(e) => { setIsDraggingWheel(true); handleWheelMove(e); }}
+            onTouchStart={(e) => { 
+              // e.preventDefault() here might block scroll on dialog if miss target, but with touch-none it's safer
+              setIsDraggingWheel(true); 
+              handleWheelMove(e); 
+            }}
           >
             {/* Thumb */}
             <div 
@@ -315,7 +343,10 @@ export default function ColorPicker({ color, onChange, label, className }) {
               background: `linear-gradient(to right, #000000, ${hsbToHex(hsb.h, hsb.s, 100)})` 
             }}
             onMouseDown={(e) => { setIsDraggingSlider(true); handleSliderMove(e); }}
-            onTouchStart={(e) => { setIsDraggingSlider(true); handleSliderMove(e); }}
+            onTouchStart={(e) => { 
+              setIsDraggingSlider(true); 
+              handleSliderMove(e); 
+            }}
           >
             <div 
               className="absolute top-0 bottom-0 w-2 bg-white border-x border-gray-300 shadow-sm pointer-events-none"
@@ -406,7 +437,9 @@ export default function ColorPicker({ color, onChange, label, className }) {
                       key={color.name}
                       onClick={() => {
                         setInternalColor(color.hex);
-                        setHsb(hexToHsb(color.hex));
+                        const newHsb = hexToHsb(color.hex);
+                        setHsb(newHsb);
+                        hsbRef.current = newHsb;
                         if(onChange) onChange(color.hex);
                         setCrayolaOpen(false);
                         setCrayolaSearch('');
@@ -450,7 +483,9 @@ export default function ColorPicker({ color, onChange, label, className }) {
                   style={{ backgroundColor: c }}
                   onClick={() => {
                     setInternalColor(c);
-                    setHsb(hexToHsb(c));
+                    const newHsb = hexToHsb(c);
+                    setHsb(newHsb);
+                    hsbRef.current = newHsb;
                     if(onChange) onChange(c);
                   }}
                   title={c}
