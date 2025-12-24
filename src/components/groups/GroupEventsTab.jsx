@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
+import { useTheme } from '../shared/useTheme';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
@@ -13,7 +15,9 @@ import LevelSelector from './LevelSelector';
 import MemberSelector from './MemberSelector';
 
 export default function GroupEventsTab({ group, currentUser, myMembership, isAdmin }) {
+  const { preferences } = useTheme();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
@@ -21,23 +25,37 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
     description: '',
     start_time: '',
     end_time: '',
-    occurrences: [{ start_time: '', end_time: '' }],
+    occurrences: [{ 
+      id: Date.now(), 
+      start_time: '', 
+      end_time: '', 
+      recurrence: { enabled: false, days: [], weeks: 8, noEnd: false } 
+    }],
     link: '',
     location: '',
     target_levels: [],
     target_users: []
   });
 
-  // Recurrence controls
-  const [repeatWeekly, setRepeatWeekly] = useState(false);
-  const [repeatDays, setRepeatDays] = useState([]);
-  const [repeatWeeks, setRepeatWeeks] = useState(8);
-  const [repeatNoEnd, setRepeatNoEnd] = useState(false);
-
-   const { data: events = [] } = useQuery({
+  const { data: events = [] } = useQuery({
     queryKey: ['groupEvents', group.id],
     queryFn: () => base44.entities.GroupEvent.filter({ group_id: group.id }, 'start_time'),
   });
+
+  // Handle Edit from URL
+  useEffect(() => {
+    const editId = searchParams.get('editId');
+    if (editId && events.length > 0 && !isDialogOpen && !editingId) {
+      const event = events.find(e => e.id === editId);
+      if (event) {
+        handleEdit(event);
+        // Clear param so it doesn't reopen on close
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete('editId');
+        setSearchParams(newParams);
+      }
+    }
+  }, [searchParams, events]);
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
@@ -132,14 +150,27 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
 
   const handleEdit = (event) => {
     setEditingId(event.id);
+    
+    // Transform existing occurrences to include ID and default recurrence (disabled)
+    const existingOcc = (event.occurrences && event.occurrences.length > 0)
+      ? event.occurrences.map((o, idx) => ({
+          ...o,
+          id: Date.now() + idx,
+          recurrence: { enabled: false, days: [], weeks: 8, noEnd: false }
+        }))
+      : [{ 
+          id: Date.now(), 
+          start_time: event.start_time || '', 
+          end_time: event.end_time || '', 
+          recurrence: { enabled: false, days: [], weeks: 8, noEnd: false } 
+        }];
+
     setFormData({
       title: event.title,
       description: event.description || '',
       start_time: event.start_time,
       end_time: event.end_time || '',
-      occurrences: (event.occurrences && event.occurrences.length > 0)
-        ? event.occurrences
-        : [{ start_time: event.start_time || '', end_time: event.end_time || '' }],
+      occurrences: existingOcc,
       link: event.link || '',
       location: event.location || '',
       target_levels: event.target_levels || [],
@@ -148,21 +179,26 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
     setIsDialogOpen(true);
   };
 
-      const handleCloseDialog = () => {
-      setIsDialogOpen(false);
-      setEditingId(null);
-      setFormData({
-        title: '',
-        description: '',
-        start_time: '',
-        end_time: '',
-        occurrences: [{ start_time: '', end_time: '' }],
-        link: '',
-        location: '',
-        target_levels: [],
-        target_users: []
-      });
-      };
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+    setEditingId(null);
+    setFormData({
+      title: '',
+      description: '',
+      start_time: '',
+      end_time: '',
+      occurrences: [{ 
+        id: Date.now(), 
+        start_time: '', 
+        end_time: '', 
+        recurrence: { enabled: false, days: [], weeks: 8, noEnd: false } 
+      }],
+      link: '',
+      location: '',
+      target_levels: [],
+      target_users: []
+    });
+  };
 
   const handleSubmit = () => {
     let occ = (formData.occurrences || []).filter(o => o.start_time);
@@ -230,7 +266,13 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
         <div className="flex justify-end">
           <Dialog open={isDialogOpen} onOpenChange={(open) => !open && handleCloseDialog()}>
             <DialogTrigger asChild>
-              <Button onClick={() => setIsDialogOpen(true)}><Plus className="w-4 h-4 mr-2" /> Add Event</Button>
+              <Button 
+                onClick={() => setIsDialogOpen(true)} 
+                className="text-white hover:opacity-90"
+                style={{ backgroundColor: preferences?.primary_color }}
+              >
+                <Plus className="w-4 h-4 mr-2" /> Add Event
+              </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
@@ -248,113 +290,153 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
                   />
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <label className="text-sm font-medium">Event Dates & Times</label>
                   {(formData.occurrences || []).map((occ, idx) => (
-                    <div key={idx} className="grid grid-cols-1 sm:grid-cols-2 gap-2 items-center">
-                      <Input
-                        type="datetime-local"
-                        value={occ.start_time}
-                        onChange={e => {
-                          const occurrences = [...(formData.occurrences || [])];
-                          occurrences[idx] = { ...occurrences[idx], start_time: e.target.value };
-                          setFormData({ ...formData, occurrences });
-                        }}
-                        placeholder="Start"
-                      />
-                      <Input
-                        type="datetime-local"
-                        value={occ.end_time || ''}
-                        onChange={e => {
-                          const occurrences = [...(formData.occurrences || [])];
-                          occurrences[idx] = { ...occurrences[idx], end_time: e.target.value };
-                          setFormData({ ...formData, occurrences });
-                        }}
-                        placeholder="End (optional)"
-                      />
-                      <div className="sm:col-span-2 flex justify-end">
-                        {(formData.occurrences || []).length > 1 && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="text-red-500"
-                            onClick={() => {
-                              const occurrences = (formData.occurrences || []).filter((_, i) => i !== idx);
-                              setFormData({ ...formData, occurrences });
-                            }}
-                          >
-                            Remove
-                          </Button>
-                        )}
+                    <div key={occ.id || idx} className="border p-3 rounded-lg bg-gray-50 space-y-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 items-center">
+                        <Input
+                          type="datetime-local"
+                          value={occ.start_time}
+                          onChange={e => {
+                            const occurrences = [...(formData.occurrences || [])];
+                            occurrences[idx] = { ...occurrences[idx], start_time: e.target.value };
+                            setFormData({ ...formData, occurrences });
+                          }}
+                          placeholder="Start"
+                          className="bg-white"
+                        />
+                        <Input
+                          type="datetime-local"
+                          value={occ.end_time || ''}
+                          onChange={e => {
+                            const occurrences = [...(formData.occurrences || [])];
+                            occurrences[idx] = { ...occurrences[idx], end_time: e.target.value };
+                            setFormData({ ...formData, occurrences });
+                          }}
+                          placeholder="End (optional)"
+                          className="bg-white"
+                        />
                       </div>
+                      
+                      {/* Per-Occurrence Recurrence Settings */}
+                      <div className="flex items-center justify-between">
+                         <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                           <input 
+                             type="checkbox"
+                             checked={occ.recurrence?.enabled || false}
+                             onChange={(e) => {
+                               const occurrences = [...(formData.occurrences || [])];
+                               const isEnabled = e.target.checked;
+                               // Initialize default recurrence if enabling
+                               const recurrence = occurrences[idx].recurrence || { days: [], weeks: 8, noEnd: false };
+                               occurrences[idx] = { 
+                                 ...occurrences[idx], 
+                                 recurrence: { ...recurrence, enabled: isEnabled } 
+                               };
+                               setFormData({ ...formData, occurrences });
+                             }}
+                             className="rounded border-gray-300"
+                           />
+                           Repeating Session?
+                         </label>
+
+                         {(formData.occurrences || []).length > 1 && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="text-red-500 h-6 px-2"
+                              onClick={() => {
+                                const occurrences = (formData.occurrences || []).filter((_, i) => i !== idx);
+                                setFormData({ ...formData, occurrences });
+                              }}
+                            >
+                              <Trash2 className="w-3 h-3 mr-1" /> Remove
+                            </Button>
+                          )}
+                      </div>
+
+                      {occ.recurrence?.enabled && (
+                        <div className="pl-4 border-l-2 border-indigo-200 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                           <div className="flex flex-wrap gap-2">
+                            {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((d, dIdx) => (
+                              <button
+                                key={dIdx}
+                                type="button"
+                                onClick={() => {
+                                  const occurrences = [...(formData.occurrences || [])];
+                                  const currentDays = occurrences[idx].recurrence.days || [];
+                                  const newDays = currentDays.includes(dIdx) 
+                                    ? currentDays.filter(x => x !== dIdx) 
+                                    : [...currentDays, dIdx];
+                                  
+                                  occurrences[idx].recurrence = { ...occurrences[idx].recurrence, days: newDays };
+                                  setFormData({ ...formData, occurrences });
+                                }}
+                                className={`px-2 py-1 rounded border text-xs ${
+                                  (occ.recurrence.days || []).includes(dIdx) 
+                                    ? 'bg-purple-600 text-white border-purple-600' 
+                                    : 'bg-white text-gray-700 border-gray-200'
+                                }`}
+                              >
+                                {d}
+                              </button>
+                            ))}
+                          </div>
+                          <div className="flex items-center gap-3 flex-wrap">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-gray-600">Generate</span>
+                              <Input
+                                type="number"
+                                min={1}
+                                max={52}
+                                disabled={occ.recurrence.noEnd}
+                                value={occ.recurrence.weeks || 8}
+                                onChange={(e) => {
+                                  const occurrences = [...(formData.occurrences || [])];
+                                  occurrences[idx].recurrence.weeks = Math.max(1, Math.min(52, parseInt(e.target.value || '1')));
+                                  setFormData({ ...formData, occurrences });
+                                }}
+                                className="w-16 h-8 text-xs bg-white"
+                              />
+                              <span className="text-xs text-gray-600">weeks</span>
+                            </div>
+                            <label className="flex items-center gap-2 text-xs cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={occ.recurrence.noEnd || false}
+                                onChange={(e) => {
+                                  const occurrences = [...(formData.occurrences || [])];
+                                  occurrences[idx].recurrence.noEnd = e.target.checked;
+                                  setFormData({ ...formData, occurrences });
+                                }}
+                                className="rounded border-gray-300"
+                              />
+                              No end (1 year)
+                            </label>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => setFormData({ ...formData, occurrences: [...(formData.occurrences || []), { start_time: '', end_time: '' }] })}
+                    className="w-full"
+                    onClick={() => setFormData({ 
+                      ...formData, 
+                      occurrences: [...(formData.occurrences || []), { 
+                        id: Date.now(),
+                        start_time: '', 
+                        end_time: '',
+                        recurrence: { enabled: false, days: [], weeks: 8, noEnd: false }
+                      }] 
+                    })}
                   >
-                    + Add another date/time
+                    + Add Another Session Time
                   </Button>
-                </div>
-
-                <div className="space-y-3 border-t pt-4">
-                  <label className="text-sm font-medium">Repeat</label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      id="repeat-weekly"
-                      type="checkbox"
-                      checked={repeatWeekly}
-                      onChange={(e) => setRepeatWeekly(e.target.checked)}
-                    />
-                    <label htmlFor="repeat-weekly" className="text-sm">Repeat weekly</label>
-                  </div>
-
-                  {repeatWeekly && (
-                    <div className="space-y-3">
-                      <div className="flex flex-wrap gap-2">
-                        {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((d, idx) => (
-                          <button
-                            key={idx}
-                            type="button"
-                            onClick={() => {
-                              setRepeatDays((prev) => prev.includes(idx) ? prev.filter(x => x !== idx) : [...prev, idx]);
-                            }}
-                            className={`px-3 py-1 rounded border text-sm ${repeatDays.includes(idx) ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-gray-700 border-gray-200'}`}
-                          >
-                            {d}
-                          </button>
-                        ))}
-                      </div>
-                      <div className="flex items-center gap-3 flex-wrap">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-gray-600">Generate</span>
-                          <Input
-                            type="number"
-                            min={1}
-                            max={52}
-                            disabled={repeatNoEnd}
-                            value={repeatWeeks}
-                            onChange={(e) => setRepeatWeeks(Math.max(1, Math.min(52, parseInt(e.target.value || '1'))))}
-                            className="w-20"
-                          />
-                          <span className="text-sm text-gray-600">weeks of sessions</span>
-                        </div>
-                        <label className="flex items-center gap-2 text-sm cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={repeatNoEnd}
-                            onChange={(e) => setRepeatNoEnd(e.target.checked)}
-                            className="rounded border-gray-300"
-                          />
-                          No end
-                        </label>
-                      </div>
-                      <p className="text-xs text-gray-500">We’ll keep the same time as your first session and create upcoming weekly sessions on the selected days.</p>
-                    </div>
-                  )}
                 </div>
                 <Input placeholder="Link (Zoom, etc)" value={formData.link} onChange={e => setFormData({...formData, link: e.target.value})} />
                 <Input placeholder="Location (Optional)" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} />
