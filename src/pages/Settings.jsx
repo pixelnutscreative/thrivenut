@@ -340,12 +340,11 @@ export default function Settings() {
           setActiveTab(v); 
           navigate(`#${v}`); 
         }} className="w-full">
-          <TabsList className="grid grid-cols-5 md:grid-cols-9 gap-1 mb-6 bg-transparent h-auto">
-            {['profile', 'appearance', 'features', 'dashboard', 'preferences', 'widgets-v2', 'bible', 'referrals'].map(tab => {
+          <TabsList className="grid grid-cols-4 md:grid-cols-8 gap-1 mb-6 bg-transparent h-auto">
+            {['profile', 'features', 'dashboard', 'preferences', 'widgets-v2', 'bible', 'referrals'].map(tab => {
               let icon, label;
               switch(tab) {
                 case 'profile': icon = <User className="w-4 h-4" />; label = 'Profile'; break;
-                case 'appearance': icon = <Palette className="w-4 h-4" />; label = 'Theme'; break;
                 case 'features': icon = <Layers className="w-4 h-4" />; label = 'Features'; break;
                 case 'dashboard': icon = <CalendarIcon className="w-4 h-4" />; label = 'Dash'; break;
                 case 'preferences': icon = <Sliders className="w-4 h-4" />; label = 'Prefs'; break;
@@ -429,6 +428,7 @@ export default function Settings() {
                               showIrlToggle={false}
                               isProfile={true}
                               primaryColor={primaryColor}
+                              hideSaveButtons={true}
                             />
                           </div>
 
@@ -462,7 +462,6 @@ export default function Settings() {
                                   setFormData={(newData) => setProfileData(prev => ({ ...prev, ...newData }))}
                                   isProfile={true}
                                 />
-                                <AddressingPreferences formData={prefData} setFormData={setPrefData} />
                                 <Card>
                                   <CardContent className="pt-6 flex items-center justify-between">
                                     <div>
@@ -549,22 +548,6 @@ export default function Settings() {
 
 
 
-          {/* APPEARANCE TAB */}
-          <TabsContent value="appearance">
-            <Card>
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle>Theme & Colors</CardTitle>
-                  <Button onClick={handleSave} disabled={updatePreferencesMutation.isPending}>
-                    <Save className="w-4 h-4 mr-2" />
-                    {updatePreferencesMutation.isPending ? 'Saving...' : 'Save'}
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent><ThemeSelector themeData={prefData} onChange={(data) => setPrefData({ ...prefData, ...data })} /></CardContent>
-            </Card>
-          </TabsContent>
-
           {/* FEATURES TAB */}
           <TabsContent value="features">
             <Card>
@@ -600,7 +583,18 @@ export default function Settings() {
                 {updatePreferencesMutation.isPending ? 'Saving...' : 'Save Changes'}
               </Button>
             </div>
+            
+            <Card className="mb-6">
+              <CardHeader className="pb-3">
+                <CardTitle>Theme & Colors</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ThemeSelector themeData={prefData} onChange={(data) => setPrefData({ ...prefData, ...data })} />
+              </CardContent>
+            </Card>
+
             <AIPersonalitySettings formData={prefData} setFormData={setPrefData} />
+            <AddressingPreferences formData={prefData} setFormData={setPrefData} />
             <Card className="mb-4">
               <CardHeader>
                 <CardTitle className="text-base">General Preferences</CardTitle>

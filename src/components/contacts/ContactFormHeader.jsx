@@ -34,7 +34,7 @@ const defaultClubs = [
   { id: 'we_do_not_have', label: 'We Do Not Have Club', display: 'We Do Not Have Club' },
 ];
 
-export default function ContactFormHeader({ formData, setFormData, onSave, isSaving, isEditing, sharedClubs = [], onAddSharedClub, hiddenClubs = [], onToggleClubVisibility, primaryColor, showIrlToggle = true, isProfile = false }) {
+export default function ContactFormHeader({ formData, setFormData, onSave, isSaving, isEditing, sharedClubs = [], onAddSharedClub, hiddenClubs = [], onToggleClubVisibility, primaryColor, showIrlToggle = true, isProfile = false, hideSaveButtons = false }) {
   const [newClub, setNewClub] = useState('');
   const [showClubsModal, setShowClubsModal] = useState(false);
   const [shareNewClub, setShareNewClub] = useState(false);
@@ -91,26 +91,28 @@ export default function ContactFormHeader({ formData, setFormData, onSave, isSav
             />
           </div>
         </div>
-        <div className="flex gap-2">
-          <Button
-            onClick={() => onSave(false)}
-            disabled={isSaving}
-            size="sm"
-            variant="outline"
-            className="border-purple-300 text-purple-600 hover:bg-purple-50"
-          >
-            {isEditing ? 'Update' : 'Save'}
-          </Button>
-          <Button
-            onClick={() => onSave(true)}
-            disabled={isSaving}
-            size="sm"
-            style={{ backgroundColor: buttonColor }}
-            className="hover:opacity-90"
-          >
-            {isEditing ? 'Update & Close' : 'Save & Close'}
-          </Button>
-        </div>
+        {!hideSaveButtons && (
+          <div className="flex gap-2">
+            <Button
+              onClick={() => onSave(false)}
+              disabled={isSaving}
+              size="sm"
+              variant="outline"
+              className="border-purple-300 text-purple-600 hover:bg-purple-50"
+            >
+              {isEditing ? 'Update' : 'Save'}
+            </Button>
+            <Button
+              onClick={() => onSave(true)}
+              disabled={isSaving}
+              size="sm"
+              style={{ backgroundColor: buttonColor }}
+              className="hover:opacity-90"
+            >
+              {isEditing ? 'Update & Close' : 'Save & Close'}
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Photo and names row */}
