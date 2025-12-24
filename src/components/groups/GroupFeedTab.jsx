@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,6 +18,7 @@ import { useTheme } from '../shared/useTheme';
 export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin }) {
   const { preferences } = useTheme();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({ title: '', content: '', is_pinned: false, is_public: false, target_levels: [] });
@@ -138,16 +140,24 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
   });
 
   // --- Handlers ---
-  const handleEdit = (post) => {
-    setEditingId(post.id);
-    setFormData({
-      title: post.title,
-      content: post.content || '',
-      is_pinned: post.is_pinned || false,
-      is_public: post.is_public || false,
-      target_levels: post.target_levels || []
-    });
-    setIsDialogOpen(true);
+  const handleEdit = (item) => {
+    if (item.type === 'post') {
+        setEditingId(item.id);
+        setFormData({
+        title: item.title,
+        content: item.content || '',
+        is_pinned: item.is_pinned || false,
+        is_public: item.is_public || false,
+        target_levels: item.target_levels || []
+        });
+        setIsDialogOpen(true);
+    } else {
+        // Switch tab and pass editId
+        const newParams = new URLSearchParams(searchParams);
+        newParams.set('tab', item.type === 'event' ? 'events' : item.type === 'resource' ? 'resources' : 'training');
+        newParams.set('editId', item.id);
+        setSearchParams(newParams);
+    }
   };
 
   const handleCloseDialog = () => {
@@ -285,7 +295,7 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
               item={item} 
               isAdmin={isAdmin}
               currentUser={currentUser}
-              onEdit={item.type === 'post' ? () => handleEdit(item) : null}
+              onEdit={() => handleEdit(item)}
               onDelete={item.type === 'post' ? () => deletePostMutation.mutate(item.id) : null}
               onHide={() => hideItemMutation.mutate(item.id)}
               onToggleComplete={() => toggleTrainingCompletion.mutate(item.id)}
@@ -368,18 +378,24 @@ function FeedItemCard({ item, isAdmin, currentUser, onEdit, onDelete, onHide, on
           )}
 
           <div className="flex gap-1 ml-2 pl-2 border-l">
-            {(item.type === 'post' && (isAdmin || item.author_email === currentUser?.email)) && (
-              <>
-                <Button variant="ghost" size="sm" onClick={onEdit} className="text-gray-400 hover:text-purple-600 h-8 w-8 p-0" title="Edit">
-                  <Pencil className="w-4 h-4" />
-                </Button>
-                {(isAdmin || item.author_email === currentUser?.email) && (
-                  <Button variant="ghost" size="sm" onClick={onDelete} className="text-gray-400 hover:text-red-500 h-8 w-8 p-0" title="Delete">
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                )}
-              </>
+            {/* Edit Button for All Types */}
+            {(isAdmin || 
+              (item.type === 'post' && item.author_email === currentUser?.email) ||
+              (item.type === 'event' && item.created_by === currentUser?.email) ||
+              (item.type === 'resource' && item.submitted_by === currentUser?.email)
+             ) && (
+              <Button variant="ghost" size="sm" onClick={onEdit} className="text-gray-400 hover:text-purple-600 h-8 w-8 p-0" title="Edit">
+                <Pencil className="w-4 h-4" />
+              </Button>
             )}
+
+            {/* Delete Button (Only for Posts here, others handled in their tabs usually, but we could add if needed. User asked for Edit.) */}
+            {(item.type === 'post' && (isAdmin || item.author_email === currentUser?.email)) && (
+                <Button variant="ghost" size="sm" onClick={onDelete} className="text-gray-400 hover:text-red-500 h-8 w-8 p-0" title="Delete">
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+            )}
+            
             <Button variant="ghost" size="sm" onClick={onHide} className="text-gray-400 hover:text-gray-600 h-8 w-8 p-0" title="Hide from feed">
               <EyeOff className="w-4 h-4" />
             </Button>
