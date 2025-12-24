@@ -60,12 +60,16 @@ export default function FeatureOrderManager({ enabledModules, onChange }) {
           return (
             <Card 
               key={feature.id}
-              className={`transition-all ${isEnabled ? 'border-purple-300 bg-purple-50/50' : 'border-gray-200 opacity-60'}`}
+              className={`transition-all ${isEnabled ? '' : 'border-gray-200 opacity-60'}`}
+              style={isEnabled ? {
+                borderColor: 'color-mix(in srgb, var(--accent-color) 30%, white)',
+                backgroundColor: 'color-mix(in srgb, var(--accent-color) 5%, white)'
+              } : {}}
             >
               <CardContent className="p-3 flex items-center gap-3">
                 <div className="flex-shrink-0">
                   {isEnabled ? (
-                    <Eye className="w-4 h-4 text-purple-500" />
+                    <Eye className="w-4 h-4" style={{ color: 'var(--accent-color)' }} />
                   ) : (
                     <EyeOff className="w-4 h-4 text-gray-400" />
                   )}

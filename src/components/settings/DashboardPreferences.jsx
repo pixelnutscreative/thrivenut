@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import ColorPicker from '../shared/ColorPicker';
 import { LayoutDashboard, Droplet, Heart, Clock, Eye, EyeOff, ArrowDown, NotebookPen, Calendar, ExternalLink, Sparkles, Paintbrush } from 'lucide-react';
 
 const toneOptions = [
@@ -80,21 +81,30 @@ export default function DashboardPreferences({ formData, setFormData }) {
               <Paintbrush className="w-4 h-4 text-gray-500" />
               Completed Items Color
             </Label>
-            <div className="flex flex-wrap gap-3">
-              {colorOptions.map(color => (
-                <div
-                  key={color.value}
-                  onClick={() => setFormData({ ...formData, completed_items_color: color.value })}
-                  className={`cursor-pointer rounded-full p-1 transition-all ${
-                    (formData.completed_items_color || 'green') === color.value 
-                      ? 'ring-2 ring-offset-2 ring-gray-400' 
-                      : 'opacity-70 hover:opacity-100'
-                  }`}
-                  title={color.label}
-                >
-                  <div className={`w-8 h-8 rounded-full ${color.bg}`} />
-                </div>
-              ))}
+            <div className="flex flex-wrap items-center gap-4">
+              <ColorPicker 
+                color={formData.completed_items_color || '#22c55e'} 
+                onChange={(c) => setFormData({ ...formData, completed_items_color: c })} 
+                label="Pick Color"
+              />
+              
+              <div className="flex gap-2">
+                {(formData.saved_colors && formData.saved_colors.length > 0) ? (
+                  formData.saved_colors.slice(0, 7).map((color, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setFormData({ ...formData, completed_items_color: color })}
+                      className="w-8 h-8 rounded-full border border-gray-200 shadow-sm hover:scale-110 transition-transform"
+                      style={{ backgroundColor: color }}
+                      title={color}
+                    />
+                  ))
+                ) : (
+                  Array(7).fill(0).map((_, i) => (
+                    <div key={i} className="w-8 h-8 rounded-full border-2 border-dashed border-gray-300 opacity-50" />
+                  ))
+                )}
+              </div>
             </div>
           </div>
 
@@ -135,16 +145,21 @@ export default function DashboardPreferences({ formData, setFormData }) {
                 onClick={() => setFormData({ ...formData, completed_tasks_display: option.value })}
                 className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
                   formData.completed_tasks_display === option.value
-                    ? 'border-purple-500 bg-purple-50'
-                    : 'border-gray-200 hover:border-purple-300'
+                    ? ''
+                    : 'border-gray-200 hover:opacity-80'
                 }`}
+                style={formData.completed_tasks_display === option.value ? {
+                  borderColor: 'var(--accent-color)',
+                  backgroundColor: 'color-mix(in srgb, var(--accent-color) 10%, white)'
+                } : {}}
               >
                 <div className="flex items-center gap-3">
-                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                    formData.completed_tasks_display === option.value ? 'border-purple-500' : 'border-gray-300'
-                  }`}>
+                  <div 
+                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center`}
+                    style={{ borderColor: formData.completed_tasks_display === option.value ? 'var(--accent-color)' : '#d1d5db' }}
+                  >
                     {formData.completed_tasks_display === option.value && (
-                      <div className="w-2.5 h-2.5 rounded-full bg-purple-500" />
+                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: 'var(--accent-color)' }} />
                     )}
                   </div>
                   <Icon className="w-5 h-5 text-gray-600" />
@@ -224,9 +239,13 @@ export default function DashboardPreferences({ formData, setFormData }) {
                 onClick={() => setFormData({ ...formData, journal_reminder_time: opt.value })}
                 className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
                   (formData.journal_reminder_time || 'night') === opt.value
-                    ? 'border-purple-500 bg-purple-50'
-                    : 'border-gray-200 hover:border-purple-300'
+                    ? ''
+                    : 'border-gray-200 hover:opacity-80'
                 }`}
+                style={(formData.journal_reminder_time || 'night') === opt.value ? {
+                  borderColor: 'var(--accent-color)',
+                  backgroundColor: 'color-mix(in srgb, var(--accent-color) 10%, white)'
+                } : {}}
               >
                 <h4 className="font-semibold">{opt.label}</h4>
                 <p className="text-xs text-gray-500 mt-1">{opt.description}</p>

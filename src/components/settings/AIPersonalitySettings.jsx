@@ -26,8 +26,12 @@ export default function AIPersonalitySettings({ formData, setFormData }) {
               key={tone.id}
               onClick={() => setFormData({ ...formData, ai_personality_tone: tone.id })}
               className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                formData.ai_personality_tone === tone.id ? 'border-purple-500 bg-purple-50' : 'border-gray-200 hover:border-purple-300'
+                formData.ai_personality_tone === tone.id ? '' : 'border-gray-200 hover:opacity-80'
               }`}
+              style={formData.ai_personality_tone === tone.id ? {
+                borderColor: 'var(--accent-color)',
+                backgroundColor: 'color-mix(in srgb, var(--accent-color) 10%, white)'
+              } : {}}
             >
               <p className="font-medium">{tone.name}</p>
               <p className="text-xs text-gray-500">{tone.description}</p>
