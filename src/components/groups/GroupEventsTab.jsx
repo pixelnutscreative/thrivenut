@@ -25,12 +25,7 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
     description: '',
     start_time: '',
     end_time: '',
-    occurrences: [{ 
-      id: Date.now(), 
-      start_time: '', 
-      end_time: '', 
-      recurrence: { enabled: false, days: [], weeks: 8, noEnd: false } 
-    }],
+    occurrences: [],
     link: '',
     location: '',
     target_levels: [],
@@ -187,12 +182,7 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
       description: '',
       start_time: '',
       end_time: '',
-      occurrences: [{ 
-        id: Date.now(), 
-        start_time: '', 
-        end_time: '', 
-        recurrence: { enabled: false, days: [], weeks: 8, noEnd: false } 
-      }],
+      occurrences: [],
       link: '',
       location: '',
       target_levels: [],
@@ -283,7 +273,18 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
           <Dialog open={isDialogOpen} onOpenChange={(open) => !open && handleCloseDialog()}>
             <DialogTrigger asChild>
               <Button 
-                onClick={() => setIsDialogOpen(true)} 
+                onClick={() => {
+                  setIsDialogOpen(true);
+                  setFormData(prev => ({ 
+                    ...prev, 
+                    occurrences: [{
+                      id: Date.now(),
+                      start_time: '',
+                      end_time: '',
+                      recurrence: { enabled: false, days: [], weeks: 8, noEnd: false }
+                    }]
+                  }));
+                }} 
                 className="text-white hover:opacity-90"
                 style={{ backgroundColor: preferences?.primary_color }}
               >
@@ -518,18 +519,35 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
                   </p>
                 )}
 
-                {Array.isArray(event.occurrences) && event.occurrences.length > 1 && (
-                  <div className="mt-2 text-sm text-gray-600">
-                    <div className="font-medium">Other sessions:</div>
-                    <ul className="list-disc ml-5">
-                      {event.occurrences.slice(1).map((o, i) => (
-                        <li key={i}>
-                          {o.start_time ? `${format(new Date(o.start_time), 'EEE, MMM d, h:mm a')}${o.end_time ? ` - ${format(new Date(o.end_time), 'h:mm a')}` : ''}` : ''}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+                {(() => {
+                  const now = new Date();
+                  const twoWeeksLater = new Date();
+                  twoWeeksLater.setDate(now.getDate() + 14);
+
+                  const futureOccurrences = (event.occurrences || [])
+                    .filter(o => new Date(o.start_time) > now)
+                    .sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
+
+                  const occurrencesToShow = futureOccurrences.filter(o => new Date(o.start_time) <= twoWeeksLater);
+
+                  if (occurrencesToShow.length === 0) return null;
+
+                  return (
+                    <div className="mt-2 text-sm text-gray-600">
+                      <div className="font-medium">Upcoming Sessions (Next 2 Weeks):</div>
+                      <ul className="list-disc ml-5">
+                        {occurrencesToShow.map((o, i) => (
+                          <li key={i}>
+                            {o.start_time ? `${format(new Date(o.start_time), 'EEE, MMM d, h:mm a')}${o.end_time ? ` - ${format(new Date(o.end_time), 'h:mm a')}` : ''}` : ''}
+                          </li>
+                        ))}
+                      </ul>
+                      {futureOccurrences.length > occurrencesToShow.length && (
+                        <p className="text-xs text-gray-500 mt-1">and {futureOccurrences.length - occurrencesToShow.length} more upcoming...</p>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 <div className="mt-4 pt-4 border-t flex flex-wrap gap-2 justify-between items-center">
                   <div className="flex gap-4 text-sm text-gray-500">
