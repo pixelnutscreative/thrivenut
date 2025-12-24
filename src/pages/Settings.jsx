@@ -29,6 +29,7 @@ import WidgetSettingsV2 from '../components/settings/WidgetSettingsV2';
 import AccountDeletionTab from '../components/settings/AccountDeletionTab';
 import AIPersonalitySettings from '../components/settings/AIPersonalitySettings';
 import AddressingPreferences from '../components/settings/AddressingPreferences';
+import OnboardingModal from '../components/onboarding/OnboardingModal';
 import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
 import { useTheme } from '../components/shared/useTheme';
 import { useLocation, useNavigate } from 'react-router-dom';
