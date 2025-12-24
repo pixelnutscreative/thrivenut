@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Plus, Trash2, Edit2, Eye, EyeOff } from 'lucide-react';
+import ColorPicker from '../shared/ColorPicker';
 
 const GOOGLE_FONTS = [
   'Poppins', 'Montserrat', 'Roboto', 'Open Sans', 'Lato', 'Raleway', 'Oswald',
@@ -267,24 +268,24 @@ export default function AdminAnnouncementsContent() {
             {formData.background_type === 'solid' ? (
               <div>
                 <Label>Background Color</Label>
-                <Input type="color" value={formData.background_color} onChange={(e) => setFormData({ ...formData, background_color: e.target.value })} />
+                <ColorPicker color={formData.background_color} onChange={(val) => setFormData({ ...formData, background_color: val })} />
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Gradient Start</Label>
-                  <Input type="color" value={formData.gradient_color_start} onChange={(e) => setFormData({ ...formData, gradient_color_start: e.target.value })} />
+                  <ColorPicker color={formData.gradient_color_start} onChange={(val) => setFormData({ ...formData, gradient_color_start: val })} />
                 </div>
                 <div>
                   <Label>Gradient End</Label>
-                  <Input type="color" value={formData.gradient_color_end} onChange={(e) => setFormData({ ...formData, gradient_color_end: e.target.value })} />
+                  <ColorPicker color={formData.gradient_color_end} onChange={(val) => setFormData({ ...formData, gradient_color_end: val })} />
                 </div>
               </div>
             )}
 
             <div>
               <Label>Text Color</Label>
-              <Input type="color" value={formData.text_color} onChange={(e) => setFormData({ ...formData, text_color: e.target.value })} />
+              <ColorPicker color={formData.text_color} onChange={(val) => setFormData({ ...formData, text_color: val })} />
             </div>
 
             <div>
