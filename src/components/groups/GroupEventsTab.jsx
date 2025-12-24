@@ -201,49 +201,65 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
   };
 
   const handleSubmit = () => {
-    let occ = (formData.occurrences || []).filter(o => o.start_time);
+    let finalOccurrences = [];
+    
+    // Filter out empty occurrences
+    const validOccurrences = (formData.occurrences || []).filter(o => o.start_time);
+    
+    validOccurrences.forEach(occ => {
+      // Add the original occurrence
+      finalOccurrences.push({
+        start_time: occ.start_time,
+        end_time: occ.end_time
+      });
 
-    // If repeating weekly, generate future sessions based on first occurrence
-    if (repeatWeekly && repeatDays.length > 0 && occ.length > 0 && occ[0].start_time) {
-      const first = new Date(occ[0].start_time);
-      const endFirst = occ[0].end_time ? new Date(occ[0].end_time) : null;
-      const durationMs = endFirst ? (endFirst - first) : 0;
-
-      // Find the Sunday of the week for the first date
-      const weekStart = new Date(first);
-      weekStart.setHours(0,0,0,0);
-      weekStart.setDate(first.getDate() - first.getDay());
-
-      const hours = first.getHours();
-      const minutes = first.getMinutes();
-
-      const generated = [];
-      const weeksToGenerate = repeatNoEnd ? 52 : repeatWeeks;
-      for (let w = 0; w < weeksToGenerate; w++) {
-        for (const d of repeatDays) {
-          const dt = new Date(weekStart);
-          dt.setDate(weekStart.getDate() + d + w * 7);
-          dt.setHours(hours, minutes, 0, 0);
-          const startIso = new Date(dt).toISOString();
-          const endIso = durationMs > 0 ? new Date(dt.getTime() + durationMs).toISOString() : '';
-          generated.push({ start_time: startIso, end_time: endIso });
+      // Handle Recurrence
+      if (occ.recurrence?.enabled && occ.recurrence.days?.length > 0) {
+        const first = new Date(occ.start_time);
+        const endFirst = occ.end_time ? new Date(occ.end_time) : null;
+        const durationMs = endFirst ? (endFirst - first) : 0;
+        
+        const weekStart = new Date(first);
+        weekStart.setHours(0,0,0,0);
+        weekStart.setDate(first.getDate() - first.getDay()); // Sunday of that week
+        
+        const hours = first.getHours();
+        const minutes = first.getMinutes();
+        
+        const weeksToGenerate = occ.recurrence.noEnd ? 52 : (occ.recurrence.weeks || 8);
+        
+        for (let w = 0; w < weeksToGenerate; w++) {
+          for (const d of occ.recurrence.days) {
+            const dt = new Date(weekStart);
+            dt.setDate(weekStart.getDate() + d + (w * 7));
+            dt.setHours(hours, minutes, 0, 0);
+            
+            // Don't duplicate the original start time
+            if (Math.abs(dt.getTime() - first.getTime()) < 60000) continue;
+            
+            // Skip past dates if needed, but usually we generate from the first date
+            
+            const startIso = dt.toISOString();
+            const endIso = durationMs > 0 ? new Date(dt.getTime() + durationMs).toISOString() : '';
+            
+            finalOccurrences.push({ start_time: startIso, end_time: endIso });
+          }
         }
       }
+    });
 
-      // Ensure the very first is present (avoid duplicates)
-      const all = [...generated, ...occ];
-      // Deduplicate by start_time
-      const map = new Map();
-      all.forEach(o => { if (o.start_time) map.set(o.start_time, o); });
-      occ = Array.from(map.values()).sort((a,b) => new Date(a.start_time) - new Date(b.start_time));
-    }
+    // Deduplicate and Sort
+    const uniqueMap = new Map();
+    finalOccurrences.forEach(o => uniqueMap.set(o.start_time, o));
+    const sortedOcc = Array.from(uniqueMap.values()).sort((a,b) => new Date(a.start_time) - new Date(b.start_time));
 
-    const primary = occ[0] || { start_time: formData.start_time, end_time: formData.end_time };
+    const primary = sortedOcc[0] || { start_time: formData.start_time, end_time: formData.end_time };
+    
     const toSubmit = {
       ...formData,
       start_time: primary?.start_time || '',
       end_time: primary?.end_time || '',
-      occurrences: occ
+      occurrences: sortedOcc
     };
 
     if (editingId) {
