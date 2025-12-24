@@ -31,8 +31,32 @@ Deno.serve(async (req) => {
             'MATIC': 'matic-network',
             'SHIB': 'shiba-inu',
             'LTC': 'litecoin',
-            'PNIC': 'pixel-nuts-creative-coin', // Hypothetical
-            'MIRX': 'mirx-coin' // Hypothetical
+            'AVAX': 'avalanche-2',
+            'TRX': 'tron',
+            'LINK': 'chainlink',
+            'ATOM': 'cosmos',
+            'XLM': 'stellar',
+            'UNI': 'uniswap',
+            'XMR': 'monero',
+            'ETC': 'ethereum-classic',
+            'FIL': 'filecoin',
+            'HBAR': 'hedera-hashgraph',
+            'APT': 'aptos',
+            'VET': 'vechain',
+            'QNT': 'quant-network',
+            'NEAR': 'near',
+            'ALGO': 'algorand',
+            'AAVE': 'aave',
+            'GRT': 'the-graph',
+            'FTM': 'fantom',
+            'EOS': 'eos',
+            'SAND': 'the-sandbox',
+            'MANA': 'decentraland',
+            'THETA': 'theta-token',
+            'AXS': 'axie-infinity',
+            'XTZ': 'tezos',
+            'PNIC': 'pixel-nuts-creative-coin',
+            'MIRX': 'mirx-coin'
         };
         
         // Filter for known ids

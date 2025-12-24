@@ -27,6 +27,12 @@ export default function NotificationBell({ userEmail, isDark = false }) {
       const hasTikTokAccess = prefs[0]?.tiktok_access_approved;
       
       return notifs.filter(n => {
+        // Targeted notification
+        if (n.user_email) {
+          return n.user_email === userEmail;
+        }
+        
+        // Broadcast notification
         if (n.target_audience === 'all') return true;
         if (n.target_audience === 'tiktok_users' && hasTikTokAccess) return true;
         return false;

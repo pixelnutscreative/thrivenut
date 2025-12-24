@@ -252,7 +252,11 @@ export default function AdminNotificationsContent() {
             <Card key={notif.id} className="border-2">
               <CardContent className="pt-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-medium">{notif.title}</span>
+                  <div className="flex flex-col">
+                    <span className="font-medium">{notif.title}</span>
+                    {notif.user_email && <span className="text-xs text-blue-600">Target: {notif.user_email}</span>}
+                    {notif.type && <span className="text-xs text-gray-500">Type: {notif.type}</span>}
+                  </div>
                   <div className="flex items-center gap-2">
                     <Badge variant={notif.is_active ? 'default' : 'secondary'}>
                       {notif.is_active ? 'Active' : 'Inactive'}
