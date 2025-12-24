@@ -104,12 +104,13 @@ import React, { useState } from 'react';
            if (!user?.email) return [];
            const memberships = await base44.entities.CreatorGroupMember.filter({ user_email: user.email, status: 'active' });
            if (memberships.length === 0) return [];
-           const groups = [];
-           for (const m of memberships) {
-               const group = await base44.entities.CreatorGroup.findById(m.group_id);
-               if (group) groups.push(group);
-           }
-           return groups;
+
+           // Fetch all groups in parallel
+           const groupPromises = memberships.map(m => base44.entities.CreatorGroup.filter({ id: m.group_id }));
+           const groupResults = await Promise.all(groupPromises);
+
+           // Flatten array of arrays and filter out any empty results
+           return groupResults.flat().filter(g => g && g.status !== 'archived');
        },
        enabled: !!user?.email
      });
