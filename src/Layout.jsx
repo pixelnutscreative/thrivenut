@@ -118,6 +118,13 @@ export default function Layout({ children, currentPageName }) {
   const enabledModules = preferences?.enabled_modules || ['tiktok', 'gifter', 'goals', 'tasks', 'wellness', 'supplements', 'medications', 'pets', 'care_reminders', 'people', 'journal', 'mental_health', 'finance', 'activity', 'motivations'];
   const isKidMode = preferences?.default_landing_page === 'KidsJournal';
 
+  // Redirect kids to KidsJournal on login (from Home/Dashboard)
+  useEffect(() => {
+    if (isKidMode && (currentPageName === 'Dashboard' || currentPageName === 'Home')) {
+      navigate(createPageUrl('KidsJournal'));
+    }
+  }, [isKidMode, currentPageName]);
+
   // --- THEME HANDLING ---
   const primaryColor = preferences?.primary_color || '#1fd2ea';
   const accentColor = preferences?.accent_color || '#bd84f5';
@@ -361,13 +368,6 @@ export default function Layout({ children, currentPageName }) {
   preferences?.soundcloud_playlist_url || 'https://soundcloud.com/pixel-nuts-creative/sets/rise-praise';
 
   const soundcloudPosition = preferences?.soundcloud_player_position || 'menu';
-
-  // Redirect kids to KidsJournal on login (from Home/Dashboard)
-  useEffect(() => {
-    if (isKidMode && (currentPageName === 'Dashboard' || currentPageName === 'Home')) {
-      navigate(createPageUrl('KidsJournal'));
-    }
-  }, [isKidMode, currentPageName]);
 
    return (
      <>
