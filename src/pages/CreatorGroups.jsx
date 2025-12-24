@@ -29,6 +29,7 @@ export default function CreatorGroups() {
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeGroupId = searchParams.get('id');
+  const activeTab = searchParams.get('tab');
   const browseMode = searchParams.get('mode') === 'browse';
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
@@ -341,6 +342,17 @@ export default function CreatorGroups() {
   const typeConfig = (groupTypes || []).find(gt => gt.key === activeGroup?.type);
   const allowed = typeConfig?.enabled_tabs && typeConfig.enabled_tabs.length > 0 ? new Set(typeConfig.enabled_tabs) : null;
   const defaultTab = allowed && !allowed.has('feed') ? (Array.from(allowed)[0] || 'feed') : 'feed';
+  
+  const currentTab = activeTab || defaultTab;
+
+  const handleTabChange = (val) => {
+    setSearchParams(prev => {
+      const newParams = new URLSearchParams(prev);
+      newParams.set('tab', val);
+      return newParams;
+    });
+  };
+
   const isTabEnabled = (id) => {
     if (allowed && !allowed.has(id)) return false;
     if (id === 'members' && !isAdmin) return false;
@@ -793,7 +805,7 @@ export default function CreatorGroups() {
         </div>
 
         <div className="lg:col-span-3">
-          <Tabs defaultValue={defaultTab} className="space-y-6">
+          <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-6">
             <TabsList className="bg-white border p-1 rounded-xl h-auto flex-wrap gap-1 w-full justify-start">
               {availableTabs.map(tab => {
                 const enabled = isTabEnabled(tab.id);
