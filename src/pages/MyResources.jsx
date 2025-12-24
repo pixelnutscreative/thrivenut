@@ -23,7 +23,7 @@ import React, { useState } from 'react';
  
    const defaultCategories = [
      'Course', 'Zoom Meeting', 'Login', 'Recipe', 'Movie', 'Book', 'Podcast', 'Audiobook', 'Affiliate Link', 'Affiliate Portal', 
-     'Communities', 'Tools', 'Inspiration', 'Other'
+     'Communities', 'Tools', 'Inspiration', 'Other', 'Uncategorized'
    ];
    
    const categoryIcons = {
@@ -40,7 +40,8 @@ import React, { useState } from 'react';
      'Communities': <Users className="w-4 h-4" />,
      'Tools': <Building className="w-4 h-4" />,
      'Inspiration': <Info className="w-4 h-4" />,
-     'Other': <LinkIcon className="w-4 h-4" />
+     'Other': <LinkIcon className="w-4 h-4" />,
+     'Uncategorized': <Info className="w-4 h-4" />
    };
  
    export default function MyResources() {
@@ -56,10 +57,11 @@ import React, { useState } from 'react';
 
      const [formData, setFormData] = useState({
        title: '',
+       description: '',
        url: '',
-       categories: ['Other'],
+       categories: [],
        notes: '',
-       tags: [],
+       tags: [], // Deprecated
        color: '#ffffff',
        secondary_color: '',
        visibility: 'private',
@@ -113,30 +115,82 @@ import React, { useState } from 'react';
      });
  
      const { data: userCategories = [] } = useQuery({
-       queryKey: ['myResourceCategories', user?.email],
+       queryKey: ['resourceCategories'],
        queryFn: async () => {
-         if (!user?.email) return [];
-         const res = await base44.entities.UserResource.filter({ user_email: user.email });
-         const cats = new Set(res.map(r => r.category).filter(Boolean));
-         return [...cats];
-       },
-       enabled: !!user?.email
+         // Fetch managed categories
+         const cats = await base44.entities.ResourceCategory.list('sort_order');
+         return cats.map(c => c.name);
+       }
      });
  
      const allCategories = [...new Set([...defaultCategories, ...userCategories])];
+
+     // Category Management
+     const [isManageCatsOpen, setIsManageCatsOpen] = useState(false);
+     const [newCatName, setNewCatName] = useState('');
+     
+     const addCategoryMutation = useMutation({
+       mutationFn: (name) => base44.entities.ResourceCategory.create({ name }),
+       onSuccess: () => {
+         queryClient.invalidateQueries({ queryKey: ['resourceCategories'] });
+         setNewCatName('');
+       }
+     });
+
+     const deleteCategoryMutation = useMutation({
+       mutationFn: async (name) => {
+         const cats = await base44.entities.ResourceCategory.filter({ name });
+         if (cats[0]) await base44.entities.ResourceCategory.delete(cats[0].id);
+       },
+       onSuccess: () => queryClient.invalidateQueries({ queryKey: ['resourceCategories'] })
+     });
  
      const saveMutation = useMutation({
      mutationFn: async (data) => {
+       // Auto-assign "Uncategorized" if empty
+       const finalCategories = data.categories.length > 0 ? data.categories : ['Uncategorized'];
+       
        const payload = {
          ...data,
-         category: data.categories[0] || 'Other', // Sync primary category for legacy support
+         categories: finalCategories,
+         category: finalCategories[0], // Sync primary category
          user_email: user.email
        };
 
+       let savedResource;
        if (editingItem) {
-         return await base44.entities.UserResource.update(editingItem.id, payload);
+         savedResource = await base44.entities.UserResource.update(editingItem.id, payload);
+       } else {
+         savedResource = await base44.entities.UserResource.create(payload);
        }
-       return await base44.entities.UserResource.create(payload);
+
+       // Handle Group Sharing
+       if (data.visibility === 'group' && data.group_ids.length > 0) {
+         // Create GroupResource copies for each group
+         for (const groupId of data.group_ids) {
+           // Check if I am owner/admin of this group
+           const membership = await base44.entities.CreatorGroupMember.filter({ group_id: groupId, user_email: user.email });
+           const role = membership[0]?.role;
+           
+           if (role === 'owner' || role === 'admin') {
+             // Check if already exists to avoid duplicates? 
+             // For now, simple create to ensure it appears. 
+             // Ideally we'd check url/title dupes but "Copy" is safer.
+             await base44.entities.GroupResource.create({
+               group_id: groupId,
+               title: data.title,
+               description: data.description || data.notes, // Map description or notes
+               type: data.url ? 'link' : 'text',
+               url: data.url,
+               submitted_by: user.email,
+               status: 'approved', // Auto-approve for admins
+               approved_by: user.email
+             });
+           }
+         }
+       }
+
+       return savedResource;
      },
        onSuccess: () => {
          queryClient.invalidateQueries({ queryKey: ['myResources'] });
@@ -166,8 +220,9 @@ import React, { useState } from 'react';
      const resetForm = () => {
        setFormData({
          title: '',
+         description: '',
          url: '',
-         categories: ['Other'],
+         categories: [], // No default
          notes: '',
          tags: [],
          color: '#ffffff',
@@ -177,24 +232,24 @@ import React, { useState } from 'react';
          is_favorite: false
        });
      };
- 
+
      const handleEdit = (item) => {
        setEditingItem(item);
-       // Handle backward compatibility for group_id
+       // Handle backward compatibility
        let itemGroupIds = item.group_ids || [];
        if (item.group_id && !itemGroupIds.includes(item.group_id)) {
          itemGroupIds.push(item.group_id);
        }
 
-       // Handle backward compatibility for categories
        let itemCategories = item.categories || [];
        if (item.category && !itemCategories.includes(item.category)) {
          itemCategories.push(item.category);
        }
-       if (itemCategories.length === 0) itemCategories = ['Other'];
+       // Don't force 'Other' on edit if empty, let it be empty or Uncategorized on save
 
        setFormData({
          title: item.title,
+         description: item.description || '',
          url: item.url,
          categories: itemCategories,
          notes: item.notes,
@@ -209,10 +264,12 @@ import React, { useState } from 'react';
      };
  
      const filteredResources = allResources.filter(res => {
+       const searchLower = search.toLowerCase();
        const matchesSearch = !search || 
-         res.title.toLowerCase().includes(search.toLowerCase()) || 
-         res.notes?.toLowerCase().includes(search.toLowerCase()) ||
-         res.tags?.some(t => t.toLowerCase().includes(search.toLowerCase()));
+         res.title.toLowerCase().includes(searchLower) || 
+         res.description?.toLowerCase().includes(searchLower) || 
+         res.notes?.toLowerCase().includes(searchLower) ||
+         (res.categories || []).some(c => c.toLowerCase().includes(searchLower));
        
        // Handle backward compatibility: check 'categories' array OR single 'category' string
        const resCategories = res.categories || (res.category ? [res.category] : []);
@@ -368,6 +425,12 @@ import React, { useState } from 'react';
                              {cat}
                            </Badge>
                          ))}
+                         {/* Display Description snippet if available */}
+                         {resource.description && (
+                           <span className="text-xs text-gray-500 line-clamp-1 w-full mt-1">
+                             {resource.description}
+                           </span>
+                         )}
                          {isShared && (
                            <Badge variant="secondary" className="text-[10px] bg-blue-50 text-blue-700">Shared</Badge>
                          )}
@@ -474,6 +537,14 @@ import React, { useState } from 'react';
                  />
                </div>
                <div>
+                 <Label>Description</Label>
+                 <Input 
+                   value={formData.description} 
+                   onChange={(e) => setFormData({...formData, description: e.target.value})}
+                   placeholder="Short description..."
+                 />
+               </div>
+               <div>
                  <Label>URL (Optional)</Label>
                  <Input 
                    value={formData.url} 
@@ -501,37 +572,82 @@ import React, { useState } from 'react';
                    ))}
                  </div>
 
-                 <div className="grid grid-cols-2 gap-2">
-                   <Select onValueChange={(v) => {
-                     if (!formData.categories.includes(v)) {
-                       setFormData(prev => ({ ...prev, categories: [...prev.categories, v] }));
-                     }
-                   }}>
-                     <SelectTrigger>
-                       <SelectValue placeholder="Add Category..." />
-                     </SelectTrigger>
-                     <SelectContent className="max-h-[200px]">
-                       {defaultCategories.map(cat => (
-                         <SelectItem key={cat} value={cat}>
-                           <div className="flex items-center gap-2">
-                             {categoryIcons[cat] || <LinkIcon className="w-4 h-4" />}
-                             {cat}
+                 <div className="flex flex-col gap-2">
+                   <div className="flex gap-2">
+                     <Select onValueChange={(v) => {
+                       if (!formData.categories.includes(v)) {
+                         setFormData(prev => ({ ...prev, categories: [...prev.categories, v] }));
+                       }
+                     }}>
+                       <SelectTrigger className="flex-1">
+                         <SelectValue placeholder="Select Category..." />
+                       </SelectTrigger>
+                       <SelectContent className="max-h-[200px]">
+                         {allCategories.map(cat => (
+                           <SelectItem key={cat} value={cat}>
+                             <div className="flex items-center gap-2">
+                               {categoryIcons[cat] || <LinkIcon className="w-4 h-4" />}
+                               {cat}
+                             </div>
+                           </SelectItem>
+                         ))}
+                       </SelectContent>
+                     </Select>
+                     
+                     <Dialog open={isManageCatsOpen} onOpenChange={setIsManageCatsOpen}>
+                       <DialogTrigger asChild>
+                         <Button variant="outline" size="icon" title="Manage Categories">
+                           <Edit2 className="w-4 h-4" />
+                         </Button>
+                       </DialogTrigger>
+                       <DialogContent>
+                         <DialogHeader><DialogTitle>Manage Categories</DialogTitle></DialogHeader>
+                         <div className="space-y-4">
+                           <div className="flex gap-2">
+                             <Input 
+                               placeholder="New Category Name" 
+                               value={newCatName}
+                               onChange={(e) => setNewCatName(e.target.value)}
+                             />
+                             <Button onClick={() => addCategoryMutation.mutate(newCatName)} disabled={!newCatName}>Add</Button>
                            </div>
-                         </SelectItem>
-                       ))}
-                     </SelectContent>
-                   </Select>
+                           <div className="max-h-60 overflow-y-auto space-y-2">
+                             {userCategories.map(cat => (
+                               <div key={cat} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                                 <span>{cat}</span>
+                                 <Button 
+                                   variant="ghost" 
+                                   size="sm" 
+                                   onClick={() => deleteCategoryMutation.mutate(cat)}
+                                   className="text-red-500 h-6 w-6 p-0"
+                                 >
+                                   <X className="w-4 h-4" />
+                                 </Button>
+                               </div>
+                             ))}
+                             {userCategories.length === 0 && <p className="text-sm text-gray-500 text-center">No custom categories.</p>}
+                           </div>
+                         </div>
+                       </DialogContent>
+                     </Dialog>
+                   </div>
 
+                   {/* Custom Category Quick Add */}
                    <div className="flex gap-2">
                      <Input 
-                       placeholder="Custom category..." 
+                       placeholder="Type new category..." 
                        id="custom-cat-input"
                        onKeyDown={(e) => {
                          if (e.key === 'Enter') {
                            e.preventDefault();
                            const val = e.target.value.trim();
-                           if (val && !formData.categories.includes(val)) {
-                             setFormData(prev => ({ ...prev, categories: [...prev.categories, val] }));
+                           if (val) {
+                             if (!allCategories.includes(val)) {
+                               addCategoryMutation.mutate(val); // Add to permanent list
+                             }
+                             if (!formData.categories.includes(val)) {
+                               setFormData(prev => ({ ...prev, categories: [...prev.categories, val] }));
+                             }
                              e.target.value = '';
                            }
                          }
@@ -543,8 +659,13 @@ import React, { useState } from 'react';
                        onClick={() => {
                          const input = document.getElementById('custom-cat-input');
                          const val = input.value.trim();
-                         if (val && !formData.categories.includes(val)) {
-                           setFormData(prev => ({ ...prev, categories: [...prev.categories, val] }));
+                         if (val) {
+                           if (!allCategories.includes(val)) {
+                             addCategoryMutation.mutate(val);
+                           }
+                           if (!formData.categories.includes(val)) {
+                             setFormData(prev => ({ ...prev, categories: [...prev.categories, val] }));
+                           }
                            input.value = '';
                          }
                        }}
@@ -610,21 +731,20 @@ import React, { useState } from 'react';
                  </div>
                )}
                <div>
-                 <Label>Notes</Label>
+                 <Label className="flex items-center gap-2">
+                   Notes 
+                   <span className="text-xs font-normal text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                     (Do not store passwords here)
+                   </span>
+                 </Label>
                  <Textarea 
                    value={formData.notes} 
                    onChange={(e) => setFormData({...formData, notes: e.target.value})}
-                   placeholder="Why do you like this? Login info (no passwords!)..."
+                   placeholder="Add your notes here..."
+                   className="min-h-[100px]"
                  />
                </div>
-               <div>
-                 <Label>Tags (comma separated)</Label>
-                 <Input 
-                   value={formData.tags.join(', ')} 
-                   onChange={(e) => setFormData({...formData, tags: e.target.value.split(',').map(t => t.trim())})}
-                   placeholder="ai, design, recipe"
-                 />
-               </div>
+               {/* Tags field removed as requested */}
                
                <div>
                  <Label className="mb-2 block">Accent Color (Left Border)</Label>
@@ -646,21 +766,16 @@ import React, { useState } from 'react';
                        <SelectValue />
                      </SelectTrigger>
                      <SelectContent>
-                       <SelectItem value="private">
-                         <div className="flex items-center gap-2">
-                           <Lock className="w-4 h-4" /> Private
-                         </div>
-                       </SelectItem>
-                       <SelectItem value="public">
-                         <div className="flex items-center gap-2">
-                           <Globe className="w-4 h-4" /> Public (All Thrive Users)
-                         </div>
-                       </SelectItem>
-                       <SelectItem value="group">
-                         <div className="flex items-center gap-2">
-                           <Building className="w-4 h-4" /> Creator Group Only
-                         </div>
-                       </SelectItem>
+                      <SelectItem value="private">
+                        <div className="flex items-center gap-2">
+                          <Lock className="w-4 h-4" /> Private
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="group">
+                        <div className="flex items-center gap-2">
+                          <Building className="w-4 h-4" /> Share to Group(s)
+                        </div>
+                      </SelectItem>
                      </SelectContent>
                    </Select>
                  </div>
