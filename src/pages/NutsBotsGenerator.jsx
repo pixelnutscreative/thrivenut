@@ -103,7 +103,7 @@ export default function NutsBotsGenerator() {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent gap-6">
             <TabsTrigger value="generate" className="rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent px-4 py-3">
-              🤖 Generator
+              🤖 Studio
             </TabsTrigger>
             <TabsTrigger value="library" className="rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent px-4 py-3">
               📂 Assets

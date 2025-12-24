@@ -7,9 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Sparkles, Image as ImageIcon, Copy, Download, Save, RefreshCw } from 'lucide-react';
+import { Loader2, Sparkles, Image as ImageIcon, Copy, Download, Save, RefreshCw, Lightbulb, Trash2 } from 'lucide-react';
 import { useTheme } from '../components/shared/useTheme';
+import { motion } from 'framer-motion';
 
 const CATEGORY = 'thrive';
 
@@ -18,23 +18,14 @@ export default function ThriveGenerator() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('generate');
   
-  // Generator State
-  const [selectedToolId, setSelectedToolId] = useState('');
-  const [inputs, setInputs] = useState({});
-  const [generatedResult, setGeneratedResult] = useState(null);
+  // Generator State (Matching the old ReferralsTab logic)
+  const [genFeature, setGenFeature] = useState('Overview');
+  const [customFeature, setCustomFeature] = useState('');
+  const [genType, setGenType] = useState('social_caption');
+  const [generatedContent, setGeneratedContent] = useState('');
+  const [copySuccess, setCopySuccess] = useState(false);
 
-  // Fetch Tools
-  const { data: tools = [] } = useQuery({
-    queryKey: ['generatorTools', CATEGORY],
-    queryFn: async () => {
-      const all = await base44.entities.ContentGeneratorTool.filter({ category: CATEGORY, is_active: true });
-      return all;
-    }
-  });
-
-  const selectedTool = tools.find(t => t.id === selectedToolId);
-
-  // Fetch Assets
+  // Fetch Assets (Content Library)
   const { data: assets = [] } = useQuery({
     queryKey: ['marketingAssets', CATEGORY],
     queryFn: async () => {
@@ -42,60 +33,107 @@ export default function ThriveGenerator() {
     }
   });
 
-  // Fetch History
-  const { data: history = [] } = useQuery({
+  // Fetch OLD History (SavedMotivation)
+  const { data: savedReferralContent = [] } = useQuery({
+    queryKey: ['savedReferralContent'],
+    queryFn: async () => {
+      return await base44.entities.SavedMotivation.filter({ 
+        category: 'Thrive Referrals' 
+      }, '-created_date');
+    }
+  });
+
+  // Fetch NEW History (GeneratedContentHistory)
+  const { data: newHistory = [] } = useQuery({
     queryKey: ['generatedHistory', CATEGORY],
     queryFn: async () => {
       const user = await base44.auth.me();
       if (!user) return [];
-      // Assuming filter allows filtering by related tool category or we filter client side
-      // For now, fetching all history and filtering is safest if no backend filter
+      // Filter strictly for this category if possible, or filter client side.
+      // Assuming we tag them or just show all for now, but better to filter.
+      // Since Thrive Generator doesn't use ContentGeneratorTool entity in this hardcoded version, 
+      // we might not find matching tool_ids. 
+      // We will save new history with a special tool_name "Thrive Generator".
       const allHistory = await base44.entities.GeneratedContentHistory.filter({ user_email: user.email }, '-created_date');
-      // Filter client side for this category's tools
-      const toolIds = tools.map(t => t.id);
-      return allHistory.filter(h => toolIds.includes(h.tool_id));
-    },
-    enabled: tools.length > 0
+      return allHistory.filter(h => h.tool_name === 'Thrive Generator' || h.tool_id === 'thrive-gen');
+    }
   });
 
-  // Mutations
+  // Combine History
+  const combinedHistory = [
+    ...newHistory.map(h => ({
+      id: h.id,
+      content: h.content,
+      created_date: h.created_date,
+      type: 'new',
+      label: h.inputs?.feature || 'Generated'
+    })),
+    ...savedReferralContent.map(h => ({
+      id: h.id,
+      content: h.content,
+      created_date: h.created_date,
+      type: 'old',
+      label: 'Saved Idea'
+    }))
+  ].sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+
+  // Generate Mutation
   const generateMutation = useMutation({
     mutationFn: async () => {
-      if (!selectedTool) return;
-      
-      // Simulate API call for now (or use backend function if one exists)
-      // Since user asked for backend function, we'll use 'generateMarketingContent' if it supports it, 
-      // or a new generic 'runGeneratorTool' function.
-      // For this phase, I'll assume we adapt 'generateMarketingContent' or mock it until backend is ready.
-      
-      // Construct prompt
-      let prompt = selectedTool.prompt_template;
-      Object.keys(inputs).forEach(key => {
-        prompt = prompt.replace(new RegExp(`{{${key}}}`, 'g'), inputs[key] || '');
-      });
-
-      // Call backend
+      const featureToUse = genFeature === 'Custom' ? customFeature : genFeature;
       const res = await base44.functions.invoke('generateMarketingContent', {
-        prompt,
-        type: selectedTool.output_type,
-        toolId: selectedTool.id
+        feature: featureToUse,
+        contentType: genType,
+        targetAudience: 'creators' // Defaulting as per previous tab
       });
-      return res.data;
+      return res.data?.content;
     },
     onSuccess: async (data) => {
-      setGeneratedResult(data); // data = { content: "..." }
+      setGeneratedContent(data);
       
-      // Save to history
+      // Save to NEW history structure automatically? 
+      // The old tab didn't auto-save to history, it had a "Save" button. 
+      // New requested flow usually implies auto-save history or explicit.
+      // Let's auto-save to history for convenience in the "Studio" model.
+      
       const user = await base44.auth.me();
+      const featureToUse = genFeature === 'Custom' ? customFeature : genFeature;
+      
       await base44.entities.GeneratedContentHistory.create({
         user_email: user.email,
-        tool_id: selectedTool.id,
-        tool_name: selectedTool.name,
-        content: data.content,
-        content_type: selectedTool.output_type,
-        inputs: inputs
+        tool_id: 'thrive-gen',
+        tool_name: 'Thrive Generator',
+        content: data,
+        content_type: 'text',
+        inputs: { feature: featureToUse, type: genType }
       });
       queryClient.invalidateQueries({ queryKey: ['generatedHistory'] });
+    }
+  });
+
+  // Save as "Saved Idea" (Legacy support / Favorites)
+  const saveAsIdeaMutation = useMutation({
+    mutationFn: async (content) => {
+      const featureToUse = genFeature === 'Custom' ? customFeature : genFeature;
+      await base44.entities.SavedMotivation.create({
+        content: content,
+        type: 'ai_generated',
+        category: 'Thrive Referrals',
+        notes: `Generated for feature: ${featureToUse} (${genType})`,
+        used_for_content: false
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['savedReferralContent'] });
+    }
+  });
+
+  const deleteOldContentMutation = useMutation({
+    mutationFn: async (id) => {
+      await base44.entities.SavedMotivation.delete(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['savedReferralContent'] });
     }
   });
 
@@ -107,15 +145,15 @@ export default function ThriveGenerator() {
             <Sparkles className="w-8 h-8 text-teal-600" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-gray-800">Thrive Content Studio</h1>
-            <p className="text-gray-600">Generate captions, scripts, and grab ready-to-post assets for Thrive.</p>
+            <h1 className="text-3xl font-bold text-gray-800">Thrive Nut</h1>
+            <p className="text-gray-600">Generate captions, scripts, and grab ready-to-post assets.</p>
           </div>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent gap-6">
             <TabsTrigger value="generate" className="rounded-none border-b-2 border-transparent data-[state=active]:border-teal-500 data-[state=active]:bg-transparent px-4 py-3">
-              ✨ Generator
+              ✨ UGC Studio
             </TabsTrigger>
             <TabsTrigger value="library" className="rounded-none border-b-2 border-transparent data-[state=active]:border-teal-500 data-[state=active]:bg-transparent px-4 py-3">
               📂 Content Library
@@ -130,78 +168,68 @@ export default function ThriveGenerator() {
               <div className="grid lg:grid-cols-3 gap-6">
                 {/* Controls */}
                 <div className="lg:col-span-1 space-y-4">
-                  <Card>
+                  <Card className="border-teal-200">
                     <CardHeader>
-                      <CardTitle>Tool Settings</CardTitle>
+                      <CardTitle>Generator Settings</CardTitle>
+                      <CardDescription>Select what you want to promote</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <div>
-                        <Label>Select Tool</Label>
-                        <Select value={selectedToolId} onValueChange={(v) => {
-                          setSelectedToolId(v);
-                          setInputs({});
-                          setGeneratedResult(null);
-                        }}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Choose a tool..." />
+                      <div className="space-y-2">
+                        <Label>Feature to Highlight</Label>
+                        <Select value={genFeature} onValueChange={setGenFeature}>
+                          <SelectTrigger className="bg-white">
+                            <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {tools.map(tool => (
-                              <SelectItem key={tool.id} value={tool.id}>
-                                {tool.icon} {tool.name}
-                              </SelectItem>
-                            ))}
+                            <SelectItem value="Overview">App Overview (All-in-One)</SelectItem>
+                            <SelectItem value="Content Creator Hub">Content Creator Hub (Suite)</SelectItem>
+                            <SelectItem value="TikTok Engagement">TikTok Engagement CRM (Suite)</SelectItem>
+                            <SelectItem value="Live Schedule">Live Schedule & Calendar (Suite)</SelectItem>
+                            <SelectItem value="Battle Prep">Battle Prep & Inventory (Suite)</SelectItem>
+                            <SelectItem value="Goals & Habits">Goals & Habits Tracking</SelectItem>
+                            <SelectItem value="Journal & Mental Health">Journal & Mental Health</SelectItem>
+                            <SelectItem value="My Stuff">My Resources Organization</SelectItem>
+                            <SelectItem value="Finance">Finance & Budgeting</SelectItem>
+                            <SelectItem value="Custom">✨ Custom Feature / Topic</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      {genFeature === 'Custom' && (
+                        <div className="space-y-2">
+                          <Label>Describe the Topic</Label>
+                          <Input 
+                            placeholder="e.g. How I use the water tracker"
+                            value={customFeature}
+                            onChange={(e) => setCustomFeature(e.target.value)}
+                          />
+                        </div>
+                      )}
+
+                      <div className="space-y-2">
+                        <Label>Content Type</Label>
+                        <Select value={genType} onValueChange={setGenType}>
+                          <SelectTrigger className="bg-white">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="social_caption">Social Media Caption</SelectItem>
+                            <SelectItem value="short_script">Short Video Script (Reels/TikTok)</SelectItem>
+                            <SelectItem value="story_idea">Story/Post Idea</SelectItem>
+                            <SelectItem value="email_blurb">Email Newsletter Blurb</SelectItem>
+                            <SelectItem value="dm_script">Direct Message Script</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
 
-                      {selectedTool && (
-                        <div className="space-y-4 pt-4 border-t">
-                          <p className="text-sm text-gray-500">{selectedTool.description}</p>
-                          
-                          {selectedTool.input_fields?.map(field => (
-                            <div key={field.name}>
-                              <Label>{field.label}</Label>
-                              {field.type === 'select' ? (
-                                <Select 
-                                  value={inputs[field.name] || ''} 
-                                  onValueChange={(v) => setInputs({...inputs, [field.name]: v})}
-                                >
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select..." />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {field.options?.map(opt => (
-                                      <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              ) : field.type === 'textarea' ? (
-                                <Textarea 
-                                  placeholder={field.placeholder}
-                                  value={inputs[field.name] || ''}
-                                  onChange={(e) => setInputs({...inputs, [field.name]: e.target.value})}
-                                />
-                              ) : (
-                                <Input 
-                                  placeholder={field.placeholder}
-                                  value={inputs[field.name] || ''}
-                                  onChange={(e) => setInputs({...inputs, [field.name]: e.target.value})}
-                                />
-                              )}
-                            </div>
-                          ))}
-
-                          <Button 
-                            className="w-full bg-teal-600 hover:bg-teal-700 text-white"
-                            onClick={() => generateMutation.mutate()}
-                            disabled={generateMutation.isPending}
-                          >
-                            {generateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}
-                            Generate Content
-                          </Button>
-                        </div>
-                      )}
+                      <Button 
+                        className="w-full bg-teal-600 hover:bg-teal-700 text-white"
+                        onClick={() => generateMutation.mutate()}
+                        disabled={generateMutation.isPending}
+                      >
+                        {generateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}
+                        Generate Content
+                      </Button>
                     </CardContent>
                   </Card>
                 </div>
@@ -213,31 +241,33 @@ export default function ThriveGenerator() {
                       <CardTitle>Result</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      {generatedResult ? (
+                      {generatedContent ? (
                         <div className="space-y-4">
-                           {selectedTool?.output_type === 'image' ? (
-                             <img src={generatedResult.content} alt="Generated" className="w-full rounded-lg shadow-md" />
-                           ) : (
-                             <div className="p-4 bg-gray-50 rounded-lg whitespace-pre-wrap font-sans text-sm">
-                               {generatedResult.content}
-                             </div>
-                           )}
+                           <div className="p-4 bg-gray-50 rounded-lg whitespace-pre-wrap font-sans text-sm border border-teal-100">
+                             {generatedContent}
+                           </div>
                            
                            <div className="flex gap-2 justify-end">
-                             <Button variant="outline" onClick={() => navigator.clipboard.writeText(generatedResult.content)}>
-                               <Copy className="w-4 h-4 mr-2" /> Copy
+                             <Button 
+                               variant="outline" 
+                               onClick={() => saveAsIdeaMutation.mutate(generatedContent)}
+                               disabled={saveAsIdeaMutation.isPending}
+                             >
+                               <Save className="w-4 h-4 mr-2" /> Save as Idea
                              </Button>
-                             {selectedTool?.output_type === 'image' && (
-                               <Button variant="outline" onClick={() => window.open(generatedResult.content, '_blank')}>
-                                 <Download className="w-4 h-4 mr-2" /> Download
-                               </Button>
-                             )}
+                             <Button variant="default" className="bg-teal-600" onClick={() => {
+                               navigator.clipboard.writeText(generatedContent);
+                               setCopySuccess(true);
+                               setTimeout(() => setCopySuccess(false), 2000);
+                             }}>
+                               {copySuccess ? <span className="flex items-center gap-1">✓ Copied</span> : <><Copy className="w-4 h-4 mr-2" /> Copy</>}
+                             </Button>
                            </div>
                         </div>
                       ) : (
                         <div className="flex flex-col items-center justify-center h-full text-gray-400 py-12">
                           <Sparkles className="w-12 h-12 mb-4 opacity-20" />
-                          <p>Select a tool and click Generate to see magic happen!</p>
+                          <p>Select a feature and type to generate magic!</p>
                         </div>
                       )}
                     </CardContent>
@@ -250,7 +280,7 @@ export default function ThriveGenerator() {
               <div className="grid md:grid-cols-3 gap-6">
                 {assets.length === 0 ? (
                   <div className="col-span-3 text-center py-12 text-gray-500">
-                    No assets found in the library yet.
+                    No ready-to-post assets found yet. Check back soon!
                   </div>
                 ) : (
                   assets.map(asset => (
@@ -282,28 +312,35 @@ export default function ThriveGenerator() {
 
             <TabsContent value="history">
               <div className="space-y-4">
-                {history.map(item => (
-                  <Card key={item.id}>
-                    <CardContent className="p-4 flex gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Badge>{item.tool_name}</Badge>
-                          <span className="text-xs text-gray-400">{new Date(item.created_date).toLocaleDateString()}</span>
+                {combinedHistory.length === 0 ? (
+                  <div className="text-center py-12 text-gray-500">No history yet.</div>
+                ) : (
+                  combinedHistory.map(item => (
+                    <Card key={item.id} className="border border-gray-100">
+                      <CardContent className="p-4 flex gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Badge variant={item.type === 'old' ? 'secondary' : 'default'} className={item.type === 'new' ? 'bg-teal-600' : ''}>
+                              {item.label}
+                            </Badge>
+                            <span className="text-xs text-gray-400">{new Date(item.created_date).toLocaleDateString()}</span>
+                          </div>
+                          <p className="text-sm text-gray-700 line-clamp-3 whitespace-pre-wrap">{item.content}</p>
                         </div>
-                        {item.content_type === 'image' ? (
-                          <img src={item.content} alt="Historical" className="w-32 h-32 object-cover rounded" />
-                        ) : (
-                          <p className="text-sm text-gray-700 line-clamp-3">{item.content}</p>
-                        )}
-                      </div>
-                      <div className="flex flex-col gap-2">
-                         <Button size="sm" variant="ghost" onClick={() => navigator.clipboard.writeText(item.content)}>
-                           <Copy className="w-4 h-4" />
-                         </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                        <div className="flex flex-col gap-2">
+                           <Button size="sm" variant="ghost" onClick={() => navigator.clipboard.writeText(item.content)} title="Copy">
+                             <Copy className="w-4 h-4" />
+                           </Button>
+                           {item.type === 'old' && (
+                             <Button size="sm" variant="ghost" className="text-red-400 hover:text-red-600" onClick={() => deleteOldContentMutation.mutate(item.id)} title="Delete">
+                               <Trash2 className="w-4 h-4" />
+                             </Button>
+                           )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
               </div>
             </TabsContent>
           </div>
