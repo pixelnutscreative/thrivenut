@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, MapPin, Sparkles, BookOpen, Heart, Brain } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import TimezoneSelector from '../shared/TimezoneSelector';
+import ColorPicker from '../shared/ColorPicker';
 
 const greetingTypeOptions = [
   { id: 'scripture', name: 'Scripture', description: 'Daily Bible verse', icon: '📖' },
@@ -258,7 +259,7 @@ function OnboardingModal({ isOpen, user, onComplete }) {
             </div>
           )}
 
-          {/* Step 2: Favorite Color + Greeting Types Combined */}
+          {/* Step 2: Favorite Color */}
           {step === 2 && (
             <div className="space-y-6">
               <div className="space-y-3">
@@ -266,21 +267,11 @@ function OnboardingModal({ isOpen, user, onComplete }) {
                 <p className="text-sm text-gray-600">
                   We'll use it throughout the app! Your dashboard will be called "{user?.full_name?.split(' ')[0] || 'My'}'s Day"
                 </p>
-                <div className="flex gap-3 items-center">
-                  <Input
-                    type="color"
-                    value={data.favorite_color}
-                    onChange={(e) => setData({ ...data, favorite_color: e.target.value })}
-                    className="w-16 h-16 p-1"
-                  />
-                  <div className="flex-1">
-                    <Input
-                      value={data.favorite_color}
-                      onChange={(e) => setData({ ...data, favorite_color: e.target.value })}
-                      placeholder="#1fd2ea"
-                    />
-                  </div>
-                </div>
+                <ColorPicker
+                  color={data.favorite_color}
+                  onChange={(color) => setData({ ...data, favorite_color: color })}
+                  label="Choose Color"
+                />
               </div>
             </div>
           )}
@@ -376,24 +367,9 @@ function OnboardingModal({ isOpen, user, onComplete }) {
             </div>
           )}
 
-          {/* Step 5: Location + Referral Code */}
+          {/* Step 5: Location */}
           {step === 5 && (
             <>
-              {!hasReferralCode && (
-                <div className="mb-6 p-4 bg-purple-50 border-2 border-purple-200 rounded-lg">
-                  <Label className="mb-2 block font-semibold">Were you referred by someone? (Optional)</Label>
-                  <Input
-                    placeholder="Enter their referral code"
-                    value={data.referral_code_input}
-                    onChange={(e) => setData({ ...data, referral_code_input: e.target.value.toLowerCase() })}
-                    className="font-mono"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    If someone sent you a referral link, you can skip this. Otherwise, enter their code here to give them credit!
-                  </p>
-                </div>
-              )}
-
               <p className="text-sm text-gray-600">
                 We'd love to show where our Pixel Nuts community is from on a map! Your name won't show - you'll just be a dot at your city center.
               </p>

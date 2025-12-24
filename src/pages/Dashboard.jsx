@@ -88,30 +88,32 @@ export default function Dashboard() {
   const adminEmails = ['pixelnutscreative@gmail.com', 'pixel@thrivenut.app'];
   const isAdmin = adminEmails.includes(realUserEmail);
 
-  useEffect(() => {
-    if (user && preferences !== undefined) {
-      const hasCompletedOnboarding = preferences?.onboarding_completed || 
-                                     localStorage.getItem(`onboarding_completed_${user.email}`) === 'true' ||
-                                     isAdmin;
-      setShowOnboarding(!hasCompletedOnboarding);
+  // Check onboarding status but DO NOT auto-show the modal
+  const hasCompletedOnboarding = useMemo(() => {
+    if (!user || preferences === undefined) return true; // Don't prompt if loading
+    return !!(preferences?.onboarding_completed || 
+             localStorage.getItem(`onboarding_completed_${user.email}`) === 'true' ||
+             isAdmin);
+  }, [user, preferences, isAdmin]);
 
-      if (!hasCompletedOnboarding) {
-        let referralCode = sessionStorage.getItem('referral_code');
-        if (!referralCode) {
-          try {
-            const storedData = localStorage.getItem('referral_data');
-            if (storedData) {
-              const parsed = JSON.parse(storedData);
-              if (new Date(parsed.expiresAt) > new Date()) {
-                referralCode = parsed.code;
-              }
+  // Handle referral code initialization silently in background if needed
+  useEffect(() => {
+    if (user && !hasCompletedOnboarding) {
+      let referralCode = sessionStorage.getItem('referral_code');
+      if (!referralCode) {
+        try {
+          const storedData = localStorage.getItem('referral_data');
+          if (storedData) {
+            const parsed = JSON.parse(storedData);
+            if (new Date(parsed.expiresAt) > new Date()) {
+              referralCode = parsed.code;
             }
-          } catch (e) {}
-        }
-        base44.functions.invoke('initializeReferralCode', { referral_code: referralCode }).catch(() => {});
+          }
+        } catch (e) {}
       }
+      base44.functions.invoke('initializeReferralCode', { referral_code: referralCode }).catch(() => {});
     }
-  }, [user, preferences]);
+  }, [user, hasCompletedOnboarding]);
 
   const enabledModules = preferences?.enabled_modules || [];
 
@@ -371,6 +373,27 @@ export default function Dashboard() {
       <div className={`min-h-screen ${bgClass} p-4 md:p-8`}>
         <div className="max-w-7xl mx-auto space-y-8">
           
+          {/* Onboarding Call-to-Action (Manual Trigger) */}
+          {!hasCompletedOnboarding && (
+            <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl p-6 text-white shadow-lg mb-6">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold mb-2">Welcome to Let's Thrive!</h2>
+                  <p className="text-purple-100">
+                    Let's personalize your dashboard to help you crush your goals.
+                  </p>
+                </div>
+                <Button 
+                  size="lg" 
+                  onClick={() => setShowOnboarding(true)}
+                  className="bg-white text-purple-600 hover:bg-purple-50 font-bold border-0"
+                >
+                  Start Setup
+                </Button>
+              </div>
+            </div>
+          )}
+
           <div className="flex justify-end mb-4">
              <Button 
                variant="outline" 

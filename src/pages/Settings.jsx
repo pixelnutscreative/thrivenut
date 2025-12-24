@@ -81,6 +81,7 @@ export default function Settings() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('profile');
   const [expandedTabs, setExpandedTabs] = useState(['profile']);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
     const hash = location.hash.replace('#', '');
@@ -347,11 +348,26 @@ export default function Settings() {
 
   return (
     <div className={`min-h-screen ${bgClass} p-4 md:p-8 pb-32`}>
+      <OnboardingModal 
+        isOpen={showOnboarding} 
+        user={user} 
+        onComplete={() => {
+          setShowOnboarding(false);
+          queryClient.invalidateQueries({ queryKey: ['preferences'] });
+        }} 
+      />
       <div className="max-w-5xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold text-gray-800">Settings</h1>
           <div className="flex items-center gap-2">
-            {/* Save status is now on the buttons */}
+            <Button 
+              variant="outline" 
+              onClick={() => setShowOnboarding(true)}
+              className="hidden md:flex"
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              Re-run Onboarding
+            </Button>
           </div>
         </div>
 
@@ -624,14 +640,22 @@ export default function Settings() {
 
           {/* PREFERENCES TAB */}
           <TabsContent value="preferences">
-            <div className="flex justify-end mb-4">
-              <Button onClick={handleSave} disabled={isSavingAll}>
-                <Save className="w-4 h-4 mr-2" />
-                {isSavingAll ? 'Saving...' : 'Save Changes'}
-              </Button>
-            </div>
-            
-            <Card className="mb-6">
+          <div className="flex justify-end mb-4 gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowOnboarding(true)}
+              className="md:hidden"
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              Re-run Onboarding
+            </Button>
+            <Button onClick={handleSave} disabled={isSavingAll}>
+              <Save className="w-4 h-4 mr-2" />
+              {isSavingAll ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </div>
+
+          <Card className="mb-6">
               <CardHeader className="pb-3">
                 <CardTitle>Theme & Colors</CardTitle>
               </CardHeader>
