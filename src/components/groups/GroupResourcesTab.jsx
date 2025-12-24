@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
+import { useTheme } from '../shared/useTheme';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,7 +17,9 @@ import 'react-quill/dist/quill.snow.css';
 import LevelSelector from './LevelSelector';
 
 export default function GroupResourcesTab({ group, currentUser, myMembership, isAdmin }) {
+  const { preferences } = useTheme();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({ 
@@ -26,6 +30,20 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
     queryKey: ['groupResources', group.id],
     queryFn: () => base44.entities.GroupResource.filter({ group_id: group.id }, '-created_date'),
   });
+
+  // Handle Edit from URL
+  useEffect(() => {
+    const editId = searchParams.get('editId');
+    if (editId && resources.length > 0 && !isDialogOpen && !editingId) {
+      const resource = resources.find(r => r.id === editId);
+      if (resource) {
+        handleEdit(resource);
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete('editId');
+        setSearchParams(newParams);
+      }
+    }
+  }, [searchParams, resources]);
 
   const submitMutation = useMutation({
     mutationFn: (data) => base44.entities.GroupResource.create({ 
@@ -115,7 +133,13 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
         <h3 className="text-lg font-semibold">Shared Resources</h3>
         <Dialog open={isDialogOpen} onOpenChange={(open) => !open && handleCloseDialog()}>
           <DialogTrigger asChild>
-            <Button onClick={() => setIsDialogOpen(true)}><Plus className="w-4 h-4 mr-2" /> Share Resource</Button>
+            <Button 
+              onClick={() => setIsDialogOpen(true)} 
+              className="text-white hover:opacity-90"
+              style={{ backgroundColor: preferences?.primary_color }}
+            >
+              <Plus className="w-4 h-4 mr-2" /> Share Resource
+            </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
