@@ -235,9 +235,9 @@ export default function Layout({ children, currentPageName }) {
     bgColor: 'bg-pink-500/10',
     items: [
       { name: 'Links & Dashboard', icon: Share2, path: 'ShareDashboard' },
-      { name: 'Thrive Content', icon: Sparkles, path: 'ThriveGenerator' },
+      { name: 'Thrive Nut', icon: Sparkles, path: 'ThriveGenerator' },
       { name: "Pixel's AI Toolbox", icon: Brain, path: 'AIToolsGenerator' },
-      { name: 'Nuts + Bots Content', icon: MessageCircle, path: 'NutsBotsGenerator' }
+      { name: 'The Nuts + Bots', icon: MessageCircle, path: 'NutsBotsGenerator' }
     ]
   }];
 
