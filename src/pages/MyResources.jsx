@@ -102,15 +102,17 @@ import React, { useState } from 'react';
        queryKey: ['myGroups', user?.email],
        queryFn: async () => {
            if (!user?.email) return [];
-           const memberships = await base44.entities.CreatorGroupMember.filter({ user_email: user.email, status: 'active' });
-           if (memberships.length === 0) return [];
+           // Relaxed filter to ensure we get all memberships
+           const memberships = await base44.entities.CreatorGroupMember.filter({ user_email: user.email });
+           if (!memberships || memberships.length === 0) return [];
 
            // Fetch all groups in parallel
            const groupPromises = memberships.map(m => base44.entities.CreatorGroup.filter({ id: m.group_id }));
            const groupResults = await Promise.all(groupPromises);
 
-           // Flatten array of arrays and filter out any empty results
-           return groupResults.flat().filter(g => g && g.status !== 'archived');
+           // Flatten array of arrays and filter out any empty/null results
+           // Removed strict status checks to ensure groups appear
+           return groupResults.flat().filter(g => g);
        },
        enabled: !!user?.email
      });
@@ -251,14 +253,13 @@ import React, { useState } from 'react';
        if (item.category && !itemCategories.includes(item.category)) {
          itemCategories.push(item.category);
        }
-       // Don't force 'Other' on edit if empty, let it be empty or Uncategorized on save
 
        setFormData({
-         title: item.title,
+         title: item.title || '',
          description: item.description || '',
-         url: item.url,
+         url: item.url || '', // Fix: Ensure URL is never undefined to prevent crashes
          categories: itemCategories,
-         notes: item.notes,
+         notes: item.notes || '',
          tags: item.tags || [],
          color: item.color || '#ffffff',
          secondary_color: item.secondary_color || '',
@@ -554,9 +555,10 @@ import React, { useState } from 'react';
                  <Label>URL (Optional)</Label>
                  <div className="flex gap-2">
                    <Select
-                     value={formData.url.startsWith('http://') ? 'http://' : 'https://'}
+                     value={(formData.url || '').startsWith('http://') ? 'http://' : 'https://'}
                      onValueChange={(v) => {
-                       const cleanPath = formData.url.replace(/^https?:\/\//, '');
+                       const currentUrl = formData.url || '';
+                       const cleanPath = currentUrl.replace(/^https?:\/\//, '');
                        setFormData({ ...formData, url: v + cleanPath });
                      }}
                    >
@@ -569,9 +571,10 @@ import React, { useState } from 'react';
                      </SelectContent>
                    </Select>
                    <Input 
-                     value={formData.url.replace(/^https?:\/\//, '')} 
+                     value={(formData.url || '').replace(/^https?:\/\//, '')} 
                      onChange={(e) => {
-                       const protocol = formData.url.startsWith('http://') ? 'http://' : 'https://';
+                       const currentUrl = formData.url || '';
+                       const protocol = currentUrl.startsWith('http://') ? 'http://' : 'https://';
                        setFormData({ ...formData, url: protocol + e.target.value });
                      }}
                      placeholder="www.example.com"
