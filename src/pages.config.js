@@ -1,4 +1,5 @@
 import AIImageGenerator from './pages/AIImageGenerator';
+import AIToolsGenerator from './pages/AIToolsGenerator';
 import ActivityTracker from './pages/ActivityTracker';
 import Admin from './pages/Admin';
 import AdminImpersonate from './pages/AdminImpersonate';
@@ -48,6 +49,7 @@ import MyLists from './pages/MyLists';
 import MyProfile from './pages/MyProfile';
 import MyResources from './pages/MyResources';
 import NotificationHistory from './pages/NotificationHistory';
+import NutsBotsGenerator from './pages/NutsBotsGenerator';
 import ParentChildSetup from './pages/ParentChildSetup';
 import People from './pages/People';
 import PetCare from './pages/PetCare';
@@ -61,6 +63,7 @@ import QuickNotes from './pages/QuickNotes';
 import SalesTracking from './pages/SalesTracking';
 import SavedMotivations from './pages/SavedMotivations';
 import Settings from './pages/Settings';
+import ShareDashboard from './pages/ShareDashboard';
 import SocialShortcuts from './pages/SocialShortcuts';
 import SongGenerator from './pages/SongGenerator';
 import SubscriptionSuccess from './pages/SubscriptionSuccess';
@@ -68,6 +71,7 @@ import SuperFanAccess from './pages/SuperFanAccess';
 import Supplements from './pages/Supplements';
 import Support from './pages/Support';
 import Tasks from './pages/Tasks';
+import ThriveGenerator from './pages/ThriveGenerator';
 import TikTokContacts from './pages/TikTokContacts';
 import TikTokEngagement from './pages/TikTokEngagement';
 import TikTokGoals from './pages/TikTokGoals';
@@ -76,15 +80,12 @@ import WaterHistory from './pages/WaterHistory';
 import WeeklyGifterGallery from './pages/WeeklyGifterGallery';
 import Wellness from './pages/Wellness';
 import WorkSchedules from './pages/WorkSchedules';
-import ShareDashboard from './pages/ShareDashboard';
-import ThriveGenerator from './pages/ThriveGenerator';
-import AIToolsGenerator from './pages/AIToolsGenerator';
-import NutsBotsGenerator from './pages/NutsBotsGenerator';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "AIImageGenerator": AIImageGenerator,
+    "AIToolsGenerator": AIToolsGenerator,
     "ActivityTracker": ActivityTracker,
     "Admin": Admin,
     "AdminImpersonate": AdminImpersonate,
@@ -134,6 +135,7 @@ export const PAGES = {
     "MyProfile": MyProfile,
     "MyResources": MyResources,
     "NotificationHistory": NotificationHistory,
+    "NutsBotsGenerator": NutsBotsGenerator,
     "ParentChildSetup": ParentChildSetup,
     "People": People,
     "PetCare": PetCare,
@@ -147,6 +149,7 @@ export const PAGES = {
     "SalesTracking": SalesTracking,
     "SavedMotivations": SavedMotivations,
     "Settings": Settings,
+    "ShareDashboard": ShareDashboard,
     "SocialShortcuts": SocialShortcuts,
     "SongGenerator": SongGenerator,
     "SubscriptionSuccess": SubscriptionSuccess,
@@ -154,6 +157,7 @@ export const PAGES = {
     "Supplements": Supplements,
     "Support": Support,
     "Tasks": Tasks,
+    "ThriveGenerator": ThriveGenerator,
     "TikTokContacts": TikTokContacts,
     "TikTokEngagement": TikTokEngagement,
     "TikTokGoals": TikTokGoals,
@@ -162,10 +166,6 @@ export const PAGES = {
     "WeeklyGifterGallery": WeeklyGifterGallery,
     "Wellness": Wellness,
     "WorkSchedules": WorkSchedules,
-    "ShareDashboard": ShareDashboard,
-    "ThriveGenerator": ThriveGenerator,
-    "AIToolsGenerator": AIToolsGenerator,
-    "NutsBotsGenerator": NutsBotsGenerator,
 }
 
 export const pagesConfig = {
