@@ -12,12 +12,10 @@ export default function AdminAnalytics() {
     queryKey: ['adminAnalytics', timeRange],
     queryFn: async () => {
       // Fetch events (limit to recent for performance, or fetch reasonable amount)
-      // Since we can't do complex aggregates in DB easily, we fetch list and aggregate in JS
-      // In a real production app with millions of rows, we'd need a backend function for aggregation.
-      // For now, fetching last 1000 events or so.
       const events = await base44.entities.AnalyticsEvent.list('-created_date', 1000);
       return events;
-    }
+    },
+    refetchInterval: 30000 // Refresh every 30s for somewhat live data
   });
 
   if (isLoading) {
@@ -28,6 +26,11 @@ export default function AdminAnalytics() {
   const pageViews = {};
   const userActivity = {};
   let totalViews = 0;
+  
+  // Live Visitors (last 5 minutes)
+  const now = new Date();
+  const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
+  const liveVisitors = {};
 
   analytics?.forEach(event => {
     if (event.event_type === 'page_view') {
@@ -36,6 +39,17 @@ export default function AdminAnalytics() {
       
       if (event.user_email) {
         userActivity[event.user_email] = (userActivity[event.user_email] || 0) + 1;
+        
+        // Check if live
+        const eventTime = new Date(event.created_date); // created_date is auto-added
+        if (eventTime > fiveMinutesAgo) {
+          if (!liveVisitors[event.user_email] || new Date(liveVisitors[event.user_email].time) < eventTime) {
+            liveVisitors[event.user_email] = {
+              path: path,
+              time: event.created_date
+            };
+          }
+        }
       }
       totalViews++;
     }
@@ -55,6 +69,39 @@ export default function AdminAnalytics() {
 
   return (
     <div className="space-y-6">
+      {/* Live Visitors Section */}
+      <Card className="border-purple-200 bg-purple-50/50">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <span className="relative flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+            </span>
+            Live Right Now
+          </CardTitle>
+          <CardDescription>Users active in the last 5 minutes</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {Object.keys(liveVisitors).length === 0 ? (
+            <p className="text-sm text-gray-500">No active users right now.</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {Object.entries(liveVisitors).map(([email, data]) => (
+                <div key={email} className="bg-white p-3 rounded-lg border border-purple-100 shadow-sm flex items-center justify-between">
+                  <div className="truncate pr-2">
+                    <p className="font-medium text-sm truncate" title={email}>{email}</p>
+                    <p className="text-xs text-purple-600 truncate" title={data.path}>on {data.path}</p>
+                  </div>
+                  <div className="text-xs text-gray-400 whitespace-nowrap">
+                    Just now
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardContent className="pt-6 flex items-center gap-4">

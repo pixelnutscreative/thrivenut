@@ -330,7 +330,26 @@ export default function Layout({ children, currentPageName }) {
     return children;
   }
 
-  if (!userLoading && !user) {
+  // Show loading state while checking user
+  if (userLoading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-teal-50 via-purple-50 to-blue-50">
+        <div className="text-center animate-pulse">
+          <img
+            src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6924840d3628eabd1d7f8247/e225113d4_Untitleddesign.png"
+            alt="Let's Thrive!"
+            className="w-16 h-16 mx-auto mb-4" 
+          />
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-teal-600 to-purple-400 bg-clip-text text-transparent">
+            Let's Thrive!
+          </h1>
+          <p className="text-gray-500 mt-2">Loading your space...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
     window.location.href = createPageUrl('Home');
     return null;
   }
