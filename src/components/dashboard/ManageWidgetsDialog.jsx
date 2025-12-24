@@ -16,24 +16,21 @@ export default function ManageWidgetsDialog({ isOpen, onClose, layout, onUpdateL
     queryKey: ['myGroups', userEmail],
     queryFn: async () => {
       // Fetch groups I own or am a member of
-      // Simplify: fetch all active groups and filter in memory or backend function if needed
-      // For now, assuming user can add any public group or just groups they are in.
-      // Better: Fetch memberships first.
       if (!userEmail) return [];
-      
-      const memberships = await base44.entities.CreatorGroupMember.filter({ user_email: userEmail, status: 'active' });
+
+      // Get all groups I'm a member of (regardless of active status for now to catch everything)
+      const memberships = await base44.entities.CreatorGroupMember.filter({ user_email: userEmail });
       const groupIds = memberships.map(m => m.group_id);
-      
+
       // Also groups I own
       const ownedGroups = await base44.entities.CreatorGroup.filter({ owner_email: userEmail });
       const allIds = [...new Set([...groupIds, ...ownedGroups.map(g => g.id)])];
-      
+
       if (allIds.length === 0) return [];
 
-      // Fetch groups details
-      // Since filter doesn't support 'in' array efficiently in basic usage (looping is better for small numbers)
+      // Fetch group details and filter out archived ones
       const groups = await Promise.all(allIds.map(id => base44.entities.CreatorGroup.filter({ id })));
-      return groups.flat();
+      return groups.flat().filter(g => g && g.status !== 'archived');
     },
     enabled: !!userEmail && isOpen
   });

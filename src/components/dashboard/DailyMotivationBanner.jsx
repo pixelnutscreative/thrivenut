@@ -322,9 +322,9 @@ ${type === 'scripture'
               size="sm"
               onClick={() => scroll('left')}
               disabled={currentIndex === 0}
-              className="text-white hover:bg-white/20 h-6 w-6 p-0 rounded-full"
+              className="text-white bg-black/10 hover:bg-black/20 h-8 w-8 p-0 rounded-full backdrop-blur-sm"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-5 h-5" />
             </Button>
 
             <div className="flex items-center justify-center gap-1">
@@ -344,9 +344,9 @@ ${type === 'scripture'
               size="sm"
               onClick={() => scroll('right')}
               disabled={currentIndex === motivations.length - 1}
-              className="text-white hover:bg-white/20 h-6 w-6 p-0 rounded-full"
+              className="text-white bg-black/10 hover:bg-black/20 h-8 w-8 p-0 rounded-full backdrop-blur-sm"
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-5 h-5" />
             </Button>
           </div>
         )}

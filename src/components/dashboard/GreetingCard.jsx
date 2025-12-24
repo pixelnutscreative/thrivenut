@@ -25,6 +25,15 @@ const motivational = [
 ];
 
 export default function GreetingCard({ greetingType, userName }) {
+  const [index, setIndex] = React.useState(0);
+
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setIndex(prev => prev + 1);
+    }, 5000); // Rotate every 5 seconds
+    return () => clearInterval(interval);
+  }, []);
+
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Good Morning';
@@ -34,13 +43,14 @@ export default function GreetingCard({ greetingType, userName }) {
 
   const getDailyMessage = () => {
     const today = new Date().getDate();
+    const baseIndex = today + index;
     
     if (greetingType === 'scripture') {
-      return scriptures[today % scriptures.length];
+      return scriptures[baseIndex % scriptures.length];
     } else if (greetingType === 'positive_quote') {
-      return quotes[today % quotes.length];
+      return quotes[baseIndex % quotes.length];
     } else {
-      return motivational[today % motivational.length];
+      return motivational[baseIndex % motivational.length];
     }
   };
 
@@ -49,9 +59,11 @@ export default function GreetingCard({ greetingType, userName }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: -20 }}
+      key={message.text} // Re-animate on change
+      initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.5 }}
     >
       <Card className="bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 text-white border-0 shadow-xl overflow-hidden">
         <CardContent className="p-8 relative">
@@ -61,7 +73,7 @@ export default function GreetingCard({ greetingType, userName }) {
               <Icon className="w-6 h-6" />
               <p className="text-xl font-medium opacity-90">{getGreeting()}, {userName}!</p>
             </div>
-            <blockquote className="text-2xl md:text-3xl font-bold leading-relaxed mb-3">
+            <blockquote className="text-2xl md:text-3xl font-bold leading-relaxed mb-3 min-h-[4rem]">
               "{message.text}"
             </blockquote>
             <p className="text-white/80 text-lg">— {message.ref || message.author}</p>

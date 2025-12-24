@@ -18,7 +18,10 @@ const WIDGET_LABELS = {
   calendar_integration: 'Calendar Connect',
   special_events: 'Special Events',
   subscribed_events: 'Subscribed Events',
-  notion_tasks: 'Notion Tasks'
+  notion_tasks: 'Notion Tasks',
+  group_highlights: 'Highlights (Birthdays/Anniversaries)',
+  upcoming_battles: 'Upcoming Battles',
+  live_creators: 'Live Creators Today'
 };
 
 const DEFAULT_LAYOUT = [
@@ -29,7 +32,10 @@ const DEFAULT_LAYOUT = [
   { id: 'habits', visible: true, order: 4, width: 'half' },
   { id: 'calendar_integration', visible: true, order: 5, width: 'half' },
   { id: 'special_events', visible: true, order: 6, width: 'half' },
-  { id: 'subscribed_events', visible: true, order: 7, width: 'half' }
+  { id: 'subscribed_events', visible: true, order: 7, width: 'half' },
+  { id: 'group_highlights', visible: false, order: 8, width: 'half' },
+  { id: 'upcoming_battles', visible: false, order: 9, width: 'half' },
+  { id: 'live_creators', visible: false, order: 10, width: 'half' }
 ];
 
 export default function DashboardCustomizer({ isOpen, onClose, currentLayout, onSave }) {
