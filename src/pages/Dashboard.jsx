@@ -225,26 +225,43 @@ export default function Dashboard() {
   const saveLayout = (newLayout) => {
     setLayout(newLayout);
     updatePreferencesMutation.mutate({ dashboard_layout: newLayout });
-    // Keep modal open or close? Typically keep for show/hide, but maybe close.
-    // The dialog handles internal state updates via onUpdateLayout which calls this.
-    // We don't need to close it on every toggle.
   };
+
+  const isWidgetVisible = (widget) => {
+    if (!widget.visible) return false;
+    const enabledModules = preferences?.enabled_modules || [];
+
+    // Module-based visibility checks
+    if (widget.id === 'tasks' && !enabledModules.includes('tasks')) return false;
+    if (widget.id === 'goals' && !enabledModules.includes('goals')) return false;
+    if (widget.id === 'habits' && !enabledModules.includes('habits')) return false;
+    if (widget.id === 'my_day' && !enabledModules.includes('wellness')) return false;
+    if (widget.id === 'special_events' && !enabledModules.includes('people')) return false;
+    if (widget.id === 'daily_motivation' && !enabledModules.includes('motivations')) return false;
+    if (widget.id === 'crypto_ticker') return false; 
+    
+    return true;
+  };
+
+  const visibleLayout = layout.filter(isWidgetVisible);
 
   const onDragEnd = (result) => {
     if (!result.destination) return;
 
-    const newLayout = Array.from(layout);
-    const [reorderedItem] = newLayout.splice(result.source.index, 1);
-    newLayout.splice(result.destination.index, 0, reorderedItem);
+    const newVisibleLayout = Array.from(visibleLayout);
+    const [reorderedItem] = newVisibleLayout.splice(result.source.index, 1);
+    newVisibleLayout.splice(result.destination.index, 0, reorderedItem);
 
-    // Update orders
-    const updatedLayout = newLayout.map((item, index) => ({
+    // Reconstruct full layout: New Visible Order + Hidden Items
+    const hiddenItems = layout.filter(w => !visibleLayout.find(v => v.id === w.id));
+    
+    const newFullLayout = [...newVisibleLayout, ...hiddenItems].map((item, index) => ({
       ...item,
       order: index
     }));
 
-    setLayout(updatedLayout);
-    updatePreferencesMutation.mutate({ dashboard_layout: updatedLayout });
+    setLayout(newFullLayout);
+    updatePreferencesMutation.mutate({ dashboard_layout: newFullLayout });
   };
 
   const toggleWidgetWidth = (widgetId) => {
@@ -259,17 +276,7 @@ export default function Dashboard() {
   };
 
   const renderWidget = (widget) => {
-    if (!widget.visible) return null;
-    const enabledModules = preferences?.enabled_modules || [];
-
-    // Module-based visibility checks
-    if (widget.id === 'tasks' && !enabledModules.includes('tasks')) return null;
-    if (widget.id === 'goals' && !enabledModules.includes('goals')) return null;
-    if (widget.id === 'habits' && !enabledModules.includes('habits')) return null;
-    if (widget.id === 'my_day' && !enabledModules.includes('wellness')) return null;
-    if (widget.id === 'special_events' && !enabledModules.includes('people')) return null;
-    if (widget.id === 'daily_motivation' && !enabledModules.includes('motivations')) return null;
-
+    // Visibility check already handled by visibleLayout filtering
     switch (widget.id) {
       case 'daily_motivation':
         return (
@@ -411,9 +418,9 @@ export default function Dashboard() {
                 <div 
                   {...provided.droppableProps}
                   ref={provided.innerRef}
-                  className="grid grid-cols-1 md:grid-cols-2 gap-6 grid-flow-row-dense"
+                  className="flex flex-wrap gap-6"
                 >
-                  {layout.map((widget, index) => (
+                  {visibleLayout.map((widget, index) => (
                     <Draggable key={widget.id} draggableId={widget.id} index={index}>
                       {(provided) => (
                         <div
@@ -421,8 +428,8 @@ export default function Dashboard() {
                           {...provided.draggableProps}
                           className={`relative group ${
                             widget.width === 'full' 
-                              ? 'col-span-1 md:col-span-2' 
-                              : 'col-span-1'
+                              ? 'w-full' 
+                              : 'w-full md:w-[calc(50%-12px)]'
                           }`}
                         >
                           <div className="absolute top-2 right-2 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
