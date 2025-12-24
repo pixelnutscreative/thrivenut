@@ -36,6 +36,7 @@ import AdminBibleContent from '../components/admin/AdminBibleContent';
 import AdminMentalHealthContent from '../components/admin/AdminMentalHealthContent';
 import AdminMarketingAssets from '../components/admin/AdminMarketingAssets';
 import AdminPackagesContent from '../components/admin/AdminPackagesContent';
+import AdminAnalytics from '../components/admin/AdminAnalytics';
 
 const ADMIN_EMAILS = ['pixelnutscreative@gmail.com', 'pixel@thrivenut.app'];
 
@@ -77,6 +78,7 @@ export default function Admin() {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-5 h-12 mb-8">
             <TabsTrigger value="users" className="text-sm font-semibold">Users</TabsTrigger>
+            <TabsTrigger value="analytics" className="text-sm font-semibold">Analytics</TabsTrigger>
             <TabsTrigger value="support" className="text-sm font-semibold">Support</TabsTrigger>
             <TabsTrigger value="content" className="text-sm font-semibold">Content</TabsTrigger>
             <TabsTrigger value="billing" className="text-sm font-semibold">Billing</TabsTrigger>
@@ -107,6 +109,15 @@ export default function Admin() {
                   <TabsContent value="cleanup"><AdminDuplicateCleanup /></TabsContent>
                   <TabsContent value="impersonate"><AdminImpersonateContent /></TabsContent>
                 </Tabs>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* ANALYTICS TAB */}
+          <TabsContent value="analytics" className="mt-0">
+            <Card>
+              <CardContent className="p-6">
+                <AdminAnalytics />
               </CardContent>
             </Card>
           </TabsContent>

@@ -49,6 +49,26 @@ export default function Layout({ children, currentPageName }) {
     finally(() => setUserLoading(false));
   }, []);
 
+  // Analytics Tracking
+  useEffect(() => {
+    if (user?.email) {
+      // Small delay to ensure we don't track rapid redirects
+      const timer = setTimeout(() => {
+        base44.entities.AnalyticsEvent.create({
+          user_email: user.email,
+          path: location.pathname + location.search,
+          event_type: 'page_view',
+          metadata: {
+            referrer: document.referrer,
+            timestamp: new Date().toISOString()
+          }
+        }).catch(err => console.error("Analytics error", err));
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [location.pathname, location.search, user?.email]);
+
   // Effective Email (Impersonation)
   const effectiveEmail = useMemo(() => {
     if (!user || !user.email) return null;

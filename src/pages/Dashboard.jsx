@@ -25,6 +25,7 @@ import DashboardTasksSection from '../components/dashboard/DashboardTasksSection
 import DashboardHabitsSection from '../components/dashboard/DashboardHabitsSection';
 import OnboardingModal from '../components/onboarding/OnboardingModal';
 import CryptoTickerWidget from '../components/widgets/CryptoTickerWidget';
+import GreetingCard from '../components/dashboard/GreetingCard';
 import { format, startOfWeek, addDays } from 'date-fns';
 import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
 import { useTheme } from '../components/shared/useTheme';
@@ -338,9 +339,20 @@ export default function Dashboard() {
   };
 
   if (loading) {
+    // Show Greeting Card while loading
+    // We use a safe default if user/prefs aren't fully loaded yet
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+      <div className={`min-h-screen ${bgClass} flex items-center justify-center p-4`}>
+        <div className="w-full max-w-lg">
+          <div className="text-center mb-8">
+            <Loader2 className="w-8 h-8 animate-spin text-purple-600 mx-auto mb-4" />
+            <p className="text-gray-500 animate-pulse">Setting up your day...</p>
+          </div>
+          <GreetingCard 
+            greetingType={preferences?.greeting_type || 'positive_quote'} 
+            userName={user?.full_name?.split(' ')[0] || 'Friend'} 
+          />
+        </div>
       </div>
     );
   }
