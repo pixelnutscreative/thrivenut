@@ -37,6 +37,7 @@ import AdminMentalHealthContent from '../components/admin/AdminMentalHealthConte
 import AdminMarketingAssets from '../components/admin/AdminMarketingAssets';
 import AdminPackagesContent from '../components/admin/AdminPackagesContent';
 import AdminAnalytics from '../components/admin/AdminAnalytics';
+import AdminGiftCodesContent from '../components/admin/AdminGiftCodesContent';
 
 const ADMIN_EMAILS = ['pixelnutscreative@gmail.com', 'pixel@thrivenut.app'];
 
@@ -225,11 +226,13 @@ export default function Admin() {
                     <TabsList>
                       <TabsTrigger value="rewards">Thrive System</TabsTrigger>
                       <TabsTrigger value="commissions">AI Commissions</TabsTrigger>
+                      <TabsTrigger value="gifts">Gift Codes</TabsTrigger>
                     </TabsList>
                   </div>
                   
                   <TabsContent value="rewards"><AdminReferralSystem /></TabsContent>
                   <TabsContent value="commissions"><AdminReferralCommissionsContent /></TabsContent>
+                  <TabsContent value="gifts"><AdminGiftCodesContent /></TabsContent>
                 </Tabs>
               </CardContent>
             </Card>
