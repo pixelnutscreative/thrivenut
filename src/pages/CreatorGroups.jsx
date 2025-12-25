@@ -808,6 +808,7 @@ export default function CreatorGroups() {
               portfolio={activeGroup.crypto_tickers || []}
               onUpdatePortfolio={(tickers) => updateGroupMutation.mutate({ crypto_tickers: tickers })}
               title="Group Tickers"
+              isAdmin={isAdmin}
             />
           )}
 

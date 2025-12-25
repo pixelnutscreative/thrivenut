@@ -25,25 +25,30 @@ const colorPalette = [
   '#2563eb', // sky-600
 ];
 
-export default function CryptoTickerWidget({ portfolio = [], onUpdatePortfolio }) {
+export default function CryptoTickerWidget({ portfolio = [], onUpdatePortfolio, isAdmin }) {
   const { user, preferences } = useTheme();
   const queryClient = useQueryClient();
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [newCoin, setNewCoin] = useState({ symbol: '', amount: '', color: '#1e293b' });
   const [prices, setPrices] = useState({});
   const [loadingPrices, setLoadingPrices] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(null);
+  const [error, setError] = useState(null);
 
   // Fetch prices
   useEffect(() => {
     const fetchPrices = async () => {
       if (portfolio.length === 0) return;
       setLoadingPrices(true);
+      setError(null);
       try {
         const symbols = portfolio.map(c => c.symbol);
         const { data } = await base44.functions.invoke('fetchCryptoPrices', { symbols });
         setPrices(data.prices || {});
+        setLastUpdated(new Date());
       } catch (err) {
         console.error("Failed to fetch prices", err);
+        setError("Unable to update prices");
       } finally {
         setLoadingPrices(false);
       }
@@ -109,9 +114,11 @@ export default function CryptoTickerWidget({ portfolio = [], onUpdatePortfolio }
   return (
     <Card className="shadow-lg border-0 bg-transparent text-white overflow-hidden bg-slate-900">
       <CardHeader className="pb-2 pt-4 px-4 flex flex-row justify-between items-center space-y-0">
-        <div className="flex items-center gap-2">
-            {/* Removed Title as requested */}
+        <div className="flex flex-col">
+            {error && <span className="text-[10px] text-red-400 flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-red-500" /> API Limit</span>}
+            {lastUpdated && !error && <span className="text-[10px] text-slate-400">Updated: {lastUpdated.toLocaleTimeString()}</span>}
         </div>
+        {isAdmin && (
         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
           <DialogTrigger asChild>
             <Button size="icon" className="h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white">
@@ -248,14 +255,16 @@ export default function CryptoTickerWidget({ portfolio = [], onUpdatePortfolio }
                             </div>
                         </div>
                         
-                        <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={() => handleRemoveCoin(idx)}
-                            className="h-6 w-6 text-white/40 hover:text-red-300 hover:bg-transparent"
-                        >
-                            <Trash2 className="w-3 h-3" />
-                        </Button>
+                        {isAdmin && (
+                            <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                onClick={() => handleRemoveCoin(idx)}
+                                className="h-6 w-6 text-white/40 hover:text-red-300 hover:bg-transparent"
+                            >
+                                <Trash2 className="w-3 h-3" />
+                            </Button>
+                        )}
                     </div>
                   </div>
                 </div>
@@ -264,6 +273,13 @@ export default function CryptoTickerWidget({ portfolio = [], onUpdatePortfolio }
           </div>
         )}
       </CardContent>
+        {isAdmin && (
+            <div className="px-4 pb-2 text-[10px] text-slate-500 text-center">
+                Admin: Use + to add coins.
+            </div>
+        )}
+        </Dialog>
+        )}
     </Card>
   );
 }
