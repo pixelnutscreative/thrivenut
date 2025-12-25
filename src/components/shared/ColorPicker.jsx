@@ -100,8 +100,10 @@ export default function ColorPicker({ color, onChange, label, className }) {
   const [isOpen, setIsOpen] = useState(false);
   const [crayolaOpen, setCrayolaOpen] = useState(false);
   const [crayolaSearch, setCrayolaSearch] = useState('');
-  const [isDraggingWheel, setIsDraggingWheel] = useState(false);
-  const [isDraggingSlider, setIsDraggingSlider] = useState(false);
+  
+  // Dragging state refs to avoid re-renders and closure staleness
+  const isDraggingWheelRef = useRef(false);
+  const isDraggingSliderRef = useRef(false);
   
   const wheelRef = useRef(null);
   const sliderRef = useRef(null);
@@ -114,7 +116,8 @@ export default function ColorPicker({ color, onChange, label, className }) {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (color) {
+    // Only update from prop if NOT dragging
+    if (color && !isDraggingWheelRef.current && !isDraggingSliderRef.current) {
       setInternalColor(color);
       const newHsb = hexToHsb(color);
       setHsb(newHsb);
@@ -184,27 +187,26 @@ export default function ColorPicker({ color, onChange, label, className }) {
   // --- Event Listeners for Dragging ---
   useEffect(() => {
     const handleUp = () => {
-      setIsDraggingWheel(false);
-      setIsDraggingSlider(false);
+      isDraggingWheelRef.current = false;
+      isDraggingSliderRef.current = false;
     };
     
     const handleMove = (e) => {
-      if (isDraggingWheel) {
+      if (isDraggingWheelRef.current) {
         if(e.cancelable) e.preventDefault(); // Prevent scrolling on mobile
         handleWheelMove(e);
       }
-      if (isDraggingSlider) {
+      if (isDraggingSliderRef.current) {
         if(e.cancelable) e.preventDefault();
         handleSliderMove(e);
       }
     };
 
-    if (isDraggingWheel || isDraggingSlider) {
-      window.addEventListener('mousemove', handleMove);
-      window.addEventListener('mouseup', handleUp);
-      window.addEventListener('touchmove', handleMove, { passive: false });
-      window.addEventListener('touchend', handleUp);
-    }
+    // Attach to window to handle drags outside the element
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleUp);
+    window.addEventListener('touchmove', handleMove, { passive: false });
+    window.addEventListener('touchend', handleUp);
 
     return () => {
       window.removeEventListener('mousemove', handleMove);
@@ -212,7 +214,7 @@ export default function ColorPicker({ color, onChange, label, className }) {
       window.removeEventListener('touchmove', handleMove);
       window.removeEventListener('touchend', handleUp);
     };
-  }, [isDraggingWheel, isDraggingSlider, handleWheelMove, handleSliderMove]);
+  }, [handleWheelMove, handleSliderMove]);
 
   // --- EyeDropper API ---
   const handleEyeDropper = async () => {
@@ -307,12 +309,13 @@ export default function ColorPicker({ color, onChange, label, className }) {
               background: `
                 radial-gradient(circle, white, transparent 100%),
                 conic-gradient(red, yellow, lime, aqua, blue, magenta, red)
-              `
+              `,
+              touchAction: 'none' // Explicit CSS property
             }}
-            onMouseDown={(e) => { setIsDraggingWheel(true); handleWheelMove(e); }}
+            onMouseDown={(e) => { isDraggingWheelRef.current = true; handleWheelMove(e); }}
             onTouchStart={(e) => { 
-              // e.preventDefault() here might block scroll on dialog if miss target, but with touch-none it's safer
-              setIsDraggingWheel(true); 
+              if(e.cancelable) e.preventDefault(); // Crucial for mobile
+              isDraggingWheelRef.current = true; 
               handleWheelMove(e); 
             }}
           >
@@ -340,11 +343,13 @@ export default function ColorPicker({ color, onChange, label, className }) {
             ref={sliderRef}
             className="h-6 rounded-full w-full relative cursor-pointer border border-gray-200 overflow-hidden touch-none shadow-inner"
             style={{ 
-              background: `linear-gradient(to right, #000000, ${hsbToHex(hsb.h, hsb.s, 100)})` 
+              background: `linear-gradient(to right, #000000, ${hsbToHex(hsb.h, hsb.s, 100)})`,
+              touchAction: 'none'
             }}
-            onMouseDown={(e) => { setIsDraggingSlider(true); handleSliderMove(e); }}
+            onMouseDown={(e) => { isDraggingSliderRef.current = true; handleSliderMove(e); }}
             onTouchStart={(e) => { 
-              setIsDraggingSlider(true); 
+              if(e.cancelable) e.preventDefault();
+              isDraggingSliderRef.current = true; 
               handleSliderMove(e); 
             }}
           >

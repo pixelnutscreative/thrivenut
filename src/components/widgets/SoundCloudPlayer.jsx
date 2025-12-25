@@ -176,6 +176,10 @@ export function MobileSoundCloudPopup({ playlistUrl, primaryColor, accentColor, 
       >
         {/* Handle Bar */}
         <div className="flex items-center justify-between p-4 border-b">
+          <div className="flex items-center gap-2">
+            <Music className="w-5 h-5" style={{ color: primaryColor }} />
+            <h3 className="font-semibold text-gray-800">Now Playing</h3>
+          </div>
           <button
             onClick={() => setIsOpen(false)}
             className="p-2 hover:bg-gray-100 rounded-full transition-colors flex items-center gap-1 text-sm font-medium text-gray-600"
@@ -183,10 +187,6 @@ export function MobileSoundCloudPopup({ playlistUrl, primaryColor, accentColor, 
             <ChevronDown className="w-5 h-5" />
             Minimize
           </button>
-          <div className="flex items-center gap-2">
-            <Music className="w-5 h-5" style={{ color: primaryColor }} />
-            <h3 className="font-semibold text-gray-800">Now Playing</h3>
-          </div>
         </div>
         
         {/* Player */}
