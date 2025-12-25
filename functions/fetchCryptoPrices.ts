@@ -93,7 +93,7 @@ Deno.serve(async (req) => {
              prices[sym] = (seed % 1000) / 100; 
         });
         
-        if (prices['PNIC'] === undefined && symbols.includes('PNIC')) prices['PNIC'] = 5.55;
+        if (prices['PNIC'] === undefined && symbols.includes('PNIC')) prices['PNIC'] = 0.0069;
         if (prices['MIRX'] === undefined && symbols.includes('MIRX')) prices['MIRX'] = 1.23;
 
 
