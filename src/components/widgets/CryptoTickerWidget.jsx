@@ -25,41 +25,35 @@ const colorPalette = [
   '#2563eb', // sky-600
 ];
 
-export default function CryptoTickerWidget({ portfolio = [], onUpdatePortfolio, updateInterval = 60 }) {
+export default function CryptoTickerWidget({ portfolio = [], onUpdatePortfolio }) {
   const { user, preferences } = useTheme();
   const queryClient = useQueryClient();
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [newCoin, setNewCoin] = useState({ symbol: '', amount: '', color: '#1e293b' });
   const [prices, setPrices] = useState({});
   const [loadingPrices, setLoadingPrices] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState(null);
-  const [error, setError] = useState(false);
 
   // Fetch prices
   useEffect(() => {
     const fetchPrices = async () => {
       if (portfolio.length === 0) return;
       setLoadingPrices(true);
-      setError(false);
       try {
         const symbols = portfolio.map(c => c.symbol);
         const { data } = await base44.functions.invoke('fetchCryptoPrices', { symbols });
         setPrices(data.prices || {});
-        setLastUpdated(new Date());
       } catch (err) {
         console.error("Failed to fetch prices", err);
-        setError(true);
       } finally {
         setLoadingPrices(false);
       }
     };
 
     fetchPrices();
-    // Refresh interval (default 60s, min 30s)
-    const validInterval = Math.max(30, updateInterval) * 1000;
-    const intervalId = setInterval(fetchPrices, validInterval);
-    return () => clearInterval(intervalId);
-  }, [portfolio, updateInterval]);
+    // Refresh every 60s
+    const interval = setInterval(fetchPrices, 60000);
+    return () => clearInterval(interval);
+  }, [portfolio]);
 
   // Update User Holdings
   const updateUserHoldingsMutation = useMutation({
@@ -118,14 +112,13 @@ export default function CryptoTickerWidget({ portfolio = [], onUpdatePortfolio, 
         <div className="flex items-center gap-2">
             {/* Removed Title as requested */}
         </div>
-        {onUpdatePortfolio && (
-          <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-            <DialogTrigger asChild>
-              <Button size="icon" className="h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white">
-                <Plus className="w-6 h-6" />
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md bg-slate-900 text-white border-slate-700">
+        <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+          <DialogTrigger asChild>
+            <Button size="icon" className="h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white">
+              <Plus className="w-6 h-6" />
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md bg-slate-900 text-white border-slate-700">
             <DialogHeader>
               <DialogTitle>Add Group Ticker</DialogTitle>
             </DialogHeader>
@@ -182,14 +175,8 @@ export default function CryptoTickerWidget({ portfolio = [], onUpdatePortfolio, 
             </div>
           </DialogContent>
         </Dialog>
-        )}
       </CardHeader>
       <CardContent className="px-4 pb-4 space-y-3">
-        {error && (
-            <div className="text-red-400 text-xs text-center mb-2">
-                ⚠️ Price unavailable. Retrying...
-            </div>
-        )}
         {portfolio.length === 0 ? (
           <div className="text-center py-6 text-slate-400 text-sm">
             <Coins className="w-8 h-8 mx-auto mb-2 opacity-50" />
@@ -275,11 +262,6 @@ export default function CryptoTickerWidget({ portfolio = [], onUpdatePortfolio, 
               );
             })}
           </div>
-        )}
-        {lastUpdated && !error && (
-            <div className="text-[10px] text-white/40 text-right mt-2 px-1">
-                Updated: {lastUpdated.toLocaleTimeString()}
-            </div>
         )}
       </CardContent>
     </Card>

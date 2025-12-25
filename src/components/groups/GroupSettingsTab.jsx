@@ -94,7 +94,6 @@ export default function GroupSettingsTab({ group }) {
 
       <GroupAccessSettings group={group} />
       <TabPermissionsSettings group={group} />
-      <CryptoConfigSettings group={group} />
       <DeleteGroupSettings group={group} />
     </div>
   );
@@ -155,88 +154,6 @@ function GroupAccessSettings({ group }) {
           <Button onClick={() => updateMutation.mutate(formData)}>Save Settings</Button>
         </div>
       </CardContent>
-    </Card>
-  );
-}
-
-function CryptoConfigSettings({ group }) {
-  const queryClient = useQueryClient();
-  // Settings can be null initially
-  const settings = group.settings || {};
-  const [formData, setFormData] = useState({
-    crypto_ticker_coin_ids: (group.crypto_tickers || []).map(t => t.symbol).join(','),
-    crypto_ticker_interval: settings.crypto_ticker_interval || 60,
-    crypto_ticker_color: settings.crypto_ticker_color || '#1e293b'
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: (data) => {
-        // Parse comma separated list back to tickers array
-        const symbols = data.crypto_ticker_coin_ids.split(',').map(s => s.trim().toUpperCase()).filter(s => s);
-        // Preserve existing colors/amounts if symbol exists, else default
-        const currentTickers = group.crypto_tickers || [];
-        const newTickers = symbols.map(sym => {
-            const existing = currentTickers.find(t => t.symbol === sym);
-            return existing || { symbol: sym, amount: 0, color: data.crypto_ticker_color };
-        });
-
-        return base44.entities.CreatorGroup.update(group.id, {
-            crypto_tickers: newTickers,
-            settings: {
-                ...settings,
-                crypto_ticker_interval: data.crypto_ticker_interval,
-                crypto_ticker_color: data.crypto_ticker_color
-            }
-        });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(['myGroupsDetails']);
-      alert('Crypto settings updated!');
-    }
-  });
-
-  return (
-    <Card>
-        <CardHeader>
-            <CardTitle>Crypto Ticker Configuration</CardTitle>
-            <CardDescription>Configure the live price ticker.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-            <div className="space-y-2">
-                <Label>Coin Symbols (comma-separated)</Label>
-                <Input 
-                    value={formData.crypto_ticker_coin_ids} 
-                    onChange={e => setFormData({...formData, crypto_ticker_coin_ids: e.target.value})}
-                    placeholder="BTC, ETH, PNIC"
-                />
-                <p className="text-xs text-gray-500">Enter symbols like BTC, ETH, SOL. Custom tokens supported.</p>
-            </div>
-            <div className="space-y-2">
-                <Label>Update Interval (seconds)</Label>
-                <Input 
-                    type="number"
-                    min="30"
-                    max="300"
-                    value={formData.crypto_ticker_interval} 
-                    onChange={e => setFormData({...formData, crypto_ticker_interval: parseInt(e.target.value) || 60})}
-                />
-            </div>
-            <div className="space-y-2">
-                <Label>Default Card Color</Label>
-                <div className="flex gap-2 items-center">
-                    <Input 
-                        type="color"
-                        value={formData.crypto_ticker_color} 
-                        onChange={e => setFormData({...formData, crypto_ticker_color: e.target.value})}
-                        className="w-12 h-10 p-1"
-                    />
-                    <span className="text-sm text-gray-500">{formData.crypto_ticker_color}</span>
-                </div>
-            </div>
-            <div className="flex justify-end">
-                <Button onClick={() => updateMutation.mutate(formData)}>Save Crypto Config</Button>
-            </div>
-        </CardContent>
     </Card>
   );
 }
