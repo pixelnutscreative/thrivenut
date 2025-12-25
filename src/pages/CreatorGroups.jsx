@@ -364,6 +364,26 @@ export default function CreatorGroups() {
   const isTabEnabled = (id) => {
     if (allowed && !allowed.has(id)) return false;
     if (id === 'members' && !isAdmin) return false;
+    
+    // Admin Override
+    if (isAdmin) return true;
+
+    // Role-Based Permissions
+    const permissions = activeGroup?.role_tab_permissions;
+    if (permissions && permissions[id]) {
+       const userLevel = activeMembership?.level || 'Member'; // Default level
+       const userRole = activeMembership?.role || 'member';
+       const userStatus = activeMembership?.status; // e.g. interested, invited
+       
+       // Check if ANY of the user's attributes (role, level, status) are in the allowed list
+       const attributes = [userRole, userLevel, userStatus].filter(Boolean);
+       const allowedList = permissions[id];
+       
+       // If intersection is empty, user is not allowed
+       const hasPermission = attributes.some(attr => allowedList.includes(attr));
+       if (!hasPermission) return false;
+    }
+
     return !(groupPrefs?.hidden_tabs || []).includes(id);
   };
 

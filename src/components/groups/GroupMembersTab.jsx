@@ -167,21 +167,77 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
         </Dialog>
       </div>
 
-      {pendingMembers.length > 0 && isAdmin && (
+      {/* Pending Applications (Interested -> Member) */}
+      {isAdmin && (dedupedMembers.some(m => m.pending_approval) || pendingMembers.length > 0) && (
         <div className="bg-amber-50 rounded-lg border border-amber-200 overflow-hidden mb-6">
           <div className="p-3 bg-amber-100 border-b border-amber-200 font-semibold text-amber-800 flex items-center gap-2">
-            <Shield className="w-4 h-4" /> Pending Approval ({pendingMembers.length})
+            <Shield className="w-4 h-4" /> Applications & Requests
           </div>
           <div className="divide-y divide-amber-200">
-            {pendingMembers.map(member => (
-              <div key={member.id} className="p-4 flex items-center justify-between">
+            {dedupedMembers.filter(m => m.pending_approval || m.status === 'pending').map(member => (
+              <div key={member.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <div className="font-medium text-amber-900">{member.user_email}</div>
-                  <div className="text-xs text-amber-700">Requested to join</div>
+                  <div className="text-xs text-amber-700">
+                    {member.pending_approval ? 'Application Submitted' : 'Requested to join'}
+                    {member.referred_by_name && <span> • Ref: {member.referred_by_name}</span>}
+                  </div>
+                  {member.proof_of_payment_url && (
+                    <a href={member.proof_of_payment_url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 underline mt-1 block">
+                      View Proof of Payment
+                    </a>
+                  )}
                 </div>
                 <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => removeMutation.mutate(member.id)} className="bg-white border-amber-300 text-amber-700 hover:bg-amber-50">Reject</Button>
-                  <Button size="sm" onClick={() => approveMutation.mutate(member.id)} className="bg-amber-600 hover:bg-amber-700 border-transparent">Approve</Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={() => {
+                        if (member.pending_approval) {
+                            base44.functions.invoke('updateMemberStatus', { action: 'reject_member', group_id: group.id, user_email: member.user_email })
+                                .then(() => queryClient.invalidateQueries(['groupMembers', group.id]));
+                        } else {
+                            removeMutation.mutate(member.id);
+                        }
+                    }} 
+                    className="bg-white border-amber-300 text-amber-700 hover:bg-amber-50"
+                  >
+                    Reject
+                  </Button>
+                  
+                  {member.pending_approval ? (
+                      <Dialog>
+                          <DialogTrigger asChild>
+                              <Button size="sm" className="bg-amber-600 hover:bg-amber-700 border-transparent">Approve</Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                              <DialogHeader><DialogTitle>Approve Member</DialogTitle></DialogHeader>
+                              <div className="space-y-4 py-4">
+                                  <p className="text-sm">Assign a level to this user upon approval:</p>
+                                  <Select onValueChange={(val) => {
+                                       base44.functions.invoke('updateMemberStatus', { 
+                                           action: 'approve_member', 
+                                           group_id: group.id, 
+                                           user_email: member.user_email,
+                                           level_name: val
+                                       }).then(() => {
+                                           queryClient.invalidateQueries(['groupMembers', group.id]);
+                                           // Close dialog? simpler to just reload
+                                           window.location.reload(); 
+                                       });
+                                  }}>
+                                      <SelectTrigger><SelectValue placeholder="Select Level" /></SelectTrigger>
+                                      <SelectContent>
+                                          {group.member_levels?.map(l => <SelectItem key={l} value={l}>{l}</SelectItem>)}
+                                          <SelectItem value="Member">Member (Default)</SelectItem>
+                                      </SelectContent>
+                                  </Select>
+                              </div>
+                          </DialogContent>
+                      </Dialog>
+                  ) : (
+                      <Button size="sm" onClick={() => approveMutation.mutate(member.id)} className="bg-amber-600 hover:bg-amber-700 border-transparent">Approve</Button>
+                  )}
                 </div>
               </div>
             ))}

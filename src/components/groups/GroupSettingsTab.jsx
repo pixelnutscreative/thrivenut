@@ -92,8 +92,164 @@ export default function GroupSettingsTab({ group }) {
       </Card>
 
 
+      <GroupAccessSettings group={group} />
+      <TabPermissionsSettings group={group} />
       <DeleteGroupSettings group={group} />
     </div>
+  );
+}
+
+function GroupAccessSettings({ group }) {
+  const queryClient = useQueryClient();
+  const [formData, setFormData] = useState({
+    signup_url: group.signup_url || '',
+    welcome_video_url: group.welcome_video_url || '',
+    trial_period_days: group.trial_period_days || 0
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (data) => base44.entities.CreatorGroup.update(group.id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['myGroupsDetails']);
+      alert('Access settings updated!');
+    }
+  });
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Membership & Access</CardTitle>
+        <CardDescription>Configure how users join and access your group.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label>Sign Up / Payment URL</Label>
+          <Input 
+            value={formData.signup_url} 
+            onChange={e => setFormData({...formData, signup_url: e.target.value})} 
+            placeholder="https://checkout.stripe.com/..."
+          />
+          <p className="text-xs text-gray-500">Link to your external payment page. Used on the 'Interested' dashboard.</p>
+        </div>
+        <div className="space-y-2">
+          <Label>Welcome Video URL</Label>
+          <Input 
+            value={formData.welcome_video_url} 
+            onChange={e => setFormData({...formData, welcome_video_url: e.target.value})} 
+            placeholder="https://youtube.com/..."
+          />
+          <p className="text-xs text-gray-500">Video displayed on the public welcome mat.</p>
+        </div>
+        <div className="space-y-2">
+          <Label>Trial Period (Days)</Label>
+          <Input 
+            type="number"
+            value={formData.trial_period_days} 
+            onChange={e => setFormData({...formData, trial_period_days: parseInt(e.target.value) || 0})} 
+            placeholder="0"
+          />
+          <p className="text-xs text-gray-500">Set to 0 for no trial.</p>
+        </div>
+        <div className="flex justify-end">
+          <Button onClick={() => updateMutation.mutate(formData)}>Save Settings</Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function TabPermissionsSettings({ group }) {
+  const queryClient = useQueryClient();
+  // Map of tabId -> array of allowed roles/levels
+  // If undefined/empty, allowed to all (except hardcoded limits)
+  const [permissions, setPermissions] = useState(group.role_tab_permissions || {});
+
+  const updateMutation = useMutation({
+    mutationFn: (data) => base44.entities.CreatorGroup.update(group.id, { role_tab_permissions: data }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['myGroupsDetails']);
+      alert('Permissions updated!');
+    }
+  });
+
+  const availableTabs = [
+    { id: 'feed', label: 'Feed' },
+    { id: 'events', label: 'Events' },
+    { id: 'qna', label: 'Q&A' },
+    { id: 'resources', label: 'Resources' },
+    { id: 'training', label: 'Training' },
+    { id: 'requests', label: 'Requests' }
+  ];
+
+  const levels = ['Invited', 'Interested', 'Subscriber', ...(group.member_levels || [])];
+  const systemRoles = ['member', 'manager', 'admin']; 
+  const allRoles = [...new Set([...levels, ...systemRoles])]; // Dedupe if overlap
+
+  const togglePermission = (tabId, role) => {
+    const current = permissions[tabId] || [];
+    let newPerms;
+    if (current.includes(role)) {
+      newPerms = current.filter(r => r !== role);
+    } else {
+      newPerms = [...current, role];
+    }
+    
+    // If empty, maybe means everyone? 
+    // Let's say if key exists but empty list = no one? 
+    // Or we stick to "If undefined, everyone". 
+    // To make it restrictive by default for new features, let's say we save the list.
+    setPermissions({ ...permissions, [tabId]: newPerms });
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Tab Visibility</CardTitle>
+        <CardDescription>Control which roles/levels can see specific tabs. Unchecked = Hidden.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b">
+                <th className="text-left p-2">Tab</th>
+                {allRoles.map(r => <th key={r} className="text-center p-2 capitalize min-w-[80px]">{r}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {availableTabs.map(tab => (
+                <tr key={tab.id} className="border-b last:border-0">
+                  <td className="p-2 font-medium">{tab.label}</td>
+                  {allRoles.map(role => {
+                    // Default logic: Admin/Owner always see everything (handled in code), but let's allow config for others.
+                    // If permissions[tab.id] is undefined, assume Visible to all? Or visible to Member+?
+                    // Let's assume if undefined, visible to all "Member" status.
+                    // But for Invited/Interested, usually hidden.
+                    // Let's force explicit config. If undefined, we default to showing check.
+                    const isChecked = !permissions[tab.id] || permissions[tab.id].includes(role);
+                    
+                    return (
+                      <td key={role} className="text-center p-2">
+                        <input 
+                          type="checkbox" 
+                          checked={isChecked}
+                          onChange={() => togglePermission(tab.id, role)}
+                          className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                        />
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="text-xs text-gray-500">* Admins & Owners always have full access regardless of these settings.</p>
+        <div className="flex justify-end">
+          <Button onClick={() => updateMutation.mutate(permissions)}>Save Permissions</Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 

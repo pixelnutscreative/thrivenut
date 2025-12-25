@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
+import ContentQAModal from './ContentQAModal';
 
 const VOICEOVER_TOOLS = [
   { name: 'Voice Nut', url: 'https://ai.thenutsandbots.com/apps/ai-voiceover', desc: 'Generate AI voiceovers' },
@@ -308,6 +309,16 @@ export default function GroupTrainingTab({ group, currentUser, isAdmin }) {
                     />
                   </div>
 
+                  <div className="space-y-2">
+                    <Label>Video Transcript (for AI)</Label>
+                    <Textarea 
+                        value={formData.transcript || ''} 
+                        onChange={e => setFormData({...formData, transcript: e.target.value})} 
+                        placeholder="Paste the video transcript here to enable AI Q&A..."
+                        rows={4}
+                    />
+                  </div>
+
                   {/* Voiceover Tools Helper */}
                   {(formData.resource_type === 'audio' || formData.resource_type === 'mixed') && (
                       <div className="mt-4 p-3 bg-indigo-50 rounded-lg border border-indigo-100">
@@ -418,6 +429,10 @@ export default function GroupTrainingTab({ group, currentUser, isAdmin }) {
                                 <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg transition-colors shadow-sm">
                                     <Play className="w-4 h-4 fill-current" /> Watch Video
                                 </a>
+                            )}
+                            
+                            {module.transcript && (
+                                <ContentQAModal transcript={module.transcript} contentTitle={module.title} />
                             )}
                             
                             {url && type === 'audio' && (
