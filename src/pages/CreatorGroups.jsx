@@ -475,7 +475,7 @@ export default function CreatorGroups() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="z-[9999]" position="popper">
-                        {groupTypes?.map(type => (
+                        {groupTypes?.filter(t => t.key !== 'client-portal' || isProTier).map(type => (
                           <SelectItem key={type.key} value={type.key}>
                             <div className="flex flex-col text-left py-1">
                               <span className="font-semibold">{type.name}</span>
