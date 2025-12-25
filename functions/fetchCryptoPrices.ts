@@ -6,14 +6,10 @@ Deno.serve(async (req) => {
         // Auth check not strictly needed for public price fetch, but good practice
         const user = await base44.auth.me().catch(() => null);
 
-        // Cache Implementation
-        // Note: Deno Deploy instances are ephemeral, so this cache is per-instance.
-        // For distributed caching, we'd use Deno.kv, but an in-memory map helps with bursts.
-        if (!globalThis.cryptoPriceCache) {
-            globalThis.cryptoPriceCache = new Map();
-        }
-        const CACHE_DURATION = 30000; // 30 seconds
-
+        // Simple mock of price fetching or using a public API
+        // In a real scenario, use CoinGecko API or similar
+        // For now, we will use CoinGecko's simple price API which doesn't require an API key for basic usage
+        
         const { symbols } = await req.json(); // Expect array of symbols like ['BTC', 'ETH']
         
         if (!symbols || !Array.isArray(symbols) || symbols.length === 0) {
@@ -74,56 +70,19 @@ Deno.serve(async (req) => {
         const unknownSymbols = validSymbols.filter(s => !symbolMap[s.toUpperCase()]);
 
         let prices = {};
-        const now = Date.now();
-        const coinsToFetch = [];
 
-        // 1. Check Cache
-        ids.forEach(id => {
-            const cached = globalThis.cryptoPriceCache.get(id);
-            if (cached && (now - cached.timestamp) < CACHE_DURATION) {
-                // Find all symbols mapping to this id
-                Object.keys(symbolMap).forEach(sym => {
-                    if (symbolMap[sym] === id) prices[sym] = cached.price;
-                });
-            } else {
-                if (!coinsToFetch.includes(id)) coinsToFetch.push(id);
-            }
-        });
-
-        // 2. Fetch Uncached
-        if (coinsToFetch.length > 0) {
-            try {
-                const idsParam = coinsToFetch.join(',');
-                const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${idsParam}&vs_currencies=usd`);
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    coinsToFetch.forEach(id => {
-                        if (data[id]) {
-                            const price = data[id].usd;
-                            // Update cache
-                            globalThis.cryptoPriceCache.set(id, { price, timestamp: now });
-                            // Update results
-                            Object.keys(symbolMap).forEach(sym => {
-                                if (symbolMap[sym] === id) prices[sym] = price;
-                            });
-                        }
-                    });
-                } else {
-                    console.error("CoinGecko API Limit/Error:", response.status);
-                    // Use stale cache if available
-                    coinsToFetch.forEach(id => {
-                        const cached = globalThis.cryptoPriceCache.get(id);
-                        if (cached) {
-                             Object.keys(symbolMap).forEach(sym => {
-                                if (symbolMap[sym] === id) prices[sym] = cached.price;
-                            });
-                        }
-                    });
+        if (ids.length > 0) {
+            const idsParam = ids.join(',');
+            const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${idsParam}&vs_currencies=usd`);
+            const data = await response.json();
+            
+            // Map back to symbols
+            Object.keys(symbolMap).forEach(sym => {
+                const id = symbolMap[sym];
+                if (data[id]) {
+                    prices[sym] = data[id].usd;
                 }
-            } catch (err) {
-                console.error("Fetch Error:", err);
-            }
+            });
         }
         
         // Mock random values for custom tokens like PNIC/MIRX if they are requested but not found

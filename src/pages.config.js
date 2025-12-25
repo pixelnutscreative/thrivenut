@@ -20,6 +20,7 @@ import ContentCards from './pages/ContentCards';
 import ContentCreatorHub from './pages/ContentCreatorHub';
 import ContentMarketplace from './pages/ContentMarketplace';
 import CreatorDashboard from './pages/CreatorDashboard';
+import CreatorGroups from './pages/CreatorGroups';
 import CustomHomepage from './pages/CustomHomepage';
 import Dashboard from './pages/Dashboard';
 import DiscoverCreators from './pages/DiscoverCreators';
@@ -82,7 +83,6 @@ import Wellness from './pages/Wellness';
 import WorkSchedules from './pages/WorkSchedules';
 import GroupWelcome from './pages/GroupWelcome';
 import GroupInterested from './pages/GroupInterested';
-import CreatorGroups from './pages/CreatorGroups';
 import __Layout from './Layout.jsx';
 
 
@@ -109,6 +109,7 @@ export const PAGES = {
     "ContentCreatorHub": ContentCreatorHub,
     "ContentMarketplace": ContentMarketplace,
     "CreatorDashboard": CreatorDashboard,
+    "CreatorGroups": CreatorGroups,
     "CustomHomepage": CustomHomepage,
     "Dashboard": Dashboard,
     "DiscoverCreators": DiscoverCreators,
@@ -171,7 +172,6 @@ export const PAGES = {
     "WorkSchedules": WorkSchedules,
     "GroupWelcome": GroupWelcome,
     "GroupInterested": GroupInterested,
-    "CreatorGroups": CreatorGroups,
 }
 
 export const pagesConfig = {
