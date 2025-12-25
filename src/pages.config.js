@@ -20,6 +20,7 @@ import ContentCards from './pages/ContentCards';
 import ContentCreatorHub from './pages/ContentCreatorHub';
 import ContentMarketplace from './pages/ContentMarketplace';
 import CreatorDashboard from './pages/CreatorDashboard';
+import CreatorGroups from './pages/CreatorGroups';
 import CustomHomepage from './pages/CustomHomepage';
 import Dashboard from './pages/Dashboard';
 import DiscoverCreators from './pages/DiscoverCreators';
@@ -28,6 +29,8 @@ import Finance from './pages/Finance';
 import GiftLibrary from './pages/GiftLibrary';
 import GoalSharing from './pages/GoalSharing';
 import Goals from './pages/Goals';
+import GroupInterested from './pages/GroupInterested';
+import GroupWelcome from './pages/GroupWelcome';
 import Habits from './pages/Habits';
 import HolyHitmakers from './pages/HolyHitmakers';
 import Home from './pages/Home';
@@ -80,9 +83,6 @@ import WaterHistory from './pages/WaterHistory';
 import WeeklyGifterGallery from './pages/WeeklyGifterGallery';
 import Wellness from './pages/Wellness';
 import WorkSchedules from './pages/WorkSchedules';
-import GroupWelcome from './pages/GroupWelcome';
-import GroupInterested from './pages/GroupInterested';
-import CreatorGroups from './pages/CreatorGroups';
 import __Layout from './Layout.jsx';
 
 
@@ -109,6 +109,7 @@ export const PAGES = {
     "ContentCreatorHub": ContentCreatorHub,
     "ContentMarketplace": ContentMarketplace,
     "CreatorDashboard": CreatorDashboard,
+    "CreatorGroups": CreatorGroups,
     "CustomHomepage": CustomHomepage,
     "Dashboard": Dashboard,
     "DiscoverCreators": DiscoverCreators,
@@ -117,6 +118,8 @@ export const PAGES = {
     "GiftLibrary": GiftLibrary,
     "GoalSharing": GoalSharing,
     "Goals": Goals,
+    "GroupInterested": GroupInterested,
+    "GroupWelcome": GroupWelcome,
     "Habits": Habits,
     "HolyHitmakers": HolyHitmakers,
     "Home": Home,
@@ -169,9 +172,6 @@ export const PAGES = {
     "WeeklyGifterGallery": WeeklyGifterGallery,
     "Wellness": Wellness,
     "WorkSchedules": WorkSchedules,
-    "GroupWelcome": GroupWelcome,
-    "GroupInterested": GroupInterested,
-    "CreatorGroups": CreatorGroups,
 }
 
 export const pagesConfig = {

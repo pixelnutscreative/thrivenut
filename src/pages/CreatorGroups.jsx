@@ -469,51 +469,15 @@ export default function CreatorGroups() {
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
-                        {groupTypes.length > 0 ? (
-                          groupTypes.map(t => (
-                            <SelectItem key={t.key} value={t.key}>
-                              <div className="flex items-center gap-2">
-                                <Users className="w-4 h-4" /> {t.name}
-                              </div>
-                            </SelectItem>
-                          ))
-                        ) : (
-                          <>
-                            <SelectItem value="community">
-                              <div className="flex items-center gap-2">
-                                <Users className="w-4 h-4" /> Community / Friends
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="family">
-                              <div className="flex items-center gap-2">
-                                <Home className="w-4 h-4" /> Family
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="collective">
-                              <div className="flex items-center gap-2">
-                                <Sparkles className="w-4 h-4" /> Creative Collective
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="mastermind">
-                              <div className="flex items-center gap-2">
-                                <Brain className="w-4 h-4" /> Mastermind Group
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="project">
-                              <div className="flex items-center gap-2">
-                                <Briefcase className="w-4 h-4" /> Project Team
-                              </div>
-                            </SelectItem>
-                            {canCreateAgency && (
-                              <SelectItem value="agency">
-                                <div className="flex items-center gap-2">
-                                  <Building className="w-4 h-4" /> Creative Agency / Business
-                                </div>
-                              </SelectItem>
-                            )}
-                          </>
-                        )}
+                      <SelectContent className="z-[9999]" position="popper">
+                        {groupTypes?.map(type => (
+                          <SelectItem key={type.key} value={type.key}>
+                            <div className="flex flex-col text-left py-1">
+                              <span className="font-semibold">{type.name}</span>
+                              <span className="text-xs text-gray-500">{type.description}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <p className="text-xs text-gray-500">
