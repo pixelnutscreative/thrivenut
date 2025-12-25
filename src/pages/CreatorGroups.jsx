@@ -156,7 +156,14 @@ export default function CreatorGroups() {
         owner_email: user?.email,
         invite_code: Math.random().toString(36).substring(7).toUpperCase(),
         status: 'active',
-        type
+        type,
+        // Default Funnel Content
+        welcome_mat_title: `Welcome to ${name}! 👋`,
+        welcome_mat_description: "This is a private community for our members. Here you'll find exclusive resources, training, and support. Take a look around, and if you're ready to join us, click the button below!",
+        welcome_mat_button_text: "I'm Interested!",
+        interested_dashboard_header: "🎉 You're one step away! Here's everything you need to know to become a member.",
+        interested_signup_info: "1. Click the Sign Up button above\n2. Complete the registration\n3. Upload your proof of payment\n4. We'll approve you within 24 hours!",
+        interested_attribution_prompt: "Who shared this opportunity with you? (optional)"
       });
       // 2. Add Owner as Member
       await base44.entities.CreatorGroupMember.create({

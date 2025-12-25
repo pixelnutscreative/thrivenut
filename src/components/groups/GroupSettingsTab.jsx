@@ -9,6 +9,8 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { X, Plus, Save, Link as LinkIcon, Trash2, ArrowUp, ArrowDown, ChevronDown, ChevronRight, AlertTriangle } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 export default function GroupSettingsTab({ group }) {
   const queryClient = useQueryClient();
@@ -93,9 +95,142 @@ export default function GroupSettingsTab({ group }) {
 
 
       <GroupAccessSettings group={group} />
+      <FunnelContentSettings group={group} />
       <TabPermissionsSettings group={group} />
       <DeleteGroupSettings group={group} />
     </div>
+  );
+}
+
+function FunnelContentSettings({ group }) {
+  const queryClient = useQueryClient();
+  const [formData, setFormData] = useState({
+    welcome_mat_title: group.welcome_mat_title || '',
+    welcome_mat_description: group.welcome_mat_description || '',
+    welcome_mat_video_url: group.welcome_mat_video_url || '',
+    welcome_mat_button_text: group.welcome_mat_button_text || "I'm Interested",
+    interested_dashboard_header: group.interested_dashboard_header || '',
+    interested_signup_info: group.interested_signup_info || '',
+    interested_video_url: group.interested_video_url || '',
+    interested_attribution_prompt: group.interested_attribution_prompt || 'Who shared this with you?'
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (data) => base44.entities.CreatorGroup.update(group.id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['myGroupsDetails']);
+      alert('Funnel content updated!');
+    }
+  });
+
+  const handleChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Funnel Content (Invited → Interested)</CardTitle>
+        <CardDescription>Configure the content for the Welcome Mat and Interested Dashboard.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-8">
+        
+        {/* Welcome Mat Section */}
+        <div className="space-y-4">
+          <h3 className="font-semibold text-purple-700 border-b pb-2">Welcome Mat (Invited Users)</h3>
+          
+          <div className="space-y-2">
+            <Label>Title</Label>
+            <Input 
+              value={formData.welcome_mat_title} 
+              onChange={e => handleChange('welcome_mat_title', e.target.value)} 
+              placeholder="Welcome to our community!"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Description</Label>
+            <ReactQuill 
+              theme="snow"
+              value={formData.welcome_mat_description} 
+              onChange={val => handleChange('welcome_mat_description', val)}
+              className="h-32 mb-12"
+              placeholder="Explain what this group is about..."
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Welcome Video URL (Optional)</Label>
+            <Input 
+              value={formData.welcome_mat_video_url} 
+              onChange={e => handleChange('welcome_mat_video_url', e.target.value)} 
+              placeholder="https://youtube.com/..."
+            />
+            <p className="text-xs text-gray-500">Leave empty to show text only. Must be a valid YouTube link.</p>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Button Text</Label>
+            <Input 
+              value={formData.welcome_mat_button_text} 
+              onChange={e => handleChange('welcome_mat_button_text', e.target.value)} 
+              placeholder="I'm Interested"
+            />
+          </div>
+        </div>
+
+        {/* Interested Dashboard Section */}
+        <div className="space-y-4">
+          <h3 className="font-semibold text-blue-700 border-b pb-2">Interested Dashboard</h3>
+          
+          <div className="space-y-2">
+            <Label>Header Message</Label>
+            <ReactQuill 
+              theme="snow"
+              value={formData.interested_dashboard_header} 
+              onChange={val => handleChange('interested_dashboard_header', val)}
+              className="h-24 mb-12"
+              placeholder="Great! Here's how to join..."
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Signup Instructions</Label>
+            <ReactQuill 
+              theme="snow"
+              value={formData.interested_signup_info} 
+              onChange={val => handleChange('interested_signup_info', val)}
+              className="h-32 mb-12"
+              placeholder="Step 1: Click signup. Step 2: Upload proof..."
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Instruction Video URL (Optional)</Label>
+            <Input 
+              value={formData.interested_video_url} 
+              onChange={e => handleChange('interested_video_url', e.target.value)} 
+              placeholder="https://youtube.com/..."
+            />
+            <p className="text-xs text-gray-500">Optional: Add a video explaining the signup process.</p>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Attribution Prompt</Label>
+            <Input 
+              value={formData.interested_attribution_prompt} 
+              onChange={e => handleChange('interested_attribution_prompt', e.target.value)} 
+              placeholder="Who shared this with you?"
+            />
+            <p className="text-xs text-gray-500">Question shown to users when they submit their application.</p>
+          </div>
+        </div>
+
+        <div className="flex justify-end pt-4">
+          <Button onClick={() => updateMutation.mutate(formData)}>Save Funnel Content</Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 

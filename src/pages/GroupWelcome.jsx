@@ -99,8 +99,10 @@ export default function GroupWelcome() {
                         
                         <div className="relative z-20">
                             {group.logo_url && <img src={group.logo_url} alt="Logo" className="w-16 h-16 rounded-xl mb-6 shadow-lg" />}
-                            <h1 className="text-4xl font-bold mb-4">{group.name}</h1>
-                            <p className="text-lg text-gray-200 mb-8">{group.description}</p>
+                            <h1 className="text-4xl font-bold mb-4">{group.welcome_mat_title || group.name}</h1>
+                            
+                            {/* Short description from group if no detailed welcome mat description, or just show it */}
+                            {!group.welcome_mat_description && <p className="text-lg text-gray-200 mb-8">{group.description}</p>}
                             
                             <Button 
                                 size="lg" 
@@ -109,41 +111,41 @@ export default function GroupWelcome() {
                                 className="bg-white text-gray-900 hover:bg-gray-100 font-bold text-lg h-14 rounded-full w-full md:w-auto"
                             >
                                 {joining ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : null}
-                                I'm Interested
+                                {group.welcome_mat_button_text || "I'm Interested"}
                                 <ArrowRight className="w-5 h-5 ml-2" />
                             </Button>
                         </div>
                     </div>
 
-                    <div className="p-8 flex flex-col">
-                        {group.welcome_video_url ? (
-                            <div className="aspect-video bg-gray-100 rounded-xl overflow-hidden shadow-inner mb-6 relative group cursor-pointer">
-                                {group.welcome_video_url.includes('youtube') || group.welcome_video_url.includes('youtu.be') ? (
+                    <div className="p-8 flex flex-col h-full overflow-y-auto">
+                        {(group.welcome_mat_video_url || group.welcome_video_url) && (
+                            <div className="aspect-video bg-gray-100 rounded-xl overflow-hidden shadow-inner mb-6 relative group cursor-pointer shrink-0">
+                                {(group.welcome_mat_video_url || group.welcome_video_url).includes('youtube') || (group.welcome_mat_video_url || group.welcome_video_url).includes('youtu.be') ? (
                                     <iframe 
-                                        src={group.welcome_video_url.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')} 
+                                        src={(group.welcome_mat_video_url || group.welcome_video_url).replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')} 
                                         className="w-full h-full" 
                                         allowFullScreen 
                                         title="Welcome Video"
                                     />
                                 ) : (
-                                    <video src={group.welcome_video_url} controls className="w-full h-full object-cover" />
+                                    <video src={group.welcome_mat_video_url || group.welcome_video_url} controls className="w-full h-full object-cover" />
                                 )}
-                            </div>
-                        ) : (
-                            <div className="aspect-video bg-gray-100 rounded-xl flex items-center justify-center text-gray-400 mb-6">
-                                <Play className="w-12 h-12 opacity-20" />
                             </div>
                         )}
 
-                        <div className="space-y-6">
-                            <div>
-                                <h3 className="text-xl font-semibold mb-2">Why Join?</h3>
-                                <p className="text-gray-600">
-                                    Join our community to access exclusive resources, training, and connect with like-minded creators.
-                                </p>
-                            </div>
+                        <div className="space-y-6 flex-1">
+                            {group.welcome_mat_description ? (
+                                <div className="prose prose-sm max-w-none text-gray-600" dangerouslySetInnerHTML={{ __html: group.welcome_mat_description }} />
+                            ) : (
+                                <div>
+                                    <h3 className="text-xl font-semibold mb-2">Why Join?</h3>
+                                    <p className="text-gray-600">
+                                        Join our community to access exclusive resources, training, and connect with like-minded creators.
+                                    </p>
+                                </div>
+                            )}
                             
-                            <div className="border-t pt-6">
+                            <div className="border-t pt-6 mt-auto">
                                 <p className="text-sm text-gray-500 text-center">
                                     Already a member? <button onClick={() => navigate(createPageUrl('CreatorGroups') + `?id=${groupId}`)} className="text-blue-600 hover:underline font-medium">Log in here</button>
                                 </p>
