@@ -60,6 +60,7 @@ import Pricing from './pages/Pricing';
 import PromotedOffers from './pages/PromotedOffers';
 import PromotionEngine from './pages/PromotionEngine';
 import QuickNotes from './pages/QuickNotes';
+import RedeemGift from './pages/RedeemGift';
 import SalesTracking from './pages/SalesTracking';
 import SavedMotivations from './pages/SavedMotivations';
 import Settings from './pages/Settings';
@@ -80,7 +81,6 @@ import WaterHistory from './pages/WaterHistory';
 import WeeklyGifterGallery from './pages/WeeklyGifterGallery';
 import Wellness from './pages/Wellness';
 import WorkSchedules from './pages/WorkSchedules';
-import RedeemGift from './pages/RedeemGift';
 import __Layout from './Layout.jsx';
 
 
@@ -147,6 +147,7 @@ export const PAGES = {
     "PromotedOffers": PromotedOffers,
     "PromotionEngine": PromotionEngine,
     "QuickNotes": QuickNotes,
+    "RedeemGift": RedeemGift,
     "SalesTracking": SalesTracking,
     "SavedMotivations": SavedMotivations,
     "Settings": Settings,
@@ -167,7 +168,6 @@ export const PAGES = {
     "WeeklyGifterGallery": WeeklyGifterGallery,
     "Wellness": Wellness,
     "WorkSchedules": WorkSchedules,
-    "RedeemGift": RedeemGift,
 }
 
 export const pagesConfig = {

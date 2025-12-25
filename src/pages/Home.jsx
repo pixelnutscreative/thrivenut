@@ -289,6 +289,17 @@ export default function Home() {
               >
                 Start Free <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
+              
+              <Link to={createPageUrl('RedeemGift')}>
+                <Button 
+                  size="lg" 
+                  className="bg-gradient-to-r from-red-600 to-green-600 hover:from-red-700 hover:to-green-700 text-lg px-8 py-6 shadow-lg shadow-green-500/20 animate-pulse border-2 border-yellow-400"
+                >
+                  <Gift className="w-5 h-5 mr-2" />
+                  Merry Grinchmas! Enter Code Here
+                </Button>
+              </Link>
+
               <a href="#features">
                 <Button size="lg" variant="outline" className="border-purple-400 text-purple-400 hover:bg-purple-400/10 text-lg px-8 py-6">
                   See All Features
