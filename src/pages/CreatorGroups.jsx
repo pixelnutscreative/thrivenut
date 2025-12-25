@@ -806,8 +806,9 @@ export default function CreatorGroups() {
           {activeGroup.settings?.hide_ticker !== true && (
             <CryptoTickerWidget 
               portfolio={activeGroup.crypto_tickers || []}
-              onUpdatePortfolio={(tickers) => updateGroupMutation.mutate({ crypto_tickers: tickers })}
+              onUpdatePortfolio={isAdmin ? (tickers) => updateGroupMutation.mutate({ crypto_tickers: tickers }) : undefined}
               title="Group Tickers"
+              updateInterval={activeGroup.settings?.crypto_ticker_interval}
             />
           )}
 
