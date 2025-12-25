@@ -457,37 +457,57 @@ function TimeReportModal({ isOpen, onClose, groupId, projects }) {
 
   const exportPDF = () => {
     const doc = new jsPDF();
-    doc.setFontSize(18);
-    doc.text("Time Summary Report", 14, 22);
     
-    // Group by User
+    // Title
+    doc.setFontSize(20);
+    doc.text("Time Summary Report", 14, 22);
+    doc.setFontSize(10);
+    doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 30);
+    
+    // Summary Table
     const byUser = {};
     allEntries.forEach(e => {
        if (!byUser[e.user_email]) byUser[e.user_email] = 0;
        byUser[e.user_email] += e.hours;
     });
 
-    let y = 40;
-    doc.setFontSize(14);
-    doc.text("Summary by User", 14, y);
-    y += 10;
+    const summaryData = Object.entries(byUser).map(([email, hours]) => [email, `${hours.toFixed(2)}h`]);
     
-    Object.entries(byUser).forEach(([email, hours]) => {
-       doc.setFontSize(12);
-       doc.text(`${email}: ${hours.toFixed(2)} hours`, 14, y);
-       y += 10;
+    doc.autoTable({
+      startY: 40,
+      head: [['User', 'Total Hours']],
+      body: summaryData,
+      theme: 'striped',
+      headStyles: { fillColor: [100, 100, 255] }
     });
 
-    y += 10;
-    doc.setFontSize(14);
-    doc.text("Detailed Entries", 14, y);
-    y += 10;
+    // Detailed Table
+    const detailsData = allEntries
+      .sort((a,b) => new Date(b.date) - new Date(a.date))
+      .map(e => {
+        const proj = projects.find(p => p.id === entry.project_id);
+        return [
+          e.date,
+          e.user_email,
+          proj?.title || 'Unknown',
+          e.description || '-',
+          `${e.hours}h`
+        ];
+      });
 
-    allEntries.forEach(e => {
-       if (y > 270) { doc.addPage(); y = 20; }
-       doc.setFontSize(10);
-       doc.text(`${e.date} - ${e.user_email} - ${e.hours}h - ${e.description || 'No desc'}`, 14, y);
-       y += 7;
+    doc.autoTable({
+      startY: doc.lastAutoTable.finalY + 15,
+      head: [['Date', 'User', 'Project', 'Description', 'Hours']],
+      body: detailsData,
+      theme: 'grid',
+      headStyles: { fillColor: [66, 66, 66] },
+      columnStyles: {
+        0: { cellWidth: 25 },
+        1: { cellWidth: 40 },
+        2: { cellWidth: 30 },
+        3: { cellWidth: 'auto' },
+        4: { cellWidth: 20, halign: 'right' }
+      }
     });
 
     doc.save("time-report.pdf");
