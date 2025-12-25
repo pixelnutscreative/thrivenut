@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { getEffectiveUserEmail } from '../admin/ImpersonationBanner';
@@ -41,18 +40,23 @@ export function useTheme() {
 
   const primaryColor = preferences?.primary_color || '#1fd2ea';
   const accentColor = preferences?.accent_color || '#bd84f5';
+  const isDark = preferences?.app_theme === 'dark';
 
-  // Always light background for app
-  const bgClass = 'bg-gradient-to-br from-teal-50 via-purple-50 to-blue-50';
-  const textClass = 'text-gray-800';
-  const subtextClass = 'text-gray-600';
-  const cardBgClass = 'bg-white';
-  const inputBgClass = 'bg-white';
-  const borderClass = 'border-gray-200';
-  const hoverClass = 'hover:bg-gray-50';
-  const mutedBgClass = 'bg-gray-50';
+  // Dynamic theme classes
+  const bgClass = isDark 
+    ? 'bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800' 
+    : 'bg-gradient-to-br from-[var(--primary-color)]/5 via-white to-[var(--accent-color)]/5';
+    
+  const textClass = isDark ? 'text-gray-100' : 'text-gray-900';
+  const subtextClass = isDark ? 'text-gray-400' : 'text-gray-600';
+  const cardBgClass = isDark ? 'bg-gray-800/80 border-gray-700' : 'bg-white/80 border-gray-200';
+  const inputBgClass = isDark ? 'bg-gray-900 border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-900';
+  const borderClass = isDark ? 'border-gray-700' : 'border-gray-200';
+  const hoverClass = isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-50';
+  const mutedBgClass = isDark ? 'bg-gray-800' : 'bg-gray-50';
 
   return {
+    isDark,
     primaryColor,
     accentColor,
     bgClass,
