@@ -189,21 +189,29 @@ export default function CreatorGroups() {
       const group = groups[0];
       
       const existing = await base44.entities.CreatorGroupMember.filter({ group_id: group.id, user_email: user?.email });
-      if (existing.length > 0) return { group, existing: true };
+      if (existing.length > 0) {
+        // If pending, activate them since they have the invite code
+        if (existing[0].status === 'pending') {
+          await base44.entities.CreatorGroupMember.update(existing[0].id, { status: 'active', role: 'member', joined_date: new Date().toISOString() });
+          return { group, existing: false, wasPending: true };
+        }
+        return { group, existing: true };
+      }
 
       await base44.entities.CreatorGroupMember.create({
         group_id: group.id,
         user_email: user?.email,
         role: 'member',
-        status: 'pending',
-        level: 'Invited',
+        status: 'active', // Auto-activate if using valid invite code
+        level: 'Member',
         joined_date: new Date().toISOString()
       });
       return { group, existing: false };
     },
-    onSuccess: ({ group, existing }) => {
-      if (existing) alert('You are already a member of this group!');
-      else alert('Request to join sent! An admin will approve you shortly.');
+    onSuccess: ({ group, existing, wasPending }) => {
+      if (wasPending) alert('Membership activated! Welcome to the group.');
+      else if (existing) alert('You are already a member of this group!');
+      else alert('Welcome! You have joined the group.');
       
       queryClient.invalidateQueries(['myGroupMemberships']);
       setSearchParams({ id: group.id }); // Go to dashboard (might be restricted view if pending)

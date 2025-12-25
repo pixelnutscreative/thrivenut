@@ -792,10 +792,10 @@ import React, { useState } from 'react';
                      value={formData.visibility || 'private'} 
                      onValueChange={(v) => setFormData({...formData, visibility: v})}
                    >
-                     <SelectTrigger>
-                       <SelectValue />
+                     <SelectTrigger className="w-full">
+                       <SelectValue placeholder="Select visibility" />
                      </SelectTrigger>
-                     <SelectContent position="popper" className="z-[1000]">
+                     <SelectContent position="item-aligned" className="z-[9999]">
                        <SelectItem value="private">
                          <div className="flex items-center gap-2">
                            <Lock className="w-4 h-4" /> Private
