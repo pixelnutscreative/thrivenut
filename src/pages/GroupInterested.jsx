@@ -178,6 +178,13 @@ export default function GroupInterested() {
 
                 {/* Right Col: Application / Status */}
                 <div className="space-y-6">
+                    {/* Header Message */}
+                    {group.interested_dashboard_header && (
+                        <div className="bg-white p-4 rounded-lg shadow-sm border border-blue-100">
+                            <div className="prose prose-sm max-w-none text-gray-700" dangerouslySetInnerHTML={{ __html: group.interested_dashboard_header }} />
+                        </div>
+                    )}
+
                     <Card>
                         <CardHeader>
                             <CardTitle>Unlock Full Access</CardTitle>
@@ -185,19 +192,51 @@ export default function GroupInterested() {
                         </CardHeader>
                         <CardContent className="space-y-6">
                             
-                            {/* Step 1: Sign Up */}
-                            <div className="flex gap-4">
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${proofFile ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-500'}`}>1</div>
-                                <div>
-                                    <h3 className="font-semibold">Sign Up & Pay</h3>
-                                    <p className="text-sm text-gray-500 mb-2">Use the sign up link to purchase your membership.</p>
+                            {/* Video Instructions */}
+                            {group.interested_video_url && (
+                                <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden relative">
+                                    {group.interested_video_url.includes('youtube') || group.interested_video_url.includes('youtu.be') ? (
+                                        <iframe 
+                                            src={group.interested_video_url.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')} 
+                                            className="w-full h-full" 
+                                            allowFullScreen 
+                                            title="Instructions Video"
+                                        />
+                                    ) : (
+                                        <video src={group.interested_video_url} controls className="w-full h-full object-cover" />
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Rich Text Signup Info */}
+                            {group.interested_signup_info ? (
+                                <div className="bg-gray-50 p-4 rounded-lg text-sm text-gray-700">
+                                    <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: group.interested_signup_info }} />
+                                    
                                     {group.signup_url && (
-                                        <Button variant="outline" size="sm" onClick={() => window.open(group.signup_url, '_blank')} className="w-full">
-                                            Go to Payment Page <ExternalLink className="w-3 h-3 ml-2" />
+                                        <Button 
+                                            className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white gap-2"
+                                            onClick={() => window.open(group.signup_url, '_blank')}
+                                        >
+                                            Go to Payment Page <ExternalLink className="w-4 h-4" />
                                         </Button>
                                     )}
                                 </div>
-                            </div>
+                            ) : (
+                                /* Default Sign Up Step if no custom info */
+                                <div className="flex gap-4">
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${proofFile ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-500'}`}>1</div>
+                                    <div>
+                                        <h3 className="font-semibold">Sign Up & Pay</h3>
+                                        <p className="text-sm text-gray-500 mb-2">Use the sign up link to purchase your membership.</p>
+                                        {group.signup_url && (
+                                            <Button variant="outline" size="sm" onClick={() => window.open(group.signup_url, '_blank')} className="w-full">
+                                                Go to Payment Page <ExternalLink className="w-3 h-3 ml-2" />
+                                            </Button>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Step 2: Proof */}
                             <div className="flex gap-4">
@@ -221,7 +260,7 @@ export default function GroupInterested() {
                             <div className="flex gap-4">
                                 <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${referredBy ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-500'}`}>3</div>
                                 <div className="w-full">
-                                    <h3 className="font-semibold">Who invited you?</h3>
+                                    <h3 className="font-semibold">{group.interested_attribution_prompt || "Who invited you?"}</h3>
                                     <div className="mt-2 space-y-2">
                                         <Select value={referralType} onValueChange={setReferralType}>
                                             <SelectTrigger><SelectValue /></SelectTrigger>
@@ -239,7 +278,7 @@ export default function GroupInterested() {
                                             />
                                         ) : (
                                             <Input 
-                                                placeholder="Where did you find us?" 
+                                                placeholder={group.interested_attribution_prompt || "Where did you find us?"}
                                                 value={referredBy} 
                                                 onChange={(e) => setReferredBy(e.target.value)} 
                                             />
