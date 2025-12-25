@@ -156,6 +156,7 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
                   <SelectContent>
                     <SelectItem value="member">Member</SelectItem>
                     <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="virtual-assistant">Virtual Assistant</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -280,6 +281,7 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
                       <SelectItem value="member">Member</SelectItem>
                       <SelectItem value="manager">Manager</SelectItem>
                       <SelectItem value="admin">Admin</SelectItem>
+                      <SelectItem value="virtual-assistant">Virtual Assistant</SelectItem>
                     </SelectContent>
                   </Select>
                 ) : (
