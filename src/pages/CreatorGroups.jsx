@@ -21,6 +21,8 @@ import GroupQnATab from '../components/groups/GroupQnATab';
 import GroupEventsTab from '../components/groups/GroupEventsTab';
 import GroupResourcesTab from '../components/groups/GroupResourcesTab';
 import GroupSettingsTab from '../components/groups/GroupSettingsTab';
+import GroupProjectsTab from '../components/groups/GroupProjectsTab';
+import GroupMeetingsTab from '../components/groups/GroupMeetingsTab';
 import CryptoTickerWidget from '../components/widgets/CryptoTickerWidget';
 import GroupCalendarWidget from '../components/groups/GroupCalendarWidget';
 
@@ -42,6 +44,7 @@ export default function CreatorGroups() {
   const adminEmails = ['pixelnutscreative@gmail.com', 'pixel@thrivenut.app'];
   const isSuperAdmin = realUserEmail && adminEmails.includes(realUserEmail);
   const canCreateAgency = isSuperAdmin || preferences?.can_create_agency;
+  const isProTier = isSuperAdmin || preferences?.subscription_status === 'active' || preferences?.is_superfan;
 
   // Fetch my groups
   const { data: myMemberships = [], isLoading } = useQuery({
@@ -351,6 +354,8 @@ export default function CreatorGroups() {
     { id: 'qna', label: 'Q&A', icon: MessageSquare, color: 'teal' },
     { id: 'resources', label: 'Resources', icon: FileText, color: 'amber' },
     { id: 'training', label: 'Training', icon: Video, color: 'blue' },
+    { id: 'projects', label: 'Projects', icon: Briefcase, color: 'indigo' },
+    { id: 'meetings', label: 'Meetings', icon: Video, color: 'rose' },
     { id: 'members', label: 'Members', icon: Users, color: 'orange' },
     { id: 'requests', label: 'Requests', icon: AlertCircle, color: 'gray' },
   ];
@@ -483,6 +488,8 @@ export default function CreatorGroups() {
                     <p className="text-xs text-gray-500">
                       {newGroupType === 'agency' 
                         ? 'Official business groups for agencies, coaching, or brands. This creates your Agency entity.' 
+                        : newGroupType === 'client-portal'
+                        ? 'Private workspace for client projects, time tracking, and meeting records.'
                         : 'Create a space for collaboration, sharing, and growth.'}
                     </p>
                   </div>
@@ -864,6 +871,18 @@ export default function CreatorGroups() {
           <TabsContent value="training" className="focus-visible:outline-none">
             {isTabEnabled('training') && (
               <GroupTrainingTab group={activeGroup} currentUser={user} isAdmin={isAdmin} />
+            )}
+          </TabsContent>
+
+          <TabsContent value="projects" className="focus-visible:outline-none">
+            {isTabEnabled('projects') && (
+              <GroupProjectsTab group={activeGroup} currentUser={user} myMembership={activeMembership} />
+            )}
+          </TabsContent>
+
+          <TabsContent value="meetings" className="focus-visible:outline-none">
+            {isTabEnabled('meetings') && (
+              <GroupMeetingsTab group={activeGroup} currentUser={user} isAdmin={isAdmin} />
             )}
           </TabsContent>
 
