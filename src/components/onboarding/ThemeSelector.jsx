@@ -35,48 +35,17 @@ export default function ThemeSelector({ themeData, onChange }) {
   const setPrimaryColor = (color) => onChange({ primary_color: color });
   const setAccentColor = (color) => onChange({ accent_color: color });
   const setMenuColor = (color) => onChange({ menu_color: color });
-  const setAppTheme = (mode) => onChange({ app_theme: mode });
 
   const resetToDefaults = () => {
     onChange({
       primary_color: DEFAULT_PRIMARY,
       accent_color: DEFAULT_ACCENT,
       menu_color: DEFAULT_MENU,
-      app_theme: 'light'
     });
   };
 
   return (
     <div className="space-y-6">
-      {/* App Theme Selection */}
-      <div className="space-y-3">
-        <Label className="text-base font-semibold">App Theme</Label>
-        <div className="grid grid-cols-2 gap-3">
-          <button
-            onClick={() => setAppTheme('light')}
-            className={`p-4 rounded-xl border-2 transition-all ${
-              (themeData?.app_theme || 'light') === 'light'
-                ? 'border-purple-500 bg-purple-50'
-                : 'border-gray-200 hover:border-purple-300'
-            }`}
-          >
-            <div className="w-full h-12 rounded-lg mb-2 bg-gradient-to-br from-teal-50 via-white to-blue-50 border border-gray-200" />
-            <div className="text-sm font-medium">Light Mode</div>
-          </button>
-          <button
-            onClick={() => setAppTheme('dark')}
-            className={`p-4 rounded-xl border-2 transition-all ${
-              themeData?.app_theme === 'dark'
-                ? 'border-purple-500 bg-purple-50'
-                : 'border-gray-200 hover:border-purple-300'
-            }`}
-          >
-            <div className="w-full h-12 rounded-lg mb-2 bg-gray-900 border border-gray-800" />
-            <div className="text-sm font-medium">Dark Mode</div>
-          </button>
-        </div>
-      </div>
-
       {/* Menu Color Selection */}
       <div className="space-y-3">
         <Label className="text-base font-semibold">Menu Style</Label>

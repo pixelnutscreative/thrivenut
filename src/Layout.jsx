@@ -317,15 +317,12 @@ export default function Layout({ children, currentPageName }) {
   };
 
   // --- STYLES ---
-  const isDark = preferences?.app_theme === 'dark';
-  
-  const bgClass = isDark 
-    ? 'bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 text-gray-100'
-    : 'bg-gradient-to-br from-[var(--primary-color)]/5 via-white to-[var(--accent-color)]/5 text-gray-900';
+  // Using a very light version of the primary/accent colors for the background
+  const bgClass = 'bg-gradient-to-br from-[var(--primary-color)]/5 via-white to-[var(--accent-color)]/5 text-gray-900';
 
   const sidebarStyle = {
     backgroundColor: menuColor,
-    borderColor: isDark ? '#374151' : '#e5e7eb'
+    borderColor: '#e5e7eb'
   };
 
   const menuTextClass = isMenuDark ? 'text-gray-100' : 'text-gray-800';
