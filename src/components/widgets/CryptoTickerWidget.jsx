@@ -90,8 +90,9 @@ export default function CryptoTickerWidget({ portfolio = [], onUpdatePortfolio }
 
   const handleAddCoin = () => {
     if (!newCoin.symbol) return;
+    const symbol = newCoin.symbol.trim().toUpperCase();
     const updated = [...portfolio, { 
-      symbol: newCoin.symbol.toUpperCase(), 
+      symbol: symbol, 
       amount: parseFloat(newCoin.amount) || 0,
       color: newCoin.color
     }];

@@ -234,7 +234,16 @@ export default function CreatorGroups() {
   const activeMembership = myMemberships.find(m => m.group_id === activeGroupId);
   const isAdmin = activeMembership && ['owner', 'admin', 'manager'].includes(activeMembership.role);
   const isPending = activeMembership?.status === 'pending';
-  const isMember = !!activeMembership && activeMembership.status === 'active';
+  const isInterested = activeMembership?.status === 'interested' || activeMembership?.pending_approval; // Treat pending approval as interested mode
+  const isMember = !!activeMembership && (activeMembership.status === 'active' || activeMembership.status === 'trial');
+
+  // Redirect Interested users to the Interested Dashboard
+  const navigate = useNavigate();
+  useEffect(() => {
+      if (isInterested && activeGroupId) {
+          navigate(createPageUrl('GroupInterested') + `?groupId=${activeGroupId}`);
+      }
+  }, [isInterested, activeGroupId, navigate]);
 
   // Handle Referrals when joining
   const referralCode = searchParams.get('ref');
