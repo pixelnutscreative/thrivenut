@@ -290,7 +290,9 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
                 )}
               </div>
               <div className="col-span-3">
-                {isAdmin && group.member_levels?.length > 0 ? (
+                {member.role === 'owner' ? (
+                   <Badge className="bg-purple-100 text-purple-800 border-purple-200">Owner</Badge>
+                ) : isAdmin && group.member_levels?.length > 0 ? (
                   <Select 
                     value={member.level || 'none'} 
                     onValueChange={v => updateLevelMutation.mutate({ id: member.id, level: v === 'none' ? null : v })}
