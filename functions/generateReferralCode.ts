@@ -52,7 +52,8 @@ Deno.serve(async (req) => {
       user_email: user.email 
     });
 
-    if (action === 'generate') {
+    // Auto-generate if explicitly requested OR if fetching but none exist
+    if (action === 'generate' || (action === 'get' && existingLinks.length === 0)) {
       // Check limit (7 codes max)
       if (existingLinks.length >= 7) {
         return Response.json({ 
@@ -91,6 +92,25 @@ Deno.serve(async (req) => {
         is_active: true,
         is_primary: existingLinks.length === 0 // First code is primary
       });
+
+      // If this was an implicit generation ('get'), return the list format expected by the frontend query
+      if (action === 'get') {
+        return Response.json({ 
+          success: true,
+          links: [{
+            id: newLink.id,
+            referral_code: newLink.referral_code,
+            code_label: newLink.code_label || '',
+            is_primary: newLink.is_primary || false,
+            is_active: newLink.is_active,
+            stats: {
+              clicks: 0,
+              signups: 0,
+              upgrades: 0
+            }
+          }]
+        });
+      }
 
       return Response.json({ 
         success: true, 
