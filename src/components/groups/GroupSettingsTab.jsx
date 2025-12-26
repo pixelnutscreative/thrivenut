@@ -7,12 +7,76 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { X, Plus, Save, Link as LinkIcon, Trash2, ArrowUp, ArrowDown, ChevronDown, ChevronRight, AlertTriangle } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { X, Plus, Save, Link as LinkIcon, Trash2, ArrowUp, ArrowDown, ChevronDown, ChevronRight, AlertTriangle, Settings, Users, FileText, Lock, Shield } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 
 export default function GroupSettingsTab({ group }) {
+  return (
+    <div className="space-y-6">
+      <Tabs defaultValue="general" className="w-full">
+        <TabsList className="bg-gray-100 p-1 rounded-lg w-full justify-start h-auto flex-wrap">
+          <TabsTrigger value="general" className="px-4 py-2"><Settings className="w-4 h-4 mr-2" /> General</TabsTrigger>
+          <TabsTrigger value="membership" className="px-4 py-2"><Users className="w-4 h-4 mr-2" /> Membership</TabsTrigger>
+          <TabsTrigger value="content" className="px-4 py-2"><FileText className="w-4 h-4 mr-2" /> Content</TabsTrigger>
+          <TabsTrigger value="permissions" className="px-4 py-2"><Shield className="w-4 h-4 mr-2" /> Permissions</TabsTrigger>
+          <TabsTrigger value="danger" className="px-4 py-2 text-red-600 data-[state=active]:text-red-700 data-[state=active]:bg-red-50"><AlertTriangle className="w-4 h-4 mr-2" /> Danger Zone</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="general" className="space-y-6 mt-6">
+          <GroupNameSettings group={group} />
+          <GroupShortcutsSettings group={group} />
+          <CryptoTickerSettings group={group} />
+        </TabsContent>
+
+        <TabsContent value="membership" className="space-y-6 mt-6">
+          <MemberLevelsSettings group={group} />
+          <GroupAccessSettings group={group} />
+        </TabsContent>
+
+        <TabsContent value="content" className="space-y-6 mt-6">
+          <FunnelContentSettings group={group} />
+        </TabsContent>
+
+        <TabsContent value="permissions" className="space-y-6 mt-6">
+          <TabPermissionsSettings group={group} />
+        </TabsContent>
+
+        <TabsContent value="danger" className="space-y-6 mt-6">
+          <DeleteGroupSettings group={group} />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+function CryptoTickerSettings({ group }) {
+  const queryClient = useQueryClient();
+  const updateMutation = useMutation({
+    mutationFn: (data) => base44.entities.CreatorGroup.update(group.id, data),
+    onSuccess: () => queryClient.invalidateQueries(['myGroupsDetails'])
+  });
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Crypto Ticker</CardTitle>
+        <CardDescription>Show or hide the group ticker in the sidebar.</CardDescription>
+      </CardHeader>
+      <CardContent className="flex items-center justify-between">
+        <span className="text-sm text-gray-600">Show ticker on dashboard</span>
+        <Switch
+          checked={!(group.settings?.hide_ticker === true)}
+          onCheckedChange={(checked) => updateMutation.mutate({ settings: { ...(group.settings || {}), hide_ticker: !checked } })}
+        />
+      </CardContent>
+    </Card>
+  );
+}
+
+function MemberLevelsSettings({ group }) {
   const queryClient = useQueryClient();
   const [levels, setLevels] = useState(group.member_levels || []);
   const [newLevel, setNewLevel] = useState('');
@@ -38,67 +102,42 @@ export default function GroupSettingsTab({ group }) {
   };
 
   return (
-    <div className="space-y-6">
-      <GroupNameSettings group={group} />
-      <GroupShortcutsSettings group={group} />
-      
-      <Card>
-        <CardHeader>
-          <CardTitle>Member Levels & Roles</CardTitle>
-          <CardDescription>
-            Define custom levels for your members (e.g., Winners, Leaders, Champions). 
-            You can use these to control visibility of posts, events, and resources.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex gap-2">
-            <Input 
-              placeholder="Level Name (e.g. Diamond Leader)" 
-              value={newLevel} 
-              onChange={e => setNewLevel(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && addLevel()}
-            />
-            <Button onClick={addLevel} variant="outline"><Plus className="w-4 h-4" /></Button>
-          </div>
-
-          <div className="flex flex-wrap gap-2 min-h-[50px] p-4 bg-gray-50 rounded-lg border border-dashed border-gray-200">
-            {levels.map(level => (
-              <Badge key={level} className="px-3 py-1 bg-white border-purple-200 text-purple-700 flex items-center gap-2">
-                {level}
-                <button onClick={() => removeLevel(level)} className="text-gray-400 hover:text-red-500"><X className="w-3 h-3" /></button>
-              </Badge>
-            ))}
-            {levels.length === 0 && <span className="text-sm text-gray-400">No levels defined yet.</span>}
-          </div>
-
-          <div className="flex justify-end pt-4">
-            <Button onClick={handleSave} disabled={updateMutation.isPending}>
-              {updateMutation.isPending ? 'Saving...' : 'Save Levels'}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Crypto Ticker</CardTitle>
-          <CardDescription>Show or hide the group ticker in the sidebar.</CardDescription>
-        </CardHeader>
-        <CardContent className="flex items-center justify-between">
-          <span className="text-sm text-gray-600">Show ticker on dashboard</span>
-          <Switch
-            checked={!(group.settings?.hide_ticker === true)}
-            onCheckedChange={(checked) => updateMutation.mutate({ settings: { ...(group.settings || {}), hide_ticker: !checked } })}
+    <Card>
+      <CardHeader>
+        <CardTitle>Member Levels & Roles</CardTitle>
+        <CardDescription>
+          Define custom levels for your members (e.g., Winners, Leaders, Champions). 
+          You can use these to control visibility of posts, events, and resources.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex gap-2">
+          <Input 
+            placeholder="Level Name (e.g. Diamond Leader)" 
+            value={newLevel} 
+            onChange={e => setNewLevel(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && addLevel()}
           />
-        </CardContent>
-      </Card>
+          <Button onClick={addLevel} variant="outline"><Plus className="w-4 h-4" /></Button>
+        </div>
 
+        <div className="flex flex-wrap gap-2 min-h-[50px] p-4 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+          {levels.map(level => (
+            <Badge key={level} className="px-3 py-1 bg-white border-purple-200 text-purple-700 flex items-center gap-2">
+              {level}
+              <button onClick={() => removeLevel(level)} className="text-gray-400 hover:text-red-500"><X className="w-3 h-3" /></button>
+            </Badge>
+          ))}
+          {levels.length === 0 && <span className="text-sm text-gray-400">No levels defined yet.</span>}
+        </div>
 
-      <GroupAccessSettings group={group} />
-      <FunnelContentSettings group={group} />
-      <TabPermissionsSettings group={group} />
-      <DeleteGroupSettings group={group} />
-    </div>
+        <div className="flex justify-end pt-4">
+          <Button onClick={handleSave} disabled={updateMutation.isPending}>
+            {updateMutation.isPending ? 'Saving...' : 'Save Levels'}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -295,8 +334,6 @@ function GroupAccessSettings({ group }) {
 
 function TabPermissionsSettings({ group }) {
   const queryClient = useQueryClient();
-  // Map of tabId -> array of allowed roles/levels
-  // If undefined/empty, allowed to all (except hardcoded limits)
   const [permissions, setPermissions] = useState(group.role_tab_permissions || {});
 
   const updateMutation = useMutation({
@@ -318,7 +355,7 @@ function TabPermissionsSettings({ group }) {
 
   const levels = ['Invited', 'Interested', 'Subscriber', ...(group.member_levels || [])];
   const systemRoles = ['member', 'manager', 'admin']; 
-  const allRoles = [...new Set([...levels, ...systemRoles])]; // Dedupe if overlap
+  const allRoles = [...new Set([...levels, ...systemRoles])]; 
 
   const togglePermission = (tabId, role) => {
     const current = permissions[tabId] || [];
@@ -328,11 +365,6 @@ function TabPermissionsSettings({ group }) {
     } else {
       newPerms = [...current, role];
     }
-    
-    // If empty, maybe means everyone? 
-    // Let's say if key exists but empty list = no one? 
-    // Or we stick to "If undefined, everyone". 
-    // To make it restrictive by default for new features, let's say we save the list.
     setPermissions({ ...permissions, [tabId]: newPerms });
   };
 
@@ -356,13 +388,7 @@ function TabPermissionsSettings({ group }) {
                 <tr key={tab.id} className="border-b last:border-0">
                   <td className="p-2 font-medium">{tab.label}</td>
                   {allRoles.map(role => {
-                    // Default logic: Admin/Owner always see everything (handled in code), but let's allow config for others.
-                    // If permissions[tab.id] is undefined, assume Visible to all? Or visible to Member+?
-                    // Let's assume if undefined, visible to all "Member" status.
-                    // But for Invited/Interested, usually hidden.
-                    // Let's force explicit config. If undefined, we default to showing check.
                     const isChecked = !permissions[tab.id] || permissions[tab.id].includes(role);
-                    
                     return (
                       <td key={role} className="text-center p-2">
                         <input 
