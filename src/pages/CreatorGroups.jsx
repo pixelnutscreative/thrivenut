@@ -153,7 +153,6 @@ export default function CreatorGroups() {
 
   const createGroupMutation = useMutation({
     mutationFn: async ({ name, type }) => {
-      // Use backend function to prevent race conditions and ensure owner role is set correctly
       const funnel_content = {
         welcome_mat_title: `Welcome to ${name}! 👋`,
         welcome_mat_description: "This is a private community for our members. Here you'll find exclusive resources, training, and support. Take a look around, and if you're ready to join us, click the button below!",
@@ -164,17 +163,19 @@ export default function CreatorGroups() {
       };
 
       const response = await base44.functions.invoke('createCreatorGroup', { name, type, funnel_content });
-      // Wait a moment to ensure database consistency before refetching on client
       await new Promise(resolve => setTimeout(resolve, 500));
       return response.data;
     },
     onSuccess: (newGroup) => {
       queryClient.invalidateQueries(['myGroupMemberships']);
       queryClient.invalidateQueries(['myGroupsDetails']);
+      // Force close dialog immediately
       setIsCreateOpen(false);
+      // Reset form
       setNewGroupName('');
       setNewGroupType('community');
-      setSearchParams({ id: newGroup.id });
+      // Navigate
+      setTimeout(() => setSearchParams({ id: newGroup.id }), 100);
     }
   });
 
