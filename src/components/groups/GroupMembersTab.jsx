@@ -268,11 +268,12 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
                 </div>
               </div>
               <div className="col-span-2">
-                {isAdmin && group.owner_email === currentUser?.email ? (
+                {member.role === 'owner' ? (
+                   <Badge className="bg-purple-100 text-purple-800 border-purple-200">Owner</Badge>
+                ) : isAdmin && group.owner_email === currentUser?.email ? (
                   <Select 
                     value={member.role || 'member'} 
                     onValueChange={v => updateRoleMutation.mutate({ id: member.id, role: v })}
-                    disabled={member.role === 'owner'}
                   >
                     <SelectTrigger className="h-8 text-xs capitalize">
                       <SelectValue placeholder="Select Role" />
