@@ -252,6 +252,19 @@ export default function CreatorGroups() {
 
   const activeGroup = fetchedActiveGroup || groups.find(g => g.id === activeGroupId);
   const activeMembership = myMemberships.find(m => m.group_id === activeGroupId);
+  
+  // DIAGNOSTIC LOGGING
+  if (activeGroupId && activeMembership) {
+    console.log('UI DIAGNOSIS:', {
+      group: activeGroup?.name,
+      email: user?.email,
+      membership: activeMembership,
+      role: activeMembership.role,
+      level: activeMembership.level,
+      status: activeMembership.status
+    });
+  }
+
   const isAdmin = activeMembership && ['owner', 'admin', 'manager'].includes(activeMembership.role);
   const isPending = activeMembership?.status === 'pending';
   const isInterested = activeMembership?.status === 'interested' || activeMembership?.pending_approval; // Treat pending approval as interested mode
