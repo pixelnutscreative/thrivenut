@@ -153,42 +153,20 @@ export default function CreatorGroups() {
 
   const createGroupMutation = useMutation({
     mutationFn: async ({ name, type }) => {
-      // 1. Create Group
-      const group = await base44.entities.CreatorGroup.create({
-        name,
-        owner_email: user?.email,
-        invite_code: Math.random().toString(36).substring(7).toUpperCase(),
-        status: 'active',
-        type,
-        // Default Funnel Content
+      // Use backend function to prevent race conditions and ensure owner role is set correctly
+      const funnel_content = {
         welcome_mat_title: `Welcome to ${name}! 👋`,
         welcome_mat_description: "This is a private community for our members. Here you'll find exclusive resources, training, and support. Take a look around, and if you're ready to join us, click the button below!",
         welcome_mat_button_text: "I'm Interested!",
         interested_dashboard_header: "🎉 You're one step away! Here's everything you need to know to become a member.",
         interested_signup_info: "1. Click the Sign Up button above\n2. Complete the registration\n3. Upload your proof of payment\n4. We'll approve you within 24 hours!",
         interested_attribution_prompt: "Who shared this opportunity with you? (optional)"
-      });
-      // 2. Add Owner as Member (Ensure Upsert logic)
-      const existing = await base44.entities.CreatorGroupMember.filter({ group_id: group.id, user_email: user?.email });
-      if (existing.length > 0) {
-        await base44.entities.CreatorGroupMember.update(existing[0].id, {
-          role: 'owner',
-          level: 'Owner',
-          status: 'active'
-        });
-      } else {
-        await base44.entities.CreatorGroupMember.create({
-          group_id: group.id,
-          user_email: user?.email,
-          role: 'owner',
-          level: 'Owner',
-          status: 'active',
-          joined_date: new Date().toISOString()
-        });
-      }
-      // Wait a moment to ensure database consistency before refetching
-      await new Promise(resolve => setTimeout(resolve, 800));
-      return group;
+      };
+
+      const response = await base44.functions.invoke('createCreatorGroup', { name, type, funnel_content });
+      // Wait a moment to ensure database consistency before refetching on client
+      await new Promise(resolve => setTimeout(resolve, 500));
+      return response.data;
     },
     onSuccess: (newGroup) => {
       queryClient.invalidateQueries(['myGroupMemberships']);
