@@ -133,21 +133,18 @@ export default function CreatorGroups() {
 
   const deleteGroupMutation = useMutation({
     mutationFn: async (groupId) => {
-      // First verify ownership/admin
-      const group = groups.find(g => g.id === groupId);
-      if (!group || group.owner_email !== user?.email) {
-        throw new Error("Unauthorized");
-      }
-      // Delete group
-      await base44.entities.CreatorGroup.delete(groupId);
+      await base44.functions.invoke('deleteCreatorGroup', { groupId });
+      await new Promise(resolve => setTimeout(resolve, 500));
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['myGroupsDetails']);
       queryClient.invalidateQueries(['myGroupMemberships']);
-      // If we were on that group page, go back to list
       if (activeGroupId) {
         setSearchParams({});
       }
+    },
+    onError: (err) => {
+       alert('Failed to delete group: ' + (err.message || 'Unknown error'));
     }
   });
 
