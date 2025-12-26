@@ -512,8 +512,13 @@ export default function CreatorGroups() {
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button onClick={() => createGroupMutation.mutate({ name: newGroupName, type: newGroupType })} disabled={!newGroupName}>
-                    Create Group
+                  <Button 
+                     onClick={() => createGroupMutation.mutate({ name: newGroupName, type: newGroupType })} 
+                     disabled={!newGroupName || createGroupMutation.isPending}
+                  >
+                    {createGroupMutation.isPending ? (
+                       <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Creating...</>
+                    ) : 'Create Group'}
                   </Button>
                 </DialogFooter>
               </DialogContent>
