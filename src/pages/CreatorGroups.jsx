@@ -168,14 +168,24 @@ export default function CreatorGroups() {
         interested_signup_info: "1. Click the Sign Up button above\n2. Complete the registration\n3. Upload your proof of payment\n4. We'll approve you within 24 hours!",
         interested_attribution_prompt: "Who shared this opportunity with you? (optional)"
       });
-      // 2. Add Owner as Member
-      await base44.entities.CreatorGroupMember.create({
-        group_id: group.id,
-        user_email: user?.email,
-        role: 'owner',
-        status: 'active',
-        joined_date: new Date().toISOString()
-      });
+      // 2. Add Owner as Member (Ensure Upsert logic)
+      const existing = await base44.entities.CreatorGroupMember.filter({ group_id: group.id, user_email: user?.email });
+      if (existing.length > 0) {
+        await base44.entities.CreatorGroupMember.update(existing[0].id, {
+          role: 'owner',
+          level: 'Owner',
+          status: 'active'
+        });
+      } else {
+        await base44.entities.CreatorGroupMember.create({
+          group_id: group.id,
+          user_email: user?.email,
+          role: 'owner',
+          level: 'Owner',
+          status: 'active',
+          joined_date: new Date().toISOString()
+        });
+      }
       // Wait a moment to ensure database consistency before refetching
       await new Promise(resolve => setTimeout(resolve, 800));
       return group;
@@ -348,7 +358,7 @@ export default function CreatorGroups() {
     }
   };
 
-  const availableTabs = [
+  const allTabs = [
     { id: 'feed', label: 'Feed', icon: Bell, color: 'purple' },
     { id: 'events', label: 'Events', icon: Calendar, color: 'pink' },
     { id: 'qna', label: 'Q&A', icon: MessageSquare, color: 'teal' },
@@ -359,6 +369,13 @@ export default function CreatorGroups() {
     { id: 'members', label: 'Members', icon: Users, color: 'orange' },
     { id: 'requests', label: 'Requests', icon: AlertCircle, color: 'gray' },
   ];
+
+  const clientPortalTabs = ['resources', 'requests', 'projects', 'meetings', 'members'];
+  const isClientPortal = activeGroup?.type === 'client-portal';
+
+  const availableTabs = isClientPortal 
+    ? allTabs.filter(t => clientPortalTabs.includes(t.id))
+    : allTabs;
 
   const toggleTabVisibility = (tabId) => {
     const hidden = groupPrefs?.hidden_tabs || [];
