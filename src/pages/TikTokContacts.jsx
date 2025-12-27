@@ -177,6 +177,10 @@ export default function TikTokContacts() {
     const ensureArray = (val) => Array.isArray(val) ? val : (typeof val === 'string' && val ? [val] : []);
     return rawContacts.map(c => ({
       ...c,
+      username: c.username || '',
+      display_name: c.display_name || '',
+      real_name: c.real_name || '',
+      nickname: c.nickname || '',
       role: ensureArray(c.role),
       clubs: ensureArray(c.clubs),
       custom_clubs: ensureArray(c.custom_clubs),
