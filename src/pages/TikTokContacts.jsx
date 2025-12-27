@@ -319,7 +319,7 @@ export default function TikTokContacts() {
 
   const toggleDay = (day) => {
     setScheduleForm(prev => {
-      const days = prev.engagement_days || [];
+      const days = Array.isArray(prev.engagement_days) ? prev.engagement_days : [];
       if (days.includes(day)) {
         return { ...prev, engagement_days: days.filter(d => d !== day) };
       } else {
