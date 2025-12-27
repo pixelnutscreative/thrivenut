@@ -184,7 +184,7 @@ export default function WidgetSettingsV2({ formData, setFormData }) {
   };
 
   const activeService = formData.active_music_service || 'soundcloud';
-  const position = formData.soundcloud_player_position || 'hidden';
+  const position = formData.soundcloud_player_position || 'menu';
 
   return (
     <div className="space-y-6">
