@@ -630,8 +630,8 @@ export default function CreatorGroups() {
                 {displayedGroups.map(group => {
                   const pref = allGroupPrefs.find(p => p.group_id === group.id);
                   const isHidden = pref?.is_hidden_from_list;
-                  const isOwner = group.owner_email === user?.email;
-                  const membership = myMemberships.find(m => m.group_id === group.id);
+                  const isOwner = group.owner_email === effectiveEmail;
+                  const membership = combinedMemberships.find(m => m.group_id === group.id);
                   const isMember = !!membership;
 
                   return (
