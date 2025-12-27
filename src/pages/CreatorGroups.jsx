@@ -27,7 +27,7 @@ import CryptoTickerWidget from '../components/widgets/CryptoTickerWidget';
 import GroupCalendarWidget from '../components/groups/GroupCalendarWidget';
 
 export default function CreatorGroups() {
-  const { user, preferences } = useTheme();
+  const { user, preferences, effectiveEmail } = useTheme();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeGroupId = searchParams.get('id');
@@ -46,18 +46,28 @@ export default function CreatorGroups() {
   const canCreateAgency = isSuperAdmin || preferences?.can_create_agency;
   const isProTier = isSuperAdmin || preferences?.subscription_status === 'active' || preferences?.is_superfan;
 
-  // Fetch my groups
-  const { data: myMemberships = [], isLoading } = useQuery({
-    queryKey: ['myGroupMemberships', user?.email],
+  // Fetch my groups via membership
+  const { data: myMemberships = [], isLoading: loadingMemberships } = useQuery({
+    queryKey: ['myGroupMemberships', effectiveEmail],
     queryFn: async () => {
-      if (!user?.email) return [];
-      return await base44.entities.CreatorGroupMember.filter({ user_email: user?.email });
+      if (!effectiveEmail) return [];
+      return await base44.entities.CreatorGroupMember.filter({ user_email: effectiveEmail });
     },
-    enabled: !!user?.email
+    enabled: !!effectiveEmail
   });
 
-  // Fetch group details for my memberships (for list view)
-  const { data: groups = [] } = useQuery({
+  // Fetch groups I own (Fallback/Safety)
+  const { data: ownedGroups = [], isLoading: loadingOwned } = useQuery({
+    queryKey: ['myOwnedGroups', effectiveEmail],
+    queryFn: async () => {
+      if (!effectiveEmail) return [];
+      return await base44.entities.CreatorGroup.filter({ owner_email: effectiveEmail });
+    },
+    enabled: !!effectiveEmail && !activeGroupId && !browseMode
+  });
+
+  // Fetch group details for my memberships
+  const { data: memberGroups = [] } = useQuery({
     queryKey: ['myGroupsDetails', myMemberships],
     queryFn: async () => {
       if (myMemberships.length === 0) return [];
@@ -70,6 +80,18 @@ export default function CreatorGroups() {
     },
     enabled: myMemberships.length > 0 && !activeGroupId && !browseMode
   });
+
+  // Merge Owned + Member Groups
+  const groups = React.useMemo(() => {
+    const all = [...ownedGroups, ...memberGroups];
+    const map = new Map();
+    all.forEach(g => {
+        if(g && g.id) map.set(g.id, g);
+    });
+    return Array.from(map.values());
+  }, [ownedGroups, memberGroups]);
+
+  const isLoading = loadingMemberships || (!!effectiveEmail && !activeGroupId && !browseMode && loadingOwned);
 
   // Fetch specific active group (even if not a member, for preview/join)
   const { data: fetchedActiveGroup } = useQuery({
