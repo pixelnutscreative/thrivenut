@@ -334,13 +334,13 @@ export default function CreatorGroups() {
         return base44.entities.UserGroupPreference.update(groupPrefs.id, newPrefs);
       } else {
         return base44.entities.UserGroupPreference.create({ 
-          user_email: user?.email, 
+          user_email: effectiveEmail, 
           group_id: activeGroupId, 
           ...newPrefs 
         });
       }
     },
-    onSuccess: () => queryClient.invalidateQueries(['groupPrefs', user?.email, activeGroupId])
+    onSuccess: () => queryClient.invalidateQueries(['groupPrefs', effectiveEmail, activeGroupId])
   });
 
   // Shortcuts Query
