@@ -27,7 +27,7 @@ import CryptoTickerWidget from '../components/widgets/CryptoTickerWidget';
 import GroupCalendarWidget from '../components/groups/GroupCalendarWidget';
 
 export default function CreatorGroups() {
-  const { user, preferences, effectiveEmail } = useTheme();
+  const { user, preferences } = useTheme();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeGroupId = searchParams.get('id');
@@ -46,28 +46,18 @@ export default function CreatorGroups() {
   const canCreateAgency = isSuperAdmin || preferences?.can_create_agency;
   const isProTier = isSuperAdmin || preferences?.subscription_status === 'active' || preferences?.is_superfan;
 
-  // Fetch my groups via membership
-  const { data: myMemberships = [], isLoading: loadingMemberships } = useQuery({
-    queryKey: ['myGroupMemberships', effectiveEmail],
+  // Fetch my groups
+  const { data: myMemberships = [], isLoading } = useQuery({
+    queryKey: ['myGroupMemberships', user?.email],
     queryFn: async () => {
-      if (!effectiveEmail) return [];
-      return await base44.entities.CreatorGroupMember.filter({ user_email: effectiveEmail });
+      if (!user?.email) return [];
+      return await base44.entities.CreatorGroupMember.filter({ user_email: user?.email });
     },
-    enabled: !!effectiveEmail
+    enabled: !!user?.email
   });
 
-  // Fetch groups I own (Fallback/Safety)
-  const { data: ownedGroups = [], isLoading: loadingOwned } = useQuery({
-    queryKey: ['myOwnedGroups', effectiveEmail],
-    queryFn: async () => {
-      if (!effectiveEmail) return [];
-      return await base44.entities.CreatorGroup.filter({ owner_email: effectiveEmail });
-    },
-    enabled: !!effectiveEmail && !activeGroupId && !browseMode
-  });
-
-  // Fetch group details for my memberships
-  const { data: memberGroups = [] } = useQuery({
+  // Fetch group details for my memberships (for list view)
+  const { data: groups = [] } = useQuery({
     queryKey: ['myGroupsDetails', myMemberships],
     queryFn: async () => {
       if (myMemberships.length === 0) return [];
@@ -80,40 +70,6 @@ export default function CreatorGroups() {
     },
     enabled: myMemberships.length > 0 && !activeGroupId && !browseMode
   });
-
-  // Merge Owned + Member Groups
-  const groups = React.useMemo(() => {
-    const all = [...ownedGroups, ...memberGroups];
-    const map = new Map();
-    all.forEach(g => {
-        if(g && g.id) map.set(g.id, g);
-    });
-    return Array.from(map.values());
-  }, [ownedGroups, memberGroups]);
-
-  const isLoading = loadingMemberships || (!!effectiveEmail && !activeGroupId && !browseMode && loadingOwned);
-
-  // Synthesize memberships for owned groups if missing (safety net)
-  const combinedMemberships = React.useMemo(() => {
-    const existingGroupIds = new Set(myMemberships.map(m => m.group_id));
-    // Check ownedGroups (only populated in list mode) or activeGroup (if we fetched it and own it)
-    const activeGroupOwned = fetchedActiveGroup?.owner_email === effectiveEmail ? [fetchedActiveGroup] : [];
-    const candidates = [...ownedGroups, ...activeGroupOwned];
-    
-    const missingOwnedGroups = candidates.filter(g => g && !existingGroupIds.has(g.id));
-    
-    const syntheticMemberships = missingOwnedGroups.map(g => ({
-      id: `synthetic-${g.id}`,
-      group_id: g.id,
-      user_email: effectiveEmail,
-      role: 'owner',
-      level: 'Owner',
-      status: 'active',
-      joined_date: new Date().toISOString()
-    }));
-    
-    return [...myMemberships, ...syntheticMemberships];
-  }, [myMemberships, ownedGroups, fetchedActiveGroup, effectiveEmail]);
 
   // Fetch specific active group (even if not a member, for preview/join)
   const { data: fetchedActiveGroup } = useQuery({
@@ -149,12 +105,12 @@ export default function CreatorGroups() {
 
   // Fetch all group preferences for visibility
   const { data: allGroupPrefs = [], refetch: refetchAllPrefs } = useQuery({
-    queryKey: ['allGroupPrefs', effectiveEmail],
+    queryKey: ['allGroupPrefs', user?.email],
     queryFn: async () => {
-      if (!effectiveEmail) return [];
-      return await base44.entities.UserGroupPreference.filter({ user_email: effectiveEmail });
+      if (!user?.email) return [];
+      return await base44.entities.UserGroupPreference.filter({ user_email: user?.email });
     },
-    enabled: !!effectiveEmail
+    enabled: !!user?.email
   });
 
   const toggleGroupVisibilityMutation = useMutation({
@@ -164,7 +120,7 @@ export default function CreatorGroups() {
         return base44.entities.UserGroupPreference.update(existing.id, { is_hidden_from_list: isHidden });
       } else {
         return base44.entities.UserGroupPreference.create({
-          user_email: effectiveEmail,
+          user_email: user?.email,
           group_id: groupId,
           is_hidden_from_list: isHidden
         });
@@ -228,7 +184,7 @@ export default function CreatorGroups() {
       if (groups.length === 0) throw new Error('Invalid invite code');
       const group = groups[0];
       
-      const existing = await base44.entities.CreatorGroupMember.filter({ group_id: group.id, user_email: effectiveEmail });
+      const existing = await base44.entities.CreatorGroupMember.filter({ group_id: group.id, user_email: user?.email });
       if (existing.length > 0) {
         // If pending, activate them since they have the invite code
         if (existing[0].status === 'pending') {
@@ -240,7 +196,7 @@ export default function CreatorGroups() {
 
       await base44.entities.CreatorGroupMember.create({
         group_id: group.id,
-        user_email: effectiveEmail,
+        user_email: user?.email,
         role: 'member',
         status: 'active', // Auto-activate if using valid invite code
         level: 'Member',
@@ -260,7 +216,7 @@ export default function CreatorGroups() {
   });
 
   useEffect(() => {
-    if (inviteCode && effectiveEmail) {
+    if (inviteCode && user?.email) {
       if (window.confirm('Do you want to join this group?')) {
         joinMutation.mutate(inviteCode);
       } else {
@@ -268,10 +224,10 @@ export default function CreatorGroups() {
         setSearchParams({});
       }
     }
-  }, [inviteCode, effectiveEmail]);
+  }, [inviteCode, user]);
 
   const activeGroup = fetchedActiveGroup || groups.find(g => g.id === activeGroupId);
-  const activeMembership = combinedMemberships.find(m => m.group_id === activeGroupId);
+  const activeMembership = myMemberships.find(m => m.group_id === activeGroupId);
   
   // DIAGNOSTIC LOGGING
   if (activeGroupId && activeMembership) {
@@ -319,10 +275,10 @@ export default function CreatorGroups() {
 
   // Preferences Query
   const { data: groupPrefs } = useQuery({
-    queryKey: ['groupPrefs', effectiveEmail, activeGroupId],
+    queryKey: ['groupPrefs', user?.email, activeGroupId],
     queryFn: async () => {
-      if (!effectiveEmail || !activeGroupId) return null;
-      const res = await base44.entities.UserGroupPreference.filter({ user_email: effectiveEmail, group_id: activeGroupId });
+      if (!user?.email || !activeGroupId) return null;
+      const res = await base44.entities.UserGroupPreference.filter({ user_email: user?.email, group_id: activeGroupId });
       return res[0] || { hidden_tabs: [], tab_order: [] };
     },
     enabled: !!activeGroupId
@@ -334,13 +290,13 @@ export default function CreatorGroups() {
         return base44.entities.UserGroupPreference.update(groupPrefs.id, newPrefs);
       } else {
         return base44.entities.UserGroupPreference.create({ 
-          user_email: effectiveEmail, 
+          user_email: user?.email, 
           group_id: activeGroupId, 
           ...newPrefs 
         });
       }
     },
-    onSuccess: () => queryClient.invalidateQueries(['groupPrefs', effectiveEmail, activeGroupId])
+    onSuccess: () => queryClient.invalidateQueries(['groupPrefs', user?.email, activeGroupId])
   });
 
   // Shortcuts Query
@@ -461,7 +417,7 @@ export default function CreatorGroups() {
   // LIST OR BROWSE VIEW
   if (!activeGroup) {
     const displayedGroups = browseMode 
-      ? browseGroups.filter(g => g.allow_public_discovery === true || isSuperAdmin || g.owner_email === effectiveEmail)
+      ? browseGroups.filter(g => g.allow_public_discovery === true || isSuperAdmin || g.owner_email === user?.email)
       : groups.filter(g => {
           const pref = allGroupPrefs.find(p => p.group_id === g.id);
           return showHidden || !pref?.is_hidden_from_list;
@@ -574,7 +530,7 @@ export default function CreatorGroups() {
               const colorClass = getGroupColorClass(group.type);
               const pref = allGroupPrefs.find(p => p.group_id === group.id);
               const isHidden = pref?.is_hidden_from_list;
-              const membership = combinedMemberships.find(m => m.group_id === group.id);
+              const membership = myMemberships.find(m => m.group_id === group.id);
               const isMember = !!membership;
               
               return (
@@ -588,7 +544,7 @@ export default function CreatorGroups() {
                         <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${colorClass.replace('text-', 'text-opacity-80 text-').replace('bg-', 'bg-opacity-50 bg-')}`}>
                           {getGroupLabel(group.type)}
                         </span>
-                        {group.owner_email === effectiveEmail && (
+                        {group.owner_email === user?.email && (
                           <span className="text-[10px] border px-2 py-0.5 rounded-full text-gray-500">Owner</span>
                         )}
                         {!isMember && browseMode && (
@@ -630,8 +586,8 @@ export default function CreatorGroups() {
                 {displayedGroups.map(group => {
                   const pref = allGroupPrefs.find(p => p.group_id === group.id);
                   const isHidden = pref?.is_hidden_from_list;
-                  const isOwner = group.owner_email === effectiveEmail;
-                  const membership = combinedMemberships.find(m => m.group_id === group.id);
+                  const isOwner = group.owner_email === user?.email;
+                  const membership = myMemberships.find(m => m.group_id === group.id);
                   const isMember = !!membership;
 
                   return (
@@ -739,7 +695,7 @@ export default function CreatorGroups() {
   }
 
   // Private group guard (no preview unless discoverable or admin/owner)
-  if (!isMember && !isAdmin && !isSuperAdmin && activeGroup.owner_email !== effectiveEmail && activeGroup.allow_public_discovery !== true) {
+  if (!isMember && !isAdmin && !isSuperAdmin && activeGroup.owner_email !== user?.email && activeGroup.allow_public_discovery !== true) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center space-y-4">
         <div className="w-16 h-16 bg-gray-100 text-gray-600 rounded-full flex items-center justify-center">
