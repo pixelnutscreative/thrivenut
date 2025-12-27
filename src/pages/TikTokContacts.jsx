@@ -317,6 +317,12 @@ export default function TikTokContacts() {
     setScheduleModalOpen(false);
   };
 
+  const [scheduleForm, setScheduleForm] = useState({
+    engagement_frequency: 'multiple_per_week',
+    engagement_days: [],
+    engagement_day_of_month: 1
+  });
+
   const toggleDay = (day) => {
     setScheduleForm(prev => {
       const days = prev.engagement_days || [];
