@@ -588,7 +588,7 @@ export default function CreatorGroups() {
                         <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${colorClass.replace('text-', 'text-opacity-80 text-').replace('bg-', 'bg-opacity-50 bg-')}`}>
                           {getGroupLabel(group.type)}
                         </span>
-                        {group.owner_email === user?.email && (
+                        {group.owner_email === effectiveEmail && (
                           <span className="text-[10px] border px-2 py-0.5 rounded-full text-gray-500">Owner</span>
                         )}
                         {!isMember && browseMode && (
