@@ -319,10 +319,10 @@ export default function CreatorGroups() {
 
   // Preferences Query
   const { data: groupPrefs } = useQuery({
-    queryKey: ['groupPrefs', user?.email, activeGroupId],
+    queryKey: ['groupPrefs', effectiveEmail, activeGroupId],
     queryFn: async () => {
-      if (!user?.email || !activeGroupId) return null;
-      const res = await base44.entities.UserGroupPreference.filter({ user_email: user?.email, group_id: activeGroupId });
+      if (!effectiveEmail || !activeGroupId) return null;
+      const res = await base44.entities.UserGroupPreference.filter({ user_email: effectiveEmail, group_id: activeGroupId });
       return res[0] || { hidden_tabs: [], tab_order: [] };
     },
     enabled: !!activeGroupId
