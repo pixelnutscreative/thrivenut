@@ -271,7 +271,7 @@ export default function CreatorGroups() {
   }, [inviteCode, user]);
 
   const activeGroup = fetchedActiveGroup || groups.find(g => g.id === activeGroupId);
-  const activeMembership = myMemberships.find(m => m.group_id === activeGroupId);
+  const activeMembership = combinedMemberships.find(m => m.group_id === activeGroupId);
   
   // DIAGNOSTIC LOGGING
   if (activeGroupId && activeMembership) {
