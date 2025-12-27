@@ -265,10 +265,46 @@ export default function TikTokContacts() {
 
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   const [scheduleContact, setScheduleContact] = useState(null);
+  const [scheduleForm, setScheduleForm] = useState({
+    engagement_frequency: 'multiple_per_week',
+    engagement_days: [],
+    engagement_day_of_month: 1
+  });
   
   const handleOpenSchedule = (contact) => {
     setScheduleContact(contact);
+    setScheduleForm({
+      engagement_frequency: contact.engagement_frequency || 'multiple_per_week',
+      engagement_days: contact.engagement_days || [],
+      engagement_day_of_month: contact.engagement_day_of_month || 1
+    });
     setScheduleModalOpen(true);
+  };
+
+  const handleSaveSchedule = () => {
+    if (!scheduleContact) return;
+    
+    updateMutation.mutate({ 
+      id: scheduleContact.id, 
+      data: {
+        engagement_frequency: scheduleForm.engagement_frequency,
+        engagement_days: scheduleForm.engagement_days,
+        engagement_day_of_month: scheduleForm.engagement_day_of_month,
+        engagement_enabled: true
+      } 
+    });
+    setScheduleModalOpen(false);
+  };
+
+  const toggleDay = (day) => {
+    setScheduleForm(prev => {
+      const days = prev.engagement_days || [];
+      if (days.includes(day)) {
+        return { ...prev, engagement_days: days.filter(d => d !== day) };
+      } else {
+        return { ...prev, engagement_days: [...days, day] };
+      }
+    });
   };
 
 
