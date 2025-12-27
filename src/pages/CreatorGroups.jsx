@@ -164,7 +164,7 @@ export default function CreatorGroups() {
         return base44.entities.UserGroupPreference.update(existing.id, { is_hidden_from_list: isHidden });
       } else {
         return base44.entities.UserGroupPreference.create({
-          user_email: user?.email,
+          user_email: effectiveEmail,
           group_id: groupId,
           is_hidden_from_list: isHidden
         });
