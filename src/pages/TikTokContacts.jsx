@@ -86,6 +86,8 @@ const defaultFormData = {
   display_name: '',
   phonetic: '',
   role: [],
+  clubs: [],
+  custom_clubs: [],
   categories: [],
   is_favorite: false,
   engagement_enabled: false,
@@ -365,40 +367,45 @@ export default function TikTokContacts() {
     try {
       // Step 1: Find or create TikTokContact (public canonical profile) - Try/Catch to prevent blocking
       try {
-        const existingTikTokContacts = await base44.entities.TikTokContact.list();
-        let tiktokContact = existingTikTokContacts.find(
-          c => c.tiktok_username?.toLowerCase() === cleanUsername.toLowerCase()
-        );
+        const existingContacts = await base44.entities.TikTokContact.filter({ username: cleanUsername });
+        let tiktokContact = existingContacts[0];
 
         if (!tiktokContact) {
           // Create new unclaimed TikTokContact
-          tiktokContact = await base44.entities.TikTokContact.create({
-            tiktok_username: cleanUsername,
+          // Use a separate try/catch for the background creation to avoid blocking the user
+          base44.entities.TikTokContact.create({
+            username: cleanUsername,
             display_name: formData.display_name || cleanUsername,
-            phonetic_spelling: formData.phonetic || '',
-            profile_picture_url: formData.image_url || '',
+            phonetic: formData.phonetic || '',
+            image_url: formData.image_url || '',
             is_claimed_by_thrive_user: false,
             claim_status: 'unclaimed'
-          });
+          }).catch(err => console.warn('Background canonical creation failed (might already exist):', err));
         }
       } catch (err) {
-        console.warn('Could not create canonical contact, proceeding with personal contact:', err);
+        console.warn('Could not check canonical contact, proceeding:', err);
       }
 
       // Step 2: Update the legacy TikTokContact record with all form data (for backward compatibility)
       const cleanData = {
         ...formData,
-        username: cleanUsername
+        username: cleanUsername,
+        clubs: formData.clubs || [],
+        custom_clubs: formData.custom_clubs || []
       };
       
       if (editingContact) {
-        updateMutation.mutate({ id: editingContact.id, data: cleanData });
+        await updateMutation.mutateAsync({ id: editingContact.id, data: cleanData });
       } else {
-        createMutation.mutate(cleanData);
+        await createMutation.mutateAsync(cleanData);
       }
+      
+      // Handle closing in the success callback of the mutation or here if we await it
+      // Since we use mutateAsync, we can handle success here too, but mutation has its own onSuccess
+      // The state setShouldCloseAfterSave is used in the mutation's onSuccess
     } catch (error) {
-      console.error('Error creating contact:', error);
-      alert('Error creating contact. Please try again.');
+      console.error('Error saving contact:', error);
+      alert(`Error saving contact: ${error.message}`);
     }
   };
 
