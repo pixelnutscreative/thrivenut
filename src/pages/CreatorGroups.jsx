@@ -93,6 +93,28 @@ export default function CreatorGroups() {
 
   const isLoading = loadingMemberships || (!!effectiveEmail && !activeGroupId && !browseMode && loadingOwned);
 
+  // Synthesize memberships for owned groups if missing (safety net)
+  const combinedMemberships = React.useMemo(() => {
+    const existingGroupIds = new Set(myMemberships.map(m => m.group_id));
+    // Check ownedGroups (only populated in list mode) or activeGroup (if we fetched it and own it)
+    const activeGroupOwned = fetchedActiveGroup?.owner_email === effectiveEmail ? [fetchedActiveGroup] : [];
+    const candidates = [...ownedGroups, ...activeGroupOwned];
+    
+    const missingOwnedGroups = candidates.filter(g => g && !existingGroupIds.has(g.id));
+    
+    const syntheticMemberships = missingOwnedGroups.map(g => ({
+      id: `synthetic-${g.id}`,
+      group_id: g.id,
+      user_email: effectiveEmail,
+      role: 'owner',
+      level: 'Owner',
+      status: 'active',
+      joined_date: new Date().toISOString()
+    }));
+    
+    return [...myMemberships, ...syntheticMemberships];
+  }, [myMemberships, ownedGroups, fetchedActiveGroup, effectiveEmail]);
+
   // Fetch specific active group (even if not a member, for preview/join)
   const { data: fetchedActiveGroup } = useQuery({
     queryKey: ['activeGroup', activeGroupId],
