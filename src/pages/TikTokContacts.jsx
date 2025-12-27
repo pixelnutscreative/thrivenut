@@ -166,11 +166,28 @@ export default function TikTokContacts() {
 
   const effectiveEmail = user ? getEffectiveUserEmail(user.email) : null;
 
-  const { data: contacts = [] } = useQuery({
+  const { data: rawContacts = [] } = useQuery({
     queryKey: ['tiktokContacts', effectiveEmail],
     queryFn: () => base44.entities.TikTokContact.filter({ created_by: effectiveEmail }, '-created_date'),
     enabled: !!effectiveEmail,
   });
+
+  // Sanitize contacts to ensure array fields are actually arrays (prevents crashes on bad data)
+  const contacts = React.useMemo(() => {
+    const ensureArray = (val) => Array.isArray(val) ? val : (typeof val === 'string' && val ? [val] : []);
+    return rawContacts.map(c => ({
+      ...c,
+      role: ensureArray(c.role),
+      clubs: ensureArray(c.clubs),
+      custom_clubs: ensureArray(c.custom_clubs),
+      live_stream_types: ensureArray(c.live_stream_types),
+      engagement_days: ensureArray(c.engagement_days),
+      other_tiktok_accounts: ensureArray(c.other_tiktok_accounts),
+      mods_for: ensureArray(c.mods_for),
+      their_mods: ensureArray(c.their_mods),
+      businesses: ensureArray(c.businesses)
+    }));
+  }, [rawContacts]);
 
   const { data: categories = [] } = useQuery({
     queryKey: ['engagementCategories', effectiveEmail],
