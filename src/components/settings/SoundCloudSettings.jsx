@@ -19,7 +19,7 @@ const predefinedPlaylists = [
 ];
 
 export default function SoundCloudSettings({ formData, setFormData }) {
-  const position = formData.soundcloud_player_position || 'hidden';
+  const position = formData.soundcloud_player_position || 'menu';
   const activeService = formData.active_music_service || 'soundcloud';
   
   // Handlers for URLs
