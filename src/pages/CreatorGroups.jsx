@@ -149,12 +149,12 @@ export default function CreatorGroups() {
 
   // Fetch all group preferences for visibility
   const { data: allGroupPrefs = [], refetch: refetchAllPrefs } = useQuery({
-    queryKey: ['allGroupPrefs', user?.email],
+    queryKey: ['allGroupPrefs', effectiveEmail],
     queryFn: async () => {
-      if (!user?.email) return [];
-      return await base44.entities.UserGroupPreference.filter({ user_email: user?.email });
+      if (!effectiveEmail) return [];
+      return await base44.entities.UserGroupPreference.filter({ user_email: effectiveEmail });
     },
-    enabled: !!user?.email
+    enabled: !!effectiveEmail
   });
 
   const toggleGroupVisibilityMutation = useMutation({
