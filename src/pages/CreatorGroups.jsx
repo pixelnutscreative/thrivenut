@@ -228,7 +228,7 @@ export default function CreatorGroups() {
       if (groups.length === 0) throw new Error('Invalid invite code');
       const group = groups[0];
       
-      const existing = await base44.entities.CreatorGroupMember.filter({ group_id: group.id, user_email: user?.email });
+      const existing = await base44.entities.CreatorGroupMember.filter({ group_id: group.id, user_email: effectiveEmail });
       if (existing.length > 0) {
         // If pending, activate them since they have the invite code
         if (existing[0].status === 'pending') {
@@ -240,7 +240,7 @@ export default function CreatorGroups() {
 
       await base44.entities.CreatorGroupMember.create({
         group_id: group.id,
-        user_email: user?.email,
+        user_email: effectiveEmail,
         role: 'member',
         status: 'active', // Auto-activate if using valid invite code
         level: 'Member',
