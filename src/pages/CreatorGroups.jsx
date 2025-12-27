@@ -574,7 +574,7 @@ export default function CreatorGroups() {
               const colorClass = getGroupColorClass(group.type);
               const pref = allGroupPrefs.find(p => p.group_id === group.id);
               const isHidden = pref?.is_hidden_from_list;
-              const membership = myMemberships.find(m => m.group_id === group.id);
+              const membership = combinedMemberships.find(m => m.group_id === group.id);
               const isMember = !!membership;
               
               return (
