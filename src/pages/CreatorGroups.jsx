@@ -260,7 +260,7 @@ export default function CreatorGroups() {
   });
 
   useEffect(() => {
-    if (inviteCode && user?.email) {
+    if (inviteCode && effectiveEmail) {
       if (window.confirm('Do you want to join this group?')) {
         joinMutation.mutate(inviteCode);
       } else {
@@ -268,7 +268,7 @@ export default function CreatorGroups() {
         setSearchParams({});
       }
     }
-  }, [inviteCode, user]);
+  }, [inviteCode, effectiveEmail]);
 
   const activeGroup = fetchedActiveGroup || groups.find(g => g.id === activeGroupId);
   const activeMembership = combinedMemberships.find(m => m.group_id === activeGroupId);
