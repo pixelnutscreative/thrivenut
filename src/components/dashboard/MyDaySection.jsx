@@ -119,9 +119,13 @@ export default function MyDaySection({
   const [editingMeal, setEditingMeal] = useState(null);
   const [mealNoteInput, setMealNoteInput] = useState('');
   const [expandedSections, setExpandedSections] = useState(['morning', 'midday', 'afternoon', 'evening', 'night', 'anytime']);
-  const [localViewMode, setLocalViewMode] = useState('compact');
+  const [localViewMode, setLocalViewMode] = useState(viewMode);
   const [skippedTasks, setSkippedTasks] = useState([]);
   const [isReordering, setIsReordering] = useState(false);
+
+  useEffect(() => {
+    setLocalViewMode(viewMode);
+  }, [viewMode]);
   const [localTaskOrder, setLocalTaskOrder] = useState(preferences?.my_day_task_order || []);
   const [sleepForm, setSleepForm] = useState({ hours: '', quality: '' });
   const [showSleepForm, setShowSleepForm] = useState(false);

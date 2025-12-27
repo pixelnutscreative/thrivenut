@@ -213,12 +213,19 @@ export default function Settings() {
 
   const updatePreferencesMutation = useMutation({
     mutationFn: async (data) => {
+      const cleanData = { ...data };
+      // Remove system fields that shouldn't be updated manually
+      delete cleanData.id;
+      delete cleanData.created_date;
+      delete cleanData.updated_date;
+      delete cleanData.created_by;
+      
       if (preferences) {
-        return await base44.entities.UserPreferences.update(preferences.id, data);
+        return await base44.entities.UserPreferences.update(preferences.id, cleanData);
       } else {
         return await base44.entities.UserPreferences.create({
           user_email: effectiveEmail,
-          ...data,
+          ...cleanData,
           onboarding_completed: true
         });
       }

@@ -310,7 +310,7 @@ export default function Dashboard() {
             onToggleTask={(taskId, value) => selfCareMutation.mutate({ taskId, value })}
             onUpdateMealNotes={(noteKey, value) => mealNotesMutation.mutate({ noteKey, value })}
             preferences={{ ...preferences, user_email: user?.email }}
-            viewMode={'compact'}
+            viewMode={preferences?.dashboard_view_mode || 'detailed'}
             showGoogleCalendar={preferences?.show_google_calendar || false}
             showCreatorCalendarEvents={preferences?.show_creator_calendar_events !== false}
             onToggleGoogleCalendar={(checked) => toggleGoogleCalendarMutation.mutate(checked)}
