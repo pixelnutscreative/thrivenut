@@ -245,15 +245,15 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
                     <h4 className="font-semibold">{resource.title}</h4>
                     {(isAdmin || resource.submitted_by === currentUser?.email) && (
                       <div className="flex gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => handleEdit(resource)} className="text-gray-500 h-6 w-6 p-0 hover:text-purple-600" title="Edit">
-                          <Pencil className="w-4 h-4" />
+                        <Button variant="ghost" size="icon" onClick={() => handleEdit(resource)} className="text-gray-500 hover:text-purple-600" title="Edit">
+                          <Pencil className="w-5 h-5" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDuplicate(resource)} className="text-gray-500 h-6 w-6 p-0 hover:text-blue-600" title="Duplicate">
-                          <Plus className="w-4 h-4" />
+                        <Button variant="ghost" size="icon" onClick={() => handleDuplicate(resource)} className="text-gray-500 hover:text-blue-600" title="Duplicate">
+                          <Plus className="w-5 h-5" />
                         </Button>
                         {isAdmin && (
-                          <Button variant="ghost" size="sm" onClick={() => { if(window.confirm('Delete this resource?')) deleteMutation.mutate(resource.id) }} className="text-red-500 h-6 w-6 p-0" title="Delete">
-                            <Trash2 className="w-4 h-4" />
+                          <Button variant="ghost" size="icon" onClick={() => { if(window.confirm('Delete this resource?')) deleteMutation.mutate(resource.id) }} className="text-red-500" title="Delete">
+                            <Trash2 className="w-5 h-5" />
                           </Button>
                         )}
                       </div>

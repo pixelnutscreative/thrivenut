@@ -268,13 +268,13 @@ function TaskCard({ task, currentUser, projectId, canEdit }) {
          {/* Timer Button */}
          {task.status !== 'completed' && (
            <Button 
-             size="sm" 
+             size="icon"
              variant={isRunning ? "destructive" : "outline"} 
-             className={`h-8 w-8 p-0 rounded-full ${isRunning ? 'animate-pulse' : ''}`}
+             className={`h-10 w-10 rounded-full shadow-sm ${isRunning ? 'animate-pulse' : ''}`}
              onClick={toggleTimer}
              title={isRunning ? "Stop Timer" : "Start Timer"}
            >
-             {isRunning ? <Square className="w-3 h-3 fill-current" /> : <Play className="w-3 h-3 ml-0.5 fill-current" />}
+             {isRunning ? <Square className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 ml-0.5 fill-current" />}
            </Button>
          )}
 
@@ -410,8 +410,8 @@ function ManualTimeDialog({ task, projectId, currentUser }) {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-full" title="Log Time Manually">
-          <Plus className="w-4 h-4 text-gray-400" />
+        <Button size="icon" variant="ghost" className="h-10 w-10 rounded-full hover:bg-gray-100" title="Log Time Manually">
+          <Plus className="w-5 h-5 text-gray-500" />
         </Button>
       </DialogTrigger>
       <DialogContent>

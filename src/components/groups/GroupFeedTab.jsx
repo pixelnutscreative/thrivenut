@@ -21,7 +21,7 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
   const [searchParams, setSearchParams] = useSearchParams();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [formData, setFormData] = useState({ title: '', content: '', is_pinned: false, is_public: false, target_levels: [] });
+  const [formData, setFormData] = useState({ title: '', content: '', is_pinned: false, is_public: false, target_levels: [], target_roles: [] });
   const [showHidden, setShowHidden] = useState(false);
   const canPostPublicly = isAdmin || preferences?.can_create_public_ads;
 
@@ -148,7 +148,8 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
         content: item.content || '',
         is_pinned: item.is_pinned || false,
         is_public: item.is_public || false,
-        target_levels: item.target_levels || []
+        target_levels: item.target_levels || [],
+        target_roles: item.target_roles || []
         });
         setIsDialogOpen(true);
     } else {
@@ -163,7 +164,7 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
     setEditingId(null);
-    setFormData({ title: '', content: '', is_pinned: false, is_public: false, target_levels: [] });
+    setFormData({ title: '', content: '', is_pinned: false, is_public: false, target_levels: [], target_roles: [] });
   };
 
   const handleSubmit = () => {
@@ -189,8 +190,14 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
       if (!showHidden && hiddenIds.includes(item.id)) return false;
       
       if (isAdmin) return true;
-      if (!item.target_levels || item.target_levels.length === 0) return true;
-      return item.target_levels.includes(myMembership?.level);
+      
+      // Role Check
+      const roleMatch = !item.target_roles || item.target_roles.length === 0 || item.target_roles.includes(myMembership?.role);
+      
+      // Level Check
+      const levelMatch = !item.target_levels || item.target_levels.length === 0 || item.target_levels.includes(myMembership?.level);
+      
+      return roleMatch && levelMatch;
     });
 
     // Sort: Pinned posts first, then by created_date desc
@@ -268,7 +275,29 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
                     onChange={(levels) => setFormData({...formData, target_levels: levels})} 
                   />
 
-                  {/* Add per-event visibility toggle for users in Feed Tab as well if it's an event */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Target Roles (Optional)</label>
+                    <div className="flex flex-wrap gap-2">
+                      {['client', 'virtual-assistant', 'member'].map(role => (
+                        <label key={role} className="flex items-center gap-2 text-sm border p-2 rounded-md cursor-pointer bg-white hover:bg-gray-50">
+                          <input 
+                            type="checkbox"
+                            checked={(formData.target_roles || []).includes(role)}
+                            onChange={(e) => {
+                              const current = formData.target_roles || [];
+                              const updated = e.target.checked 
+                                ? [...current, role]
+                                : current.filter(r => r !== role);
+                              setFormData({...formData, target_roles: updated});
+                            }}
+                            className="rounded border-gray-300"
+                          />
+                          <span className="capitalize">{role.replace('-', ' ')}</span>
+                        </label>
+                      ))}
+                    </div>
+                    <p className="text-xs text-gray-500">If selected, only users with these roles will see this post.</p>
+                  </div>
                   {/* Although typically events are handled in Events Tab, user asked for "Per-event visibility toggle for users" 
                       This might apply to posts too if unified, but usually Events Tab. 
                       Let's leave Feed Tab simple unless we merge functionalities. 
@@ -357,23 +386,23 @@ function FeedItemCard({ item, isAdmin, currentUser, onEdit, onDelete, onHide, on
         
         <div className="flex gap-1 items-center">
           {/* Unified Action Buttons */}
-          <Button variant="ghost" size="sm" onClick={() => setAddToDayOpen(true)} title="Add to My Day" className="h-8 w-8 p-0 text-gray-500 hover:text-green-600">
-            <CalendarPlus className="w-4 h-4" />
+          <Button variant="ghost" size="icon" onClick={() => setAddToDayOpen(true)} title="Add to My Day" className="text-gray-500 hover:text-green-600">
+            <CalendarPlus className="w-5 h-5" />
           </Button>
           
-          <Button variant="ghost" size="sm" onClick={() => setShareOpen(true)} title="Share" className="h-8 w-8 p-0 text-gray-500 hover:text-blue-600">
-            <Share2 className="w-4 h-4" />
+          <Button variant="ghost" size="icon" onClick={() => setShareOpen(true)} title="Share" className="text-gray-500 hover:text-blue-600">
+            <Share2 className="w-5 h-5" />
           </Button>
 
           {item.type === 'training' && (
             <Button 
-              variant={isCompleted ? "ghost" : "ghost"} 
-              size="sm" 
+              variant="ghost"
+              size="icon"
               onClick={onToggleComplete} 
               title={isCompleted ? "Mark Incomplete" : "Mark Complete"}
-              className={`h-8 w-8 p-0 ${isCompleted ? 'text-green-600' : 'text-gray-400 hover:text-gray-600'}`}
+              className={`${isCompleted ? 'text-green-600' : 'text-gray-400 hover:text-gray-600'}`}
             >
-              <CheckCircle className="w-4 h-4" />
+              <CheckCircle className="w-5 h-5" />
             </Button>
           )}
 
@@ -384,20 +413,20 @@ function FeedItemCard({ item, isAdmin, currentUser, onEdit, onDelete, onHide, on
               (item.type === 'event' && item.created_by === currentUser?.email) ||
               (item.type === 'resource' && item.submitted_by === currentUser?.email)
              ) && (
-              <Button variant="ghost" size="sm" onClick={onEdit} className="text-gray-400 hover:text-purple-600 h-8 w-8 p-0" title="Edit">
-                <Pencil className="w-4 h-4" />
+              <Button variant="ghost" size="icon" onClick={onEdit} className="text-gray-400 hover:text-purple-600" title="Edit">
+                <Pencil className="w-5 h-5" />
               </Button>
             )}
 
-            {/* Delete Button (Only for Posts here, others handled in their tabs usually, but we could add if needed. User asked for Edit.) */}
+            {/* Delete Button */}
             {(item.type === 'post' && (isAdmin || item.author_email === currentUser?.email)) && (
-                <Button variant="ghost" size="sm" onClick={onDelete} className="text-gray-400 hover:text-red-500 h-8 w-8 p-0" title="Delete">
-                  <Trash2 className="w-4 h-4" />
+                <Button variant="ghost" size="icon" onClick={onDelete} className="text-gray-400 hover:text-red-500" title="Delete">
+                  <Trash2 className="w-5 h-5" />
                 </Button>
             )}
             
-            <Button variant="ghost" size="sm" onClick={onHide} className="text-gray-400 hover:text-gray-600 h-8 w-8 p-0" title="Hide from feed">
-              <EyeOff className="w-4 h-4" />
+            <Button variant="ghost" size="icon" onClick={onHide} className="text-gray-400 hover:text-gray-600" title="Hide from feed">
+              <EyeOff className="w-5 h-5" />
             </Button>
           </div>
         </div>

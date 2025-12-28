@@ -505,12 +505,12 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
                   <h4 className="font-bold text-lg">{event.title}</h4>
                   {(isAdmin || event.created_by === currentUser?.email) && (
                     <div className="flex gap-1">
-                      <Button variant="ghost" size="sm" onClick={() => handleEdit(event)} className="text-gray-500 h-6 w-6 p-0 hover:text-purple-600" title="Edit">
-                        <Pencil className="w-4 h-4" />
+                      <Button variant="ghost" size="icon" onClick={() => handleEdit(event)} className="text-gray-500 hover:text-purple-600" title="Edit">
+                        <Pencil className="w-5 h-5" />
                       </Button>
                       {isAdmin && (
-                        <Button variant="ghost" size="sm" onClick={() => deleteMutation.mutate(event.id)} className="text-red-500 h-6 w-6 p-0" title="Delete">
-                          <Trash2 className="w-4 h-4" />
+                        <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(event.id)} className="text-red-500" title="Delete">
+                          <Trash2 className="w-5 h-5" />
                         </Button>
                       )}
                     </div>
