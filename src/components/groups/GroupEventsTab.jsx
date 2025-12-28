@@ -34,7 +34,12 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
 
   const { data: events = [] } = useQuery({
     queryKey: ['groupEvents', group.id],
-    queryFn: () => base44.entities.GroupEvent.filter({ group_id: group.id }, 'start_time'),
+    queryFn: async () => {
+      const allEvents = await base44.entities.GroupEvent.filter({ group_id: group.id }, 'start_time');
+      // Deduplicate by ID just in case
+      const uniqueEvents = Array.from(new Map(allEvents.map(item => [item.id, item])).values());
+      return uniqueEvents;
+    },
   });
 
   // Handle Edit from URL
@@ -492,7 +497,7 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
               <div className="bg-purple-100 text-purple-700 p-3 rounded-lg text-center min-w-[80px]">
                 <div className="text-xs font-bold uppercase">{event.start_time ? format(new Date(event.start_time), 'MMM') : 'TBA'}</div>
                 <div className="text-2xl font-bold">{event.start_time ? format(new Date(event.start_time), 'd') : '--'}</div>
-                <div className="text-xs">{event.start_time ? format(new Date(event.start_time), 'h:mm a') : ''}</div>
+                <div className="text-xs">{event.start_time ? new Date(event.start_time).toLocaleTimeString([], {hour: 'numeric', minute:'2-digit'}) : ''}</div>
               </div>
               
               <div className="flex-1">
@@ -538,7 +543,7 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
                       <ul className="list-disc ml-5">
                         {occurrencesToShow.map((o, i) => (
                           <li key={i}>
-                            {o.start_time ? `${format(new Date(o.start_time), 'EEE, MMM d, h:mm a')}${o.end_time ? ` - ${format(new Date(o.end_time), 'h:mm a')}` : ''}` : ''}
+                            {o.start_time ? `${new Date(o.start_time).toLocaleString([], {weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'})}${o.end_time ? ` - ${new Date(o.end_time).toLocaleTimeString([], {hour: 'numeric', minute: '2-digit'})}` : ''}` : ''}
                           </li>
                         ))}
                       </ul>

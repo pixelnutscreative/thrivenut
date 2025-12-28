@@ -403,7 +403,9 @@ export default function CreatorGroups() {
         if (id === 'members' && !isAdmin) return false;
         // Continue to check role-based permissions
     } else if (allowed && !allowed.has(id)) {
-        return false;
+        // If the group type doesn't explicitly allow it, we usually hide it.
+        // BUT admins should see everything to configure/test.
+        if (!isAdmin) return false;
     }
     
     if (id === 'members' && !isAdmin) return false;

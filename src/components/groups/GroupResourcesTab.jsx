@@ -47,16 +47,25 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
   }, [searchParams, resources]);
 
   const submitMutation = useMutation({
-    mutationFn: (data) => base44.entities.GroupResource.create({ 
-      ...data, 
-      group_id: group.id, 
-      submitted_by: currentUser?.email,
-      status: isAdmin ? 'approved' : 'pending', 
-      approved_by: isAdmin ? currentUser?.email : null
-    }),
+    mutationFn: async (data) => {
+      // Validate mandatory fields
+      if (!data.title) throw new Error('Title is required');
+      if (data.type !== 'text' && !data.url) throw new Error('URL is required for this resource type');
+      
+      return base44.entities.GroupResource.create({ 
+        ...data, 
+        group_id: group.id, 
+        submitted_by: currentUser?.email,
+        status: isAdmin ? 'approved' : 'pending', 
+        approved_by: isAdmin ? currentUser?.email : null
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['groupResources', group.id]);
       handleCloseDialog();
+    },
+    onError: (err) => {
+      alert(`Error saving resource: ${err.message}`);
     }
   });
 
