@@ -118,35 +118,68 @@ function ProjectDetail({ projectId, group, currentUser, myMembership, onOpenRepo
     enabled: !!projectId
   });
   
-  // Calculate total time for this project (simplified, ideally backend aggregation)
+  // Calculate total time for this project
   const { data: timeEntries = [] } = useQuery({
     queryKey: ['projectTime', projectId],
     queryFn: () => base44.entities.TimeEntry.filter({ project_id: projectId }),
     enabled: !!projectId
   });
+
+  // Fetch Retainer/Budget History
+  const { data: retainers = [] } = useQuery({
+    queryKey: ['projectRetainers', projectId],
+    queryFn: () => base44.entities.ProjectRetainer.filter({ project_id: projectId }, '-date_added'),
+    enabled: !!projectId
+  });
   
-  const totalHours = timeEntries.reduce((sum, entry) => sum + (entry.hours || 0), 0);
+  const totalHoursLogged = timeEntries.reduce((sum, entry) => sum + (entry.hours || 0), 0);
+  const totalHoursPurchased = retainers.reduce((sum, r) => sum + (r.hours_added || 0), 0);
+  const hoursRemaining = totalHoursPurchased - totalHoursLogged;
+  const percentUsed = totalHoursPurchased > 0 ? (totalHoursLogged / totalHoursPurchased) * 100 : 0;
 
   return (
     <>
       {/* Header */}
-      <div className="p-6 border-b flex justify-between items-start bg-gray-50">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">{project?.title}</h2>
-          <p className="text-gray-500 mt-1 text-sm max-w-2xl">{project?.description}</p>
-          <div className="flex gap-4 mt-3 text-sm text-gray-600">
-             <div className="flex items-center gap-1"><Clock className="w-4 h-4" /> {totalHours.toFixed(2)}h logged</div>
-             <div className="flex items-center gap-1"><CheckCircle2 className="w-4 h-4" /> {tasks.filter(t => t.status === 'completed').length} / {tasks.length} tasks</div>
+      <div className="p-6 border-b bg-gray-50">
+        <div className="flex justify-between items-start">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">{project?.title}</h2>
+            <p className="text-gray-500 mt-1 text-sm max-w-2xl">{project?.description}</p>
+          </div>
+          <div className="flex gap-2">
+             {isOwnerOrAdmin(myMembership.role) && (
+               <>
+                 <Button variant="outline" size="sm" onClick={onOpenReport}>
+                   <FileText className="w-4 h-4 mr-2" /> Time Report
+                 </Button>
+                 <AddRetainerDialog projectId={projectId} currentUser={currentUser} />
+               </>
+             )}
+             <AddTaskDialog projectId={projectId} group={group} currentUser={currentUser} />
           </div>
         </div>
-        <div className="flex gap-2">
-           {isOwnerOrAdmin(myMembership.role) && (
-             <Button variant="outline" size="sm" onClick={onOpenReport}>
-               <FileText className="w-4 h-4 mr-2" /> Time Report
-             </Button>
-           )}
-           <AddTaskDialog projectId={projectId} group={group} currentUser={currentUser} />
-        </div>
+
+        {/* Budget/Retainer Overview */}
+        {(totalHoursPurchased > 0 || isOwnerOrAdmin(myMembership.role)) && (
+          <div className="mt-6 bg-white rounded-lg border p-4 shadow-sm">
+            <div className="flex justify-between items-center mb-2">
+              <h4 className="font-semibold text-sm text-gray-700">Retainer Hours</h4>
+              <span className={`text-sm font-bold ${hoursRemaining < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                {hoursRemaining.toFixed(2)}h remaining
+              </span>
+            </div>
+            <div className="w-full bg-gray-100 rounded-full h-2.5 mb-2 overflow-hidden">
+              <div 
+                className={`h-2.5 rounded-full ${hoursRemaining < 0 ? 'bg-red-500' : 'bg-purple-600'}`} 
+                style={{ width: `${Math.min(percentUsed, 100)}%` }}
+              ></div>
+            </div>
+            <div className="flex justify-between text-xs text-gray-500">
+              <span>{totalHoursLogged.toFixed(2)}h logged</span>
+              <span>{totalHoursPurchased.toFixed(2)}h total purchased</span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Task List */}
@@ -327,6 +360,79 @@ function AddProjectDialog({ groupId }) {
         </div>
         <DialogFooter>
           <Button onClick={() => mutation.mutate(data)} disabled={!data.title}>Create</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function AddRetainerDialog({ projectId, currentUser }) {
+  const queryClient = useQueryClient();
+  const [isOpen, setIsOpen] = useState(false);
+  const [data, setData] = useState({ 
+    hours_added: '', 
+    description: '', 
+    date_added: new Date().toISOString().split('T')[0] 
+  });
+
+  const mutation = useMutation({
+    mutationFn: async (formData) => {
+      return base44.entities.ProjectRetainer.create({
+        project_id: projectId,
+        hours_added: parseFloat(formData.hours_added),
+        description: formData.description,
+        date_added: formData.date_added,
+        added_by: currentUser.email
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['projectRetainers', projectId]);
+      setIsOpen(false);
+      setData({ hours_added: '', description: '', date_added: new Date().toISOString().split('T')[0] });
+    }
+  });
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" className="bg-green-600 hover:bg-green-700">
+          <Plus className="w-4 h-4 mr-2" /> Add Hours
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Add Retainer / Hours Package</DialogTitle></DialogHeader>
+        <div className="space-y-4 py-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Hours</label>
+              <Input 
+                type="number" 
+                step="0.5"
+                placeholder="e.g. 10" 
+                value={data.hours_added} 
+                onChange={e => setData({...data, hours_added: e.target.value})} 
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Date</label>
+              <Input 
+                type="date" 
+                value={data.date_added} 
+                onChange={e => setData({...data, date_added: e.target.value})} 
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Description / Package Name</label>
+            <Input 
+              placeholder="e.g. Monthly Retainer, Starter Package" 
+              value={data.description} 
+              onChange={e => setData({...data, description: e.target.value})} 
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button onClick={() => mutation.mutate(data)} disabled={!data.hours_added}>Add Hours</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
