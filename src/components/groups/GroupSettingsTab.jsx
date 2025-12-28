@@ -20,7 +20,9 @@ export default function GroupSettingsTab({ group }) {
         <TabsList className="bg-gray-100 p-1 rounded-lg w-full justify-start h-auto flex-wrap">
           <TabsTrigger value="general" className="px-4 py-2"><Settings className="w-4 h-4 mr-2" /> General</TabsTrigger>
           <TabsTrigger value="membership" className="px-4 py-2"><Users className="w-4 h-4 mr-2" /> Membership</TabsTrigger>
-          <TabsTrigger value="content" className="px-4 py-2"><FileText className="w-4 h-4 mr-2" /> Content</TabsTrigger>
+          {group.type !== 'client-portal' && (
+            <TabsTrigger value="content" className="px-4 py-2"><FileText className="w-4 h-4 mr-2" /> Content</TabsTrigger>
+          )}
           <TabsTrigger value="permissions" className="px-4 py-2"><Shield className="w-4 h-4 mr-2" /> Permissions</TabsTrigger>
           <TabsTrigger value="danger" className="px-4 py-2 text-red-600 data-[state=active]:text-red-700 data-[state=active]:bg-red-50"><AlertTriangle className="w-4 h-4 mr-2" /> Danger Zone</TabsTrigger>
         </TabsList>
@@ -36,9 +38,11 @@ export default function GroupSettingsTab({ group }) {
           <GroupAccessSettings group={group} />
         </TabsContent>
 
-        <TabsContent value="content" className="space-y-6 mt-6">
-          <FunnelContentSettings group={group} />
-        </TabsContent>
+        {group.type !== 'client-portal' && (
+          <TabsContent value="content" className="space-y-6 mt-6">
+            <FunnelContentSettings group={group} />
+          </TabsContent>
+        )}
 
         <TabsContent value="permissions" className="space-y-6 mt-6">
           <TabPermissionsSettings group={group} />
