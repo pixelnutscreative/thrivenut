@@ -350,6 +350,8 @@ function TabPermissionsSettings({ group }) {
     { id: 'qna', label: 'Q&A' },
     { id: 'resources', label: 'Resources' },
     { id: 'training', label: 'Training' },
+    { id: 'projects', label: 'Projects' },
+    { id: 'meetings', label: 'Meetings' },
     { id: 'requests', label: 'Requests' }
   ];
 
