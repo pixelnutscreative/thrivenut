@@ -228,7 +228,7 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
                                        });
                                   }}>
                                       <SelectTrigger><SelectValue placeholder="Select Level" /></SelectTrigger>
-                                      <SelectContent>
+                                      <SelectContent className="z-[60]">
                                           {group.member_levels?.map(l => <SelectItem key={l} value={l}>{l}</SelectItem>)}
                                           <SelectItem value="Member">Member (Default)</SelectItem>
                                       </SelectContent>
@@ -278,7 +278,7 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
                     <SelectTrigger className="h-8 text-xs capitalize">
                       <SelectValue placeholder="Select Role" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="z-[60]">
                       <SelectItem value="member">Member</SelectItem>
                       <SelectItem value="manager">Manager</SelectItem>
                       <SelectItem value="admin">Admin</SelectItem>
@@ -300,7 +300,7 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
                     <SelectTrigger className="h-8 text-xs">
                       <SelectValue placeholder="Assign Level" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="z-[60]">
                       <SelectItem value="none">No Level</SelectItem>
                       {group.member_levels.map(l => <SelectItem key={l} value={l}>{l}</SelectItem>)}
                     </SelectContent>

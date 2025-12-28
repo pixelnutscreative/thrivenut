@@ -414,7 +414,7 @@ export default function GroupRequestsTab({ group, currentUser, myMembership, isA
                             <SelectTrigger className="w-[140px] h-8 text-xs">
                                 <SelectValue />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="z-[60]">
                                 <SelectItem value="pending">Pending</SelectItem>
                                 <SelectItem value="in_progress">In Progress</SelectItem>
                                 <SelectItem value="resolved">Resolved</SelectItem>
