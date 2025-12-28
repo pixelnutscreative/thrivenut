@@ -1,5 +1,14 @@
-// ... existing code ...
-function EditTaskDialog({ task, projectId, group, currentUser, canEdit }) {
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Pencil, FileText, History } from 'lucide-react';
+
+export default function EditTaskDialog({ task, projectId, group, currentUser, canEdit }) {
   const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
   const [data, setData] = useState({ 
@@ -145,4 +154,3 @@ function EditTaskDialog({ task, projectId, group, currentUser, canEdit }) {
     </Dialog>
   );
 }
-// ... existing code ...
