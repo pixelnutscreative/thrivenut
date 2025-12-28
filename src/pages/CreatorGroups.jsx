@@ -480,7 +480,7 @@ export default function CreatorGroups() {
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="z-[9999]" position="popper">
+                      <SelectContent className="z-[60]" position="popper">
                         {groupTypes?.filter(t => t.key !== 'client-portal' || isProTier).map(type => (
                           <SelectItem key={type.key} value={type.key}>
                             <div className="flex flex-col text-left py-1">

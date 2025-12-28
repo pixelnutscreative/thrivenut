@@ -245,7 +245,7 @@ export default function GroupRequestsTab({ group, currentUser, myMembership, isA
                 <SelectTrigger>
                   <SelectValue placeholder="Type" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-[60]">
                   <SelectItem value="support">Support</SelectItem>
                   <SelectItem value="feature">Feature Request</SelectItem>
                   <SelectItem value="access">Access Request</SelectItem>

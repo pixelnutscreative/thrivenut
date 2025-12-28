@@ -149,7 +149,7 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
             <div className="space-y-4 py-4">
               <Select value={formData.type} onValueChange={v => setFormData({...formData, type: v})}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-[60]">
                   <SelectItem value="video">YouTube Video</SelectItem>
                   <SelectItem value="article">Article / Blog</SelectItem>
                   <SelectItem value="link">Website Link</SelectItem>

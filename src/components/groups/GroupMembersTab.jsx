@@ -153,7 +153,7 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
                 <Label>Role</Label>
                 <Select value={inviteRole} onValueChange={setInviteRole}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-[60]">
                     <SelectItem value="member">Member</SelectItem>
                     <SelectItem value="admin">Admin</SelectItem>
                     <SelectItem value="virtual-assistant">Virtual Assistant</SelectItem>
