@@ -66,7 +66,7 @@ export default function CreatorGroups() {
         return results[0];
       });
       const results = await Promise.all(groupPromises);
-      return results.filter(Boolean);
+      return results.filter(Boolean).sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
     },
     enabled: myMemberships.length > 0 && !activeGroupId && !browseMode
   });
