@@ -204,7 +204,7 @@ export default function QuickActionsBarV2({
     <motion.div 
       initial={{ y: -100 }} 
       animate={{ y: 0 }}
-      className="fixed top-14 left-0 right-0 z-40 lg:top-0 lg:left-72"
+      className="fixed top-14 left-0 right-0 z-30 lg:top-0 lg:left-72"
     >
       <div 
         className={`w-full px-4 ${paddingClass} backdrop-blur-md border-t shadow-[0_-4px_20px_rgba(0,0,0,0.05)] flex justify-between items-center`}

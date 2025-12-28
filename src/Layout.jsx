@@ -388,7 +388,7 @@ export default function Layout({ children, currentPageName }) {
       <ImpersonationBanner />
       
       {/* Mobile Header */}
-      <div className={`lg:hidden fixed top-0 left-0 right-0 z-50 backdrop-blur-sm border-b px-4 py-3 ${menuTextClass}`} style={sidebarStyle}>
+      <div className={`lg:hidden fixed top-0 left-0 right-0 z-30 backdrop-blur-sm border-b px-4 py-3 ${menuTextClass}`} style={sidebarStyle}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <img
@@ -422,7 +422,7 @@ export default function Layout({ children, currentPageName }) {
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'tween' }}
-            className="lg:hidden fixed inset-0 z-40 pt-16 flex flex-col"
+            className="lg:hidden fixed inset-0 z-20 pt-16 flex flex-col"
             style={{ backgroundColor: menuColor }}>
 
             <nav className="flex-1 p-6 space-y-1 overflow-y-auto">

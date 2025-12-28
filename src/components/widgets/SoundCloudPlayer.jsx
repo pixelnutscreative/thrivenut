@@ -95,7 +95,7 @@ export function FloatingSoundCloudPlayer({ playlistUrl, primaryColor, accentColo
       {/* Floating Music Button */}
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 left-6 z-50 w-12 h-12 rounded-full shadow-lg flex items-center justify-center text-white"
+        className="fixed bottom-6 left-6 z-35 w-12 h-12 rounded-full shadow-lg flex items-center justify-center text-white"
         style={{ background: `linear-gradient(135deg, ${primaryColor || '#1fd2ea'}, ${accentColor || '#bd84f5'})` }}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
@@ -105,7 +105,7 @@ export function FloatingSoundCloudPlayer({ playlistUrl, primaryColor, accentColo
 
       {/* Player Panel - Kept in DOM to maintain playback */}
       <div
-        className={`fixed bottom-20 left-6 z-50 bg-white rounded-2xl shadow-2xl overflow-hidden w-80 transition-all duration-300 origin-bottom-left ${
+        className={`fixed bottom-20 left-6 z-35 bg-white rounded-2xl shadow-2xl overflow-hidden w-80 transition-all duration-300 origin-bottom-left ${
           isOpen 
             ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto' 
             : 'opacity-0 translate-y-10 scale-90 pointer-events-none'
@@ -149,7 +149,7 @@ export function MobileSoundCloudPopup({ playlistUrl, primaryColor, accentColor, 
       {/* Trigger Button - Bottom Right (shifted up to avoid Help button) */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`lg:hidden fixed bottom-24 right-4 w-12 h-12 rounded-full shadow-lg flex items-center justify-center z-40 transition-opacity duration-200 ${isHidden ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+        className={`lg:hidden fixed bottom-24 right-4 w-12 h-12 rounded-full shadow-lg flex items-center justify-center z-35 transition-opacity duration-200 ${isHidden ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
         style={{ background: `linear-gradient(135deg, ${primaryColor}, ${accentColor})` }}
       >
         <Music className="w-5 h-5 text-white" />
