@@ -111,6 +111,21 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
     }
   };
 
+  const handleDuplicate = (resource) => {
+    const newResource = {
+      ...resource,
+      title: `${resource.title} (Copy)`,
+      status: isAdmin ? 'approved' : 'pending',
+      submitted_by: currentUser?.email,
+      approved_by: isAdmin ? currentUser?.email : null
+    };
+    delete newResource.id;
+    delete newResource.created_date;
+    delete newResource.updated_date;
+    
+    submitMutation.mutate(newResource);
+  };
+
   const approvedResources = resources.filter(r => r.status === 'approved');
   const pendingResources = resources.filter(r => r.status === 'pending');
 
@@ -194,8 +209,8 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
               
               <DialogFooter>
                 <Button variant="outline" onClick={handleCloseDialog}>Cancel</Button>
-                <Button onClick={handleSubmit} disabled={!formData.title || (formData.type !== 'text' && !formData.url)}>
-                  {editingId ? 'Update Resource' : (isAdmin ? 'Add Resource' : 'Submit for Review')}
+                <Button onClick={handleSubmit} disabled={!formData.title || (formData.type !== 'text' && !formData.url) || submitMutation.isPending || updateMutation.isPending}>
+                  {submitMutation.isPending || updateMutation.isPending ? 'Saving...' : (editingId ? 'Update Resource' : (isAdmin ? 'Add Resource' : 'Submit for Review'))}
                 </Button>
               </DialogFooter>
             </div>
@@ -224,8 +239,11 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
                         <Button variant="ghost" size="sm" onClick={() => handleEdit(resource)} className="text-gray-500 h-6 w-6 p-0 hover:text-purple-600" title="Edit">
                           <Pencil className="w-4 h-4" />
                         </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleDuplicate(resource)} className="text-gray-500 h-6 w-6 p-0 hover:text-blue-600" title="Duplicate">
+                          <Plus className="w-4 h-4" />
+                        </Button>
                         {isAdmin && (
-                          <Button variant="ghost" size="sm" onClick={() => deleteMutation.mutate(resource.id)} className="text-red-500 h-6 w-6 p-0" title="Delete">
+                          <Button variant="ghost" size="sm" onClick={() => { if(window.confirm('Delete this resource?')) deleteMutation.mutate(resource.id) }} className="text-red-500 h-6 w-6 p-0" title="Delete">
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         )}
