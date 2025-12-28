@@ -359,7 +359,7 @@ export default function CreatorGroups() {
     { id: 'requests', label: 'Requests', icon: AlertCircle, color: 'gray' },
   ];
 
-  const clientPortalTabs = ['resources', 'requests', 'projects', 'meetings', 'members'];
+  const clientPortalTabs = ['feed', 'resources', 'requests', 'projects', 'meetings', 'members'];
   const isClientPortal = activeGroup?.type === 'client-portal';
 
   const availableTabs = isClientPortal 
