@@ -360,7 +360,7 @@ function TabPermissionsSettings({ group }) {
   ];
 
   const levels = ['Invited', 'Interested', 'Subscriber', ...(group.member_levels || [])];
-  const systemRoles = ['member', 'manager', 'admin']; 
+  const systemRoles = ['member', 'client', 'manager', 'admin', 'virtual-assistant']; 
   const allRoles = [...new Set([...levels, ...systemRoles])]; 
 
   const togglePermission = (tabId, role) => {

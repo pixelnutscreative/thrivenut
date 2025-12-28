@@ -156,6 +156,7 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent className="z-[60]">
                     <SelectItem value="member">Member</SelectItem>
+                    <SelectItem value="client">Client</SelectItem>
                     <SelectItem value="admin">Admin</SelectItem>
                     <SelectItem value="virtual-assistant">Virtual Assistant</SelectItem>
                   </SelectContent>
@@ -281,6 +282,7 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
                     </SelectTrigger>
                     <SelectContent className="z-[60]">
                       <SelectItem value="member">Member</SelectItem>
+                      <SelectItem value="client">Client</SelectItem>
                       <SelectItem value="manager">Manager</SelectItem>
                       <SelectItem value="admin">Admin</SelectItem>
                       <SelectItem value="virtual-assistant">Virtual Assistant</SelectItem>

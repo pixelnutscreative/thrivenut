@@ -15,7 +15,7 @@ import 'jspdf-autotable'; // Assuming this is available or I'll use basic text
 
 // Helper for permissions
 const isVirtualAssistant = (role) => role === 'virtual-assistant';
-const isOwnerOrAdmin = (role) => ['owner', 'admin'].includes(role);
+const isOwnerOrAdmin = (role) => ['owner', 'admin', 'client'].includes(role);
 
 export default function GroupProjectsTab({ group, currentUser, myMembership }) {
   const queryClient = useQueryClient();

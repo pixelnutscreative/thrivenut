@@ -389,10 +389,19 @@ export default function CreatorGroups() {
   };
 
   const isTabEnabled = (id) => {
-    // Client Portal overrides: always enable these tabs regardless of GroupType config (which might be outdated)
+    const userRole = activeMembership?.role || 'member';
+    const userLevel = activeMembership?.level || 'Member';
+    const userStatus = activeMembership?.status;
+    
+    // Client Role Override: Clients should always see their core tabs
+    if (userRole === 'client' && ['feed', 'projects', 'meetings', 'resources', 'requests'].includes(id)) {
+        return true;
+    }
+
+    // Client Portal overrides: always enable these tabs regardless of GroupType config
     if (isClientPortal && ['feed', 'projects', 'meetings', 'resources', 'requests', 'members'].includes(id)) {
         if (id === 'members' && !isAdmin) return false;
-        // Still check permissions below
+        // Continue to check role-based permissions
     } else if (allowed && !allowed.has(id)) {
         return false;
     }
@@ -404,16 +413,13 @@ export default function CreatorGroups() {
 
     // Role-Based Permissions
     const permissions = activeGroup?.role_tab_permissions;
-    if (permissions && permissions[id]) {
-       const userLevel = activeMembership?.level || 'Member'; // Default level
-       const userRole = activeMembership?.role || 'member';
-       const userStatus = activeMembership?.status; // e.g. interested, invited
-       
+    if (permissions && permissions[id] && permissions[id].length > 0) {
        // Check if ANY of the user's attributes (role, level, status) are in the allowed list
        const attributes = [userRole, userLevel, userStatus].filter(Boolean);
        const allowedList = permissions[id];
        
        // If intersection is empty, user is not allowed
+       // NOTE: We check if ANY attribute matches. 
        const hasPermission = attributes.some(attr => allowedList.includes(attr));
        if (!hasPermission) return false;
     }
