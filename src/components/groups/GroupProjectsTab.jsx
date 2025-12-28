@@ -9,9 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { format } from 'date-fns';
-import { Plus, Play, Square, Clock, Calendar, User, FileText, Trash2, CheckCircle2, Circle, MoreVertical, FileDown } from 'lucide-react';
+import { Plus, Play, Square, Clock, Calendar, User, FileText, Trash2, CheckCircle2, Circle, MoreVertical, FileDown, Pencil, History } from 'lucide-react';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable'; // Assuming this is available or I'll use basic text
+import 'jspdf-autotable'; 
+import EditTaskDialog from './EditTaskDialog';
 
 // Helper for permissions
 const isVirtualAssistant = (role) => role === 'virtual-assistant';
@@ -144,7 +145,7 @@ function ProjectDetail({ projectId, group, currentUser, myMembership, onOpenRepo
                <FileText className="w-4 h-4 mr-2" /> Time Report
              </Button>
            )}
-           <AddTaskDialog projectId={projectId} group={group} />
+           <AddTaskDialog projectId={projectId} group={group} currentUser={currentUser} />
         </div>
       </div>
 
@@ -152,11 +153,12 @@ function ProjectDetail({ projectId, group, currentUser, myMembership, onOpenRepo
       <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-white">
         {tasks.map(task => (
            <TaskCard 
-             key={task.id} 
-             task={task} 
-             currentUser={currentUser}
-             projectId={projectId}
-             canEdit={isOwnerOrAdmin(myMembership.role) || isVirtualAssistant(myMembership.role)} 
+           key={task.id} 
+           task={task} 
+           currentUser={currentUser}
+           group={group}
+           projectId={projectId}
+           canEdit={isOwnerOrAdmin(myMembership.role) || (task.created_by === currentUser?.email)} 
            />
         ))}
         {tasks.length === 0 && (
@@ -169,7 +171,7 @@ function ProjectDetail({ projectId, group, currentUser, myMembership, onOpenRepo
   );
 }
 
-function TaskCard({ task, currentUser, projectId, canEdit }) {
+function TaskCard({ task, currentUser, group, projectId, canEdit }) {
   const queryClient = useQueryClient();
   const [isRunning, setIsRunning] = useState(false);
   const [startTime, setStartTime] = useState(null);
@@ -279,6 +281,14 @@ function TaskCard({ task, currentUser, projectId, canEdit }) {
          )}
 
          <ManualTimeDialog task={task} projectId={projectId} currentUser={currentUser} />
+
+         <EditTaskDialog 
+           task={task} 
+           projectId={projectId} 
+           group={group} // Need group to fetch members
+           currentUser={currentUser}
+           canEdit={canEdit} 
+         />
       </div>
     </div>
   );
@@ -323,7 +333,7 @@ function AddProjectDialog({ groupId }) {
   );
 }
 
-function AddTaskDialog({ projectId, group }) {
+function AddTaskDialog({ projectId, group, currentUser }) {
   const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
   const [data, setData] = useState({ title: '', assignee_email: '', due_date: '', estimated_hours: '' });
@@ -339,7 +349,8 @@ function AddTaskDialog({ projectId, group }) {
       ...task, 
       project_id: projectId,
       estimated_hours: parseFloat(task.estimated_hours) || 0,
-      status: 'todo'
+      status: 'todo',
+      created_by: currentUser?.email
     }),
     onSuccess: () => {
       queryClient.invalidateQueries(['projectTasks', projectId]);
