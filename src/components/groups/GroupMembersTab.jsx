@@ -112,6 +112,7 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
         <h3 className="text-lg font-semibold">Members</h3>
         <p>Member list is only visible to admins.</p>
         <p className="mt-2 text-sm">{activeMembers.length} Active Members</p>
+        <p className="text-xs text-gray-300 mt-4">Debug: {members.length} raw records</p>
       </div>
     );
   }
