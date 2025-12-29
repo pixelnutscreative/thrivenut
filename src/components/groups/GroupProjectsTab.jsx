@@ -363,78 +363,7 @@ function AddProjectDialog({ groupId }) {
   );
 }
 
-function AddRetainerDialog({ projectId, currentUser }) {
-  const queryClient = useQueryClient();
-  const [isOpen, setIsOpen] = useState(false);
-  const [data, setData] = useState({ 
-    hours_added: '', 
-    description: '', 
-    date_added: new Date().toISOString().split('T')[0] 
-  });
 
-  const mutation = useMutation({
-    mutationFn: async (formData) => {
-      return base44.entities.ProjectRetainer.create({
-        project_id: projectId,
-        hours_added: parseFloat(formData.hours_added),
-        description: formData.description,
-        date_added: formData.date_added,
-        added_by: currentUser.email
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(['projectRetainers', projectId]);
-      setIsOpen(false);
-      setData({ hours_added: '', description: '', date_added: new Date().toISOString().split('T')[0] });
-    }
-  });
-
-  return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm" className="bg-green-600 hover:bg-green-700">
-          <Plus className="w-4 h-4 mr-2" /> Add Hours
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader><DialogTitle>Add Retainer / Hours Package</DialogTitle></DialogHeader>
-        <div className="space-y-4 py-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Hours</label>
-              <Input 
-                type="number" 
-                step="0.5"
-                placeholder="e.g. 10" 
-                value={data.hours_added} 
-                onChange={e => setData({...data, hours_added: e.target.value})} 
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Date</label>
-              <Input 
-                type="date" 
-                value={data.date_added} 
-                onChange={e => setData({...data, date_added: e.target.value})} 
-              />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Description / Package Name</label>
-            <Input 
-              placeholder="e.g. Monthly Retainer, Starter Package" 
-              value={data.description} 
-              onChange={e => setData({...data, description: e.target.value})} 
-            />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button onClick={() => mutation.mutate(data)} disabled={!data.hours_added}>Add Hours</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
 
 function AddTaskDialog({ projectId, group, currentUser }) {
   const queryClient = useQueryClient();
