@@ -148,12 +148,9 @@ function ProjectDetail({ projectId, group, currentUser, myMembership, onOpenRepo
           </div>
           <div className="flex gap-2">
              {isOwnerOrAdmin(myMembership.role) && (
-               <>
-                 <Button variant="outline" size="sm" onClick={onOpenReport}>
-                   <FileText className="w-4 h-4 mr-2" /> Time Report
-                 </Button>
-                 <AddRetainerDialog projectId={projectId} currentUser={currentUser} />
-               </>
+               <Button variant="outline" size="sm" onClick={onOpenReport}>
+                 <FileText className="w-4 h-4 mr-2" /> Time Report
+               </Button>
              )}
              <AddTaskDialog projectId={projectId} group={group} currentUser={currentUser} />
           </div>

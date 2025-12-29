@@ -1,13 +1,78 @@
+
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, UserPlus, Shield } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Trash2, UserPlus, Shield, Plus, Package } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+function AddRetainerPackageDialog({ group, member, currentUser }) {
+  const queryClient = useQueryClient();
+  const [isOpen, setIsOpen] = useState(false);
+  const [selectedPackage, setSelectedPackage] = useState(null);
+  const packages = [
+    { name: '$444 Package', hours: 5, sessions: 7 },
+    { name: '$999 Package', hours: 16, sessions: 22 }
+  ];
+
+  const mutation = useMutation({
+    mutationFn: async (packageData) => {
+      return base44.entities.GroupMemberRetainerPackage.create({
+        group_id: group.id,
+        member_email: member.user_email,
+        hours_purchased: packageData.hours,
+        package_name: packageData.name,
+        purchase_date: new Date().toISOString().split('T')[0],
+        purchased_by: currentUser.email
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['memberRetainerPackages', group.id, member.user_email]);
+      // Also invalidate overall project queries since they depend on this
+      queryClient.invalidateQueries(['allGroupProjects', group.id]);
+      setIsOpen(false);
+      setSelectedPackage(null);
+    }
+  });
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <button className="text-xs text-purple-600 hover:text-purple-800 flex items-center gap-1 mt-0.5">
+          <Plus className="w-3 h-3" /> Add Hours Package
+        </button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Add Retainer Package for {member.user_email}</DialogTitle></DialogHeader>
+        <div className="space-y-4 py-4">
+          <p className="text-sm text-gray-600">Select a package to add hours to this member's retainer.</p>
+          <div className="grid grid-cols-2 gap-4">
+            {packages.map((pkg, index) => (
+              <Card 
+                key={index} 
+                className={`cursor-pointer ${selectedPackage?.name === pkg.name ? 'border-purple-500 ring-2 ring-purple-500' : ''}`}
+                onClick={() => setSelectedPackage(pkg)}
+              >
+                <CardContent className="p-4">
+                  <h5 className="font-bold text-lg">{pkg.name}</h5>
+                  <p className="text-sm text-gray-500">{pkg.hours} hours ({pkg.sessions} sessions)</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+        <DialogFooter>
+          <Button onClick={() => mutation.mutate(selectedPackage)} disabled={!selectedPackage}>Add Package</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 export default function GroupMembersTab({ group, currentUser, isAdmin }) {
   const queryClient = useQueryClient();
@@ -26,14 +91,33 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
   });
 
   // Copy link functionality
-  const baseUrl = window.location.origin;
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''; // Safely access window
   const referralParam = referralLink ? `&ref=${referralLink.code}` : '';
   // Ensure we use the correct page URL (capitalized as per file name)
   const inviteLink = `${baseUrl}/CreatorGroups?invite=${group.invite_code}${referralParam}`;
   
   const copyLink = () => {
-    navigator.clipboard.writeText(inviteLink);
-    alert('Invite link copied to clipboard! (Referral tracking included)');
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(inviteLink);
+      alert('Invite link copied to clipboard! (Referral tracking included)');
+    } else {
+      // Fallback for environments without navigator.clipboard
+      const textArea = document.createElement("textarea");
+      textArea.value = inviteLink;
+      textArea.style.position = "fixed"; // Avoid scrolling to bottom
+      textArea.style.left = "-9999px"; // Move off-screen
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        alert('Invite link copied to clipboard! (Referral tracking included)');
+      } catch (err) {
+        console.error('Failed to copy', err);
+        alert('Failed to copy invite link. Please copy it manually.');
+      }
+      document.body.removeChild(textArea);
+    }
   };
 
   const { data: members = [] } = useQuery({
@@ -98,13 +182,14 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
       const prev = map[key];
       if (!prev) map[key] = m;
       else if (prev.status !== 'active' && m.status === 'active') map[key] = m;
+      else if (prev.status === 'pending' && m.pending_approval) map[key] = m; // Prioritize explicit pending approval status
     });
     return Object.values(map);
   }, [members]);
 
   const myMembership = React.useMemo(() => dedupedMembers.find(m => (m.user_email || '').toLowerCase() === (currentUser?.email || '').toLowerCase()) || null, [dedupedMembers, currentUser]);
-  const pendingMembers = dedupedMembers.filter(m => m.status === 'pending');
-  const activeMembers = dedupedMembers.filter(m => m.status !== 'pending');
+  const pendingMembers = dedupedMembers.filter(m => m.status === 'pending' || m.pending_approval);
+  const activeMembers = dedupedMembers.filter(m => m.status !== 'pending' && !m.pending_approval);
 
   if (!isAdmin && myMembership?.role !== 'owner') {
     return (
@@ -171,13 +256,13 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
       </div>
 
       {/* Pending Applications (Interested -> Member) */}
-      {isAdmin && (dedupedMembers.some(m => m.pending_approval) || pendingMembers.length > 0) && (
+      {isAdmin && pendingMembers.length > 0 && (
         <div className="bg-amber-50 rounded-lg border border-amber-200 overflow-hidden mb-6">
           <div className="p-3 bg-amber-100 border-b border-amber-200 font-semibold text-amber-800 flex items-center gap-2">
             <Shield className="w-4 h-4" /> Applications & Requests
           </div>
           <div className="divide-y divide-amber-200">
-            {dedupedMembers.filter(m => m.pending_approval || m.status === 'pending').map(member => (
+            {pendingMembers.map(member => (
               <div key={member.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <div className="font-medium text-amber-900">{member.user_email}</div>
@@ -267,6 +352,9 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
                 </div>
                 <div className="overflow-hidden">
                   <p className="font-medium truncate">{member.user_email}</p>
+                  {isAdmin && (
+                    <AddRetainerPackageDialog group={group} member={member} currentUser={currentUser} />
+                  )}
                 </div>
               </div>
               <div className="col-span-2">
