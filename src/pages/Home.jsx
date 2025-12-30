@@ -217,15 +217,23 @@ const plusFeatures = [
   },
 ];
 
+// ===================== SHARE & EARN =====================
+const shareFeatures = [
+  { title: 'Promote Thrive Nut', description: 'Share the app and earn rewards for every referral.' },
+  { title: "Promote Pixel's AI Toolbox", description: 'Earn by sharing our powerful AI tools collection.' },
+  { title: 'Promote The Nuts + Bots', description: 'Refer friends to our automation and bot services.' },
+  { title: 'Earn Points & Rewards', description: 'Collect points for referrals and engagement, then trade them in!' },
+];
+
 // ===================== CUSTOMIZATION FEATURES =====================
 const customizationFeatures = [
+  { title: 'Quick Actions Bar', description: 'One-tap access to your most used tools, always at your fingertips.' },
   { title: 'Custom Theme Colors', description: 'Choose your primary and accent colors' },
   { title: 'Dark/Light/System Mode', description: 'Automatic or manual theme switching' },
   { title: 'Menu Color Customization', description: 'Personalize your sidebar color' },
   { title: 'Profile & Header Images', description: 'Add your own branding' },
   { title: 'Feature Ordering', description: 'Drag and drop to reorder menu items' },
   { title: 'Enable/Disable Modules', description: 'Show only what you need' },
-  { title: 'Quick Actions Widget', description: 'Floating shortcuts to frequently used features' },
   { title: 'SoundCloud Integration', description: 'Embed your playlist in the app' },
   { title: 'Multiple Greeting Types', description: 'Rotate through scriptures, quotes, and affirmations' },
 ];
