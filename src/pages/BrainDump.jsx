@@ -38,17 +38,25 @@ export default function BrainDump() {
   const [habitConfigOpen, setHabitConfigOpen] = useState(false);
   const [currentHabitItem, setCurrentHabitItem] = useState(null);
 
-  const analyzeBrainDump = async () => {
-    if (dumps.length === 0) return;
+  const analyzeBrainDump = async (singleContent = null) => {
+    // If singleContent provided, we are in "Smart Add" mode
+    // Otherwise use existing dumps
+    const itemsToProcess = singleContent 
+      ? [{ id: 'temp_new', content: singleContent }] 
+      : dumps;
+      
+    if (itemsToProcess.length === 0) return;
+    
     setIsAnalyzing(true);
     try {
-      const dumpTexts = dumps.map(d => `- [ID:${d.id}] ${d.content}`).join('\n');
+      const dumpTexts = itemsToProcess.map(d => `- [ID:${d.id}] ${d.content}`).join('\n');
       const response = await base44.integrations.Core.InvokeLLM({
-        prompt: `Analyze these brain dump items and categorize them into actionable types.
-        Items:
+        prompt: `Analyze these brain dump items. If an item contains multiple distinct actions (e.g. a list or bullet points), SPLIT them into separate items.
+        
+        Items to Analyze:
         ${dumpTexts}
         
-        Return a JSON object with a list of items. Each item should have:
+        Return a JSON object with a list of actionable items. Each item should have:
         - original_id (extract from the ID tag)
         - type (one of: 'task', 'goal', 'habit', 'note', 'event')
         - suggested_title (clear, actionable title)
@@ -75,8 +83,25 @@ export default function BrainDump() {
           }
         }
       });
-      setAnalysisResults(response.analysis || []);
+      
+      // Add unique UI IDs to each result to handle splits
+      const resultsWithIds = (response.analysis || []).map(item => ({
+        ...item,
+        _ui_id: Math.random().toString(36).substr(2, 9),
+        // If it was a temporary new item, we need to pass the content to save it later if needed?
+        // Actually, if it's 'temp_new', we might want to CREATE the brain dump first, or just create the items directly.
+        // Let's assume for 'temp_new' we just process them.
+      }));
+      
+      setAnalysisResults(resultsWithIds);
       setShowAnalysis(true);
+      
+      // If this was a smart add, clear the input
+      if (singleContent) {
+        setContent('');
+        setCategory('');
+      }
+      
     } catch (err) {
       console.error(err);
       alert('Failed to analyze. Please try again.');
@@ -93,8 +118,8 @@ export default function BrainDump() {
       return;
     }
 
-    // Convert logic based on type
     try {
+      // Create the entity
       if (item.type === 'task') {
         await base44.entities.Task.create({ title: item.suggested_title, category: item.suggested_category, status: 'pending', created_by: user.email });
       } else if (item.type === 'goal') {
@@ -114,12 +139,26 @@ export default function BrainDump() {
         await base44.entities.QuickNote.create({ content: item.suggested_title, created_by: user.email });
       }
       
-      // Mark original dump as processed
-      await base44.entities.BrainDump.update(item.original_id, { is_processed: true });
-      
-      // Update local state
-      setAnalysisResults(prev => prev.filter(r => r.original_id !== item.original_id));
-      queryClient.invalidateQueries(['brainDumps']);
+      // Remove this specific item from the analysis list
+      const remainingResults = analysisResults.filter(r => r._ui_id !== item._ui_id);
+      setAnalysisResults(remainingResults);
+
+      // Handle the original brain dump entity
+      if (item.original_id && item.original_id !== 'temp_new') {
+        // Check if there are any other items pending for this original_id
+        const othersPending = remainingResults.some(r => r.original_id === item.original_id);
+        
+        // Only mark as processed if this was the last one (or if we want to be safe, just mark it)
+        // Actually, if we mark it processed now, and there are others, they still exist in 'remainingResults' state,
+        // so the user can continue processing them.
+        // BUT, if the user closes the modal, those others are lost from UI state.
+        // And if the BrainDump is marked processed, they won't show up in the next 'analyzeBrainDump' call.
+        // So we should ONLY mark processed if NO others are pending.
+        if (!othersPending) {
+          await base44.entities.BrainDump.update(item.original_id, { is_processed: true });
+          queryClient.invalidateQueries(['brainDumps']);
+        }
+      }
       
       // Reset habit state if needed
       if (habitConfig) {
