@@ -186,18 +186,27 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
 
     // Filter by visibility (admin or matching level) AND not hidden
     const visible = allItems.filter(item => {
-      // If showing hidden, allow hidden items (but still check visibility rules)
-      if (!showHidden && hiddenIds.includes(item.id)) return false;
-      
-      if (isAdmin) return true;
-      
-      // Role Check
-      const roleMatch = !item.target_roles || item.target_roles.length === 0 || item.target_roles.includes(myMembership?.role);
-      
-      // Level Check
-      const levelMatch = !item.target_levels || item.target_levels.length === 0 || item.target_levels.includes(myMembership?.level);
-      
-      return roleMatch && levelMatch;
+    // 1. Pending/Approval Check (Resources, Events, etc.)
+    // If an item has a status field and it's pending/review, hide it from non-admins/non-authors
+    const isPending = item.status && ['pending', 'review', 'draft'].includes(item.status);
+    const isAuthor = item.submitted_by === currentUser?.email || item.created_by === currentUser?.email || item.author_email === currentUser?.email;
+
+    if (isPending && !isAdmin && !isAuthor) return false;
+
+    // 2. Hidden Check
+    // If showing hidden, allow hidden items (but still check visibility rules)
+    if (!showHidden && hiddenIds.includes(item.id)) return false;
+
+    if (isAdmin) return true; // Admins see everything (approved or pending)
+    if (isAuthor) return true; // Authors see their own items
+
+    // 3. Role Check
+    const roleMatch = !item.target_roles || item.target_roles.length === 0 || item.target_roles.includes(myMembership?.role);
+
+    // 4. Level Check
+    const levelMatch = !item.target_levels || item.target_levels.length === 0 || item.target_levels.includes(myMembership?.level);
+
+    return roleMatch && levelMatch;
     });
 
     // Sort: Pinned posts first, then by created_date desc
