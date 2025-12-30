@@ -22,6 +22,7 @@ const features = [
 
 const premiumFeatures = [
   'Social Media Suite',
+  'Personalized TikTok Analytics',
   'Creator contact management',
   'Content calendar',
   'Sunny Songbird AI songs',
@@ -59,10 +60,13 @@ export default function Pricing() {
     checkSub();
   }, [user]);
 
-  const handleSubscribe = async (planType) => {
+  // TODO: Replace with your actual Stripe Price ID for the $77/year plan
+  const ANNUAL_PRICE_ID = "price_1Q..."; 
+
+  const handleSubscribe = async (priceId) => {
     if (!user) {
       // Save the selected plan to localStorage so we can resume after login
-      localStorage.setItem('pending_plan_type', planType);
+      localStorage.setItem('pending_plan_id', priceId);
       await base44.auth.redirectToLogin(window.location.href);
       return;
     }
@@ -74,9 +78,9 @@ export default function Pricing() {
       const cancelUrl = window.location.href;
       
       const response = await base44.functions.invoke('createCheckout', { 
-        plan_type: planType,
-        success_url: successUrl,
-        cancel_url: cancelUrl
+        priceId: priceId,
+        successUrl: successUrl,
+        cancelUrl: cancelUrl
       });
       if (response.data?.url) {
         window.location.href = response.data.url;
@@ -91,11 +95,11 @@ export default function Pricing() {
   useEffect(() => {
     const checkPendingPlan = async () => {
       if (user && !checkingSubscription) {
-        const pendingPlan = localStorage.getItem('pending_plan_type');
-        if (pendingPlan) {
-          localStorage.removeItem('pending_plan_type');
+        const pendingPriceId = localStorage.getItem('pending_plan_id');
+        if (pendingPriceId) {
+          localStorage.removeItem('pending_plan_id');
           // Auto-trigger checkout for the saved plan
-          handleSubscribe(pendingPlan);
+          handleSubscribe(pendingPriceId);
         }
       }
     };
@@ -119,11 +123,8 @@ export default function Pricing() {
             Choose Your Plan
           </motion.h1>
           <p className={isDark ? 'text-gray-300' : 'text-gray-600'}>
-            Start thriving today with our holiday special pricing!
+            Unlock the full potential with PLUS
           </p>
-          <Badge className="bg-red-500 text-white text-sm px-3 py-1">
-            🎄 Holiday Special - Ends Dec 7th!
-          </Badge>
         </div>
 
         {checkingSubscription ? (
@@ -148,48 +149,8 @@ export default function Pricing() {
         ) : (
           <>
             {/* Pricing Cards */}
-            <div className="grid md:grid-cols-3 gap-6">
-              {/* Monthly Plan */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-              >
-                <Card className={`h-full ${isDark ? 'bg-gray-800' : ''}`}>
-                  <CardHeader className="text-center pb-2">
-                    <div className="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center" style={{ backgroundColor: `${primaryColor}20` }}>
-                      <Zap className="w-6 h-6" style={{ color: primaryColor }} />
-                    </div>
-                    <CardTitle>Monthly</CardTitle>
-                    <p className="text-sm text-gray-500">Perfect to try it out</p>
-                  </CardHeader>
-                  <CardContent className="text-center space-y-4">
-                    <div>
-                      <span className="text-4xl font-bold">$49</span>
-                      <p className="text-sm text-green-600 font-medium">for 7 months!</p>
-                      <p className="text-xs text-gray-400">One-time payment</p>
-                    </div>
-                    <Button
-                      onClick={() => handleSubscribe('monthly')}
-                      disabled={loading}
-                      variant="outline"
-                      className="w-full"
-                    >
-                      {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Get Started'}
-                    </Button>
-                    <ul className="text-left space-y-2 text-sm">
-                      {features.slice(0, 5).map((feature, i) => (
-                        <li key={i} className="flex items-center gap-2">
-                          <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
-                          <span>{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
-              </motion.div>
-
-              {/* Annual Plan - Featured */}
+            <div className="max-w-md mx-auto">
+              {/* Annual Plan - PLUS Version */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -205,74 +166,40 @@ export default function Pricing() {
                     <div className="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center" style={gradientStyle}>
                       <Crown className="w-6 h-6 text-white" />
                     </div>
-                    <CardTitle>Annual</CardTitle>
-                    <p className="text-sm text-gray-500">Save big with yearly!</p>
+                    <CardTitle>PLUS Version</CardTitle>
+                    <p className="text-sm text-gray-500">Annual Access</p>
                   </CardHeader>
                   <CardContent className="text-center space-y-4">
                     <div>
                       <span className="text-4xl font-bold">$77</span>
                       <span className="text-gray-500">/year</span>
-                      <p className="text-sm text-green-600 font-medium">Save $35 vs monthly!</p>
+                      <p className="text-sm text-green-600 font-medium">Save $34/year!</p>
                       <p className="text-xs text-gray-400 line-through">Was $111/year</p>
                     </div>
                     <Button
-                      onClick={() => handleSubscribe('annual')}
+                      onClick={() => handleSubscribe(ANNUAL_PRICE_ID)}
                       disabled={loading}
                       className="w-full text-white"
                       style={gradientStyle}
                     >
-                      {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Get Annual Access'}
+                      {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Get PLUS Version'}
                     </Button>
                     <ul className="text-left space-y-2 text-sm">
-                      {features.map((feature, i) => (
+                      <li className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                        <span className="font-medium">All Free Features Included</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                         <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                         <span>Unlimited Groups & Child Accounts</span>
+                      </li>
+                      {premiumFeatures.map((feature, i) => (
                         <li key={i} className="flex items-center gap-2">
                           <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
                           <span>{feature}</span>
                         </li>
                       ))}
                     </ul>
-                  </CardContent>
-                </Card>
-              </motion.div>
-
-              {/* AI Toolbox Bundle */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-              >
-                <Card className={`h-full ${isDark ? 'bg-gray-800' : 'bg-gradient-to-br from-purple-50 to-pink-50'}`}>
-                  <CardHeader className="text-center pb-2">
-                    <div className="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center bg-gradient-to-r from-purple-500 to-pink-500">
-                      <Sparkles className="w-6 h-6 text-white" />
-                    </div>
-                    <CardTitle>AI Toolbox Bundle</CardTitle>
-                    <p className="text-sm text-gray-500">Get it FREE!</p>
-                  </CardHeader>
-                  <CardContent className="text-center space-y-4">
-                    <div>
-                      <span className="text-4xl font-bold text-green-600">FREE</span>
-                      <p className="text-sm text-purple-600 font-medium">with AI Toolbox annual</p>
-                    </div>
-                    <Button
-                      onClick={() => window.open('https://thenutsandbots.com/order-thenutsandbotsplusai-annual-8125-6335-3387-5540', '_blank')}
-                      variant="outline"
-                      className="w-full border-purple-300 text-purple-700 hover:bg-purple-50"
-                    >
-                      <ExternalLink className="w-4 h-4 mr-2" />
-                      Get AI Toolbox
-                    </Button>
-                    <div className="text-left">
-                      <p className="text-xs text-gray-500 mb-2">Includes Let's Thrive PLUS:</p>
-                      <ul className="space-y-2 text-sm">
-                        {['All AI tools & prompts', 'Go Nuts! Classes', 'Templates & tutorials', 'Community access'].map((feature, i) => (
-                          <li key={i} className="flex items-center gap-2">
-                            <Check className="w-4 h-4 text-purple-500 flex-shrink-0" />
-                            <span>{feature}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
                   </CardContent>
                 </Card>
               </motion.div>
