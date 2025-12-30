@@ -300,9 +300,10 @@ export default function BrainDump() {
                         <Button 
                           size="sm" 
                           onClick={() => processAnalysisItem(item)}
-                          className="bg-indigo-500 hover:bg-indigo-600 text-white"
+                          className="bg-green-500 hover:bg-green-600 text-white px-3"
+                          title="Confirm & Create"
                         >
-                          Confirm
+                          <Check className="w-5 h-5" />
                         </Button>
                       </div>
                     </CardContent>
