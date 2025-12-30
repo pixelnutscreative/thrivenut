@@ -488,7 +488,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Social Media Suite Section */}
+      {/* PLUS Version Features Section */}
       <div className="bg-gradient-to-r from-purple-900/50 via-pink-900/50 to-purple-900/50 py-20">
         <div className="max-w-6xl mx-auto px-4">
           <motion.div 
@@ -498,21 +498,21 @@ export default function Home() {
             className="text-center mb-12"
           >
             <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 text-lg px-4 py-1 mb-4">
-              ✨ PREMIUM ADD-ON
+              ✨ PLUS VERSION
             </Badge>
             <h2 className="text-4xl md:text-5xl font-bold mb-4">
-              Social Media Suite
+              Social Media Suite + More
             </h2>
             <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-2">
               The ultimate toolkit for live streamers, content creators, and community builders.
             </p>
             <p className="text-lg text-purple-400">
-              Everything you need to grow your audience and show love to your supporters.
+              Unlimited Groups, Unlimited Kids, and powerful Creator Tools.
             </p>
           </motion.div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
-            {socialMediaFeatures.map((feature, index) => {
+            {plusFeatures.map((feature, index) => {
               const Icon = feature.icon;
               return (
                 <motion.div
@@ -535,6 +535,24 @@ export default function Home() {
               );
             })}
           </div>
+        </div>
+      </div>
+
+      {/* Share & Earn Section */}
+      <div className="max-w-6xl mx-auto px-4 py-10 border-b border-gray-800">
+        <div className="text-center mb-10">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">Share & Earn</h2>
+          <p className="text-gray-400">Promote the tools you love and get rewarded!</p>
+        </div>
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {shareFeatures.map((feature, index) => (
+            <Card key={index} className="bg-gray-800/30 border-gray-700">
+              <CardContent className="p-5 text-center">
+                <h4 className="font-bold text-teal-400 mb-2">{feature.title}</h4>
+                <p className="text-sm text-gray-400">{feature.description}</p>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </div>
 
