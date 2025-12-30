@@ -663,32 +663,7 @@ export default function Home() {
           </motion.div>
         </div>
 
-        {/* SuperFan Option - Below */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="mt-8 max-w-md mx-auto"
-        >
-          <Card className="bg-gray-800/50 border-gray-700">
-            <CardContent className="p-6 text-center">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <Crown className="w-5 h-5 text-amber-400" />
-                <span className="font-bold text-amber-400">Already a SuperFan?</span>
-              </div>
-              <p className="text-sm text-gray-400 mb-4">
-                If you're a SuperFan of @PixelNutsCreative on TikTok, you get FREE access!
-              </p>
-              <Button 
-                onClick={handleGetStarted}
-                variant="outline"
-                className="border-amber-500 text-amber-400 hover:bg-amber-500/10"
-              >
-                Verify SuperFan Status <Star className="w-4 h-4 ml-2" />
-              </Button>
-            </CardContent>
-          </Card>
-        </motion.div>
+
       </div>
 
       {/* Final CTA */}
