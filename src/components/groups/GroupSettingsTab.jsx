@@ -14,6 +14,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { useTheme } from '@/components/shared/useTheme';
+import ColorPicker from '../shared/ColorPicker';
 
 export default function GroupSettingsTab({ group }) {
   return (
