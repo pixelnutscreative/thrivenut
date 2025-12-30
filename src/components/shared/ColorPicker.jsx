@@ -435,7 +435,7 @@ export default function ColorPicker({ color, onChange, label, className }) {
                   autoFocus
                 />
               </div>
-              <ScrollArea className="h-72">
+              <div className="h-72 overflow-y-auto">
                 <div className="p-2 space-y-1">
                   {CRAYOLA_COLORS.filter(c => c.name.toLowerCase().includes(crayolaSearch.toLowerCase())).map(color => (
                     <button
@@ -460,7 +460,7 @@ export default function ColorPicker({ color, onChange, label, className }) {
                     <div className="text-xs text-gray-400 text-center py-4">No colors found</div>
                   )}
                 </div>
-              </ScrollArea>
+              </div>
             </PopoverContent>
           </Popover>
         </div>
