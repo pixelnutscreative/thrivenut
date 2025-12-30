@@ -9,10 +9,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Check, X, Calendar, ChevronRight, ArrowRight, Trash2, Lightbulb, Filter, Zap, User, Camera } from 'lucide-react';
+import { Plus, Check, X, Calendar, ChevronRight, ArrowRight, Trash2, Lightbulb, Filter, Zap, User, Camera, Sparkles, Loader2, RefreshCw, Tag, BookOpen, ListFilter } from 'lucide-react';
 import { format, parseISO, isToday, isBefore, startOfDay } from 'date-fns';
 import { useTheme } from '../components/shared/useTheme';
 import CleaningTasks from './CleaningTasks';
+import HabitConfigModal from '../components/brain-dump/HabitConfigModal';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const categoryOptions = [
   { value: 'Work', emoji: '💼' },
@@ -43,6 +45,13 @@ export default function Tasks() {
     assigned_to_family_id: null,
     requires_photo_proof: false
   });
+
+  // AI Brain Dump State
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [showAnalysis, setShowAnalysis] = useState(false);
+  const [analysisResults, setAnalysisResults] = useState([]);
+  const [habitConfigOpen, setHabitConfigOpen] = useState(false);
+  const [currentHabitItem, setCurrentHabitItem] = useState(null);
 
   const { user } = useTheme();
 
@@ -127,6 +136,139 @@ export default function Tasks() {
     mutationFn: (id) => base44.entities.BrainDump.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['brainDumps'] })
   });
+
+  const analyzeBrainDump = async (singleContent = null) => {
+    const itemsToProcess = singleContent 
+      ? [{ id: 'temp_new', content: singleContent }] 
+      : brainDumps;
+      
+    if (itemsToProcess.length === 0) return;
+    
+    setIsAnalyzing(true);
+    try {
+      const dumpTexts = itemsToProcess.map(d => `- [ID:${d.id}] ${d.content}`).join('\n');
+      const response = await base44.integrations.Core.InvokeLLM({
+        prompt: `You are an expert task manager. Your goal is to break down brain dumps into small, single, actionable units.
+
+CRITICAL INSTRUCTIONS FOR SPLITTING:
+1. Aggressively split long text into multiple separate items.
+2. Split on keywords like "and", "also", "then", "plus" if they connect distinct tasks.
+3. Split on commas, periods, and newlines if they separate distinct thoughts.
+4. Turn run-on sentences into separate items.
+
+Items to Analyze:
+${dumpTexts}
+
+Return a JSON object with a list of actionable items. Each item should have:
+- original_id (extract from the ID tag)
+- type (one of: 'task', 'goal', 'habit', 'note', 'event', 'resource')
+- suggested_title (clear, actionable title)
+- suggested_category (e.g. Work, Personal, Health, Reading List, Watch List)
+- suggested_url (if a link is present)
+- reasoning (brief why)
+
+For habits, identify if there's any implied frequency.
+For resources (books, movies, articles), suggest a category like 'Reading List', 'Watch List'.`,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            analysis: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  original_id: { type: "string" },
+                  type: { type: "string" },
+                  suggested_title: { type: "string" },
+                  suggested_category: { type: "string" },
+                  suggested_url: { type: "string" },
+                  reasoning: { type: "string" }
+                }
+              }
+            }
+          }
+        }
+      });
+      
+      const resultsWithIds = (response.analysis || []).map(item => ({
+        ...item,
+        _ui_id: Math.random().toString(36).substr(2, 9),
+      }));
+      
+      setAnalysisResults(resultsWithIds);
+      setShowAnalysis(true);
+      
+      if (singleContent) {
+        setBrainDumpText('');
+      }
+      
+    } catch (err) {
+      console.error(err);
+      alert('Failed to analyze. Please try again.');
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const processAnalysisItem = async (item, habitConfig = null) => {
+    if (item.type === 'habit' && !habitConfig) {
+      setCurrentHabitItem(item);
+      setHabitConfigOpen(true);
+      return;
+    }
+
+    try {
+      if (item.type === 'task') {
+        await base44.entities.Task.create({ title: item.suggested_title, category: item.suggested_category, status: 'pending', created_by: user.email });
+      } else if (item.type === 'goal') {
+        await base44.entities.Goal.create({ title: item.suggested_title, category: item.suggested_category, created_by: user.email });
+      } else if (item.type === 'habit') {
+        const habitData = habitConfig || { name: item.suggested_title, frequency: 'daily' };
+        await base44.entities.Habit.create({ 
+          name: habitData.name, 
+          frequency: habitData.frequency,
+          target_days: habitData.target_days || [],
+          monthly_date: habitData.monthly_date,
+          created_by: user.email 
+        });
+      } else if (item.type === 'event') {
+        await base44.entities.ExternalEvent.create({ title: item.suggested_title, date: new Date().toISOString().split('T')[0], created_by: user.email });
+      } else if (item.type === 'note') {
+        await base44.entities.QuickNote.create({ content: item.suggested_title, created_by: user.email });
+      } else if (item.type === 'resource') {
+        await base44.entities.UserResource.create({
+          user_email: user.email,
+          title: item.suggested_title,
+          category: item.suggested_category || 'General',
+          categories: [item.suggested_category || 'General'],
+          url: item.suggested_url || '',
+          description: item.reasoning || 'Added from Brain Dump'
+        });
+      }
+      
+      const remainingResults = analysisResults.filter(r => r._ui_id !== item._ui_id);
+      setAnalysisResults(remainingResults);
+
+      if (item.original_id && item.original_id !== 'temp_new') {
+        const othersPending = remainingResults.some(r => r.original_id === item.original_id);
+        if (!othersPending) {
+          await base44.entities.BrainDump.update(item.original_id, { is_processed: true });
+          queryClient.invalidateQueries(['brainDumps']);
+        }
+      }
+      
+      if (habitConfig) {
+        setHabitConfigOpen(false);
+        setCurrentHabitItem(null);
+      }
+      
+      // Also refresh tasks/goals etc
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const handleAddTask = () => {
     if (!newTask.trim()) return;
