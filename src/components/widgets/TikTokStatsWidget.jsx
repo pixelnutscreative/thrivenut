@@ -101,17 +101,25 @@ export default function TikTokStatsWidget() {
     try {
       const response = await base44.functions.invoke('fetchPublicTikTokStats', { username });
       
-      if (response.data?.error === 'scrape_failed') {
+      if (response.data?.source === 'official_api') {
+         // Great success via integration
+         saveStatsMutation.mutate({
+          followers: response.data.followers,
+          likes: response.data.likes,
+          following: response.data.following,
+          source: 'official_api'
+        });
+      } else if (response.data?.error === 'scrape_failed') {
         // Fallback to manual with explanation
-        alert("We couldn't auto-sync with TikTok right now (they are strict about bots!). Please enter your stats manually for today.");
+        alert("We couldn't auto-sync. Please authorize TikTok in the app settings or enter stats manually.");
         setIsManualInput(true);
       } else if (response.data?.followers) {
-        // Success
+        // Scrape Success
         saveStatsMutation.mutate({
           followers: response.data.followers,
           likes: response.data.likes,
           following: response.data.following,
-          source: 'auto_sync'
+          source: 'scrape'
         });
       }
     } catch (err) {
