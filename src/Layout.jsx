@@ -159,7 +159,7 @@ export default function Layout({ children, currentPageName }) {
     id: 'core',
     items: [
     { name: getDashboardName(), icon: LayoutDashboard, path: 'Dashboard', alwaysShow: true },
-    { name: preferences?.my_resources_label || 'My Stuff', icon: Bookmark, path: 'MyResources' },
+    { name: preferences?.my_resources_label || 'My Stuff', icon: Bookmark, path: 'MyResources', moduleId: 'my_resources' },
     { 
       name: 'My Groups', 
       icon: Users, 
@@ -211,8 +211,8 @@ export default function Layout({ children, currentPageName }) {
     bgColor: 'bg-lime-500/10',
     items: [
     { name: getPrayerName(), icon: Heart, path: 'PrayerRequests', moduleId: 'prayer' },
-    { name: 'Holy Hitmakers', icon: Music, path: 'HolyHitmakers', requiresBibleBeliever: true },
-    { name: 'Bible Resources', icon: BookOpen, path: 'BibleResources', requiresBibleBeliever: true }]
+    { name: 'Holy Hitmakers', icon: Music, path: 'HolyHitmakers', requiresBibleBeliever: true, moduleId: 'holy_hitmakers' },
+    { name: 'Bible Resources', icon: BookOpen, path: 'BibleResources', requiresBibleBeliever: true, moduleId: 'bible_resources' }]
 
   },
   {
@@ -234,11 +234,11 @@ export default function Layout({ children, currentPageName }) {
     color: 'text-orange-400', // Orange
     bgColor: 'bg-orange-500/10',
     items: [
-    { name: 'Content Creator Center', icon: Target, path: 'ContentCreatorHub' },
+    { name: 'Content Creator Center', icon: Target, path: 'ContentCreatorHub', moduleId: 'content_creator_center' },
     // Affiliate Programs moved to Share & Earn
     { name: 'Content Ideas', icon: Lightbulb, path: 'SavedMotivations', moduleId: 'motivations' },
-    { name: 'Content Marketplace', icon: Briefcase, path: 'ContentMarketplace', highlight: true },
-    { name: 'Create AI Music', icon: Music, isSection: true, subItems: [
+    { name: 'Content Marketplace', icon: Briefcase, path: 'ContentMarketplace', highlight: true, moduleId: 'content_marketplace' },
+    { name: 'Create AI Music', icon: Music, isSection: true, moduleId: 'ai_music_suite', subItems: [
       { name: 'Sunny Songbird', icon: Sun, path: 'SongGenerator' },
       { name: "Ping & Pong's Silly Songs", icon: Smile, externalUrl: 'https://sillysongs.pixelnutscreative.com' },
       { name: 'Holy Hitmakers', icon: Music, path: 'HolyHitmakers', requiresBibleBeliever: true }]
