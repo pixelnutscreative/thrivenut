@@ -6,13 +6,15 @@ import { Eye, EyeOff } from 'lucide-react';
 const allFeatures = [
   // Core
   { id: 'my_resources', name: 'My Stuff', description: 'Your saved resources', color: 'text-gray-500' },
+  { id: 'my_groups', name: 'My Groups', description: 'Browse and manage your groups', color: 'text-gray-500' },
   { id: 'pixels_place', name: "Pixel's Place", description: 'Community resources and tools', color: 'text-gray-500' },
 
   // Goals + Growth
   { id: 'quick_notes', name: 'Quick Notes', description: 'Simple note taking', color: 'text-purple-400' },
   { id: 'tasks', name: 'Tasks', description: 'Includes cleaning, household, and brain dump', color: 'text-purple-400' },
   { id: 'habits', name: 'Habits', description: 'Daily habit tracking', color: 'text-purple-400' },
-  { id: 'goals', name: 'Goals & Vision Board', description: 'Long-term goal tracking & vision board', color: 'text-purple-400' },
+  { id: 'goals', name: 'Goals', description: 'Long-term goal tracking', color: 'text-purple-400' },
+  { id: 'vision_board', name: 'Vision Board', description: 'Visualize your dreams', color: 'text-purple-400' },
   { id: 'journal', name: 'Journal', description: 'Daily reflections', color: 'text-purple-400' },
   { id: 'finance', name: 'Finance', description: 'Subscriptions and expenses', color: 'text-purple-400' },
 
@@ -25,7 +27,6 @@ const allFeatures = [
   // Faith & Spiritual
   { id: 'prayer', name: 'Prayer Requests', description: 'Or Send Light & Love', color: 'text-lime-400' },
   { id: 'holy_hitmakers', name: 'Holy Hitmakers', description: 'Faith-based AI music generation', color: 'text-lime-400' },
-  { id: 'bible_resources', name: 'Bible Resources', description: 'Study tools and content', color: 'text-lime-400' },
 
   // Mind + Body Health
   { id: 'mental_health', name: 'Mental Health', description: 'Support tools', color: 'text-yellow-400' },
