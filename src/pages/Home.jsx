@@ -137,8 +137,25 @@ const neurodivergentFeatures = [
   { icon: CheckSquare, title: 'Self-Care Gating', description: 'Optional: Block certain features until self-care tasks are done' },
 ];
 
-// ===================== SOCIAL MEDIA SUITE (PREMIUM) =====================
-const socialMediaFeatures = [
+// ===================== PLUS (PREMIUM) FEATURES =====================
+const plusFeatures = [
+  // Community Tools
+  { 
+    icon: Users, 
+    title: 'Unlimited Groups', 
+    description: 'Create as many groups as you need for family, business, clients, or friends.',
+  },
+  { 
+    icon: Shield, 
+    title: 'Unlimited Child Accounts', 
+    description: 'Manage all your kids in one place with no limits on child accounts.',
+  },
+  { 
+    icon: Star, 
+    title: 'Content Creator Center', 
+    description: 'Your central hub for brainstorming, planning, and managing your content strategy.',
+  },
+  // Social Media Suite
   {
     icon: TrendingUp,
     title: 'Personalized TikTok Analytics',
