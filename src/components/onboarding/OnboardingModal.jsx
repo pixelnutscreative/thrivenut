@@ -6,10 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, MapPin, Sparkles, BookOpen, Heart, Brain } from 'lucide-react';
+import { Loader2, MapPin, Sparkles, BookOpen, Heart, Brain, User, Settings } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import TimezoneSelector from '../shared/TimezoneSelector';
 import ColorPicker from '../shared/ColorPicker';
+import ImageUploader from '../settings/ImageUploader';
 
 const greetingTypeOptions = [
   { id: 'scripture', name: 'Scripture', description: 'Daily Bible verse', icon: '📖' },
@@ -37,16 +38,27 @@ function OnboardingModal({ isOpen, user, onComplete }) {
   const detectedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/New_York';
   
   const [data, setData] = useState({
+    // Profile
+    nickname: '',
+    profile_image_url: '',
+    tiktok_username: '',
+    favorite_color: '#1fd2ea',
+    
+    // Preferences
+    user_timezone: detectedTimezone,
+    time_format: '12h',
+    greeting_types: ['positive_quote'],
+    
+    // Goals
+    mental_health_struggles: [],
+    improvement_goals: [],
+    
+    // Location
     city: '',
     state: '',
     show_on_map: false,
     skip_location: false,
-    user_timezone: detectedTimezone,
-    time_format: '12h',
-    favorite_color: '#1fd2ea',
-    greeting_types: ['positive_quote'],
-    mental_health_struggles: [],
-    improvement_goals: [],
+    
     referral_code_input: ''
   });
 
@@ -54,13 +66,17 @@ function OnboardingModal({ isOpen, user, onComplete }) {
   const [hasReferralCode, setHasReferralCode] = useState(false);
   
   useEffect(() => {
+    if (user?.full_name) {
+        // Default nickname to first name
+        setData(prev => ({ ...prev, nickname: user.full_name.split(' ')[0] }));
+    }
     const referralCode = sessionStorage.getItem('referral_code');
     const storedData = localStorage.getItem('referral_data');
     
     if (referralCode || storedData) {
       setHasReferralCode(true);
     }
-  }, []);
+  }, [user]);
 
   const completeMutation = useMutation({
     mutationFn: async () => {
@@ -146,6 +162,11 @@ function OnboardingModal({ isOpen, user, onComplete }) {
       
       const prefsData = {
         onboarding_completed: true,
+        nickname: data.nickname,
+        profile_image_url: data.profile_image_url,
+        tiktok_username: data.tiktok_username,
+        primary_color: data.favorite_color, // Use favorite color as primary for now? Or keep separate? The schema has primary_color
+        favorite_color: data.favorite_color, // Profile uses this too?
         user_timezone: data.user_timezone,
         time_format: data.time_format,
         greeting_types: data.greeting_types,
@@ -161,7 +182,9 @@ function OnboardingModal({ isOpen, user, onComplete }) {
 
       const profileData = {
         user_email: user.email,
-        favorite_color: data.favorite_color
+        favorite_color: data.favorite_color,
+        tiktok_username: data.tiktok_username,
+        nickname: data.nickname
       };
 
       if (prefs[0]) {
@@ -203,125 +226,150 @@ function OnboardingModal({ isOpen, user, onComplete }) {
   });
 
   const handleNext = () => {
-    if (step === 1 && data.user_timezone) {
+    if (step === 1 && data.nickname) {
       setStep(2);
-    } else if (step === 2) {
+    } else if (step === 2 && data.user_timezone && data.greeting_types.length > 0) {
       setStep(3);
-    } else if (step === 3 && data.greeting_types.length > 0) {
+    } else if (step === 3) {
       setStep(4);
     } else if (step === 4) {
-      setStep(5);
-    } else if (step === 5) {
       completeMutation.mutate();
     }
   };
 
   const canProceed = () => {
-    if (step === 1) return data.user_timezone;
-    if (step === 2) return true; // Favorite color + greeting types combined
-    if (step === 3) return data.greeting_types.length > 0;
-    if (step === 4) return true; // Mental health is optional
-    if (step === 5) return data.skip_location || (data.city && data.state);
+    if (step === 1) return !!data.nickname;
+    if (step === 2) return data.user_timezone && data.greeting_types.length > 0;
+    if (step === 3) return true; // Mental health is optional
+    if (step === 4) return data.skip_location || (data.city && data.state);
     return false;
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-purple-500" />
-            {step === 1 && 'Welcome to Let\'s Thrive!'}
-            {step === 2 && 'Personalize Your Experience'}
-            {step === 3 && 'Daily Inspiration'}
-            {step === 4 && 'What Are You Working On?'}
-            {step === 5 && 'Join Our Community Map'}
+            {step === 1 && 'Let\'s Get to Know You'}
+            {step === 2 && 'Your Preferences'}
+            {step === 3 && 'What Are You Working On?'}
+            {step === 4 && 'Join Our Community Map'}
           </DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-4 py-4">
-          {/* Step 1: Timezone */}
+        <div className="space-y-6 py-4">
+          {/* Step 1: Profile Setup */}
           {step === 1 && (
-            <div className="space-y-4">
-              <p className="text-sm text-gray-600">
-                We've detected your timezone. Update it if needed, and select your preferred time format.
-              </p>
-              <TimezoneSelector 
-                value={data.user_timezone} 
-                onChange={(v) => setData({ ...data, user_timezone: v })} 
-              />
-              <div className="space-y-2 mt-4">
-                <Label>Time Format</Label>
-                <Select value={data.time_format} onValueChange={(v) => setData({ ...data, time_format: v })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="12h">12-hour (2:30 PM)</SelectItem>
-                    <SelectItem value="24h">24-hour / Military (14:30)</SelectItem>
-                  </SelectContent>
-                </Select>
+            <div className="space-y-6">
+              <div className="space-y-4">
+                <div className="flex justify-center">
+                    <ImageUploader 
+                        currentImage={data.profile_image_url}
+                        onImageChange={(url) => setData({ ...data, profile_image_url: url })}
+                        size="small"
+                        label="Profile Picture (Optional)"
+                    />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>What should we call you?</Label>
+                  <Input 
+                    value={data.nickname}
+                    onChange={(e) => setData({ ...data, nickname: e.target.value })}
+                    placeholder="Nickname or First Name"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>TikTok Username (Optional)</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-2.5 text-gray-400">@</span>
+                    <Input 
+                      value={data.tiktok_username}
+                      onChange={(e) => setData({ ...data, tiktok_username: e.target.value.replace('@', '') })}
+                      placeholder="username"
+                      className="pl-7"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Favorite Color</Label>
+                  <ColorPicker
+                    color={data.favorite_color}
+                    onChange={(color) => setData({ ...data, favorite_color: color })}
+                    label="Choose Color"
+                  />
+                  <p className="text-xs text-gray-500">We'll use this for your dashboard theme.</p>
+                </div>
               </div>
             </div>
           )}
 
-          {/* Step 2: Favorite Color */}
+          {/* Step 2: Preferences */}
           {step === 2 && (
             <div className="space-y-6">
-              <div className="space-y-3">
-                <Label className="text-base font-semibold">Pick your favorite color</Label>
-                <p className="text-sm text-gray-600">
-                  We'll use it throughout the app! Your dashboard will be called "{user?.full_name?.split(' ')[0] || 'My'}'s Day"
-                </p>
-                <ColorPicker
-                  color={data.favorite_color}
-                  onChange={(color) => setData({ ...data, favorite_color: color })}
-                  label="Choose Color"
-                />
+              <div className="space-y-4">
+                <div>
+                    <Label className="mb-2 block">Timezone & Format</Label>
+                    <TimezoneSelector 
+                        value={data.user_timezone} 
+                        onChange={(v) => setData({ ...data, user_timezone: v })} 
+                    />
+                    <div className="mt-2">
+                        <Select value={data.time_format} onValueChange={(v) => setData({ ...data, time_format: v })}>
+                        <SelectTrigger>
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="12h">12-hour (2:30 PM)</SelectItem>
+                            <SelectItem value="24h">24-hour / Military (14:30)</SelectItem>
+                        </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+
+                <div>
+                    <Label className="mb-2 block">Daily Inspiration</Label>
+                    <p className="text-xs text-gray-500 mb-3">Choose what you want to see daily (select all that apply):</p>
+                    <div className="grid grid-cols-1 gap-2">
+                        {greetingTypeOptions.map(greeting => {
+                            const isSelected = data.greeting_types.includes(greeting.id);
+                            return (
+                            <div
+                                key={greeting.id}
+                                onClick={() => {
+                                const current = data.greeting_types;
+                                const newTypes = isSelected
+                                    ? current.filter(t => t !== greeting.id)
+                                    : [...current, greeting.id];
+                                if (newTypes.length > 0) {
+                                    setData({ ...data, greeting_types: newTypes });
+                                }
+                                }}
+                                className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                                isSelected ? 'border-purple-500 bg-purple-50' : 'border-gray-200 hover:border-purple-300'
+                                }`}
+                            >
+                                <div className="flex items-center gap-3">
+                                <Checkbox checked={isSelected} />
+                                <span>{greeting.icon}</span>
+                                <div>
+                                    <span className="font-medium text-sm">{greeting.name}</span>
+                                </div>
+                                </div>
+                            </div>
+                            );
+                        })}
+                    </div>
+                </div>
               </div>
             </div>
           )}
 
-          {/* Step 3: Greeting Types */}
+          {/* Step 3: Mental Health / Goals */}
           {step === 3 && (
-            <div className="space-y-4">
-              <p className="text-sm text-gray-600">
-                Choose which types of daily inspiration you want to see (select all that apply):
-              </p>
-              {greetingTypeOptions.map(greeting => {
-                const isSelected = data.greeting_types.includes(greeting.id);
-                return (
-                  <div
-                    key={greeting.id}
-                    onClick={() => {
-                      const current = data.greeting_types;
-                      const newTypes = isSelected
-                        ? current.filter(t => t !== greeting.id)
-                        : [...current, greeting.id];
-                      if (newTypes.length > 0) {
-                        setData({ ...data, greeting_types: newTypes });
-                      }
-                    }}
-                    className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                      isSelected ? 'border-purple-500 bg-purple-50' : 'border-gray-200 hover:border-purple-300'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Checkbox checked={isSelected} />
-                      <span>{greeting.icon}</span>
-                      <div>
-                        <span className="font-medium">{greeting.name}</span>
-                        <p className="text-xs text-gray-500">{greeting.description}</p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Step 4: Mental Health / Goals */}
-          {step === 4 && (
             <div className="space-y-6 overflow-y-auto max-h-[60vh] pr-2">
               <div className="flex items-center gap-2 mb-2">
                 <Heart className="w-5 h-5 text-purple-500" />
@@ -422,8 +470,8 @@ function OnboardingModal({ isOpen, user, onComplete }) {
             </div>
           )}
 
-          {/* Step 5: Location */}
-          {step === 5 && (
+          {/* Step 4: Location */}
+          {step === 4 && (
             <>
               <p className="text-sm text-gray-600">
                 We'd love to show where our Pixel Nuts community is from on a map! Your name won't show - you'll just be a dot at your city center.
@@ -497,7 +545,7 @@ function OnboardingModal({ isOpen, user, onComplete }) {
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 Saving...
               </>
-            ) : step === 5 ? (
+            ) : step === 4 ? (
               "Let's Go!"
             ) : (
               'Next'
@@ -507,7 +555,7 @@ function OnboardingModal({ isOpen, user, onComplete }) {
 
         {/* Progress indicator */}
         <div className="flex gap-1 justify-center mb-2">
-          {[1, 2, 3, 4, 5].map(s => (
+          {[1, 2, 3, 4].map(s => (
             <div
               key={s}
               className={`h-1.5 rounded-full transition-all ${
