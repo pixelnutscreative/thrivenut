@@ -106,8 +106,10 @@ export default function Layout({ children, currentPageName }) {
       if (memberships.length === 0) return [];
       
       const details = await Promise.all(memberships.map(m => base44.entities.CreatorGroup.filter({ id: m.group_id })));
-      return details.flat().filter(g => g && g.status === 'active');
-    },
+      const activeGroups = details.flat().filter(g => g && g.status === 'active');
+      // Deduplicate groups by ID to prevent menu duplicates
+      return Array.from(new Map(activeGroups.map(g => [g.id, g])).values());
+      },
     enabled: !!effectiveEmail
   });
 

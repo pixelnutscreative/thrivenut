@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogT
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Users, Plus, Settings, Video, AlertCircle, ArrowLeft, Loader2, Building, Home, Heart, Sparkles, Brain, Briefcase, Calendar, MessageSquare, FileText, Bell, Eye, EyeOff, Link as LinkIcon, ExternalLink, Clock, Trash2, Filter, LayoutGrid, List, Lock } from 'lucide-react';
-import { useTheme } from '../components/shared/useTheme';
+import { useTheme } from '@/components/shared/useTheme';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import GroupTrainingTab from '../components/groups/GroupTrainingTab';
@@ -66,13 +66,16 @@ export default function CreatorGroups() {
         return results[0];
       });
       const results = await Promise.all(groupPromises);
-      return results.filter(Boolean).sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+      const validGroups = results.filter(Boolean);
+      // Deduplicate groups by ID
+      const uniqueGroups = Array.from(new Map(validGroups.map(g => [g.id, g])).values());
+      return uniqueGroups.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
     },
     enabled: myMemberships.length > 0 && !activeGroupId && !browseMode
   });
 
   // Fetch specific active group (even if not a member, for preview/join)
-  const { data: fetchedActiveGroup } = useQuery({
+  const { data: fetchedActiveGroup, isLoading: isActiveGroupLoading } = useQuery({
     queryKey: ['activeGroup', activeGroupId],
     queryFn: async () => {
       const res = await base44.entities.CreatorGroup.filter({ id: activeGroupId });
@@ -306,8 +309,20 @@ export default function CreatorGroups() {
     enabled: !!activeGroupId
   });
 
-  if (isLoading) {
+  if (isLoading || (activeGroupId && isActiveGroupLoading)) {
     return <div className="flex justify-center items-center h-screen"><Loader2 className="w-8 h-8 animate-spin text-purple-600" /></div>;
+  }
+
+  // Handle case where group ID is in URL but group not found
+  if (activeGroupId && !activeGroup && !isActiveGroupLoading) {
+    return (
+        <div className="flex flex-col items-center justify-center h-screen p-6 text-center">
+            <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
+            <h2 className="text-xl font-bold text-gray-900">Group Not Found</h2>
+            <p className="text-gray-500 mt-2">This group may have been deleted or you don't have permission to view it.</p>
+            <Button className="mt-4" onClick={() => setSearchParams({})}>Back to My Groups</Button>
+        </div>
+    );
   }
 
   const getGroupIcon = (type) => {
