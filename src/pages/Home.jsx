@@ -83,6 +83,48 @@ const freeFeatures = [
     description: 'Curated design resources, AI tools, learning materials, and community workshops from PixelNutsCreative.',
     color: 'from-rose-500 to-red-500'
   },
+  { 
+    icon: CheckSquare, 
+    title: 'Tasks & To-Dos', 
+    description: 'Simple, effective task lists to keep you organized and focused on what matters.',
+    color: 'from-emerald-500 to-teal-500'
+  },
+  { 
+    icon: Zap, 
+    title: 'Habit Tracker', 
+    description: 'Build new habits and break old ones with daily tracking and streak monitoring.',
+    color: 'from-yellow-500 to-orange-500'
+  },
+  { 
+    icon: Wallet, 
+    title: 'Simple Budgeting (KISS)', 
+    description: 'Keep it simple. Track income, expenses, and savings without the headache.',
+    color: 'from-green-500 to-emerald-500'
+  },
+  { 
+    icon: Shield, 
+    title: 'Parenting & Kid Controls', 
+    description: "Manage your kids' access, tasks, and schedules safely with dedicated tools.",
+    color: 'from-blue-500 to-indigo-500'
+  },
+  { 
+    icon: Brain, 
+    title: 'Mental Health Tools', 
+    description: 'Track moods, triggers, and access resources to support your mental well-being.',
+    color: 'from-purple-500 to-pink-500'
+  },
+  { 
+    icon: Activity, 
+    title: 'Activity Tracker', 
+    description: 'Log workouts, steps, and movement to stay healthy and active.',
+    color: 'from-orange-500 to-red-500'
+  },
+  { 
+    icon: Sun, 
+    title: 'Faith & Spiritual Tools', 
+    description: 'Holy Hitmakers music, Bible resources, and prayer journals to nurture your spirit.',
+    color: 'from-yellow-400 to-orange-400'
+  },
 ];
 
 // ===================== NEURODIVERGENT FEATURES =====================
