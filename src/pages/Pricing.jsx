@@ -22,6 +22,9 @@ const features = [
 
 const premiumFeatures = [
   'Social Media Suite',
+  'Unlimited Groups',
+  'Unlimited Child Accounts',
+  'Content Creator Center',
   'Personalized TikTok Analytics',
   'Creator contact management',
   'Content calendar',
