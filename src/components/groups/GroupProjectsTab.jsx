@@ -126,17 +126,7 @@ function ProjectDetail({ projectId, group, currentUser, myMembership, onOpenRepo
     enabled: !!projectId
   });
 
-  // Fetch Retainer/Budget History
-  const { data: retainers = [] } = useQuery({
-    queryKey: ['projectRetainers', projectId],
-    queryFn: () => base44.entities.ProjectRetainer.filter({ project_id: projectId }, '-date_added'),
-    enabled: !!projectId
-  });
-  
   const totalHoursLogged = timeEntries.reduce((sum, entry) => sum + (entry.hours || 0), 0);
-  const totalHoursPurchased = retainers.reduce((sum, r) => sum + (r.hours_added || 0), 0);
-  const hoursRemaining = totalHoursPurchased - totalHoursLogged;
-  const percentUsed = totalHoursPurchased > 0 ? (totalHoursLogged / totalHoursPurchased) * 100 : 0;
 
   return (
     <>
@@ -157,27 +147,16 @@ function ProjectDetail({ projectId, group, currentUser, myMembership, onOpenRepo
           </div>
         </div>
 
-        {/* Budget/Retainer Overview */}
-        {(totalHoursPurchased > 0 || isOwnerOrAdmin(myMembership.role)) && (
-          <div className="mt-6 bg-white rounded-lg border p-4 shadow-sm">
-            <div className="flex justify-between items-center mb-2">
-              <h4 className="font-semibold text-sm text-gray-700">Retainer Hours</h4>
-              <span className={`text-sm font-bold ${hoursRemaining < 0 ? 'text-red-600' : 'text-green-600'}`}>
-                {hoursRemaining.toFixed(2)}h remaining
-              </span>
-            </div>
-            <div className="w-full bg-gray-100 rounded-full h-2.5 mb-2 overflow-hidden">
-              <div 
-                className={`h-2.5 rounded-full ${hoursRemaining < 0 ? 'bg-red-500' : 'bg-purple-600'}`} 
-                style={{ width: `${Math.min(percentUsed, 100)}%` }}
-              ></div>
-            </div>
-            <div className="flex justify-between text-xs text-gray-500">
-              <span>{totalHoursLogged.toFixed(2)}h logged</span>
-              <span>{totalHoursPurchased.toFixed(2)}h total purchased</span>
-            </div>
+        {/* Project Hours Overview */}
+        <div className="mt-6 bg-white rounded-lg border p-4 shadow-sm flex justify-between items-center">
+          <div>
+            <h4 className="font-semibold text-sm text-gray-700">Total Project Hours</h4>
+            <p className="text-xs text-gray-500">Time logged on this project</p>
           </div>
-        )}
+          <div className="text-xl font-bold text-gray-900">
+            {totalHoursLogged.toFixed(2)}h
+          </div>
+        </div>
       </div>
 
       {/* Task List */}

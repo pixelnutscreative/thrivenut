@@ -84,6 +84,11 @@ function MeetingCard({ meeting, isExpanded, onToggle }) {
                  <h3 className="font-bold text-lg">{meeting.title}</h3>
                  <div className="flex items-center gap-4 text-sm text-gray-500 mt-1">
                     <span className="flex items-center gap-1"><Calendar className="w-4 h-4" /> {format(new Date(meeting.meeting_date), 'PPP p')}</span>
+                    {meeting.hours > 0 && (
+                      <span className="bg-gray-100 px-2 py-0.5 rounded-full text-xs font-medium text-gray-700">
+                        {meeting.hours}h Logged
+                      </span>
+                    )}
                     {meeting.attendees && meeting.attendees.length > 0 && (
                        <span>{meeting.attendees.length} Attendees</span>
                     )}
@@ -161,19 +166,21 @@ function AddMeetingDialog({ groupId }) {
     meeting_date: '', 
     attendees: '', 
     video_url: '', 
-    transcript: '' 
+    transcript: '',
+    hours: '0'
   });
 
   const mutation = useMutation({
     mutationFn: (meeting) => base44.entities.MeetingRecording.create({
       ...meeting,
       group_id: groupId,
+      hours: parseFloat(meeting.hours) || 0,
       attendees: meeting.attendees.split(',').map(e => e.trim()).filter(Boolean)
     }),
     onSuccess: () => {
       queryClient.invalidateQueries(['groupMeetings', groupId]);
       setIsOpen(false);
-      setData({ title: '', meeting_date: '', attendees: '', video_url: '', transcript: '' });
+      setData({ title: '', meeting_date: '', attendees: '', video_url: '', transcript: '', hours: '0' });
     }
   });
 
@@ -194,8 +201,19 @@ function AddMeetingDialog({ groupId }) {
                  <label className="text-sm font-medium">Date & Time</label>
                  <Input type="datetime-local" value={data.meeting_date} onChange={e => setData({...data, meeting_date: e.target.value})} />
               </div>
-           </div>
-           <div className="space-y-2">
+              </div>
+              <div className="space-y-2">
+              <label className="text-sm font-medium">Duration (Hours)</label>
+              <Input 
+                type="number" 
+                step="0.25" 
+                value={data.hours} 
+                onChange={e => setData({...data, hours: e.target.value})} 
+                placeholder="1.0"
+              />
+              <p className="text-xs text-gray-500">Time to deduct from retainer package.</p>
+              </div>
+              <div className="space-y-2">
               <label className="text-sm font-medium">Attendees (comma separated emails)</label>
               <Input value={data.attendees} onChange={e => setData({...data, attendees: e.target.value})} placeholder="alice@example.com, bob@example.com" />
            </div>

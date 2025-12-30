@@ -309,6 +309,50 @@ export default function CreatorGroups() {
     enabled: !!activeGroupId
   });
 
+  // --- Retainer Balance Calculation ---
+  // Only fetch for Client Portal groups
+  const isClientPortal = ['client-portal', 'agency'].includes(activeGroup?.type);
+  
+  const { data: retainerBalance } = useQuery({
+    queryKey: ['retainerBalance', activeGroupId],
+    queryFn: async () => {
+      if (!activeGroupId) return null;
+      
+      // 1. Get total purchased hours (GroupMemberRetainerPackage)
+      // Note: Assuming we want sum of ALL packages in the group (typically 1 client)
+      const packages = await base44.entities.GroupMemberRetainerPackage.filter({ group_id: activeGroupId });
+      const purchased = packages.reduce((sum, p) => sum + (p.hours_purchased || 0), 0);
+
+      // 2. Get total project logged hours (TimeEntry)
+      // We need to fetch projects first to get project IDs? 
+      // TimeEntry has project_id but not group_id directly (unless we added it? Schema says project_id).
+      // But we can filter TimeEntry by... wait, TimeEntry schema doesn't have group_id. 
+      // We must fetch projects first.
+      const projects = await base44.entities.GroupProject.filter({ group_id: activeGroupId });
+      const projectIds = projects.map(p => p.id);
+      
+      let logged = 0;
+      if (projectIds.length > 0) {
+         // This is a bit inefficient if many projects, but fine for now. 
+         // Ideally TimeEntry should have group_id.
+         const timePromises = projectIds.map(pid => base44.entities.TimeEntry.filter({ project_id: pid }));
+         const allTime = await Promise.all(timePromises);
+         logged = allTime.flat().reduce((sum, t) => sum + (t.hours || 0), 0);
+      }
+
+      // 3. Get total meeting hours (MeetingRecording)
+      const meetings = await base44.entities.MeetingRecording.filter({ group_id: activeGroupId });
+      const meetingHours = meetings.reduce((sum, m) => sum + (m.hours || 0), 0);
+
+      return {
+        purchased,
+        used: logged + meetingHours,
+        remaining: purchased - (logged + meetingHours)
+      };
+    },
+    enabled: !!activeGroupId && isClientPortal
+  });
+
   if (isLoading || (activeGroupId && isActiveGroupLoading)) {
     return <div className="flex justify-center items-center h-screen"><Loader2 className="w-8 h-8 animate-spin text-purple-600" /></div>;
   }
@@ -414,7 +458,23 @@ export default function CreatorGroups() {
     const userLevel = activeMembership?.level || 'Member';
     const userStatus = activeMembership?.status;
     
-    // Client Role Override: Clients should always see their core tabs
+    // Check for explicit permissions from Group Settings first
+    const permissions = activeGroup?.role_tab_permissions;
+    if (permissions && permissions[id] !== undefined) {
+       // If the tab is configured in permissions, use that configuration STRICTLY
+       const attributes = [userRole, userLevel, userStatus].filter(Boolean);
+       const allowedList = permissions[id];
+       const hasPermission = attributes.some(attr => allowedList.includes(attr));
+       
+       // Admins always bypass unless they specifically want to test? 
+       // Standard practice: Admins see everything. 
+       if (isAdmin) return true;
+
+       return hasPermission;
+    }
+
+    // Fallback logic if permissions are NOT set for this tab
+    // Client Role Default: Clients usually see core tabs
     if (userRole === 'client' && ['feed', 'projects', 'meetings', 'resources', 'requests'].includes(id)) {
         return true;
     }
@@ -422,7 +482,6 @@ export default function CreatorGroups() {
     // Client Portal overrides: always enable these tabs regardless of GroupType config
     if (isClientGroup && ['feed', 'projects', 'meetings', 'resources', 'requests', 'members'].includes(id)) {
         if (id === 'members' && !isAdmin) return false;
-        // Continue to check role-based permissions
     } else if (allowed && !allowed.has(id)) {
         // If the group type doesn't explicitly allow it, we usually hide it.
         // BUT admins should see everything to configure/test.
@@ -433,19 +492,6 @@ export default function CreatorGroups() {
     
     // Admin Override
     if (isAdmin) return true;
-
-    // Role-Based Permissions
-    const permissions = activeGroup?.role_tab_permissions;
-    if (permissions && permissions[id] && permissions[id].length > 0) {
-       // Check if ANY of the user's attributes (role, level, status) are in the allowed list
-       const attributes = [userRole, userLevel, userStatus].filter(Boolean);
-       const allowedList = permissions[id];
-       
-       // If intersection is empty, user is not allowed
-       // NOTE: We check if ANY attribute matches. 
-       const hasPermission = attributes.some(attr => allowedList.includes(attr));
-       if (!hasPermission) return false;
-    }
 
     return !(groupPrefs?.hidden_tabs || []).includes(id);
   };
@@ -867,6 +913,30 @@ export default function CreatorGroups() {
         </div>
 
         <div className="lg:col-span-3">
+          
+          {/* Retainer Balance Header */}
+          {retainerBalance && (retainerBalance.purchased > 0 || isAdmin) && (
+            <div className="bg-white rounded-xl p-4 border shadow-sm mb-6 flex flex-col sm:flex-row justify-between items-center gap-4 bg-gradient-to-r from-white to-purple-50/50">
+               <div className="flex items-center gap-3">
+                  <div className="p-3 bg-purple-100 text-purple-600 rounded-lg">
+                     <Clock className="w-6 h-6" />
+                  </div>
+                  <div>
+                     <h3 className="font-bold text-gray-900">Hours Balance</h3>
+                     <p className="text-sm text-gray-500">
+                        {retainerBalance.purchased.toFixed(2)}h Purchased • {retainerBalance.used.toFixed(2)}h Used
+                     </p>
+                  </div>
+               </div>
+               <div className="text-right">
+                  <div className={`text-2xl font-bold ${retainerBalance.remaining < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                     {retainerBalance.remaining.toFixed(2)}h
+                  </div>
+                  <div className="text-xs text-gray-400 font-medium uppercase tracking-wider">Remaining</div>
+               </div>
+            </div>
+          )}
+
           <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-6">
             <TabsList className="bg-white border p-1 rounded-xl h-auto flex-wrap gap-1 w-full justify-start">
               {availableTabs.map(tab => {
