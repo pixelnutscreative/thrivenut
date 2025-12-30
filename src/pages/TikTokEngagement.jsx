@@ -15,6 +15,7 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
 import { useTheme } from '../components/shared/useTheme';
+import TikTokStatsWidget from '@/components/widgets/TikTokStatsWidget';
 
 const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -608,6 +609,9 @@ export default function TikTokEngagement() {
             </Button>
           </Link>
         </div>
+
+        {/* My Growth Tracker */}
+        <TikTokStatsWidget />
 
         {/* Engagement Guide */}
         <Card className={isDark ? 'bg-gradient-to-r from-blue-900/30 to-cyan-900/30 border-blue-700' : 'bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200'}>
