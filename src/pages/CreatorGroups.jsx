@@ -405,7 +405,7 @@ export default function CreatorGroups() {
     }
 
     // Client Portal overrides: always enable these tabs regardless of GroupType config
-    if (isClientPortal && ['feed', 'projects', 'meetings', 'resources', 'requests', 'members'].includes(id)) {
+    if (isClientGroup && ['feed', 'projects', 'meetings', 'resources', 'requests', 'members'].includes(id)) {
         if (id === 'members' && !isAdmin) return false;
         // Continue to check role-based permissions
     } else if (allowed && !allowed.has(id)) {
