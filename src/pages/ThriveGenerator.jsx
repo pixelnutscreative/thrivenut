@@ -8,25 +8,51 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Sparkles, Image as ImageIcon, Copy, Download, Save, RefreshCw, Lightbulb, Trash2 } from 'lucide-react';
+import { Loader2, Sparkles, Image as ImageIcon, Copy, Download, Save, RefreshCw, Lightbulb, Trash2, ExternalLink, Image } from 'lucide-react';
 import { useTheme } from '../components/shared/useTheme';
 
 const CATEGORY = 'thrive';
 
 export default function ThriveGenerator() {
-  const { bgClass } = useTheme();
+  const { bgClass, effectiveEmail, preferences } = useTheme();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('generate');
   
   // Generator State
   const [genFeature, setGenFeature] = useState('Overview');
   const [customFeature, setCustomFeature] = useState('');
+  
   const [genType, setGenType] = useState('social_caption');
+  const [customType, setCustomType] = useState('');
+  
   const [targetAudience, setTargetAudience] = useState('Entrepreneurs');
+  const [customAudience, setCustomAudience] = useState('');
+  
   const [tone, setTone] = useState('Pixel Style (Humorous)');
+  const [customTone, setCustomTone] = useState('');
   
   const [generatedContent, setGeneratedContent] = useState('');
   const [copySuccess, setCopySuccess] = useState(false);
+  const [showToolPicker, setShowToolPicker] = useState(false);
+
+  // Fetch AI tool links
+  const { data: aiToolLinks = [] } = useQuery({
+    queryKey: ['aiToolLinks'],
+    queryFn: () => base44.entities.AIToolLink.filter({ is_active: true }, 'sort_order'),
+  });
+
+  // Detect user's AI platform (for tool links)
+  const { data: platformUser } = useQuery({
+    queryKey: ['platformUser', effectiveEmail],
+    queryFn: async () => {
+      if (!effectiveEmail) return null;
+      const users = await base44.entities.AIPlatformUser.filter({ user_email: effectiveEmail });
+      return users[0] || null;
+    },
+    enabled: !!effectiveEmail,
+  });
+
+  const userPlatform = preferences?.ai_platform || platformUser?.platform || 'lets_go_nuts';
 
   // Fetch Assets (Content Library)
   const { data: assets = [] } = useQuery({
@@ -79,11 +105,15 @@ export default function ThriveGenerator() {
   const generateMutation = useMutation({
     mutationFn: async () => {
       const featureToUse = genFeature === 'Custom' ? customFeature : genFeature;
+      const typeToUse = genType === 'Custom' ? customType : genType;
+      const audienceToUse = targetAudience === 'Custom' ? customAudience : targetAudience;
+      const toneToUse = tone === 'Custom' ? customTone : tone;
+
       const res = await base44.functions.invoke('generateMarketingContent', {
         feature: featureToUse,
-        contentType: genType,
-        targetAudience: targetAudience,
-        tone: tone
+        contentType: typeToUse,
+        targetAudience: audienceToUse,
+        tone: toneToUse
       });
       return res.data?.content;
     },
@@ -92,6 +122,9 @@ export default function ThriveGenerator() {
       
       const user = await base44.auth.me();
       const featureToUse = genFeature === 'Custom' ? customFeature : genFeature;
+      const typeToUse = genType === 'Custom' ? customType : genType;
+      const audienceToUse = targetAudience === 'Custom' ? customAudience : targetAudience;
+      const toneToUse = tone === 'Custom' ? customTone : tone;
       
       await base44.entities.GeneratedContentHistory.create({
         user_email: user.email,
@@ -99,7 +132,7 @@ export default function ThriveGenerator() {
         tool_name: 'Thrive Generator',
         content: data,
         content_type: 'text',
-        inputs: { feature: featureToUse, type: genType, audience: targetAudience, tone: tone }
+        inputs: { feature: featureToUse, type: typeToUse, audience: audienceToUse, tone: toneToUse }
       });
       queryClient.invalidateQueries({ queryKey: ['generatedHistory'] });
     }
@@ -210,12 +243,24 @@ export default function ThriveGenerator() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="social_caption">Social Media Caption</SelectItem>
+                            <SelectItem value="image_post">Image + Post Copy</SelectItem>
                             <SelectItem value="short_script">Short Video Script (Reels/TikTok)</SelectItem>
+                            <SelectItem value="ai_character">AI Character Video (Voiceover)</SelectItem>
+                            <SelectItem value="ai_song">Short AI Song (approx 1:11)</SelectItem>
                             <SelectItem value="story_idea">Story/Post Idea</SelectItem>
                             <SelectItem value="email_blurb">Email Newsletter Blurb</SelectItem>
                             <SelectItem value="dm_script">Direct Message Script</SelectItem>
+                            <SelectItem value="Custom">✨ Custom Type</SelectItem>
                           </SelectContent>
                         </Select>
+                        {genType === 'Custom' && (
+                          <Input 
+                            placeholder="e.g. LinkedIn Article"
+                            value={customType}
+                            onChange={(e) => setCustomType(e.target.value)}
+                            className="mt-2"
+                          />
+                        )}
                       </div>
 
                       {/* Target Audience */}
@@ -232,8 +277,17 @@ export default function ThriveGenerator() {
                             <SelectItem value="Moms">Moms / Parents</SelectItem>
                             <SelectItem value="Students">Students</SelectItem>
                             <SelectItem value="Busy Professionals">Busy Professionals</SelectItem>
+                            <SelectItem value="Custom">✨ Custom Audience</SelectItem>
                           </SelectContent>
                         </Select>
+                        {targetAudience === 'Custom' && (
+                          <Input 
+                            placeholder="e.g. Yoga Instructors"
+                            value={customAudience}
+                            onChange={(e) => setCustomAudience(e.target.value)}
+                            className="mt-2"
+                          />
+                        )}
                       </div>
 
                       {/* Tone */}
@@ -249,8 +303,17 @@ export default function ThriveGenerator() {
                             <SelectItem value="Encouraging">Encouraging & Warm</SelectItem>
                             <SelectItem value="Sassy/Edgy">Sassy / Edgy</SelectItem>
                             <SelectItem value="Neurospicy Friendly">Neurospicy Friendly</SelectItem>
+                            <SelectItem value="Custom">✨ Custom Tone</SelectItem>
                           </SelectContent>
                         </Select>
+                        {tone === 'Custom' && (
+                          <Input 
+                            placeholder="e.g. Witty and Dry"
+                            value={customTone}
+                            onChange={(e) => setCustomTone(e.target.value)}
+                            className="mt-2"
+                          />
+                        )}
                       </div>
 
                       <Button 
@@ -286,13 +349,75 @@ export default function ThriveGenerator() {
                              >
                                <Save className="w-4 h-4 mr-2" /> Save as Idea
                              </Button>
-                             <Button variant="default" className="bg-teal-600" onClick={() => {
-                               navigator.clipboard.writeText(generatedContent);
-                               setCopySuccess(true);
-                               setTimeout(() => setCopySuccess(false), 2000);
-                             }}>
-                               {copySuccess ? <span className="flex items-center gap-1">✓ Copied</span> : <><Copy className="w-4 h-4 mr-2" /> Copy</>}
-                             </Button>
+                             
+                             <div className="relative">
+                               <Button 
+                                 variant="default" 
+                                 className="bg-teal-600" 
+                                 onClick={() => setShowToolPicker(!showToolPicker)}
+                               >
+                                 <Copy className="w-4 h-4 mr-2" /> Copy & Open Tool
+                               </Button>
+
+                               {showToolPicker && (
+                                 <>
+                                   <div className="fixed inset-0 z-40" onClick={() => setShowToolPicker(false)} />
+                                   <div className="absolute right-0 bottom-full mb-2 bg-white border border-teal-200 rounded-lg shadow-xl z-50 p-2 min-w-[240px]">
+                                     <button
+                                       onClick={() => {
+                                         navigator.clipboard.writeText(generatedContent);
+                                         setCopySuccess(true);
+                                         setTimeout(() => setCopySuccess(false), 2000);
+                                         setShowToolPicker(false);
+                                       }}
+                                       className="w-full flex items-center gap-2 px-3 py-2 hover:bg-teal-50 rounded text-left border-b border-gray-100 mb-1"
+                                     >
+                                       <Copy className="w-4 h-4 text-teal-600" />
+                                       <span className="text-sm font-medium">Just Copy</span>
+                                     </button>
+                                     <p className="text-xs font-semibold text-gray-500 my-2 px-2">Copy & Open In:</p>
+                                     <div className="space-y-1 max-h-64 overflow-y-auto">
+                                       {aiToolLinks.map(tool => {
+                                         let url = '';
+                                         if (tool.is_general_tool) {
+                                           url = tool.pixels_toolbox_url || tool.lets_go_nuts_url;
+                                         } else if (tool.app_id) {
+                                           const baseUrl = userPlatform === 'pixels_toolbox'
+                                             ? 'https://ai.thenutsandbots.com/apps/custom-app/'
+                                             : 'https://create.letsgonuts.ai/apps/custom-app/';
+                                           url = baseUrl + tool.app_id;
+                                         } else {
+                                           url = userPlatform === 'pixels_toolbox' ? tool.pixels_toolbox_url : tool.lets_go_nuts_url;
+                                         }
+                                         
+                                         if (!url) return null;
+
+                                         return (
+                                           <button
+                                             key={tool.id}
+                                             onClick={() => {
+                                               navigator.clipboard.writeText(generatedContent);
+                                               window.open(url, '_blank');
+                                               setShowToolPicker(false);
+                                             }}
+                                             className="w-full flex items-center gap-2 px-3 py-2 hover:bg-teal-50 rounded text-left"
+                                           >
+                                             {tool.icon_url ? (
+                                               <img src={tool.icon_url} alt="" className="w-5 h-5 rounded object-cover" />
+                                             ) : tool.icon_emoji ? (
+                                               <span className="text-lg">{tool.icon_emoji}</span>
+                                             ) : (
+                                               <Image className="w-4 h-4 text-gray-400" />
+                                             )}
+                                             <span className="text-sm font-medium truncate">{tool.tool_name}</span>
+                                           </button>
+                                         );
+                                       })}
+                                     </div>
+                                   </div>
+                                 </>
+                               )}
+                             </div>
                            </div>
                         </div>
                       ) : (
