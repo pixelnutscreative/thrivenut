@@ -25,6 +25,7 @@ import QuickActionsSettings from '../components/settings/QuickActionsSettings';
 import SoundCloudSettings from '../components/settings/SoundCloudSettings';
 import MoodEmojiSettings from '../components/settings/MoodEmojiSettings';
 import WidgetSettingsV2 from '../components/settings/WidgetSettingsV2';
+import MentalHealthSettings from '../components/settings/MentalHealthSettings';
 // ReferralsTab removed
 import AccountDeletionTab from '../components/settings/AccountDeletionTab';
 import AIPersonalitySettings from '../components/settings/AIPersonalitySettings';
@@ -675,6 +676,7 @@ export default function Settings() {
 
             <AIPersonalitySettings formData={prefData} setFormData={setPrefData} />
             <AddressingPreferences formData={prefData} setFormData={setPrefData} />
+            <MentalHealthSettings formData={prefData} setFormData={setPrefData} />
             <Card className="mb-4">
               <CardHeader>
                 <CardTitle className="text-base">General Preferences</CardTitle>

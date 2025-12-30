@@ -19,9 +19,15 @@ const greetingTypeOptions = [
 ];
 
 const commonStruggles = [
-  'ADHD', 'Anxiety', 'Depression', 'Stress', 'Focus Issues', 
-  'Overwhelm', 'Low Energy', 'Sleep Problems', 'Social Anxiety', 
-  'Procrastination', 'Burnout', 'Time Management'
+  'ADHD / Focus', 'Anger Management', 'Anxiety', 'Autism / Sensory', 
+  'Depression', 'Grief / Loss', 'Loneliness', 'Sleep Issues', 
+  'Stress / Overwhelm', 'Trauma / PTSD'
+];
+
+const improvementGoals = [
+  'Confidence', 'Emotional Regulation', 'Gratitude', 'Mindfulness', 
+  'Motivation', 'Productivity', 'Relationships', 'Self-Care', 
+  'Self-Esteem', 'Setting Boundaries'
 ];
 
 function OnboardingModal({ isOpen, user, onComplete }) {
@@ -316,14 +322,19 @@ function OnboardingModal({ isOpen, user, onComplete }) {
 
           {/* Step 4: Mental Health / Goals */}
           {step === 4 && (
-            <div className="space-y-4">
+            <div className="space-y-6 overflow-y-auto max-h-[60vh] pr-2">
+              <div className="flex items-center gap-2 mb-2">
+                <Heart className="w-5 h-5 text-purple-500" />
+                <h3 className="font-semibold text-gray-800">What You're Working On</h3>
+              </div>
+              <p className="text-xs text-gray-500 -mt-4 mb-4">
+                This helps personalize your affirmations and AI support. 100% private. 💜
+              </p>
+
+              {/* Struggles */}
               <div>
-                <Label className="mb-2 flex items-center gap-2">
-                  <Brain className="w-4 h-4" />
-                  What are you working on? (Optional)
-                </Label>
-                <p className="text-xs text-gray-500 mb-3">Select ALL areas you'd like support with. You can update this anytime in Settings.</p>
-                <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto pr-2">
+                <Label className="mb-2 block text-sm font-medium">Things I'm working through...</Label>
+                <div className="flex flex-wrap gap-2">
                   {commonStruggles.map(struggle => {
                     const isSelected = data.mental_health_struggles.includes(struggle);
                     return (
@@ -338,31 +349,75 @@ function OnboardingModal({ isOpen, user, onComplete }) {
                               : [...current, struggle]
                           });
                         }}
-                        className={`p-2 rounded-lg border text-xs transition-all ${
-                          isSelected ? 'border-purple-500 bg-purple-50 text-purple-700' : 'border-gray-200 hover:border-purple-300'
+                        className={`px-3 py-1.5 rounded-full border text-xs transition-all ${
+                          isSelected 
+                            ? 'border-orange-200 bg-orange-50 text-orange-700' 
+                            : 'border-gray-200 hover:border-orange-200'
                         }`}
                       >
+                        {isSelected && <span className="mr-1">😓</span>}
                         {struggle}
                       </button>
                     );
                   })}
                 </div>
               </div>
+
+              {/* Improvements */}
               <div>
-                <Label className="mb-2">Add custom areas (optional)</Label>
-                <Input
-                  placeholder="Add your own (comma separated)"
-                  onBlur={(e) => {
-                    if (e.target.value.trim()) {
-                      const custom = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
-                      setData({
-                        ...data,
-                        mental_health_struggles: [...new Set([...data.mental_health_struggles, ...custom])]
-                      });
-                      e.target.value = '';
-                    }
-                  }}
-                />
+                <Label className="mb-2 block text-sm font-medium">Things I want to improve...</Label>
+                <div className="flex flex-wrap gap-2">
+                  {improvementGoals.map(goal => {
+                    const isSelected = data.improvement_goals.includes(goal);
+                    return (
+                      <button
+                        key={goal}
+                        onClick={() => {
+                          const current = data.improvement_goals;
+                          setData({
+                            ...data,
+                            improvement_goals: isSelected
+                              ? current.filter(g => g !== goal)
+                              : [...current, goal]
+                          });
+                        }}
+                        className={`px-3 py-1.5 rounded-full border text-xs transition-all ${
+                          isSelected 
+                            ? 'border-blue-200 bg-blue-50 text-blue-700' 
+                            : 'border-gray-200 hover:border-blue-200'
+                        }`}
+                      >
+                        {isSelected && <span className="mr-1">✨</span>}
+                        {goal}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Custom */}
+              <div>
+                <Label className="mb-2 block text-sm">Custom Items I'm Working On</Label>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Add custom item (e.g. 'Burnout')"
+                    onBlur={(e) => {
+                      if (e.target.value.trim()) {
+                        const custom = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+                        setData({
+                          ...data,
+                          mental_health_struggles: [...new Set([...data.mental_health_struggles, ...custom])]
+                        });
+                        e.target.value = '';
+                      }
+                    }}
+                    className="text-sm"
+                  />
+                  <Button variant="outline" size="sm" className="shrink-0">Add</Button>
+                </div>
+                <p className="text-[10px] text-gray-400 mt-1">
+                  Add your own custom items. Once submitted, admin can add them to the global list for others.
+                </p>
               </div>
             </div>
           )}
