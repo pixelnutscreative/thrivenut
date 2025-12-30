@@ -229,12 +229,12 @@ export default function BrainDump() {
             </div>
           </div>
           <Button 
-            onClick={analyzeBrainDump} 
+            onClick={() => analyzeBrainDump(null)} 
             disabled={isAnalyzing || dumps.length === 0}
             className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white"
           >
             {isAnalyzing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}
-            AI Sort & Organize
+            Organize Saved Items
           </Button>
         </div>
 
@@ -266,7 +266,15 @@ export default function BrainDump() {
                           <span className="font-bold capitalize">{item.type}</span>
                           <span className="text-sm bg-white px-2 rounded border">{item.suggested_category}</span>
                         </div>
-                        <p className="font-medium text-gray-900">{item.suggested_title}</p>
+                        <Input 
+                          value={item.suggested_title} 
+                          onChange={(e) => {
+                            const newResults = [...analysisResults];
+                            newResults[idx].suggested_title = e.target.value;
+                            setAnalysisResults(newResults);
+                          }}
+                          className="font-medium text-gray-900 mb-1"
+                        />
                         <p className="text-xs text-gray-500 mt-1">{item.reasoning}</p>
                       </div>
                       <div className="flex gap-2">
@@ -333,7 +341,15 @@ export default function BrainDump() {
                 className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
               >
                 <Save className="w-4 h-4 mr-2" />
-                Save Thought
+                Save Only
+              </Button>
+              <Button 
+                onClick={() => analyzeBrainDump(content)} 
+                disabled={!content.trim() || isAnalyzing}
+                className="flex-1 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white"
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                AI Process Now
               </Button>
             </div>
           </CardContent>
