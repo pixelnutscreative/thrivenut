@@ -551,29 +551,47 @@ For resources (books, movies, articles), suggest a category like 'Reading List',
                 <p className="text-sm text-gray-500">
                   Dump everything on your mind here. No structure needed. Organize later.
                 </p>
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-start">
                   <Textarea
                     value={brainDumpText}
                     onChange={(e) => setBrainDumpText(e.target.value)}
                     placeholder="Type anything that comes to mind... ideas, todos, random thoughts..."
                     className="flex-1"
                     rows={3}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleBrainDump();
-                      }
-                    }}
                   />
-                  <Button onClick={handleBrainDump} style={{ backgroundColor: primaryColor }}>
-                    <Zap className="w-4 h-4 mr-2" />
-                    Capture
-                  </Button>
+                  <div className="flex flex-col gap-2">
+                    <Button onClick={handleBrainDump} style={{ backgroundColor: primaryColor }} disabled={!brainDumpText.trim()}>
+                      <Zap className="w-4 h-4 mr-2" />
+                      Capture Only
+                    </Button>
+                    <Button 
+                      onClick={() => analyzeBrainDump(brainDumpText)} 
+                      disabled={!brainDumpText.trim() || isAnalyzing}
+                      className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white"
+                    >
+                      {isAnalyzing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}
+                      AI Process
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
             {/* Brain Dump Items */}
+            <div className="flex justify-between items-center pt-4">
+              <h3 className="font-semibold text-gray-500 uppercase text-xs tracking-wider">Saved Items ({brainDumps.length})</h3>
+              <Button 
+                onClick={() => analyzeBrainDump(null)} 
+                disabled={isAnalyzing || brainDumps.length === 0}
+                variant="outline"
+                size="sm"
+                className="border-purple-200 text-purple-700 hover:bg-purple-50"
+              >
+                {isAnalyzing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}
+                Organize All Saved
+              </Button>
+            </div>
+
             {brainDumps.length === 0 ? (
               <Card className={cardBgClass}>
                 <CardContent className="py-12 text-center text-gray-500">
