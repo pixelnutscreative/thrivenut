@@ -540,7 +540,7 @@ export default function Home() {
           className="text-center mb-12"
         >
           <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-lg px-4 py-1 mb-4 animate-pulse">
-            🎄 HOLIDAY SPECIAL - Ends December 7th!
+            🎄 HOLIDAY SPECIAL
           </Badge>
           <h2 className="text-4xl md:text-5xl font-bold mb-4">
             Get <span className="text-purple-400">Access</span>
@@ -569,7 +569,7 @@ export default function Home() {
                     <span className="text-gray-400">/month</span>
                   </div>
                   <p className="text-teal-300 text-sm mt-1">for 7 months ($49 total)</p>
-                  <p className="text-xs text-gray-500 mt-2">Ends December 7th!</p>
+                  <p className="text-xs text-gray-500 mt-2">Limited Time Offer</p>
                 </div>
 
                 <div className="space-y-2 mb-6 text-sm">
