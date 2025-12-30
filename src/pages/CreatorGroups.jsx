@@ -619,10 +619,6 @@ export default function CreatorGroups() {
               const isHidden = pref?.is_hidden_from_list;
               const membership = myMemberships.find(m => m.group_id === group.id);
               const isMember = !!membership;
-              
-              const customColor = group.settings?.group_color;
-              const iconStyle = customColor ? { backgroundColor: customColor + '20', color: customColor } : {};
-              const iconClass = customColor ? '' : colorClass;
 
               return (
                 <Card key={group.id} className={`hover:shadow-lg transition-all cursor-pointer group ${isHidden ? 'opacity-60 bg-gray-50' : ''}`} onClick={() => setSearchParams({ id: group.id })}>
