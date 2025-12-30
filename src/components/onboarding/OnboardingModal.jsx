@@ -33,6 +33,7 @@ const improvementGoals = [
 
 function OnboardingModal({ isOpen, user, onComplete }) {
   const [step, setStep] = useState(1);
+  const [customInput, setCustomInput] = useState('');
   
   // Auto-detect timezone
   const detectedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/New_York';
@@ -446,23 +447,67 @@ function OnboardingModal({ isOpen, user, onComplete }) {
               {/* Custom */}
               <div>
                 <Label className="mb-2 block text-sm">Custom Items I'm Working On</Label>
-                <div className="flex gap-2">
+                <div className="flex gap-2 mb-2">
                   <Input
-                    placeholder="Add custom item (e.g. 'Burnout')"
-                    onBlur={(e) => {
-                      if (e.target.value.trim()) {
-                        const custom = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
-                        setData({
-                          ...data,
-                          mental_health_struggles: [...new Set([...data.mental_health_struggles, ...custom])]
-                        });
-                        e.target.value = '';
+                    value={customInput}
+                    onChange={(e) => setCustomInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && customInput.trim()) {
+                        e.preventDefault();
+                        const newItem = customInput.trim();
+                        if (!data.mental_health_struggles.includes(newItem)) {
+                          setData({
+                            ...data,
+                            mental_health_struggles: [...data.mental_health_struggles, newItem]
+                          });
+                        }
+                        setCustomInput('');
                       }
                     }}
+                    placeholder="Add custom item (e.g. 'Burnout')"
                     className="text-sm"
                   />
-                  <Button variant="outline" size="sm" className="shrink-0">Add</Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="shrink-0"
+                    onClick={() => {
+                      if (customInput.trim()) {
+                        const newItem = customInput.trim();
+                        if (!data.mental_health_struggles.includes(newItem)) {
+                          setData({
+                            ...data,
+                            mental_health_struggles: [...data.mental_health_struggles, newItem]
+                          });
+                        }
+                        setCustomInput('');
+                      }
+                    }}
+                  >
+                    Add
+                  </Button>
                 </div>
+                
+                {/* Display custom added items */}
+                {data.mental_health_struggles.filter(s => !commonStruggles.includes(s)).length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {data.mental_health_struggles.filter(s => !commonStruggles.includes(s)).map(custom => (
+                      <button
+                        key={custom}
+                        onClick={() => {
+                          setData({
+                            ...data,
+                            mental_health_struggles: data.mental_health_struggles.filter(s => s !== custom)
+                          });
+                        }}
+                        className="px-3 py-1.5 rounded-full border text-xs bg-purple-50 border-purple-200 text-purple-700 flex items-center gap-1 hover:bg-purple-100"
+                      >
+                        {custom} <span className="text-[10px] ml-1">×</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
                 <p className="text-[10px] text-gray-400 mt-1">
                   Add your own custom items. Once submitted, admin can add them to the global list for others.
                 </p>
@@ -478,12 +523,12 @@ function OnboardingModal({ isOpen, user, onComplete }) {
               </p>
 
               {!data.skip_location && (
-                <>
+                <div className="space-y-4">
                   <div className="space-y-2">
                     <Label>City</Label>
                     <Input
                       value={data.city}
-                      onChange={(e) => setData({ ...data, city: e.target.value })}
+                      onChange={(e) => setData({ ...data, city: e.target.value, show_on_map: true })}
                       placeholder="e.g., Nashville"
                     />
                   </div>
@@ -492,30 +537,15 @@ function OnboardingModal({ isOpen, user, onComplete }) {
                     <Label>State (or Country if outside US)</Label>
                     <Input
                       value={data.state}
-                      onChange={(e) => setData({ ...data, state: e.target.value })}
+                      onChange={(e) => setData({ ...data, state: e.target.value, show_on_map: true })}
                       placeholder="e.g., TN or United Kingdom"
                     />
                   </div>
-
-                  <div
-                    onClick={() => setData({ ...data, show_on_map: !data.show_on_map })}
-                    className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                      data.show_on_map ? 'border-purple-500 bg-purple-50' : 'border-gray-200 hover:border-purple-300'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Checkbox checked={data.show_on_map} />
-                      <div>
-                        <span className="font-medium text-sm">Show me on the community map</span>
-                        <p className="text-xs text-gray-500">Let others see your general location</p>
-                      </div>
-                    </div>
-                  </div>
-                </>
+                </div>
               )}
 
               <div
-                onClick={() => setData({ ...data, skip_location: !data.skip_location })}
+                onClick={() => setData({ ...data, skip_location: !data.skip_location, show_on_map: !data.skip_location ? false : data.show_on_map })}
                 className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
                   data.skip_location ? 'border-purple-500 bg-purple-50' : 'border-gray-200 hover:border-purple-300'
                 }`}
