@@ -102,7 +102,8 @@ export default function TikTokStatsWidget() {
       const response = await base44.functions.invoke('fetchPublicTikTokStats', { username });
       
       if (response.data?.error === 'scrape_failed') {
-        // Fallback to manual
+        // Fallback to manual with explanation
+        alert("We couldn't auto-sync with TikTok right now (they are strict about bots!). Please enter your stats manually for today.");
         setIsManualInput(true);
       } else if (response.data?.followers) {
         // Success
@@ -115,6 +116,7 @@ export default function TikTokStatsWidget() {
       }
     } catch (err) {
       console.error(err);
+      alert("Sync failed. Switching to manual mode.");
       setIsManualInput(true);
     } finally {
       setLoading(false);
