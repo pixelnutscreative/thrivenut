@@ -33,6 +33,7 @@ export default function GroupSettingsTab({ group }) {
           <GroupNameSettings group={group} />
           <GroupTypeSettings group={group} />
           <GroupShortcutsSettings group={group} />
+          <GroupColorSettings group={group} />
           <CryptoTickerSettings group={group} />
         </TabsContent>
 
@@ -57,6 +58,35 @@ export default function GroupSettingsTab({ group }) {
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+function GroupColorSettings({ group }) {
+  const queryClient = useQueryClient();
+  const updateMutation = useMutation({
+    mutationFn: (color) => base44.entities.CreatorGroup.update(group.id, { settings: { ...group.settings, group_color: color } }),
+    onSuccess: () => queryClient.invalidateQueries(['myGroupsDetails'])
+  });
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Group Theme Color</CardTitle>
+        <CardDescription>Customize the primary color for this group.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center gap-4">
+          <ColorPicker 
+            color={group.settings?.group_color || '#8b5cf6'} 
+            onChange={(c) => updateMutation.mutate(c)} 
+            label="Pick a color"
+          />
+          <div className="text-sm text-gray-500">
+            Selected: <span className="font-mono font-medium text-gray-700">{group.settings?.group_color || '#8b5cf6'}</span>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 

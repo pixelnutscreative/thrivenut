@@ -5,10 +5,56 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Trash2, UserPlus, Shield, Plus, Package } from 'lucide-react';
+import { Trash2, UserPlus, Shield, Plus, Package, History, Clock } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+function ViewRetainerHistoryDialog({ group, member }) {
+  const { data: packages = [] } = useQuery({
+    queryKey: ['memberRetainerPackages', group.id, member.user_email],
+    queryFn: () => base44.entities.GroupMemberRetainerPackage.filter({ group_id: group.id, member_email: member.user_email }, '-purchase_date')
+  });
+
+  const totalHours = packages.reduce((sum, pkg) => sum + (pkg.hours_purchased || 0), 0);
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <button className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1 mt-0.5">
+          <History className="w-3 h-3" /> History
+        </button>
+      </DialogTrigger>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Retainer History: {member.user_email}</DialogTitle>
+        </DialogHeader>
+        <div className="py-4">
+          <div className="bg-purple-50 p-4 rounded-lg mb-4 flex justify-between items-center">
+            <span className="font-medium text-purple-900">Total Purchased</span>
+            <span className="text-2xl font-bold text-purple-700">{totalHours} hrs</span>
+          </div>
+          
+          <div className="space-y-3 max-h-[300px] overflow-y-auto">
+            {packages.length === 0 ? (
+              <p className="text-center text-gray-500 text-sm py-4">No packages added yet.</p>
+            ) : (
+              packages.map(pkg => (
+                <div key={pkg.id} className="border p-3 rounded-lg flex justify-between items-center text-sm">
+                  <div>
+                    <div className="font-medium">{pkg.package_name || 'Custom Package'}</div>
+                    <div className="text-xs text-gray-500">{new Date(pkg.purchase_date).toLocaleDateString()}</div>
+                  </div>
+                  <Badge variant="secondary" className="bg-green-50 text-green-700">+{pkg.hours_purchased} hrs</Badge>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 function AddRetainerPackageDialog({ group, member, currentUser }) {
   const queryClient = useQueryClient();
@@ -19,8 +65,8 @@ function AddRetainerPackageDialog({ group, member, currentUser }) {
   const isPixelAdmin = ['pixelnutscreative@gmail.com', 'pixel@thrivenut.app'].includes(currentUser?.email);
   
   const presets = [
-    { name: '$444 Package', hours: 5 },
-    { name: '$999 Package', hours: 16 }
+    { name: '5 Hour Package', hours: 5 },
+    { name: '16 Hour Package', hours: 16 }
   ];
 
   const mutation = useMutation({
@@ -383,7 +429,10 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
                 <div className="overflow-hidden">
                   <p className="font-medium truncate">{member.user_email}</p>
                   {isAdmin && group.enable_retainer_management && (
-                    <AddRetainerPackageDialog group={group} member={member} currentUser={currentUser} />
+                    <div className="flex gap-3">
+                      <AddRetainerPackageDialog group={group} member={member} currentUser={currentUser} />
+                      <ViewRetainerHistoryDialog group={group} member={member} />
+                    </div>
                   )}
                 </div>
               </div>
