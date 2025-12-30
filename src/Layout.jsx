@@ -249,11 +249,9 @@ export default function Layout({ children, currentPageName }) {
       { name: 'Creator Contacts', icon: Users, path: 'TikTokContacts' },
       { name: 'Content Calendar', icon: Calendar, path: 'LiveSchedule' },
       { name: 'Discover Creators', icon: Search, path: 'DiscoverCreators' },
-      { name: 'Battle Prep', icon: Swords, path: 'BattlePrep' },
       { name: 'Live Engagement', icon: Activity, path: 'LiveEngagement' },
       { name: 'Gift Gallery Gratitude', icon: Gift, path: 'WeeklyGifterGallery' },
-      { name: 'Love Away Giveaways', icon: Gift, path: 'LoveAway' },
-      { name: 'Pictionary Helper', icon: Palette, path: 'PictionaryHelper' }]
+      { name: 'Love Aways', icon: Gift, path: 'LoveAway' }]
     }]
 
   },
