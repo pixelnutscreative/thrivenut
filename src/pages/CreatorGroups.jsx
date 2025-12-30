@@ -615,11 +615,18 @@ export default function CreatorGroups() {
               const membership = myMemberships.find(m => m.group_id === group.id);
               const isMember = !!membership;
               
+              const customColor = group.settings?.group_color;
+              const iconStyle = customColor ? { backgroundColor: customColor + '20', color: customColor } : {};
+              const iconClass = customColor ? '' : colorClass;
+
               return (
                 <Card key={group.id} className={`hover:shadow-lg transition-all cursor-pointer group ${isHidden ? 'opacity-60 bg-gray-50' : ''}`} onClick={() => setSearchParams({ id: group.id })}>
                   <CardContent className="p-6">
                     <div className="flex justify-between items-start mb-4">
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-xl ${colorClass}`}>
+                      <div 
+                        className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-xl ${iconClass}`}
+                        style={iconStyle}
+                      >
                         {group.logo_url ? <img src={group.logo_url} alt="" className="w-full h-full object-cover rounded-xl" /> : group.name[0]}
                       </div>
                       <div className="flex flex-col items-end gap-1">
@@ -672,11 +679,18 @@ export default function CreatorGroups() {
                   const membership = myMemberships.find(m => m.group_id === group.id);
                   const isMember = !!membership;
 
+                  const customColor = group.settings?.group_color;
+                  const iconStyle = customColor ? { backgroundColor: customColor + '20', color: customColor } : {};
+                  const iconClass = customColor ? '' : getGroupColorClass(group.type);
+
                   return (
                     <TableRow key={group.id} className={isHidden ? 'opacity-60 bg-gray-50' : ''}>
                       <TableCell className="font-medium cursor-pointer" onClick={() => setSearchParams({ id: group.id })}>
                         <div className="flex items-center gap-3">
-                           <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm ${getGroupColorClass(group.type)}`}>
+                           <div 
+                             className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm ${iconClass}`}
+                             style={iconStyle}
+                           >
                               {group.name[0]}
                            </div>
                            {group.name}
@@ -796,8 +810,14 @@ export default function CreatorGroups() {
     );
   }
 
+  // Override theme colors if group has a custom color
+  const themeStyles = activeGroup.settings?.group_color ? {
+    '--primary-color': activeGroup.settings.group_color,
+    '--accent-color': activeGroup.settings.group_color,
+  } : {};
+
   return (
-    <div className="min-h-screen bg-gray-50/50">
+    <div className="min-h-screen bg-gray-50/50" style={themeStyles}>
       {/* Header */}
       <div className="bg-white border-b sticky top-0 z-10 px-6 py-4 shadow-sm">
         <div className="max-w-6xl mx-auto flex justify-between items-center">
