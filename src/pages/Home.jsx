@@ -97,6 +97,11 @@ const neurodivergentFeatures = [
 
 // ===================== SOCIAL MEDIA SUITE (PREMIUM) =====================
 const socialMediaFeatures = [
+  {
+    icon: TrendingUp,
+    title: 'Personalized TikTok Analytics',
+    description: 'Track your own growth! See follower stats, video performance, and engagement metrics directly in your dashboard.',
+  },
   { 
     icon: Users, 
     title: 'Creator Contact Database', 
@@ -290,15 +295,7 @@ export default function Home() {
                 Start Free <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
               
-              <Link to={createPageUrl('RedeemGift')}>
-                <Button 
-                  size="lg" 
-                  className="bg-gradient-to-r from-red-600 to-green-600 hover:from-red-700 hover:to-green-700 text-lg px-8 py-6 shadow-lg shadow-green-500/20 animate-pulse border-2 border-yellow-400"
-                >
-                  <Gift className="w-5 h-5 mr-2" />
-                  Merry Grinchmas! Enter Code Here
-                </Button>
-              </Link>
+
 
               <a href="#features">
                 <Button size="lg" variant="outline" className="border-purple-400 text-purple-400 hover:bg-purple-400/10 text-lg px-8 py-6">
@@ -325,7 +322,7 @@ export default function Home() {
             Everything You Need to <span className="text-teal-400">Thrive</span>
           </h2>
           <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-            No credit card required. No hidden fees. Just powerful tools to help you live your best life.
+            No credit card required. Includes 1 Child Account and 1 Group (Family). Upgrade to PLUS for more!
           </p>
         </motion.div>
 
@@ -539,65 +536,19 @@ export default function Home() {
           viewport={{ once: true }}
           className="text-center mb-12"
         >
-          <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-lg px-4 py-1 mb-4 animate-pulse">
-            🎄 HOLIDAY SPECIAL
+          <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30 text-lg px-4 py-1 mb-4">
+            ✨ UPGRADE
           </Badge>
           <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            Get <span className="text-purple-400">Access</span>
+            Get <span className="text-purple-400">PLUS</span>
           </h2>
           <p className="text-xl text-gray-400">
-            Choose how you want to unlock the Social Media Suite
+            Unlock the full potential of your dashboard
           </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-          {/* Holiday Special - 7 months */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            <Card className="h-full bg-gradient-to-br from-teal-900/30 to-emerald-900/30 border-teal-500/50 relative overflow-hidden">
-              <div className="absolute top-0 right-0 bg-gradient-to-l from-teal-500 to-emerald-500 text-white text-sm font-bold px-4 py-1 rounded-bl-lg">
-                🎄 HOLIDAY DEAL
-              </div>
-              <CardContent className="p-6 pt-12">
-                <div className="text-center mb-6">
-                  <h3 className="text-xl font-bold text-teal-400 mb-2">7 for 7 Special</h3>
-                  <div className="flex items-center justify-center gap-2">
-                    <span className="text-4xl font-bold text-white">$7</span>
-                    <span className="text-gray-400">/month</span>
-                  </div>
-                  <p className="text-teal-300 text-sm mt-1">for 7 months ($49 total)</p>
-                  <p className="text-xs text-gray-500 mt-2">Limited Time Offer</p>
-                </div>
-
-                <div className="space-y-2 mb-6 text-sm">
-                  <div className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-teal-400 mt-0.5 flex-shrink-0" />
-                    <span className="text-gray-300">All free features</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-teal-400 mt-0.5 flex-shrink-0" />
-                    <span className="text-gray-300">Full Social Media Suite</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-teal-400 mt-0.5 flex-shrink-0" />
-                    <span className="text-gray-300">Priority support</span>
-                  </div>
-                </div>
-
-                <Button 
-                  onClick={handleGetStarted}
-                  className="w-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600"
-                >
-                  Get 7 for 7 <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          {/* Holiday Annual - $77 */}
+        <div className="max-w-md mx-auto">
+          {/* PLUS Version - $77 */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -610,7 +561,7 @@ export default function Home() {
               </div>
               <CardContent className="p-6 pt-12">
                 <div className="text-center mb-6">
-                  <h3 className="text-xl font-bold text-purple-400 mb-2">Annual (Holiday)</h3>
+                  <h3 className="text-xl font-bold text-purple-400 mb-2">PLUS Version</h3>
                   <div className="flex items-center justify-center gap-2">
                     <span className="text-2xl text-gray-500 line-through">$111</span>
                     <span className="text-4xl font-bold text-white">$77</span>
@@ -632,11 +583,15 @@ export default function Home() {
                   </div>
                   <div className="flex items-start gap-2">
                     <Check className="w-4 h-4 text-purple-400 mt-0.5 flex-shrink-0" />
-                    <span className="text-gray-300">Priority support</span>
+                    <span className="text-gray-300">Personalized TikTok Analytics</span>
+                  </div>
+                   <div className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-purple-400 mt-0.5 flex-shrink-0" />
+                    <span className="text-gray-300">Unlimited Groups & Child Accounts</span>
                   </div>
                   <div className="flex items-start gap-2">
-                    <Star className="w-4 h-4 text-purple-400 mt-0.5 flex-shrink-0" />
-                    <span className="text-gray-300">Best price per month!</span>
+                    <Check className="w-4 h-4 text-purple-400 mt-0.5 flex-shrink-0" />
+                    <span className="text-gray-300">Priority support</span>
                   </div>
                 </div>
 
@@ -644,58 +599,7 @@ export default function Home() {
                   onClick={handleGetStarted}
                   className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
                 >
-                  Get Annual Deal <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          {/* AI Toolbox Bundle */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.2 }}
-          >
-            <Card className="h-full bg-gradient-to-br from-amber-900/30 to-orange-900/30 border-amber-500/50 relative overflow-hidden">
-              <div className="absolute top-0 right-0 bg-gradient-to-l from-amber-500 to-orange-500 text-white text-sm font-bold px-4 py-1 rounded-bl-lg">
-                🎁 BUNDLE
-              </div>
-              <CardContent className="p-6 pt-12">
-                <div className="text-center mb-6">
-                  <h3 className="text-xl font-bold text-amber-400 mb-2">AI Toolbox Bundle</h3>
-                  <div className="flex items-center justify-center gap-2">
-                    <span className="text-4xl font-bold text-white">FREE</span>
-                  </div>
-                  <p className="text-amber-300 text-sm mt-1">with AI Toolbox annual sub</p>
-                </div>
-
-                <div className="space-y-2 mb-6 text-sm">
-                  <div className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
-                    <span className="text-gray-300">Everything in Let's Thrive!</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
-                    <span className="text-gray-300">Pixel's AI Toolbox access</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
-                    <span className="text-gray-300">Two apps, one subscription!</span>
-                  </div>
-                </div>
-
-                <div className="bg-amber-900/30 rounded-lg p-3 mb-4">
-                  <p className="text-xs text-amber-200 text-center">
-                    Already an AI Toolbox subscriber? You get this FREE!
-                  </p>
-                </div>
-
-                <Button 
-                  onClick={handleGetStarted}
-                  className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
-                >
-                  Learn More <ArrowRight className="w-4 h-4 ml-2" />
+                  Get PLUS Now <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </CardContent>
             </Card>
