@@ -36,6 +36,10 @@ const allFeatures = [
   
   // Parenting
   { id: 'parenting', name: 'Parenting & Kids', description: 'Child journals & controls' },
+
+  // Community & Extras
+  { id: 'share_earn', name: 'Share & Earn', description: 'Affiliate links & generators' },
+  { id: 'pixels_place', name: "Pixel's Place", description: 'Community resources' },
 ];
 
 export default function FeatureOrderManager({ enabledModules, onChange }) {

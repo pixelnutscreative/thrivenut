@@ -174,7 +174,7 @@ export default function Layout({ children, currentPageName }) {
          }))
       ]
     },
-    { name: "Pixel's Place", icon: Sparkles, path: 'PixelsParadise', alwaysShow: true }]
+    { name: "Pixel's Place", icon: Sparkles, path: 'PixelsParadise', moduleId: 'pixels_place' }]
 
   },
   {
@@ -261,10 +261,10 @@ export default function Layout({ children, currentPageName }) {
     color: 'text-pink-400', // Hot Pink
     bgColor: 'bg-pink-500/10',
     items: [
-      { name: 'Links & Dashboard', icon: Share2, path: 'ShareDashboard' },
-      { name: 'Thrive Nut', icon: Sparkles, path: 'ThriveGenerator' },
-      { name: "Pixel's AI Toolbox", icon: Brain, path: 'AIToolsGenerator' },
-      { name: 'The Nuts + Bots', icon: MessageCircle, path: 'NutsBotsGenerator' }
+      { name: 'Links & Dashboard', icon: Share2, path: 'ShareDashboard', moduleId: 'share_earn' },
+      { name: 'Thrive Nut', icon: Sparkles, path: 'ThriveGenerator', moduleId: 'share_earn' },
+      { name: "Pixel's AI Toolbox", icon: Brain, path: 'AIToolsGenerator', moduleId: 'share_earn' },
+      { name: 'The Nuts + Bots', icon: MessageCircle, path: 'NutsBotsGenerator', moduleId: 'share_earn' }
     ]
   }];
 
