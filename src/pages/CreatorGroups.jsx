@@ -359,12 +359,18 @@ export default function CreatorGroups() {
     { id: 'requests', label: 'Requests', icon: AlertCircle, color: 'gray' },
   ];
 
-  const clientPortalTabs = ['feed', 'resources', 'requests', 'projects', 'meetings', 'members'];
-  const isClientPortal = activeGroup?.type === 'client-portal';
+  // Determine if this group is a "Client Group" (agency or client-portal)
+  const isClientGroup = ['client-portal', 'agency'].includes(activeGroup?.type);
+  
+  // Projects and Meetings are only for Client Groups
+  const clientOnlyTabs = ['projects', 'meetings'];
 
-  const availableTabs = isClientPortal 
-    ? allTabs.filter(t => clientPortalTabs.includes(t.id))
-    : allTabs;
+  const availableTabs = allTabs.filter(tab => {
+    if (clientOnlyTabs.includes(tab.id)) {
+      return isClientGroup;
+    }
+    return true;
+  });
 
   const toggleTabVisibility = (tabId) => {
     const hidden = groupPrefs?.hidden_tabs || [];

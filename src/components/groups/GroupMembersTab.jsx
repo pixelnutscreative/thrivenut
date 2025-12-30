@@ -382,7 +382,7 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
                 </div>
                 <div className="overflow-hidden">
                   <p className="font-medium truncate">{member.user_email}</p>
-                  {isAdmin && (
+                  {isAdmin && group.enable_retainer_management && (
                     <AddRetainerPackageDialog group={group} member={member} currentUser={currentUser} />
                   )}
                 </div>

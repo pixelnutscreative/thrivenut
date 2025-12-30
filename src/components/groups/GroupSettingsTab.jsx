@@ -35,6 +35,7 @@ export default function GroupSettingsTab({ group }) {
 
         <TabsContent value="membership" className="space-y-6 mt-6">
           <MemberLevelsSettings group={group} />
+          <RetainerSettings group={group} />
           <GroupAccessSettings group={group} />
         </TabsContent>
 
@@ -74,6 +75,33 @@ function CryptoTickerSettings({ group }) {
         <Switch
           checked={!(group.settings?.hide_ticker === true)}
           onCheckedChange={(checked) => updateMutation.mutate({ settings: { ...(group.settings || {}), hide_ticker: !checked } })}
+        />
+      </CardContent>
+    </Card>
+  );
+}
+
+function RetainerSettings({ group }) {
+  const queryClient = useQueryClient();
+  const updateMutation = useMutation({
+    mutationFn: (data) => base44.entities.CreatorGroup.update(group.id, data),
+    onSuccess: () => queryClient.invalidateQueries(['myGroupsDetails'])
+  });
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Retainer Management</CardTitle>
+        <CardDescription>Enable or disable the ability to add hour packages and track retainers for members.</CardDescription>
+      </CardHeader>
+      <CardContent className="flex items-center justify-between">
+        <div className="space-y-1">
+          <div className="font-medium">Enable Retainer Management</div>
+          <div className="text-sm text-gray-500">Allows admins to add hour packages to members.</div>
+        </div>
+        <Switch
+          checked={group.enable_retainer_management === true}
+          onCheckedChange={(checked) => updateMutation.mutate({ enable_retainer_management: checked })}
         />
       </CardContent>
     </Card>
