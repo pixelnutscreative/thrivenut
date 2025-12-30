@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -12,6 +13,7 @@ import { X, Plus, Save, Link as LinkIcon, Trash2, ArrowUp, ArrowDown, ChevronDow
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
+import { useTheme } from '../components/shared/useTheme';
 
 export default function GroupSettingsTab({ group }) {
   return (
@@ -29,6 +31,7 @@ export default function GroupSettingsTab({ group }) {
 
         <TabsContent value="general" className="space-y-6 mt-6">
           <GroupNameSettings group={group} />
+          <GroupTypeSettings group={group} />
           <GroupShortcutsSettings group={group} />
           <CryptoTickerSettings group={group} />
         </TabsContent>
@@ -477,6 +480,68 @@ function GroupNameSettings({ group }) {
         </div>
         <div className="flex justify-end">
           <Button onClick={() => updateMutation.mutate({ name, description })} disabled={!name}>Update Details</Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function GroupTypeSettings({ group }) {
+  const queryClient = useQueryClient();
+  const { user, preferences } = useTheme();
+  
+  // Admin/Pro Logic (mirrors CreatorGroups.js)
+  const realUserEmail = user?.email ? user?.email.toLowerCase() : '';
+  const adminEmails = ['pixelnutscreative@gmail.com', 'pixel@thrivenut.app'];
+  const isSuperAdmin = realUserEmail && adminEmails.includes(realUserEmail);
+  const isProTier = isSuperAdmin || preferences?.subscription_status === 'active' || preferences?.is_superfan;
+
+  const { data: groupTypes = [] } = useQuery({
+    queryKey: ['groupTypes'],
+    queryFn: () => base44.entities.GroupType.filter({ is_active: true }, 'sort_order')
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (newType) => base44.entities.CreatorGroup.update(group.id, { type: newType }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['myGroupsDetails']);
+      // Reload to refresh tabs logic
+      window.location.reload(); 
+    }
+  });
+
+  // Filter types based on user role (prevent regular users from switching to Agency/Client Portal if they aren't Pro)
+  const availableTypes = groupTypes.filter(t => t.key !== 'client-portal' || isProTier);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Group Type</CardTitle>
+        <CardDescription>
+          Changing the group type will affect available tabs and features.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex items-center gap-4">
+        <div className="flex-1">
+          <Select 
+            value={group.type} 
+            onValueChange={(val) => {
+              if (window.confirm('Changing group type may hide/show certain tabs. Continue?')) {
+                updateMutation.mutate(val);
+              }
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {availableTypes.map(type => (
+                <SelectItem key={type.key} value={type.key}>
+                  <span className="font-medium">{type.name}</span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </CardContent>
     </Card>
