@@ -453,7 +453,7 @@ export default function Settings() {
                             <ContactFormHeader 
                               formData={{
                                 ...profileData,
-                                real_name: user?.full_name,
+                                real_name: profileData.real_name || user?.full_name,
                                 image_url: prefData.profile_image_url,
                                 color: profileData.favorite_color,
                                 clubs: profileData.clubs || [],
@@ -462,14 +462,19 @@ export default function Settings() {
                               setFormData={(newData) => {
                                 setProfileData(prev => ({
                                   ...prev,
+                                  real_name: newData.real_name,
                                   nickname: newData.nickname,
                                   favorite_color: newData.color,
                                   clubs: newData.clubs || [],
                                   custom_clubs: newData.custom_clubs || []
                                 }));
-                                if (newData.image_url !== prefData.profile_image_url) {
-                                  setPrefData(prev => ({ ...prev, profile_image_url: newData.image_url }));
-                                }
+
+                                // Sync shared fields to UserPreferences
+                                setPrefData(prev => ({ 
+                                  ...prev, 
+                                  nickname: newData.nickname,
+                                  profile_image_url: newData.image_url 
+                                }));
                               }}
                               onSave={() => handleSave()}
                               isSaving={updatePreferencesMutation.isPending || updateUserProfileMutation.isPending}
