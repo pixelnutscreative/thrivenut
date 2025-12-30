@@ -129,7 +129,15 @@ export default function Layout({ children, currentPageName }) {
   const hasTikTokAccess = isAdmin || preferences?.tiktok_access_approved || preferences?.is_superfan;
   // Determine if Bible features are enabled (default to true if undefined)
   const isBibleBeliever = preferences?.enable_bible_options !== false;
-  const enabledModules = preferences?.enabled_modules || ['tiktok', 'gifter', 'goals', 'tasks', 'wellness', 'supplements', 'medications', 'pets', 'care_reminders', 'people', 'journal', 'mental_health', 'finance', 'activity', 'motivations'];
+  const enabledModules = preferences?.enabled_modules || [
+    'my_resources', 'my_groups', 'pixels_place', 
+    'quick_notes', 'tasks', 'habits', 'goals', 'vision_board', 'journal', 'finance',
+    'people', 'parenting', 'care_reminders', 'pets',
+    'prayer', 'holy_hitmakers', 
+    'mental_health', 'wellness', 'supplements', 'medications', 'activity',
+    'content_creator_center', 'motivations', 'content_marketplace', 'ai_music_suite', 'tiktok',
+    'share_earn'
+  ];
   const isKidMode = preferences?.default_landing_page === 'KidsJournal';
 
   // Redirect kids to KidsJournal on login (from Home/Dashboard)
