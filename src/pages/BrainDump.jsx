@@ -451,11 +451,26 @@ response_json_schema: {
                       <Button 
                         size="sm" 
                         variant="outline"
+                        onClick={() => {
+                          base44.entities.Task.create({ 
+                            title: dump.content, 
+                            status: 'pending', 
+                            created_by: user.email 
+                          }).then(() => handleProcess(dump.id));
+                        }}
+                        className="text-blue-600 hover:bg-blue-50 border-blue-200 mr-2"
+                      >
+                        <Check className="w-4 h-4 mr-1" />
+                        Make Task
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
                         onClick={() => handleProcess(dump.id)}
                         className="text-green-600 hover:bg-green-50 border-green-200"
                       >
                         <Check className="w-4 h-4 mr-1" />
-                        Processed
+                        Done
                       </Button>
                     </div>
                   </CardContent>
