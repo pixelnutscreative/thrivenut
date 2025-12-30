@@ -402,6 +402,12 @@ function TabPermissionsSettings({ group }) {
   const queryClient = useQueryClient();
   const [permissions, setPermissions] = useState(group.role_tab_permissions || {});
 
+  // Fetch Group Types to determine defaults
+  const { data: groupTypes = [] } = useQuery({
+    queryKey: ['groupTypes'],
+    queryFn: () => base44.entities.GroupType.filter({ is_active: true }, 'sort_order')
+  });
+
   const updateMutation = useMutation({
     mutationFn: (data) => base44.entities.CreatorGroup.update(group.id, { role_tab_permissions: data }),
     onSuccess: () => {
@@ -425,8 +431,51 @@ function TabPermissionsSettings({ group }) {
   const systemRoles = ['member', 'client', 'manager', 'admin', 'virtual-assistant']; 
   const allRoles = [...new Set([...levels, ...systemRoles])]; 
 
+  // Helper to determine if a tab is enabled by default for a role
+  // This mirrors logic in CreatorGroups.js `isTabEnabled` fallback
+  const isDefaultEnabled = (tabId, role) => {
+    // Admin/Owner always enabled by default
+    if (role === 'admin' || role === 'owner') return true;
+
+    const isClientGroup = ['client-portal', 'agency'].includes(group.type);
+    const typeConfig = (groupTypes || []).find(gt => gt.key === group.type);
+    const allowed = typeConfig?.enabled_tabs && typeConfig.enabled_tabs.length > 0 ? new Set(typeConfig.enabled_tabs) : null;
+
+    // Client Role Default
+    if (role === 'client' && ['feed', 'projects', 'meetings', 'resources', 'requests'].includes(tabId)) {
+        return true;
+    }
+
+    // Client Portal overrides
+    if (isClientGroup && ['feed', 'projects', 'meetings', 'resources', 'requests', 'members'].includes(tabId)) {
+        if (tabId === 'members') return false; // Members tab hidden by default for non-admins
+        return true;
+    } 
+    
+    // Group Type Config overrides
+    if (allowed && !allowed.has(tabId)) {
+        return false;
+    }
+    
+    // Global Members tab restriction
+    if (tabId === 'members') return false;
+
+    // Default to visible if not restricted
+    return true;
+  };
+
   const togglePermission = (tabId, role) => {
-    const current = permissions[tabId] || [];
+    // If we are toggling, we must initialize the permission array if it's undefined
+    // If undefined, it means "use defaults". So we need to calculate what the current state is,
+    // and then toggle from THERE.
+    
+    let current = permissions[tabId];
+    
+    // If not set yet, initialize it with all roles that are currently enabled by default
+    if (current === undefined) {
+       current = allRoles.filter(r => isDefaultEnabled(tabId, r));
+    }
+
     let newPerms;
     if (current.includes(role)) {
       newPerms = current.filter(r => r !== role);
@@ -440,7 +489,13 @@ function TabPermissionsSettings({ group }) {
     <Card>
       <CardHeader>
         <CardTitle>Tab Visibility</CardTitle>
-        <CardDescription>Control which roles/levels can see specific tabs. Unchecked = Hidden.</CardDescription>
+        <CardDescription>
+          Control which roles/levels can see specific tabs. 
+          <br/>
+          <span className="text-xs text-gray-500 font-normal">
+            (Gray = System Default. Click to override.)
+          </span>
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="overflow-x-auto">
@@ -456,14 +511,22 @@ function TabPermissionsSettings({ group }) {
                 <tr key={tab.id} className="border-b last:border-0">
                   <td className="p-2 font-medium">{tab.label}</td>
                   {allRoles.map(role => {
-                    const isChecked = !permissions[tab.id] || permissions[tab.id].includes(role);
+                    // Check if explicit permission exists
+                    const hasExplicitPermission = permissions[tab.id] !== undefined;
+                    
+                    // If explicit, use it. If not, use default.
+                    const isChecked = hasExplicitPermission 
+                        ? permissions[tab.id].includes(role) 
+                        : isDefaultEnabled(tab.id, role);
+
                     return (
                       <td key={role} className="text-center p-2">
                         <input 
                           type="checkbox" 
                           checked={isChecked}
                           onChange={() => togglePermission(tab.id, role)}
-                          className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                          className={`rounded border-gray-300 text-purple-600 focus:ring-purple-500 ${!hasExplicitPermission ? 'opacity-50' : ''}`}
+                          title={!hasExplicitPermission ? "Using System Default (Click to override)" : "Custom Setting"}
                         />
                       </td>
                     );
