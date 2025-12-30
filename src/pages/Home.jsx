@@ -130,7 +130,6 @@ const freeFeatures = [
 // ===================== NEURODIVERGENT FEATURES =====================
 const neurodivergentFeatures = [
   { icon: Brain, title: 'ADHD-Friendly Mode', description: 'Checklists, structure, and simplified interfaces to reduce overwhelm' },
-  { icon: Accessibility, title: 'Autism-Friendly Mode', description: 'Reduced animations, sensory-friendly design, clear navigation' },
   { icon: Eye, title: 'High Contrast Mode', description: 'Enhanced visibility for those with visual needs' },
   { icon: Sliders, title: 'Fully Customizable', description: 'Drag-and-drop feature ordering, custom colors, choose your theme' },
   { icon: Mic, title: 'Text-to-Speech', description: 'Have options and buttons read aloud' },
