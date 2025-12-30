@@ -610,6 +610,11 @@ export default function CreatorGroups() {
             {displayedGroups.map(group => {
               const GroupIcon = getGroupIcon(group.type);
               const colorClass = getGroupColorClass(group.type);
+              
+              const customColor = group.settings?.group_color;
+              const iconStyle = customColor ? { backgroundColor: customColor + '20', color: customColor } : {};
+              const iconClass = customColor ? '' : colorClass;
+
               const pref = allGroupPrefs.find(p => p.group_id === group.id);
               const isHidden = pref?.is_hidden_from_list;
               const membership = myMemberships.find(m => m.group_id === group.id);
