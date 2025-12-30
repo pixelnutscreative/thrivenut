@@ -51,19 +51,31 @@ export default function BrainDump() {
     try {
       const dumpTexts = itemsToProcess.map(d => `- [ID:${d.id}] ${d.content}`).join('\n');
       const response = await base44.integrations.Core.InvokeLLM({
-        prompt: `Analyze these brain dump items. If an item contains multiple distinct actions (e.g. a list or bullet points), SPLIT them into separate items.
-        
-        Items to Analyze:
-        ${dumpTexts}
-        
-        Return a JSON object with a list of actionable items. Each item should have:
-        - original_id (extract from the ID tag)
-        - type (one of: 'task', 'goal', 'habit', 'note', 'event')
-        - suggested_title (clear, actionable title)
-        - suggested_category (e.g. Work, Personal, Health)
-        - reasoning (brief why)
-        
-        For habits, identify if there's any implied frequency (e.g. "every monday" -> specific_days, "daily" -> daily).`,
+        prompt: `You are an expert task manager. Your goal is to break down brain dumps into small, single, actionable units.
+
+CRITICAL INSTRUCTIONS FOR SPLITTING:
+1. Aggressively split long text into multiple separate items.
+2. Split on keywords like "and", "also", "then", "plus" if they connect distinct tasks.
+3. Split on commas, periods, and newlines if they separate distinct thoughts.
+4. Turn run-on sentences into separate items.
+
+Example Input: "I need to go to the gym every day and start doing something, I need to stop eating bread, i need to look for a storage unit"
+Example Output Items:
+- "Go to the gym every day" (Type: habit)
+- "Stop eating bread" (Type: habit)
+- "Look for a storage unit" (Type: task)
+
+Items to Analyze:
+${dumpTexts}
+
+Return a JSON object with a list of actionable items. Each item should have:
+- original_id (extract from the ID tag)
+- type (one of: 'task', 'goal', 'habit', 'note', 'event')
+- suggested_title (clear, actionable title)
+- suggested_category (e.g. Work, Personal, Health)
+- reasoning (brief why)
+
+For habits, identify if there's any implied frequency (e.g. "every monday" -> specific_days, "daily" -> daily).`,
         response_json_schema: {
           type: "object",
           properties: {
