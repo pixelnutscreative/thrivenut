@@ -38,6 +38,7 @@ import AdminMarketingAssets from '../components/admin/AdminMarketingAssets';
 import AdminPackagesContent from '../components/admin/AdminPackagesContent';
 import AdminAnalytics from '../components/admin/AdminAnalytics';
 import AdminGiftCodesContent from '../components/admin/AdminGiftCodesContent';
+import AdminFeatureFlags from '../components/admin/AdminFeatureFlags';
 
 const ADMIN_EMAILS = ['pixelnutscreative@gmail.com', 'pixel@thrivenut.app'];
 
@@ -84,6 +85,7 @@ export default function Admin() {
             <TabsTrigger value="content" className="text-sm font-semibold">Content</TabsTrigger>
             <TabsTrigger value="billing" className="text-sm font-semibold">Billing</TabsTrigger>
             <TabsTrigger value="app" className="text-sm font-semibold">App</TabsTrigger>
+            <TabsTrigger value="features" className="text-sm font-semibold">Features</TabsTrigger>
             <TabsTrigger value="referrals" className="text-sm font-semibold">Referrals</TabsTrigger>
           </TabsList>
 
@@ -213,6 +215,19 @@ export default function Admin() {
                   <TabsContent value="groups"><AdminGroupsContent /></TabsContent>
 <TabsContent value="groupTypes"><AdminGroupTypesContent /></TabsContent>
                 </Tabs>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* FEATURES TAB */}
+          <TabsContent value="features" className="mt-0">
+            <Card>
+              <CardContent className="p-6">
+                <div className="mb-6">
+                  <h2 className="text-xl font-bold mb-2">Global Feature Flags</h2>
+                  <p className="text-gray-500">Control feature visibility globally. Disabled features are hidden for all users except admins (who see a DEV indicator).</p>
+                </div>
+                <AdminFeatureFlags />
               </CardContent>
             </Card>
           </TabsContent>

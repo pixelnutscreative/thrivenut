@@ -113,6 +113,18 @@ export default function Layout({ children, currentPageName }) {
     enabled: !!effectiveEmail
   });
 
+  // Fetch Global Feature Flags
+  const { data: featureFlags = [] } = useQuery({
+    queryKey: ['featureFlags'],
+    queryFn: () => base44.entities.FeatureFlag.list(),
+    staleTime: 60000 // Cache for 1 min
+  });
+
+  const getFeatureFlag = (featureId) => {
+    const flag = featureFlags.find(f => f.feature_id === featureId);
+    return flag ? flag.is_enabled : true; // Default to true if no flag record exists
+  };
+
   // Permissions
   const hasTikTokAccess = isAdmin || preferences?.tiktok_access_approved || preferences?.is_superfan;
   // Determine if Bible features are enabled (default to true if undefined)
@@ -164,7 +176,7 @@ export default function Layout({ children, currentPageName }) {
       name: 'My Groups', 
       icon: Users, 
       isSection: true,
-      alwaysShow: true,
+      moduleId: 'my_groups',
       subItems: [
          { name: 'Browse Groups', icon: Search, path: 'CreatorGroups?mode=browse' },
          ...myMenuGroups.map(g => ({
@@ -187,7 +199,7 @@ export default function Layout({ children, currentPageName }) {
     { name: 'Tasks', icon: FileText, path: 'Tasks', moduleId: 'tasks' },
     { name: 'Habits', icon: Target, path: 'Habits', moduleId: 'habits' },
     { name: 'Goals', icon: Target, path: 'Goals', moduleId: 'goals' },
-    { name: 'Vision Board', icon: Eye, path: 'VisionBoard', moduleId: 'goals' },
+    { name: 'Vision Board', icon: Eye, path: 'VisionBoard', moduleId: 'vision_board' },
     { name: 'Journal', icon: BookOpen, path: 'Journal', moduleId: 'journal' },
     { name: 'Finance', icon: Wallet, path: 'Finance', moduleId: 'finance' }]
 
@@ -211,8 +223,7 @@ export default function Layout({ children, currentPageName }) {
     bgColor: 'bg-lime-500/10',
     items: [
     { name: getPrayerName(), icon: Heart, path: 'PrayerRequests', moduleId: 'prayer' },
-    { name: 'Holy Hitmakers', icon: Music, path: 'HolyHitmakers', requiresBibleBeliever: true, moduleId: 'holy_hitmakers' },
-    { name: 'Bible Resources', icon: BookOpen, path: 'BibleResources', requiresBibleBeliever: true, moduleId: 'bible_resources' }]
+    { name: 'Holy Hitmakers', icon: Music, path: 'HolyHitmakers', requiresBibleBeliever: true, moduleId: 'holy_hitmakers' }]
 
   },
   {
@@ -450,6 +461,16 @@ export default function Layout({ children, currentPageName }) {
                         className="overflow-hidden space-y-1">
 
                           {group.items.map((item) => {
+                            // Check global feature flags
+                            let isDevMode = false;
+                            if (item.moduleId) {
+                              const isGloballyEnabled = getFeatureFlag(item.moduleId);
+                              if (!isGloballyEnabled) {
+                                if (!isAdmin) return null;
+                                isDevMode = true;
+                              }
+                            }
+
                             // Check permissions/modules
                             if (item.adminOnly && !isAdmin) return null;
                             if (isKidMode) {
@@ -459,7 +480,7 @@ export default function Layout({ children, currentPageName }) {
                             if (item.requiresBibleBeliever && !isBibleBeliever) return null;
                             if (!isKidMode && item.moduleId && !enabledModules.includes(item.moduleId) && !item.alwaysShow) return null;
 
-                          const Icon = item.icon;
+                            const Icon = item.icon;
                           const isActive = currentPageName === item.path;
                           const isExpanded = expandedSections.includes(item.name);
                           const hasActiveSubItem = isSubItemActive(item);
@@ -736,6 +757,16 @@ export default function Layout({ children, currentPageName }) {
                         className="overflow-hidden space-y-1">
 
                         {group.items.map((item) => {
+                          // Check global feature flags
+                          let isDevMode = false;
+                          if (item.moduleId) {
+                            const isGloballyEnabled = getFeatureFlag(item.moduleId);
+                            if (!isGloballyEnabled) {
+                              if (!isAdmin) return null;
+                              isDevMode = true;
+                            }
+                          }
+
                           // Check permissions/modules
                           if (item.adminOnly && !isAdmin) return null;
                           if (isKidMode) {
@@ -765,6 +796,7 @@ export default function Layout({ children, currentPageName }) {
                                     <Icon className="w-5 h-5" />
                                     <span className="font-medium">{item.name}</span>
                                     {isLocked && <Lock className="w-3 h-3 text-amber-500" />}
+                                    {isDevMode && <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-bold border border-amber-200">DEV</span>}
                                   </div>
                                   {!isLocked && (isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />)}
                                 </button>
@@ -833,8 +865,12 @@ export default function Layout({ children, currentPageName }) {
                               }
                               style={isActive ? { background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` } : {}}>
 
-                              <Icon className="w-5 h-5" />
+                              <div className="relative">
+                                <Icon className="w-5 h-5" />
+                                {isDevMode && <span className="absolute -top-1 -right-1 w-2 h-2 bg-amber-500 rounded-full border border-white"></span>}
+                              </div>
                               <span className="text-sm font-medium">{item.name}</span>
+                              {isDevMode && <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-bold border border-amber-200 opacity-80">DEV</span>}
                             </Link>);
 
                         })}
