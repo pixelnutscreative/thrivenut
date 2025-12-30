@@ -441,6 +441,92 @@ For resources (books, movies, articles), suggest a category like 'Reading List',
           <h1 className={`text-3xl font-bold ${textClass}`}>Tasks & Brain Dump</h1>
         </div>
 
+        <Dialog open={showAnalysis} onOpenChange={setShowAnalysis}>
+          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>AI Sorting Suggestions</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              {analysisResults.length === 0 ? (
+                <p className="text-center text-gray-500 py-4">All sorted! 🎉</p>
+              ) : (
+                analysisResults.map((item, idx) => (
+                  <Card key={idx} className="bg-gray-50">
+                    <CardContent className="p-4 flex items-start gap-4">
+                      <div className={`p-2 rounded-lg shrink-0 ${
+                        item.type === 'task' ? 'bg-blue-100 text-blue-600' :
+                        item.type === 'goal' ? 'bg-purple-100 text-purple-600' :
+                        item.type === 'habit' ? 'bg-green-100 text-green-600' :
+                        item.type === 'resource' ? 'bg-orange-100 text-orange-600' :
+                        'bg-gray-100 text-gray-600'
+                      }`}>
+                        {item.type === 'task' ? <Check className="w-5 h-5" /> :
+                         item.type === 'goal' ? <Tag className="w-5 h-5" /> :
+                         item.type === 'habit' ? <RefreshCw className="w-5 h-5" /> :
+                         item.type === 'resource' ? <BookOpen className="w-5 h-5" /> :
+                         <ListFilter className="w-5 h-5" />}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-bold capitalize">{item.type}</span>
+                          <span className="text-sm bg-white px-2 rounded border">{item.suggested_category}</span>
+                        </div>
+                        <Input 
+                          value={item.suggested_title} 
+                          onChange={(e) => {
+                            const newResults = [...analysisResults];
+                            newResults[idx].suggested_title = e.target.value;
+                            setAnalysisResults(newResults);
+                          }}
+                          className="font-medium text-gray-900 mb-1"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">{item.reasoning}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Select 
+                          value={item.type} 
+                          onValueChange={(val) => {
+                            const newResults = [...analysisResults];
+                            newResults[idx].type = val;
+                            setAnalysisResults(newResults);
+                          }}
+                        >
+                          <SelectTrigger className="h-8 w-[100px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="task">Task</SelectItem>
+                            <SelectItem value="goal">Goal</SelectItem>
+                            <SelectItem value="habit">Habit</SelectItem>
+                            <SelectItem value="resource">Resource (My Stuff)</SelectItem>
+                            <SelectItem value="note">Note</SelectItem>
+                            <SelectItem value="event">Event</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Button 
+                          size="sm" 
+                          onClick={() => processAnalysisItem(item)}
+                          className="bg-green-500 hover:bg-green-600 text-white px-3"
+                          title="Confirm & Create"
+                        >
+                          <Check className="w-5 h-5" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <HabitConfigModal 
+          open={habitConfigOpen} 
+          onOpenChange={setHabitConfigOpen}
+          initialData={currentHabitItem}
+          onConfirm={(config) => processAnalysisItem(currentHabitItem, config)}
+        />
+
         <Tabs defaultValue="tasks" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="tasks">My Tasks ({filteredTasks.length})</TabsTrigger>
