@@ -184,6 +184,21 @@ const socialMediaFeatures = [
     title: 'Song Collaboration', 
     description: 'Share generated songs with collaborators. Perfect for working with music producers or other creators.',
   },
+  { 
+    icon: LinkIcon, 
+    title: 'Social Shortcuts', 
+    description: 'Quick access to all your important links, resources, and frequent destinations.',
+  },
+  { 
+    icon: MessageCircle, 
+    title: 'Live Engagement', 
+    description: 'Tools to keep your live stream audience engaged, active, and entertained.',
+  },
+  { 
+    icon: Gift, 
+    title: 'Love Aways', 
+    description: 'Organize and track your giveaways and community love in one place.',
+  },
 ];
 
 // ===================== CUSTOMIZATION FEATURES =====================
