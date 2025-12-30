@@ -13,31 +13,38 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 function AddRetainerPackageDialog({ group, member, currentUser }) {
   const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedPackage, setSelectedPackage] = useState(null);
-  const packages = [
-    { name: '$444 Package', hours: 5, sessions: 7 },
-    { name: '$999 Package', hours: 16, sessions: 22 }
+  const [formData, setFormData] = useState({ name: '', hours: '' });
+
+  // Only show specific presets for Pixel Nuts admins
+  const isPixelAdmin = ['pixelnutscreative@gmail.com', 'pixel@thrivenut.app'].includes(currentUser?.email);
+  
+  const presets = [
+    { name: '$444 Package', hours: 5 },
+    { name: '$999 Package', hours: 16 }
   ];
 
   const mutation = useMutation({
-    mutationFn: async (packageData) => {
+    mutationFn: async (data) => {
       return base44.entities.GroupMemberRetainerPackage.create({
         group_id: group.id,
         member_email: member.user_email,
-        hours_purchased: packageData.hours,
-        package_name: packageData.name,
+        hours_purchased: parseFloat(data.hours),
+        package_name: data.name,
         purchase_date: new Date().toISOString().split('T')[0],
         purchased_by: currentUser.email
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['memberRetainerPackages', group.id, member.user_email]);
-      // Also invalidate overall project queries since they depend on this
       queryClient.invalidateQueries(['allGroupProjects', group.id]);
       setIsOpen(false);
-      setSelectedPackage(null);
+      setFormData({ name: '', hours: '' });
     }
   });
+
+  const applyPreset = (preset) => {
+    setFormData({ name: preset.name, hours: preset.hours });
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -49,24 +56,48 @@ function AddRetainerPackageDialog({ group, member, currentUser }) {
       <DialogContent>
         <DialogHeader><DialogTitle>Add Retainer Package for {member.user_email}</DialogTitle></DialogHeader>
         <div className="space-y-4 py-4">
-          <p className="text-sm text-gray-600">Select a package to add hours to this member's retainer.</p>
-          <div className="grid grid-cols-2 gap-4">
-            {packages.map((pkg, index) => (
-              <Card 
-                key={index} 
-                className={`cursor-pointer ${selectedPackage?.name === pkg.name ? 'border-purple-500 ring-2 ring-purple-500' : ''}`}
-                onClick={() => setSelectedPackage(pkg)}
-              >
-                <CardContent className="p-4">
-                  <h5 className="font-bold text-lg">{pkg.name}</h5>
-                  <p className="text-sm text-gray-500">{pkg.hours} hours ({pkg.sessions} sessions)</p>
-                </CardContent>
-              </Card>
-            ))}
+          <p className="text-sm text-gray-600">Manually enter package details or select a preset.</p>
+          
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <Label>Package Name</Label>
+              <Input 
+                placeholder="e.g. Consulting Block" 
+                value={formData.name} 
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Hours</Label>
+              <Input 
+                type="number" 
+                placeholder="e.g. 10" 
+                value={formData.hours} 
+                onChange={(e) => setFormData({...formData, hours: e.target.value})}
+              />
+            </div>
           </div>
+
+          {isPixelAdmin && (
+            <div className="mt-4 pt-4 border-t">
+              <p className="text-xs font-semibold text-gray-500 mb-2">Your Presets</p>
+              <div className="grid grid-cols-2 gap-2">
+                {presets.map((preset, index) => (
+                  <button
+                    key={index}
+                    onClick={() => applyPreset(preset)}
+                    className="text-left p-3 rounded-lg border hover:bg-purple-50 hover:border-purple-200 transition-colors text-sm"
+                  >
+                    <div className="font-medium">{preset.name}</div>
+                    <div className="text-gray-500">{preset.hours} hours</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
         <DialogFooter>
-          <Button onClick={() => mutation.mutate(selectedPackage)} disabled={!selectedPackage}>Add Package</Button>
+          <Button onClick={() => mutation.mutate(formData)} disabled={!formData.name || !formData.hours}>Add Package</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
