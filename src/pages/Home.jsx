@@ -10,7 +10,7 @@ import {
   Sparkles, Check, Star, Crown, Zap, Gift, Music, Calendar,
   Video, MessageSquare, TrendingUp, Palette, ArrowRight, Shield, LogIn,
   Droplet, Moon, Apple, CheckSquare, ImageIcon, Mic, Share2, Eye,
-  Sliders, Accessibility, MessageCircle
+  Sliders, Accessibility, MessageCircle, Wallet, Activity, Sun, Link as LinkIcon
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
