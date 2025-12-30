@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../components/shared/useTheme';
 import { format } from 'date-fns';
 
-import { Brain, Trash2, Save, Plus, Tag, Search, Check, ListFilter, Sparkles, Loader2, X, RefreshCw } from 'lucide-react';
+import { Brain, Trash2, Save, Plus, Tag, Search, Check, ListFilter, Sparkles, Loader2, X, RefreshCw, BookOpen, Link as LinkIcon } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import HabitConfigModal from '../components/brain-dump/HabitConfigModal';
@@ -70,30 +70,33 @@ ${dumpTexts}
 
 Return a JSON object with a list of actionable items. Each item should have:
 - original_id (extract from the ID tag)
-- type (one of: 'task', 'goal', 'habit', 'note', 'event')
+- type (one of: 'task', 'goal', 'habit', 'note', 'event', 'resource')
 - suggested_title (clear, actionable title)
-- suggested_category (e.g. Work, Personal, Health)
+- suggested_category (e.g. Work, Personal, Health, Reading List, Watch List)
+- suggested_url (if a link is present)
 - reasoning (brief why)
 
-For habits, identify if there's any implied frequency (e.g. "every monday" -> specific_days, "daily" -> daily).`,
-        response_json_schema: {
-          type: "object",
-          properties: {
-            analysis: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  original_id: { type: "string" },
-                  type: { type: "string" },
-                  suggested_title: { type: "string" },
-                  suggested_category: { type: "string" },
-                  reasoning: { type: "string" }
-                }
-              }
-            }
-          }
+For habits, identify if there's any implied frequency (e.g. "every monday" -> specific_days, "daily" -> daily).
+For resources (books, movies, articles, links), suggest a category like 'Reading List', 'Watch List', or 'Research'.`,
+response_json_schema: {
+  type: "object",
+  properties: {
+    analysis: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          original_id: { type: "string" },
+          type: { type: "string" },
+          suggested_title: { type: "string" },
+          suggested_category: { type: "string" },
+          suggested_url: { type: "string" },
+          reasoning: { type: "string" }
         }
+      }
+    }
+  }
+}
       });
       
       // Add unique UI IDs to each result to handle splits
@@ -149,6 +152,15 @@ For habits, identify if there's any implied frequency (e.g. "every monday" -> sp
         await base44.entities.ExternalEvent.create({ title: item.suggested_title, date: new Date().toISOString().split('T')[0], created_by: user.email });
       } else if (item.type === 'note') {
         await base44.entities.QuickNote.create({ content: item.suggested_title, created_by: user.email });
+      } else if (item.type === 'resource') {
+        await base44.entities.UserResource.create({
+          user_email: user.email,
+          title: item.suggested_title,
+          category: item.suggested_category || 'General',
+          categories: [item.suggested_category || 'General'],
+          url: item.suggested_url || '',
+          description: item.reasoning || 'Added from Brain Dump'
+        });
       }
       
       // Remove this specific item from the analysis list
@@ -266,11 +278,13 @@ For habits, identify if there's any implied frequency (e.g. "every monday" -> sp
                         item.type === 'task' ? 'bg-blue-100 text-blue-600' :
                         item.type === 'goal' ? 'bg-purple-100 text-purple-600' :
                         item.type === 'habit' ? 'bg-green-100 text-green-600' :
+                        item.type === 'resource' ? 'bg-orange-100 text-orange-600' :
                         'bg-gray-100 text-gray-600'
                       }`}>
                         {item.type === 'task' ? <Check className="w-5 h-5" /> :
                          item.type === 'goal' ? <Tag className="w-5 h-5" /> :
                          item.type === 'habit' ? <RefreshCw className="w-5 h-5" /> :
+                         item.type === 'resource' ? <BookOpen className="w-5 h-5" /> :
                          <ListFilter className="w-5 h-5" />}
                       </div>
                       <div className="flex-1">
@@ -305,6 +319,7 @@ For habits, identify if there's any implied frequency (e.g. "every monday" -> sp
                             <SelectItem value="task">Task</SelectItem>
                             <SelectItem value="goal">Goal</SelectItem>
                             <SelectItem value="habit">Habit</SelectItem>
+                            <SelectItem value="resource">Resource (My Stuff)</SelectItem>
                             <SelectItem value="note">Note</SelectItem>
                             <SelectItem value="event">Event</SelectItem>
                           </SelectContent>
