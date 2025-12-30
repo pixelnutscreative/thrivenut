@@ -13,7 +13,7 @@ import { X, Plus, Save, Link as LinkIcon, Trash2, ArrowUp, ArrowDown, ChevronDow
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
-import { useTheme } from '../components/shared/useTheme';
+import { useTheme } from '@/components/shared/useTheme';
 
 export default function GroupSettingsTab({ group }) {
   return (
