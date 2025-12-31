@@ -267,9 +267,11 @@ export default function CreatorGroups() {
     if (inviteCode && referralCode && user?.email) {
       // Track referral
       base44.functions.invoke('trackReferral', { 
-        code: referralCode, 
-        event: 'group_join',
-        details: { group_id: activeGroupId || 'pending_invite' }
+        referralCode: referralCode, 
+        activityType: 'click',
+        email: user.email,
+        sourceType: 'group_invite',
+        sourceDetail: activeGroupId || 'pending_invite'
       }).catch(err => console.error('Referral track error:', err));
     }
   }, [inviteCode, referralCode, user]);
