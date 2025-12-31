@@ -62,7 +62,7 @@ export default function TikTokAccessGate({ isOpen, onClose }) {
               Upgrade to Plus - $77/year
             </Button>
             <p className="text-xs text-gray-500 mt-2">
-              Includes 7-day free trial. Cancel anytime.
+              Cancel anytime.
             </p>
           </div>
         </div>

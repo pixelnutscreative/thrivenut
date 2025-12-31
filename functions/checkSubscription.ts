@@ -33,7 +33,22 @@ Deno.serve(async (req) => {
       limit: 1
     });
 
-    const activeSub = subscriptions.data[0] || trialing.data[0];
+    let activeSub = subscriptions.data[0] || trialing.data[0];
+
+    // Check for AI Platform / Nuts & Bots access
+    if (!activeSub) {
+        const aiUsers = await base44.entities.AIPlatformUser.filter({ user_email: user.email });
+        const aiUser = aiUsers[0];
+        
+        if (aiUser && aiUser.subscription_status === 'active') {
+             // Create a mock subscription object for the frontend
+             activeSub = {
+                 status: 'active',
+                 plan: { nickname: 'Included with ' + (aiUser.platform || 'AI Tools') },
+                 source: 'ai_platform'
+             };
+        }
+    }
 
     return Response.json({ 
         hasActiveSubscription: !!activeSub,
