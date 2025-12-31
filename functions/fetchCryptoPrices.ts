@@ -143,8 +143,17 @@ Deno.serve(async (req) => {
             });
         }
 
-        // Removed hardcoded fallback for PNIC/MIRX as they are now expected to be in CustomCoin entity
-        // If not found in CustomCoin and not in CoinGecko, they will return undefined price (or 0 in frontend)
+        // Hardcoded fallbacks for specific coins if not found
+        if (!prices['MIRX'] && validSymbols.some(s => s.toUpperCase() === 'MIRX')) {
+            prices['MIRX'] = 1.0;
+        }
+        if (!prices['PNIC'] && validSymbols.some(s => s.toUpperCase() === 'PNIC')) {
+            // Check if PNIC was in custom coins, if not default to something or leave as is
+            // Assuming PNIC usually managed via custom coins, but if missing:
+            if (!customPriceMap['PNIC']) {
+                prices['PNIC'] = 0.0045; // Default fallback if needed
+            }
+        }
 
         return Response.json({ prices });
 

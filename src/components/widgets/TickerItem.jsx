@@ -68,6 +68,7 @@ export default function TickerItem({ coin, currentPrice, userHolding, userValue,
                                 <div className="flex gap-2">
                                     <Input 
                                         type="number" 
+                                        step="any"
                                         value={tempAmount}
                                         onChange={(e) => setTempAmount(e.target.value)}
                                         onKeyDown={handleKeyDown}
@@ -82,11 +83,9 @@ export default function TickerItem({ coin, currentPrice, userHolding, userValue,
                             </div>
                         </PopoverContent>
                     </Popover>
-                    {userValue > 0 && (
-                        <div className="text-sm font-bold text-green-400 font-mono">
-                            ${userValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </div>
-                    )}
+                    <div className="text-sm font-bold text-green-400 font-mono">
+                        ${userValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </div>
                 </div>
             </div>
             
