@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
         if (meetings.length > 0) {
             context += "--- MEETING RECORDS & TRANSCRIPTS ---\n";
             meetings.forEach(m => {
-                context += `Meeting: ${m.title} (${new Date(m.date).toLocaleDateString()})\nSummary/Transcript: ${m.transcript || m.summary || 'No transcript available'}\n\n`;
+                context += `Meeting: ${m.title} (${new Date(m.meeting_date).toLocaleDateString()})\nSummary/Transcript: ${m.transcript || 'No transcript available'}\n\n`;
             });
         }
 
