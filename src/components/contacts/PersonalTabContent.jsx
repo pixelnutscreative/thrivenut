@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, X, Instagram, Facebook, Youtube, Twitter, Linkedin, Twitch, Star } from 'lucide-react';
+import { Plus, X, Instagram, Facebook, Youtube, Twitter, Linkedin, Twitch, Star, Calendar, Trash2 } from 'lucide-react';
 import NotesWithHistory from './NotesWithHistory';
 
 const veteranBranches = [
@@ -176,6 +176,81 @@ export default function PersonalTabContent({ formData, setFormData, hidePrivateI
               onChange={(e) => setFormData({ ...formData, sobriety_date: e.target.value })}
               className="h-8"
             />
+          )}
+        </div>
+      </div>
+
+      {/* Special Dates */}
+      <div className="space-y-2 p-3 bg-purple-50 rounded-lg border border-purple-100">
+        <div className="flex items-center justify-between">
+          <Label className="text-sm font-semibold text-purple-900 flex items-center gap-2">
+            <Calendar className="w-4 h-4" />
+            Special Dates & Anniversaries
+          </Label>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-6 text-xs text-purple-700 hover:bg-purple-100"
+            onClick={() => {
+              const newDate = { id: Date.now().toString(), date: '', title: '', type: 'milestone', is_special_date: true };
+              setFormData({
+                ...formData,
+                moments: [...(formData.moments || []), newDate],
+                memorable_moments: [...(formData.moments || []), newDate]
+              });
+            }}
+          >
+            <Plus className="w-3 h-3 mr-1" /> Add Date
+          </Button>
+        </div>
+        
+        <div className="space-y-2">
+          {/* Show moments that are flagged as special dates or look like special dates */}
+          {(formData.moments || []).filter(m => m.is_special_date || m.type === 'milestone').map((moment, idx) => (
+            <div key={moment.id || idx} className="flex gap-2 items-center">
+              <Input
+                type="date"
+                value={moment.date}
+                onChange={(e) => {
+                  const updated = [...(formData.moments || [])];
+                  const index = updated.findIndex(m => m.id === moment.id);
+                  if (index !== -1) {
+                    updated[index] = { ...updated[index], date: e.target.value };
+                    setFormData({ ...formData, moments: updated, memorable_moments: updated });
+                  }
+                }}
+                className="h-8 w-32 bg-white"
+              />
+              <Input
+                placeholder="Event Name (e.g. Wedding Anniversary)"
+                value={moment.title}
+                onChange={(e) => {
+                  const updated = [...(formData.moments || [])];
+                  const index = updated.findIndex(m => m.id === moment.id);
+                  if (index !== -1) {
+                    updated[index] = { ...updated[index], title: e.target.value };
+                    setFormData({ ...formData, moments: updated, memorable_moments: updated });
+                  }
+                }}
+                className="h-8 flex-1 bg-white"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-gray-400 hover:text-red-500"
+                onClick={() => {
+                  const updated = (formData.moments || []).filter(m => m.id !== moment.id);
+                  setFormData({ ...formData, moments: updated, memorable_moments: updated });
+                }}
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </div>
+          ))}
+          {(!formData.moments || formData.moments.filter(m => m.is_special_date || m.type === 'milestone').length === 0) && (
+            <p className="text-xs text-gray-400 italic px-1">No additional special dates added.</p>
           )}
         </div>
       </div>
