@@ -71,6 +71,9 @@ export default function TickerItem({ coin, currentPrice, userHolding, userValue,
                                         Save
                                     </Button>
                                 </div>
+                                <div className="text-right text-xs text-green-300 font-mono pt-1">
+                                    Value: ${(parseFloat(tempAmount || 0) * currentPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </div>
                             </div>
                         </PopoverContent>
                     </Popover>

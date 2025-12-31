@@ -249,25 +249,32 @@ export default function Home() {
     const urlParams = new URLSearchParams(window.location.search);
     const refCode = urlParams.get('ref');
     if (refCode) {
-      const referralData = {
-        code: refCode,
-        sourceType: urlParams.get('source_type') || null,
-        sourceDetail: urlParams.get('source_detail') || null,
-        timestamp: new Date().toISOString(),
-        expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString() // 365 days
-      };
-      
-      // Store in both sessionStorage (for immediate use) and localStorage (for persistence)
-      sessionStorage.setItem('referral_code', refCode);
-      localStorage.setItem('referral_data', JSON.stringify(referralData));
-      
-      // Track click with source info if available
-      base44.functions.invoke('trackReferral', { 
-        referralCode: refCode, 
-        activityType: 'click',
-        sourceType: urlParams.get('source_type') || null,
-        sourceDetail: urlParams.get('source_detail') || null
-      }).catch(() => {});
+      // Check if we've already tracked this code in this session to prevent duplicates
+      const sessionTrackedKey = `referral_tracked_${refCode}`;
+      const isAlreadyTracked = sessionStorage.getItem(sessionTrackedKey);
+
+      if (!isAlreadyTracked) {
+        const referralData = {
+          code: refCode,
+          sourceType: urlParams.get('source_type') || null,
+          sourceDetail: urlParams.get('source_detail') || null,
+          timestamp: new Date().toISOString(),
+          expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString() // 365 days
+        };
+        
+        // Store in both sessionStorage (for immediate use) and localStorage (for persistence)
+        sessionStorage.setItem('referral_code', refCode);
+        localStorage.setItem('referral_data', JSON.stringify(referralData));
+        sessionStorage.setItem(sessionTrackedKey, 'true');
+        
+        // Track click with source info if available
+        base44.functions.invoke('trackReferral', { 
+          referralCode: refCode, 
+          activityType: 'click',
+          sourceType: urlParams.get('source_type') || null,
+          sourceDetail: urlParams.get('source_detail') || null
+        }).catch(() => {});
+      }
     }
 
     base44.auth.isAuthenticated().then(auth => {
