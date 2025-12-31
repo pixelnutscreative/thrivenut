@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,11 +6,22 @@ import { Pencil, Trash2 } from 'lucide-react';
 
 export default function TickerItem({ coin, currentPrice, userHolding, userValue, loading, onUpdateHolding, onRemove }) {
   const [open, setOpen] = useState(false);
-  
+  const [tempAmount, setTempAmount] = useState(userHolding);
+
+  // Sync temp amount when userHolding changes externally
+  useEffect(() => {
+    setTempAmount(userHolding);
+  }, [userHolding]);
+
+  const handleSave = () => {
+    onUpdateHolding(tempAmount);
+    setOpen(false);
+  };
+
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
-      onUpdateHolding(e.target.value);
-      setOpen(false);
+      e.preventDefault();
+      handleSave();
     }
   };
 
@@ -46,15 +57,20 @@ export default function TickerItem({ coin, currentPrice, userHolding, userValue,
                         <PopoverContent className="w-48 bg-slate-900 border-slate-700 text-white">
                             <div className="space-y-2">
                                 <h4 className="font-medium text-sm">My {coin.symbol} Amount</h4>
-                                <Input 
-                                    type="number" 
-                                    defaultValue={userHolding}
-                                    onKeyDown={handleKeyDown}
-                                    className="h-8 bg-slate-800 border-slate-600 text-white"
-                                    autoFocus
-                                    placeholder="0.00"
-                                />
-                                <p className="text-xs text-slate-400">Press Enter to save</p>
+                                <div className="flex gap-2">
+                                    <Input 
+                                        type="number" 
+                                        value={tempAmount}
+                                        onChange={(e) => setTempAmount(e.target.value)}
+                                        onKeyDown={handleKeyDown}
+                                        className="h-8 bg-slate-800 border-slate-600 text-white"
+                                        autoFocus
+                                        placeholder="0.00"
+                                    />
+                                    <Button size="sm" className="h-8 px-2 bg-indigo-600 hover:bg-indigo-700" onClick={handleSave}>
+                                        Save
+                                    </Button>
+                                </div>
                             </div>
                         </PopoverContent>
                     </Popover>
