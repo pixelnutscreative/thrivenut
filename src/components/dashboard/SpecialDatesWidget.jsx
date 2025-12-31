@@ -86,7 +86,9 @@ export default function SpecialDatesWidget({ userEmail }) {
     switch (type) {
       case 'birthday': return <Gift className="w-4 h-4 text-pink-500" />;
       case 'sobriety': return <Award className="w-4 h-4 text-purple-500" />;
-      case 'moment': return <Star className="w-4 h-4 text-amber-500" />;
+      case 'moment': 
+      case 'milestone': 
+        return <Star className="w-4 h-4 text-amber-500" />;
       default: return <Heart className="w-4 h-4 text-red-500" />;
     }
   };
