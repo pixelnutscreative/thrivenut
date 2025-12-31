@@ -64,7 +64,7 @@ export default function Pricing() {
   }, [user]);
 
   // TODO: Replace with your actual Stripe Price ID for the $77/year plan
-  const ANNUAL_PRICE_ID = "price_1Q..."; 
+  const ANNUAL_PRICE_ID = "price_1SYCEQDB4sLI21NpDMlISc31"; 
 
   const handleSubscribe = async (priceId) => {
     if (!user) {
