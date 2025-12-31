@@ -83,9 +83,11 @@ export default function TickerItem({ coin, currentPrice, userHolding, userValue,
                             </div>
                         </PopoverContent>
                     </Popover>
-                    <div className="text-sm font-bold text-green-400 font-mono">
-                        ${userValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </div>
+                    {userValue > 0 && (
+                        <div className="text-sm font-bold text-green-400 font-mono">
+                            ${userValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </div>
+                    )}
                 </div>
             </div>
             

@@ -144,7 +144,8 @@ Deno.serve(async (req) => {
         }
 
         // Hardcoded fallbacks for specific coins if not found
-        if (!prices['MIRX'] && validSymbols.some(s => s.toUpperCase() === 'MIRX')) {
+        // Force MIRX to 1.0 if requested, regardless of API result (as per user request)
+        if (validSymbols.some(s => s.toUpperCase() === 'MIRX')) {
             prices['MIRX'] = 1.0;
         }
         if (!prices['PNIC'] && validSymbols.some(s => s.toUpperCase() === 'PNIC')) {
