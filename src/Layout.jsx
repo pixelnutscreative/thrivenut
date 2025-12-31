@@ -113,6 +113,17 @@ export default function Layout({ children, currentPageName }) {
     enabled: !!effectiveEmail
   });
 
+  // Check for AI Platform Access (Nuts & Bots / Pixel's AI Toolbox)
+  const { data: aiUser } = useQuery({
+    queryKey: ['aiUser', effectiveEmail],
+    queryFn: async () => {
+      if (!effectiveEmail) return null;
+      const users = await base44.entities.AIPlatformUser.filter({ user_email: effectiveEmail });
+      return users[0] || null;
+    },
+    enabled: !!effectiveEmail
+  });
+
   // Fetch Global Feature Flags
   const { data: featureFlags = [] } = useQuery({
     queryKey: ['featureFlags'],
@@ -126,7 +137,10 @@ export default function Layout({ children, currentPageName }) {
   };
 
   // Permissions
-  const hasTikTokAccess = isAdmin || preferences?.tiktok_access_approved || preferences?.is_superfan;
+  const hasTikTokAccess = isAdmin || 
+                          preferences?.tiktok_access_approved || 
+                          preferences?.is_superfan || 
+                          (aiUser && aiUser.subscription_status === 'active');
   // Determine if Bible features are enabled (default to true if undefined)
   const isBibleBeliever = preferences?.enable_bible_options !== false;
   const enabledModules = preferences?.enabled_modules || [
