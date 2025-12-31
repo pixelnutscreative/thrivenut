@@ -11,9 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { format } from 'date-fns';
 import { Plus, Play, Square, Clock, Calendar, User, FileText, Trash2, CheckCircle2, Circle, MoreVertical, FileDown, Pencil, History } from 'lucide-react';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable'; 
 import EditTaskDialog from './EditTaskDialog';
+import TimeReportDialog from './TimeReportDialog';
 
 // Helper for permissions
 const isVirtualAssistant = (role) => role === 'virtual-assistant';
@@ -95,11 +94,10 @@ export default function GroupProjectsTab({ group, currentUser, myMembership }) {
 
       {/* Time Report Modal */}
       {isTimeReportOpen && (
-        <TimeReportModal 
+        <TimeReportDialog 
           isOpen={isTimeReportOpen} 
           onClose={() => setIsTimeReportOpen(false)} 
           groupId={group.id} 
-          projects={projects}
         />
       )}
     </div>
@@ -463,125 +461,4 @@ function ManualTimeDialog({ task, projectId, currentUser }) {
   );
 }
 
-function TimeReportModal({ isOpen, onClose, groupId, projects }) {
-  // Fetch all time entries for these projects
-  const { data: allEntries = [] } = useQuery({
-     queryKey: ['groupTimeEntries', groupId],
-     queryFn: async () => {
-        // We can't query by list of project IDs easily in one go unless we loop or have a 'group_id' on TimeEntry. 
-        // We don't have 'group_id' on TimeEntry, but we have 'project_id'. 
-        // Best approach: fetch all projects, then fetch entries for each.
-        const promises = projects.map(p => base44.entities.TimeEntry.filter({ project_id: p.id }));
-        const results = await Promise.all(promises);
-        return results.flat();
-     },
-     enabled: isOpen && projects.length > 0
-  });
-
-  const exportPDF = () => {
-    const doc = new jsPDF();
-    
-    // Title
-    doc.setFontSize(20);
-    doc.text("Time Summary Report", 14, 22);
-    doc.setFontSize(10);
-    doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 30);
-    
-    // Summary Table
-    const byUser = {};
-    allEntries.forEach(e => {
-       if (!byUser[e.user_email]) byUser[e.user_email] = 0;
-       byUser[e.user_email] += e.hours;
-    });
-
-    const summaryData = Object.entries(byUser).map(([email, hours]) => [email, `${hours.toFixed(2)}h`]);
-    
-    doc.autoTable({
-      startY: 40,
-      head: [['User', 'Total Hours']],
-      body: summaryData,
-      theme: 'striped',
-      headStyles: { fillColor: [100, 100, 255] }
-    });
-
-    // Detailed Table
-    const detailsData = allEntries
-      .sort((a,b) => new Date(b.date) - new Date(a.date))
-      .map(e => {
-        const proj = projects.find(p => p.id === entry.project_id);
-        return [
-          e.date,
-          e.user_email,
-          proj?.title || 'Unknown',
-          e.description || '-',
-          `${e.hours}h`
-        ];
-      });
-
-    doc.autoTable({
-      startY: doc.lastAutoTable.finalY + 15,
-      head: [['Date', 'User', 'Project', 'Description', 'Hours']],
-      body: detailsData,
-      theme: 'grid',
-      headStyles: { fillColor: [66, 66, 66] },
-      columnStyles: {
-        0: { cellWidth: 25 },
-        1: { cellWidth: 40 },
-        2: { cellWidth: 30 },
-        3: { cellWidth: 'auto' },
-        4: { cellWidth: 20, halign: 'right' }
-      }
-    });
-
-    doc.save("time-report.pdf");
-  };
-
-  const totalHours = allEntries.reduce((sum, e) => sum + e.hours, 0);
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Time Summary Report</DialogTitle>
-        </DialogHeader>
-        <div className="py-4 space-y-4">
-           <div className="flex justify-between items-center p-4 bg-gray-100 rounded-lg">
-              <div>
-                <div className="text-sm text-gray-500">Total Project Hours</div>
-                <div className="text-2xl font-bold">{totalHours.toFixed(2)}h</div>
-              </div>
-              <Button onClick={exportPDF}>
-                 <FileDown className="w-4 h-4 mr-2" /> Export PDF
-              </Button>
-           </div>
-           
-           <div className="max-h-64 overflow-y-auto border rounded-md">
-              <table className="w-full text-sm">
-                 <thead className="bg-gray-50 border-b">
-                   <tr>
-                     <th className="p-2 text-left">Date</th>
-                     <th className="p-2 text-left">User</th>
-                     <th className="p-2 text-left">Project</th>
-                     <th className="p-2 text-right">Hours</th>
-                   </tr>
-                 </thead>
-                 <tbody>
-                   {allEntries.sort((a,b) => new Date(b.date) - new Date(a.date)).map(entry => {
-                      const proj = projects.find(p => p.id === entry.project_id);
-                      return (
-                        <tr key={entry.id} className="border-b last:border-0">
-                           <td className="p-2">{entry.date}</td>
-                           <td className="p-2 truncate max-w-[150px]">{entry.user_email}</td>
-                           <td className="p-2 truncate max-w-[150px]">{proj?.title || 'Unknown'}</td>
-                           <td className="p-2 text-right font-mono">{entry.hours}</td>
-                        </tr>
-                      );
-                   })}
-                 </tbody>
-              </table>
-           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
+// TimeReportModal removed in favor of shared TimeReportDialog

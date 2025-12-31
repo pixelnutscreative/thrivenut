@@ -26,6 +26,7 @@ import GroupProjectsTab from '../components/groups/GroupProjectsTab';
 import GroupMeetingsTab from '../components/groups/GroupMeetingsTab';
 import CryptoTickerWidget from '../components/widgets/CryptoTickerWidget';
 import GroupCalendarWidget from '../components/groups/GroupCalendarWidget';
+import TimeReportDialog from '../components/groups/TimeReportDialog';
 
 export default function CreatorGroups() {
   const { user, preferences } = useTheme();
@@ -39,6 +40,7 @@ export default function CreatorGroups() {
   const [newGroupType, setNewGroupType] = useState('community');
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'table'
   const [showHidden, setShowHidden] = useState(false);
+  const [showTimeReport, setShowTimeReport] = useState(false);
 
   // Admin Check
   const realUserEmail = user?.email ? user?.email.toLowerCase() : '';
@@ -950,13 +952,31 @@ export default function CreatorGroups() {
                      </p>
                   </div>
                </div>
-               <div className="text-right">
-                  <div className={`text-2xl font-bold ${retainerBalance.remaining < 0 ? 'text-red-600' : 'text-green-600'}`}>
-                     {retainerBalance.remaining.toFixed(2)}h
-                  </div>
-                  <div className="text-xs text-gray-400 font-medium uppercase tracking-wider">Remaining</div>
+               <div className="flex items-center gap-6">
+                 <Button 
+                   variant="outline" 
+                   size="sm" 
+                   className="hidden sm:flex bg-white/50 hover:bg-white"
+                   onClick={() => setShowTimeReport(true)}
+                 >
+                   <FileText className="w-4 h-4 mr-2" /> View Report
+                 </Button>
+                 <div className="text-right">
+                    <div className={`text-2xl font-bold ${retainerBalance.remaining < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                       {retainerBalance.remaining.toFixed(2)}h
+                    </div>
+                    <div className="text-xs text-gray-400 font-medium uppercase tracking-wider">Remaining</div>
+                 </div>
                </div>
             </div>
+          )}
+
+          {showTimeReport && (
+            <TimeReportDialog 
+              isOpen={showTimeReport} 
+              onClose={() => setShowTimeReport(false)} 
+              groupId={activeGroupId} 
+            />
           )}
 
           <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-6">
