@@ -225,8 +225,9 @@ export default function CreatorGroups() {
   });
 
   useEffect(() => {
-    if (inviteCode && user?.email && processedInviteRef.current !== inviteCode) {
-      processedInviteRef.current = inviteCode;
+    const sessionKey = `invite_prompt_shown_${inviteCode}`;
+    if (inviteCode && user?.email && !sessionStorage.getItem(sessionKey)) {
+      sessionStorage.setItem(sessionKey, 'true');
       
       // Use setTimeout to allow render to complete before blocking with confirm
       setTimeout(() => {

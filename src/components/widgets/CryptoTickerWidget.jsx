@@ -70,22 +70,32 @@ export default function CryptoTickerWidget({ portfolio = [], onUpdatePortfolio }
       }
       
       // Update UserPreferences
-      // Need to find the preferences ID first. Assuming we have it or fetch it.
-      // useTheme provides preferences object which usually has ID if fetched from DB.
-      // If not, we filter.
       let prefsId = preferences?.id;
-      if (!prefsId) {
+
+      // Double check if we can't find ID from props
+      if (!prefsId && user?.email) {
          const res = await base44.entities.UserPreferences.filter({ user_email: user.email });
-         if (res.length > 0) prefsId = res[0].id;
+         if (res.length > 0) {
+           prefsId = res[0].id;
+         } else {
+           // Create if doesn't exist
+           const newPrefs = await base44.entities.UserPreferences.create({
+             user_email: user.email,
+             crypto_portfolio: newPortfolio
+           });
+           return newPrefs;
+         }
       }
 
       if (prefsId) {
         await base44.entities.UserPreferences.update(prefsId, { crypto_portfolio: newPortfolio });
+      } else {
+        throw new Error("Could not find or create user preferences to save portfolio.");
       }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(['preferences']);
-    }
+      },
+      onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['preferences'] });
+      }
   });
 
   const handleAddCoin = () => {
