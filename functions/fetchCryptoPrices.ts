@@ -17,6 +17,15 @@ Deno.serve(async (req) => {
              return Response.json({ prices: {} });
         }
 
+        // Fetch Custom Coins from DB first
+        const customCoins = await base44.asServiceRole.entities.CustomCoin.list();
+        const customPriceMap = {};
+        customCoins.forEach(c => {
+            if (c.symbol && c.current_price !== undefined) {
+                customPriceMap[c.symbol.toUpperCase()] = c.current_price;
+            }
+        });
+
         // Static map for common coins to save API calls
         const symbolMap = {
             'BTC': 'bitcoin',
@@ -72,10 +81,13 @@ Deno.serve(async (req) => {
         const resolvedIds = {};
         const symbolsToSearch = [];
 
-        // 1. Resolve from map
+        // 1. Resolve from map (checking Custom Coins first)
         validSymbols.forEach(sym => {
             const upper = sym.toUpperCase();
-            if (symbolMap[upper]) {
+            if (customPriceMap[upper] !== undefined) {
+                // It's a custom coin, we have the price directly
+                // We'll handle this when constructing the response
+            } else if (symbolMap[upper]) {
                 resolvedIds[sym] = symbolMap[upper];
             } else {
                 symbolsToSearch.push(sym);
@@ -110,6 +122,13 @@ Deno.serve(async (req) => {
         const allIds = Object.values(resolvedIds);
         let prices = {};
 
+        // Add custom coin prices
+        Object.keys(customPriceMap).forEach(sym => {
+             // Find original symbol casing from request if possible, or use uppercase
+             const originalSym = validSymbols.find(s => s.toUpperCase() === sym) || sym;
+             prices[originalSym] = customPriceMap[sym];
+        });
+
         if (allIds.length > 0) {
             const idsParam = allIds.join(',');
             const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${idsParam}&vs_currencies=usd`);
@@ -124,9 +143,8 @@ Deno.serve(async (req) => {
             });
         }
 
-        // Fill in mocked custom tokens if absolutely necessary (keeping PNIC/MIRX logic but removing random generation)
-        if (prices['PNIC'] === undefined && symbols.includes('PNIC')) prices['PNIC'] = 0.0069;
-        if (prices['MIRX'] === undefined && symbols.includes('MIRX')) prices['MIRX'] = 1.23;
+        // Removed hardcoded fallback for PNIC/MIRX as they are now expected to be in CustomCoin entity
+        // If not found in CustomCoin and not in CoinGecko, they will return undefined price (or 0 in frontend)
 
         return Response.json({ prices });
 
