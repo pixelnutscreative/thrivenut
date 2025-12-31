@@ -169,7 +169,9 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
   // Copy link functionality
   const isPreview = typeof window !== 'undefined' && window.location.hostname.includes('preview-sandbox');
   const baseUrl = isPreview ? 'https://app.thrivenut.app' : (typeof window !== 'undefined' ? window.location.origin : '');
-  const referralParam = referralLink?.code ? `&ref=${referralLink.code}` : '';
+  // Safer check for referral link code
+  const referralCode = referralLink && referralLink.code;
+  const referralParam = referralCode ? `&ref=${referralCode}` : '';
   // Ensure we use the correct page URL (capitalized as per file name)
   const inviteLink = `${baseUrl}/CreatorGroups?invite=${group.invite_code}${referralParam}`;
   
