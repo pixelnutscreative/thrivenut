@@ -101,7 +101,7 @@ export default function TikTokEngagement() {
       });
     },
     onSuccess: (_, variables) => {
-      setJustEngaged(prev => ({ ...prev, [variables.id]: true }));
+      // Keep existing state to maintain hidden status
       setTimeout(() => {
         queryClient.invalidateQueries({ queryKey: ['tiktokContacts'] });
         queryClient.invalidateQueries({ queryKey: ['tiktokCreators'] });
