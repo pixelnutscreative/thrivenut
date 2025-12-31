@@ -3,29 +3,21 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
-        // Auth check not strictly needed for public price fetch, but good practice
+        // Auth check
         const user = await base44.auth.me().catch(() => null);
 
-        // Simple mock of price fetching or using a public API
-        // In a real scenario, use CoinGecko API or similar
-        // For now, we will use CoinGecko's simple price API which doesn't require an API key for basic usage
-        
         const { symbols } = await req.json(); // Expect array of symbols like ['BTC', 'ETH']
         
         if (!symbols || !Array.isArray(symbols) || symbols.length === 0) {
              return Response.json({ error: "No symbols provided" }, { status: 400 });
         }
 
-        // Filter valid symbols
         const validSymbols = symbols.filter(s => typeof s === 'string');
         if (validSymbols.length === 0) {
              return Response.json({ prices: {} });
         }
 
-        // CoinGecko requires IDs, not symbols. We'll do a basic mapping for common ones
-        // or try to search. For reliability, let's just use a fixed mapping for now
-        // and default to 0 for unknown.
-        
+        // Static map for common coins to save API calls
         const symbolMap = {
             'BTC': 'bitcoin',
             'ETH': 'ethereum',
@@ -61,41 +53,80 @@ Deno.serve(async (req) => {
             'THETA': 'theta-token',
             'AXS': 'axie-infinity',
             'XTZ': 'tezos',
-            'PNIC': 'pixel-nuts-creative-coin',
-            'MIRX': 'mirx-coin'
+            'PNIC': 'pixel-nuts-creative-coin', // Keep custom if needed, or remove if not real
+            'MIRX': 'mirx-coin',
+            'USDT': 'tether',
+            'USDC': 'usd-coin',
+            'BNB': 'binancecoin',
+            'DAI': 'dai',
+            'STETH': 'staked-ether',
+            'OKB': 'okb',
+            'LEO': 'leo-token',
+            'TON': 'the-open-network',
+            'LDO': 'lido-dao',
+            'CRO': 'crypto-com-chain',
+            'ICP': 'internet-computer',
+            'BCH': 'bitcoin-cash'
         };
-        
-        // Filter for known ids
-        const ids = validSymbols.map(s => symbolMap[s.toUpperCase()]).filter(Boolean);
-        const unknownSymbols = validSymbols.filter(s => !symbolMap[s.toUpperCase()]);
 
+        const resolvedIds = {};
+        const symbolsToSearch = [];
+
+        // 1. Resolve from map
+        validSymbols.forEach(sym => {
+            const upper = sym.toUpperCase();
+            if (symbolMap[upper]) {
+                resolvedIds[sym] = symbolMap[upper];
+            } else {
+                symbolsToSearch.push(sym);
+            }
+        });
+
+        // 2. Search for missing symbols (Rate limit warning: this is slow and limited)
+        // We limit to 5 searches per request to avoid timeout/rate-limit
+        const searchLimit = 5;
+        const searchPromises = symbolsToSearch.slice(0, searchLimit).map(async (sym) => {
+            try {
+                // Add delay to prevent hitting rate limit instantly
+                await new Promise(r => setTimeout(r, 200)); 
+                const res = await fetch(`https://api.coingecko.com/api/v3/search?query=${sym}`);
+                if (!res.ok) return;
+                const data = await res.json();
+                // Find exact symbol match, prioritize by market cap rank
+                const coin = data.coins?.find(c => c.symbol.toUpperCase() === sym.toUpperCase());
+                if (coin) {
+                    resolvedIds[sym] = coin.id;
+                }
+            } catch (e) {
+                console.error(`Failed to search ${sym}:`, e);
+            }
+        });
+
+        if (symbolsToSearch.length > 0) {
+            await Promise.all(searchPromises);
+        }
+
+        // 3. Fetch prices
+        const allIds = Object.values(resolvedIds);
         let prices = {};
 
-        if (ids.length > 0) {
-            const idsParam = ids.join(',');
+        if (allIds.length > 0) {
+            const idsParam = allIds.join(',');
             const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${idsParam}&vs_currencies=usd`);
             const data = await response.json();
-            
+
             // Map back to symbols
-            Object.keys(symbolMap).forEach(sym => {
-                const id = symbolMap[sym];
+            Object.keys(resolvedIds).forEach(sym => {
+                const id = resolvedIds[sym];
                 if (data[id]) {
                     prices[sym] = data[id].usd;
                 }
             });
         }
-        
-        // Mock random values for custom tokens like PNIC/MIRX if they are requested but not found
-        // or for testing
-        unknownSymbols.forEach(sym => {
-             // Generate a consistent-ish mock price based on char codes
-             const seed = sym.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-             prices[sym] = (seed % 1000) / 100; 
-        });
-        
+
+        // Fill in mocked custom tokens if absolutely necessary (keeping PNIC/MIRX logic but removing random generation)
         if (prices['PNIC'] === undefined && symbols.includes('PNIC')) prices['PNIC'] = 0.0069;
         if (prices['MIRX'] === undefined && symbols.includes('MIRX')) prices['MIRX'] = 1.23;
-
 
         return Response.json({ prices });
 
