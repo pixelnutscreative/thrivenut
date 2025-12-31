@@ -46,12 +46,20 @@ export default function TickerItem({ coin, currentPrice, userHolding, userValue,
         <div className="flex justify-between items-end pt-2 border-t border-white/10">
             <div className="flex-1">
                 <label className="text-[10px] text-white/60 uppercase font-semibold mb-1 block">My Holdings</label>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col items-start gap-1">
                     <Popover open={open} onOpenChange={setOpen}>
                         <PopoverTrigger asChild>
                             <button className="text-sm font-mono bg-black/20 hover:bg-black/40 px-2 py-1 rounded transition-colors flex items-center gap-1">
-                                {userHolding > 0 ? userHolding : 'Set Qty'}
-                                <Pencil className="w-3 h-3 opacity-50" />
+                                {userHolding > 0 ? (
+                                    <>
+                                        {userHolding} <span className="text-xs opacity-50">{coin.symbol}</span>
+                                        <Pencil className="w-3 h-3 opacity-30 ml-1" />
+                                    </>
+                                ) : (
+                                    <>
+                                        Set Qty <Pencil className="w-3 h-3 opacity-50" />
+                                    </>
+                                )}
                             </button>
                         </PopoverTrigger>
                         <PopoverContent className="w-48 bg-slate-900 border-slate-700 text-white">
@@ -78,9 +86,9 @@ export default function TickerItem({ coin, currentPrice, userHolding, userValue,
                         </PopoverContent>
                     </Popover>
                     {userValue > 0 && (
-                        <span className="text-xs text-green-300 font-mono">
-                            (${userValue.toLocaleString(undefined, { maximumFractionDigits: 2 })})
-                        </span>
+                        <div className="text-sm font-bold text-green-400 font-mono">
+                            ${userValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </div>
                     )}
                 </div>
             </div>

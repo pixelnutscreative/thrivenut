@@ -185,6 +185,8 @@ export default function CreatorGroups() {
 
   // Handle Invite Link
   const inviteCode = searchParams.get('invite');
+  const processedInviteRef = React.useRef(null);
+
   const joinMutation = useMutation({
     mutationFn: async (code) => {
       const groups = await base44.entities.CreatorGroup.filter({ invite_code: code });
@@ -223,13 +225,18 @@ export default function CreatorGroups() {
   });
 
   useEffect(() => {
-    if (inviteCode && user?.email) {
-      if (window.confirm('Do you want to join this group?')) {
-        joinMutation.mutate(inviteCode);
-      } else {
-        // Remove invite param if they cancel
-        setSearchParams({});
-      }
+    if (inviteCode && user?.email && processedInviteRef.current !== inviteCode) {
+      processedInviteRef.current = inviteCode;
+      
+      // Use setTimeout to allow render to complete before blocking with confirm
+      setTimeout(() => {
+        if (window.confirm('Do you want to join this group?')) {
+          joinMutation.mutate(inviteCode);
+        } else {
+          // Remove invite param if they cancel
+          setSearchParams({});
+        }
+      }, 100);
     }
   }, [inviteCode, user]);
 
