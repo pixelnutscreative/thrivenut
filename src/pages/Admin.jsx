@@ -39,6 +39,7 @@ import AdminPackagesContent from '../components/admin/AdminPackagesContent';
 import AdminAnalytics from '../components/admin/AdminAnalytics';
 import AdminGiftCodesContent from '../components/admin/AdminGiftCodesContent';
 import AdminFeatureFlags from '../components/admin/AdminFeatureFlags';
+import AdminCustomCoins from '../components/admin/AdminCustomCoins';
 
 const ADMIN_EMAILS = ['pixelnutscreative@gmail.com', 'pixel@thrivenut.app'];
 
@@ -160,6 +161,7 @@ export default function Admin() {
                       <TabsTrigger value="categories">Categories</TabsTrigger>
                       <TabsTrigger value="mentalhealth">Mental Health</TabsTrigger>
                       <TabsTrigger value="assets">Marketing Assets</TabsTrigger>
+                      <TabsTrigger value="coins">Custom Coins</TabsTrigger>
                     </TabsList>
                   </div>
                   
@@ -172,6 +174,7 @@ export default function Admin() {
                   <TabsContent value="categories"><AdminCategoriesContent /></TabsContent>
                   <TabsContent value="mentalhealth"><AdminMentalHealthContent /></TabsContent>
                   <TabsContent value="assets"><AdminMarketingAssets /></TabsContent>
+                  <TabsContent value="coins"><AdminCustomCoins /></TabsContent>
                 </Tabs>
               </CardContent>
             </Card>
