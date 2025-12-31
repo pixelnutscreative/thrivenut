@@ -46,6 +46,48 @@ export default function ShareDashboard() {
     enabled: !!userEmail,
   });
 
+  // Source Stats Query (for dropdown)
+  const { data: sourceStats } = useQuery({
+    queryKey: ['referralSourceStats', userEmail],
+    queryFn: async () => {
+        // We need to fetch ReferralActivity but it's not exposed via standard list/filter usually for aggregation
+        // But we can filter by referrer_email.
+        // Since we want aggregates, we might need to fetch all activities for this user and aggregate locally
+        // or add a backend function. For now, fetch latest activities.
+        // Assuming base44.entities.ReferralActivity is available.
+        const activities = await base44.entities.ReferralActivity.filter({ referrer_email: userEmail });
+        
+        // Group by referral code + source type
+        const stats = {};
+        activities.forEach(act => {
+            const key = `${act.referral_code}`;
+            if (!stats[key]) stats[key] = [];
+            
+            // Only add if unique combination of source_type/detail/tracking
+            const sourceKey = `${act.source_type || 'direct'}-${act.source_detail || ''}-${act.tracking_identifier || ''}`;
+            let existing = stats[key].find(s => s.key === sourceKey);
+            if (!existing) {
+                existing = {
+                    key: sourceKey,
+                    source_type: act.source_type || 'direct',
+                    source_detail: act.source_detail,
+                    tracking_identifier: act.tracking_identifier,
+                    clicks: 0,
+                    signups: 0,
+                    upgrades: 0
+                };
+                stats[key].push(existing);
+            }
+            
+            if (act.activity_type === 'click') existing.clicks++;
+            if (act.activity_type === 'signup') existing.signups++;
+            if (act.activity_type === 'upgrade') existing.upgrades++;
+        });
+        return stats;
+    },
+    enabled: !!userEmail
+  });
+
   // Commissions
   const { data: commissionData } = useQuery({
     queryKey: ['commissionData', userEmail],
@@ -304,9 +346,37 @@ export default function ShareDashboard() {
                           <code className="text-lg font-bold font-mono text-purple-700">{link.referral_code}</code>
                           {link.code_label && <Badge variant="secondary">{link.code_label}</Badge>}
                         </div>
-                        <p className="text-xs text-gray-500">
-                          {link.stats?.clicks || 0} clicks • {link.stats?.signups || 0} signups • {link.stats?.upgrades || 0} upgrades
-                        </p>
+                        <div className="flex flex-col gap-1">
+                            <p className="text-xs text-gray-500">
+                              {link.stats?.clicks || 0} clicks • {link.stats?.signups || 0} signups • {link.stats?.upgrades || 0} upgrades
+                            </p>
+                            
+                            {/* Source Breakdown */}
+                            {sourceStats && sourceStats[link.referral_code] && sourceStats[link.referral_code].length > 0 && (
+                                <div className="mt-1">
+                                    <Select>
+                                        <SelectTrigger className="h-6 text-[10px] w-auto border-none bg-gray-50 px-2 min-w-[120px]">
+                                            <SelectValue placeholder="View Sources" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {sourceStats[link.referral_code].map((source, idx) => (
+                                                <SelectItem key={idx} value={`source-${idx}`} disabled>
+                                                    <div className="flex flex-col gap-0.5 py-1">
+                                                        <span className="font-semibold text-xs">
+                                                            {source.source_type === 'group_invite' ? 'Group Invite' : (source.tracking_identifier || source.source_type || 'Direct')}
+                                                            {source.source_detail && <span className="font-normal text-gray-500"> ({source.source_detail})</span>}
+                                                        </span>
+                                                        <span className="text-[10px] text-gray-400">
+                                                            {source.clicks} clicks, {source.signups} signups
+                                                        </span>
+                                                    </div>
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            )}
+                        </div>
                       </div>
                       <div className="flex items-center gap-2">
                          <Button size="sm" variant="outline" onClick={() => handleCopyLink(link.referral_code)}>
