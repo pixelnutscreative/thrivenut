@@ -63,28 +63,36 @@ export default function Pricing() {
     checkSub();
   }, [user]);
 
-  // TODO: Replace with your actual Stripe Price ID for the $77/year plan
-  const ANNUAL_PRICE_ID = "price_1SYCEQDB4sLI21NpDMlISc31"; 
-
-  const handleSubscribe = async (priceId) => {
+  const handleSubscribe = async () => {
     if (!user) {
-      // Save the selected plan to localStorage so we can resume after login
-      localStorage.setItem('pending_plan_id', priceId);
+      // Save intent to localStorage so we can resume after login
+      localStorage.setItem('pending_plan_type', 'annual_77');
       await base44.auth.redirectToLogin(window.location.href);
       return;
     }
 
     setLoading(true);
     try {
-      // Pass the success URL to redirect back to
       const successUrl = `${window.location.origin}/SubscriptionSuccess?session_id={CHECKOUT_SESSION_ID}`;
       const cancelUrl = window.location.href;
       
+      // Use ad-hoc pricing for the $77 plan
       const response = await base44.functions.invoke('createCheckout', { 
-        priceId: priceId,
+        price_data: {
+            currency: 'usd',
+            product_data: {
+                name: 'Plus Plan (Annual)',
+                description: 'Annual access to all Plus features'
+            },
+            unit_amount: 7700, // $77.00
+            recurring: {
+                interval: 'year'
+            }
+        },
         successUrl: successUrl,
         cancelUrl: cancelUrl
       });
+      
       if (response.data?.url) {
         window.location.href = response.data.url;
       }
@@ -93,6 +101,29 @@ export default function Pricing() {
       setLoading(false);
     }
   };
+
+  // Check for pending plan after login
+  useEffect(() => {
+    const checkPendingPlan = async () => {
+      if (user && !checkingSubscription) {
+        const pendingPlanType = localStorage.getItem('pending_plan_type');
+        if (pendingPlanType === 'annual_77') {
+          localStorage.removeItem('pending_plan_type');
+          handleSubscribe();
+        } else {
+             // Legacy check for ID
+            const pendingPriceId = localStorage.getItem('pending_plan_id');
+            if (pendingPriceId) {
+                localStorage.removeItem('pending_plan_id');
+                // We don't support ID checkout here anymore for the main button, so ignore or handle differently if needed
+                // For now, redirecting to new flow
+                handleSubscribe();
+            }
+        }
+      }
+    };
+    checkPendingPlan();
+  }, [user, checkingSubscription]);
 
   // Check for pending plan after login
   useEffect(() => {
@@ -180,7 +211,7 @@ export default function Pricing() {
                       <p className="text-xs text-gray-400 line-through">Was $111/year</p>
                     </div>
                     <Button
-                      onClick={() => handleSubscribe(ANNUAL_PRICE_ID)}
+                      onClick={handleSubscribe}
                       disabled={loading}
                       className="w-full text-white"
                       style={gradientStyle}

@@ -22,24 +22,27 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
     }
 
-    const { priceId, successUrl, cancelUrl } = await req.json();
+    const { priceId, price_data, successUrl, cancelUrl } = await req.json();
 
-    if (!priceId) {
-      return new Response(JSON.stringify({ error: 'Missing priceId' }), { status: 400 });
+    if (!priceId && !price_data) {
+      return new Response(JSON.stringify({ error: 'Missing priceId or price_data' }), { status: 400 });
     }
 
-    // Retrieve price details to determine mode
-    const price = await stripe.prices.retrieve(priceId);
-    const mode = price.type === 'recurring' ? 'subscription' : 'payment';
+    let line_items;
+    let mode;
+
+    if (priceId) {
+      const price = await stripe.prices.retrieve(priceId);
+      mode = price.type === 'recurring' ? 'subscription' : 'payment';
+      line_items = [{ price: priceId, quantity: 1 }];
+    } else if (price_data) {
+      mode = price_data.recurring ? 'subscription' : 'payment';
+      line_items = [{ price_data: price_data, quantity: 1 }];
+    }
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
-        },
-      ],
+      line_items: line_items,
       mode: mode,
       success_url: successUrl || `${req.headers.get('origin')}/SubscriptionSuccess?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: cancelUrl || `${req.headers.get('origin')}/Pricing`,

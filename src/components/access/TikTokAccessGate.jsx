@@ -9,14 +9,21 @@ import { base44 } from '@/api/base44Client';
 export default function TikTokAccessGate({ isOpen, onClose }) {
   const [loading, setLoading] = useState(null);
 
-  // TODO: Replace with actual $77 Price ID
-  const PLUS_PLAN_PRICE_ID = "price_1SYCEQDB4sLI21NpDMlISc31"; 
-
   const handleSubscribe = async () => {
     setLoading('annual');
     try {
       const response = await base44.functions.invoke('createCheckout', { 
-        priceId: PLUS_PLAN_PRICE_ID,
+        price_data: {
+            currency: 'usd',
+            product_data: {
+                name: 'Plus Plan (Social Media Suite)',
+                description: 'Annual access to Social Media Suite and Plus features'
+            },
+            unit_amount: 7700, // $77.00
+            recurring: {
+                interval: 'year'
+            }
+        },
         successUrl: `${window.location.origin}/SubscriptionSuccess?session_id={CHECKOUT_SESSION_ID}`,
         cancelUrl: window.location.href
       });
