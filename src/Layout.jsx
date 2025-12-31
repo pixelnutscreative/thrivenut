@@ -427,7 +427,18 @@ export default function Layout({ children, currentPageName }) {
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 className={menuTextClass}>
 
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : (
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-6 h-6">
+                  {/* Top Bun */}
+                  <path d="M4 8C4 5.79086 5.79086 4 8 4H16C18.2091 4 20 5.79086 20 8V10H4V8Z" fill="#F59E0B" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
+                  {/* Lettuce */}
+                  <path d="M3 12C3 12 4.5 10.5 6 12C7.5 13.5 9 12 9 12C9 12 10.5 10.5 12 12C13.5 13.5 15 12 15 12C15 12 16.5 10.5 18 12C19.5 13.5 21 12 21 12" stroke="#10B981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  {/* Patty */}
+                  <rect x="4" y="14" width="16" height="3" rx="1.5" fill="#78350F" stroke="currentColor" strokeWidth="1" />
+                  {/* Bottom Bun */}
+                  <path d="M4 18V19C4 20.1046 4.89543 21 6 21H18C19.1046 21 20 20.1046 20 19V18H4Z" fill="#F59E0B" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
             </Button>
           </div>
         </div>
