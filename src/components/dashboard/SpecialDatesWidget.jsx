@@ -3,14 +3,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Gift, Calendar, Heart, Award, Star } from 'lucide-react';
+import { Gift, Calendar, Heart, Award, Star, History } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { format, addDays, isSameDay, parseISO, isWithinInterval } from 'date-fns';
+import { format, addDays, subDays, isSameDay, parseISO, isWithinInterval, startOfDay } from 'date-fns';
 
 export default function SpecialDatesWidget({ userEmail }) {
-  const [viewMode, setViewMode] = useState('upcoming'); // 'today' or 'upcoming'
-  const [daysAhead, setDaysAhead] = useState("7");
+  const [viewMode, setViewMode] = useState('upcoming'); // 'recent', 'today', 'upcoming'
+  const [daysAhead, setDaysAhead] = useState("30");
+  const [daysBack, setDaysBack] = useState("30");
 
   const { data: contacts = [] } = useQuery({
     queryKey: ['personalContacts', userEmail],
@@ -18,50 +19,53 @@ export default function SpecialDatesWidget({ userEmail }) {
     enabled: !!userEmail,
   });
 
-  const getUpcomingDates = () => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const endDate = addDays(today, parseInt(daysAhead));
-    
+  const getEvents = () => {
+    const today = startOfDay(new Date());
     const events = [];
+
+    // Define range based on viewMode
+    let rangeStart, rangeEnd;
+    
+    if (viewMode === 'upcoming') {
+      rangeStart = today;
+      rangeEnd = addDays(today, parseInt(daysAhead));
+    } else if (viewMode === 'recent') {
+      rangeStart = subDays(today, parseInt(daysBack));
+      rangeEnd = subDays(today, 1); // Yesterday
+    } else {
+      // Today
+      rangeStart = today;
+      rangeEnd = today;
+    }
 
     contacts.forEach(contact => {
       // Helper to process date fields
       const processDate = (dateStr, type, label) => {
         if (!dateStr) return;
         
-        // Parse the original date (e.g., birthday year)
         const originalDate = parseISO(dateStr);
-        // Create a date object for *this year* to check upcoming
-        const currentYearDate = new Date(today.getFullYear(), originalDate.getMonth(), originalDate.getDate());
+        // We need to find the occurrence of this date that falls within our range
+        // Since the range might cross a year boundary (e.g. Dec to Jan), we check a few possibilities
         
-        // If date passed this year, look at next year
-        if (currentYearDate < today && !isSameDay(currentYearDate, today)) {
-          currentYearDate.setFullYear(today.getFullYear() + 1);
-        }
-
-        if (viewMode === 'today') {
-           if (isSameDay(currentYearDate, today)) {
-             events.push({
-               contact,
-               date: currentYearDate,
-               originalDate,
-               type,
-               label
-             });
-           }
-        } else {
-           // Upcoming
-           if (isWithinInterval(currentYearDate, { start: today, end: endDate })) {
-             events.push({
-                contact,
-                date: currentYearDate,
-                originalDate,
-                type,
-                label
-             });
-           }
-        }
+        const currentYear = today.getFullYear();
+        const yearsToCheck = [currentYear - 1, currentYear, currentYear + 1];
+        
+        yearsToCheck.forEach(year => {
+          const occurrence = new Date(year, originalDate.getMonth(), originalDate.getDate());
+          
+          if (isWithinInterval(occurrence, { start: rangeStart, end: rangeEnd })) {
+             // Avoid duplicates if 'today' is included in multiple checks (unlikely with distinct ranges but safe)
+             if (!events.some(e => e.contact.id === contact.id && e.type === type && isSameDay(e.date, occurrence))) {
+               events.push({
+                 contact,
+                 date: occurrence,
+                 originalDate,
+                 type,
+                 label
+               });
+             }
+          }
+        });
       };
 
       processDate(contact.birthday, 'birthday', 'Birthday');
@@ -70,17 +74,25 @@ export default function SpecialDatesWidget({ userEmail }) {
       // Process moments
       if (contact.moments && Array.isArray(contact.moments)) {
         contact.moments.forEach(moment => {
-           if (moment.date) {
-             processDate(moment.date, 'moment', moment.title || 'Special Moment');
+           if (moment.date && (moment.is_special_date || moment.type === 'milestone')) {
+             processDate(moment.date, 'moment', moment.title || 'Special Day');
            }
         });
       }
     });
 
-    return events.sort((a, b) => a.date - b.date);
+    // Sort by date. 
+    // For 'recent', maybe we want reverse chronological (newest first)? 
+    // Usually lists are chronological. Let's stick to chronological for consistency, 
+    // but user might expect "most recent" at top. 
+    // Let's do chronological (oldest to newest) for upcoming, and reverse for recent.
+    
+    return events.sort((a, b) => {
+      return viewMode === 'recent' ? b.date - a.date : a.date - b.date;
+    });
   };
 
-  const events = getUpcomingDates();
+  const events = getEvents();
 
   const getIcon = (type) => {
     switch (type) {
@@ -109,6 +121,14 @@ export default function SpecialDatesWidget({ userEmail }) {
           </CardTitle>
           <div className="flex gap-2">
             <div className="flex bg-gray-100 rounded-lg p-1">
+               <button
+                onClick={() => setViewMode('recent')}
+                className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
+                  viewMode === 'recent' ? 'bg-white shadow-sm text-purple-600' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Recent
+              </button>
               <button
                 onClick={() => setViewMode('today')}
                 className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
@@ -128,10 +148,14 @@ export default function SpecialDatesWidget({ userEmail }) {
             </div>
           </div>
         </div>
-        {viewMode === 'upcoming' && (
-           <div className="flex items-center gap-2 mt-2">
-             <span className="text-xs text-gray-500">Show next:</span>
-             <Select value={daysAhead} onValueChange={setDaysAhead}>
+        
+        {viewMode !== 'today' && (
+           <div className="flex items-center gap-2 mt-2 justify-end">
+             <span className="text-xs text-gray-500">{viewMode === 'recent' ? 'Show past:' : 'Show next:'}</span>
+             <Select 
+               value={viewMode === 'recent' ? daysBack : daysAhead} 
+               onValueChange={viewMode === 'recent' ? setDaysBack : setDaysAhead}
+             >
                <SelectTrigger className="h-7 w-24 text-xs">
                  <SelectValue />
                </SelectTrigger>
@@ -148,12 +172,13 @@ export default function SpecialDatesWidget({ userEmail }) {
       <CardContent>
         {events.length === 0 ? (
           <div className="text-center py-8 text-gray-500 text-sm">
-            {viewMode === 'today' ? 'No special dates today.' : 'No upcoming special dates found.'}
+            {viewMode === 'today' ? 'No special dates today.' : 
+             viewMode === 'recent' ? 'No recent special dates.' : 'No upcoming special dates found.'}
           </div>
         ) : (
           <div className="space-y-3">
             {events.map((event, idx) => (
-              <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border hover:shadow-sm transition-shadow">
+              <div key={idx} className={`flex items-center justify-between p-3 rounded-lg border hover:shadow-sm transition-shadow ${isSameDay(event.date, new Date()) ? 'bg-purple-50 border-purple-100' : 'bg-gray-50'}`}>
                 <div className="flex items-center gap-3">
                   {event.contact.photo_url ? (
                     <img 
