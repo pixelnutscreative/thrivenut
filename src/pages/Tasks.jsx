@@ -82,6 +82,16 @@ export default function Tasks() {
     enabled: !!user?.email
   });
 
+  const { data: resourceCategories = [] } = useQuery({
+    queryKey: ['resourceCategories'],
+    queryFn: async () => base44.entities.ResourceCategory.list(),
+  });
+
+  const createResourceCategoryMutation = useMutation({
+    mutationFn: (name) => base44.entities.ResourceCategory.create({ name, is_active: true }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['resourceCategories'] })
+  });
+
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Task.create(data),
     onSuccess: () => {
@@ -469,7 +479,40 @@ For resources (books, movies, articles), suggest a category like 'Reading List',
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="font-bold capitalize">{item.type}</span>
-                          <span className="text-sm bg-white px-2 rounded border">{item.suggested_category}</span>
+                          {item.type === 'resource' ? (
+                            <Select 
+                              value={item.suggested_category} 
+                              onValueChange={(val) => {
+                                if (val === 'new_custom_category') {
+                                  const newCat = prompt("Enter new category name:");
+                                  if (newCat) {
+                                    createResourceCategoryMutation.mutate(newCat);
+                                    const newResults = [...analysisResults];
+                                    newResults[idx].suggested_category = newCat;
+                                    setAnalysisResults(newResults);
+                                  }
+                                } else {
+                                  const newResults = [...analysisResults];
+                                  newResults[idx].suggested_category = val;
+                                  setAnalysisResults(newResults);
+                                }
+                              }}
+                            >
+                              <SelectTrigger className="h-6 text-xs w-auto min-w-[100px]">
+                                <SelectValue placeholder="Category" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {resourceCategories.map(cat => (
+                                  <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                                ))}
+                                <SelectItem value="new_custom_category" className="font-bold text-blue-600">
+                                  + Create "{item.suggested_category}" or New
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <span className="text-sm bg-white px-2 rounded border">{item.suggested_category}</span>
+                          )}
                         </div>
                         <Input 
                           value={item.suggested_title} 
