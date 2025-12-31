@@ -43,7 +43,15 @@ export default function SpecialDatesWidget({ userEmail }) {
       const processDate = (dateStr, type, label) => {
         if (!dateStr) return;
         
-        const originalDate = parseISO(dateStr);
+        // Manual parse to prevent timezone shifts (treat YYYY-MM-DD as local date)
+        let originalDate;
+        if (dateStr.includes('T')) {
+          originalDate = parseISO(dateStr);
+        } else {
+          const [y, m, d] = dateStr.split('-').map(Number);
+          originalDate = new Date(y, m - 1, d);
+        }
+
         // We need to find the occurrence of this date that falls within our range
         // Since the range might cross a year boundary (e.g. Dec to Jan), we check a few possibilities
         
