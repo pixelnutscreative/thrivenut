@@ -27,6 +27,7 @@ import GroupMeetingsTab from '../components/groups/GroupMeetingsTab';
 import CryptoTickerWidget from '../components/widgets/CryptoTickerWidget';
 import GroupCalendarWidget from '../components/groups/GroupCalendarWidget';
 import TimeReportDialog from '../components/groups/TimeReportDialog';
+import GroupAICompanion from '../components/groups/GroupAICompanion';
 
 export default function CreatorGroups() {
   const { user, preferences } = useTheme();
@@ -914,6 +915,16 @@ export default function CreatorGroups() {
         
         {/* Shortcuts & Crypto Sidebar */}
         <div className="lg:col-span-1 space-y-6">
+
+          {/* AI Companion for Client Portals */}
+          {(activeGroup.type === 'client-portal' || activeGroup.type === 'agency') && (
+              <GroupAICompanion 
+                  groupId={activeGroup.id} 
+                  groupName={activeGroup.name}
+                  className="w-full"
+              />
+          )}
+
           {/* Calendar Widget */}
           <GroupCalendarWidget group={activeGroup} myMembership={activeMembership} isAdmin={isAdmin} />
 
