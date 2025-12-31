@@ -50,8 +50,8 @@ export default function CryptoTickerWidget({ portfolio = [], onUpdatePortfolio }
     };
 
     fetchPrices();
-    // Refresh every 60s
-    const interval = setInterval(fetchPrices, 60000);
+    // Refresh every hour (3600000 ms)
+    const interval = setInterval(fetchPrices, 3600000);
     return () => clearInterval(interval);
   }, [portfolio]);
 
