@@ -718,8 +718,7 @@ export default function Layout({ children, currentPageName }) {
       </AnimatePresence>
 
       {/* Desktop Sidebar */}
-      <div className="hidden lg:flex">
-        <div className="fixed left-0 top-0 bottom-0 w-72 backdrop-blur-sm border-r p-6 flex flex-col overflow-y-auto" style={sidebarStyle}>
+      <div className="hidden lg:flex fixed left-0 top-0 bottom-0 w-72 backdrop-blur-sm border-r p-6 flex-col overflow-y-auto z-20" style={sidebarStyle}>
           <div className="mb-8">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-3">
@@ -1016,9 +1015,8 @@ export default function Layout({ children, currentPageName }) {
         </div>
 
         {/* Main Content Area */}
-        <div className="ml-72 flex-1" style={{ paddingTop: '80px' }}>
+        <div className="hidden lg:block ml-72" style={{ paddingTop: '80px' }}>
           {children}
-        </div>
         </div>
 
         {/* Mobile Main Content */}
