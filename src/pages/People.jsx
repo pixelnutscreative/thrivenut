@@ -737,6 +737,17 @@ export default function People() {
                             <Input type="number" value={formData.age} onChange={(e) => setFormData({...formData, age: e.target.value})} />
                           </div>
                         </div>
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                           <div className="space-y-2">
+                            <Label>Birthday</Label>
+                            <Input type="date" value={formData.birthday || ''} onChange={(e) => setFormData({...formData, birthday: e.target.value})} />
+                          </div>
+                           <div className="space-y-2">
+                            <Label>Sobriety Date</Label>
+                            <Input type="date" value={formData.sobriety_date || ''} onChange={(e) => setFormData({...formData, sobriety_date: e.target.value})} />
+                          </div>
+                        </div>
 
                         {formData.relationship === 'child' && (
                           <div className="flex items-center justify-between p-3 bg-yellow-50 border border-yellow-200 rounded-lg">

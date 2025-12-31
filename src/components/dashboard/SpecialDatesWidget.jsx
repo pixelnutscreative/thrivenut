@@ -13,11 +13,39 @@ export default function SpecialDatesWidget({ userEmail }) {
   const [daysAhead, setDaysAhead] = useState("30");
   const [daysBack, setDaysBack] = useState("30");
 
-  const { data: contacts = [] } = useQuery({
-    queryKey: ['personalContacts', userEmail],
-    queryFn: () => base44.entities.PersonalContact.filter({ created_by: userEmail }),
+  const { data: tiktokContacts = [] } = useQuery({
+    queryKey: ['tiktokContacts', userEmail],
+    queryFn: () => base44.entities.TikTokContact.filter({ created_by: userEmail }),
     enabled: !!userEmail,
   });
+
+  const { data: familyMembers = [] } = useQuery({
+    queryKey: ['familyMembers', userEmail],
+    queryFn: () => base44.entities.FamilyMember.filter({ created_by: userEmail }),
+    enabled: !!userEmail,
+  });
+
+  // Merge contacts and standardize fields
+  const allContacts = [
+    ...tiktokContacts.map(c => ({
+      id: c.id,
+      name: c.real_name || c.display_name || c.nickname || c.username,
+      photo_url: c.image_url,
+      birthday: c.birthday,
+      sobriety_date: c.sobriety_date,
+      moments: c.moments || [],
+      source: 'contact'
+    })),
+    ...familyMembers.map(f => ({
+      id: f.id,
+      name: f.name || f.nickname,
+      photo_url: f.profile_image_url,
+      birthday: f.birthday,
+      sobriety_date: f.sobriety_date,
+      moments: f.memorable_moments || [], // FamilyMember uses memorable_moments
+      source: 'family'
+    }))
+  ];
 
   const getEvents = () => {
     const today = startOfDay(new Date());
@@ -38,7 +66,7 @@ export default function SpecialDatesWidget({ userEmail }) {
       rangeEnd = today;
     }
 
-    contacts.forEach(contact => {
+    allContacts.forEach(contact => {
       // Helper to process date fields
       const processDate = (dateStr, type, label) => {
         if (!dateStr) return;
@@ -52,9 +80,6 @@ export default function SpecialDatesWidget({ userEmail }) {
           originalDate = new Date(y, m - 1, d);
         }
 
-        // We need to find the occurrence of this date that falls within our range
-        // Since the range might cross a year boundary (e.g. Dec to Jan), we check a few possibilities
-        
         const currentYear = today.getFullYear();
         const yearsToCheck = [currentYear - 1, currentYear, currentYear + 1];
         
@@ -62,7 +87,6 @@ export default function SpecialDatesWidget({ userEmail }) {
           const occurrence = new Date(year, originalDate.getMonth(), originalDate.getDate());
           
           if (isWithinInterval(occurrence, { start: rangeStart, end: rangeEnd })) {
-             // Avoid duplicates if 'today' is included in multiple checks (unlikely with distinct ranges but safe)
              if (!events.some(e => e.contact.id === contact.id && e.type === type && isSameDay(e.date, occurrence))) {
                events.push({
                  contact,
@@ -88,12 +112,6 @@ export default function SpecialDatesWidget({ userEmail }) {
         });
       }
     });
-
-    // Sort by date. 
-    // For 'recent', maybe we want reverse chronological (newest first)? 
-    // Usually lists are chronological. Let's stick to chronological for consistency, 
-    // but user might expect "most recent" at top. 
-    // Let's do chronological (oldest to newest) for upcoming, and reverse for recent.
     
     return events.sort((a, b) => {
       return viewMode === 'recent' ? b.date - a.date : a.date - b.date;
