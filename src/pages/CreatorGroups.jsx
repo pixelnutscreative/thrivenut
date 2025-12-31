@@ -265,14 +265,20 @@ export default function CreatorGroups() {
   const referralCode = searchParams.get('ref');
   useEffect(() => {
     if (inviteCode && referralCode && user?.email) {
-      // Track referral
-      base44.functions.invoke('trackReferral', { 
-        referralCode: referralCode, 
-        activityType: 'click',
-        email: user.email,
-        sourceType: 'group_invite',
-        sourceDetail: activeGroupId || 'pending_invite'
-      }).catch(err => console.error('Referral track error:', err));
+      const sessionTrackedKey = `referral_tracked_group_${referralCode}_${inviteCode}`;
+      const isAlreadyTracked = sessionStorage.getItem(sessionTrackedKey);
+
+      if (!isAlreadyTracked) {
+        sessionStorage.setItem(sessionTrackedKey, 'true');
+        // Track referral
+        base44.functions.invoke('trackReferral', { 
+          referralCode: referralCode, 
+          activityType: 'click',
+          email: user.email,
+          sourceType: 'group_invite',
+          sourceDetail: activeGroupId || 'pending_invite'
+        }).catch(err => console.error('Referral track error:', err));
+      }
     }
   }, [inviteCode, referralCode, user]);
 
