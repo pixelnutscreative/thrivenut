@@ -198,6 +198,7 @@ export default function Dashboard() {
 
   const [showManageModal, setShowManageModal] = useState(false);
   
+  // --- DRAG AND DROP / LAYOUT LOGIC ---
   const defaultLayout = [
     { id: 'daily_motivation', visible: true, order: 0, width: 'full' },
     { id: 'my_day', visible: true, order: 1, width: 'full' },
@@ -214,30 +215,11 @@ export default function Dashboard() {
 
   const [layout, setLayout] = useState([]);
 
-  useEffect(() => {
-    const prefLayout = preferences?.dashboard_layout || [];
-    const merged = [...prefLayout];
-    defaultLayout.forEach(def => {
-      const existing = merged.find(p => p.id === def.id);
-      if (!existing) {
-        merged.push(def);
-      } else if (!existing.width) {
-        existing.width = def.width;
-      }
-    });
-    setLayout(merged.sort((a, b) => a.order - b.order));
-  }, [preferences?.dashboard_layout]);
-
-  const saveLayout = (newLayout) => {
-    setLayout(newLayout);
-    updatePreferencesMutation.mutate({ dashboard_layout: newLayout });
-  };
-
+  // Check visibility first
   const isWidgetVisible = (widget) => {
     if (!widget.visible) return false;
     const enabledModules = preferences?.enabled_modules || [];
 
-    // Module-based visibility checks
     if (widget.id === 'tasks' && !enabledModules.includes('tasks')) return false;
     if (widget.id === 'goals' && !enabledModules.includes('goals')) return false;
     if (widget.id === 'habits' && !enabledModules.includes('habits')) return false;
@@ -251,34 +233,142 @@ export default function Dashboard() {
     return true;
   };
 
-  const visibleLayout = layout.filter(isWidgetVisible);
-
-  const onDragEnd = (result) => {
-    if (!result.destination) return;
-
-    const newVisibleLayout = Array.from(visibleLayout);
-    const [reorderedItem] = newVisibleLayout.splice(result.source.index, 1);
-    newVisibleLayout.splice(result.destination.index, 0, reorderedItem);
-
-    // Reconstruct full layout: New Visible Order + Hidden Items
-    const hiddenItems = layout.filter(w => !visibleLayout.find(v => v.id === w.id));
+  // 1. Initialize layout from preferences or defaults
+  useEffect(() => {
+    const prefLayout = preferences?.dashboard_layout || [];
+    const merged = [...prefLayout];
     
-    const newFullLayout = [...newVisibleLayout, ...hiddenItems].map((item, index) => ({
-      ...item,
-      order: index
-    }));
+    // Ensure all default widgets exist in layout
+    defaultLayout.forEach(def => {
+      const existing = merged.find(p => p.id === def.id);
+      if (!existing) {
+        merged.push(def);
+      } else {
+        // Ensure default props exist if missing
+        if (!existing.width) existing.width = def.width;
+      }
+    });
 
-    setLayout(newFullLayout);
-    updatePreferencesMutation.mutate({ dashboard_layout: newFullLayout });
+    // Sort by order initially
+    merged.sort((a, b) => (a.order || 0) - (b.order || 0));
+
+    // Assign 'column' property if missing (migration strategy)
+    // We'll distribute half-width items to left/right columns alternately
+    let halfWidthCounter = 0;
+    const mapped = merged.map((item, index) => {
+      // If column is already set, keep it
+      if (item.column) return item;
+
+      // If width is full, force to 'top' zone for now (or keep as full width stack)
+      if (item.width === 'full') {
+        return { ...item, column: 'top', order: index };
+      }
+
+      // Distribute half width items
+      const col = halfWidthCounter % 2 === 0 ? 'left' : 'right';
+      halfWidthCounter++;
+      return { ...item, column: col, order: index };
+    });
+
+    setLayout(mapped);
+  }, [preferences?.dashboard_layout]);
+
+  // 2. Compute columns for rendering
+  // We filter by visibility AND group by column
+  const topWidgets = layout.filter(w => w.column === 'top' && isWidgetVisible(w)).sort((a, b) => a.order - b.order);
+  const leftWidgets = layout.filter(w => w.column === 'left' && isWidgetVisible(w)).sort((a, b) => a.order - b.order);
+  const rightWidgets = layout.filter(w => w.column === 'right' && isWidgetVisible(w)).sort((a, b) => a.order - b.order);
+
+  // 3. Handle Drag End
+  const onDragEnd = (result) => {
+    const { source, destination, draggableId } = result;
+
+    if (!destination) return;
+    if (source.droppableId === destination.droppableId && source.index === destination.index) return;
+
+    // Helper to get list by ID
+    const getList = (id) => {
+        if (id === 'top') return [...topWidgets];
+        if (id === 'left') return [...leftWidgets];
+        if (id === 'right') return [...rightWidgets];
+        return [];
+    };
+
+    const sourceList = getList(source.droppableId);
+    const destList = source.droppableId === destination.droppableId ? sourceList : getList(destination.droppableId);
+
+    // Remove from source
+    const [movedItem] = sourceList.splice(source.index, 1);
+
+    // Update item properties based on destination
+    const updatedItem = { ...movedItem };
+    updatedItem.column = destination.droppableId;
+    
+    // Auto-adjust width if moving to/from top
+    if (destination.droppableId === 'top') {
+        updatedItem.width = 'full';
+    } else {
+        updatedItem.width = 'half'; // Force half width in columns to prevent overflow
+    }
+
+    // Insert into destination
+    destList.splice(destination.index, 0, updatedItem);
+
+    // Reconstruct entire layout array
+    // We need to merge the modified lists back with the hidden/other items
+    const visibleTop = source.droppableId === 'top' ? (destination.droppableId === 'top' ? destList : sourceList) : (destination.droppableId === 'top' ? destList : topWidgets);
+    const visibleLeft = source.droppableId === 'left' ? (destination.droppableId === 'left' ? destList : sourceList) : (destination.droppableId === 'left' ? destList : leftWidgets);
+    const visibleRight = source.droppableId === 'right' ? (destination.droppableId === 'right' ? destList : sourceList) : (destination.droppableId === 'right' ? destList : rightWidgets);
+
+    // Re-index orders within each visible list
+    const reindexedTop = visibleTop.map((item, idx) => ({ ...item, order: idx }));
+    const reindexedLeft = visibleLeft.map((item, idx) => ({ ...item, order: idx }));
+    const reindexedRight = visibleRight.map((item, idx) => ({ ...item, order: idx }));
+
+    // Get hidden items (not visible)
+    const hiddenItems = layout.filter(w => !isWidgetVisible(w));
+
+    // Combine all
+    const newLayout = [
+        ...reindexedTop,
+        ...reindexedLeft,
+        ...reindexedRight,
+        ...hiddenItems
+    ];
+
+    setLayout(newLayout);
+    updatePreferencesMutation.mutate({ dashboard_layout: newLayout });
+  };
+
+  const saveLayout = (newLayout) => {
+    setLayout(newLayout);
+    updatePreferencesMutation.mutate({ dashboard_layout: newLayout });
   };
 
   const toggleWidgetWidth = (widgetId) => {
-    const updatedLayout = layout.map(item => {
-      if (item.id === widgetId) {
-        return { ...item, width: item.width === 'full' ? 'half' : 'full' };
-      }
-      return item;
+    // In this new layout, toggling width essentially moves it between 'top' (full) and 'left/right' (half)
+    // We'll default to moving 'full' -> 'left', and 'half' -> 'top'
+    const item = layout.find(i => i.id === widgetId);
+    if (!item) return;
+
+    let newColumn = item.column;
+    let newWidth = item.width;
+
+    if (item.width === 'full') {
+        newWidth = 'half';
+        newColumn = 'left'; // Default to left column
+    } else {
+        newWidth = 'full';
+        newColumn = 'top';
+    }
+
+    const updatedLayout = layout.map(w => {
+        if (w.id === widgetId) {
+            return { ...w, width: newWidth, column: newColumn };
+        }
+        return w;
     });
+
     setLayout(updatedLayout);
     updatePreferencesMutation.mutate({ dashboard_layout: updatedLayout });
   };
@@ -427,53 +517,134 @@ export default function Dashboard() {
           </div>
 
           <DragDropContext onDragEnd={onDragEnd}>
-            <Droppable droppableId="dashboard-grid" direction="horizontal">
-              {(provided) => (
-                <div 
-                  {...provided.droppableProps}
-                  ref={provided.innerRef}
-                  className="flex flex-wrap gap-6"
-                >
-                  {visibleLayout.map((widget, index) => (
-                    <Draggable key={widget.id} draggableId={widget.id} index={index}>
-                      {(provided) => (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          className={`relative group ${
-                            widget.width === 'full' 
-                              ? 'w-full' 
-                              : 'w-full md:w-[calc(50%-12px)]'
-                          }`}
-                        >
-                          <div className="absolute top-2 right-2 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button
-                              onClick={() => toggleWidgetWidth(widget.id)}
-                              className="p-1.5 bg-white/80 dark:bg-black/50 backdrop-blur-sm rounded-md shadow-sm hover:bg-white dark:hover:bg-black/70 cursor-pointer"
-                              title={widget.width === 'full' ? "Make half width" : "Make full width (Double Wide!)"}
-                            >
-                              {widget.width === 'full' ? (
+            <div className="space-y-6">
+              {/* Top Section (Full Width) */}
+              <Droppable droppableId="top">
+                {(provided) => (
+                  <div
+                    {...provided.droppableProps}
+                    ref={provided.innerRef}
+                    className="space-y-6 min-h-[10px]"
+                  >
+                    {topWidgets.map((widget, index) => (
+                      <Draggable key={widget.id} draggableId={widget.id} index={index}>
+                        {(provided) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            className="relative group w-full"
+                          >
+                             {/* Controls */}
+                            <div className="absolute top-2 right-2 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={() => toggleWidgetWidth(widget.id)}
+                                className="p-1.5 bg-white/80 dark:bg-black/50 backdrop-blur-sm rounded-md shadow-sm hover:bg-white dark:hover:bg-black/70 cursor-pointer"
+                                title="Make half width"
+                              >
                                 <Minimize2 className="w-4 h-4 text-gray-500" />
-                              ) : (
-                                <Maximize2 className="w-4 h-4 text-gray-500" />
-                              )}
-                            </button>
-                            <div 
-                              {...provided.dragHandleProps}
-                              className="p-1.5 bg-white/80 dark:bg-black/50 backdrop-blur-sm rounded-md shadow-sm cursor-grab active:cursor-grabbing hover:bg-white dark:hover:bg-black/70"
-                            >
-                              <GripHorizontal className="w-4 h-4 text-gray-500" />
+                              </button>
+                              <div
+                                {...provided.dragHandleProps}
+                                className="p-1.5 bg-white/80 dark:bg-black/50 backdrop-blur-sm rounded-md shadow-sm cursor-grab active:cursor-grabbing hover:bg-white dark:hover:bg-black/70"
+                              >
+                                <GripHorizontal className="w-4 h-4 text-gray-500" />
+                              </div>
                             </div>
+                            {renderWidget(widget)}
                           </div>
-                          {renderWidget(widget)}
-                        </div>
-                      )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+
+              {/* Two Column Section */}
+              <div className="flex flex-col md:flex-row gap-6">
+                {/* Left Column */}
+                <Droppable droppableId="left">
+                  {(provided) => (
+                    <div
+                      {...provided.droppableProps}
+                      ref={provided.innerRef}
+                      className="flex-1 space-y-6 min-h-[100px]"
+                    >
+                      {leftWidgets.map((widget, index) => (
+                        <Draggable key={widget.id} draggableId={widget.id} index={index}>
+                          {(provided) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              className="relative group w-full"
+                            >
+                              <div className="absolute top-2 right-2 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button
+                                  onClick={() => toggleWidgetWidth(widget.id)}
+                                  className="p-1.5 bg-white/80 dark:bg-black/50 backdrop-blur-sm rounded-md shadow-sm hover:bg-white dark:hover:bg-black/70 cursor-pointer"
+                                  title="Make full width"
+                                >
+                                  <Maximize2 className="w-4 h-4 text-gray-500" />
+                                </button>
+                                <div
+                                  {...provided.dragHandleProps}
+                                  className="p-1.5 bg-white/80 dark:bg-black/50 backdrop-blur-sm rounded-md shadow-sm cursor-grab active:cursor-grabbing hover:bg-white dark:hover:bg-black/70"
+                                >
+                                  <GripHorizontal className="w-4 h-4 text-gray-500" />
+                                </div>
+                              </div>
+                              {renderWidget(widget)}
+                            </div>
+                          )}
+                        </Draggable>
+                      ))}
+                      {provided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
+
+                {/* Right Column */}
+                <Droppable droppableId="right">
+                  {(provided) => (
+                    <div
+                      {...provided.droppableProps}
+                      ref={provided.innerRef}
+                      className="flex-1 space-y-6 min-h-[100px]"
+                    >
+                      {rightWidgets.map((widget, index) => (
+                        <Draggable key={widget.id} draggableId={widget.id} index={index}>
+                          {(provided) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              className="relative group w-full"
+                            >
+                              <div className="absolute top-2 right-2 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button
+                                  onClick={() => toggleWidgetWidth(widget.id)}
+                                  className="p-1.5 bg-white/80 dark:bg-black/50 backdrop-blur-sm rounded-md shadow-sm hover:bg-white dark:hover:bg-black/70 cursor-pointer"
+                                  title="Make full width"
+                                >
+                                  <Maximize2 className="w-4 h-4 text-gray-500" />
+                                </button>
+                                <div
+                                  {...provided.dragHandleProps}
+                                  className="p-1.5 bg-white/80 dark:bg-black/50 backdrop-blur-sm rounded-md shadow-sm cursor-grab active:cursor-grabbing hover:bg-white dark:hover:bg-black/70"
+                                >
+                                  <GripHorizontal className="w-4 h-4 text-gray-500" />
+                                </div>
+                              </div>
+                              {renderWidget(widget)}
+                            </div>
+                          )}
+                        </Draggable>
+                      ))}
+                      {provided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
+              </div>
+            </div>
           </DragDropContext>
 
           {user?.email?.toLowerCase() === 'pixelnutscreative@gmail.com' && (
