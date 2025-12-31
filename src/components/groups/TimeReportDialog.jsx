@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { FileDown, ArrowUpDown, Filter } from 'lucide-react';
+import { FileDown, ArrowUpDown, Filter, FileText } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import jsPDF from 'jspdf';
