@@ -145,6 +145,7 @@ export default function CreatorGroups() {
     onSuccess: () => {
       queryClient.invalidateQueries(['myGroupsDetails']);
       queryClient.invalidateQueries(['myGroupMemberships']);
+      queryClient.invalidateQueries(['activeGroup']);
       if (activeGroupId) {
         setSearchParams({});
       }
@@ -276,7 +277,10 @@ export default function CreatorGroups() {
   // Update Group Crypto
   const updateGroupMutation = useMutation({
     mutationFn: (data) => base44.entities.CreatorGroup.update(activeGroupId, data),
-    onSuccess: () => queryClient.invalidateQueries(['myGroupsDetails'])
+    onSuccess: () => {
+      queryClient.invalidateQueries(['myGroupsDetails']);
+      queryClient.invalidateQueries(['activeGroup', activeGroupId]);
+    }
   });
 
   // Preferences Query
