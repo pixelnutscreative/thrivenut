@@ -30,7 +30,6 @@ import TimeReportDialog from '../components/groups/TimeReportDialog';
 import GroupAICompanion from '../components/groups/GroupAICompanion';
 import MarketingOrdersTab from '../components/groups/marketing/MarketingOrdersTab';
 import GroupDiscussionTab from '../components/groups/GroupDiscussionTab';
-import ModScheduleTab from '../components/groups/mods/ModScheduleTab';
 
 export default function CreatorGroups() {
   const { user, preferences } = useTheme();
@@ -443,7 +442,6 @@ export default function CreatorGroups() {
     { id: 'meetings', label: 'Meetings', icon: Video, color: 'rose' },
     { id: 'marketing', label: 'Marketing', icon: Printer, color: 'indigo' },
     { id: 'discussion', label: 'Discussion', icon: MessageSquare, color: 'teal' },
-    { id: 'mod_schedule', label: 'Mod Schedule', icon: Calendar, color: 'green' },
     { id: 'members', label: 'Members', icon: Users, color: 'orange' },
     { id: 'requests', label: 'Requests', icon: AlertCircle, color: 'gray' },
   ];
@@ -505,12 +503,12 @@ export default function CreatorGroups() {
 
     // Fallback logic if permissions are NOT set for this tab
     // Client Role Default: Clients usually see core tabs
-    if (userRole === 'client' && ['feed', 'projects', 'meetings', 'marketing', 'resources', 'requests', 'discussion', 'mod_schedule'].includes(id)) {
+    if (userRole === 'client' && ['feed', 'projects', 'meetings', 'marketing', 'resources', 'requests', 'discussion'].includes(id)) {
         return true;
     }
 
     // Client Portal overrides: always enable these tabs regardless of GroupType config
-    if (isClientGroup && ['feed', 'projects', 'meetings', 'marketing', 'resources', 'requests', 'members', 'discussion', 'mod_schedule'].includes(id)) {
+    if (isClientGroup && ['feed', 'projects', 'meetings', 'marketing', 'resources', 'requests', 'members', 'discussion'].includes(id)) {
         if (id === 'members' && !isAdmin) return false;
     } else if (allowed && !allowed.has(id)) {
         // If the group type doesn't explicitly allow it, we usually hide it.
@@ -1097,12 +1095,6 @@ export default function CreatorGroups() {
           <TabsContent value="discussion" className="focus-visible:outline-none">
             {isTabEnabled('discussion') && (
               <GroupDiscussionTab group={activeGroup} currentUser={user} isAdmin={isAdmin} />
-            )}
-          </TabsContent>
-
-          <TabsContent value="mod_schedule" className="focus-visible:outline-none">
-            {isTabEnabled('mod_schedule') && (
-              <ModScheduleTab group={activeGroup} currentUser={user} isAdmin={isAdmin} />
             )}
           </TabsContent>
 
