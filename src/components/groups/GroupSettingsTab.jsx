@@ -424,7 +424,9 @@ function TabPermissionsSettings({ group }) {
     { id: 'training', label: 'Training' },
     { id: 'projects', label: 'Projects' },
     { id: 'meetings', label: 'Meetings' },
+    { id: 'marketing', label: 'Marketing Orders' },
     { id: 'discussion', label: 'Discussion' },
+    { id: 'members', label: 'Members' },
     { id: 'requests', label: 'Requests' }
   ];
 
