@@ -75,7 +75,7 @@ function CreateShiftButton({ group }) {
       const end = new Date(`${formData.date}T${formData.endTime}`);
       
       const shifts = [];
-      const recurrenceGroupId = formData.recurring ? crypto.randomUUID() : null;
+      const recurrenceGroupId = formData.recurring ? (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36)) : null;
 
       // Create main shift
       shifts.push({
