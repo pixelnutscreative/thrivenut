@@ -185,10 +185,20 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
                             </div>
                             {order.vendor_quote_url && (
                                 <div>
-                                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Competitor Quote</p>
-                                    <a href={order.vendor_quote_url} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline text-sm flex items-center gap-1 mt-1">
-                                        <FileText className="w-3 h-3" /> View Quote
-                                    </a>
+                                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Attached Quotes/Specs</p>
+                                    {(order.vendor_quotes && order.vendor_quotes.length > 0) ? (
+                                        <div className="space-y-1 mt-1">
+                                            {order.vendor_quotes.map((q, i) => (
+                                                <a key={i} href={q.url} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline text-sm flex items-center gap-1">
+                                                    <FileText className="w-3 h-3" /> {q.name || `File ${i+1}`}
+                                                </a>
+                                            ))}
+                                        </div>
+                                    ) : order.vendor_quote_url ? (
+                                        <a href={order.vendor_quote_url} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline text-sm flex items-center gap-1 mt-1">
+                                            <FileText className="w-3 h-3" /> View File
+                                        </a>
+                                    ) : <span className="text-gray-400 text-sm">None</span>}
                                 </div>
                             )}
                         </div>

@@ -519,6 +519,10 @@ export default function CreatorGroups() {
     // Admin Override
     if (isAdmin) return true;
 
+    // Check disabled features (Global Admin Toggle)
+    const disabledFeatures = activeGroup.settings?.disabled_features || [];
+    if (disabledFeatures.includes(id)) return false;
+
     return !(groupPrefs?.hidden_tabs || []).includes(id);
   };
 

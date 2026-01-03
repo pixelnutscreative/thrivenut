@@ -24,7 +24,7 @@ export default function MarketingOrderForm({ group, onClose, existingOrder = nul
   });
 
   const [uploading, setUploading] = useState(false);
-  const [quoteUrl, setQuoteUrl] = useState(existingOrder?.vendor_quote_url || '');
+  const [vendorQuotes, setVendorQuotes] = useState(existingOrder?.vendor_quotes || []);
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.MarketingOrder.create({ ...data, group_id: group.id, client_email: base44.auth.user?.email || 'unknown' }),
@@ -43,26 +43,35 @@ export default function MarketingOrderForm({ group, onClose, existingOrder = nul
   });
 
   const handleFileUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
 
     setUploading(true);
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      setQuoteUrl(file_url);
+      const newQuotes = [];
+      for (const file of files) {
+          const { file_url } = await base44.integrations.Core.UploadFile({ file });
+          newQuotes.push({ url: file_url, name: file.name });
+      }
+      setVendorQuotes(prev => [...prev, ...newQuotes]);
     } catch (err) {
       console.error("Upload failed", err);
-      alert("Failed to upload file");
+      alert("Failed to upload file(s)");
     } finally {
       setUploading(false);
     }
+  };
+
+  const removeQuote = (index) => {
+      setVendorQuotes(prev => prev.filter((_, i) => i !== index));
   };
 
   const onSubmit = (data) => {
     const payload = {
       ...data,
       budget: data.budget ? parseFloat(data.budget) : null,
-      vendor_quote_url: quoteUrl,
+      vendor_quotes: vendorQuotes,
+      vendor_quote_url: null, // Deprecated
     };
 
     if (existingOrder) {
@@ -116,30 +125,36 @@ export default function MarketingOrderForm({ group, onClose, existingOrder = nul
             <Textarea {...register('shipping_address')} placeholder="Full delivery address..." />
           </div>
 
-          <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-4 space-y-3">
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3">
             <div className="flex items-start gap-3">
-                <div className="p-2 bg-indigo-100 rounded-full">
-                    <Upload className="w-5 h-5 text-indigo-600" />
+                <div className="p-2 bg-white border rounded-full">
+                    <Upload className="w-5 h-5 text-gray-600" />
                 </div>
                 <div>
-                    <h4 className="font-semibold text-indigo-900">Found a better price?</h4>
-                    <p className="text-sm text-indigo-700">Upload a quote from another vendor, and we'll do our best to match or beat it!</p>
+                    <h4 className="font-semibold text-gray-900">Upload Specs or Vendor Quotes</h4>
+                    <p className="text-sm text-gray-600">Have an existing quote or spec sheet? Upload it here so we can see exactly what you need.</p>
                 </div>
             </div>
             
             <div className="flex items-center gap-3">
                 <Input 
                     type="file" 
+                    multiple
                     onChange={handleFileUpload} 
                     disabled={uploading}
                     className="bg-white"
                 />
                 {uploading && <Loader2 className="w-4 h-4 animate-spin text-indigo-600" />}
             </div>
-            {quoteUrl && (
-                <div className="text-sm text-green-600 flex items-center gap-1">
-                    <span className="font-medium">✓ Quote uploaded</span>
-                    <a href={quoteUrl} target="_blank" rel="noreferrer" className="underline hover:text-green-700">(View)</a>
+            
+            {vendorQuotes.length > 0 && (
+                <div className="space-y-1 mt-2">
+                    {vendorQuotes.map((q, idx) => (
+                        <div key={idx} className="flex items-center justify-between text-sm bg-white p-2 rounded border">
+                            <a href={q.url} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline truncate max-w-[200px]">{q.name || 'View File'}</a>
+                            <button type="button" onClick={() => removeQuote(idx)} className="text-red-400 hover:text-red-600 px-2">×</button>
+                        </div>
+                    ))}
                 </div>
             )}
           </div>

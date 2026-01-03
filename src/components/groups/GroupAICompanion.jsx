@@ -11,10 +11,33 @@ import { cn } from '@/components/ui/utils';
 export default function GroupAICompanion({ groupId, groupName, className }) {
   const [isOpen, setIsOpen] = useState(true);
   const [input, setInput] = useState('');
-  const [messages, setMessages] = useState([
-    { role: 'assistant', content: `Hi! I'm your AI companion for ${groupName || 'this group'}. I can answer questions about meetings, resources, and tasks. What do you need help with?` }
-  ]);
+  const [messages, setMessages] = useState([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const scrollRef = useRef(null);
+
+  // Fetch History on mount
+  useEffect(() => {
+    const fetchHistory = async () => {
+        try {
+            const history = await base44.entities.GroupAIChatMessage.filter({ group_id: groupId }, 'created_date', 50);
+            if (history && history.length > 0) {
+                // Determine user (filter on backend or client? The entity has user_email. 
+                // We should only show THIS user's chat history with the AI, or broad group history?
+                // Usually AI chat is personal.
+                const user = await base44.auth.me();
+                const myHistory = history.filter(h => h.user_email === user.email);
+                setMessages(myHistory.map(h => ({ role: h.role, content: h.content })));
+            } else {
+                setMessages([{ role: 'assistant', content: `Hi! I'm your AI companion for ${groupName || 'this group'}. I have access to all group resources, meetings, posts, and tasks. What do you need help with?` }]);
+            }
+        } catch (err) {
+            console.error("Failed to load history", err);
+        } finally {
+            setIsLoadingHistory(false);
+        }
+    };
+    if (isOpen) fetchHistory();
+  }, [groupId, groupName, isOpen]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -24,13 +47,11 @@ export default function GroupAICompanion({ groupId, groupName, className }) {
 
   const askMutation = useMutation({
     mutationFn: async (question) => {
-      // Prepare history (last 10 messages to save tokens)
-      const history = messages.slice(-10).map(m => ({ role: m.role, content: m.content }));
-      
+      // We don't need to pass history manually anymore as backend fetches it from DB
+      // But we can for optimistic UI.
       const res = await base44.functions.invoke('askGroupAI', {
         groupId,
-        question,
-        history
+        question
       });
       return res.data.answer;
     },
