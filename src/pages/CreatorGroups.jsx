@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogT
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Users, Plus, Settings, Video, AlertCircle, ArrowLeft, Loader2, Building, Home, Heart, Sparkles, Brain, Briefcase, Calendar, MessageSquare, FileText, Bell, Eye, EyeOff, Link as LinkIcon, ExternalLink, Clock, Trash2, Filter, LayoutGrid, List, Lock } from 'lucide-react';
+import { Users, Plus, Settings, Video, AlertCircle, ArrowLeft, Loader2, Building, Home, Heart, Sparkles, Brain, Briefcase, Calendar, MessageSquare, FileText, Bell, Eye, EyeOff, Link as LinkIcon, ExternalLink, Clock, Trash2, Filter, LayoutGrid, List, Lock, Printer } from 'lucide-react';
 import { useTheme } from '@/components/shared/useTheme';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -439,6 +439,7 @@ export default function CreatorGroups() {
     { id: 'training', label: 'Training', icon: Video, color: 'blue' },
     { id: 'projects', label: 'Projects', icon: Briefcase, color: 'indigo' },
     { id: 'meetings', label: 'Meetings', icon: Video, color: 'rose' },
+    { id: 'marketing', label: 'Marketing', icon: Printer, color: 'indigo' },
     { id: 'members', label: 'Members', icon: Users, color: 'orange' },
     { id: 'requests', label: 'Requests', icon: AlertCircle, color: 'gray' },
   ];
@@ -447,7 +448,7 @@ export default function CreatorGroups() {
   const isClientGroup = ['client-portal', 'agency'].includes(activeGroup?.type);
   
   // Projects and Meetings are only for Client Groups
-  const clientOnlyTabs = ['projects', 'meetings'];
+  const clientOnlyTabs = ['projects', 'meetings', 'marketing'];
 
   const availableTabs = allTabs.filter(tab => {
     if (clientOnlyTabs.includes(tab.id)) {
@@ -500,12 +501,12 @@ export default function CreatorGroups() {
 
     // Fallback logic if permissions are NOT set for this tab
     // Client Role Default: Clients usually see core tabs
-    if (userRole === 'client' && ['feed', 'projects', 'meetings', 'resources', 'requests'].includes(id)) {
+    if (userRole === 'client' && ['feed', 'projects', 'meetings', 'marketing', 'resources', 'requests'].includes(id)) {
         return true;
     }
 
     // Client Portal overrides: always enable these tabs regardless of GroupType config
-    if (isClientGroup && ['feed', 'projects', 'meetings', 'resources', 'requests', 'members'].includes(id)) {
+    if (isClientGroup && ['feed', 'projects', 'meetings', 'marketing', 'resources', 'requests', 'members'].includes(id)) {
         if (id === 'members' && !isAdmin) return false;
     } else if (allowed && !allowed.has(id)) {
         // If the group type doesn't explicitly allow it, we usually hide it.
@@ -1076,6 +1077,12 @@ export default function CreatorGroups() {
           <TabsContent value="meetings" className="focus-visible:outline-none">
             {isTabEnabled('meetings') && (
               <GroupMeetingsTab group={activeGroup} currentUser={user} isAdmin={isAdmin} />
+            )}
+          </TabsContent>
+
+          <TabsContent value="marketing" className="focus-visible:outline-none">
+            {isTabEnabled('marketing') && (
+              <MarketingOrdersTab group={activeGroup} isAdmin={isAdmin} />
             )}
           </TabsContent>
 
