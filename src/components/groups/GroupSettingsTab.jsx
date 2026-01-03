@@ -31,6 +31,7 @@ export default function GroupSettingsTab({ group }) {
         </TabsList>
 
         <TabsContent value="general" className="space-y-6 mt-6">
+          <GroupFeaturesSettings group={group} />
           <GroupNameSettings group={group} />
           <GroupTypeSettings group={group} />
           <GroupShortcutsSettings group={group} />
@@ -554,6 +555,69 @@ function TabPermissionsSettings({ group }) {
         <div className="flex justify-end">
           <Button onClick={() => updateMutation.mutate(permissions)}>Save Permissions</Button>
         </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function GroupFeaturesSettings({ group }) {
+  const queryClient = useQueryClient();
+  const updateGroupMutation = useMutation({
+    mutationFn: (data) => base44.entities.CreatorGroup.update(group.id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['activeGroup', group.id]);
+      queryClient.invalidateQueries(['myGroupsDetails']);
+    }
+  });
+
+  const allTabs = [
+    { id: 'feed', label: 'Feed' },
+    { id: 'events', label: 'Events' },
+    { id: 'qna', label: 'Q&A' },
+    { id: 'resources', label: 'Resources' },
+    { id: 'training', label: 'Training' },
+    { id: 'projects', label: 'Projects' },
+    { id: 'meetings', label: 'Meetings' },
+    { id: 'marketing', label: 'Marketing Orders' },
+    { id: 'discussion', label: 'Discussion' },
+    { id: 'members', label: 'Members' },
+    { id: 'requests', label: 'Requests' },
+  ];
+
+  const disabledFeatures = group.settings?.disabled_features || [];
+
+  const toggleFeature = (featureId) => {
+      const isCurrentlyDisabled = disabledFeatures.includes(featureId);
+      const newDisabled = isCurrentlyDisabled 
+        ? disabledFeatures.filter(f => f !== featureId)
+        : [...disabledFeatures, featureId];
+      
+      updateGroupMutation.mutate({ 
+          settings: { 
+              ...group.settings, 
+              disabled_features: newDisabled 
+          } 
+      });
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+          <CardTitle>Feature Management</CardTitle>
+          <CardDescription>Turn specific features on or off for this group.</CardDescription>
+      </CardHeader>
+      <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {allTabs.map(tab => {
+                  const isEnabled = !disabledFeatures.includes(tab.id);
+                  return (
+                      <div key={tab.id} className="flex items-center justify-between p-3 border rounded-lg bg-gray-50">
+                          <span className="font-medium text-gray-700">{tab.label}</span>
+                          <Switch checked={isEnabled} onCheckedChange={() => toggleFeature(tab.id)} />
+                      </div>
+                  );
+              })}
+          </div>
       </CardContent>
     </Card>
   );
