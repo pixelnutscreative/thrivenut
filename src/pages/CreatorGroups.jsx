@@ -28,6 +28,7 @@ import CryptoTickerWidget from '../components/widgets/CryptoTickerWidget';
 import GroupCalendarWidget from '../components/groups/GroupCalendarWidget';
 import TimeReportDialog from '../components/groups/TimeReportDialog';
 import GroupAICompanion from '../components/groups/GroupAICompanion';
+import MarketingOrdersTab from '../components/groups/marketing/MarketingOrdersTab';
 
 export default function CreatorGroups() {
   const { user, preferences } = useTheme();
