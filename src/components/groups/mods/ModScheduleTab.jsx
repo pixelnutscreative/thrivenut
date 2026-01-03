@@ -11,7 +11,6 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar, Clock, Users, UserPlus, CheckCircle, XCircle, AlertCircle, Plus, Filter, Mail, Trash2 } from 'lucide-react';
 import { format, isSameDay, startOfWeek, addDays, startOfDay, endOfDay, parseISO } from 'date-fns';
-import { cn } from '@/components/ui/utils';
 
 export default function ModScheduleTab({ group, currentUser, isAdmin }) {
   const [view, setView] = useState('upcoming'); // upcoming, my_shifts, open, reports
@@ -71,11 +70,13 @@ function CreateShiftButton({ group }) {
 
   const createMutation = useMutation({
     mutationFn: async () => {
-      const start = new Date(`${formData.date}T${formData.startTime}`);
-      const end = new Date(`${formData.date}T${formData.endTime}`);
+      // Safe date parsing for Safari
+      const start = new Date(formData.date + 'T' + formData.startTime + ':00');
+      const end = new Date(formData.date + 'T' + formData.endTime + ':00');
       
       const shifts = [];
-      const recurrenceGroupId = formData.recurring ? (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36)) : null;
+      // Simple random ID for recurrence grouping to avoid crypto issues in some environments
+      const recurrenceGroupId = formData.recurring ? Math.random().toString(36).substring(2) + Date.now().toString(36) : null;
 
       // Create main shift
       shifts.push({
