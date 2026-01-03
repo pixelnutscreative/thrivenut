@@ -424,6 +424,7 @@ function TabPermissionsSettings({ group }) {
     { id: 'training', label: 'Training' },
     { id: 'projects', label: 'Projects' },
     { id: 'meetings', label: 'Meetings' },
+    { id: 'discussion', label: 'Discussion' },
     { id: 'requests', label: 'Requests' }
   ];
 
@@ -485,6 +486,10 @@ function TabPermissionsSettings({ group }) {
     setPermissions({ ...permissions, [tabId]: newPerms });
   };
 
+  const toggleAll = (tabId, enable) => {
+      setPermissions({ ...permissions, [tabId]: enable ? allRoles : [] });
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -503,6 +508,7 @@ function TabPermissionsSettings({ group }) {
             <thead>
               <tr className="border-b">
                 <th className="text-left p-2">Tab</th>
+                <th className="text-center p-2 min-w-[100px]">Quick Actions</th>
                 {allRoles.map(r => <th key={r} className="text-center p-2 capitalize min-w-[80px]">{r}</th>)}
               </tr>
             </thead>
@@ -510,6 +516,12 @@ function TabPermissionsSettings({ group }) {
               {availableTabs.map(tab => (
                 <tr key={tab.id} className="border-b last:border-0">
                   <td className="p-2 font-medium">{tab.label}</td>
+                  <td className="p-2 text-center">
+                    <div className="flex justify-center gap-1">
+                        <Button variant="ghost" size="xs" className="h-6 text-[10px]" onClick={() => toggleAll(tab.id, true)}>All</Button>
+                        <Button variant="ghost" size="xs" className="h-6 text-[10px]" onClick={() => toggleAll(tab.id, false)}>None</Button>
+                    </div>
+                  </td>
                   {allRoles.map(role => {
                     // Check if explicit permission exists
                     const hasExplicitPermission = permissions[tab.id] !== undefined;
