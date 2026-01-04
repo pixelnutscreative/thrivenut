@@ -513,12 +513,19 @@ export default function CreatorGroups() {
     });
   };
 
+  // Check if group has custom navigation configured
+  const hasCustomNavigation = !!activeGroup?.settings?.tab_order;
+  const disabledFeatures = activeGroup?.settings?.disabled_features || [];
+
   const isTabEnabled = (id) => {
     const userRole = activeMembership?.role || 'member';
     const userLevel = activeMembership?.level || 'Member';
     const userStatus = activeMembership?.status;
     
-    // Check for explicit permissions from Group Settings first
+    // Check disabled features first (Global Admin Toggle) - If it's disabled here, it's disabled for everyone
+    if (disabledFeatures.includes(id)) return false;
+
+    // Check for explicit permissions from Group Settings next
     const permissions = activeGroup?.role_tab_permissions;
     if (permissions && permissions[id] !== undefined) {
        // If the tab is configured in permissions, use that configuration STRICTLY
@@ -526,34 +533,34 @@ export default function CreatorGroups() {
        const allowedList = permissions[id];
        const hasPermission = attributes.some(attr => allowedList.includes(attr));
        
-       // Admins always bypass unless they specifically want to test? 
-       // Standard practice: Admins see everything. 
        if (isAdmin) return true;
-
        return hasPermission;
     }
 
-    // Fallback logic if permissions are NOT set for this tab
+    // If Custom Navigation is enabled, and the tab is NOT disabled (checked above), 
+    // it should be enabled for everyone (unless it's 'members' or explicitly restricted)
+    if (hasCustomNavigation) {
+       if (id === 'members' && !isAdmin) return false;
+       return true; 
+    }
+
+    // Legacy/Default logic (if no custom navigation set)
     // Client Role Default: Clients usually see core tabs
     if (userRole === 'client' && ['feed', 'projects', 'meetings', 'marketing', 'assets', 'resources', 'requests', 'discussion'].includes(id)) {
         return true;
     }
 
-    // Client Portal overrides: always enable these tabs regardless of GroupType config
+    // Client Portal overrides
     if (isClientGroup && ['feed', 'projects', 'meetings', 'marketing', 'assets', 'resources', 'requests', 'members', 'discussion'].includes(id)) {
         if (id === 'members' && !isAdmin) return false;
+        // Proceed to return true at end
     } else if (allowed && !allowed.has(id)) {
-        // If the group type doesn't explicitly allow it, we usually hide it.
-        // BUT admins should see everything to configure/test.
+        // If not allowed by Group Type, hide it (unless admin)
         if (!isAdmin) return false;
     }
     
     if (id === 'members' && !isAdmin) return false;
     
-    // Check disabled features (Global Admin Toggle)
-    const disabledFeatures = activeGroup?.settings?.disabled_features || [];
-    if (disabledFeatures.includes(id)) return false;
-
     // Admin Override
     if (isAdmin) return true;
 
@@ -562,17 +569,22 @@ export default function CreatorGroups() {
 
   // Helper to check if a tab is visible to a regular member (for admin indication)
   const isVisibleToRegularMember = (id) => {
+    // If disabled globally, it's not visible
+    if (disabledFeatures.includes(id)) return false;
+
     const permissions = activeGroup?.role_tab_permissions;
     if (permissions && permissions[id] !== undefined) {
        return permissions[id].includes('member') || permissions[id].includes('Member');
     }
     
-    // Fallback defaults for member role
+    // If Custom Navigation is enabled, and not disabled, it IS visible to members
+    if (hasCustomNavigation) {
+       if (id === 'members') return false;
+       return true;
+    }
+    
+    // Fallback defaults for member role (Legacy/Default)
     if (isClientGroup) {
-        // In client portal, members usually see Feed, Resources, Q&A if not explicitly restricted
-        // But logic above for client portal specificies what 'client' sees. 
-        // For 'member' in client portal, it might be restrictive.
-        // Let's assume standard member tabs:
         return ['feed', 'events', 'qna', 'resources', 'training', 'discussion'].includes(id);
     }
 
