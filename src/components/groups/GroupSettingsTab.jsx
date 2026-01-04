@@ -414,6 +414,7 @@ function GroupAccessSettings({ group }) {
 function TabPermissionsSettings({ group }) {
   const queryClient = useQueryClient();
   const [permissions, setPermissions] = useState(group.role_tab_permissions || {});
+  const [showSaved, setShowSaved] = useState(false);
 
   // Fetch Group Types to determine defaults
   const { data: groupTypes = [] } = useQuery({
@@ -425,7 +426,8 @@ function TabPermissionsSettings({ group }) {
     mutationFn: (data) => base44.entities.CreatorGroup.update(group.id, { role_tab_permissions: data }),
     onSuccess: () => {
       queryClient.invalidateQueries(['myGroupsDetails']);
-      alert('Permissions updated!');
+      setShowSaved(true);
+      setTimeout(() => setShowSaved(false), 2000);
     }
   });
 
@@ -575,7 +577,13 @@ function TabPermissionsSettings({ group }) {
         </div>
         <p className="text-xs text-gray-500">* Admins & Owners always have full access regardless of these settings.</p>
         <div className="flex justify-end">
-          <Button onClick={() => updateMutation.mutate(permissions)}>Save Permissions</Button>
+          <Button 
+            onClick={() => updateMutation.mutate(permissions)}
+            disabled={updateMutation.isPending}
+            className={showSaved ? 'bg-green-600 hover:bg-green-700' : ''}
+          >
+            {updateMutation.isPending ? 'Saving...' : showSaved ? 'Saved!' : 'Save Permissions'}
+          </Button>
         </div>
       </CardContent>
     </Card>
