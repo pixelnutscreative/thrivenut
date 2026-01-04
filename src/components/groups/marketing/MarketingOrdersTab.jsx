@@ -48,6 +48,7 @@ export default function MarketingOrdersTab({ group, isAdmin }) {
     changes_requested: 'bg-orange-100 text-orange-800',
     approved: 'bg-teal-100 text-teal-800',
     artwork_approved: 'bg-teal-100 text-teal-800',
+    awaiting_payment: 'bg-emerald-100 text-emerald-800',
     paid: 'bg-green-100 text-green-800',
     printing: 'bg-indigo-100 text-indigo-800',
     production: 'bg-indigo-100 text-indigo-800',
@@ -56,8 +57,10 @@ export default function MarketingOrdersTab({ group, isAdmin }) {
     archived: 'bg-gray-200 text-gray-500'
   };
 
-  const getStatusLabel = (status) => {
-    switch(status) {
+  const getStatusLabel = (order) => {
+    if (order.custom_status_label) return order.custom_status_label;
+    
+    switch(order.status) {
         case 'need_specs': return 'Need Specs';
         case 'quoting': 
         case 'pending_quote': return 'Quoting...';
@@ -68,13 +71,14 @@ export default function MarketingOrdersTab({ group, isAdmin }) {
         case 'changes_requested': return 'Changes Requested';
         case 'approved': 
         case 'artwork_approved': return 'Artwork Approved';
+        case 'awaiting_payment': return 'Awaiting Payment';
         case 'paid': return 'Paid';
         case 'printing':
         case 'production': return 'Printing';
         case 'shipped': return 'Shipped';
         case 'completed': return 'Completed';
         case 'archived': return 'Archived';
-        default: return status.replace('_', ' ');
+        default: return order.status.replace('_', ' ');
     }
   };
 
@@ -125,8 +129,7 @@ export default function MarketingOrdersTab({ group, isAdmin }) {
               {filteredOrders.map(order => (
                   <Card key={order.id} className="hover:shadow-md transition-shadow cursor-pointer border-l-4 border-l-indigo-500" onClick={() => setSelectedOrder(order)}>
                       <CardContent className="p-5">
-                          <div className="flex justify-between items-start mb-3">
-                              <Badge className={statusColors[order.status]}>{getStatusLabel(order.status)}</Badge>
+                          <div className="flex justify-end items-start mb-3">
                               <span className="text-xs text-gray-400 font-mono">{format(new Date(order.created_date || new Date()), 'MMM d')}</span>
                           </div>
                           <h3 className="font-bold text-gray-900 mb-1 truncate">{order.title}</h3>
@@ -138,7 +141,7 @@ export default function MarketingOrdersTab({ group, isAdmin }) {
                               </div>
                               <div className="font-medium text-indigo-600 flex flex-col items-end">
                                   {order.our_price && <span>${(order.our_price/100).toFixed(2)}</span>}
-                                  <span className="text-xs text-gray-400 font-medium uppercase tracking-wider">{getStatusLabel(order.status)}</span>
+                                  <Badge className={cn("mt-1", statusColors[order.status])}>{getStatusLabel(order)}</Badge>
                               </div>
                           </div>
                       </CardContent>

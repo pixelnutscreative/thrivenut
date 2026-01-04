@@ -6,8 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Send, FileText, Image as ImageIcon, DollarSign, Edit, Trash2, Archive, Check, Upload, Reply } from 'lucide-react';
+import { Loader2, Send, FileText, Image as ImageIcon, DollarSign, Edit, Trash2, Archive, Check, Upload, Reply, Save, X, ExternalLink } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }) {
   const queryClient = useQueryClient();
@@ -20,6 +21,13 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
   const [newVariation, setNewVariation] = useState({ title: '', description: '', price: '' });
   const [trackingCode, setTrackingCode] = useState(order.tracking_code || '');
   const [carrier, setCarrier] = useState(order.carrier || '');
+  
+  // Header Editing State
+  const [isEditingHeader, setIsEditingHeader] = useState(false);
+  const [editTitle, setEditTitle] = useState(order.title);
+  const [editDate, setEditDate] = useState(order.needed_by_date || '');
+  const [editDesc, setEditDesc] = useState(order.description || '');
+  const [invoiceUrl, setInvoiceUrl] = useState(order.invoice_url || '');
 
   useEffect(() => {
     base44.auth.me().then(setCurrentUser).catch(console.error);
@@ -201,6 +209,7 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
     changes_requested: 'bg-orange-100 text-orange-800',
     approved: 'bg-teal-100 text-teal-800',
     artwork_approved: 'bg-teal-100 text-teal-800',
+    awaiting_payment: 'bg-emerald-100 text-emerald-800',
     paid: 'bg-green-100 text-green-800',
     printing: 'bg-indigo-100 text-indigo-800',
     production: 'bg-indigo-100 text-indigo-800',
@@ -209,7 +218,10 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
     archived: 'bg-gray-200 text-gray-500 line-through'
   };
 
-  const getStatusLabel = (status) => {
+  const getStatusLabel = (o) => {
+    if (o.custom_status_label) return o.custom_status_label;
+    
+    const status = o.status;
     switch(status) {
         case 'need_specs': return 'Need Specs';
         case 'quoting': 
@@ -221,6 +233,7 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
         case 'changes_requested': return 'Changes Requested';
         case 'approved': 
         case 'artwork_approved': return 'Artwork Approved';
+        case 'awaiting_payment': return 'Awaiting Payment';
         case 'paid': return 'Paid';
         case 'printing':
         case 'production': return 'Printing';
@@ -238,11 +251,33 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
     { value: 'designing', label: 'Design in Process' },
     { value: 'proofing', label: 'Proofing' },
     { value: 'artwork_approved', label: 'Artwork Approved' },
+    { value: 'awaiting_payment', label: 'Awaiting Payment' },
     { value: 'printing', label: 'Printing' },
     { value: 'shipped', label: 'Shipped' },
     { value: 'completed', label: 'Completed' },
-    { value: 'archived', label: 'Archived' }
+    { value: 'archived', label: 'Archived' },
+    { value: 'custom', label: 'Custom Status...' }
   ];
+
+  const handleStatusChange = (val) => {
+     if (val === 'custom') {
+         const label = prompt("Enter custom status label:");
+         if (label) {
+             updateOrderMutation.mutate({ custom_status_label: label });
+         }
+     } else {
+         updateOrderMutation.mutate({ status: val, custom_status_label: null });
+     }
+  };
+
+  const handleSaveHeader = () => {
+    updateOrderMutation.mutate({
+        title: editTitle,
+        needed_by_date: editDate,
+        description: editDesc
+    });
+    setIsEditingHeader(false);
+  };
 
   return (
     <div className="fixed inset-0 z-[45] flex items-center justify-center bg-black/50 p-0 md:p-4">
@@ -250,33 +285,57 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
         {/* Header */}
         <div className="p-4 border-b flex justify-between items-center bg-gray-50 select-none">
           <div>
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-1 w-full">
                 <div className="flex items-center gap-3">
-                    <h2 className="text-xl font-bold">{order.title}</h2>
-                    {!isAdmin ? (
-                        <Badge className={statusColors[order.status]}>{getStatusLabel(order.status)}</Badge>
+                    {isEditingHeader ? (
+                        <Input 
+                            value={editTitle} 
+                            onChange={e => setEditTitle(e.target.value)} 
+                            className="text-lg font-bold h-8"
+                        />
                     ) : (
-                        <div className="relative group">
-                            <Badge className={cn("cursor-pointer hover:opacity-80 flex items-center gap-1", statusColors[order.status])}>
-                                {getStatusLabel(order.status)} <Edit className="w-3 h-3 opacity-50" />
-                            </Badge>
-                            <select 
-                                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                                value={order.status}
-                                onChange={(e) => updateOrderMutation.mutate({ status: e.target.value })}
-                            >
+                        <h2 className="text-xl font-bold">{order.title}</h2>
+                    )}
+
+                    {!isAdmin ? (
+                        <Badge className={statusColors[order.status]}>{getStatusLabel(order)}</Badge>
+                    ) : (
+                        <Select value={order.status} onValueChange={handleStatusChange}>
+                            <SelectTrigger className={cn("w-auto h-7 text-xs px-2 gap-1 border-0 shadow-none", statusColors[order.status])}>
+                                <SelectValue>{getStatusLabel(order)}</SelectValue>
+                            </SelectTrigger>
+                            <SelectContent>
                                 {statusOptions.map(opt => (
-                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                                 ))}
-                            </select>
-                        </div>
+                            </SelectContent>
+                        </Select>
                     )}
                 </div>
-                <p className="text-sm text-gray-500">Ordered by {order.client_email} • Due {order.needed_by_date || 'ASAP'}</p>
+                {isEditingHeader ? (
+                   <div className="flex items-center gap-2 mt-1">
+                      <Input 
+                         type="date"
+                         value={editDate}
+                         onChange={e => setEditDate(e.target.value)}
+                         className="w-40 h-7 text-xs"
+                      />
+                      <span className="text-xs text-gray-400">Due Date</span>
+                   </div>
+                ) : (
+                   <p className="text-sm text-gray-500">Ordered by {order.client_email} • Due {order.needed_by_date || 'ASAP'}</p>
+                )}
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={onEdit} title="Edit Order"><Edit className="w-4 h-4" /></Button>
+            {isEditingHeader ? (
+                <>
+                    <Button size="sm" variant="ghost" onClick={() => setIsEditingHeader(false)}><X className="w-4 h-4" /></Button>
+                    <Button size="sm" onClick={handleSaveHeader} className="bg-green-600 hover:bg-green-700"><Save className="w-4 h-4" /></Button>
+                </>
+            ) : (
+                <Button variant="ghost" size="icon" onClick={() => setIsEditingHeader(true)} title="Edit Order"><Edit className="w-4 h-4" /></Button>
+            )}
             {isAdmin && (
                 <Button variant="ghost" size="icon" className="text-red-500" onClick={() => {
                      if(window.confirm('Archive this order?')) updateOrderMutation.mutate({ status: 'archived' });
@@ -320,7 +379,15 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Description</p>
-                                <p className="whitespace-pre-wrap mt-1 text-gray-700">{order.description}</p>
+                                {isEditingHeader ? (
+                                    <Textarea 
+                                        value={editDesc}
+                                        onChange={e => setEditDesc(e.target.value)}
+                                        className="mt-1 min-h-[150px]"
+                                    />
+                                ) : (
+                                    <p className="whitespace-pre-wrap mt-1 text-gray-700">{order.description}</p>
+                                )}
                             </div>
                             <div className="space-y-4">
                                 <div>
@@ -331,6 +398,26 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
                                     <div>
                                         <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Budget</p>
                                         <p className="mt-1 text-gray-700">{order.budget ? `$${order.budget}` : 'None'}</p>
+                                    </div>
+                                    <div className="flex-1">
+                                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Invoice / Payment</p>
+                                            {isAdmin ? (
+                                                <div className="flex gap-2 mt-1">
+                                                    <Input 
+                                                        placeholder="Invoice URL" 
+                                                        value={invoiceUrl} 
+                                                        onChange={(e) => setInvoiceUrl(e.target.value)}
+                                                        className="h-8 text-sm w-40"
+                                                    />
+                                                    <Button size="sm" variant="outline" onClick={() => updateOrderMutation.mutate({ invoice_url: invoiceUrl })}>Save</Button>
+                                                </div>
+                                            ) : order.invoice_url ? (
+                                                <a href={order.invoice_url} target="_blank" rel="noreferrer" className="mt-1 inline-flex items-center text-sm font-medium text-indigo-600 hover:underline">
+                                                    <ExternalLink className="w-3 h-3 mr-1" /> Pay Invoice
+                                                </a>
+                                            ) : (
+                                                <span className="text-gray-400 text-sm mt-1 block">No invoice yet</span>
+                                            )}
                                     </div>
                                     {order.status === 'shipped' && (
                                         <div className="flex-1">
@@ -471,19 +558,21 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
                             </div>
                         )}
 
-                        {/* Pay Button */}
-                        {!isAdmin && order.our_price && order.status !== 'paid' && order.selected_proof_id && (
+                        {/* Pay Button - Prioritize Invoice URL if present, otherwise default to internal pay */}
+                        {!isAdmin && order.invoice_url && order.status !== 'paid' && (
+                             <div className="flex justify-end pt-2">
+                                <Button className="bg-green-600 hover:bg-green-700 text-white shadow-lg" onClick={() => window.open(order.invoice_url, '_blank')}>
+                                    <DollarSign className="w-4 h-4 mr-2" /> Pay Invoice
+                                </Button>
+                             </div>
+                        )}
+                        {!isAdmin && !order.invoice_url && order.our_price && order.status !== 'paid' && order.selected_proof_id && (
                              <div className="flex justify-end pt-2">
                                 <Button className="bg-green-600 hover:bg-green-700 text-white shadow-lg" onClick={handlePayment}>
                                     <DollarSign className="w-4 h-4 mr-2" /> Pay Now (${(order.our_price/100).toFixed(2)})
                                 </Button>
                              </div>
                         )}
-                         {!isAdmin && order.our_price && !order.selected_proof_id && (
-                             <div className="flex justify-end pt-2">
-                                 <Button variant="outline" disabled title="Approve a proof first">Pay Now (Awaiting Approval)</Button>
-                             </div>
-                         )}
                     </div>
 
                     {/* Proofs Section */}
