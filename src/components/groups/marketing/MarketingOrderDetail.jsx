@@ -332,43 +332,54 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
 
           {/* Right: Comments/Chat */}
           <div className="w-full md:w-80 h-[50%] md:h-auto border-t md:border-t-0 md:border-l bg-white flex flex-col">
-            <div className="p-3 md:p-4 border-b bg-gray-50">
-                <h3 className="font-semibold text-gray-900">Comments & Feedback</h3>
-            </div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {comments.length === 0 && (
-                    <p className="text-center text-gray-400 text-sm mt-10">No comments yet. Start the conversation!</p>
-                )}
-                {comments.map((comment) => (
-                    <div key={comment.id} className={cn("text-sm p-3 rounded-lg max-w-[90%]", 
-                        comment.author_email === base44.auth.user?.email ? "bg-indigo-50 ml-auto border border-indigo-100" : "bg-gray-100 mr-auto border border-gray-200"
-                    )}>
-                        <p className="font-bold text-xs mb-1 text-gray-500">{comment.author_email?.split('@')[0]}</p>
-                        <p className="text-gray-800 whitespace-pre-wrap">{comment.content}</p>
-                        <p className="text-[10px] text-gray-400 mt-1 text-right">{new Date(comment.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
-                    </div>
-                ))}
-            </div>
-            <div className="p-3 pb-8 md:pb-3 border-t bg-gray-50">
-                <div className="flex gap-2">
-                    <Textarea 
-                        id="comment-input"
-                        value={commentInput}
-                        onChange={e => setCommentInput(e.target.value)}
-                        placeholder="Type a message..."
-                        className="min-h-[40px] max-h-[120px] resize-none text-sm"
-                        onKeyDown={e => {
-                            if (e.key === 'Enter' && !e.shiftKey) {
-                                e.preventDefault();
-                                handleSendMessage();
-                            }
-                        }}
-                    />
-                    <Button size="icon" onClick={handleSendMessage} disabled={!commentInput.trim() || addCommentMutation.isPending} className="shrink-0 bg-indigo-600">
-                        <Send className="w-4 h-4" />
-                    </Button>
-                </div>
-            </div>
+          <div className="p-3 md:p-4 border-b bg-gray-50">
+              <h3 className="font-semibold text-gray-900">Comments & Feedback</h3>
+          </div>
+
+          {/* Input Area (Moved to top) */}
+          <div className="p-3 border-b bg-gray-50">
+              <div className="flex gap-2">
+                  <Textarea 
+                      id="comment-input"
+                      value={commentInput}
+                      onChange={e => setCommentInput(e.target.value)}
+                      placeholder="Type a message..."
+                      className="min-h-[40px] max-h-[120px] resize-none text-sm"
+                      onKeyDown={e => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault();
+                              handleSendMessage();
+                          }
+                      }}
+                  />
+                  <Button size="icon" onClick={handleSendMessage} disabled={!commentInput.trim() || addCommentMutation.isPending} className="shrink-0 bg-indigo-600">
+                      <Send className="w-4 h-4" />
+                  </Button>
+              </div>
+          </div>
+
+          {/* Comments List */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 flex flex-col-reverse">
+              {comments.length === 0 && (
+                  <p className="text-center text-gray-400 text-sm mt-10">No comments yet. Start the conversation!</p>
+              )}
+              {/* Display comments in chronological order but container is flex-col-reverse so newest at bottom if we want chat style, 
+                  OR standard order. User asked to move input above. 
+                  If input is above, usually comments are below, newest at top? Or oldest at top?
+                  Let's keep standard chat order (oldest at top) but list them normally.
+              */}
+              <div className="space-y-4">
+                  {comments.map((comment) => (
+                      <div key={comment.id} className={cn("text-sm p-3 rounded-lg max-w-[90%]", 
+                          comment.author_email === base44.auth.user?.email ? "bg-indigo-50 ml-auto border border-indigo-100" : "bg-gray-100 mr-auto border border-gray-200"
+                      )}>
+                          <p className="font-bold text-xs mb-1 text-gray-500">{comment.author_email?.split('@')[0]}</p>
+                          <p className="text-gray-800 whitespace-pre-wrap">{comment.content}</p>
+                          <p className="text-[10px] text-gray-400 mt-1 text-right">{new Date(comment.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                      </div>
+                  ))}
+              </div>
+          </div>
           </div>
 
         </div>
