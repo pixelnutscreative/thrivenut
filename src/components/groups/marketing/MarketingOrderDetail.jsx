@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Loader2, Send, CheckCircle2, AlertTriangle, FileText, Image as ImageIcon, DollarSign, Edit, Trash2, Eye, EyeOff, Archive, Check } from 'lucide-react';
+import { Loader2, Send, CheckCircle2, AlertTriangle, FileText, Image as ImageIcon, DollarSign, Edit, Trash2, Eye, EyeOff, Archive, Check, Upload } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/components/ui/utils';
 
