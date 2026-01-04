@@ -442,15 +442,10 @@ export default function Layout({ children, currentPageName }) {
                 className={menuTextClass}>
 
               {mobileMenuOpen ? <X className="w-6 h-6" /> : (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-6 h-6">
-                  {/* Top Bun */}
-                  <path d="M4 8C4 5.79086 5.79086 4 8 4H16C18.2091 4 20 5.79086 20 8V10H4V8Z" fill="white" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  {/* Lettuce */}
-                  <path d="M3 12C3 12 4.5 10.5 6 12C7.5 13.5 9 12 9 12C9 12 10.5 10.5 12 12C13.5 13.5 15 12 15 12C15 12 16.5 10.5 18 12C19.5 13.5 21 12 21 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  {/* Patty */}
-                  <rect x="4" y="14" width="16" height="3" rx="1.5" fill="currentColor" stroke="currentColor" strokeWidth="1" />
-                  {/* Bottom Bun */}
-                  <path d="M4 18V19C4 20.1046 4.89543 21 6 21H18C19.1046 21 20 20.1046 20 19V18H4Z" fill="white" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8">
+                  <path fillRule="evenodd" clipRule="evenodd" d="M20 10H4C4 6 7.5 3 12 3C16.5 3 20 6 20 10ZM9 8C9.55 8 10 7.55 10 7C10 6.45 9.55 6 9 6C8.45 6 8 6.45 8 7C8 7.55 8.45 8 9 8ZM13 6C13.55 6 14 5.55 14 5C14 4.45 13.55 4 13 4C12.45 4 12 4.45 12 5C12 5.55 12.45 6 13 6ZM16 8C16.55 8 17 7.55 17 7C17 6.45 16.55 6 16 6C15.45 6 15 6.45 15 7C15 7.55 15.45 8 16 8Z" />
+                  <rect x="4" y="12" width="16" height="3" rx="1.5" />
+                  <path d="M4 17H20V18C20 20.2 18.2 22 16 22H8C5.8 22 4 20.2 4 18V17Z" />
                 </svg>
               )}
             </Button>
