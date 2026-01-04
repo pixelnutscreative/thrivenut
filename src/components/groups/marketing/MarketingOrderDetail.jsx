@@ -21,6 +21,8 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
   const [newVariation, setNewVariation] = useState({ title: '', description: '', price: '' });
   const [trackingCode, setTrackingCode] = useState(order.tracking_code || '');
   const [carrier, setCarrier] = useState(order.carrier || '');
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editContent, setEditContent] = useState('');
   
   // Header Editing State
   const [isEditingHeader, setIsEditingHeader] = useState(false);
@@ -70,6 +72,20 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
     },
     onSuccess: () => {
       setCommentInput('');
+      queryClient.invalidateQueries(['marketingComments', order.id]);
+    }
+  });
+
+  const deleteCommentMutation = useMutation({
+    mutationFn: (id) => base44.entities.MarketingOrderComment.delete(id),
+    onSuccess: () => queryClient.invalidateQueries(['marketingComments', order.id])
+  });
+
+  const updateCommentMutation = useMutation({
+    mutationFn: ({ id, content }) => base44.entities.MarketingOrderComment.update(id, { content }),
+    onSuccess: () => {
+      setEditingCommentId(null);
+      setEditContent('');
       queryClient.invalidateQueries(['marketingComments', order.id]);
     }
   });
@@ -701,6 +717,7 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
                                 const isMe = comment.author_email === currentUser?.email;
                                 const dateObj = new Date(comment.created_at);
                                 const isValidDate = !isNaN(dateObj.getTime());
+                                const isEditing = editingCommentId === comment.id;
                                 
                                 return (
                                     <div key={comment.id} className={cn("text-sm p-3 rounded-lg max-w-[95%] relative group", 
@@ -708,23 +725,47 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
                                     )}>
                                         <div className="flex justify-between items-start gap-2 mb-1">
                                             <p className="font-bold text-xs text-gray-500">{comment.author_email?.split('@')[0]}</p>
-                                            {!isMe && (
-                                                <button 
-                                                    onClick={() => handleReply(comment)}
-                                                    className="opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity p-1 hover:bg-gray-200 rounded"
-                                                    title="Reply"
-                                                >
-                                                    <Reply className="w-3 h-3 text-gray-500" />
-                                                </button>
+                                            {isMe && !isEditing && (
+                                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <button 
+                                                        onClick={() => { setEditingCommentId(comment.id); setEditContent(comment.content); }}
+                                                        className="p-1 hover:bg-indigo-100 rounded text-gray-500 hover:text-indigo-600"
+                                                        title="Edit"
+                                                    >
+                                                        <Edit className="w-3 h-3" />
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => { if(window.confirm('Delete comment?')) deleteCommentMutation.mutate(comment.id); }}
+                                                        className="p-1 hover:bg-red-100 rounded text-gray-500 hover:text-red-600"
+                                                        title="Delete"
+                                                    >
+                                                        <Trash2 className="w-3 h-3" />
+                                                    </button>
+                                                </div>
                                             )}
                                         </div>
-                                        <p className="text-gray-800 whitespace-pre-wrap">{comment.content}</p>
+
+                                        {isEditing ? (
+                                            <div className="space-y-2">
+                                                <Textarea 
+                                                    value={editContent} 
+                                                    onChange={e => setEditContent(e.target.value)} 
+                                                    className="text-xs min-h-[60px] bg-white"
+                                                />
+                                                <div className="flex gap-2 justify-end">
+                                                    <Button size="sm" variant="ghost" className="h-6 text-xs" onClick={() => setEditingCommentId(null)}>Cancel</Button>
+                                                    <Button size="sm" className="h-6 text-xs" onClick={() => updateCommentMutation.mutate({ id: comment.id, content: editContent })}>Save</Button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <p className="text-gray-800 whitespace-pre-wrap">{comment.content}</p>
+                                        )}
+
                                         <div className="flex justify-between items-center mt-1">
-                                            {/* Mobile Reply Button (Always visible) */}
-                                            {!isMe && (
+                                            {!isMe && !isEditing && (
                                                 <button 
                                                     onClick={() => handleReply(comment)}
-                                                    className="md:hidden text-[10px] font-medium text-indigo-600 flex items-center gap-1"
+                                                    className="text-[10px] font-medium text-indigo-600 flex items-center gap-1 hover:underline"
                                                 >
                                                     <Reply className="w-3 h-3" /> Reply
                                                 </button>
