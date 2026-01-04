@@ -462,7 +462,6 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
                                     <p className="mt-1 text-gray-700">{order.shipping_address || 'N/A'}</p>
                                 </div>
                                 <div className="flex flex-wrap gap-6">
-                                    {/* Budget Moved - Removed from here */}
                                     <div className="flex-1">
                                             <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Invoice / Payment</p>
                                             {isAdmin ? (
