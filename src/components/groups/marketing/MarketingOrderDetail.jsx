@@ -149,13 +149,11 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
             <p className="text-sm text-gray-500">Ordered by {order.client_email} • Due {order.needed_by_date || 'ASAP'}</p>
           </div>
           <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={onEdit} title="Edit Order"><Edit className="w-4 h-4" /></Button>
             {isAdmin && (
-                <>
-                <Button variant="ghost" size="icon" onClick={onEdit} title="Edit Order"><Edit className="w-4 h-4" /></Button>
                 <Button variant="ghost" size="icon" className="text-red-500" onClick={() => {
                      if(window.confirm('Archive this order?')) updateOrderMutation.mutate({ status: 'archived' });
                 }} title="Archive"><Archive className="w-4 h-4" /></Button>
-                </>
             )}
             <Button variant="outline" onClick={onClose}><FileText className="w-4 h-4 mr-2" /> Close</Button>
           </div>
