@@ -440,6 +440,7 @@ function TabPermissionsSettings({ group }) {
     { id: 'projects', label: 'Projects' },
     { id: 'meetings', label: 'Meetings' },
     { id: 'marketing', label: 'Marketing Orders' },
+    { id: 'assets', label: 'Brand & Assets' },
     { id: 'discussion', label: 'Discussion' },
     { id: 'members', label: 'Members' },
     { id: 'requests', label: 'Requests' }
@@ -609,6 +610,7 @@ function GroupFeaturesSettings({ group }) {
     { id: 'projects', label: 'Projects' },
     { id: 'meetings', label: 'Meetings' },
     { id: 'marketing', label: 'Marketing Orders' },
+    { id: 'assets', label: 'Brand & Assets' },
     { id: 'discussion', label: 'Discussion' },
     { id: 'members', label: 'Members' },
     { id: 'requests', label: 'Requests' },
