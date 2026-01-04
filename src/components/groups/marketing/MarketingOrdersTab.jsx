@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import MarketingOrderForm from './MarketingOrderForm';
 import MarketingOrderDetail from './MarketingOrderDetail';
 import { cn } from '@/components/ui/utils';
+import { MessageCircle } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function MarketingOrdersTab({ group, isAdmin }) {
@@ -176,5 +177,42 @@ export default function MarketingOrdersTab({ group, isAdmin }) {
       )}
 
     </div>
+  );
+}
+
+function MarketingOrderCard({ order, onClick, statusColors, getStatusLabel }) {
+  const { data: comments = [] } = useQuery({
+    queryKey: ['marketingComments', order.id],
+    queryFn: () => base44.entities.MarketingOrderComment.filter({ order_id: order.id }),
+    staleTime: 60000 // Cache for 1 min
+  });
+
+  return (
+      <Card className="hover:shadow-md transition-shadow cursor-pointer border-l-4 border-l-indigo-500" onClick={onClick}>
+          <CardContent className="p-5">
+              <div className="flex justify-between items-start mb-3">
+                  <div className="flex items-center gap-2">
+                     {comments.length > 0 && (
+                        <Badge variant="secondary" className="bg-blue-50 text-blue-600 gap-1 hover:bg-blue-100 px-1.5 h-5 text-[10px]">
+                           <MessageCircle className="w-3 h-3" /> {comments.length}
+                        </Badge>
+                     )}
+                  </div>
+                  <span className="text-xs text-gray-400 font-mono">{format(new Date(order.created_date || new Date()), 'MMM d')}</span>
+              </div>
+              <h3 className="font-bold text-gray-900 mb-1 truncate">{order.title}</h3>
+              <p className="text-sm text-gray-500 line-clamp-2 mb-4 h-10">{order.description}</p>
+              
+              <div className="flex justify-between items-center text-sm border-t pt-3">
+                  <div className="text-gray-500">
+                      {order.needed_by_date ? `Due: ${format(new Date(order.needed_by_date), 'MMM d')}` : 'No deadline'}
+                  </div>
+                  <div className="font-medium text-indigo-600 flex flex-col items-end">
+                      {order.our_price && <span>${(order.our_price/100).toFixed(2)}</span>}
+                      <Badge className={cn("mt-1", statusColors[order.status])}>{getStatusLabel(order)}</Badge>
+                  </div>
+              </div>
+          </CardContent>
+      </Card>
   );
 }
