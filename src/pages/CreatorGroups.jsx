@@ -438,15 +438,15 @@ export default function CreatorGroups() {
 
   const allTabs = [
     { id: 'feed', label: 'Feed', icon: Bell, color: 'purple' },
+    { id: 'discussion', label: 'Discussion', icon: MessageSquare, color: 'teal' },
     { id: 'events', label: 'Events', icon: Calendar, color: 'pink' },
-    { id: 'qna', label: 'Q&A', icon: MessageSquare, color: 'teal' },
-    { id: 'resources', label: 'Resources', icon: FileText, color: 'amber' },
-    { id: 'training', label: 'Training', icon: Video, color: 'blue' },
-    { id: 'projects', label: 'Projects', icon: Briefcase, color: 'indigo' },
     { id: 'meetings', label: 'Meetings', icon: Video, color: 'rose' },
+    { id: 'projects', label: 'Projects', icon: Briefcase, color: 'indigo' },
     { id: 'marketing', label: 'Marketing', icon: Printer, color: 'indigo' },
     { id: 'assets', label: 'Brand & Assets', icon: Sparkles, color: 'pink' },
-    { id: 'discussion', label: 'Discussion', icon: MessageSquare, color: 'teal' },
+    { id: 'resources', label: 'Resources', icon: FileText, color: 'amber' },
+    { id: 'training', label: 'Training', icon: Video, color: 'blue' },
+    { id: 'qna', label: 'Q&A', icon: MessageSquare, color: 'teal' },
     { id: 'members', label: 'Members', icon: Users, color: 'orange' },
     { id: 'requests', label: 'Requests', icon: AlertCircle, color: 'gray' },
   ];
@@ -462,6 +462,19 @@ export default function CreatorGroups() {
       return isClientGroup;
     }
     return true;
+  });
+
+  // Sort tabs based on group settings
+  const tabOrder = activeGroup.settings?.tab_order || allTabs.map(t => t.id);
+  availableTabs.sort((a, b) => {
+    const indexA = tabOrder.indexOf(a.id);
+    const indexB = tabOrder.indexOf(b.id);
+    // If both exist in order array, sort by index
+    if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+    // If one doesn't exist (new tab?), put it at the end
+    if (indexA === -1) return 1;
+    if (indexB === -1) return -1;
+    return 0;
   });
 
   const toggleTabVisibility = (tabId) => {
