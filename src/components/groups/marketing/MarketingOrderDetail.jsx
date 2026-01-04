@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Send, FileText, Image as ImageIcon, DollarSign, Edit, Trash2, Archive, Check, Upload } from 'lucide-react';
+import { Loader2, Send, FileText, Image as ImageIcon, DollarSign, Edit, Trash2, Archive, Check, Upload, Reply } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
 
 export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }) {
@@ -77,6 +77,22 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
   const handleSendMessage = () => {
     if (!commentInput.trim() || !currentUser) return;
     addCommentMutation.mutate(commentInput);
+  };
+
+  const handleReply = (comment) => {
+    const replyText = `> ${comment.content.substring(0, 50)}${comment.content.length > 50 ? '...' : ''}\n\n`;
+    setCommentInput(prev => replyText + prev);
+    // Switch to comments tab if not already active (though we are likely there if clicking reply)
+    if (activeTab !== 'comments') setActiveTab('comments');
+    
+    // Focus input
+    setTimeout(() => {
+        const input = document.getElementById('comment-input');
+        if (input) {
+            input.focus();
+            input.setSelectionRange(input.value.length, input.value.length);
+        }
+    }, 100);
   };
 
   const handleAddVariation = () => {
@@ -167,8 +183,8 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-0 md:p-4 touch-none">
-      <Card className="w-full max-w-5xl h-[100dvh] md:h-[90vh] flex flex-col bg-white overflow-hidden shadow-2xl rounded-none md:rounded-xl touch-auto">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-0 md:p-4">
+      <Card className="w-full max-w-5xl h-[100dvh] md:h-[90vh] flex flex-col bg-white overflow-hidden shadow-2xl rounded-none md:rounded-xl">
         {/* Header */}
         <div className="p-4 border-b flex justify-between items-center bg-gray-50">
           <div>
@@ -486,15 +502,45 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
                             <p className="text-center text-gray-400 text-sm mt-10">No comments yet. Start the conversation!</p>
                         )}
                         <div className="space-y-4 pb-20 md:pb-0">
-                            {comments.map((comment) => (
-                                <div key={comment.id} className={cn("text-sm p-3 rounded-lg max-w-[90%]", 
-                                    comment.author_email === currentUser?.email ? "bg-indigo-50 ml-auto border border-indigo-100" : "bg-gray-100 mr-auto border border-gray-200"
-                                )}>
-                                    <p className="font-bold text-xs mb-1 text-gray-500">{comment.author_email?.split('@')[0]}</p>
-                                    <p className="text-gray-800 whitespace-pre-wrap">{comment.content}</p>
-                                    <p className="text-[10px] text-gray-400 mt-1 text-right">{new Date(comment.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
-                                </div>
-                            ))}
+                            {comments.map((comment) => {
+                                const isMe = comment.author_email === currentUser?.email;
+                                const dateObj = new Date(comment.created_at);
+                                const isValidDate = !isNaN(dateObj.getTime());
+                                
+                                return (
+                                    <div key={comment.id} className={cn("text-sm p-3 rounded-lg max-w-[95%] relative group", 
+                                        isMe ? "bg-indigo-50 ml-auto border border-indigo-100" : "bg-gray-100 mr-auto border border-gray-200"
+                                    )}>
+                                        <div className="flex justify-between items-start gap-2 mb-1">
+                                            <p className="font-bold text-xs text-gray-500">{comment.author_email?.split('@')[0]}</p>
+                                            {!isMe && (
+                                                <button 
+                                                    onClick={() => handleReply(comment)}
+                                                    className="opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity p-1 hover:bg-gray-200 rounded"
+                                                    title="Reply"
+                                                >
+                                                    <Reply className="w-3 h-3 text-gray-500" />
+                                                </button>
+                                            )}
+                                        </div>
+                                        <p className="text-gray-800 whitespace-pre-wrap">{comment.content}</p>
+                                        <div className="flex justify-between items-center mt-1">
+                                            {/* Mobile Reply Button (Always visible) */}
+                                            {!isMe && (
+                                                <button 
+                                                    onClick={() => handleReply(comment)}
+                                                    className="md:hidden text-[10px] font-medium text-indigo-600 flex items-center gap-1"
+                                                >
+                                                    <Reply className="w-3 h-3" /> Reply
+                                                </button>
+                                            )}
+                                            <span className="text-[10px] text-gray-400 ml-auto">
+                                                {isValidDate ? dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}
+                                            </span>
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
                 </div>
