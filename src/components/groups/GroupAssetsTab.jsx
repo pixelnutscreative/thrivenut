@@ -5,17 +5,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Plus, Upload, Trash2, Link as LinkIcon, FileText, Image as ImageIcon, Type, Palette, ExternalLink, X, Search, Filter, Briefcase, Printer } from 'lucide-react';
+import { Loader2, Plus, Upload, Trash2, Link as LinkIcon, FileText, Image as ImageIcon, Type, Palette, ExternalLink, X, Filter } from 'lucide-react';
 import ColorPicker from '../shared/ColorPicker';
 
 export default function GroupAssetsTab({ group, isAdmin }) {
   const [activeTab, setActiveTab] = useState('brand');
 
-  // Safety check for group prop
   if (!group) return <div className="p-4 text-center text-gray-500">Group data unavailable</div>;
 
   return (
@@ -57,7 +55,6 @@ function BrandKitSection({ group, isAdmin }) {
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   
-  // Fetch Brand
   const { data: brands = [], isLoading } = useQuery({
     queryKey: ['groupBrand', group.id],
     queryFn: async () => {
@@ -127,7 +124,6 @@ function BrandKitSection({ group, isAdmin }) {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Colors & Style */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
@@ -181,7 +177,6 @@ function BrandKitSection({ group, isAdmin }) {
         </CardContent>
       </Card>
 
-      {/* Fonts & Links */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
@@ -249,11 +244,10 @@ function BrandKitSection({ group, isAdmin }) {
         </CardContent>
       </Card>
 
-      {/* Voice & Info */}
       <Card className="lg:col-span-2">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
-            <Brain className="w-4 h-4" /> Voice & Strategy
+            <Type className="w-4 h-4" /> Voice & Strategy
           </CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -300,21 +294,34 @@ function AssetLibrarySection({ group, isAdmin }) {
   const [filterProject, setFilterProject] = useState('all');
   const [isUploadOpen, setIsUploadOpen] = useState(false);
 
-  // Fetch Assets
   const { data: assets = [], isLoading } = useQuery({
     queryKey: ['groupAssets', group.id],
-    queryFn: () => base44.entities.MarketingAsset.filter({ group_id: group.id }, '-created_date'),
+    queryFn: async () => {
+      try {
+        return await base44.entities.MarketingAsset.filter({ group_id: group.id }, '-created_date');
+      } catch (e) {
+        console.error("Asset fetch error", e);
+        return [];
+      }
+    },
   });
 
-  // Fetch Projects & Orders for Filtering/Linking
   const { data: projects = [] } = useQuery({
     queryKey: ['groupProjects', group.id],
-    queryFn: () => base44.entities.GroupProject.filter({ group_id: group.id }),
+    queryFn: async () => {
+      try {
+        return await base44.entities.GroupProject.filter({ group_id: group.id });
+      } catch (e) { return []; }
+    },
   });
 
   const { data: orders = [] } = useQuery({
     queryKey: ['marketingOrders', group.id],
-    queryFn: () => base44.entities.MarketingOrder.filter({ group_id: group.id }),
+    queryFn: async () => {
+      try {
+        return await base44.entities.MarketingOrder.filter({ group_id: group.id });
+      } catch (e) { return []; }
+    },
   });
 
   const deleteMutation = useMutation({
@@ -324,13 +331,12 @@ function AssetLibrarySection({ group, isAdmin }) {
 
   const filteredAssets = assets.filter(a => {
     if (filterProject === 'all') return true;
-    if (filterProject === 'brand') return a.linked_brand_id; // Simple check if flagged as brand
+    if (filterProject === 'brand') return a.linked_brand_id;
     return (a.linked_project_ids || []).includes(filterProject) || (a.linked_order_ids || []).includes(filterProject);
   });
 
   return (
     <div className="space-y-6">
-      {/* Filters & Actions */}
       <div className="flex flex-col md:flex-row justify-between gap-4">
         <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0">
           <Filter className="w-4 h-4 text-gray-400" />
@@ -357,7 +363,6 @@ function AssetLibrarySection({ group, isAdmin }) {
         </Button>
       </div>
 
-      {/* Grid */}
       {isLoading ? (
         <div className="text-center py-10"><Loader2 className="w-8 h-8 animate-spin mx-auto text-gray-300" /></div>
       ) : filteredAssets.length === 0 ? (
@@ -383,7 +388,6 @@ function AssetLibrarySection({ group, isAdmin }) {
         </div>
       )}
 
-      {/* Upload Dialog */}
       <UploadAssetDialog 
         isOpen={isUploadOpen} 
         onClose={() => setIsUploadOpen(false)} 
@@ -397,9 +401,9 @@ function AssetLibrarySection({ group, isAdmin }) {
 
 function AssetCard({ asset, projects, orders, onDelete }) {
   const fileUrl = asset.file_url || '';
-  const isImage = asset.file_type === 'image' || fileUrl.match(/\.(jpeg|jpg|png|gif|webp)$/i);
+  // Safer image check
+  const isImage = asset.file_type === 'image' || (fileUrl && /\.(jpeg|jpg|png|gif|webp)$/i.test(fileUrl));
   
-  // Find linked names
   const linkedNames = [];
   if (asset.linked_brand_id) linkedNames.push('Brand Kit');
   (asset.linked_project_ids || []).forEach(pid => {
@@ -415,14 +419,16 @@ function AssetCard({ asset, projects, orders, onDelete }) {
     <Card className="group overflow-hidden hover:shadow-md transition-all border-gray-200">
       <div className="aspect-square bg-gray-100 relative flex items-center justify-center overflow-hidden">
         {isImage ? (
-          <img src={asset.file_url} alt={asset.name} className="w-full h-full object-cover" />
+          <img src={fileUrl} alt={asset.name} className="w-full h-full object-cover" />
         ) : (
           <FileText className="w-16 h-16 text-gray-300" />
         )}
         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-          <Button variant="secondary" size="icon" className="rounded-full" onClick={() => window.open(asset.file_url, '_blank')}>
-            <ExternalLink className="w-4 h-4" />
-          </Button>
+          {fileUrl && (
+            <Button variant="secondary" size="icon" className="rounded-full" onClick={() => window.open(fileUrl, '_blank')}>
+              <ExternalLink className="w-4 h-4" />
+            </Button>
+          )}
           <Button variant="destructive" size="icon" className="rounded-full" onClick={onDelete}>
             <Trash2 className="w-4 h-4" />
           </Button>
@@ -448,16 +454,16 @@ function UploadAssetDialog({ isOpen, onClose, group, projects, orders }) {
   const queryClient = useQueryClient();
   const [file, setFile] = useState(null);
   const [name, setName] = useState('');
-  const [selectedContexts, setSelectedContexts] = useState([]); // Array of IDs
+  const [selectedContexts, setSelectedContexts] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
 
   const uploadMutation = useMutation({
     mutationFn: async () => {
       setIsUploading(true);
       try {
+        if (!file) return;
         const { file_url } = await base44.integrations.Core.UploadFile({ file });
         
-        // Determine linkages
         const linked_project_ids = selectedContexts.filter(id => projects.some(p => p.id === id));
         const linked_order_ids = selectedContexts.filter(id => orders.some(o => o.id === id));
         const isBrand = selectedContexts.includes('brand');
@@ -467,10 +473,10 @@ function UploadAssetDialog({ isOpen, onClose, group, projects, orders }) {
           name: name || file.name,
           file_url,
           file_type: file.type.includes('image') ? 'image' : 'document',
-          linked_brand_id: isBrand ? 'true' : null, // Just flagging it
+          linked_brand_id: isBrand ? 'true' : null,
           linked_project_ids,
           linked_order_ids,
-          uploaded_by: 'user' // Placeholder
+          uploaded_by: 'user'
         });
       } finally {
         setIsUploading(false);
@@ -501,9 +507,11 @@ function UploadAssetDialog({ isOpen, onClose, group, projects, orders }) {
           <div className="space-y-2">
             <Label>File</Label>
             <Input type="file" onChange={e => {
-              const f = e.target.files[0];
-              setFile(f);
-              if (f && !name) setName(f.name);
+              const f = e.target.files?.[0];
+              if (f) {
+                setFile(f);
+                if (!name) setName(f.name);
+              }
             }} />
           </div>
           <div className="space-y-2">
