@@ -19,6 +19,12 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
 
   useEffect(() => {
     base44.auth.me().then(setCurrentUser).catch(console.error);
+    
+    // Lock body scroll prevents background scrolling issues on mobile
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
   }, []);
 
   // Queries
@@ -138,8 +144,8 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-0 md:p-4">
-      <Card className="w-full max-w-5xl h-full md:h-[90vh] flex flex-col bg-white overflow-hidden shadow-2xl rounded-none md:rounded-xl">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-0 md:p-4 touch-none">
+      <Card className="w-full max-w-5xl h-[100dvh] md:h-[90vh] flex flex-col bg-white overflow-hidden shadow-2xl rounded-none md:rounded-xl touch-auto">
         {/* Header */}
         <div className="p-4 border-b flex justify-between items-center bg-gray-50">
           <div>
@@ -185,7 +191,7 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
 
             <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
                 {/* Left: Details & Proofs */}
-                <div className={cn("flex-1 overflow-y-auto p-4 md:p-6 space-y-6 md:space-y-8 bg-gray-50/50", 
+                <div className={cn("flex-1 overflow-y-auto p-4 md:p-6 space-y-6 md:space-y-8 bg-gray-50/50 overscroll-contain", 
                     activeTab === 'comments' ? 'hidden md:block' : 'block'
                 )}>
                     {/* Specs & Info */}
