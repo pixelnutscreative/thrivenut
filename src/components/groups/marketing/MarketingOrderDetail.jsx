@@ -14,6 +14,7 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
   const [commentInput, setCommentInput] = useState('');
   const [priceInput, setPriceInput] = useState(order.our_price ? (order.our_price / 100).toFixed(2) : '');
   const [uploadingProof, setUploadingProof] = useState(false);
+  const [uploadingQuote, setUploadingQuote] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [activeTab, setActiveTab] = useState('details');
   const [newVariation, setNewVariation] = useState({ title: '', description: '', price: '' });
@@ -169,6 +170,24 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
     }
   };
 
+  const handleQuoteUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploadingQuote(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const newQuote = { name: file.name, url: file_url };
+      const updatedQuotes = [...(order.vendor_quotes || []), newQuote];
+      updateOrderMutation.mutate({ vendor_quotes: updatedQuotes });
+    } catch (err) {
+      console.error(err);
+      alert('Upload failed');
+    } finally {
+      setUploadingQuote(false);
+    }
+  };
+
   const statusColors = {
     pending_quote: 'bg-yellow-100 text-yellow-800',
     in_progress: 'bg-blue-100 text-blue-800',
@@ -186,7 +205,7 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-0 md:p-4">
       <Card className="w-full max-w-5xl h-[100dvh] md:h-[90vh] flex flex-col bg-white overflow-hidden shadow-2xl rounded-none md:rounded-xl">
         {/* Header */}
-        <div className="p-4 border-b flex justify-between items-center bg-gray-50">
+        <div className="p-4 border-b flex justify-between items-center bg-gray-50 select-none">
           <div>
             <h2 className="text-xl font-bold flex items-center gap-3">
               {order.title}
@@ -246,29 +265,34 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
                                     <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Shipping Address</p>
                                     <p className="mt-1 text-gray-700">{order.shipping_address || 'N/A'}</p>
                                 </div>
-                                <div className="flex gap-4">
+                                <div className="flex flex-wrap gap-6">
                                     <div>
                                         <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Budget</p>
                                         <p className="mt-1 text-gray-700">{order.budget ? `$${order.budget}` : 'None'}</p>
                                     </div>
-                                    {order.vendor_quote_url && (
-                                        <div>
+                                    <div className="flex-1 min-w-[200px]">
+                                        <div className="flex items-center justify-between">
                                             <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Attached Quotes/Specs</p>
-                                            {(order.vendor_quotes && order.vendor_quotes.length > 0) ? (
-                                                <div className="space-y-1 mt-1">
-                                                    {order.vendor_quotes.map((q, i) => (
-                                                        <a key={i} href={q.url} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline text-sm flex items-center gap-1">
-                                                            <FileText className="w-3 h-3" /> {q.name || `File ${i+1}`}
-                                                        </a>
-                                                    ))}
-                                                </div>
-                                            ) : order.vendor_quote_url ? (
-                                                <a href={order.vendor_quote_url} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline text-sm flex items-center gap-1 mt-1">
-                                                    <FileText className="w-3 h-3" /> View File
-                                                </a>
-                                            ) : <span className="text-gray-400 text-sm">None</span>}
+                                            <label className="cursor-pointer text-indigo-600 hover:text-indigo-800 flex items-center gap-1 text-xs font-medium bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 transition-colors">
+                                                <input type="file" className="hidden" onChange={handleQuoteUpload} disabled={uploadingQuote} />
+                                                {uploadingQuote ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
+                                                Upload
+                                            </label>
                                         </div>
-                                    )}
+                                        <div className="mt-2 space-y-1">
+                                            {(order.vendor_quotes && order.vendor_quotes.length > 0) ? (
+                                                order.vendor_quotes.map((q, i) => (
+                                                    <a key={i} href={q.url} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline text-sm flex items-center gap-1">
+                                                        <FileText className="w-3 h-3" /> {q.name || `File ${i+1}`}
+                                                    </a>
+                                                ))
+                                            ) : order.vendor_quote_url ? (
+                                                <a href={order.vendor_quote_url} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline text-sm flex items-center gap-1">
+                                                    <FileText className="w-3 h-3" /> View Initial File
+                                                </a>
+                                            ) : <span className="text-gray-400 text-sm italic">No quotes uploaded yet</span>}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
