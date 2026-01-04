@@ -279,6 +279,12 @@ function CommentSection({ post, currentUser, isAdmin }) {
     queryFn: () => base44.entities.GroupDiscussionComment.filter({ post_id: post.id }, 'created_date'),
   });
 
+  const handleReply = (comment) => {
+    const replyText = `> ${comment.content.substring(0, 50)}${comment.content.length > 50 ? '...' : ''}\n\n`;
+    setNewComment(prev => replyText + prev);
+    document.getElementById(`comment-input-${post.id}`)?.focus();
+  };
+
   const createMutation = useMutation({
     mutationFn: () => base44.entities.GroupDiscussionComment.create({
       post_id: post.id,
@@ -310,7 +316,15 @@ function CommentSection({ post, currentUser, isAdmin }) {
                     <span className="font-bold text-xs text-gray-600">{comment.author_email}</span>
                     <span className="text-[10px] text-gray-400">{formatDistanceToNow(new Date(comment.created_date), { addSuffix: true })}</span>
                   </div>
-                  <div className="text-gray-800">{comment.content}</div>
+                  <div className="text-gray-800 whitespace-pre-wrap">{comment.content}</div>
+                  <div className="mt-1 flex items-center gap-2">
+                      <button 
+                          onClick={() => handleReply(comment)} 
+                          className="text-[10px] text-gray-400 hover:text-indigo-600 font-medium"
+                      >
+                          Reply
+                      </button>
+                  </div>
                </div>
                {(comment.author_email === currentUser?.email || isAdmin) && (
                  <button onClick={() => deleteMutation.mutate(comment.id)} className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-opacity">
@@ -322,6 +336,7 @@ function CommentSection({ post, currentUser, isAdmin }) {
        </div>
        <div className="flex gap-2">
           <Input 
+            id={`comment-input-${post.id}`}
             value={newComment} 
             onChange={e => setNewComment(e.target.value)} 
             placeholder="Write a comment..." 

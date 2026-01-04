@@ -37,9 +37,9 @@ export default function GroupProjectsTab({ group, currentUser, myMembership }) {
   }, [projects]);
 
   return (
-    <div className="flex h-[calc(100vh-200px)] min-h-[600px] gap-6">
+    <div className="flex flex-col md:flex-row h-auto md:h-[calc(100vh-200px)] min-h-[600px] gap-6">
       {/* Sidebar - Projects List */}
-      <div className="w-64 flex-shrink-0 flex flex-col gap-4">
+      <div className="w-full md:w-64 flex-shrink-0 flex flex-col gap-4">
         <div className="flex justify-between items-center">
           <h3 className="font-bold text-lg">Projects</h3>
           {isOwnerOrAdmin(myMembership.role) && (

@@ -947,14 +947,16 @@ export default function CreatorGroups() {
         {/* Shortcuts & Crypto Sidebar */}
         <div className="lg:col-span-1 space-y-6 order-2 lg:order-1">
 
-          {/* AI Companion for Client Portals */}
+          {/* AI Companion for Client Portals (Desktop) */}
           {(activeGroup.type === 'client-portal' || activeGroup.type === 'agency') && (
-              <GroupAICompanion 
-                  groupId={activeGroup.id} 
-                  groupName={activeGroup.name}
-                  className="w-full"
-                  defaultOpen={false}
-              />
+              <div className="hidden lg:block">
+                  <GroupAICompanion 
+                      groupId={activeGroup.id} 
+                      groupName={activeGroup.name}
+                      className="w-full"
+                      defaultOpen={false}
+                  />
+              </div>
           )}
 
           {/* Calendar Widget */}
@@ -1000,6 +1002,18 @@ export default function CreatorGroups() {
         </div>
 
         <div className="lg:col-span-3 order-1 lg:order-2">
+
+          {/* AI Companion for Client Portals (Mobile - Top) */}
+          {(activeGroup.type === 'client-portal' || activeGroup.type === 'agency') && (
+              <div className="block lg:hidden mb-6">
+                  <GroupAICompanion 
+                      groupId={activeGroup.id} 
+                      groupName={activeGroup.name}
+                      className="w-full"
+                      defaultOpen={false}
+                  />
+              </div>
+          )}
           
           {/* Retainer Balance Header */}
           {retainerBalance && (retainerBalance.purchased > 0 || isAdmin) && (
