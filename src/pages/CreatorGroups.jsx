@@ -86,8 +86,22 @@ export default function CreatorGroups() {
   const { data: fetchedActiveGroup, isLoading: isActiveGroupLoading } = useQuery({
     queryKey: ['activeGroup', activeGroupId],
     queryFn: async () => {
-      const res = await base44.entities.CreatorGroup.filter({ id: activeGroupId });
-      return res[0];
+      // First try standard fetch (fastest)
+      try {
+        const res = await base44.entities.CreatorGroup.filter({ id: activeGroupId });
+        if (res && res.length > 0) return res[0];
+      } catch (e) {
+        console.log("Standard fetch failed, trying secure fetch");
+      }
+
+      // Fallback: Fetch via backend function (bypasses RLS for "Private Group" screen visibility)
+      try {
+        const { data } = await base44.functions.invoke('getGroupDetails', { groupId: activeGroupId });
+        return data.group;
+      } catch (e) {
+        console.error("Secure fetch failed", e);
+        return null;
+      }
     },
     enabled: !!activeGroupId
   });
