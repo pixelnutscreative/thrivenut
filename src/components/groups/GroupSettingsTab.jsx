@@ -32,8 +32,7 @@ export default function GroupSettingsTab({ group }) {
         </TabsList>
 
         <TabsContent value="general" className="space-y-6 mt-6">
-          <GroupFeaturesSettings group={group} />
-          <GroupTabOrderSettings group={group} />
+          <GroupTabsManager group={group} />
           <RetainerSettings group={group} />
           <GroupNameSettings group={group} />
           <GroupTypeSettings group={group} />
@@ -417,6 +416,7 @@ function TabPermissionsSettings({ group }) {
   const queryClient = useQueryClient();
   const [permissions, setPermissions] = useState(group.role_tab_permissions || {});
   const [showSaved, setShowSaved] = useState(false);
+  const [showColumnSelector, setShowColumnSelector] = useState(false);
 
   // Fetch Group Types to determine defaults
   const { data: groupTypes = [] } = useQuery({
@@ -448,15 +448,21 @@ function TabPermissionsSettings({ group }) {
     { id: 'requests', label: 'Requests' },
   ];
 
+  // Only show enabled features in permission table
+  const disabledFeatures = group.settings?.disabled_features || [];
+  const activeTabs = availableTabs.filter(tab => !disabledFeatures.includes(tab.id));
+
   const levels = ['Invited', 'Interested', 'Subscriber', ...(group.member_levels || [])];
   const systemRoles = ['member', 'client', 'manager', 'admin', 'virtual-assistant']; 
   
   // Filter out levels that conflict with system roles (case-insensitive)
   const filteredLevels = levels.filter(l => !systemRoles.includes(l.toLowerCase()));
-  const allRoles = [...new Set([...filteredLevels, ...systemRoles])]; 
+  const allRoles = [...new Set([...filteredLevels, ...systemRoles])];
+  
+  // Initial visible columns: all system roles + active levels
+  const [visibleColumns, setVisibleColumns] = useState(allRoles);
 
   // Helper to determine if a tab is enabled by default for a role
-  // This mirrors logic in CreatorGroups.js `isTabEnabled` fallback
   const isDefaultEnabled = (tabId, role) => {
     // Admin/Owner always enabled by default
     if (role === 'admin' || role === 'owner') return true;
@@ -489,13 +495,7 @@ function TabPermissionsSettings({ group }) {
   };
 
   const togglePermission = (tabId, role) => {
-    // If we are toggling, we must initialize the permission array if it's undefined
-    // If undefined, it means "use defaults". So we need to calculate what the current state is,
-    // and then toggle from THERE.
-    
     let current = permissions[tabId];
-    
-    // If not set yet, initialize it with all roles that are currently enabled by default
     if (current === undefined) {
        current = allRoles.filter(r => isDefaultEnabled(tabId, r));
     }
@@ -513,145 +513,253 @@ function TabPermissionsSettings({ group }) {
       setPermissions({ ...permissions, [tabId]: enable ? allRoles : [] });
   };
 
+  const toggleColumnVisibility = (role) => {
+    if (visibleColumns.includes(role)) {
+      setVisibleColumns(visibleColumns.filter(c => c !== role));
+    } else {
+      setVisibleColumns([...visibleColumns, role]);
+    }
+  };
+
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Tab Visibility</CardTitle>
-        <CardDescription>
-          Control which roles/levels can see specific tabs. 
-          <br/>
-          <span className="text-xs text-gray-500 font-normal">
-            (Gray = System Default. Click to override.)
-          </span>
-        </CardDescription>
+      <CardHeader className="flex flex-row items-start justify-between">
+        <div>
+            <CardTitle>Tab Visibility</CardTitle>
+            <CardDescription>
+              Control which roles/levels can see specific tabs.
+            </CardDescription>
+        </div>
+        <div className="relative">
+            <Button variant="outline" size="sm" onClick={() => setShowColumnSelector(!showColumnSelector)}>
+                <Settings className="w-3 h-3 mr-2" /> Columns
+            </Button>
+            {showColumnSelector && (
+                <div className="absolute right-0 top-10 bg-white border shadow-lg rounded-lg p-3 z-50 w-48 max-h-64 overflow-y-auto">
+                    <p className="text-xs font-semibold text-gray-500 mb-2 uppercase">Show Roles/Levels</p>
+                    {allRoles.map(role => (
+                        <div key={role} className="flex items-center gap-2 py-1">
+                            <input 
+                                type="checkbox" 
+                                checked={visibleColumns.includes(role)} 
+                                onChange={() => toggleColumnVisibility(role)}
+                                className="rounded text-purple-600 focus:ring-purple-500 cursor-pointer"
+                            />
+                            <span className="text-sm capitalize truncate">{role}</span>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="overflow-x-auto border rounded-lg">
-          <table className="w-full text-sm divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="text-left p-3 font-semibold text-gray-700 sticky left-0 bg-gray-50 z-10 w-32 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Tab</th>
-                <th className="text-center p-3 font-semibold text-gray-700 w-24">Actions</th>
-                {allRoles.map(r => (
-                  <th key={r} className="text-center p-3 capitalize font-semibold text-gray-700 min-w-[100px] whitespace-nowrap">
-                    {r}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {availableTabs.map(tab => (
-                <tr key={tab.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="p-3 font-medium text-gray-900 sticky left-0 bg-white z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
-                    {tab.label}
-                  </td>
-                  <td className="p-3 text-center">
-                    <div className="flex justify-center gap-1">
-                        <Button variant="ghost" size="xs" className="h-6 w-6 p-0 text-gray-400 hover:text-green-600" onClick={() => toggleAll(tab.id, true)} title="Enable All">
-                          <ArrowUp className="w-3 h-3" />
-                        </Button>
-                        <Button variant="ghost" size="xs" className="h-6 w-6 p-0 text-gray-400 hover:text-red-600" onClick={() => toggleAll(tab.id, false)} title="Disable All">
-                          <ArrowDown className="w-3 h-3" />
-                        </Button>
+        {activeTabs.length === 0 ? (
+            <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg">
+                No active features to configure. Enable features in the General tab first.
+            </div>
+        ) : (
+            <>
+                <div className="overflow-x-auto border rounded-lg">
+                  <table className="w-full text-sm divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="text-left p-3 font-semibold text-gray-700 sticky left-0 bg-gray-50 z-10 w-32 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Tab</th>
+                        <th className="text-center p-3 font-semibold text-gray-700 w-24">Actions</th>
+                        {allRoles.filter(r => visibleColumns.includes(r)).map(r => (
+                          <th key={r} className="text-center p-3 capitalize font-semibold text-gray-700 min-w-[100px] whitespace-nowrap">
+                            {r}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {activeTabs.map(tab => (
+                        <tr key={tab.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="p-3 font-medium text-gray-900 sticky left-0 bg-white z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                            {tab.label}
+                          </td>
+                          <td className="p-3 text-center">
+                            <div className="flex justify-center gap-1">
+                                <Button variant="ghost" size="xs" className="h-6 w-6 p-0 text-gray-400 hover:text-green-600" onClick={() => toggleAll(tab.id, true)} title="Enable All">
+                                  <ArrowUp className="w-3 h-3" />
+                                </Button>
+                                <Button variant="ghost" size="xs" className="h-6 w-6 p-0 text-gray-400 hover:text-red-600" onClick={() => toggleAll(tab.id, false)} title="Disable All">
+                                  <ArrowDown className="w-3 h-3" />
+                                </Button>
+                            </div>
+                          </td>
+                          {allRoles.filter(r => visibleColumns.includes(r)).map(role => {
+                            const hasExplicitPermission = permissions[tab.id] !== undefined;
+                            const isChecked = hasExplicitPermission 
+                                ? permissions[tab.id].includes(role) 
+                                : isDefaultEnabled(tab.id, role);
+        
+                            return (
+                              <td key={role} className="text-center p-3">
+                                <input 
+                                  type="checkbox" 
+                                  checked={isChecked}
+                                  onChange={() => togglePermission(tab.id, role)}
+                                  className={`w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500 cursor-pointer ${!hasExplicitPermission ? 'opacity-40 grayscale' : ''}`}
+                                  title={!hasExplicitPermission ? "Using Default (Click to override)" : "Custom Setting"}
+                                />
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                         <span className="w-3 h-3 rounded bg-white border border-gray-300 inline-block"></span>
+                         <span className="text-xs text-gray-500">Custom</span>
+                         <span className="w-3 h-3 rounded bg-white border border-gray-300 opacity-40 grayscale inline-block ml-2"></span>
+                         <span className="text-xs text-gray-500">Default (System)</span>
                     </div>
-                  </td>
-                  {allRoles.map(role => {
-                    const hasExplicitPermission = permissions[tab.id] !== undefined;
-                    const isChecked = hasExplicitPermission 
-                        ? permissions[tab.id].includes(role) 
-                        : isDefaultEnabled(tab.id, role);
-
-                    return (
-                      <td key={role} className="text-center p-3">
-                        <input 
-                          type="checkbox" 
-                          checked={isChecked}
-                          onChange={() => togglePermission(tab.id, role)}
-                          className={`w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500 cursor-pointer ${!hasExplicitPermission ? 'opacity-40 grayscale' : ''}`}
-                          title={!hasExplicitPermission ? "Using Default (Click to override)" : "Custom Setting"}
-                        />
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <p className="text-xs text-gray-500">* Admins & Owners always have full access regardless of these settings.</p>
-        <div className="flex justify-end">
-          <Button 
-            onClick={() => updateMutation.mutate(permissions)}
-            disabled={updateMutation.isPending}
-            className={showSaved ? 'bg-green-600 hover:bg-green-700' : ''}
-          >
-            {updateMutation.isPending ? 'Saving...' : showSaved ? 'Saved!' : 'Save Permissions'}
-          </Button>
-        </div>
+                    <Button 
+                        onClick={() => updateMutation.mutate(permissions)}
+                        disabled={updateMutation.isPending}
+                        className={showSaved ? 'bg-green-600 hover:bg-green-700' : ''}
+                    >
+                        {updateMutation.isPending ? 'Saving...' : showSaved ? 'Saved!' : 'Save Permissions'}
+                    </Button>
+                </div>
+            </>
+        )}
       </CardContent>
     </Card>
   );
 }
 
-function GroupFeaturesSettings({ group }) {
+function GroupTabsManager({ group }) {
   const queryClient = useQueryClient();
-  const updateGroupMutation = useMutation({
-    mutationFn: (data) => base44.entities.CreatorGroup.update(group.id, data),
+  
+  const defaultOrder = [
+    'feed', 'discussion', 'events', 'meetings', 'projects', 
+    'marketing', 'assets', 'resources', 'training', 'qna', 
+    'members', 'requests'
+  ];
+
+  // Merge saved order with any missing default tabs
+  const savedOrder = group.settings?.tab_order || defaultOrder;
+  const missingTabs = defaultOrder.filter(id => !savedOrder.includes(id));
+  const fullOrder = [...savedOrder, ...missingTabs];
+
+  const [items, setItems] = useState(fullOrder);
+  const [disabledFeatures, setDisabledFeatures] = useState(group.settings?.disabled_features || []);
+  const [hasChanges, setHasChanges] = useState(false);
+
+  const updateMutation = useMutation({
+    mutationFn: (data) => base44.entities.CreatorGroup.update(group.id, { 
+      settings: { ...group.settings, ...data } 
+    }),
     onSuccess: () => {
       queryClient.invalidateQueries(['activeGroup', group.id]);
       queryClient.invalidateQueries(['myGroupsDetails']);
+      setHasChanges(false);
     }
   });
 
-  const allTabs = [
-    { id: 'feed', label: 'Feed' },
-    { id: 'discussion', label: 'Discussion' },
-    { id: 'events', label: 'Events' },
-    { id: 'meetings', label: 'Meetings' },
-    { id: 'projects', label: 'Projects' },
-    { id: 'marketing', label: 'Marketing Orders' },
-    { id: 'assets', label: 'Brand & Assets' },
-    { id: 'resources', label: 'Resources' },
-    { id: 'training', label: 'Training' },
-    { id: 'qna', label: 'Q&A' },
-    { id: 'members', label: 'Members' },
-    { id: 'requests', label: 'Requests' },
-  ];
-
-  const disabledFeatures = group.settings?.disabled_features || [];
+  const onDragEnd = (result) => {
+    if (!result.destination) return;
+    
+    const newItems = Array.from(items);
+    const [reorderedItem] = newItems.splice(result.source.index, 1);
+    newItems.splice(result.destination.index, 0, reorderedItem);
+    
+    setItems(newItems);
+    setHasChanges(true);
+  };
 
   const toggleFeature = (featureId) => {
-      const isCurrentlyDisabled = disabledFeatures.includes(featureId);
-      const newDisabled = isCurrentlyDisabled 
-        ? disabledFeatures.filter(f => f !== featureId)
-        : [...disabledFeatures, featureId];
-      
-      updateGroupMutation.mutate({ 
-          settings: { 
-              ...group.settings, 
-              disabled_features: newDisabled 
-          } 
-      });
+    setDisabledFeatures(prev => {
+      const isDisabled = prev.includes(featureId);
+      const newDisabled = isDisabled 
+        ? prev.filter(f => f !== featureId)
+        : [...prev, featureId];
+      return newDisabled;
+    });
+    setHasChanges(true);
+  };
+
+  const handleSave = () => {
+    updateMutation.mutate({
+      tab_order: items,
+      disabled_features: disabledFeatures
+    });
+  };
+
+  const labels = {
+    feed: 'Feed',
+    discussion: 'Discussion',
+    events: 'Events',
+    meetings: 'Meetings',
+    projects: 'Projects',
+    marketing: 'Marketing Orders',
+    assets: 'Brand & Assets',
+    resources: 'Resources',
+    training: 'Training',
+    qna: 'Q&A',
+    members: 'Members',
+    requests: 'Requests'
   };
 
   return (
     <Card>
       <CardHeader>
-          <CardTitle>Feature Management</CardTitle>
-          <CardDescription>Turn specific features on or off for this group.</CardDescription>
+        <CardTitle>Group Navigation & Features</CardTitle>
+        <CardDescription>
+          Enable/disable features and drag to reorder tabs in your group navigation.
+        </CardDescription>
       </CardHeader>
       <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {allTabs.map(tab => {
-                  const isEnabled = !disabledFeatures.includes(tab.id);
+        <DragDropContext onDragEnd={onDragEnd}>
+          <Droppable droppableId="tabs">
+            {(provided) => (
+              <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-2 max-w-2xl">
+                {items.map((id, index) => {
+                  const isEnabled = !disabledFeatures.includes(id);
                   return (
-                      <div key={tab.id} className="flex items-center justify-between p-3 border rounded-lg bg-gray-50">
-                          <span className="font-medium text-gray-700">{tab.label}</span>
-                          <Switch checked={isEnabled} onCheckedChange={() => toggleFeature(tab.id)} />
-                      </div>
+                    <Draggable key={id} draggableId={id} index={index}>
+                      {(provided) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          className={`flex items-center gap-3 p-3 border rounded-lg shadow-sm transition-all ${isEnabled ? 'bg-white border-gray-200' : 'bg-gray-50 border-gray-100 opacity-75'}`}
+                        >
+                          <div {...provided.dragHandleProps} className="cursor-move p-1 text-gray-400 hover:text-gray-600">
+                             <GripVertical className="w-5 h-5" />
+                          </div>
+                          <div className="flex-1 flex items-center justify-between">
+                             <div className="flex flex-col">
+                               <span className={`font-medium ${isEnabled ? 'text-gray-900' : 'text-gray-500'}`}>{labels[id] || id}</span>
+                               {!isEnabled && <span className="text-xs text-gray-400">Hidden from group</span>}
+                             </div>
+                             <Switch 
+                                checked={isEnabled} 
+                                onCheckedChange={() => toggleFeature(id)} 
+                             />
+                          </div>
+                        </div>
+                      )}
+                    </Draggable>
                   );
-              })}
+                })}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
+        </DragDropContext>
+        
+        {hasChanges && (
+          <div className="mt-6 flex justify-end">
+            <Button onClick={handleSave} disabled={updateMutation.isPending}>
+              {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
+            </Button>
           </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -878,99 +986,4 @@ function GroupShortcutsSettings({ group }) {
   );
 }
 
-function GroupTabOrderSettings({ group }) {
-  const queryClient = useQueryClient();
-  
-  const defaultOrder = [
-    'feed', 'discussion', 'events', 'meetings', 'projects', 
-    'marketing', 'assets', 'resources', 'training', 'qna', 
-    'members', 'requests'
-  ];
-
-  const [items, setItems] = useState(group.settings?.tab_order || defaultOrder);
-  const [hasChanges, setHasChanges] = useState(false);
-
-  const updateMutation = useMutation({
-    mutationFn: (newOrder) => base44.entities.CreatorGroup.update(group.id, { 
-      settings: { ...group.settings, tab_order: newOrder } 
-    }),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['activeGroup', group.id]);
-      setHasChanges(false);
-    }
-  });
-
-  const onDragEnd = (result) => {
-    if (!result.destination) return;
-    
-    const newItems = Array.from(items);
-    const [reorderedItem] = newItems.splice(result.source.index, 1);
-    newItems.splice(result.destination.index, 0, reorderedItem);
-    
-    setItems(newItems);
-    setHasChanges(true);
-  };
-
-  const labels = {
-    feed: 'Feed',
-    discussion: 'Discussion',
-    events: 'Events',
-    meetings: 'Meetings',
-    projects: 'Projects',
-    marketing: 'Marketing Orders',
-    assets: 'Brand & Assets',
-    resources: 'Resources',
-    training: 'Training',
-    qna: 'Q&A',
-    members: 'Members',
-    requests: 'Requests'
-  };
-
-  // Ensure all known tabs are in the list (in case new ones were added)
-  const currentSet = new Set(items);
-  const missingTabs = defaultOrder.filter(id => !currentSet.has(id));
-  const fullList = [...items, ...missingTabs];
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Tab Order</CardTitle>
-        <CardDescription>Drag and drop to reorder tabs for your group.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <DragDropContext onDragEnd={onDragEnd}>
-          <Droppable droppableId="tabs">
-            {(provided) => (
-              <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-2 max-w-md">
-                {fullList.map((id, index) => (
-                  <Draggable key={id} draggableId={id} index={index}>
-                    {(provided) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        {...provided.dragHandleProps}
-                        className="flex items-center gap-3 p-3 bg-white border rounded-lg shadow-sm hover:shadow-md transition-shadow"
-                      >
-                        <GripVertical className="w-4 h-4 text-gray-400 cursor-move" />
-                        <span className="font-medium">{labels[id] || id}</span>
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
-        </DragDropContext>
-        
-        {hasChanges && (
-          <div className="mt-4 flex justify-end">
-            <Button onClick={() => updateMutation.mutate(items)} disabled={updateMutation.isPending}>
-              {updateMutation.isPending ? 'Saving...' : 'Save Order'}
-            </Button>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
+// GroupTabOrderSettings removed, logic moved to GroupTabsManager
