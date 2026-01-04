@@ -44,6 +44,7 @@ export default function CreatorGroups() {
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'table'
   const [showHidden, setShowHidden] = useState(false);
   const [showTimeReport, setShowTimeReport] = useState(false);
+  const [isAIMobileOpen, setIsAIMobileOpen] = useState(false);
 
   // Admin Check
   const realUserEmail = user?.email ? user?.email.toLowerCase() : '';
@@ -938,9 +939,34 @@ export default function CreatorGroups() {
                 <code className="text-xs bg-gray-100 px-2 py-1 rounded block text-center mb-1">Code: {activeGroup.invite_code}</code>
               </div>
             )}
+
+            {/* Mobile AI Button */}
+            {(activeGroup.type === 'client-portal' || activeGroup.type === 'agency') && (
+              <Button 
+                size="sm" 
+                className="lg:hidden bg-gradient-to-r from-violet-600 to-indigo-600 text-white border-0 shadow-sm"
+                onClick={() => setIsAIMobileOpen(true)}
+              >
+                <Sparkles className="w-4 h-4" />
+              </Button>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Mobile AI Dialog */}
+      <Dialog open={isAIMobileOpen} onOpenChange={setIsAIMobileOpen}>
+        <DialogContent className="p-0 border-0 h-[80vh] max-h-[600px] flex flex-col bg-transparent shadow-none">
+           <div className="bg-white rounded-xl overflow-hidden flex-1 shadow-2xl">
+              <GroupAICompanion 
+                  groupId={activeGroup.id} 
+                  groupName={activeGroup.name}
+                  className="w-full h-full border-0 shadow-none"
+                  defaultOpen={true}
+              />
+           </div>
+        </DialogContent>
+      </Dialog>
 
       <div className="max-w-6xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
         
@@ -1003,20 +1029,8 @@ export default function CreatorGroups() {
 
         <div className="lg:col-span-3 order-1 lg:order-2">
 
-          {/* AI Companion for Client Portals (Mobile - Top) */}
-          {(activeGroup.type === 'client-portal' || activeGroup.type === 'agency') && (
-              <div className="block lg:hidden mb-6">
-                  <GroupAICompanion 
-                      groupId={activeGroup.id} 
-                      groupName={activeGroup.name}
-                      className="w-full"
-                      defaultOpen={false}
-                  />
-              </div>
-          )}
-          
           {/* Retainer Balance Header */}
-          {retainerBalance && (retainerBalance.purchased > 0 || isAdmin) && (
+          {retainerBalance && (retainerBalance.purchased > 0 || isAdmin) && activeGroup.settings?.hide_retainer_balance !== true && (
             <div className="bg-white rounded-xl p-4 border shadow-sm mb-6 flex flex-col sm:flex-row justify-between items-center gap-4 bg-gradient-to-r from-white to-purple-50/50">
                <div className="flex items-center gap-3">
                   <div className="p-3 bg-purple-100 text-purple-600 rounded-lg">
@@ -1060,34 +1074,46 @@ export default function CreatorGroups() {
             <TabsList className="bg-white border p-1 rounded-xl h-auto flex-wrap gap-1 w-full justify-start">
               {availableTabs.map(tab => {
                 const enabled = isTabEnabled(tab.id);
-                if (!enabled) return null; // Hide disabled tabs completely
+                if (!enabled) return null; 
                 
-                // Check visibility for regular members (only show indicator if admin)
+                // Check visibility for regular members
                 const isMemberVisible = isVisibleToRegularMember(tab.id);
-                const showAdminBadge = isAdmin && !isMemberVisible;
+                const isAdminOnly = isAdmin && !isMemberVisible;
+                const isActive = currentTab === tab.id;
 
                 const Icon = tab.icon;
                 return (
                   <TabsTrigger 
                     key={tab.id} 
                     value={tab.id} 
-                    className={`px-4 py-2 rounded-lg data-[state=active]:bg-${tab.color}-100 data-[state=active]:text-${tab.color}-700 flex items-center`}
+                    title={tab.label + (isAdminOnly ? " (Admin Only)" : "")}
+                    className={`
+                      relative flex items-center transition-all duration-200 rounded-lg
+                      ${isActive ? `px-4 py-2 bg-${tab.color}-100 text-${tab.color}-700 shadow-sm` : 'px-3 py-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900'}
+                      ${isAdminOnly && !isActive ? 'opacity-40 grayscale' : ''}
+                    `}
                   >
-                    <Icon className="w-4 h-4 mr-2" /> 
-                    {tab.label}
-                    {showAdminBadge && (
-                       <span title="Visible to Admins only" className="ml-2 px-1.5 py-0.5 rounded-full bg-gray-200 text-gray-600 text-[10px] flex items-center">
-                          <EyeOff className="w-3 h-3 mr-1" /> Admin Only
-                       </span>
+                    <Icon className={`w-4 h-4 ${isActive ? 'mr-2' : ''}`} />
+                    {isActive && <span className="font-medium text-sm">{tab.label}</span>}
+                    
+                    {/* Admin indicator dot if minimized */}
+                    {isAdminOnly && !isActive && (
+                      <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-gray-400 rounded-full" title="Admin Only" />
                     )}
                   </TabsTrigger>
                 );
               })}
-              {/* Show hidden count or generic "See All" if many hidden? For now customizable via modal */}
               
               {isAdmin && (
-                <TabsTrigger value="settings" className="px-4 py-2 rounded-lg data-[state=active]:bg-gray-800 data-[state=active]:text-white ml-auto">
-                  <Settings className="w-4 h-4 mr-2" /> Settings
+                <TabsTrigger 
+                  value="settings" 
+                  className={`
+                    ml-auto rounded-lg transition-all duration-200
+                    ${currentTab === 'settings' ? 'px-4 py-2 bg-gray-800 text-white' : 'px-3 py-2 text-gray-500 hover:bg-gray-100'}
+                  `}
+                >
+                  <Settings className={`w-4 h-4 ${currentTab === 'settings' ? 'mr-2' : ''}`} />
+                  {currentTab === 'settings' && <span>Settings</span>}
                 </TabsTrigger>
               )}
             </TabsList>

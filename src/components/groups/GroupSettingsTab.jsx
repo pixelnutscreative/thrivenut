@@ -139,6 +139,18 @@ function RetainerSettings({ group }) {
           onCheckedChange={(checked) => updateMutation.mutate({ enable_retainer_management: checked })}
         />
       </CardContent>
+      {group.enable_retainer_management && (
+        <CardContent className="flex items-center justify-between border-t pt-4">
+          <div className="space-y-1">
+            <div className="font-medium">Show Balance to Client</div>
+            <div className="text-sm text-gray-500">If disabled, only admins can see the hours balance.</div>
+          </div>
+          <Switch
+            checked={!(group.settings?.hide_retainer_balance === true)}
+            onCheckedChange={(checked) => updateMutation.mutate({ settings: { ...group.settings, hide_retainer_balance: !checked } })}
+          />
+        </CardContent>
+      )}
     </Card>
   );
 }
@@ -433,7 +445,10 @@ function TabPermissionsSettings({ group }) {
 
   const levels = ['Invited', 'Interested', 'Subscriber', ...(group.member_levels || [])];
   const systemRoles = ['member', 'client', 'manager', 'admin', 'virtual-assistant']; 
-  const allRoles = [...new Set([...levels, ...systemRoles])]; 
+  
+  // Filter out levels that conflict with system roles (case-insensitive)
+  const filteredLevels = levels.filter(l => !systemRoles.includes(l.toLowerCase()));
+  const allRoles = [...new Set([...filteredLevels, ...systemRoles])]; 
 
   // Helper to determine if a tab is enabled by default for a role
   // This mirrors logic in CreatorGroups.js `isTabEnabled` fallback
@@ -506,42 +521,49 @@ function TabPermissionsSettings({ group }) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b">
-                <th className="text-left p-2">Tab</th>
-                <th className="text-center p-2 min-w-[100px]">Quick Actions</th>
-                {allRoles.map(r => <th key={r} className="text-center p-2 capitalize min-w-[80px]">{r}</th>)}
+        <div className="overflow-x-auto border rounded-lg">
+          <table className="w-full text-sm divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="text-left p-3 font-semibold text-gray-700 sticky left-0 bg-gray-50 z-10 w-32 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Tab</th>
+                <th className="text-center p-3 font-semibold text-gray-700 w-24">Actions</th>
+                {allRoles.map(r => (
+                  <th key={r} className="text-center p-3 capitalize font-semibold text-gray-700 min-w-[100px] whitespace-nowrap">
+                    {r}
+                  </th>
+                ))}
               </tr>
             </thead>
-            <tbody>
+            <tbody className="bg-white divide-y divide-gray-200">
               {availableTabs.map(tab => (
-                <tr key={tab.id} className="border-b last:border-0">
-                  <td className="p-2 font-medium">{tab.label}</td>
-                  <td className="p-2 text-center">
+                <tr key={tab.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="p-3 font-medium text-gray-900 sticky left-0 bg-white z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                    {tab.label}
+                  </td>
+                  <td className="p-3 text-center">
                     <div className="flex justify-center gap-1">
-                        <Button variant="ghost" size="xs" className="h-6 text-[10px]" onClick={() => toggleAll(tab.id, true)}>All</Button>
-                        <Button variant="ghost" size="xs" className="h-6 text-[10px]" onClick={() => toggleAll(tab.id, false)}>None</Button>
+                        <Button variant="ghost" size="xs" className="h-6 w-6 p-0 text-gray-400 hover:text-green-600" onClick={() => toggleAll(tab.id, true)} title="Enable All">
+                          <ArrowUp className="w-3 h-3" />
+                        </Button>
+                        <Button variant="ghost" size="xs" className="h-6 w-6 p-0 text-gray-400 hover:text-red-600" onClick={() => toggleAll(tab.id, false)} title="Disable All">
+                          <ArrowDown className="w-3 h-3" />
+                        </Button>
                     </div>
                   </td>
                   {allRoles.map(role => {
-                    // Check if explicit permission exists
                     const hasExplicitPermission = permissions[tab.id] !== undefined;
-                    
-                    // If explicit, use it. If not, use default.
                     const isChecked = hasExplicitPermission 
                         ? permissions[tab.id].includes(role) 
                         : isDefaultEnabled(tab.id, role);
 
                     return (
-                      <td key={role} className="text-center p-2">
+                      <td key={role} className="text-center p-3">
                         <input 
                           type="checkbox" 
                           checked={isChecked}
                           onChange={() => togglePermission(tab.id, role)}
-                          className={`rounded border-gray-300 text-purple-600 focus:ring-purple-500 ${!hasExplicitPermission ? 'opacity-50' : ''}`}
-                          title={!hasExplicitPermission ? "Using System Default (Click to override)" : "Custom Setting"}
+                          className={`w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500 cursor-pointer ${!hasExplicitPermission ? 'opacity-40 grayscale' : ''}`}
+                          title={!hasExplicitPermission ? "Using Default (Click to override)" : "Custom Setting"}
                         />
                       </td>
                     );
