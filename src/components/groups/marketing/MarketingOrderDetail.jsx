@@ -159,9 +159,9 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
           </div>
         </div>
 
-        <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
           {/* Left: Details & Proofs */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-8 bg-gray-50/50">
+          <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 md:space-y-8 bg-gray-50/50">
             
             {/* Specs & Info */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
@@ -331,8 +331,8 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
           </div>
 
           {/* Right: Comments/Chat */}
-          <div className="w-80 border-l bg-white flex flex-col">
-            <div className="p-4 border-b bg-gray-50">
+          <div className="w-full md:w-80 h-[40%] md:h-auto border-t md:border-t-0 md:border-l bg-white flex flex-col">
+            <div className="p-3 md:p-4 border-b bg-gray-50">
                 <h3 className="font-semibold text-gray-900">Comments & Feedback</h3>
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
