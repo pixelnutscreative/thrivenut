@@ -283,25 +283,25 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
     <div className="fixed inset-0 z-[45] flex items-center justify-center bg-black/50 p-0 md:p-4">
       <Card className="w-full max-w-5xl h-[100dvh] md:h-[90vh] flex flex-col bg-white overflow-hidden shadow-2xl rounded-none md:rounded-xl">
         {/* Header */}
-        <div className="p-4 border-b flex justify-between items-center bg-gray-50 select-none">
-          <div>
+        <div className="p-4 border-b flex justify-between items-start bg-white select-none">
+          <div className="flex-1 min-w-0 mr-4">
             <div className="flex flex-col gap-1 w-full">
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-2">
                     {isEditingHeader ? (
                         <Input 
                             value={editTitle} 
                             onChange={e => setEditTitle(e.target.value)} 
-                            className="text-lg font-bold h-8"
+                            className="text-lg font-bold h-8 w-full md:w-auto"
                         />
                     ) : (
-                        <h2 className="text-xl font-bold">{order.title}</h2>
+                        <h2 className="text-lg md:text-xl font-bold leading-tight">{order.title}</h2>
                     )}
 
                     {!isAdmin ? (
                         <Badge className={statusColors[order.status]}>{getStatusLabel(order)}</Badge>
                     ) : (
                         <Select value={order.status} onValueChange={handleStatusChange}>
-                            <SelectTrigger className={cn("w-auto h-7 text-xs px-2 gap-1 border-0 shadow-none", statusColors[order.status])}>
+                            <SelectTrigger className={cn("w-auto h-6 text-[10px] px-2 gap-1 border-0 shadow-none rounded-full", statusColors[order.status])}>
                                 <SelectValue>{getStatusLabel(order)}</SelectValue>
                             </SelectTrigger>
                             <SelectContent>
@@ -323,25 +323,25 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
                       <span className="text-xs text-gray-400">Due Date</span>
                    </div>
                 ) : (
-                   <p className="text-sm text-gray-500">Ordered by {order.client_email} • Due {order.needed_by_date || 'ASAP'}</p>
+                   <p className="text-xs md:text-sm text-gray-500 truncate">Ordered by {order.client_email} • Due {order.needed_by_date || 'ASAP'}</p>
                 )}
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 shrink-0">
             {isEditingHeader ? (
                 <>
                     <Button size="sm" variant="ghost" onClick={() => setIsEditingHeader(false)}><X className="w-4 h-4" /></Button>
-                    <Button size="sm" onClick={handleSaveHeader} className="bg-green-600 hover:bg-green-700"><Save className="w-4 h-4" /></Button>
+                    <Button size="sm" onClick={handleSaveHeader} className="bg-green-600 hover:bg-green-700 text-white"><Save className="w-4 h-4" /></Button>
                 </>
             ) : (
-                <Button variant="ghost" size="icon" onClick={() => setIsEditingHeader(true)} title="Edit Order"><Edit className="w-4 h-4" /></Button>
+                <Button variant="ghost" size="icon" onClick={() => setIsEditingHeader(true)} title="Edit Order" className="text-gray-400 hover:text-gray-600"><Edit className="w-4 h-4" /></Button>
             )}
             {isAdmin && (
-                <Button variant="ghost" size="icon" className="text-red-500" onClick={() => {
+                <Button variant="ghost" size="icon" className="text-gray-400 hover:text-red-500" onClick={() => {
                      if(window.confirm('Archive this order?')) updateOrderMutation.mutate({ status: 'archived' });
                 }} title="Archive"><Archive className="w-4 h-4" /></Button>
             )}
-            <Button variant="outline" onClick={onClose}><FileText className="w-4 h-4 mr-2" /> Close</Button>
+            <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full hover:bg-gray-100 text-gray-500"><X className="w-5 h-5" /></Button>
           </div>
         </div>
 
