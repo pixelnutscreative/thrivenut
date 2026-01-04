@@ -202,7 +202,7 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-0 md:p-4">
+    <div className="fixed inset-0 z-[45] flex items-center justify-center bg-black/50 p-0 md:p-4">
       <Card className="w-full max-w-5xl h-[100dvh] md:h-[90vh] flex flex-col bg-white overflow-hidden shadow-2xl rounded-none md:rounded-xl">
         {/* Header */}
         <div className="p-4 border-b flex justify-between items-center bg-gray-50 select-none">
