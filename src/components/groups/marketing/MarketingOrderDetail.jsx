@@ -16,6 +16,7 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
   const [uploadingProof, setUploadingProof] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [activeTab, setActiveTab] = useState('details');
+  const [newVariation, setNewVariation] = useState({ title: '', description: '', price: '' });
 
   useEffect(() => {
     base44.auth.me().then(setCurrentUser).catch(console.error);
@@ -78,10 +79,32 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
     addCommentMutation.mutate(commentInput);
   };
 
-  const handleUpdatePrice = () => {
-    const priceInCents = Math.round(parseFloat(priceInput) * 100);
-    if (isNaN(priceInCents)) return;
-    updateOrderMutation.mutate({ our_price: priceInCents });
+  const handleAddVariation = () => {
+    if (!newVariation.title || !newVariation.price) return;
+    const priceInCents = Math.round(parseFloat(newVariation.price) * 100);
+    
+    const variation = {
+        id: crypto.randomUUID(),
+        title: newVariation.title,
+        description: newVariation.description,
+        price: priceInCents
+    };
+    
+    const updatedVariations = [...(order.quote_variations || []), variation];
+    updateOrderMutation.mutate({ quote_variations: updatedVariations });
+    setNewVariation({ title: '', description: '', price: '' });
+  };
+
+  const handleDeleteVariation = (id) => {
+      const updated = (order.quote_variations || []).filter(v => v.id !== id);
+      updateOrderMutation.mutate({ quote_variations: updated });
+  };
+
+  const handleSelectVariation = (variation) => {
+      updateOrderMutation.mutate({ 
+          selected_variation_id: variation.id,
+          our_price: variation.price
+      });
   };
 
   const handleProofUpload = async (e) => {
@@ -235,45 +258,110 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
                         </div>
                     </div>
 
-                    {/* Price & Payment */}
-                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between flex-wrap gap-4">
-                        <div>
-                            <h3 className="font-semibold text-gray-900">Pricing & Payment</h3>
-                            <p className="text-sm text-gray-500">
-                                {order.status === 'paid' ? 'Paid in full' : 'Payment required before production'}
-                            </p>
+                    {/* Quote Variations & Pricing */}
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-4">
+                        <div className="flex justify-between items-center border-b pb-2">
+                            <div>
+                                <h3 className="font-semibold text-gray-900">Quote Options</h3>
+                                <p className="text-sm text-gray-500">Select an option to proceed</p>
+                            </div>
+                            <div className="text-right">
+                                {order.our_price ? (
+                                    <div className="flex flex-col items-end">
+                                        <span className="text-xs text-gray-500 uppercase">Selected Total</span>
+                                        <span className="text-2xl font-bold text-green-600">${(order.our_price / 100).toFixed(2)}</span>
+                                        {order.status === 'paid' && <Badge className="bg-green-100 text-green-800">Paid</Badge>}
+                                    </div>
+                                ) : (
+                                    <Badge variant="outline" className="bg-yellow-50 text-yellow-700">Pending Selection</Badge>
+                                )}
+                            </div>
                         </div>
-                        <div className="flex items-center gap-4">
-                            {isAdmin ? (
-                                <div className="flex items-center gap-2">
-                                    <span className="text-gray-500">$</span>
-                                    <Input 
-                                        type="number" 
-                                        value={priceInput} 
-                                        onChange={e => setPriceInput(e.target.value)} 
-                                        className="w-24 text-right font-mono"
-                                    />
-                                    <Button size="sm" onClick={handleUpdatePrice} disabled={updateOrderMutation.isPending}>Set Price</Button>
-                                </div>
-                            ) : (
-                                <div className="text-right">
-                                    {order.our_price ? (
-                                        <span className="text-2xl font-bold text-gray-900">${(order.our_price / 100).toFixed(2)}</span>
-                                    ) : (
-                                        <span className="text-gray-400 italic">Pending Quote</span>
-                                    )}
-                                </div>
-                            )}
 
-                            {!isAdmin && order.our_price && order.status !== 'paid' && order.selected_proof_id && (
-                                <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={handlePayment}>
-                                    <DollarSign className="w-4 h-4 mr-2" /> Pay Now
-                                </Button>
-                            )}
-                            {!isAdmin && order.our_price && !order.selected_proof_id && (
-                                <Button variant="outline" disabled title="Approve a proof first">Pay Now (Awaiting Approval)</Button>
-                            )}
+                        {/* Variations List */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {(order.quote_variations || []).map((variation) => {
+                                const isSelected = order.selected_variation_id === variation.id;
+                                return (
+                                    <div 
+                                        key={variation.id} 
+                                        className={cn("border rounded-xl p-4 flex flex-col transition-all cursor-pointer relative", 
+                                            isSelected ? "border-green-500 bg-green-50/50 shadow-md" : "border-gray-200 hover:border-indigo-300 hover:shadow-sm"
+                                        )}
+                                        onClick={() => handleSelectVariation(variation)}
+                                    >
+                                        {isSelected && <div className="absolute top-2 right-2 text-green-600"><CheckCircle2 className="w-5 h-5" /></div>}
+                                        <h4 className="font-bold text-gray-900 mb-1">{variation.title}</h4>
+                                        <p className="text-sm text-gray-600 mb-3 flex-1">{variation.description}</p>
+                                        <div className="flex justify-between items-center mt-auto pt-3 border-t">
+                                            <span className="font-bold text-lg">${(variation.price / 100).toFixed(2)}</span>
+                                            {isAdmin && (
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="sm" 
+                                                    className="h-6 w-6 p-0 text-red-400 hover:text-red-600"
+                                                    onClick={(e) => { e.stopPropagation(); handleDeleteVariation(variation.id); }}
+                                                >
+                                                    <Trash2 className="w-3 h-3" />
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
+
+                        {/* Admin Add Variation */}
+                        {isAdmin && (
+                            <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                                <h4 className="text-sm font-semibold mb-3">Add Quote Option</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+                                    <div className="md:col-span-1">
+                                        <Input 
+                                            placeholder="Title (e.g. 100 Units)" 
+                                            value={newVariation.title} 
+                                            onChange={e => setNewVariation({...newVariation, title: e.target.value})} 
+                                            className="bg-white"
+                                        />
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <Input 
+                                            placeholder="Description (e.g. Standard Vinyl)" 
+                                            value={newVariation.description} 
+                                            onChange={e => setNewVariation({...newVariation, description: e.target.value})} 
+                                            className="bg-white"
+                                        />
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <div className="relative flex-1">
+                                            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                                            <Input 
+                                                type="number" 
+                                                placeholder="0.00" 
+                                                value={newVariation.price} 
+                                                onChange={e => setNewVariation({...newVariation, price: e.target.value})} 
+                                                className="pl-6 bg-white"
+                                            />
+                                        </div>
+                                        <Button onClick={handleAddVariation} disabled={!newVariation.title || !newVariation.price}>Add</Button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Pay Button */}
+                        {!isAdmin && order.our_price && order.status !== 'paid' && order.selected_proof_id && (
+                             <div className="flex justify-end pt-2">
+                                <Button className="bg-green-600 hover:bg-green-700 text-white shadow-lg" onClick={handlePayment}>
+                                    <DollarSign className="w-4 h-4 mr-2" /> Pay Now (${(order.our_price/100).toFixed(2)})
+                                </Button>
+                             </div>
+                        )}
+                         {!isAdmin && order.our_price && !order.selected_proof_id && (
+                             <div className="flex justify-end pt-2">
+                                 <Button variant="outline" disabled title="Approve a proof first">Pay Now (Awaiting Approval)</Button>
+                             </div>
+                         )}
                     </div>
 
                     {/* Proofs Section */}
@@ -338,7 +426,7 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
                                                             <Trash2 className="w-4 h-4" />
                                                         </Button>
                                                     )}
-                                                    {!isAdmin && order.status !== 'approved' && order.status !== 'paid' && (
+                                                    {order.status !== 'approved' && order.status !== 'paid' && (
                                                         <>
                                                             <Button variant="outline" size="sm" onClick={() => {
                                                                 setActiveTab('comments');
