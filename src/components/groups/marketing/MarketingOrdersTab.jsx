@@ -127,25 +127,13 @@ export default function MarketingOrdersTab({ group, isAdmin }) {
       ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredOrders.map(order => (
-                  <Card key={order.id} className="hover:shadow-md transition-shadow cursor-pointer border-l-4 border-l-indigo-500" onClick={() => setSelectedOrder(order)}>
-                      <CardContent className="p-5">
-                          <div className="flex justify-end items-start mb-3">
-                              <span className="text-xs text-gray-400 font-mono">{format(new Date(order.created_date || new Date()), 'MMM d')}</span>
-                          </div>
-                          <h3 className="font-bold text-gray-900 mb-1 truncate">{order.title}</h3>
-                          <p className="text-sm text-gray-500 line-clamp-2 mb-4 h-10">{order.description}</p>
-                          
-                          <div className="flex justify-between items-center text-sm border-t pt-3">
-                              <div className="text-gray-500">
-                                  {order.needed_by_date ? `Due: ${format(new Date(order.needed_by_date), 'MMM d')}` : 'No deadline'}
-                              </div>
-                              <div className="font-medium text-indigo-600 flex flex-col items-end">
-                                  {order.our_price && <span>${(order.our_price/100).toFixed(2)}</span>}
-                                  <Badge className={cn("mt-1", statusColors[order.status])}>{getStatusLabel(order)}</Badge>
-                              </div>
-                          </div>
-                      </CardContent>
-                  </Card>
+                  <MarketingOrderCard 
+                      key={order.id} 
+                      order={order} 
+                      onClick={() => setSelectedOrder(order)} 
+                      statusColors={statusColors}
+                      getStatusLabel={getStatusLabel}
+                  />
               ))}
           </div>
       )}

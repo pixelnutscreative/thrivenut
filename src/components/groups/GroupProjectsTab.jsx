@@ -369,9 +369,23 @@ function AddTaskDialog({ projectId, group, currentUser }) {
       status: 'todo',
       created_by: currentUser?.email
     }),
-    onSuccess: () => {
+    onSuccess: async (newTask) => {
       queryClient.invalidateQueries(['projectTasks', projectId]);
       setIsOpen(false);
+      
+      // Notify assignee
+      if (data.assignee_email && data.assignee_email !== currentUser?.email) {
+          await base44.entities.Notification.create({
+              title: 'New Task Assigned',
+              message: `You have been assigned a new task: "${data.title}"`,
+              user_email: data.assignee_email,
+              type: 'task_assigned',
+              link: `/CreatorGroups?id=${group.id}&tab=projects`,
+              is_active: true,
+              created_at: new Date().toISOString()
+          });
+      }
+
       setData({ title: '', assignee_email: '', due_date: '', estimated_hours: '' });
     }
   });

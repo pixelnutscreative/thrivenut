@@ -70,9 +70,26 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
           created_at: new Date().toISOString()
         });
     },
-    onSuccess: () => {
+    onSuccess: async (newComment) => {
       setCommentInput('');
       queryClient.invalidateQueries(['marketingComments', order.id]);
+
+      // Notify the other party
+      const isClient = currentUser.email === order.client_email;
+      const targetEmail = isClient ? 'pixelnutscreative@gmail.com' : order.client_email; // Notify admin if client, client if admin
+      
+      // Don't notify self
+      if (targetEmail && targetEmail !== currentUser.email) {
+          await base44.entities.Notification.create({
+              title: `New Comment: ${order.title}`,
+              message: `${currentUser.email.split('@')[0]} commented on marketing order "${order.title}"`,
+              user_email: targetEmail,
+              type: 'marketing_comment',
+              link: `/CreatorGroups?id=${order.group_id}&tab=marketing`, // Ideally link to specific order
+              is_active: true,
+              created_at: new Date().toISOString()
+          });
+      }
     }
   });
 

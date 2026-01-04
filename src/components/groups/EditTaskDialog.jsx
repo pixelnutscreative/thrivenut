@@ -56,9 +56,23 @@ export default function EditTaskDialog({ task, projectId, group, currentUser, ca
         estimated_hours: parseFloat(updatedData.estimated_hours) || 0
       });
     },
-    onSuccess: () => {
+    onSuccess: async (updatedTask, variables) => {
       queryClient.invalidateQueries(['projectTasks', projectId]);
       queryClient.invalidateQueries(['taskLogs', task.id]);
+      
+      // Notify if assignee changed
+      if (variables.assignee_email && variables.assignee_email !== task.assignee_email && variables.assignee_email !== currentUser?.email) {
+          await base44.entities.Notification.create({
+              title: 'Task Assigned',
+              message: `You have been assigned to task: "${variables.title}"`,
+              user_email: variables.assignee_email,
+              type: 'task_assigned',
+              link: `/CreatorGroups?id=${group.id}&tab=projects`,
+              is_active: true,
+              created_at: new Date().toISOString()
+          });
+      }
+
       setIsOpen(false);
     }
   });
