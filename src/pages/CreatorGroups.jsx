@@ -63,7 +63,7 @@ export default function CreatorGroups() {
   });
 
   // Fetch group details for my memberships (for list view)
-  const { data: groups = [] } = useQuery({
+  const { data: groups = [], isLoading: isLoadingGroups } = useQuery({
     queryKey: ['myGroupsDetails', myMemberships],
     queryFn: async () => {
       if (myMemberships.length === 0) return [];
@@ -379,7 +379,9 @@ export default function CreatorGroups() {
     enabled: !!activeGroupId && isClientPortal
   });
 
-  if (isLoading || (activeGroupId && isActiveGroupLoading)) {
+  const showLoading = isLoading || (activeGroupId && isActiveGroupLoading) || (isLoadingGroups && myMemberships.length > 0 && !activeGroupId && !browseMode);
+
+  if (showLoading) {
     return <div className="flex justify-center items-center h-screen"><Loader2 className="w-8 h-8 animate-spin text-purple-600" /></div>;
   }
 

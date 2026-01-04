@@ -359,7 +359,7 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
           </div>
 
           {/* Comments List */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 flex flex-col-reverse">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {comments.length === 0 && (
                   <p className="text-center text-gray-400 text-sm mt-10">No comments yet. Start the conversation!</p>
               )}
