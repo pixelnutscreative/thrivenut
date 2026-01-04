@@ -325,7 +325,7 @@ function AssetLibrarySection({ group, isAdmin }) {
   const filteredAssets = assets.filter(a => {
     if (filterProject === 'all') return true;
     if (filterProject === 'brand') return a.linked_brand_id; // Simple check if flagged as brand
-    return a.linked_project_ids?.includes(filterProject) || a.linked_order_ids?.includes(filterProject);
+    return (a.linked_project_ids || []).includes(filterProject) || (a.linked_order_ids || []).includes(filterProject);
   });
 
   return (
@@ -396,7 +396,8 @@ function AssetLibrarySection({ group, isAdmin }) {
 }
 
 function AssetCard({ asset, projects, orders, onDelete }) {
-  const isImage = asset.file_type === 'image' || asset.file_url.match(/\.(jpeg|jpg|png|gif|webp)$/i);
+  const fileUrl = asset.file_url || '';
+  const isImage = asset.file_type === 'image' || fileUrl.match(/\.(jpeg|jpg|png|gif|webp)$/i);
   
   // Find linked names
   const linkedNames = [];

@@ -93,7 +93,7 @@ const CRAYOLA_COLORS = [
   { name: 'Gray', hex: '#8B8680' }, { name: 'Timberwolf', hex: '#D9D6CF' }, { name: 'Black', hex: '#000000' }
 ];
 
-export default function ColorPicker({ color, onChange, label, className }) {
+export default function ColorPicker({ color, onChange, label, className, trigger }) {
   const [internalColor, setInternalColor] = useState(color || '#000000');
   const [hsb, setHsb] = useState({ h: 0, s: 0, b: 0 });
   const [mode, setMode] = useState('hex');
@@ -284,13 +284,17 @@ export default function ColorPicker({ color, onChange, label, className }) {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <button className={`flex items-center gap-2 group ${className}`} type="button">
-          <div 
-            className="w-8 h-8 rounded-full shadow-sm ring-2 ring-white ring-offset-1 ring-offset-gray-200 transition-transform group-hover:scale-110" 
-            style={{ backgroundColor: internalColor }} 
-          />
-          {label && <span className="text-sm text-gray-600">{label}</span>}
-        </button>
+        {trigger ? (
+          trigger
+        ) : (
+          <button className={`flex items-center gap-2 group ${className}`} type="button">
+            <div 
+              className="w-8 h-8 rounded-full shadow-sm ring-2 ring-white ring-offset-1 ring-offset-gray-200 transition-transform group-hover:scale-110" 
+              style={{ backgroundColor: internalColor }} 
+            />
+            {label && <span className="text-sm text-gray-600">{label}</span>}
+          </button>
+        )}
       </DialogTrigger>
       <DialogContent className="w-80 sm:max-w-[360px] p-4" hideCloseButton={false}>
         <div className="flex items-center justify-between mb-2">
