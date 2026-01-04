@@ -138,7 +138,7 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-0 md:p-4">
-      <Card className="w-full max-w-5xl h-[100dvh] md:h-[90vh] flex flex-col bg-white overflow-hidden shadow-2xl rounded-none md:rounded-xl">
+      <Card className="w-full max-w-5xl h-full md:h-[90vh] flex flex-col bg-white overflow-hidden shadow-2xl rounded-none md:rounded-xl">
         {/* Header */}
         <div className="p-4 border-b flex justify-between items-center bg-gray-50">
           <div>
@@ -331,7 +331,7 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
           </div>
 
           {/* Right: Comments/Chat */}
-          <div className="w-full md:w-80 h-[40%] md:h-auto border-t md:border-t-0 md:border-l bg-white flex flex-col">
+          <div className="w-full md:w-80 h-[50%] md:h-auto border-t md:border-t-0 md:border-l bg-white flex flex-col">
             <div className="p-3 md:p-4 border-b bg-gray-50">
                 <h3 className="font-semibold text-gray-900">Comments & Feedback</h3>
             </div>
@@ -349,7 +349,7 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
                     </div>
                 ))}
             </div>
-            <div className="p-3 border-t bg-gray-50">
+            <div className="p-3 pb-8 md:pb-3 border-t bg-gray-50">
                 <div className="flex gap-2">
                     <Textarea 
                         id="comment-input"
