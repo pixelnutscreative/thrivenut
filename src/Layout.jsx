@@ -439,9 +439,9 @@ export default function Layout({ children, currentPageName }) {
                 variant="ghost"
                 size="icon"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className={menuTextClass}>
+                className={`${menuTextClass} hover:bg-transparent focus:bg-transparent active:bg-transparent`}>
 
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : (
+              {mobileMenuOpen ? <X className="w-8 h-8" /> : (
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8">
                   <path fillRule="evenodd" clipRule="evenodd" d="M20 10H4C4 6 7.5 3 12 3C16.5 3 20 6 20 10ZM9 8C9.55 8 10 7.55 10 7C10 6.45 9.55 6 9 6C8.45 6 8 6.45 8 7C8 7.55 8.45 8 9 8ZM13 6C13.55 6 14 5.55 14 5C14 4.45 13.55 4 13 4C12.45 4 12 4.45 12 5C12 5.55 12.45 6 13 6ZM16 8C16.55 8 17 7.55 17 7C17 6.45 16.55 6 16 6C15.45 6 15 6.45 15 7C15 7.55 15.45 8 16 8Z" />
                   <rect x="4" y="12" width="16" height="3" rx="1.5" />
