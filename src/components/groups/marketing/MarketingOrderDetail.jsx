@@ -17,6 +17,12 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
   const [commentInput, setCommentInput] = useState('');
   const [priceInput, setPriceInput] = useState(order.our_price ? (order.our_price / 100).toFixed(2) : '');
   const [uploadingProof, setUploadingProof] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [activeTab, setActiveTab] = useState('details');
+
+  useEffect(() => {
+    base44.auth.me().then(setCurrentUser).catch(console.error);
+  }, []);
 
   // Queries
   const { data: proofs = [] } = useQuery({
@@ -38,12 +44,15 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
   });
 
   const addCommentMutation = useMutation({
-    mutationFn: (content) => base44.entities.MarketingOrderComment.create({
-      order_id: order.id,
-      author_email: base44.auth.user?.email, // Assuming sync access or handled in component mount
-      content,
-      created_at: new Date().toISOString()
-    }),
+    mutationFn: (content) => {
+        if (!currentUser?.email) throw new Error("User email not found");
+        return base44.entities.MarketingOrderComment.create({
+          order_id: order.id,
+          author_email: currentUser.email,
+          content,
+          created_at: new Date().toISOString()
+        });
+    },
     onSuccess: () => {
       setCommentInput('');
       queryClient.invalidateQueries(['marketingComments', order.id]);
@@ -62,7 +71,7 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
 
   // Handlers
   const handleSendMessage = () => {
-    if (!commentInput.trim()) return;
+    if (!commentInput.trim() || !currentUser) return;
     addCommentMutation.mutate(commentInput);
   };
 
