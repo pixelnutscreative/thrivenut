@@ -32,6 +32,7 @@ export default function GroupSettingsTab({ group }) {
 
         <TabsContent value="general" className="space-y-6 mt-6">
           <GroupFeaturesSettings group={group} />
+          <RetainerSettings group={group} />
           <GroupNameSettings group={group} />
           <GroupTypeSettings group={group} />
           <GroupShortcutsSettings group={group} />
@@ -41,7 +42,6 @@ export default function GroupSettingsTab({ group }) {
 
         <TabsContent value="membership" className="space-y-6 mt-6">
           <MemberLevelsSettings group={group} />
-          <RetainerSettings group={group} />
           <GroupAccessSettings group={group} />
         </TabsContent>
 
@@ -126,13 +126,13 @@ function RetainerSettings({ group }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Retainer Management</CardTitle>
-        <CardDescription>Enable or disable the ability to add hour packages and track retainers for members.</CardDescription>
+        <CardTitle>Hourly Tracking & Retainers</CardTitle>
+        <CardDescription>Configure time tracking and retainer packages for this group.</CardDescription>
       </CardHeader>
       <CardContent className="flex items-center justify-between">
         <div className="space-y-1">
-          <div className="font-medium">Enable Retainer Management</div>
-          <div className="text-sm text-gray-500">Allows admins to add hour packages to members.</div>
+          <div className="font-medium">Enable Hourly Tracking</div>
+          <div className="text-sm text-gray-500">Turn this off for flat-rate clients (hides hours balance).</div>
         </div>
         <Switch
           checked={group.enable_retainer_management === true}

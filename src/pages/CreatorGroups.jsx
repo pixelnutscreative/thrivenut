@@ -521,12 +521,12 @@ export default function CreatorGroups() {
     
     if (id === 'members' && !isAdmin) return false;
     
-    // Admin Override
-    if (isAdmin) return true;
-
     // Check disabled features (Global Admin Toggle)
     const disabledFeatures = activeGroup.settings?.disabled_features || [];
     if (disabledFeatures.includes(id)) return false;
+
+    // Admin Override
+    if (isAdmin) return true;
 
     return !(groupPrefs?.hidden_tabs || []).includes(id);
   };
@@ -1030,7 +1030,7 @@ export default function CreatorGroups() {
         <div className="lg:col-span-3 order-1 lg:order-2">
 
           {/* Retainer Balance Header */}
-          {retainerBalance && (retainerBalance.purchased > 0 || isAdmin) && activeGroup.settings?.hide_retainer_balance !== true && (
+          {retainerBalance && activeGroup.enable_retainer_management && (retainerBalance.purchased > 0 || isAdmin) && activeGroup.settings?.hide_retainer_balance !== true && (
             <div className="bg-white rounded-xl p-4 border shadow-sm mb-6 flex flex-col sm:flex-row justify-between items-center gap-4 bg-gradient-to-r from-white to-purple-50/50">
                <div className="flex items-center gap-3">
                   <div className="p-3 bg-purple-100 text-purple-600 rounded-lg">
