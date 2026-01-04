@@ -160,11 +160,11 @@ export default function MarketingOrdersTab({ group, isAdmin }) {
 
       {selectedOrder && (
           <MarketingOrderDetail 
-            order={selectedOrder} 
+            order={orders.find(o => o.id === selectedOrder.id) || selectedOrder} 
             isAdmin={isAdmin}
             onClose={() => setSelectedOrder(null)}
             onEdit={() => {
-                setEditingOrder(selectedOrder);
+                setEditingOrder(orders.find(o => o.id === selectedOrder.id) || selectedOrder);
                 // The form will handle the update, and we might keep detail open or close it. 
                 // Let's keep detail open but overlay the form.
             }}
