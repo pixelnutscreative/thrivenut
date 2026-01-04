@@ -8,8 +8,8 @@ import { base44 } from '@/api/base44Client';
 import { useMutation } from '@tanstack/react-query';
 import { cn } from '@/components/ui/utils';
 
-export default function GroupAICompanion({ groupId, groupName, className }) {
-  const [isOpen, setIsOpen] = useState(true);
+export default function GroupAICompanion({ groupId, groupName, className, defaultOpen }) {
+  const [isOpen, setIsOpen] = useState(defaultOpen ?? true);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);

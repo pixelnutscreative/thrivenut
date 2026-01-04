@@ -37,7 +37,7 @@ export default function GroupCalendarWidget({ group, myMembership, isAdmin }) {
     <Card className="border-0 shadow-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
       <CardHeader className="pb-2 pt-4 px-4">
         <CardTitle className="text-lg font-bold uppercase tracking-wider text-gray-700 dark:text-gray-200 flex items-center gap-2">
-            <Clock className="w-6 h-6 text-purple-600" /> Upcoming Events
+            <Clock className="w-6 h-6 text-purple-600" /> Calendar
         </CardTitle>
       </CardHeader>
       <CardContent className="px-4 pb-4">

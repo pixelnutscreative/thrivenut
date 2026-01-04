@@ -530,6 +530,27 @@ export default function CreatorGroups() {
     return !(groupPrefs?.hidden_tabs || []).includes(id);
   };
 
+  // Helper to check if a tab is visible to a regular member (for admin indication)
+  const isVisibleToRegularMember = (id) => {
+    const permissions = activeGroup?.role_tab_permissions;
+    if (permissions && permissions[id] !== undefined) {
+       return permissions[id].includes('member') || permissions[id].includes('Member');
+    }
+    
+    // Fallback defaults for member role
+    if (isClientGroup) {
+        // In client portal, members usually see Feed, Resources, Q&A if not explicitly restricted
+        // But logic above for client portal specificies what 'client' sees. 
+        // For 'member' in client portal, it might be restrictive.
+        // Let's assume standard member tabs:
+        return ['feed', 'events', 'qna', 'resources', 'training', 'discussion'].includes(id);
+    }
+
+    if (allowed && !allowed.has(id)) return false;
+    if (id === 'members') return false;
+    return true;
+  };
+
   // LIST OR BROWSE VIEW
   if (!activeGroup) {
     const displayedGroups = browseMode 
@@ -924,7 +945,7 @@ export default function CreatorGroups() {
       <div className="max-w-6xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
         
         {/* Shortcuts & Crypto Sidebar */}
-        <div className="lg:col-span-1 space-y-6">
+        <div className="lg:col-span-1 space-y-6 order-2 lg:order-1">
 
           {/* AI Companion for Client Portals */}
           {(activeGroup.type === 'client-portal' || activeGroup.type === 'agency') && (
@@ -932,6 +953,7 @@ export default function CreatorGroups() {
                   groupId={activeGroup.id} 
                   groupName={activeGroup.name}
                   className="w-full"
+                  defaultOpen={false}
               />
           )}
 
@@ -977,7 +999,7 @@ export default function CreatorGroups() {
           )}
         </div>
 
-        <div className="lg:col-span-3">
+        <div className="lg:col-span-3 order-1 lg:order-2">
           
           {/* Retainer Balance Header */}
           {retainerBalance && (retainerBalance.purchased > 0 || isAdmin) && (
@@ -1026,14 +1048,24 @@ export default function CreatorGroups() {
                 const enabled = isTabEnabled(tab.id);
                 if (!enabled) return null; // Hide disabled tabs completely
                 
+                // Check visibility for regular members (only show indicator if admin)
+                const isMemberVisible = isVisibleToRegularMember(tab.id);
+                const showAdminBadge = isAdmin && !isMemberVisible;
+
                 const Icon = tab.icon;
                 return (
                   <TabsTrigger 
                     key={tab.id} 
                     value={tab.id} 
-                    className={`px-4 py-2 rounded-lg data-[state=active]:bg-${tab.color}-100 data-[state=active]:text-${tab.color}-700`}
+                    className={`px-4 py-2 rounded-lg data-[state=active]:bg-${tab.color}-100 data-[state=active]:text-${tab.color}-700 flex items-center`}
                   >
-                    <Icon className="w-4 h-4 mr-2" /> {tab.label}
+                    <Icon className="w-4 h-4 mr-2" /> 
+                    {tab.label}
+                    {showAdminBadge && (
+                       <span title="Visible to Admins only" className="ml-2 px-1.5 py-0.5 rounded-full bg-gray-200 text-gray-600 text-[10px] flex items-center">
+                          <EyeOff className="w-3 h-3 mr-1" /> Admin Only
+                       </span>
+                    )}
                   </TabsTrigger>
                 );
               })}
