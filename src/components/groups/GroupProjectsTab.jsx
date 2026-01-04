@@ -126,6 +126,10 @@ function ProjectDetail({ projectId, group, currentUser, myMembership, onOpenRepo
 
   const totalHoursLogged = timeEntries.reduce((sum, entry) => sum + (entry.hours || 0), 0);
 
+  const isHourlyEnabled = group.enable_retainer_management;
+  const canViewHours = isHourlyEnabled && (isOwnerOrAdmin(myMembership.role) || ['manager', 'virtual-assistant'].includes(myMembership.role));
+  const canLogTime = isHourlyEnabled && ['owner', 'admin', 'manager', 'virtual-assistant'].includes(myMembership.role);
+
   return (
     <>
       {/* Header */}
@@ -136,7 +140,7 @@ function ProjectDetail({ projectId, group, currentUser, myMembership, onOpenRepo
             <p className="text-gray-500 mt-1 text-sm max-w-2xl">{project?.description}</p>
           </div>
           <div className="flex gap-2">
-             {isOwnerOrAdmin(myMembership.role) && (
+             {canViewHours && (
                <Button variant="outline" size="sm" onClick={onOpenReport}>
                  <FileText className="w-4 h-4 mr-2" /> Time Report
                </Button>
@@ -146,6 +150,7 @@ function ProjectDetail({ projectId, group, currentUser, myMembership, onOpenRepo
         </div>
 
         {/* Project Hours Overview */}
+        {canViewHours && (
         <div className="mt-6 bg-white rounded-lg border p-4 shadow-sm flex justify-between items-center">
           <div>
             <h4 className="font-semibold text-sm text-gray-700">Total Project Hours</h4>
@@ -155,6 +160,7 @@ function ProjectDetail({ projectId, group, currentUser, myMembership, onOpenRepo
             {totalHoursLogged.toFixed(2)}h
           </div>
         </div>
+        )}
       </div>
 
       {/* Task List */}
@@ -167,6 +173,7 @@ function ProjectDetail({ projectId, group, currentUser, myMembership, onOpenRepo
            group={group}
            projectId={projectId}
            canEdit={isOwnerOrAdmin(myMembership.role) || (task.created_by === currentUser?.email)} 
+           canLogTime={canLogTime}
            />
         ))}
         {tasks.length === 0 && (
@@ -179,7 +186,7 @@ function ProjectDetail({ projectId, group, currentUser, myMembership, onOpenRepo
   );
 }
 
-function TaskCard({ task, currentUser, group, projectId, canEdit }) {
+function TaskCard({ task, currentUser, group, projectId, canEdit, canLogTime }) {
   const queryClient = useQueryClient();
   const [isRunning, setIsRunning] = useState(false);
   const [startTime, setStartTime] = useState(null);
@@ -276,7 +283,7 @@ function TaskCard({ task, currentUser, group, projectId, canEdit }) {
          )}
          
          {/* Timer Button */}
-         {task.status !== 'completed' && (
+         {canLogTime && task.status !== 'completed' && (
            <Button 
              size="icon"
              variant={isRunning ? "destructive" : "outline"} 
@@ -288,7 +295,7 @@ function TaskCard({ task, currentUser, group, projectId, canEdit }) {
            </Button>
          )}
 
-         <ManualTimeDialog task={task} projectId={projectId} currentUser={currentUser} />
+         {canLogTime && <ManualTimeDialog task={task} projectId={projectId} currentUser={currentUser} />}
 
          <EditTaskDialog 
            task={task} 
