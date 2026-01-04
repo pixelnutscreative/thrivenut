@@ -15,6 +15,9 @@ import ColorPicker from '../shared/ColorPicker';
 export default function GroupAssetsTab({ group, isAdmin }) {
   const [activeTab, setActiveTab] = useState('brand');
 
+  // Safety check for group prop
+  if (!group) return <div className="p-4 text-center text-gray-500">Group data unavailable</div>;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-4 rounded-xl shadow-sm border">
@@ -57,7 +60,14 @@ function BrandKitSection({ group, isAdmin }) {
   // Fetch Brand
   const { data: brands = [], isLoading } = useQuery({
     queryKey: ['groupBrand', group.id],
-    queryFn: () => base44.entities.Brand.filter({ group_id: group.id }),
+    queryFn: async () => {
+       try {
+         return await base44.entities.Brand.filter({ group_id: group.id });
+       } catch (e) {
+         console.error("Brand fetch error", e);
+         return [];
+       }
+    },
   });
 
   const brand = brands[0] || { colors: [], fonts: [] };

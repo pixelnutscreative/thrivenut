@@ -150,6 +150,124 @@ function AddRetainerPackageDialog({ group, member, currentUser }) {
   );
 }
 
+function EditMemberDialog({ member, group, isAdmin, currentUser, onUpdate }) {
+  const [role, setRole] = useState(member.role || 'member');
+  const [level, setLevel] = useState(member.level || 'Member');
+  const [isOpen, setIsOpen] = useState(false);
+
+  // Sync state when member changes or dialog opens
+  React.useEffect(() => {
+    setRole(member.role || 'member');
+    setLevel(member.level || 'Member');
+  }, [member, isOpen]);
+
+  const updateRoleMutation = useMutation({
+    mutationFn: async () => {
+        // Parallel updates if both changed, but separate calls
+        const promises = [];
+        if (role !== member.role) promises.push(base44.entities.CreatorGroupMember.update(member.id, { role }));
+        if (level !== member.level) promises.push(base44.entities.CreatorGroupMember.update(member.id, { level: level === 'none' ? null : level }));
+        await Promise.all(promises);
+    },
+    onSuccess: () => {
+      onUpdate();
+      setIsOpen(false);
+    }
+  });
+
+  const removeMutation = useMutation({
+    mutationFn: () => base44.entities.CreatorGroupMember.delete(member.id),
+    onSuccess: () => {
+        onUpdate();
+        setIsOpen(false);
+    }
+  });
+
+  const canEdit = isAdmin && member.role !== 'owner';
+  const isOwner = member.role === 'owner';
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <button className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100">
+            <Trash2 className="w-4 h-4 sr-only" /> {/* Hidden trigger, actual trigger is row click */}
+            <span className="text-xs font-medium text-indigo-600 hover:underline">Manage</span>
+        </button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Manage Member: {member.user_email}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-4">
+            <div className="flex flex-col gap-1 bg-gray-50 p-3 rounded-lg text-sm">
+                <div className="flex justify-between">
+                    <span className="text-gray-500">Joined</span>
+                    <span className="font-medium">{new Date(member.joined_date || member.created_date).toLocaleDateString()}</span>
+                </div>
+                <div className="flex justify-between">
+                    <span className="text-gray-500">Status</span>
+                    <Badge variant={member.status === 'active' ? 'default' : 'secondary'} className={member.status === 'active' ? 'bg-green-100 text-green-800 hover:bg-green-200' : ''}>
+                        {member.status}
+                    </Badge>
+                </div>
+            </div>
+
+            {canEdit ? (
+                <>
+                    <div className="space-y-2">
+                        <Label>Role</Label>
+                        <Select value={role} onValueChange={setRole}>
+                            <SelectTrigger>
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="z-[60]">
+                                <SelectItem value="member">Member</SelectItem>
+                                <SelectItem value="client">Client</SelectItem>
+                                <SelectItem value="manager">Manager</SelectItem>
+                                <SelectItem value="admin">Admin</SelectItem>
+                                <SelectItem value="virtual-assistant">Virtual Assistant</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Level</Label>
+                        <Select value={level} onValueChange={setLevel}>
+                            <SelectTrigger>
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="z-[60]">
+                                <SelectItem value="none">No Level</SelectItem>
+                                <SelectItem value="Member">Member (Default)</SelectItem>
+                                {group.member_levels?.map(l => <SelectItem key={l} value={l}>{l}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </>
+            ) : (
+                <p className="text-sm text-gray-500 italic">
+                    {isOwner ? "This member is the Owner and cannot be edited." : "You do not have permission to edit this member."}
+                </p>
+            )}
+        </div>
+        <DialogFooter className="flex justify-between sm:justify-between">
+            {canEdit ? (
+                <Button variant="destructive" size="sm" onClick={() => { if(window.confirm('Remove this member?')) removeMutation.mutate(); }}>
+                    Remove Member
+                </Button>
+            ) : <div />}
+            
+            {canEdit && (
+                <div className="flex gap-2">
+                    <Button variant="ghost" onClick={() => setIsOpen(false)}>Cancel</Button>
+                    <Button onClick={() => updateRoleMutation.mutate()} disabled={updateRoleMutation.isPending}>Save Changes</Button>
+                </div>
+            )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function GroupMembersTab({ group, currentUser, isAdmin }) {
   const queryClient = useQueryClient();
   const [isInviteOpen, setIsInviteOpen] = useState(false);
@@ -415,103 +533,51 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
         </div>
       )}
 
-      <div className="bg-white rounded-lg border shadow-sm">
-        <div className="grid grid-cols-12 gap-4 p-4 border-b bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
-          <div className="col-span-4">Member</div>
-          <div className="col-span-2">Role</div>
-          <div className="col-span-3">Level</div>
-          <div className="col-span-2">Status</div>
-          <div className="col-span-1 text-right"></div>
-        </div>
+      <div className="space-y-2">
         {activeMembers.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">No active members found</div>
+          <div className="p-8 text-center text-gray-500 bg-white rounded-lg border">No active members found</div>
         ) : (
           activeMembers.map(member => (
-            <div key={member.id} className="grid grid-cols-12 gap-4 p-4 border-b last:border-0 items-center text-sm">
-              <div className="col-span-4 flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-bold text-xs">
+            <div key={member.id} className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-100 to-indigo-100 flex items-center justify-center text-purple-700 font-bold text-sm border border-purple-200">
                   {member.user_email[0].toUpperCase()}
                 </div>
-                <div className="overflow-hidden">
-                  <p className="font-medium truncate">{member.user_email}</p>
+                <div>
+                  <div className="font-medium text-gray-900 flex items-center gap-2">
+                    {member.user_email}
+                    {member.role === 'owner' && <Badge className="bg-purple-100 text-purple-800 border-purple-200 text-[10px] h-5 px-1.5">Owner</Badge>}
+                    {member.role === 'admin' && <Badge className="bg-blue-100 text-blue-800 border-blue-200 text-[10px] h-5 px-1.5">Admin</Badge>}
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
+                    <span>Joined {new Date(member.joined_date || member.created_date).toLocaleDateString()}</span>
+                    {member.level && member.level !== 'none' && (
+                        <>
+                            <span>•</span>
+                            <span className="font-medium text-indigo-600">{member.level}</span>
+                        </>
+                    )}
+                  </div>
                   {isAdmin && group.enable_retainer_management && (
-                    <div className="flex gap-3">
+                    <div className="flex gap-3 mt-1">
                       <AddRetainerPackageDialog group={group} member={member} currentUser={currentUser} />
                       <ViewRetainerHistoryDialog group={group} member={member} />
                     </div>
                   )}
                 </div>
               </div>
-              <div className="col-span-2">
-                {member.role === 'owner' ? (
-                   <Badge className="bg-purple-100 text-purple-800 border-purple-200">Owner</Badge>
-                ) : isAdmin && group.owner_email === currentUser?.email ? (
-                  <Select 
-                    value={member.role || 'member'} 
-                    onValueChange={v => updateRoleMutation.mutate({ id: member.id, role: v })}
-                  >
-                    <SelectTrigger className="h-8 text-xs capitalize">
-                      <SelectValue placeholder="Select Role" />
-                    </SelectTrigger>
-                    <SelectContent className="z-[60]">
-                      <SelectItem value="member">Member</SelectItem>
-                      <SelectItem value="client">Client</SelectItem>
-                      <SelectItem value="manager">Manager</SelectItem>
-                      <SelectItem value="admin">Admin</SelectItem>
-                      <SelectItem value="virtual-assistant">Virtual Assistant</SelectItem>
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <Badge variant="outline" className="capitalize">{member.role}</Badge>
-                )}
-              </div>
-              <div className="col-span-3">
-                {member.role === 'owner' ? (
-                   <Badge className="bg-purple-100 text-purple-800 border-purple-200">Owner</Badge>
-                ) : isAdmin && group.member_levels?.length > 0 ? (
-                  <Select 
-                    value={member.level || 'none'} 
-                    onValueChange={v => updateLevelMutation.mutate({ id: member.id, level: v === 'none' ? null : v })}
-                  >
-                    <SelectTrigger className="h-8 text-xs">
-                      <SelectValue placeholder="Assign Level" />
-                    </SelectTrigger>
-                    <SelectContent className="z-[60]">
-                      <SelectItem value="none">No Level</SelectItem>
-                      {group.member_levels.map(l => <SelectItem key={l} value={l}>{l}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  member.level && <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">{member.level}</Badge>
-                )}
-              </div>
-              <div className="col-span-2">
-                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                  member.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                }`}>
-                  {member.status === 'invited' ? 'pending' : member.status}
-                </span>
-              </div>
-              <div className="col-span-1 text-right">
-                {isAdmin && member.role !== 'owner' && (
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button variant="ghost" size="icon" className="text-gray-400 hover:text-red-500 h-8 w-8">
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Remove member?</DialogTitle>
-                      </DialogHeader>
-                      <div className="py-2 text-sm">Are you sure you want to remove {member.user_email} from this group?</div>
-                      <DialogFooter>
-                        <Button variant="outline">Cancel</Button>
-                        <Button variant="destructive" onClick={() => removeMutation.mutate(member.id)}>Remove</Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
-                )}
+              
+              <div className="flex items-center gap-3">
+                 {/* Only admins or owners can edit other members */}
+                 {(isAdmin || group.owner_email === currentUser?.email) && (
+                    <EditMemberDialog 
+                        member={member} 
+                        group={group} 
+                        isAdmin={isAdmin} 
+                        currentUser={currentUser} 
+                        onUpdate={() => queryClient.invalidateQueries(['groupMembers', group.id])}
+                    />
+                 )}
               </div>
             </div>
           ))

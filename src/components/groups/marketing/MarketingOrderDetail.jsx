@@ -346,17 +346,51 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
                     )}
                 </div>
                 {isEditingHeader ? (
-                   <div className="flex items-center gap-2 mt-1">
-                      <Input 
-                         type="date"
-                         value={editDate}
-                         onChange={e => setEditDate(e.target.value)}
-                         className="w-40 h-7 text-xs"
-                      />
-                      <span className="text-xs text-gray-400">Due Date</span>
+                   <div className="flex items-center gap-4 mt-1 flex-wrap">
+                      <div className="flex items-center gap-2">
+                          <Input 
+                             type="date"
+                             value={editDate}
+                             onChange={e => setEditDate(e.target.value)}
+                             className="w-32 h-7 text-xs"
+                          />
+                          <span className="text-xs text-gray-400">Due</span>
+                      </div>
+                      
+                      {/* Budget Editing - Admin Only */}
+                      {isAdmin && (
+                          <div className="flex items-center gap-2">
+                              <span className="text-xs text-gray-400">$</span>
+                              <Input 
+                                 type="number"
+                                 placeholder="Budget"
+                                 value={order.budget || ''}
+                                 onChange={e => updateOrderMutation.mutate({ budget: parseFloat(e.target.value) })}
+                                 className="w-24 h-7 text-xs"
+                              />
+                              <span className="text-xs text-gray-400">Budget</span>
+                          </div>
+                      )}
                    </div>
                 ) : (
-                   <p className="text-xs md:text-sm text-gray-500 truncate">Ordered by {order.client_email} • Due {order.needed_by_date || 'ASAP'}</p>
+                   <div className="flex flex-wrap items-center gap-3 text-xs md:text-sm text-gray-500 mt-1">
+                       <span className="truncate">Ordered by {order.client_email}</span>
+                       <span>•</span>
+                       <span className={!order.needed_by_date ? 'text-gray-400' : 'font-medium text-gray-700'}>
+                           Due {order.needed_by_date ? new Date(order.needed_by_date).toLocaleDateString() : 'ASAP'}
+                       </span>
+                       
+                       {/* Budget Display */}
+                       {(order.budget || isAdmin) && (
+                           <>
+                               <span>•</span>
+                               <span className="flex items-center gap-1">
+                                   <span className="text-gray-400">Budget:</span>
+                                   <span className="font-medium text-green-600">{order.budget ? `$${order.budget}` : 'Not set'}</span>
+                               </span>
+                           </>
+                       )}
+                   </div>
                 )}
             </div>
           </div>
@@ -428,10 +462,7 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
                                     <p className="mt-1 text-gray-700">{order.shipping_address || 'N/A'}</p>
                                 </div>
                                 <div className="flex flex-wrap gap-6">
-                                    <div>
-                                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Budget</p>
-                                        <p className="mt-1 text-gray-700">{order.budget ? `$${order.budget}` : 'None'}</p>
-                                    </div>
+                                    {/* Budget Moved - Removed from here */}
                                     <div className="flex-1">
                                             <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Invoice / Payment</p>
                                             {isAdmin ? (
