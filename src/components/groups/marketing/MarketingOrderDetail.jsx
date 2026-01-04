@@ -18,6 +18,8 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
   const [currentUser, setCurrentUser] = useState(null);
   const [activeTab, setActiveTab] = useState('details');
   const [newVariation, setNewVariation] = useState({ title: '', description: '', price: '' });
+  const [trackingCode, setTrackingCode] = useState(order.tracking_code || '');
+  const [carrier, setCarrier] = useState(order.carrier || '');
 
   useEffect(() => {
     base44.auth.me().then(setCurrentUser).catch(console.error);
@@ -189,17 +191,58 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
   };
 
   const statusColors = {
+    need_specs: 'bg-red-100 text-red-800',
+    quoting: 'bg-yellow-100 text-yellow-800',
     pending_quote: 'bg-yellow-100 text-yellow-800',
+    awaiting_selection: 'bg-amber-100 text-amber-800',
+    designing: 'bg-blue-100 text-blue-800',
     in_progress: 'bg-blue-100 text-blue-800',
     proofing: 'bg-purple-100 text-purple-800',
     changes_requested: 'bg-orange-100 text-orange-800',
     approved: 'bg-teal-100 text-teal-800',
+    artwork_approved: 'bg-teal-100 text-teal-800',
     paid: 'bg-green-100 text-green-800',
+    printing: 'bg-indigo-100 text-indigo-800',
     production: 'bg-indigo-100 text-indigo-800',
     shipped: 'bg-cyan-100 text-cyan-800',
     completed: 'bg-gray-100 text-gray-800',
     archived: 'bg-gray-200 text-gray-500 line-through'
   };
+
+  const getStatusLabel = (status) => {
+    switch(status) {
+        case 'need_specs': return 'Need Specs';
+        case 'quoting': 
+        case 'pending_quote': return 'Quoting...';
+        case 'awaiting_selection': return 'Select Option';
+        case 'designing': 
+        case 'in_progress': return 'Designing';
+        case 'proofing': return 'Proofing';
+        case 'changes_requested': return 'Changes Requested';
+        case 'approved': 
+        case 'artwork_approved': return 'Artwork Approved';
+        case 'paid': return 'Paid';
+        case 'printing':
+        case 'production': return 'Printing';
+        case 'shipped': return 'Shipped';
+        case 'completed': return 'Completed';
+        case 'archived': return 'Archived';
+        default: return status.replace('_', ' ');
+    }
+  };
+
+  const statusOptions = [
+    { value: 'need_specs', label: 'Need Specs' },
+    { value: 'quoting', label: 'Quoting' },
+    { value: 'awaiting_selection', label: 'Awaiting Selection' },
+    { value: 'designing', label: 'Design in Process' },
+    { value: 'proofing', label: 'Proofing' },
+    { value: 'artwork_approved', label: 'Artwork Approved' },
+    { value: 'printing', label: 'Printing' },
+    { value: 'shipped', label: 'Shipped' },
+    { value: 'completed', label: 'Completed' },
+    { value: 'archived', label: 'Archived' }
+  ];
 
   return (
     <div className="fixed inset-0 z-[45] flex items-center justify-center bg-black/50 p-0 md:p-4">
@@ -207,11 +250,30 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
         {/* Header */}
         <div className="p-4 border-b flex justify-between items-center bg-gray-50 select-none">
           <div>
-            <h2 className="text-xl font-bold flex items-center gap-3">
-              {order.title}
-              <Badge className={statusColors[order.status]}>{order.status.replace('_', ' ')}</Badge>
-            </h2>
-            <p className="text-sm text-gray-500">Ordered by {order.client_email} • Due {order.needed_by_date || 'ASAP'}</p>
+            <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-3">
+                    <h2 className="text-xl font-bold">{order.title}</h2>
+                    {!isAdmin ? (
+                        <Badge className={statusColors[order.status]}>{getStatusLabel(order.status)}</Badge>
+                    ) : (
+                        <div className="relative group">
+                            <Badge className={cn("cursor-pointer hover:opacity-80 flex items-center gap-1", statusColors[order.status])}>
+                                {getStatusLabel(order.status)} <Edit className="w-3 h-3 opacity-50" />
+                            </Badge>
+                            <select 
+                                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                value={order.status}
+                                onChange={(e) => updateOrderMutation.mutate({ status: e.target.value })}
+                            >
+                                {statusOptions.map(opt => (
+                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+                </div>
+                <p className="text-sm text-gray-500">Ordered by {order.client_email} • Due {order.needed_by_date || 'ASAP'}</p>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" onClick={onEdit} title="Edit Order"><Edit className="w-4 h-4" /></Button>
@@ -270,6 +332,26 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
                                         <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Budget</p>
                                         <p className="mt-1 text-gray-700">{order.budget ? `$${order.budget}` : 'None'}</p>
                                     </div>
+                                    {order.status === 'shipped' && (
+                                        <div className="flex-1">
+                                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Shipping Info</p>
+                                            {isAdmin ? (
+                                                <div className="flex gap-2 mt-1">
+                                                    <Input 
+                                                        placeholder="Tracking Code" 
+                                                        value={trackingCode} 
+                                                        onChange={(e) => setTrackingCode(e.target.value)}
+                                                        className="h-8 text-sm w-32"
+                                                    />
+                                                    <Button size="sm" variant="outline" onClick={() => updateOrderMutation.mutate({ tracking_code: trackingCode })}>Save</Button>
+                                                </div>
+                                            ) : (
+                                                <p className="mt-1 text-gray-700 font-mono select-all">
+                                                    {order.tracking_code || 'Tracking info coming soon'}
+                                                </p>
+                                            )}
+                                        </div>
+                                    )}
                                     <div className="flex-1 min-w-[200px]">
                                         <div className="flex items-center justify-between">
                                             <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Attached Quotes/Specs</p>

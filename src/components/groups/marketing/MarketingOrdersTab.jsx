@@ -38,16 +38,44 @@ export default function MarketingOrdersTab({ group, isAdmin }) {
   });
 
   const statusColors = {
+    need_specs: 'bg-red-100 text-red-800',
+    quoting: 'bg-yellow-100 text-yellow-800',
     pending_quote: 'bg-yellow-100 text-yellow-800',
+    awaiting_selection: 'bg-amber-100 text-amber-800',
+    designing: 'bg-blue-100 text-blue-800',
     in_progress: 'bg-blue-100 text-blue-800',
     proofing: 'bg-purple-100 text-purple-800',
     changes_requested: 'bg-orange-100 text-orange-800',
     approved: 'bg-teal-100 text-teal-800',
+    artwork_approved: 'bg-teal-100 text-teal-800',
     paid: 'bg-green-100 text-green-800',
+    printing: 'bg-indigo-100 text-indigo-800',
     production: 'bg-indigo-100 text-indigo-800',
     shipped: 'bg-cyan-100 text-cyan-800',
     completed: 'bg-gray-100 text-gray-800',
     archived: 'bg-gray-200 text-gray-500'
+  };
+
+  const getStatusLabel = (status) => {
+    switch(status) {
+        case 'need_specs': return 'Need Specs';
+        case 'quoting': 
+        case 'pending_quote': return 'Quoting...';
+        case 'awaiting_selection': return 'Select Option';
+        case 'designing': 
+        case 'in_progress': return 'Designing';
+        case 'proofing': return 'Proofing';
+        case 'changes_requested': return 'Changes Requested';
+        case 'approved': 
+        case 'artwork_approved': return 'Artwork Approved';
+        case 'paid': return 'Paid';
+        case 'printing':
+        case 'production': return 'Printing';
+        case 'shipped': return 'Shipped';
+        case 'completed': return 'Completed';
+        case 'archived': return 'Archived';
+        default: return status.replace('_', ' ');
+    }
   };
 
   return (
@@ -98,7 +126,7 @@ export default function MarketingOrdersTab({ group, isAdmin }) {
                   <Card key={order.id} className="hover:shadow-md transition-shadow cursor-pointer border-l-4 border-l-indigo-500" onClick={() => setSelectedOrder(order)}>
                       <CardContent className="p-5">
                           <div className="flex justify-between items-start mb-3">
-                              <Badge className={statusColors[order.status]}>{order.status.replace('_', ' ')}</Badge>
+                              <Badge className={statusColors[order.status]}>{getStatusLabel(order.status)}</Badge>
                               <span className="text-xs text-gray-400 font-mono">{format(new Date(order.created_date || new Date()), 'MMM d')}</span>
                           </div>
                           <h3 className="font-bold text-gray-900 mb-1 truncate">{order.title}</h3>
@@ -108,8 +136,9 @@ export default function MarketingOrdersTab({ group, isAdmin }) {
                               <div className="text-gray-500">
                                   {order.needed_by_date ? `Due: ${format(new Date(order.needed_by_date), 'MMM d')}` : 'No deadline'}
                               </div>
-                              <div className="font-medium text-indigo-600">
-                                  {order.our_price ? `$${(order.our_price/100).toFixed(2)}` : 'Quoting...'}
+                              <div className="font-medium text-indigo-600 flex flex-col items-end">
+                                  {order.our_price && <span>${(order.our_price/100).toFixed(2)}</span>}
+                                  <span className="text-xs text-gray-400 font-medium uppercase tracking-wider">{getStatusLabel(order.status)}</span>
                               </div>
                           </div>
                       </CardContent>

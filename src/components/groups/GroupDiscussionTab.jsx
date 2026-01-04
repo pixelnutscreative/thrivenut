@@ -7,6 +7,24 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
+function UserAvatar({ email, className }) {
+  const { data: userProfile } = useQuery({
+    queryKey: ['userProfile', email],
+    queryFn: async () => {
+       const prefs = await base44.entities.UserPreferences.filter({ user_email: email });
+       return prefs[0];
+    },
+    staleTime: 1000 * 60 * 5 // 5 mins
+  });
+  
+  return (
+    <Avatar className={className}>
+      <AvatarImage src={userProfile?.profile_image_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`} />
+      <AvatarFallback>{email ? email[0].toUpperCase() : '?'}</AvatarFallback>
+    </Avatar>
+  );
+}
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { MessageSquare, Image as ImageIcon, BarChart2, MoreVertical, Trash2, Send, ThumbsUp, Loader2, Plus, X } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
@@ -172,10 +190,7 @@ function DiscussionPost({ post, currentUser, isAdmin }) {
     <Card className="overflow-hidden">
       <CardHeader className="flex flex-row items-start justify-between p-4 pb-2">
         <div className="flex gap-3">
-          <Avatar className="w-10 h-10">
-            <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author_email}`} />
-            <AvatarFallback>{post.author_email[0]}</AvatarFallback>
-          </Avatar>
+          <UserAvatar email={post.author_email} className="w-10 h-10" />
           <div>
              <div className="font-semibold text-sm">{post.author_email}</div>
              <div className="text-xs text-gray-500">{formatDistanceToNow(new Date(post.created_date), { addSuffix: true })}</div>
@@ -307,10 +322,7 @@ function CommentSection({ post, currentUser, isAdmin }) {
        <div className="space-y-4 mb-4 pt-4">
           {comments.map(comment => (
             <div key={comment.id} className="flex gap-2 group">
-               <Avatar className="w-6 h-6 mt-1">
-                 <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.author_email}`} />
-                 <AvatarFallback>{comment.author_email[0]}</AvatarFallback>
-               </Avatar>
+               <UserAvatar email={comment.author_email} className="w-6 h-6 mt-1" />
                <div className="flex-1 bg-white p-2 rounded-lg rounded-tl-none border shadow-sm text-sm">
                   <div className="flex justify-between items-center mb-1">
                     <span className="font-bold text-xs text-gray-600">{comment.author_email}</span>
