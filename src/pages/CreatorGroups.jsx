@@ -479,7 +479,7 @@ export default function CreatorGroups() {
   });
 
   // Sort tabs based on group settings
-  const tabOrder = activeGroup.settings?.tab_order || allTabs.map(t => t.id);
+  const tabOrder = activeGroup?.settings?.tab_order || allTabs.map(t => t.id);
   availableTabs.sort((a, b) => {
     const indexA = tabOrder.indexOf(a.id);
     const indexB = tabOrder.indexOf(b.id);
@@ -551,7 +551,7 @@ export default function CreatorGroups() {
     if (id === 'members' && !isAdmin) return false;
     
     // Check disabled features (Global Admin Toggle)
-    const disabledFeatures = activeGroup.settings?.disabled_features || [];
+    const disabledFeatures = activeGroup?.settings?.disabled_features || [];
     if (disabledFeatures.includes(id)) return false;
 
     // Admin Override
