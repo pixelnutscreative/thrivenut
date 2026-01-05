@@ -35,7 +35,7 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
   const { data: events = [] } = useQuery({
     queryKey: ['groupEvents', group.id],
     queryFn: async () => {
-      const allEvents = await base44.entities.GroupEvent.filter({ group_id: group.id }, 'start_time');
+      const allEvents = await base44.entities.GroupEvent.filter({ group_id: group.id }, '-start_time');
       // Deduplicate by ID just in case
       const uniqueEvents = Array.from(new Map(allEvents.map(item => [item.id, item])).values());
       return uniqueEvents;
@@ -491,11 +491,13 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {visibleEvents.map(event => (
-          <Card key={event.id} className="flex flex-col h-full hover:shadow-md transition-shadow">
+        {visibleEvents.map(event => {
+          const isPast = event.start_time && new Date(event.start_time) < new Date();
+          return (
+          <Card key={event.id} className={`flex flex-col h-full hover:shadow-md transition-shadow ${isPast ? 'opacity-60 grayscale bg-gray-50' : ''}`}>
             <CardContent className="p-4 flex flex-col gap-4 flex-1">
               <div className="flex justify-between items-start w-full">
-                <div className="bg-purple-100 text-purple-700 p-2 rounded-lg text-center min-w-[70px]">
+                <div className={`p-2 rounded-lg text-center min-w-[70px] ${isPast ? 'bg-gray-200 text-gray-500' : 'bg-purple-100 text-purple-700'}`}>
                   <div className="text-[10px] font-bold uppercase">{event.start_time ? format(new Date(event.start_time), 'MMM') : 'TBA'}</div>
                   <div className="text-xl font-bold">{event.start_time ? format(new Date(event.start_time), 'd') : '--'}</div>
                   <div className="text-[10px]">{event.start_time ? new Date(event.start_time).toLocaleTimeString([], {hour: 'numeric', minute:'2-digit'}) : ''}</div>
@@ -551,7 +553,7 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
                 <Button 
                   size="sm" 
                   variant="outline" 
-                  className="text-xs h-8 flex-1 text-purple-600 border-purple-200 hover:bg-purple-50"
+                  className={`text-xs h-8 flex-1 ${isPast ? 'text-gray-500 border-gray-300' : 'text-purple-600 border-purple-200 hover:bg-purple-50'}`}
                   onClick={() => handleAddToMyDay(event)}
                 >
                   <CalendarPlus className="w-3 h-3 mr-1" /> Add
@@ -567,7 +569,7 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
               </div>
             </CardContent>
           </Card>
-        ))}
+        )})}
         {visibleEvents.length === 0 && <div className="text-center py-12 text-gray-500">No upcoming events.</div>}
       </div>
     </div>
