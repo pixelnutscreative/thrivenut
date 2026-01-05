@@ -14,6 +14,15 @@ import 'react-quill/dist/quill.snow.css';
 import LevelSelector from './LevelSelector';
 import MemberSelector from './MemberSelector';
 
+const toLocalISOString = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return '';
+  const offset = date.getTimezoneOffset() * 60000;
+  const localDate = new Date(date.getTime() - offset);
+  return localDate.toISOString().slice(0, 16);
+};
+
 export default function GroupEventsTab({ group, currentUser, myMembership, isAdmin }) {
   const { preferences } = useTheme();
   const queryClient = useQueryClient();
@@ -156,20 +165,22 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
       ? event.occurrences.map((o, idx) => ({
           ...o,
           id: Date.now() + idx,
+          start_time: toLocalISOString(o.start_time),
+          end_time: toLocalISOString(o.end_time),
           recurrence: { enabled: false, days: [], weeks: 8, noEnd: false }
         }))
       : [{ 
           id: Date.now(), 
-          start_time: event.start_time || '', 
-          end_time: event.end_time || '', 
+          start_time: toLocalISOString(event.start_time), 
+          end_time: toLocalISOString(event.end_time), 
           recurrence: { enabled: false, days: [], weeks: 8, noEnd: false } 
         }];
 
     setFormData({
       title: event.title,
       description: event.description || '',
-      start_time: event.start_time,
-      end_time: event.end_time || '',
+      start_time: toLocalISOString(event.start_time),
+      end_time: toLocalISOString(event.end_time),
       occurrences: existingOcc,
       link: event.link || '',
       location: event.location || '',
@@ -202,10 +213,10 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
     const validOccurrences = (formData.occurrences || []).filter(o => o.start_time);
     
     validOccurrences.forEach(occ => {
-      // Add the original occurrence
+      // Add the original occurrence (converted to UTC)
       finalOccurrences.push({
-        start_time: occ.start_time,
-        end_time: occ.end_time
+        start_time: new Date(occ.start_time).toISOString(),
+        end_time: occ.end_time ? new Date(occ.end_time).toISOString() : ''
       });
 
       // Handle Recurrence
