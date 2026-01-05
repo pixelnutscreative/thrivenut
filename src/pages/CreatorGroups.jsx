@@ -661,18 +661,29 @@ export default function CreatorGroups() {
     }
 
     // Legacy/Default logic (if no custom navigation set)
-    // Client Role Default: Clients usually see core tabs
+    // Check Group Type configuration (Source of Truth for features)
+    if (allowed && !allowed.has(id)) {
+        // If not allowed by Group Type, hide it (unless admin)
+        // Admin always sees everything to configure/manage, OR should we hide it even for admin if disabled at type level?
+        // User requested: "if I remove or add some thing, then all the Agency category groups get that feature added or removed"
+        // This implies it should be removed for everyone including admins if the feature is disabled for the group type.
+        // However, usually admins need access to data. But for "Features", if a feature is off, it should be off.
+        // Let's stick to hiding it for non-admins first, or maybe everyone. 
+        // If I hide it for admin, they can't manage data if they accidentally turn it off.
+        // But the user said "feature added or removed".
+        // Let's hide it for everyone if not in `allowed`.
+        // BUT, existing code had `if (!isAdmin) return false`. 
+        // Let's enforce it for everyone, so the feature truly disappears.
+        return false;
+    }
+
+    // Client Role Default (Legacy - can be removed if GroupType config is robust, but keeping for safety for now)
     if (userRole === 'client' && ['feed', 'projects', 'meetings', 'marketing', 'assets', 'resources', 'requests', 'discussion'].includes(id)) {
         return true;
     }
 
-    // Client Portal overrides
-    if (isClientGroup && ['feed', 'projects', 'meetings', 'marketing', 'assets', 'resources', 'requests', 'members', 'discussion'].includes(id)) {
+    if (isClientGroup) {
         if (id === 'members' && !isAdmin) return false;
-        // Proceed to return true at end
-    } else if (allowed && !allowed.has(id)) {
-        // If not allowed by Group Type, hide it (unless admin)
-        if (!isAdmin) return false;
     }
     
     if (id === 'members' && !isAdmin) return false;
