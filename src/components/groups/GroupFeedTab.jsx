@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Pin, MessageSquare, Trash2, Pencil, Calendar, Link as LinkIcon, Video, CheckCircle, Eye, EyeOff, FileText, Check, Circle, Share2, CalendarPlus, MoreHorizontal, Globe, History, Archive } from 'lucide-react';
+import { Plus, Pin, MessageSquare, Trash2, Pencil, Calendar, Link as LinkIcon, Video, CheckCircle, Eye, EyeOff, FileText, Share2, CalendarPlus, Globe, History, ExternalLink } from 'lucide-react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import LevelSelector from './LevelSelector';
@@ -190,11 +190,6 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
     else if (item.type === 'training') newParams.set('tab', 'training');
     else if (item.type === 'qna') newParams.set('tab', 'qna');
     
-    // Set focus ID if needed (though existing tabs might not auto-scroll yet, this sets the intent)
-    // We can update other tabs later to look for 'highlight' or 'id' param.
-    // For now, at least switch tabs.
-    // newParams.set('highlight', item.id);
-    
     setSearchParams(newParams);
   };
 
@@ -210,27 +205,26 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
 
     // Filter by visibility (admin or matching level) AND not hidden
     const visible = allItems.filter(item => {
-    // 1. Pending/Approval Check (Resources, Events, etc.)
-    // If an item has a status field and it's pending/review, hide it from non-admins/non-authors
-    const isPending = item.status && ['pending', 'review', 'draft'].includes(item.status);
-    const isAuthor = item.submitted_by === currentUser?.email || item.created_by === currentUser?.email || item.author_email === currentUser?.email;
+      // 1. Pending/Approval Check
+      const isPending = item.status && ['pending', 'review', 'draft'].includes(item.status);
+      const isAuthor = item.submitted_by === currentUser?.email || item.created_by === currentUser?.email || item.author_email === currentUser?.email;
 
-    if (isPending && !isAdmin && !isAuthor) return false;
+      if (isPending && !isAdmin && !isAuthor) return false;
 
-    // 2. Hidden Check
-    // If showing hidden, allow hidden items (but still check visibility rules)
-    if (!showHidden && hiddenIds.includes(item.id)) return false;
+      // 2. Hidden Check
+      // If showing hidden, allow hidden items (but still check visibility rules)
+      if (!showHidden && hiddenIds.includes(item.id)) return false;
 
-    if (isAdmin) return true; // Admins see everything (approved or pending)
-    if (isAuthor) return true; // Authors see their own items
+      if (isAdmin) return true; // Admins see everything
+      if (isAuthor) return true; // Authors see their own items
 
-    // 3. Role Check
-    const roleMatch = !item.target_roles || item.target_roles.length === 0 || item.target_roles.includes(myMembership?.role);
+      // 3. Role Check
+      const roleMatch = !item.target_roles || item.target_roles.length === 0 || item.target_roles.includes(myMembership?.role);
 
-    // 4. Level Check
-    const levelMatch = !item.target_levels || item.target_levels.length === 0 || item.target_levels.includes(myMembership?.level);
+      // 4. Level Check
+      const levelMatch = !item.target_levels || item.target_levels.length === 0 || item.target_levels.includes(myMembership?.level);
 
-    return roleMatch && levelMatch;
+      return roleMatch && levelMatch;
     });
 
     // Sort: Pinned posts first, then by created_date desc
@@ -239,7 +233,7 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
       if (!(a.type === 'post' && a.is_pinned) && b.type === 'post' && b.is_pinned) return 1;
       return new Date(b.created_date) - new Date(a.created_date);
     });
-  }, [posts, events, resources, trainings, hiddenIds, isAdmin, myMembership]);
+  }, [posts, events, resources, trainings, qnas, hiddenIds, isAdmin, myMembership, currentUser, showHidden]);
 
   return (
     <div className="space-y-6">
@@ -250,107 +244,102 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
         </h3>
         <div className="flex gap-2">
             <Button 
-            variant={showHidden ? "secondary" : "ghost"} 
-            size="sm"
-            onClick={() => setShowHidden(!showHidden)}
-            className="text-gray-500"
-            title="View History (Hidden Items)"
+              variant={showHidden ? "secondary" : "ghost"} 
+              size="sm"
+              onClick={() => setShowHidden(!showHidden)}
+              className="text-gray-500"
+              title="View History (Hidden Items)"
             >
-            <History className="w-4 h-4 mr-2" />
-            {showHidden ? "Hide History" : "View History"}
+              <History className="w-4 h-4 mr-2" />
+              {showHidden ? "Hide History" : "View History"}
             </Button>
         
-        {isAdmin && (
-          <Dialog open={isDialogOpen} onOpenChange={(open) => !open && handleCloseDialog()}>
-            <DialogTrigger asChild>
-              <Button onClick={() => setIsDialogOpen(true)}><Plus className="w-4 h-4 mr-2" /> New Post</Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>{editingId ? 'Edit Post' : 'Create Announcement'}</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <Input 
-                  placeholder="Title" 
-                  value={formData.title} 
-                  onChange={e => setFormData({...formData, title: e.target.value})} 
-                />
-                <div className="h-64 mb-12">
-                  <ReactQuill 
-                    theme="snow" 
-                    value={formData.content} 
-                    onChange={v => setFormData({...formData, content: v})} 
-                    className="h-48"
-                  />
-                </div>
-                <div className="space-y-4">
-                  <div className="flex gap-4">
-                    <label className="flex items-center gap-2 text-sm cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        checked={formData.is_pinned} 
-                        onChange={e => setFormData({...formData, is_pinned: e.target.checked})} 
-                        className="rounded border-gray-300"
+            {isAdmin && (
+              <Dialog open={isDialogOpen} onOpenChange={(open) => !open && handleCloseDialog()}>
+                <DialogTrigger asChild>
+                  <Button onClick={() => setIsDialogOpen(true)}><Plus className="w-4 h-4 mr-2" /> New Post</Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>{editingId ? 'Edit Post' : 'Create Announcement'}</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <Input 
+                      placeholder="Title" 
+                      value={formData.title} 
+                      onChange={e => setFormData({...formData, title: e.target.value})} 
+                    />
+                    <div className="h-64 mb-12">
+                      <ReactQuill 
+                        theme="snow" 
+                        value={formData.content} 
+                        onChange={v => setFormData({...formData, content: v})} 
+                        className="h-48"
                       />
-                      Pin to top
-                    </label>
-                    
-                    {canPostPublicly && (
-                      <label className="flex items-center gap-2 text-sm cursor-pointer text-indigo-600 font-medium">
-                        <input 
-                          type="checkbox" 
-                          checked={formData.is_public} 
-                          onChange={e => setFormData({...formData, is_public: e.target.checked})} 
-                          className="rounded border-indigo-300"
-                        />
-                        <Globe className="w-3 h-3" /> Make Public (Ad)
-                      </label>
-                    )}
-                  </div>
-                  
-                  <LevelSelector 
-                    group={group} 
-                    selectedLevels={formData.target_levels} 
-                    onChange={(levels) => setFormData({...formData, target_levels: levels})} 
-                  />
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Target Roles (Optional)</label>
-                    <div className="flex flex-wrap gap-2">
-                      {['client', 'virtual-assistant', 'member'].map(role => (
-                        <label key={role} className="flex items-center gap-2 text-sm border p-2 rounded-md cursor-pointer bg-white hover:bg-gray-50">
+                    </div>
+                    <div className="space-y-4">
+                      <div className="flex gap-4">
+                        <label className="flex items-center gap-2 text-sm cursor-pointer">
                           <input 
-                            type="checkbox"
-                            checked={(formData.target_roles || []).includes(role)}
-                            onChange={(e) => {
-                              const current = formData.target_roles || [];
-                              const updated = e.target.checked 
-                                ? [...current, role]
-                                : current.filter(r => r !== role);
-                              setFormData({...formData, target_roles: updated});
-                            }}
+                            type="checkbox" 
+                            checked={formData.is_pinned} 
+                            onChange={e => setFormData({...formData, is_pinned: e.target.checked})} 
                             className="rounded border-gray-300"
                           />
-                          <span className="capitalize">{role.replace('-', ' ')}</span>
+                          Pin to top
                         </label>
-                      ))}
+                        
+                        {canPostPublicly && (
+                          <label className="flex items-center gap-2 text-sm cursor-pointer text-indigo-600 font-medium">
+                            <input 
+                              type="checkbox" 
+                              checked={formData.is_public} 
+                              onChange={e => setFormData({...formData, is_public: e.target.checked})} 
+                              className="rounded border-indigo-300"
+                            />
+                            <Globe className="w-3 h-3" /> Make Public (Ad)
+                          </label>
+                        )}
+                      </div>
+                      
+                      <LevelSelector 
+                        group={group} 
+                        selectedLevels={formData.target_levels} 
+                        onChange={(levels) => setFormData({...formData, target_levels: levels})} 
+                      />
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Target Roles (Optional)</label>
+                        <div className="flex flex-wrap gap-2">
+                          {['client', 'virtual-assistant', 'member'].map(role => (
+                            <label key={role} className="flex items-center gap-2 text-sm border p-2 rounded-md cursor-pointer bg-white hover:bg-gray-50">
+                              <input 
+                                type="checkbox"
+                                checked={(formData.target_roles || []).includes(role)}
+                                onChange={(e) => {
+                                  const current = formData.target_roles || [];
+                                  const updated = e.target.checked 
+                                    ? [...current, role]
+                                    : current.filter(r => r !== role);
+                                  setFormData({...formData, target_roles: updated});
+                                }}
+                                className="rounded border-gray-300"
+                              />
+                              <span className="capitalize">{role.replace('-', ' ')}</span>
+                            </label>
+                          ))}
+                        </div>
+                        <p className="text-xs text-gray-500">If selected, only users with these roles will see this post.</p>
+                      </div>
                     </div>
-                    <p className="text-xs text-gray-500">If selected, only users with these roles will see this post.</p>
+                    <Button onClick={handleSubmit} disabled={!formData.title} className="w-full bg-indigo-600 hover:bg-indigo-700">
+                      {editingId ? 'Update Post' : 'Post'}
+                    </Button>
                   </div>
-                  {/* Although typically events are handled in Events Tab, user asked for "Per-event visibility toggle for users" 
-                      This might apply to posts too if unified, but usually Events Tab. 
-                      Let's leave Feed Tab simple unless we merge functionalities. 
-                      Actually, Feed Tab handles Posts/Events creation in some versions or view. 
-                      Here we are just editing Posts. Events are in GroupEventsTab.
-                  */}
-                </div>
-                <Button onClick={handleSubmit} disabled={!formData.title} className="w-full bg-indigo-600 hover:bg-indigo-700">
-                  {editingId ? 'Update Post' : 'Post'}
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-      )}
+                </DialogContent>
+              </Dialog>
+            )}
+        </div>
       </div>
 
       <div className="space-y-4">
