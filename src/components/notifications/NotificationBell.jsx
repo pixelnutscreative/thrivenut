@@ -148,8 +148,12 @@ export default function NotificationBell({ userEmail, isDark = false }) {
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className={`w-5 h-5 ${isDark ? 'text-gray-100' : 'text-gray-600'}`} />
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className={`relative hover:bg-transparent data-[state=open]:bg-transparent ${isDark ? 'text-gray-100 hover:text-gray-100' : 'text-gray-600 hover:text-gray-600'}`}
+        >
+          <Bell className="w-5 h-5" />
           {unreadNotifications.length > 0 && (
             <Badge 
               className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-red-500"

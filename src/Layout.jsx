@@ -439,7 +439,7 @@ export default function Layout({ children, currentPageName }) {
                 variant="ghost"
                 size="icon"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className={`${menuTextClass} hover:bg-transparent focus:bg-transparent active:bg-transparent`}>
+                className={`${menuTextClass} hover:bg-transparent focus:bg-transparent active:bg-transparent ${isMenuDark ? 'hover:text-gray-100 focus:text-gray-100 active:text-gray-100' : 'hover:text-gray-800 focus:text-gray-800 active:text-gray-800'}`}>
 
               {mobileMenuOpen ? <X className="w-8 h-8" /> : (
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8">
