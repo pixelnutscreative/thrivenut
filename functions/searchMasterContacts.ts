@@ -11,10 +11,8 @@ export default Deno.serve(async (req) => {
 
         // Fetch all contacts using service role to bypass RLS (Row Level Security)
         // This allows searching across all users' contacts to find existing creators
-        const allContacts = await base44.asServiceRole.entities.TikTokContact.list(5000); // list(limit) - limit is first arg if no sort? 
-        // SDK note: list(sort, limit) or list(limit). 
-        // Original code was list('username', 5000).
-        // Let's use list('username', 5000) to be safe/consistent.
+        // Using explicit sort to ensure limit is applied correctly
+        const allContacts = await base44.asServiceRole.entities.TikTokContact.list('-created_date', 5000);
 
         // Consolidate and sanitize on backend to reduce payload size
         const byUsername = {};
