@@ -16,6 +16,8 @@ import 'react-quill/dist/quill.snow.css';
 import { useTheme } from '@/components/shared/useTheme';
 import ColorPicker from '../shared/ColorPicker';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import GroupAnnouncementsSettings from './GroupAnnouncementsSettings';
+import AgencyLiveCalendar from '@/pages/AgencyLiveCalendar';
 
 export default function GroupSettingsTab({ group }) {
   return (
@@ -23,12 +25,16 @@ export default function GroupSettingsTab({ group }) {
       <Tabs defaultValue="general" className="w-full">
         <TabsList className="bg-gray-100 p-1 rounded-lg w-full justify-start h-auto flex-wrap">
           <TabsTrigger value="general" className="px-4 py-2"><Settings className="w-4 h-4 mr-2" /> General</TabsTrigger>
+          <TabsTrigger value="announcements" className="px-4 py-2"><Megaphone className="w-4 h-4 mr-2" /> Announcements</TabsTrigger>
+          {group.type === 'agency' && (
+             <TabsTrigger value="lives" className="px-4 py-2"><Video className="w-4 h-4 mr-2" /> Live Calendar</TabsTrigger>
+          )}
           <TabsTrigger value="membership" className="px-4 py-2"><Users className="w-4 h-4 mr-2" /> Membership</TabsTrigger>
           {group.type !== 'client-portal' && (
             <TabsTrigger value="content" className="px-4 py-2"><FileText className="w-4 h-4 mr-2" /> Content</TabsTrigger>
           )}
           <TabsTrigger value="permissions" className="px-4 py-2"><Shield className="w-4 h-4 mr-2" /> Permissions</TabsTrigger>
-          <TabsTrigger value="danger" className="px-4 py-2 text-red-600 data-[state=active]:text-red-700 data-[state=active]:bg-red-50"><AlertTriangle className="w-4 h-4 mr-2" /> Danger Zone</TabsTrigger>
+          <TabsTrigger value="danger" className="px-4 py-2 text-red-600 data-[state=active]:text-red-700 data-[state=active]:bg-red-50"><Trash2 className="w-4 h-4 mr-2" /> Danger Zone</TabsTrigger>
         </TabsList>
 
         <TabsContent value="general" className="space-y-6 mt-6">
@@ -39,6 +45,14 @@ export default function GroupSettingsTab({ group }) {
           <GroupShortcutsSettings group={group} />
           <GroupColorSettings group={group} />
           <CryptoTickerSettings group={group} />
+        </TabsContent>
+
+        <TabsContent value="announcements" className="space-y-6 mt-6">
+          <GroupAnnouncementsSettings group={group} />
+        </TabsContent>
+
+        <TabsContent value="lives" className="space-y-6 mt-6">
+           <AgencyLiveCalendar group={group} />
         </TabsContent>
 
         <TabsContent value="membership" className="space-y-6 mt-6">

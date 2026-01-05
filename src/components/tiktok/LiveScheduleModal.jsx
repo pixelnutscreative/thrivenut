@@ -71,6 +71,7 @@ export default function LiveScheduleModal({ isOpen, onClose, lives, onSave }) {
 
   const handleSave = async () => {
     setLoading(true);
+    // Ensure host_username is set if missing (default to current user logic if needed, but here we just pass items)
     await onSave(items);
     setLoading(false);
   };
@@ -131,6 +132,13 @@ export default function LiveScheduleModal({ isOpen, onClose, lives, onSave }) {
               <div>
                 <Label className="text-sm">Description</Label>
                 <Textarea placeholder="Live description" value={item.description || ''} onChange={(e) => updateItem(index, 'description', e.target.value)} rows={2} />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3">
+                 <div>
+                    <Label className="text-sm">Host Username</Label>
+                    <Input placeholder="@username" value={item.host_username || ''} onChange={(e) => updateItem(index, 'host_username', e.target.value.replace('@',''))} />
+                 </div>
               </div>
 
               <div className="space-y-2">

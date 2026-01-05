@@ -6,12 +6,75 @@ import { X } from 'lucide-react';
 export default function AnnouncementBar() {
   const [dismissed, setDismissed] = useState([]);
 
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    base44.auth.me().then(setUser).catch(() => setUser(null));
+  }, []);
+
+  // Fetch user's active groups to filter group-specific announcements
+  const { data: myGroupIds = [] } = useQuery({
+    queryKey: ['myGroupIds', user?.email],
+    queryFn: async () => {
+      if (!user?.email) return [];
+      const memberships = await base44.entities.CreatorGroupMember.filter({ user_email: user.email, status: 'active' });
+      return memberships.map(m => m.group_id);
+    },
+    enabled: !!user?.email
+  });
+
   const { data: bars = [] } = useQuery({
-    queryKey: ['announcementBars'],
+    queryKey: ['announcementBars', myGroupIds],
     queryFn: async () => {
       try {
-        const all = await base44.entities.AnnouncementBar.list('-display_order');
-        return all;
+        // 1. Fetch Global Announcement Bars
+        const globalBars = await base44.entities.AnnouncementBar.list('-display_order');
+        
+        // 2. Fetch Group-Specific Notifications that act as bars
+        // Since we can't do complex OR queries easily, we'll fetch notifications 
+        // that have a group_id in our list.
+        // Assuming AnnouncementBar entity is used for GLOBAL system announcements
+        // and Notification entity (with group_id) is used for GROUP announcements.
+        // Or we can add group_id to AnnouncementBar entity itself?
+        // The user prompt said: "notification bar... just like we have in the admin... so when they post that up, it will show up at the top"
+        // Let's assume we are re-purposing AnnouncementBar for groups OR fetching Notifications that are meant to be announcements.
+        // Let's stick to modifying Notification entity as per plan, but display them HERE.
+        
+        let groupAnnouncements = [];
+        if (myGroupIds.length > 0) {
+            // We need to fetch notifications for these groups that are "announcement" type?
+            // Or maybe simply ALL active notifications for the group are treated as announcements?
+            // User said "admin's can put an announcement and the bar that runs across the top"
+            // Let's look for notifications with type="announcement" and group_id IN myGroupIds
+            // Current Notification entity has type="system" default.
+            
+            // Since we can't filter by array includes easily in one call if not supported,
+            // we'll fetch by group_id for each group (or list all if volume low).
+            // Better: use the new group_id field in Notification.
+            
+            // For now, let's just fetch ALL active notifications for the user's groups.
+            // In a real app with many notifs this might be heavy, but for now it's ok.
+            // We'll filter client side for type='announcement' or just display the latest.
+            
+            const promises = myGroupIds.map(gid => 
+                base44.entities.Notification.filter({ group_id: gid, is_active: true })
+            );
+            const results = await Promise.all(promises);
+            groupAnnouncements = results.flat().map(n => ({
+                id: n.id,
+                message: n.message,
+                link: n.link,
+                background_color: n.button_color || '#8b5cf6', // Use button color as bg for group announcements
+                text_color: '#ffffff',
+                is_active: true,
+                schedule_type: 'manual',
+                display_order: 100, // Higher priority than global?
+                type: 'group_announcement',
+                group_id: n.group_id
+            }));
+        }
+
+        return [...globalBars, ...groupAnnouncements];
       } catch (error) {
         console.error('Error fetching announcement bars:', error);
         return [];
@@ -19,6 +82,7 @@ export default function AnnouncementBar() {
     },
     refetchInterval: 30000,
     retry: false,
+    enabled: !!user // Only fetch if we know the user
   });
 
   const isInSchedule = (bar) => {

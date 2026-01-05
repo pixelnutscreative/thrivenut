@@ -83,6 +83,7 @@ import WaterHistory from './pages/WaterHistory';
 import WeeklyGifterGallery from './pages/WeeklyGifterGallery';
 import Wellness from './pages/Wellness';
 import WorkSchedules from './pages/WorkSchedules';
+import AgencyLiveCalendar from './pages/AgencyLiveCalendar';
 import __Layout from './Layout.jsx';
 
 
@@ -172,6 +173,7 @@ export const PAGES = {
     "WeeklyGifterGallery": WeeklyGifterGallery,
     "Wellness": Wellness,
     "WorkSchedules": WorkSchedules,
+    "AgencyLiveCalendar": AgencyLiveCalendar,
 }
 
 export const pagesConfig = {
