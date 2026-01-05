@@ -49,6 +49,8 @@ export default function CreatorGroups() {
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('member');
+  const [inviteStep, setInviteStep] = useState('check'); // check | link
+  const [editingReferralCode, setEditingReferralCode] = useState('');
 
   // Admin Check
   const realUserEmail = user?.email ? user?.email.toLowerCase() : '';
@@ -284,20 +286,17 @@ export default function CreatorGroups() {
   const isMember = !!activeMembership && (activeMembership.status === 'active' || activeMembership.status === 'trial');
   const canInvite = isAdmin || (activeGroup?.settings?.allowed_invite_roles || []).includes(activeMembership?.role);
 
-  // Invite Mutation
+  // Invite Mutation (Direct Add)
   const inviteMutation = useMutation({
     mutationFn: async (data) => {
       const email = (data.email || '').trim().toLowerCase();
       if (!email) throw new Error('Email required');
       
-      // Determine Role and Level
-      // If admin, use selected role. If member, use defaults from settings.
       const roleToUse = isAdmin ? data.role : (activeGroup.settings?.default_invite_role || 'member');
-      const levelToUse = isAdmin ? 'Member' : (activeGroup.settings?.default_invite_level || 'Member'); // Admin UI doesn't have level selector yet, default to Member. Member invite uses settings.
+      const levelToUse = isAdmin ? 'Member' : (activeGroup.settings?.default_invite_level || 'Member');
 
       const existing = await base44.entities.CreatorGroupMember.filter({ group_id: activeGroup.id, user_email: email });
       if (existing.length > 0) {
-        // Upsert: promote to active and update role
         return base44.entities.CreatorGroupMember.update(existing[0].id, {
           role: roleToUse,
           status: 'active',
@@ -315,12 +314,72 @@ export default function CreatorGroups() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['groupMembers', activeGroup.id]); // Invalidate members list
+      queryClient.invalidateQueries(['groupMembers', activeGroup.id]);
       setIsInviteOpen(false);
       setInviteEmail('');
       alert('Member invited successfully!');
     }
   });
+
+  // Fetch Referral Link for current user (for invite link generation)
+  const { data: myReferralLink, isLoading: isReferralLoading } = useQuery({
+    queryKey: ['myReferralLink', user?.email],
+    queryFn: async () => {
+      if (!user?.email) return null;
+      const links = await base44.entities.ReferralLink.filter({ user_email: user?.email, is_active: true });
+      return links[0] || null;
+    },
+    enabled: !!user?.email && isInviteOpen
+  });
+
+  // Create/Update Referral Code Mutation
+  const referralCodeMutation = useMutation({
+    mutationFn: async (code) => {
+      // Basic validation
+      if (!code || code.length < 3) throw new Error("Code too short");
+      
+      // Check uniqueness if changing
+      if (myReferralLink && myReferralLink.referral_code === code) return myReferralLink;
+
+      const existing = await base44.entities.ReferralLink.filter({ referral_code: code });
+      if (existing.length > 0 && existing[0].user_email !== user?.email) {
+        throw new Error("This code is already taken.");
+      }
+
+      if (myReferralLink) {
+        return base44.entities.ReferralLink.update(myReferralLink.id, { referral_code: code });
+      } else {
+        // Create new
+        // Note: initializeReferralCode usually handles creating random one, but we can creating specific one here
+        return base44.entities.ReferralLink.create({
+          user_email: user.email,
+          referral_code: code,
+          is_active: true,
+          created_at: new Date().toISOString()
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['myReferralLink', user?.email]);
+      setInviteStep('link');
+    },
+    onError: (err) => alert(err.message)
+  });
+
+  useEffect(() => {
+    if (isInviteOpen && myReferralLink) {
+      setEditingReferralCode(myReferralLink.referral_code);
+      // If code looks like a random UUID or long scramble (e.g. > 15 chars), default to check step
+      // Otherwise if it looks custom, user might still want to change it, but maybe we can go to link step?
+      // User requested: "if they’ve never customized... pop up". 
+      // We'll stick to 'check' step initially to be safe as requested.
+      setInviteStep('check');
+    } else if (isInviteOpen && !isReferralLoading && !myReferralLink) {
+        // No code yet
+        setEditingReferralCode('');
+        setInviteStep('check');
+    }
+  }, [isInviteOpen, myReferralLink, isReferralLoading]);
 
   // Redirect Interested users to the Interested Dashboard
   const navigate = useNavigate();
@@ -1031,42 +1090,114 @@ export default function CreatorGroups() {
                     <UserPlus className="w-4 h-4 mr-2" /> Invite
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="max-w-md">
                   <DialogHeader>
-                    <DialogTitle>Invite Member</DialogTitle>
+                    <DialogTitle>Invite to {activeGroup.name}</DialogTitle>
                     <CardDescription>
-                      {isAdmin 
-                        ? "Add a new member and assign their role." 
-                        : `Invite a new member to join as ${activeGroup.settings?.default_invite_role || 'member'}.`}
+                      Bring new members into your community.
                     </CardDescription>
                   </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                      <Label>Email Address</Label>
-                      <Input value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} placeholder="user@example.com" />
-                    </div>
-                    
-                    {isAdmin && (
-                      <div className="space-y-2">
-                        <Label>Role</Label>
-                        <Select value={inviteRole} onValueChange={setInviteRole}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent className="z-[60]">
-                            <SelectItem value="member">Member</SelectItem>
-                            <SelectItem value="client">Client</SelectItem>
-                            <SelectItem value="manager">Manager</SelectItem>
-                            <SelectItem value="admin">Admin</SelectItem>
-                            <SelectItem value="virtual-assistant">Virtual Assistant</SelectItem>
-                          </SelectContent>
-                        </Select>
+                  
+                  {isReferralLoading ? (
+                    <div className="py-8 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-purple-600" /></div>
+                  ) : inviteStep === 'check' ? (
+                    <div className="space-y-4 py-4">
+                      <div className="bg-purple-50 p-4 rounded-lg border border-purple-100">
+                        <h4 className="font-semibold text-purple-900 mb-1">Confirm Your Referral Code</h4>
+                        <p className="text-sm text-purple-700 mb-3">
+                          This code is attached to your invite link so you get credit for new members.
+                        </p>
+                        <div className="space-y-2">
+                          <Label>Your Code</Label>
+                          <Input 
+                            value={editingReferralCode} 
+                            onChange={(e) => setEditingReferralCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
+                            placeholder="YOURCODE" 
+                            className="font-mono uppercase tracking-wider"
+                          />
+                          <p className="text-xs text-gray-500">
+                            {myReferralLink ? "You can customize this if you want." : "Create a unique code for yourself."}
+                          </p>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                  <DialogFooter>
-                    <Button onClick={() => inviteMutation.mutate({ email: inviteEmail, role: inviteRole })} disabled={!inviteEmail || inviteMutation.isPending}>
-                      {inviteMutation.isPending ? 'Inviting...' : 'Send Invite'}
-                    </Button>
-                  </DialogFooter>
+                      <DialogFooter>
+                        <Button 
+                          onClick={() => referralCodeMutation.mutate(editingReferralCode)} 
+                          disabled={!editingReferralCode || referralCodeMutation.isPending}
+                          className="w-full"
+                        >
+                          {referralCodeMutation.isPending ? 'Saving...' : 'Continue to Invite Link'}
+                        </Button>
+                      </DialogFooter>
+                    </div>
+                  ) : (
+                    <Tabs defaultValue="link" className="w-full">
+                      <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="link">Share Link</TabsTrigger>
+                        {isAdmin && <TabsTrigger value="email">Direct Add</TabsTrigger>}
+                      </TabsList>
+                      
+                      <TabsContent value="link" className="space-y-4 py-4">
+                        <div className="space-y-3">
+                          <p className="text-sm text-gray-600">
+                            Copy this unique link to invite people. It includes your referral code <strong>{myReferralLink?.referral_code}</strong>.
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <Input 
+                              readOnly 
+                              value={`https://${window.location.hostname}/CreatorGroups?invite=${activeGroup.invite_code}&ref=${myReferralLink?.referral_code}`} 
+                              className="bg-gray-50 font-mono text-xs"
+                            />
+                            <Button 
+                              size="icon" 
+                              variant="outline" 
+                              onClick={() => {
+                                navigator.clipboard.writeText(`https://${window.location.hostname}/CreatorGroups?invite=${activeGroup.invite_code}&ref=${myReferralLink?.referral_code}`);
+                                alert("Link copied!");
+                              }}
+                            >
+                              <LinkIcon className="w-4 h-4" />
+                            </Button>
+                          </div>
+                          <div className="text-xs text-gray-400 text-center">
+                            New members will join as <strong>{activeGroup.settings?.default_invite_role || 'member'}</strong>
+                          </div>
+                        </div>
+                        <Button variant="ghost" size="sm" onClick={() => setInviteStep('check')} className="w-full mt-2 text-gray-400">
+                          Edit Referral Code
+                        </Button>
+                      </TabsContent>
+
+                      {isAdmin && (
+                        <TabsContent value="email" className="space-y-4 py-4">
+                          <div className="space-y-2">
+                            <Label>Email Address</Label>
+                            <Input value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} placeholder="user@example.com" />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Role</Label>
+                            <Select value={inviteRole} onValueChange={setInviteRole}>
+                              <SelectTrigger><SelectValue /></SelectTrigger>
+                              <SelectContent className="z-[60]">
+                                <SelectItem value="member">Member</SelectItem>
+                                <SelectItem value="client">Client</SelectItem>
+                                <SelectItem value="manager">Manager</SelectItem>
+                                <SelectItem value="admin">Admin</SelectItem>
+                                <SelectItem value="virtual-assistant">Virtual Assistant</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <Button 
+                            onClick={() => inviteMutation.mutate({ email: inviteEmail, role: inviteRole })} 
+                            disabled={!inviteEmail || inviteMutation.isPending} 
+                            className="w-full"
+                          >
+                            {inviteMutation.isPending ? 'Inviting...' : 'Send Direct Invite'}
+                          </Button>
+                        </TabsContent>
+                      )}
+                    </Tabs>
+                  )}
                 </DialogContent>
               </Dialog>
             )}
