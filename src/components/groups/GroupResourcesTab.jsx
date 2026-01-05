@@ -52,13 +52,28 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
       if (!data.title) throw new Error('Title is required');
       if (data.type !== 'text' && !data.url) throw new Error('URL is required for this resource type');
       
-      return base44.entities.GroupResource.create({ 
+      const resource = await base44.entities.GroupResource.create({ 
         ...data, 
         group_id: group.id, 
         submitted_by: currentUser?.email,
         status: isAdmin ? 'approved' : 'pending', 
         approved_by: isAdmin ? currentUser?.email : null
       });
+
+      if (isAdmin) {
+        try {
+          await base44.functions.invoke('notifyGroupMembers', {
+            group_id: group.id,
+            title: `New Resource: ${group.name}`,
+            message: `New resource added: ${data.title}`,
+            type: 'group_resource',
+            link: `/CreatorGroups?id=${group.id}&tab=resources`
+          });
+        } catch (err) {
+          console.error("Failed to send notifications", err);
+        }
+      }
+      return resource;
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['groupResources', group.id]);
@@ -87,10 +102,28 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
   });
 
   const reviewMutation = useMutation({
-    mutationFn: ({ id, status }) => base44.entities.GroupResource.update(id, { 
-      status, 
-      approved_by: currentUser?.email 
-    }),
+    mutationFn: async ({ id, status }) => {
+      const updated = await base44.entities.GroupResource.update(id, { 
+        status, 
+        approved_by: currentUser?.email 
+      });
+
+      if (status === 'approved') {
+        try {
+          // Fetch resource title if needed, but we can just say "New Resource"
+          await base44.functions.invoke('notifyGroupMembers', {
+            group_id: group.id,
+            title: `New Resource: ${group.name}`,
+            message: `A new resource has been approved and added to the library.`,
+            type: 'group_resource',
+            link: `/CreatorGroups?id=${group.id}&tab=resources`
+          });
+        } catch (err) {
+          console.error("Failed to send notifications", err);
+        }
+      }
+      return updated;
+    },
     onSuccess: () => queryClient.invalidateQueries(['groupResources', group.id])
   });
 

@@ -123,6 +123,18 @@ export default function NotificationBell({ userEmail, isDark = false }) {
     markAsReadMutation.mutate(notification.id);
   };
 
+  const handleLinkClick = (notif) => {
+    handleNotificationClick(notif);
+    setIsOpen(false);
+    if (notif.link) {
+      if (notif.link.startsWith('http')) {
+        window.open(notif.link, '_blank');
+      } else {
+        navigate(notif.link);
+      }
+    }
+  };
+
   const handleSaveNotification = (e, notificationId) => {
     e.stopPropagation();
     saveNotificationMutation.mutate(notificationId);
@@ -185,17 +197,21 @@ export default function NotificationBell({ userEmail, isDark = false }) {
                   </div>
                 </div>
                 
-                {notif.button_text && notif.button_url && (
+                {(notif.link || (notif.button_text && notif.button_url)) && (
                   <Button
                     size="sm"
                     className="w-full mt-3 text-white"
                     style={{ backgroundColor: notif.button_color || '#8b5cf6' }}
                     onClick={() => {
-                      handleNotificationClick(notif);
-                      window.open(notif.button_url, '_blank');
+                      if (notif.button_text && notif.button_url) {
+                        handleNotificationClick(notif);
+                        window.open(notif.button_url, '_blank');
+                      } else {
+                        handleLinkClick(notif);
+                      }
                     }}
                   >
-                    {notif.button_text}
+                    {notif.button_text || 'View Item'}
                   </Button>
                 )}
 
