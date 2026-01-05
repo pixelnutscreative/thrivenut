@@ -144,8 +144,6 @@ export default function Dashboard() {
     enabled: !!user && enabledModules.includes('wellness'),
   });
 
-  const effectiveEmail = user ? getEffectiveUserEmail(user.email) : null;
-
   const { data: tiktokContacts = [] } = useQuery({
     queryKey: ['tiktokContacts', effectiveEmail],
     queryFn: () => base44.entities.TikTokContact.filter({ created_by: effectiveEmail }),
