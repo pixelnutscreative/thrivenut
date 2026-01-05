@@ -84,7 +84,10 @@ export default function LiveSchedule() {
     city: '',
     state: '',
     address: '',
-    stream_url: ''
+    stream_url: '',
+    topic: '',
+    description: '',
+    recurring_days: []
   });
   const [formData, setFormData] = useState({
     host_username: '',
@@ -170,7 +173,10 @@ export default function LiveSchedule() {
     setContentFormData({
       type: item.type || 'live',
       title: item.title || '',
+      topic: item.topic || '',
+      description: item.description || '',
       day_of_week: item.day_of_week || 'Monday',
+      recurring_days: item.recurring_days || (item.day_of_week ? [item.day_of_week] : ['Monday']),
       time: item.time || '12:00',
       is_recurring: item.is_recurring !== false,
       audience: item.audience || 'all_ages',
@@ -195,7 +201,10 @@ export default function LiveSchedule() {
     setContentFormData({
       type: item.type || 'live',
       title: item.title ? `${item.title} (copy)` : '',
+      topic: item.topic || '',
+      description: item.description || '',
       day_of_week: item.day_of_week || 'Monday',
+      recurring_days: item.recurring_days || (item.day_of_week ? [item.day_of_week] : ['Monday']),
       time: item.time || '12:00',
       is_recurring: item.is_recurring !== false,
       audience: item.audience || 'all_ages',
@@ -234,6 +243,18 @@ export default function LiveSchedule() {
     }));
   };
 
+  const toggleContentRecurringDay = (day) => {
+    setContentFormData(prev => {
+      const current = prev.recurring_days || [];
+      return {
+        ...prev,
+        recurring_days: current.includes(day)
+          ? current.filter(d => d !== day)
+          : [...current, day]
+      };
+    });
+  };
+
   const handleSaveContent = () => {
     if (editingContentItem?.id) {
       updateContentMutation.mutate({ id: editingContentItem.id, data: contentFormData });
@@ -243,7 +264,14 @@ export default function LiveSchedule() {
   };
 
   const getMyContentForDay = (day) => {
-    return myContentItems.filter(item => item.day_of_week === day).sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+    return myContentItems.filter(item => {
+      // Check recurring days array
+      if (item.recurring_days && item.recurring_days.length > 0) {
+        return item.recurring_days.includes(day);
+      }
+      // Fallback to legacy single day
+      return item.day_of_week === day;
+    }).sort((a, b) => (a.time || '').localeCompare(b.time || ''));
   };
 
   const createScheduleMutation = useMutation({
@@ -787,7 +815,8 @@ export default function LiveSchedule() {
                               </Button>
                             </div>
                           </div>
-                          {item.title && <p className={`text-xs font-medium mt-1 ${textClass}`}>{item.title}</p>}
+                          {item.title && <p className={`text-xs font-bold mt-1 ${textClass}`}>{item.title}</p>}
+                          {item.topic && <p className={`text-xs italic ${subtextClass}`}>{item.topic}</p>}
                           {item.share_to_directory && <Badge className="mt-1 text-xs bg-purple-100 text-purple-700">Shared</Badge>}
                         </div>
                       );
@@ -1042,7 +1071,14 @@ export default function LiveSchedule() {
       <Dialog open={!!editingContentItem} onOpenChange={(open) => {
         if (!open) {
           setEditingContentItem(null);
-          setContentFormData({ type: 'live', title: '', day_of_week: 'Monday', time: '12:00', is_recurring: true, audience: 'all_ages', share_to_directory: false, specific_date: '', live_types: ['regular'], platforms: ['tiktok'], has_giveaway: false, must_be_present: false, requires_registration: false, superfan_only: false, is_in_person: false, city: '', state: '', address: '', stream_url: '' });
+          setContentFormData({ 
+            type: 'live', title: '', topic: '', description: '', 
+            day_of_week: 'Monday', recurring_days: ['Monday'], time: '12:00', is_recurring: true, 
+            audience: 'all_ages', share_to_directory: false, specific_date: '', 
+            live_types: ['regular'], platforms: ['tiktok'], has_giveaway: false, 
+            must_be_present: false, requires_registration: false, superfan_only: false, 
+            is_in_person: false, city: '', state: '', address: '', stream_url: '' 
+          });
         }
       }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -1084,6 +1120,25 @@ export default function LiveSchedule() {
                 placeholder={contentFormData.type === 'live' ? "e.g., Morning Live" : "e.g., New Video Drop"}
                 value={contentFormData.title}
                 onChange={(e) => setContentFormData({ ...contentFormData, title: e.target.value })}
+              />
+            </div>
+
+            {/* Topic & Description */}
+            <div className="space-y-2">
+              <Label>Topic / Theme</Label>
+              <Input
+                placeholder="What is it about?"
+                value={contentFormData.topic}
+                onChange={(e) => setContentFormData({ ...contentFormData, topic: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Description (Optional)</Label>
+              <Textarea
+                placeholder="Details about what you do..."
+                value={contentFormData.description}
+                onChange={(e) => setContentFormData({ ...contentFormData, description: e.target.value })}
+                rows={3}
               />
             </div>
 
@@ -1148,15 +1203,24 @@ export default function LiveSchedule() {
             </div>
 
             {contentFormData.is_recurring ? (
-              <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Day</Label>
-                  <Select value={contentFormData.day_of_week} onValueChange={(v) => setContentFormData({ ...contentFormData, day_of_week: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {daysOfWeek.map(day => <SelectItem key={day} value={day}>{day}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                  <Label>Select Days</Label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {daysOfWeek.map(day => (
+                      <div
+                        key={day}
+                        onClick={() => toggleContentRecurringDay(day)}
+                        className={`p-2 rounded-lg border-2 cursor-pointer transition-all text-xs text-center ${
+                          (contentFormData.recurring_days || []).includes(day)
+                            ? 'border-purple-500 bg-purple-50 text-purple-700 font-medium'
+                            : 'border-gray-200 hover:border-purple-300'
+                        }`}
+                      >
+                        {day.slice(0, 3)}
+                      </div>
+                    ))}
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label>Time</Label>
