@@ -58,6 +58,7 @@ export default function GroupSettingsTab({ group }) {
         </TabsContent>
 
         <TabsContent value="danger" className="space-y-6 mt-6">
+          <TransferOwnershipSettings group={group} />
           <DeleteGroupSettings group={group} />
         </TabsContent>
       </Tabs>
@@ -1009,6 +1010,100 @@ function GroupTypeSettings({ group }) {
           </Select>
         </div>
       </CardContent>
+    </Card>
+  );
+}
+
+function TransferOwnershipSettings({ group }) {
+  const queryClient = useQueryClient();
+  const [newOwnerEmail, setNewOwnerEmail] = useState('');
+  const [confirmEmail, setConfirmEmail] = useState('');
+  const [isOpen, setIsOpen] = useState(false);
+  const { user } = useTheme();
+
+  const isOwner = user?.email?.toLowerCase() === group.owner_email?.toLowerCase();
+
+  const transferMutation = useMutation({
+    mutationFn: async () => {
+      const response = await base44.functions.invoke('transferGroupOwnership', {
+        group_id: group.id,
+        new_owner_email: newOwnerEmail
+      });
+      if (response.data.error) throw new Error(response.data.error);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['myGroupsDetails']);
+      queryClient.invalidateQueries(['myGroupMemberships']);
+      setIsOpen(false);
+      setNewOwnerEmail('');
+      setConfirmEmail('');
+      alert('Ownership transferred successfully!');
+      window.location.reload();
+    },
+    onError: (err) => {
+      alert(err.message || 'Failed to transfer ownership');
+    }
+  });
+
+  if (!isOwner) return null;
+
+  return (
+    <Card className="border-amber-200 shadow-sm bg-amber-50/30">
+        <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+            <CollapsibleTrigger className="w-full">
+                <CardHeader className="flex flex-row items-center justify-between p-6 cursor-pointer hover:bg-amber-50/50 transition-colors">
+                    <div className="text-left">
+                        <CardTitle className="text-amber-700 flex items-center gap-2">
+                            <Users className="w-5 h-5" /> Transfer Ownership
+                        </CardTitle>
+                        <CardDescription>Transfer this group to another user. You will remain an admin.</CardDescription>
+                    </div>
+                    {isOpen ? <ChevronDown className="w-5 h-5 text-amber-500" /> : <ChevronRight className="w-5 h-5 text-amber-500" />}
+                </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+                <CardContent className="space-y-4 pt-0">
+                    <div className="p-4 bg-amber-100/50 rounded-lg border border-amber-200 text-amber-800 text-sm">
+                        <strong>Warning:</strong> You are about to transfer ownership of <strong>{group.name}</strong>. 
+                        The new owner will have full control over the group settings, including the ability to remove you.
+                    </div>
+                    
+                    <div className="space-y-2">
+                        <Label>New Owner's Email</Label>
+                        <Input 
+                            value={newOwnerEmail} 
+                            onChange={e => setNewOwnerEmail(e.target.value)} 
+                            placeholder="new.owner@example.com"
+                            className="bg-white"
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label>Confirm New Owner's Email</Label>
+                        <Input 
+                            value={confirmEmail} 
+                            onChange={e => setConfirmEmail(e.target.value)} 
+                            placeholder="Type email again to confirm"
+                            className="bg-white"
+                        />
+                    </div>
+
+                    <Button 
+                        variant="outline" 
+                        disabled={!newOwnerEmail || newOwnerEmail !== confirmEmail || transferMutation.isPending}
+                        onClick={() => {
+                            if (window.confirm(`Are you sure you want to transfer ownership of ${group.name} to ${newOwnerEmail}?`)) {
+                                transferMutation.mutate();
+                            }
+                        }}
+                        className="w-full border-amber-300 text-amber-800 hover:bg-amber-100 hover:text-amber-900"
+                    >
+                        {transferMutation.isPending ? 'Transferring...' : 'Transfer Ownership'}
+                    </Button>
+                </CardContent>
+            </CollapsibleContent>
+        </Collapsible>
     </Card>
   );
 }
