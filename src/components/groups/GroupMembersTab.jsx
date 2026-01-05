@@ -270,88 +270,11 @@ function EditMemberDialog({ member, group, isAdmin, currentUser, onUpdate }) {
 
 export default function GroupMembersTab({ group, currentUser, isAdmin }) {
   const queryClient = useQueryClient();
-  const [isInviteOpen, setIsInviteOpen] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState('member');
-
-  // Fetch Referral Code
-  const { data: referralLink } = useQuery({
-    queryKey: ['myReferralLink', currentUser?.email],
-    queryFn: async () => {
-      const links = await base44.entities.ReferralLink.filter({ user_email: currentUser?.email, is_active: true });
-      return links[0];
-    },
-    enabled: !!currentUser?.email
-  });
-
-  // Copy link functionality
-  const isPreview = typeof window !== 'undefined' && window.location.hostname.includes('preview-sandbox');
-  // Use custom domain for production
-  const baseUrl = isPreview ? 'https://app.thrivenut.app' : 'https://thrive.pixelnutscreative.com';
-  
-  // Safer check for referral link code (property is referral_code)
-  const referralCode = referralLink?.referral_code;
-  const referralParam = referralCode ? `&ref=${referralCode}` : '';
-  
-  // Ensure we use the correct page URL (capitalized as per file name)
-  const inviteLink = `${baseUrl}/CreatorGroups?invite=${group.invite_code}${referralParam}`;
-  
-  const copyLink = () => {
-    if (typeof navigator !== 'undefined' && navigator.clipboard) {
-      navigator.clipboard.writeText(inviteLink);
-      alert('Invite link copied to clipboard! (Referral tracking included)');
-    } else {
-      // Fallback for environments without navigator.clipboard
-      const textArea = document.createElement("textarea");
-      textArea.value = inviteLink;
-      textArea.style.position = "fixed"; // Avoid scrolling to bottom
-      textArea.style.left = "-9999px"; // Move off-screen
-      document.body.appendChild(textArea);
-      textArea.focus();
-      textArea.select();
-      try {
-        document.execCommand('copy');
-        alert('Invite link copied to clipboard! (Referral tracking included)');
-      } catch (err) {
-        console.error('Failed to copy', err);
-        alert('Failed to copy invite link. Please copy it manually.');
-      }
-      document.body.removeChild(textArea);
-    }
-  };
 
   const { data: members = [] } = useQuery({
     queryKey: ['groupMembers', group.id],
     queryFn: async () => {
       return await base44.entities.CreatorGroupMember.filter({ group_id: group.id });
-    }
-  });
-
-  const inviteMutation = useMutation({
-    mutationFn: async (data) => {
-      const email = (data.email || '').trim().toLowerCase();
-      if (!email) throw new Error('Email required');
-      const existing = await base44.entities.CreatorGroupMember.filter({ group_id: group.id, user_email: email });
-      if (existing.length > 0) {
-        // Upsert: promote to active and update role
-        return base44.entities.CreatorGroupMember.update(existing[0].id, {
-          role: data.role,
-          status: 'active',
-          joined_date: existing[0].joined_date || new Date().toISOString()
-        });
-      }
-      return base44.entities.CreatorGroupMember.create({
-        group_id: group.id,
-        user_email: email,
-        role: data.role,
-        status: 'active',
-        joined_date: new Date().toISOString()
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(['groupMembers', group.id]);
-      setIsInviteOpen(false);
-      setInviteEmail('');
     }
   });
 
@@ -397,62 +320,17 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
         <h3 className="text-lg font-semibold">Members</h3>
         <p>Member list is only visible to admins.</p>
         <p className="mt-2 text-sm">{activeMembers.length} Active Members</p>
-        <p className="text-xs text-gray-300 mt-4">Debug: {members.length} raw records</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-purple-50 p-4 rounded-xl border border-purple-100">
-        <div>
-          <h4 className="font-semibold text-purple-900">Invite Members</h4>
-          <p className="text-sm text-purple-700">Share this link to let people join automatically (as pending).</p>
-        </div>
-        <div className="flex gap-2 w-full sm:w-auto">
-          <Input value={inviteLink} readOnly className="bg-white text-xs font-mono" />
-          <Button onClick={copyLink} variant="outline" className="whitespace-nowrap">Copy Link</Button>
-        </div>
-      </div>
-
       <div className="flex justify-between items-center">
         <div>
           <h3 className="text-lg font-semibold">Group Members</h3>
           <p className="text-sm text-gray-500">Manage who has access to this group</p>
         </div>
-        <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <UserPlus className="w-4 h-4 mr-2" /> Manually Add
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Manually Add Member</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label>Email Address</Label>
-                <Input value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} placeholder="user@example.com" />
-              </div>
-              <div className="space-y-2">
-                <Label>Role</Label>
-                <Select value={inviteRole} onValueChange={setInviteRole}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent className="z-[60]">
-                    <SelectItem value="member">Member</SelectItem>
-                    <SelectItem value="client">Client</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="virtual-assistant">Virtual Assistant</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button onClick={() => inviteMutation.mutate({ email: inviteEmail, role: inviteRole })} disabled={!inviteEmail}>Add Active Member</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </div>
 
       {/* Pending Applications (Interested -> Member) */}

@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogT
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Users, Plus, Settings, Video, AlertCircle, ArrowLeft, Loader2, Building, Home, Heart, Sparkles, Brain, Briefcase, Calendar, MessageSquare, FileText, Bell, Eye, EyeOff, Link as LinkIcon, ExternalLink, Clock, Trash2, Filter, LayoutGrid, List, Lock, Printer } from 'lucide-react';
+import { Users, Plus, Settings, Video, AlertCircle, ArrowLeft, Loader2, Building, Home, Heart, Sparkles, Brain, Briefcase, Calendar, MessageSquare, FileText, Bell, Eye, EyeOff, Link as LinkIcon, ExternalLink, Clock, Trash2, Filter, LayoutGrid, List, Lock, Printer, UserPlus } from 'lucide-react';
 import { useTheme } from '@/components/shared/useTheme';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -46,6 +46,9 @@ export default function CreatorGroups() {
   const [showHidden, setShowHidden] = useState(false);
   const [showTimeReport, setShowTimeReport] = useState(false);
   const [isAIMobileOpen, setIsAIMobileOpen] = useState(false);
+  const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState('member');
 
   // Admin Check
   const realUserEmail = user?.email ? user?.email.toLowerCase() : '';
@@ -279,6 +282,45 @@ export default function CreatorGroups() {
   const isPending = activeMembership?.status === 'pending';
   const isInterested = activeMembership?.status === 'interested' || activeMembership?.pending_approval; // Treat pending approval as interested mode
   const isMember = !!activeMembership && (activeMembership.status === 'active' || activeMembership.status === 'trial');
+  const canInvite = isAdmin || (isMember && activeGroup?.settings?.allow_member_invites);
+
+  // Invite Mutation
+  const inviteMutation = useMutation({
+    mutationFn: async (data) => {
+      const email = (data.email || '').trim().toLowerCase();
+      if (!email) throw new Error('Email required');
+      
+      // Determine Role and Level
+      // If admin, use selected role. If member, use defaults from settings.
+      const roleToUse = isAdmin ? data.role : (activeGroup.settings?.default_invite_role || 'member');
+      const levelToUse = isAdmin ? 'Member' : (activeGroup.settings?.default_invite_level || 'Member'); // Admin UI doesn't have level selector yet, default to Member. Member invite uses settings.
+
+      const existing = await base44.entities.CreatorGroupMember.filter({ group_id: activeGroup.id, user_email: email });
+      if (existing.length > 0) {
+        // Upsert: promote to active and update role
+        return base44.entities.CreatorGroupMember.update(existing[0].id, {
+          role: roleToUse,
+          status: 'active',
+          level: levelToUse,
+          joined_date: existing[0].joined_date || new Date().toISOString()
+        });
+      }
+      return base44.entities.CreatorGroupMember.create({
+        group_id: activeGroup.id,
+        user_email: email,
+        role: roleToUse,
+        status: 'active',
+        level: levelToUse,
+        joined_date: new Date().toISOString()
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['groupMembers', activeGroup.id]); // Invalidate members list
+      setIsInviteOpen(false);
+      setInviteEmail('');
+      alert('Member invited successfully!');
+    }
+  });
 
   // Redirect Interested users to the Interested Dashboard
   const navigate = useNavigate();
@@ -981,6 +1023,54 @@ export default function CreatorGroups() {
               </div>
             )}
 
+            {/* Invite Button */}
+            {canInvite && (
+              <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm" className="hidden sm:flex bg-purple-600 hover:bg-purple-700 text-white shadow-sm border-0">
+                    <UserPlus className="w-4 h-4 mr-2" /> Invite
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Invite Member</DialogTitle>
+                    <CardDescription>
+                      {isAdmin 
+                        ? "Add a new member and assign their role." 
+                        : `Invite a new member to join as ${activeGroup.settings?.default_invite_role || 'member'}.`}
+                    </CardDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label>Email Address</Label>
+                      <Input value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} placeholder="user@example.com" />
+                    </div>
+                    
+                    {isAdmin && (
+                      <div className="space-y-2">
+                        <Label>Role</Label>
+                        <Select value={inviteRole} onValueChange={setInviteRole}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent className="z-[60]">
+                            <SelectItem value="member">Member</SelectItem>
+                            <SelectItem value="client">Client</SelectItem>
+                            <SelectItem value="manager">Manager</SelectItem>
+                            <SelectItem value="admin">Admin</SelectItem>
+                            <SelectItem value="virtual-assistant">Virtual Assistant</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                  </div>
+                  <DialogFooter>
+                    <Button onClick={() => inviteMutation.mutate({ email: inviteEmail, role: inviteRole })} disabled={!inviteEmail || inviteMutation.isPending}>
+                      {inviteMutation.isPending ? 'Inviting...' : 'Send Invite'}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            )}
+
             {/* Mobile AI Button */}
             {(activeGroup.type === 'client-portal' || activeGroup.type === 'agency') && (
               <Button 
@@ -990,6 +1080,17 @@ export default function CreatorGroups() {
               >
                 <Sparkles className="w-4 h-4" />
               </Button>
+            )}
+            
+            {/* Mobile Invite Button (Icon Only) */}
+            {canInvite && (
+               <Button 
+                 size="sm" 
+                 className="sm:hidden bg-purple-600 hover:bg-purple-700 text-white border-0 shadow-sm"
+                 onClick={() => setIsInviteOpen(true)}
+               >
+                 <UserPlus className="w-4 h-4" />
+               </Button>
             )}
           </div>
         </div>

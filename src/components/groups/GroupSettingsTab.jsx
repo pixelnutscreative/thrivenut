@@ -42,6 +42,7 @@ export default function GroupSettingsTab({ group }) {
         </TabsContent>
 
         <TabsContent value="membership" className="space-y-6 mt-6">
+          <MemberInviteSettings group={group} />
           <MemberLevelsSettings group={group} />
           <GroupAccessSettings group={group} />
         </TabsContent>
@@ -152,6 +153,85 @@ function RetainerSettings({ group }) {
           />
         </CardContent>
       )}
+    </Card>
+  );
+}
+
+function MemberInviteSettings({ group }) {
+  const queryClient = useQueryClient();
+  const [allowInvites, setAllowInvites] = useState(group.settings?.allow_member_invites || false);
+  const [defaultRole, setDefaultRole] = useState(group.settings?.default_invite_role || 'member');
+  const [defaultLevel, setDefaultLevel] = useState(group.settings?.default_invite_level || 'Member');
+
+  const updateMutation = useMutation({
+    mutationFn: (data) => base44.entities.CreatorGroup.update(group.id, { settings: { ...group.settings, ...data } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['activeGroup', group.id]);
+      alert('Invite settings updated!');
+    }
+  });
+
+  const handleSave = () => {
+    updateMutation.mutate({
+      allow_member_invites: allowInvites,
+      default_invite_role: defaultRole,
+      default_invite_level: defaultLevel
+    });
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Member Invitations</CardTitle>
+        <CardDescription>Control how members are invited to the group.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <div className="font-medium">Allow Members to Invite</div>
+            <div className="text-sm text-gray-500">If enabled, regular members can invite others.</div>
+          </div>
+          <Switch
+            checked={allowInvites}
+            onCheckedChange={setAllowInvites}
+          />
+        </div>
+
+        {allowInvites && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
+            <div className="space-y-2">
+              <Label>Default Role for Invites</Label>
+              <Select value={defaultRole} onValueChange={setDefaultRole}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="member">Member</SelectItem>
+                  <SelectItem value="client">Client</SelectItem>
+                  <SelectItem value="virtual-assistant">Virtual Assistant</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Default Level for Invites</Label>
+              <Select value={defaultLevel} onValueChange={setDefaultLevel}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Member">Member (Default)</SelectItem>
+                  {group.member_levels?.map(l => <SelectItem key={l} value={l}>{l}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        )}
+
+        <div className="flex justify-end">
+          <Button onClick={handleSave} disabled={updateMutation.isPending}>Save Settings</Button>
+        </div>
+      </CardContent>
     </Card>
   );
 }
