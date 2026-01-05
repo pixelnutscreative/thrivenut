@@ -21,9 +21,23 @@ const veteranBranches = [
 const generations = ['Gen Z', 'Millennial', 'Gen X', 'Boomer', 'Silent', 'Other'];
 
 const defaultFamilyRoles = [
+  // Parents
   'Mom', 'Dad', 'Single Mom', 'Single Dad', 'SAHM', 'SAHD', 
-  'Grandma', 'Grandpa', 'Widow', 'Widower', 'Empty Nester', 
-  'Foster Parent', 'Step-Parent', 'Caregiver'
+  'Foster Parent', 'Step-Parent', 'Co-Parent',
+  // Grandparents
+  'Grandma', 'Grandpa', 'Great-Grandparent',
+  // Extended Family
+  'Aunt', 'Uncle', 'Godparent', 'Caregiver',
+  // Relationship Status
+  'Single', 'Married', 'Partnered', 'Widow', 'Widower', 
+  // Life Stage
+  'Empty Nester', 'Retiree', 'Student',
+  // Pets (General)
+  'Pet Parent', 'Fur Mama', 'Fur Papa',
+  // Specific Pets
+  'Dog Mom', 'Dog Dad', 'Cat Mom', 'Cat Dad',
+  'Bird Parent', 'Reptile Parent', 'Fish Parent', 
+  'Plant Parent', 'Farm Life'
 ];
 
 const defaultSocialPlatforms = [
