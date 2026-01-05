@@ -120,17 +120,25 @@ export default function NotificationHistory() {
                         dangerouslySetInnerHTML={{ __html: notif.message }}
                       />
 
-                      {notif.button_text && notif.button_url && (
+                      {(notif.link || (notif.button_text && notif.button_url)) && (
                         <Button
                           size="sm"
                           className="text-white"
                           style={{ backgroundColor: notif.button_color || '#8b5cf6' }}
-                          asChild
+                          onClick={() => {
+                            if (notif.button_text && notif.button_url) {
+                              window.open(notif.button_url, '_blank');
+                            } else if (notif.link) {
+                              if (notif.link.startsWith('http')) {
+                                window.open(notif.link, '_blank');
+                              } else {
+                                window.location.href = notif.link;
+                              }
+                            }
+                          }}
                         >
-                          <a href={notif.button_url} target="_blank" rel="noopener noreferrer">
-                            {notif.button_text}
-                            <ExternalLink className="w-3 h-3 ml-2" />
-                          </a>
+                          {notif.button_text || 'View Item'}
+                          <ExternalLink className="w-3 h-3 ml-2" />
                         </Button>
                       )}
                     </CardContent>
@@ -184,17 +192,25 @@ export default function NotificationHistory() {
                         dangerouslySetInnerHTML={{ __html: notif.message }}
                       />
 
-                      {notif.button_text && notif.button_url && (
+                      {(notif.link || (notif.button_text && notif.button_url)) && (
                         <Button
                           size="sm"
                           className="text-white"
                           style={{ backgroundColor: notif.button_color || '#8b5cf6' }}
-                          asChild
+                          onClick={() => {
+                            if (notif.button_text && notif.button_url) {
+                              window.open(notif.button_url, '_blank');
+                            } else if (notif.link) {
+                              if (notif.link.startsWith('http')) {
+                                window.open(notif.link, '_blank');
+                              } else {
+                                window.location.href = notif.link;
+                              }
+                            }
+                          }}
                         >
-                          <a href={notif.button_url} target="_blank" rel="noopener noreferrer">
-                            {notif.button_text}
-                            <ExternalLink className="w-3 h-3 ml-2" />
-                          </a>
+                          {notif.button_text || 'View Item'}
+                          <ExternalLink className="w-3 h-3 ml-2" />
                         </Button>
                       )}
                     </CardContent>
