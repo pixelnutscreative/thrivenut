@@ -30,6 +30,7 @@ export default function GroupAnnouncementsSettings({ group }) {
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Notification.create({
       ...data,
+      button_color: data.color, // Map local color state to entity field
       group_id: group.id,
       title: `Announcement: ${group.name}`, // Internal title
       type: 'announcement',
