@@ -4,9 +4,21 @@ import { base44 } from '@/api/base44Client';
 import { X } from 'lucide-react';
 
 export default function AnnouncementBar() {
-  const [dismissed, setDismissed] = useState([]);
+  // Persist dismissed announcements to localStorage
+  const [dismissed, setDismissed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('dismissed_announcements');
+      return saved ? JSON.parse(saved) : [];
+    }
+    return [];
+  });
 
   const [user, setUser] = useState(null);
+
+  // Sync dismissed to localStorage
+  useEffect(() => {
+    localStorage.setItem('dismissed_announcements', JSON.stringify(dismissed));
+  }, [dismissed]);
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => setUser(null));
