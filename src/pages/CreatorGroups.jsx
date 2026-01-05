@@ -31,6 +31,7 @@ import GroupAICompanion from '../components/groups/GroupAICompanion';
 import MarketingOrdersTab from '../components/groups/marketing/MarketingOrdersTab';
 import GroupDiscussionTab from '../components/groups/GroupDiscussionTab';
 import GroupAssetsTab from '../components/groups/GroupAssetsTab';
+import GroupAnnouncementBanner from '../components/groups/GroupAnnouncementBanner';
 
 export default function CreatorGroups() {
   const { user, preferences } = useTheme();
@@ -1370,6 +1371,10 @@ export default function CreatorGroups() {
         </div>
 
         <div className="lg:col-span-3 order-1 lg:order-2">
+
+          <div className="mb-6">
+             <GroupAnnouncementBanner groupId={activeGroupId} />
+          </div>
 
           {/* Retainer Balance Header */}
           {retainerBalance && activeGroup.enable_retainer_management && (retainerBalance.purchased > 0 || isAdmin) && activeGroup.settings?.hide_retainer_balance !== true && (

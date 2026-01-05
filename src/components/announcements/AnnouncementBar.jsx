@@ -4,6 +4,22 @@ import { base44 } from '@/api/base44Client';
 import { X } from 'lucide-react';
 
 export default function AnnouncementBar() {
+  // Check if global announcements are enabled in PlatformConfig
+  const { data: config } = useQuery({
+    queryKey: ['platformConfigAnnouncements'],
+    queryFn: async () => {
+      try {
+        const res = await base44.entities.PlatformConfig.filter({ platform_id: 'global_announcements' });
+        return res[0];
+      } catch (e) {
+        return null;
+      }
+    }
+  });
+
+  // If disabled by admin, return null immediately
+  if (config && config.is_enabled === false) return null;
+
   // Persist dismissed announcements to localStorage
   const [dismissed, setDismissed] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -149,9 +165,11 @@ export default function AnnouncementBar() {
 
   if (!activeBar) return null;
 
-  // Use a simpler style - white background with colored left border/text to avoid "big purple bar"
-  const barColor = activeBar.background_color || '#8b5cf6';
-  
+  // Use solid or gradient style
+  const backgroundStyle = activeBar.background_type === 'gradient'
+    ? { background: `linear-gradient(to right, ${activeBar.gradient_color_start || activeBar.background_color}, ${activeBar.gradient_color_end || activeBar.background_color})` }
+    : { backgroundColor: activeBar.background_color };
+
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
   
   const formattedMessage = activeBar.message.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
@@ -159,42 +177,61 @@ export default function AnnouncementBar() {
   return (
     <div
       data-announcement-bar
-      className="fixed z-[45] bg-white border-b shadow-sm flex items-center justify-between px-4 py-2"
+      className="fixed z-[45] overflow-hidden text-white shadow-md flex items-center"
       style={{
+        ...backgroundStyle,
         fontFamily: activeBar.google_font || 'inherit',
         left: isMobile ? 0 : '288px',
         right: 0,
         top: isMobile ? '56px' : '0',
         width: isMobile ? '100%' : 'calc(100% - 288px)',
-        borderLeft: `4px solid ${barColor}`
+        height: '48px'
       }}
     >
-      <div className="flex-1 flex items-center gap-3 overflow-hidden mr-8">
-        <div 
-          className="text-sm font-medium truncate text-gray-800"
-          dangerouslySetInnerHTML={{ __html: formattedMessage }}
-        />
+      <div className="relative w-full h-full flex items-center px-4">
+        <div className="marquee-container flex-1">
+          <div 
+            className="marquee-content whitespace-nowrap font-medium"
+            dangerouslySetInnerHTML={{ __html: formattedMessage }}
+          />
+        </div>
         
         {activeBar.link && (
           <a
             href={activeBar.link}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap hover:opacity-80 transition-opacity"
-            style={{ backgroundColor: barColor, color: '#ffffff' }}
+            className="ml-4 bg-white/20 hover:bg-white/30 text-white px-3 py-1 rounded-full text-xs font-bold transition-colors z-10 whitespace-nowrap"
           >
             View
           </a>
         )}
-      </div>
 
-      <button
-        onClick={handleDismiss}
-        className="text-gray-400 hover:text-gray-600 transition-colors p-1"
-        aria-label="Dismiss"
-      >
-        <X className="w-4 h-4" />
-      </button>
+        <button
+          onClick={handleDismiss}
+          className="ml-2 text-white/80 hover:text-white transition-colors p-1 z-10"
+          aria-label="Dismiss"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      </div>
+      <style jsx>{`
+        .marquee-container {
+          overflow: hidden;
+          position: relative;
+          height: 100%;
+          display: flex;
+          align-items: center;
+        }
+        .marquee-content {
+          animation: marquee-global 20s linear infinite;
+          padding-left: 100%;
+        }
+        @keyframes marquee-global {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-100%); }
+        }
+      `}</style>
     </div>
   );
 }

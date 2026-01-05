@@ -1,94 +1,68 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Loader2, Upload } from 'lucide-react';
-import ImageUploader from '../settings/ImageUploader';
+import { useTheme } from '../shared/useTheme';
 
 export default function AdminPlatformConfig() {
   const queryClient = useQueryClient();
+  const { user } = useTheme();
 
-  const { data: configs = [], isLoading } = useQuery({
+  const { data: configs = [] } = useQuery({
     queryKey: ['platformConfigs'],
     queryFn: () => base44.entities.PlatformConfig.list(),
   });
 
-  const getConfigValue = (key) => {
-    const config = configs.find(c => c.config_key === key);
-    return config?.config_value || '';
-  };
-
-  const updateConfigMutation = useMutation({
-    mutationFn: async ({ key, value }) => {
-      const existing = configs.find(c => c.config_key === key);
-      if (existing) {
-        return await base44.entities.PlatformConfig.update(existing.id, { config_value: value });
+  const updateMutation = useMutation({
+    mutationFn: async (config) => {
+      if (config.id) {
+        return base44.entities.PlatformConfig.update(config.id, config);
       } else {
-        return await base44.entities.PlatformConfig.create({
-          config_key: key,
-          config_value: value,
-          description: `Logo for ${key}`
-        });
+        return base44.entities.PlatformConfig.create(config);
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['platformConfigs'] });
-    },
+      queryClient.invalidateQueries(['platformConfigs']);
+      queryClient.invalidateQueries(['platformConfigAnnouncements']);
+    }
   });
 
-  if (isLoading) {
-    return <Loader2 className="w-6 h-6 animate-spin mx-auto" />;
-  }
+  const toggleFeature = (id, label, isEnabled) => {
+    const existing = configs.find(c => c.platform_id === id);
+    updateMutation.mutate({
+      id: existing?.id,
+      platform_id: id,
+      display_label: label,
+      is_enabled: isEnabled,
+      display_order: 0
+    });
+  };
+
+  const isAnnouncementsEnabled = configs.find(c => c.platform_id === 'global_announcements')?.is_enabled !== false;
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Platform Branding</CardTitle>
+        <CardTitle>Platform Feature Toggles</CardTitle>
+        <CardDescription>Enable or disable global platform features.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <Label className="text-lg font-semibold">Pixel's AI Toolbox</Label>
-            <div className="space-y-2">
-              <Label>Logo</Label>
-              <ImageUploader
-                currentImage={getConfigValue('pixels_toolbox_logo')}
-                onImageChange={(url) => updateConfigMutation.mutate({ key: 'pixels_toolbox_logo', value: url })}
-                size="small"
-              />
-            </div>
+        <div className="flex items-center justify-between p-4 border rounded-lg">
+          <div className="space-y-0.5">
+            <Label className="text-base">Global Announcement Bar</Label>
+            <p className="text-sm text-gray-500">
+              Show the scrolling announcement bar at the top of the entire app.
+            </p>
           </div>
-
-          <div className="space-y-4">
-            <Label className="text-lg font-semibold">Let's Go Nuts</Label>
-            <div className="space-y-2">
-              <Label>Logo</Label>
-              <ImageUploader
-                currentImage={getConfigValue('lets_go_nuts_logo')}
-                onImageChange={(url) => updateConfigMutation.mutate({ key: 'lets_go_nuts_logo', value: url })}
-                size="small"
-              />
-            </div>
-          </div>
+          <Switch
+            checked={isAnnouncementsEnabled}
+            onCheckedChange={(checked) => toggleFeature('global_announcements', 'Global Announcements', checked)}
+          />
         </div>
-
-        <div className="space-y-4 pt-6 border-t">
-          <Label className="text-lg font-semibold">NutPals Gallery</Label>
-          <div className="space-y-2">
-            <Label>Default Song URL (SoundCloud)</Label>
-            <div className="flex gap-2">
-              <Input 
-                placeholder="https://soundcloud.com/..." 
-                defaultValue={getConfigValue('default_nutpal_song')}
-                onBlur={(e) => updateConfigMutation.mutate({ key: 'default_nutpal_song', value: e.target.value })}
-              />
-            </div>
-            <p className="text-xs text-gray-500">Plays in NutPal gallery if no specific song is set for the style.</p>
-          </div>
-        </div>
-      </CardContent
+      </CardContent>
     </Card>
   );
 }
