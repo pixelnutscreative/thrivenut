@@ -346,6 +346,39 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
   );
 }
 
+function FeedContentDisplay({ content, className = "" }) {
+  const [expanded, setExpanded] = useState(false);
+  
+  if (!content) return null;
+  
+  // Strip HTML to get rough text length for "isLong" check
+  const textLength = content.replace(/<[^>]*>?/gm, '').length;
+  const isLong = textLength > 300;
+
+  return (
+    <div>
+      <div 
+        className={`prose prose-sm max-w-none text-gray-700 ${className} ${!expanded && isLong ? 'max-h-24 overflow-hidden relative' : ''}`}
+      >
+        <div dangerouslySetInnerHTML={{ __html: content }} />
+        {!expanded && isLong && (
+          <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-white to-transparent pointer-events-none" />
+        )}
+      </div>
+      {isLong && (
+        <Button 
+          variant="link" 
+          size="sm" 
+          onClick={() => setExpanded(!expanded)} 
+          className="p-0 h-auto mt-1 text-purple-600 font-medium"
+        >
+          {expanded ? 'Show Less' : 'Read More'}
+        </Button>
+      )}
+    </div>
+  );
+}
+
 function FeedItemCard({ item, isAdmin, currentUser, onEdit, onDelete, onHide, onToggleComplete, isCompleted }) {
   const [shareOpen, setShareOpen] = useState(false);
   const [addToDayOpen, setAddToDayOpen] = useState(false);
@@ -442,7 +475,7 @@ function FeedItemCard({ item, isAdmin, currentUser, onEdit, onDelete, onHide, on
       </CardHeader>
       <CardContent>
         {item.type === 'post' && (
-          <div className="prose prose-sm max-w-none text-gray-700" dangerouslySetInnerHTML={{ __html: item.content }} />
+          <FeedContentDisplay content={item.content} />
         )}
         
         {item.type === 'event' && (
@@ -451,13 +484,13 @@ function FeedItemCard({ item, isAdmin, currentUser, onEdit, onDelete, onHide, on
               <Calendar className="w-4 h-4" />
               <span className="font-semibold">{new Date(item.start_time).toLocaleString()}</span>
             </div>
-            <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: item.description }} />
+            <FeedContentDisplay content={item.description} />
           </div>
         )}
 
         {item.type === 'resource' && (
           <div className="text-sm text-gray-600 space-y-2">
-            <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: item.description }} />
+            <FeedContentDisplay content={item.description} />
             {item.url && (
               <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:underline flex items-center gap-1">
                 <LinkIcon className="w-3 h-3" /> Open Resource
@@ -468,7 +501,7 @@ function FeedItemCard({ item, isAdmin, currentUser, onEdit, onDelete, onHide, on
 
         {item.type === 'training' && (
           <div className="text-sm text-gray-600 space-y-2">
-             <p>{item.description}</p>
+             <FeedContentDisplay content={item.description} />
              {item.video_url && (
                 <a href={item.video_url} target="_blank" rel="noopener noreferrer" className="text-red-600 hover:underline flex items-center gap-1">
                   <Video className="w-3 h-3" /> Watch Video
