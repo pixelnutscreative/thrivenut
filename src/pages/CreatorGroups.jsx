@@ -321,36 +321,36 @@ export default function CreatorGroups() {
     }
   });
 
-  // Fetch Referral Link for current user (for invite link generation)
-  const { data: myReferralLink, isLoading: isReferralLoading } = useQuery({
-    queryKey: ['myReferralLink', user?.email],
+  // Fetch Referral Link(s) for current user
+  const { data: myReferralLinks = [], isLoading: isReferralLoading } = useQuery({
+    queryKey: ['myReferralLinks', user?.email],
     queryFn: async () => {
-      if (!user?.email) return null;
-      const links = await base44.entities.ReferralLink.filter({ user_email: user?.email, is_active: true });
-      return links[0] || null;
+      if (!user?.email) return [];
+      // Fetch all active links
+      return await base44.entities.ReferralLink.filter({ user_email: user?.email, is_active: true });
     },
     enabled: !!user?.email && isInviteOpen
   });
 
+  const [selectedCodeId, setSelectedCodeId] = useState(null);
+
   // Create/Update Referral Code Mutation
   const referralCodeMutation = useMutation({
-    mutationFn: async (code) => {
+    mutationFn: async ({ code, id }) => {
       // Basic validation
       if (!code || code.length < 3) throw new Error("Code too short");
       
-      // Check uniqueness if changing
-      if (myReferralLink && myReferralLink.referral_code === code) return myReferralLink;
-
       const existing = await base44.entities.ReferralLink.filter({ referral_code: code });
+      // Check if code taken by someone else
       if (existing.length > 0 && existing[0].user_email !== user?.email) {
         throw new Error("This code is already taken.");
       }
 
-      if (myReferralLink) {
-        return base44.entities.ReferralLink.update(myReferralLink.id, { referral_code: code });
+      if (id) {
+        // Updating existing
+        return base44.entities.ReferralLink.update(id, { referral_code: code });
       } else {
         // Create new
-        // Note: initializeReferralCode usually handles creating random one, but we can creating specific one here
         return base44.entities.ReferralLink.create({
           user_email: user.email,
           referral_code: code,
@@ -359,27 +359,42 @@ export default function CreatorGroups() {
         });
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries(['myReferralLink', user?.email]);
-      setInviteStep('link');
+    onSuccess: (updatedLink) => {
+      queryClient.invalidateQueries(['myReferralLinks', user?.email]);
+      // If we just updated/created, make sure it's selected
+      setEditingReferralCode(updatedLink.referral_code);
+      setSelectedCodeId(updatedLink.id);
+      // Don't auto-advance for "Save" action, user will click Continue. 
+      // Actually, user flow: "Save" -> Updates code -> Then they can continue.
+      // But prompt says "Make them hit a save button ... and it has to update".
+      alert("Code updated successfully!");
     },
     onError: (err) => alert(err.message)
   });
 
   useEffect(() => {
-    if (isInviteOpen && myReferralLink) {
-      setEditingReferralCode(myReferralLink.referral_code);
-      // If code looks like a random UUID or long scramble (e.g. > 15 chars), default to check step
-      // Otherwise if it looks custom, user might still want to change it, but maybe we can go to link step?
-      // User requested: "if they’ve never customized... pop up". 
-      // We'll stick to 'check' step initially to be safe as requested.
-      setInviteStep('check');
-    } else if (isInviteOpen && !isReferralLoading && !myReferralLink) {
-        // No code yet
+    if (isInviteOpen && !isReferralLoading) {
+      if (myReferralLinks.length > 0) {
+        // If we haven't selected one yet, or the current selection is invalid, pick the first
+        if (!selectedCodeId || !myReferralLinks.find(l => l.id === selectedCodeId)) {
+           const defaultLink = myReferralLinks[0];
+           setSelectedCodeId(defaultLink.id);
+           setEditingReferralCode(defaultLink.referral_code);
+        }
+      } else {
         setEditingReferralCode('');
-        setInviteStep('check');
+        setSelectedCodeId(null);
+      }
+      setInviteStep('check');
     }
-  }, [isInviteOpen, myReferralLink, isReferralLoading]);
+  }, [isInviteOpen, myReferralLinks, isReferralLoading]);
+
+  // Sync editing text when selection changes (for dropdown mode)
+  const handleSelectionChange = (id) => {
+    setSelectedCodeId(id);
+    const link = myReferralLinks.find(l => l.id === id);
+    if (link) setEditingReferralCode(link.referral_code);
+  };
 
   // Redirect Interested users to the Interested Dashboard
   const navigate = useNavigate();
@@ -1103,30 +1118,61 @@ export default function CreatorGroups() {
                   ) : inviteStep === 'check' ? (
                     <div className="space-y-4 py-4">
                       <div className="bg-purple-50 p-4 rounded-lg border border-purple-100">
-                        <h4 className="font-semibold text-purple-900 mb-1">Confirm Your Referral Code</h4>
+                        <h4 className="font-semibold text-purple-900 mb-1">Select Referral Code</h4>
                         <p className="text-sm text-purple-700 mb-3">
-                          This code is attached to your invite link so you get credit for new members.
+                          Choose which code to attach to your invite link.
                         </p>
-                        <div className="space-y-2">
-                          <Label>Your Code</Label>
-                          <Input 
-                            value={editingReferralCode} 
-                            onChange={(e) => setEditingReferralCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
-                            placeholder="YOURCODE" 
-                            className="font-mono uppercase tracking-wider"
-                          />
-                          <p className="text-xs text-gray-500">
-                            {myReferralLink ? "You can customize this if you want." : "Create a unique code for yourself."}
-                          </p>
-                        </div>
+                        
+                        {myReferralLinks.length > 1 ? (
+                          <div className="space-y-2">
+                            <Label>Select Code</Label>
+                            <Select value={selectedCodeId} onValueChange={handleSelectionChange}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a code" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {myReferralLinks.map(link => (
+                                  <SelectItem key={link.id} value={link.id}>
+                                    {link.referral_code}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <p className="text-xs text-gray-500">
+                              You have multiple codes. Select one to use.
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            <Label>Your Code</Label>
+                            <div className="flex gap-2">
+                              <Input 
+                                value={editingReferralCode} 
+                                onChange={(e) => setEditingReferralCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
+                                placeholder="YOURCODE" 
+                                className="font-mono uppercase tracking-wider"
+                              />
+                              <Button 
+                                variant="outline" 
+                                onClick={() => referralCodeMutation.mutate({ code: editingReferralCode, id: selectedCodeId })}
+                                disabled={referralCodeMutation.isPending || (selectedCodeId && myReferralLinks.find(l=>l.id===selectedCodeId)?.referral_code === editingReferralCode)}
+                              >
+                                {referralCodeMutation.isPending ? '...' : 'Save'}
+                              </Button>
+                            </div>
+                            <p className="text-xs text-gray-500">
+                              {myReferralLinks.length === 1 ? "You can customize your code here. Click Save to update." : "Create a unique code for yourself."}
+                            </p>
+                          </div>
+                        )}
                       </div>
                       <DialogFooter>
                         <Button 
-                          onClick={() => referralCodeMutation.mutate(editingReferralCode)} 
-                          disabled={!editingReferralCode || referralCodeMutation.isPending}
+                          onClick={() => setInviteStep('link')} 
+                          disabled={!editingReferralCode}
                           className="w-full"
                         >
-                          {referralCodeMutation.isPending ? 'Saving...' : 'Continue to Invite Link'}
+                          Continue with {editingReferralCode}
                         </Button>
                       </DialogFooter>
                     </div>
@@ -1140,19 +1186,19 @@ export default function CreatorGroups() {
                       <TabsContent value="link" className="space-y-4 py-4">
                         <div className="space-y-3">
                           <p className="text-sm text-gray-600">
-                            Copy this unique link to invite people. It includes your referral code <strong>{myReferralLink?.referral_code}</strong>.
+                            Copy this unique link to invite people. It includes your referral code <strong>{editingReferralCode}</strong>.
                           </p>
                           <div className="flex items-center gap-2">
                             <Input 
                               readOnly 
-                              value={`https://${window.location.hostname}/CreatorGroups?invite=${activeGroup.invite_code}&ref=${myReferralLink?.referral_code}`} 
+                              value={`https://${window.location.hostname}/CreatorGroups?invite=${activeGroup.invite_code}&ref=${editingReferralCode}`} 
                               className="bg-gray-50 font-mono text-xs"
                             />
                             <Button 
                               size="icon" 
                               variant="outline" 
                               onClick={() => {
-                                navigator.clipboard.writeText(`https://${window.location.hostname}/CreatorGroups?invite=${activeGroup.invite_code}&ref=${myReferralLink?.referral_code}`);
+                                navigator.clipboard.writeText(`https://${window.location.hostname}/CreatorGroups?invite=${activeGroup.invite_code}&ref=${editingReferralCode}`);
                                 alert("Link copied!");
                               }}
                             >
@@ -1164,7 +1210,7 @@ export default function CreatorGroups() {
                           </div>
                         </div>
                         <Button variant="ghost" size="sm" onClick={() => setInviteStep('check')} className="w-full mt-2 text-gray-400">
-                          Edit Referral Code
+                          Change Referral Code
                         </Button>
                       </TabsContent>
 
