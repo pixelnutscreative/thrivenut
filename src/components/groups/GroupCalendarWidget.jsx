@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Calendar } from '@/components/ui/calendar';
 import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Clock } from 'lucide-react';
+import { Clock, Link as LinkIcon } from 'lucide-react';
 import { isSameDay, parseISO, format } from 'date-fns';
 
 export default function GroupCalendarWidget({ group, myMembership, isAdmin }) {
@@ -55,6 +55,18 @@ export default function GroupCalendarWidget({ group, myMembership, isAdmin }) {
                             </span>
                         </div>
                     </div>
+                    {(event.link || (event.location && event.location.startsWith('http'))) && (
+                        <a 
+                            href={event.link || event.location} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="p-2 text-purple-600 hover:bg-purple-50 rounded-full transition-colors"
+                            title="Join Event"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <LinkIcon className="w-4 h-4" />
+                        </a>
+                    )}
                 </div>
             )) : (
                 <div className="text-sm text-gray-400 italic text-center py-6 bg-gray-50 dark:bg-gray-800/50 rounded-lg">

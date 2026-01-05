@@ -490,103 +490,80 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
         </div>
       )}
 
-      <div className="grid gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {visibleEvents.map(event => (
-          <Card key={event.id}>
-            <CardContent className="p-4 flex flex-col md:flex-row gap-4 items-start">
-              <div className="bg-purple-100 text-purple-700 p-3 rounded-lg text-center min-w-[80px]">
-                <div className="text-xs font-bold uppercase">{event.start_time ? format(new Date(event.start_time), 'MMM') : 'TBA'}</div>
-                <div className="text-2xl font-bold">{event.start_time ? format(new Date(event.start_time), 'd') : '--'}</div>
-                <div className="text-xs">{event.start_time ? new Date(event.start_time).toLocaleTimeString([], {hour: 'numeric', minute:'2-digit'}) : ''}</div>
+          <Card key={event.id} className="flex flex-col h-full hover:shadow-md transition-shadow">
+            <CardContent className="p-4 flex flex-col gap-4 flex-1">
+              <div className="flex justify-between items-start w-full">
+                <div className="bg-purple-100 text-purple-700 p-2 rounded-lg text-center min-w-[70px]">
+                  <div className="text-[10px] font-bold uppercase">{event.start_time ? format(new Date(event.start_time), 'MMM') : 'TBA'}</div>
+                  <div className="text-xl font-bold">{event.start_time ? format(new Date(event.start_time), 'd') : '--'}</div>
+                  <div className="text-[10px]">{event.start_time ? new Date(event.start_time).toLocaleTimeString([], {hour: 'numeric', minute:'2-digit'}) : ''}</div>
+                </div>
+                
+                {(isAdmin || event.created_by === currentUser?.email) && (
+                  <div className="flex gap-1 -mr-2 -mt-2">
+                    <Button variant="ghost" size="icon" onClick={() => handleEdit(event)} className="text-gray-400 hover:text-purple-600 h-8 w-8" title="Edit">
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                    {isAdmin && (
+                      <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(event.id)} className="text-gray-400 hover:text-red-500 h-8 w-8" title="Delete">
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                )}
               </div>
               
               <div className="flex-1">
-                <div className="flex justify-between items-start">
-                  <h4 className="font-bold text-lg">{event.title}</h4>
-                  {(isAdmin || event.created_by === currentUser?.email) && (
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => handleEdit(event)} className="text-gray-500 hover:text-purple-600" title="Edit">
-                        <Pencil className="w-5 h-5" />
-                      </Button>
-                      {isAdmin && (
-                        <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(event.id)} className="text-red-500" title="Delete">
-                          <Trash2 className="w-5 h-5" />
-                        </Button>
-                      )}
-                    </div>
-                  )}
-                </div>
-                <div className="prose prose-sm text-gray-600 mt-1 max-w-none" dangerouslySetInnerHTML={{ __html: event.description }} />
+                <h4 className="font-bold text-lg mb-2 leading-tight line-clamp-2">{event.title}</h4>
+                <div className="prose prose-sm text-gray-600 text-xs line-clamp-3 mb-3" dangerouslySetInnerHTML={{ __html: event.description }} />
                 
-                {event.edited_by && (
-                  <p className="text-xs text-purple-400 italic mt-2">
-                    Edited by {event.edited_by === currentUser?.email ? 'you' : event.edited_by} on {new Date(event.edited_at).toLocaleDateString()}
-                  </p>
-                )}
-
                 {(() => {
                   const now = new Date();
-                  const twoWeeksLater = new Date();
-                  twoWeeksLater.setDate(now.getDate() + 14);
-
                   const futureOccurrences = (event.occurrences || [])
-                    .filter(o => new Date(o.start_time) > now)
-                    .sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
+                    .filter(o => new Date(o.start_time) > now);
 
-                  const occurrencesToShow = futureOccurrences.filter(o => new Date(o.start_time) <= twoWeeksLater);
-
-                  if (occurrencesToShow.length === 0) return null;
+                  if (futureOccurrences.length === 0) return null;
 
                   return (
-                    <div className="mt-2 text-sm text-gray-600">
-                      <div className="font-medium">Upcoming Sessions (Next 2 Weeks):</div>
-                      <ul className="list-disc ml-5">
-                        {occurrencesToShow.map((o, i) => (
-                          <li key={i}>
-                            {o.start_time ? `${new Date(o.start_time).toLocaleString([], {weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'})}${o.end_time ? ` - ${new Date(o.end_time).toLocaleTimeString([], {hour: 'numeric', minute: '2-digit'})}` : ''}` : ''}
-                          </li>
-                        ))}
-                      </ul>
-                      {futureOccurrences.length > occurrencesToShow.length && (
-                        <p className="text-xs text-gray-500 mt-1">and {futureOccurrences.length - occurrencesToShow.length} more upcoming...</p>
-                      )}
+                    <div className="text-xs text-purple-600 font-medium mb-2">
+                      +{futureOccurrences.length} future sessions
                     </div>
                   );
                 })()}
 
-                <div className="mt-4 pt-4 border-t flex flex-wrap gap-2 justify-between items-center">
-                  <div className="flex gap-4 text-sm text-gray-500">
+                <div className="space-y-2 mt-auto">
                     {event.link && (
-                      <a href={event.link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-blue-600 hover:underline">
-                        <LinkIcon className="w-4 h-4" /> Join Link
+                      <a href={event.link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs text-blue-600 hover:underline truncate">
+                        <LinkIcon className="w-3 h-3 flex-shrink-0" /> Join Link
                       </a>
                     )}
                     {event.location && (
-                      <div className="flex items-center gap-1">
-                        <MapPin className="w-4 h-4" /> {event.location}
+                      <div className="flex items-center gap-2 text-xs text-gray-500 truncate">
+                        <MapPin className="w-3 h-3 flex-shrink-0" /> {event.location}
                       </div>
                     )}
-                  </div>
-                  
-                  <div className="flex gap-2">
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      className="gap-2 text-purple-600 border-purple-200 hover:bg-purple-50"
-                      onClick={() => handleAddToMyDay(event)}
-                    >
-                      <CalendarPlus className="w-3 h-3" /> Add to My Day
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      variant="ghost" 
-                      className="gap-2 text-gray-500"
-                      onClick={() => handleShare(event)}
-                    >
-                      <Share2 className="w-3 h-3" /> Share
-                    </Button>
-                  </div>
                 </div>
+              </div>
+
+              <div className="pt-3 border-t flex gap-2 justify-between mt-auto">
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="text-xs h-8 flex-1 text-purple-600 border-purple-200 hover:bg-purple-50"
+                  onClick={() => handleAddToMyDay(event)}
+                >
+                  <CalendarPlus className="w-3 h-3 mr-1" /> Add
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  className="text-xs h-8 w-8 px-0 text-gray-500"
+                  onClick={() => handleShare(event)}
+                >
+                  <Share2 className="w-3 h-3" />
+                </Button>
               </div>
             </CardContent>
           </Card>
