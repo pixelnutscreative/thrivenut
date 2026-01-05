@@ -24,60 +24,25 @@ export default function MasterUsernameSearch({
   const [searchTerm, setSearchTerm] = useState('');
   const containerRef = useRef(null);
 
-  // Fetch ALL TikTok contacts from all users (master database)
+  // Fetch ALL TikTok contacts from all users (master database) via backend function to bypass RLS
   const { data: allContacts = [] } = useQuery({
     queryKey: ['masterTikTokContacts'],
-    queryFn: () => base44.entities.TikTokContact.list('username', 5000),
+    queryFn: async () => {
+      const response = await base44.functions.invoke('searchMasterContacts');
+      return response.data.contacts || [];
+    },
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
-  // Consolidate by username - keep best data for each unique username
+  // Filter out excluded usernames
   const consolidatedContacts = React.useMemo(() => {
-    const byUsername = {};
+    if (!allContacts.length) return [];
     
-    allContacts.forEach(contact => {
+    return allContacts.filter(contact => {
       const username = (contact.username || '').toLowerCase().replace('@', '').trim();
-      if (!username) return;
-      
       // Skip excluded usernames
-      if (excludeUsernames.some(u => u?.toLowerCase().replace('@', '').trim() === username)) return;
-      
-      const displayName = contact.display_name || '';
-      const phonetic = contact.phonetic || '';
-      const realName = contact.real_name || '';
-      const nickname = contact.nickname || '';
-      const imageUrl = contact.image_url || '';
-      
-      if (!byUsername[username]) {
-        byUsername[username] = {
-          username,
-          display_name: displayName,
-          phonetic: phonetic,
-          real_name: realName,
-          nickname: nickname,
-          image_url: imageUrl,
-        };
-      } else {
-        // Prefer non-empty values (merge best data)
-        if (!byUsername[username].display_name && displayName) {
-          byUsername[username].display_name = displayName;
-        }
-        if (!byUsername[username].phonetic && phonetic) {
-          byUsername[username].phonetic = phonetic;
-        }
-        if (!byUsername[username].real_name && realName) {
-          byUsername[username].real_name = realName;
-        }
-        if (!byUsername[username].nickname && nickname) {
-          byUsername[username].nickname = nickname;
-        }
-        if (!byUsername[username].image_url && imageUrl) {
-          byUsername[username].image_url = imageUrl;
-        }
-      }
+      return !excludeUsernames.some(u => u?.toLowerCase().replace('@', '').trim() === username);
     });
-    
-    return Object.values(byUsername).sort((a, b) => a.username.localeCompare(b.username));
   }, [allContacts, excludeUsernames]);
 
   // Filter by search term
