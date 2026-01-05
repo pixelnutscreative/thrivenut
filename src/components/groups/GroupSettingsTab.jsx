@@ -159,9 +159,15 @@ function RetainerSettings({ group }) {
 
 function MemberInviteSettings({ group }) {
   const queryClient = useQueryClient();
-  const [allowInvites, setAllowInvites] = useState(group.settings?.allow_member_invites || false);
+  // Allowed invite roles defaults to empty if not set (only admin/owner can invite by default logic elsewhere)
+  // We'll store an array of roles that CAN invite.
+  const [allowedRoles, setAllowedRoles] = useState(group.settings?.allowed_invite_roles || []);
   const [defaultRole, setDefaultRole] = useState(group.settings?.default_invite_role || 'member');
   const [defaultLevel, setDefaultLevel] = useState(group.settings?.default_invite_level || 'Member');
+  
+  // Membership Questions
+  const [questions, setQuestions] = useState(group.settings?.membership_questions || []);
+  const [newQuestion, setNewQuestion] = useState('');
 
   const updateMutation = useMutation({
     mutationFn: (data) => base44.entities.CreatorGroup.update(group.id, { settings: { ...group.settings, ...data } }),
@@ -173,34 +179,69 @@ function MemberInviteSettings({ group }) {
 
   const handleSave = () => {
     updateMutation.mutate({
-      allow_member_invites: allowInvites,
+      allowed_invite_roles: allowedRoles,
       default_invite_role: defaultRole,
-      default_invite_level: defaultLevel
+      default_invite_level: defaultLevel,
+      membership_questions: questions
     });
   };
+
+  const toggleAllowedRole = (role) => {
+    setAllowedRoles(prev => 
+      prev.includes(role) 
+        ? prev.filter(r => r !== role)
+        : [...prev, role]
+    );
+  };
+
+  const addQuestion = () => {
+    if (newQuestion.trim()) {
+      setQuestions([...questions, newQuestion.trim()]);
+      setNewQuestion('');
+    }
+  };
+
+  const removeQuestion = (idx) => {
+    setQuestions(questions.filter((_, i) => i !== idx));
+  };
+
+  const roles = ['member', 'client', 'virtual-assistant', 'manager'];
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Member Invitations</CardTitle>
-        <CardDescription>Control how members are invited to the group.</CardDescription>
+        <CardDescription>Control who can invite members and how new members join.</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="space-y-1">
-            <div className="font-medium">Allow Members to Invite</div>
-            <div className="text-sm text-gray-500">If enabled, regular members can invite others.</div>
+      <CardContent className="space-y-8">
+        
+        {/* Who Can Invite Section */}
+        <div className="space-y-3">
+          <Label className="text-base font-semibold">Who can invite others?</Label>
+          <p className="text-sm text-gray-500">Admins and Owners can always invite. Select which other roles can also send invites.</p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {roles.map(role => (
+              <label key={role} className="flex items-center gap-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={allowedRoles.includes(role)}
+                  onChange={() => toggleAllowedRole(role)}
+                  className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                />
+                <span className="text-sm font-medium capitalize">{role.replace('-', ' ')}</span>
+              </label>
+            ))}
           </div>
-          <Switch
-            checked={allowInvites}
-            onCheckedChange={setAllowInvites}
-          />
         </div>
 
-        {allowInvites && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
+        {/* New Member Defaults Section */}
+        <div className="space-y-4 pt-4 border-t">
+          <Label className="text-base font-semibold">New Member Defaults</Label>
+          <p className="text-sm text-gray-500">When someone is invited by a non-admin, they will join with these settings.</p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label>Default Role for Invites</Label>
+              <Label>Role</Label>
               <Select value={defaultRole} onValueChange={setDefaultRole}>
                 <SelectTrigger>
                   <SelectValue />
@@ -214,7 +255,7 @@ function MemberInviteSettings({ group }) {
             </div>
             
             <div className="space-y-2">
-              <Label>Default Level for Invites</Label>
+              <Label>Level</Label>
               <Select value={defaultLevel} onValueChange={setDefaultLevel}>
                 <SelectTrigger>
                   <SelectValue />
@@ -226,10 +267,40 @@ function MemberInviteSettings({ group }) {
               </Select>
             </div>
           </div>
-        )}
+        </div>
 
-        <div className="flex justify-end">
-          <Button onClick={handleSave} disabled={updateMutation.isPending}>Save Settings</Button>
+        {/* Membership Questions Section */}
+        <div className="space-y-4 pt-4 border-t">
+          <Label className="text-base font-semibold">Membership Questions</Label>
+          <p className="text-sm text-gray-500">Questions users must answer when requesting to join.</p>
+          
+          <div className="space-y-2">
+            <div className="flex gap-2">
+              <Input 
+                value={newQuestion} 
+                onChange={e => setNewQuestion(e.target.value)} 
+                placeholder="e.g. Why do you want to join this group?"
+                onKeyDown={e => e.key === 'Enter' && addQuestion()}
+              />
+              <Button onClick={addQuestion} variant="outline" type="button">Add</Button>
+            </div>
+            
+            <div className="space-y-2 mt-2">
+              {questions.map((q, idx) => (
+                <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+                  <span className="text-sm">{q}</span>
+                  <Button variant="ghost" size="sm" onClick={() => removeQuestion(idx)} className="text-gray-400 hover:text-red-500">
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+              {questions.length === 0 && <p className="text-sm text-gray-400 italic">No questions set.</p>}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-end pt-4 border-t">
+          <Button onClick={handleSave} disabled={updateMutation.isPending}>Save All Changes</Button>
         </div>
       </CardContent>
     </Card>

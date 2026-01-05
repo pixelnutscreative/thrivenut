@@ -282,7 +282,7 @@ export default function CreatorGroups() {
   const isPending = activeMembership?.status === 'pending';
   const isInterested = activeMembership?.status === 'interested' || activeMembership?.pending_approval; // Treat pending approval as interested mode
   const isMember = !!activeMembership && (activeMembership.status === 'active' || activeMembership.status === 'trial');
-  const canInvite = isAdmin || (isMember && activeGroup?.settings?.allow_member_invites);
+  const canInvite = isAdmin || (activeGroup?.settings?.allowed_invite_roles || []).includes(activeMembership?.role);
 
   // Invite Mutation
   const inviteMutation = useMutation({
