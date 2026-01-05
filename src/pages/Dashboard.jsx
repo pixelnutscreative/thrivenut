@@ -73,13 +73,15 @@ export default function Dashboard() {
     checkAuth();
   }, []);
 
+  const effectiveEmail = user ? getEffectiveUserEmail(user.email) : null;
+
   const { data: preferences } = useQuery({
-    queryKey: ['preferences', user?.email],
+    queryKey: ['preferences', effectiveEmail],
     queryFn: async () => {
-      const prefs = await base44.entities.UserPreferences.filter({ user_email: user.email });
+      const prefs = await base44.entities.UserPreferences.filter({ user_email: effectiveEmail });
       return prefs[0] || null;
     },
-    enabled: !!user,
+    enabled: !!effectiveEmail,
   });
 
   const [prefKey, setPrefKey] = useState(0);
@@ -118,7 +120,17 @@ export default function Dashboard() {
     }
   }, [user, hasCompletedOnboarding]);
 
-  const enabledModules = preferences?.enabled_modules || [];
+  const DEFAULT_MODULES = [
+    'my_resources', 'my_groups', 'pixels_place', 
+    'quick_notes', 'tasks', 'habits', 'goals', 'vision_board', 'journal', 'finance',
+    'people', 'parenting', 'care_reminders', 'pets',
+    'prayer', 'holy_hitmakers', 
+    'mental_health', 'wellness', 'supplements', 'medications', 'activity',
+    'content_creator_center', 'motivations', 'content_marketplace', 'ai_music_suite', 'tiktok',
+    'share_earn'
+  ];
+
+  const enabledModules = preferences?.enabled_modules || DEFAULT_MODULES;
 
   const { data: selfCareLog } = useQuery({
     queryKey: ['selfCareToday', format(new Date(), 'yyyy-MM-dd')],
