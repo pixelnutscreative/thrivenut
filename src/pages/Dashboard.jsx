@@ -228,7 +228,7 @@ export default function Dashboard() {
   // Check visibility first
   const isWidgetVisible = (widget) => {
     if (!widget.visible) return false;
-    const enabledModules = preferences?.enabled_modules || [];
+    // enabledModules is defined in component scope with defaults
 
     if (widget.id === 'tasks' && !enabledModules.includes('tasks')) return false;
     if (widget.id === 'goals' && !enabledModules.includes('goals')) return false;
