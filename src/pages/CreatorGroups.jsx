@@ -36,9 +36,28 @@ export default function CreatorGroups() {
   const { user, preferences } = useTheme();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeGroupId = searchParams.get('id');
+  const idParam = searchParams.get('id');
+  const slugParam = searchParams.get('slug');
   const activeTab = searchParams.get('tab');
   const browseMode = searchParams.get('mode') === 'browse';
+
+  // State to hold resolved ID from slug
+  const [resolvedGroupId, setResolvedGroupId] = useState(null);
+
+  // Resolve Slug
+  useEffect(() => {
+    const resolveSlug = async () => {
+      if (slugParam && !idParam) {
+        const groups = await base44.entities.CreatorGroup.filter({ slug: slugParam });
+        if (groups.length > 0) {
+          setResolvedGroupId(groups[0].id);
+        }
+      }
+    };
+    resolveSlug();
+  }, [slugParam, idParam]);
+
+  const activeGroupId = idParam || resolvedGroupId;
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
   const [newGroupType, setNewGroupType] = useState('community');

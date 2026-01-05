@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Pin, MessageSquare, Trash2, Pencil, Calendar, Link as LinkIcon, Video, CheckCircle, Eye, EyeOff, FileText, Check, Circle, Share2, CalendarPlus, MoreHorizontal, Globe } from 'lucide-react';
+import { Plus, Pin, MessageSquare, Trash2, Pencil, Calendar, Link as LinkIcon, Video, CheckCircle, Eye, EyeOff, FileText, Check, Circle, Share2, CalendarPlus, MoreHorizontal, Globe, History, Archive } from 'lucide-react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import LevelSelector from './LevelSelector';
@@ -49,12 +49,18 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
     queryFn: () => base44.entities.GroupTraining.filter({ group_id: group.id, active: true }, '-created_date'),
   });
 
+  // 5. Fetch Q&A
+  const { data: qnas = [] } = useQuery({
+    queryKey: ['groupQnA', group.id],
+    queryFn: () => base44.entities.GroupQnA.filter({ group_id: group.id, is_public: true }, '-created_date'),
+  });
+
   const { data: completions = [] } = useQuery({
     queryKey: ['myCompletions', group.id, currentUser?.email],
     queryFn: () => base44.entities.GroupTrainingCompletion.filter({ user_email: currentUser?.email }),
   });
   
-  // 5. Fetch Hidden Preferences
+  // 6. Fetch Hidden Preferences
   const { data: userGroupPref } = useQuery({
     queryKey: ['userGroupPref', group.id, currentUser?.email],
     queryFn: async () => {
@@ -175,6 +181,23 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
     }
   };
 
+  const navigateToTab = (item) => {
+    const newParams = new URLSearchParams(searchParams);
+    
+    // Set tab based on type
+    if (item.type === 'event') newParams.set('tab', 'events');
+    else if (item.type === 'resource') newParams.set('tab', 'resources');
+    else if (item.type === 'training') newParams.set('tab', 'training');
+    else if (item.type === 'qna') newParams.set('tab', 'qna');
+    
+    // Set focus ID if needed (though existing tabs might not auto-scroll yet, this sets the intent)
+    // We can update other tabs later to look for 'highlight' or 'id' param.
+    // For now, at least switch tabs.
+    // newParams.set('highlight', item.id);
+    
+    setSearchParams(newParams);
+  };
+
   // --- Aggregation & Sorting ---
   const feedItems = useMemo(() => {
     const allItems = [
@@ -182,6 +205,7 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
       ...events.map(i => ({ ...i, type: 'event' })),
       ...resources.map(i => ({ ...i, type: 'resource' })),
       ...trainings.map(i => ({ ...i, type: 'training' })),
+      ...qnas.map(i => ({ ...i, type: 'qna', title: `Q&A: ${i.question}` })),
     ];
 
     // Filter by visibility (admin or matching level) AND not hidden
@@ -219,18 +243,24 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end gap-2">
-        <Button 
-          variant={showHidden ? "secondary" : "ghost"} 
-          size="sm"
-          onClick={() => setShowHidden(!showHidden)}
-          className="text-gray-500"
-        >
-          {showHidden ? <Eye className="w-4 h-4 mr-2" /> : <EyeOff className="w-4 h-4 mr-2" />}
-          {showHidden ? "Hide Hidden Items" : "Show Hidden Items"}
-        </Button>
-      
-      {isAdmin && (
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-semibold flex items-center gap-2">
+            Feed
+            {showHidden && <Badge variant="secondary" className="text-xs font-normal">Viewing History</Badge>}
+        </h3>
+        <div className="flex gap-2">
+            <Button 
+            variant={showHidden ? "secondary" : "ghost"} 
+            size="sm"
+            onClick={() => setShowHidden(!showHidden)}
+            className="text-gray-500"
+            title="View History (Hidden Items)"
+            >
+            <History className="w-4 h-4 mr-2" />
+            {showHidden ? "Hide History" : "View History"}
+            </Button>
+        
+        {isAdmin && (
           <Dialog open={isDialogOpen} onOpenChange={(open) => !open && handleCloseDialog()}>
             <DialogTrigger asChild>
               <Button onClick={() => setIsDialogOpen(true)}><Plus className="w-4 h-4 mr-2" /> New Post</Button>
@@ -338,6 +368,8 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
               onHide={() => hideItemMutation.mutate(item.id)}
               onToggleComplete={() => toggleTrainingCompletion.mutate(item.id)}
               isCompleted={completions.some(c => c.training_id === item.id)}
+              onClick={() => item.type !== 'post' && navigateToTab(item)}
+              isHidden={hiddenIds.includes(item.id)}
             />
           ))
         )}
@@ -379,17 +411,18 @@ function FeedContentDisplay({ content, className = "" }) {
   );
 }
 
-function FeedItemCard({ item, isAdmin, currentUser, onEdit, onDelete, onHide, onToggleComplete, isCompleted }) {
+function FeedItemCard({ item, isAdmin, currentUser, onEdit, onDelete, onHide, onToggleComplete, isCompleted, onClick, isHidden }) {
   const [shareOpen, setShareOpen] = useState(false);
   const [addToDayOpen, setAddToDayOpen] = useState(false);
 
   const getIcon = () => {
     switch(item.type) {
-      case 'post': return <MessageSquare className="w-6 h-6 text-blue-500" />;
-      case 'event': return <Calendar className="w-6 h-6 text-green-500" />;
-      case 'resource': return <LinkIcon className="w-6 h-6 text-purple-500" />;
-      case 'training': return <Video className="w-6 h-6 text-red-500" />;
-      default: return <FileText className="w-6 h-6" />;
+      case 'post': return <MessageSquare className="w-5 h-5 text-blue-500" />;
+      case 'event': return <Calendar className="w-5 h-5 text-green-500" />;
+      case 'resource': return <LinkIcon className="w-5 h-5 text-purple-500" />;
+      case 'training': return <Video className="w-5 h-5 text-red-500" />;
+      case 'qna': return <MessageSquare className="w-5 h-5 text-teal-500" />;
+      default: return <FileText className="w-5 h-5" />;
     }
   };
 
@@ -399,26 +432,35 @@ function FeedItemCard({ item, isAdmin, currentUser, onEdit, onDelete, onHide, on
       case 'event': return 'Event';
       case 'resource': return 'Resource';
       case 'training': return 'Training';
+      case 'qna': return 'Q&A';
       default: return 'Item';
     }
   };
 
   return (
-    <Card className={`transition-all hover:shadow-md ${item.is_pinned ? 'border-l-4 border-l-blue-500' : ''}`}>
+    <Card 
+        className={`transition-all hover:shadow-md ${item.is_pinned ? 'border-l-4 border-l-blue-500' : ''} ${isHidden ? 'opacity-60 bg-gray-50' : ''}`}
+    >
       <ShareDialog open={shareOpen} onOpenChange={setShareOpen} item={item} />
       <AddToDayDialog open={addToDayOpen} onOpenChange={setAddToDayOpen} item={item} user={currentUser} />
 
       <CardHeader className="pb-2 flex flex-row justify-between items-start">
-        <div>
+        <div 
+            onClick={onClick} 
+            className={`flex-1 ${item.type !== 'post' ? 'cursor-pointer group' : ''}`}
+        >
           <div className="flex items-center gap-2 mb-1">
-            <Badge variant="secondary" className="text-[10px] flex items-center gap-1">
+            <Badge variant="secondary" className="text-[10px] flex items-center gap-1 group-hover:bg-gray-200 transition-colors">
               {getIcon()} {getLabel()}
             </Badge>
             {item.is_pinned && <Badge className="bg-blue-100 text-blue-700 text-[10px]"><Pin className="w-3 h-3 mr-1" /> Pinned</Badge>}
             {item.is_public && <Badge className="bg-indigo-100 text-indigo-700 text-[10px]"><Globe className="w-3 h-3 mr-1" /> Public</Badge>}
             <span className="text-xs text-gray-400">{new Date(item.created_date).toLocaleDateString()}</span>
           </div>
-          <CardTitle className="text-lg">{item.title}</CardTitle>
+          <CardTitle className="text-lg group-hover:text-purple-600 transition-colors flex items-center gap-2">
+            {item.title}
+            {item.type !== 'post' && <ExternalLink className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400" />}
+          </CardTitle>
           {item.target_levels?.length > 0 && (
             <div className="mt-1">
               <Badge variant="outline" className="text-[10px] text-gray-400">{item.target_levels.join(', ')} only</Badge>
@@ -427,7 +469,7 @@ function FeedItemCard({ item, isAdmin, currentUser, onEdit, onDelete, onHide, on
         </div>
         
         <div className="flex gap-1 items-center">
-          {/* Unified Action Buttons */}
+          {/* Action Buttons */}
           <Button variant="ghost" size="icon" onClick={() => setAddToDayOpen(true)} title="Add to My Day" className="text-gray-500 hover:text-green-600">
             <CalendarPlus className="w-5 h-5" />
           </Button>
@@ -467,8 +509,14 @@ function FeedItemCard({ item, isAdmin, currentUser, onEdit, onDelete, onHide, on
                 </Button>
             )}
             
-            <Button variant="ghost" size="icon" onClick={onHide} className="text-gray-400 hover:text-gray-600" title="Hide from feed">
-              <EyeOff className="w-5 h-5" />
+            <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={onHide} 
+                className={`${isHidden ? 'text-green-600 bg-green-50' : 'text-gray-400 hover:text-gray-600'}`} 
+                title={isHidden ? "Unhide" : "Mark as Seen / Hide"}
+            >
+              {isHidden ? <Eye className="w-5 h-5" /> : <CheckCircle className="w-5 h-5" />}
             </Button>
           </div>
         </div>
@@ -508,6 +556,12 @@ function FeedItemCard({ item, isAdmin, currentUser, onEdit, onDelete, onHide, on
                 </a>
              )}
           </div>
+        )}
+        
+        {item.type === 'qna' && (
+            <div className="text-sm text-gray-600 space-y-2">
+                <p>{item.answer ? "Answered" : "Waiting for answer"}</p>
+            </div>
         )}
       </CardContent>
     </Card>

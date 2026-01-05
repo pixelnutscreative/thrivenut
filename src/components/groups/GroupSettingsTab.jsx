@@ -935,12 +935,25 @@ function GroupNameSettings({ group }) {
   const queryClient = useQueryClient();
   const [name, setName] = useState(group.name);
   const [description, setDescription] = useState(group.description || '');
+  const [slug, setSlug] = useState(group.slug || '');
 
   const updateMutation = useMutation({
-    mutationFn: (data) => base44.entities.CreatorGroup.update(group.id, data),
+    mutationFn: async (data) => {
+      // Check slug uniqueness if changed
+      if (data.slug && data.slug !== group.slug) {
+        const existing = await base44.entities.CreatorGroup.filter({ slug: data.slug });
+        if (existing.length > 0 && existing[0].id !== group.id) {
+          throw new Error('This URL name is already taken.');
+        }
+      }
+      return base44.entities.CreatorGroup.update(group.id, data);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['myGroupsDetails']);
       alert('Group settings updated!');
+    },
+    onError: (err) => {
+      alert(err.message);
     }
   });
 
@@ -955,11 +968,23 @@ function GroupNameSettings({ group }) {
           <Input value={name} onChange={e => setName(e.target.value)} />
         </div>
         <div className="space-y-2">
+          <Label>Group URL Name (Slug)</Label>
+          <div className="flex items-center gap-2">
+            <span className="text-gray-500 text-sm whitespace-nowrap">.../CreatorGroups?slug=</span>
+            <Input 
+              value={slug} 
+              onChange={e => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))} 
+              placeholder="my-group-name"
+            />
+          </div>
+          <p className="text-xs text-gray-500">Only lowercase letters, numbers, and dashes.</p>
+        </div>
+        <div className="space-y-2">
           <Label>Description</Label>
           <Input value={description} onChange={e => setDescription(e.target.value)} />
         </div>
         <div className="flex justify-end">
-          <Button onClick={() => updateMutation.mutate({ name, description })} disabled={!name}>Update Details</Button>
+          <Button onClick={() => updateMutation.mutate({ name, description, slug })} disabled={!name}>Update Details</Button>
         </div>
       </CardContent>
     </Card>
