@@ -149,10 +149,9 @@ export default function AnnouncementBar() {
 
   if (!activeBar) return null;
 
-  const backgroundStyle = activeBar.background_type === 'gradient'
-    ? { background: `linear-gradient(to right, ${activeBar.gradient_color_start}, ${activeBar.gradient_color_end})` }
-    : { backgroundColor: activeBar.background_color };
-
+  // Use a simpler style - white background with colored left border/text to avoid "big purple bar"
+  const barColor = activeBar.background_color || '#8b5cf6';
+  
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
   
   const formattedMessage = activeBar.message.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
@@ -160,52 +159,42 @@ export default function AnnouncementBar() {
   return (
     <div
       data-announcement-bar
-      className="fixed z-[45] overflow-hidden"
+      className="fixed z-[45] bg-white border-b shadow-sm flex items-center justify-between px-4 py-2"
       style={{
-        ...backgroundStyle,
         fontFamily: activeBar.google_font || 'inherit',
         left: isMobile ? 0 : '288px',
         right: 0,
         top: isMobile ? '56px' : '0',
         width: isMobile ? '100%' : 'calc(100% - 288px)',
+        borderLeft: `4px solid ${barColor}`
       }}
     >
-      <div className="relative py-3 px-4">
-        <div className="marquee-container">
+      <div className="flex-1 flex items-center gap-3 overflow-hidden mr-8">
+        <div 
+          className="text-sm font-medium truncate text-gray-800"
+          dangerouslySetInnerHTML={{ __html: formattedMessage }}
+        />
+        
+        {activeBar.link && (
           <a
             href={activeBar.link}
             target="_blank"
             rel="noopener noreferrer"
-            className="marquee-content whitespace-nowrap inline-block hover:opacity-80 transition-opacity"
-            style={{ color: activeBar.text_color }}
-            dangerouslySetInnerHTML={{ __html: formattedMessage }}
-          />
-        </div>
-        <button
-          onClick={handleDismiss}
-          className="absolute top-1/2 right-4 transform -translate-y-1/2 hover:opacity-70 transition-opacity"
-          style={{ color: activeBar.text_color }}
-        >
-          <X className="w-5 h-5" />
-        </button>
+            className="text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap hover:opacity-80 transition-opacity"
+            style={{ backgroundColor: barColor, color: '#ffffff' }}
+          >
+            View
+          </a>
+        )}
       </div>
-      <style jsx>{`
-        .marquee-container {
-          overflow: hidden;
-          display: flex;
-        }
-        .marquee-content {
-          animation: marquee 20s linear infinite;
-        }
-        @keyframes marquee {
-          0% {
-            transform: translateX(100%);
-          }
-          100% {
-            transform: translateX(-100%);
-          }
-        }
-      `}</style>
+
+      <button
+        onClick={handleDismiss}
+        className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+        aria-label="Dismiss"
+      >
+        <X className="w-4 h-4" />
+      </button>
     </div>
   );
 }
