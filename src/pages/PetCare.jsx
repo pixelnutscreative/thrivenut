@@ -13,6 +13,7 @@ import { Plus, Trash2, Edit, Clock, Pill, Phone, PawPrint, Camera, CheckCircle, 
 import { Checkbox } from '@/components/ui/checkbox';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
+import QuickPetCareCheck from '../components/wellness/QuickPetCareCheck';
 
 const activityTypes = [
   { value: 'walk', label: '🚶 Walk', icon: Dog },
@@ -250,11 +251,6 @@ export default function PetCare() {
           <Button onClick={() => setShowModal(true)} className="bg-gradient-to-r from-purple-600 to-pink-600">
             <Plus className="w-4 h-4 mr-2" /> Add Pet
           </Button>
-        </div>
-
-        {/* Quick Check List moved here from Wellness */}
-        <div className="mb-6">
-          <QuickPetCareCheck userEmail={user?.email} />
         </div>
 
         {/* Quick Check List moved here from Wellness */}
