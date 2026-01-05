@@ -584,15 +584,8 @@ export default function CreatorGroups() {
   // Determine if this group is a "Client Group" (agency or client-portal)
   const isClientGroup = ['client-portal', 'agency'].includes(activeGroup?.type);
   
-  // Projects and Meetings are only for Client Groups
-  const clientOnlyTabs = ['projects', 'meetings', 'marketing', 'assets'];
-
-  const availableTabs = allTabs.filter(tab => {
-    if (clientOnlyTabs.includes(tab.id)) {
-      return isClientGroup;
-    }
-    return true;
-  });
+  // All tabs are now potentially available, controlled by Group Type settings
+  const availableTabs = allTabs;
 
   // Sort tabs based on group settings
   const tabOrder = activeGroup?.settings?.tab_order || allTabs.map(t => t.id);
