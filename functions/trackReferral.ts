@@ -28,6 +28,29 @@ Deno.serve(async (req) => {
 
     const referralLink = links[0];
 
+    // Determine if existing user (for 'click' activity)
+    let isExistingUser = false;
+    let finalActivityType = activityType;
+
+    if (activityType === 'click' && email) {
+      try {
+        const users = await base44.asServiceRole.entities.User.filter({ email });
+        if (users.length > 0) {
+          const user = users[0];
+          // If created more than 10 minutes ago, consider existing
+          const created = new Date(user.created_date);
+          const now = new Date();
+          const diffMinutes = (now - created) / 1000 / 60;
+          if (diffMinutes > 10) {
+            isExistingUser = true;
+            finalActivityType = 'click_existing';
+          }
+        }
+      } catch (e) {
+        console.error("User check failed", e);
+      }
+    }
+
     // Log activity with enhanced tracking
     await base44.asServiceRole.entities.ReferralActivity.create({
       referral_code: codeLower,
@@ -35,7 +58,7 @@ Deno.serve(async (req) => {
       tracking_identifier: trackingIdentifier,
       referrer_email: referralLink.user_email,
       referred_email: email || null,
-      activity_type: activityType, // 'click', 'signup', 'upgrade'
+      activity_type: finalActivityType,
       source_type: sourceType || null,
       source_detail: sourceDetail || null,
       activity_date: new Date().toISOString(),
@@ -44,9 +67,13 @@ Deno.serve(async (req) => {
     });
 
     // Update counts
-    if (activityType === 'click') {
+    if (finalActivityType === 'click') {
       await base44.asServiceRole.entities.ReferralLink.update(referralLink.id, {
         total_clicks: (referralLink.total_clicks || 0) + 1
+      });
+    } else if (finalActivityType === 'click_existing') {
+      await base44.asServiceRole.entities.ReferralLink.update(referralLink.id, {
+        total_existing_clicks: (referralLink.total_existing_clicks || 0) + 1
       });
     } else if (activityType === 'signup') {
       await base44.asServiceRole.entities.ReferralLink.update(referralLink.id, {

@@ -208,10 +208,11 @@ export default function ShareDashboard() {
   const pointsPerUpgrade = pointsConfig.find(c => c.config_key === 'points_per_upgrade')?.points_value || 5;
   const links = referralData?.links || [];
   const totalStats = links.reduce((acc, link) => ({
-    clicks: acc.clicks + (link.stats?.clicks || 0),
-    signups: acc.signups + (link.stats?.signups || 0),
-    upgrades: acc.upgrades + (link.stats?.upgrades || 0)
-  }), { clicks: 0, signups: 0, upgrades: 0 });
+    clicks: acc.clicks + (link.stats?.clicks || 0) + (link.total_clicks || 0), // Handle both potential locations if structure varies
+    existing_clicks: acc.existing_clicks + (link.total_existing_clicks || 0),
+    signups: acc.signups + (link.stats?.signups || 0) + (link.total_signups || 0),
+    upgrades: acc.upgrades + (link.stats?.upgrades || 0) + (link.total_upgrades || 0)
+  }), { clicks: 0, existing_clicks: 0, signups: 0, upgrades: 0 });
   const totalPoints = (totalStats.signups * pointsPerSignup) + (totalStats.upgrades * pointsPerUpgrade);
   const couponProgress = (commissionData?.verifiedPurchaseCount || 0) % 4;
 
@@ -260,10 +261,14 @@ export default function ShareDashboard() {
                   Your Impact & Rewards
                 </h2>
              </div>
-             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                <div className="bg-white p-4 rounded-xl text-center shadow-sm">
                  <p className="text-3xl font-bold text-purple-600">{totalStats.clicks}</p>
-                 <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Total Clicks</p>
+                 <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">New Clicks</p>
+               </div>
+               <div className="bg-white p-4 rounded-xl text-center shadow-sm">
+                 <p className="text-3xl font-bold text-blue-600">{totalStats.existing_clicks}</p>
+                 <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Member Clicks</p>
                </div>
                <div className="bg-white p-4 rounded-xl text-center shadow-sm">
                  <p className="text-3xl font-bold text-teal-600">{totalStats.signups}</p>
@@ -348,7 +353,7 @@ export default function ShareDashboard() {
                         </div>
                         <div className="flex flex-col gap-1">
                             <p className="text-xs text-gray-500">
-                              {link.stats?.clicks || 0} clicks • {link.stats?.signups || 0} signups • {link.stats?.upgrades || 0} upgrades
+                              {(link.total_clicks || 0)} new clicks • {(link.total_existing_clicks || 0)} members • {(link.total_signups || 0)} signups
                             </p>
                             
                             {/* Source Breakdown */}

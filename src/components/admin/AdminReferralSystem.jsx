@@ -30,8 +30,13 @@ export default function AdminReferralSystem() {
   const signupConfig = pointsConfig.find(c => c.config_key === 'points_per_signup');
   const upgradeConfig = pointsConfig.find(c => c.config_key === 'points_per_upgrade');
 
-  const [pointsPerSignup, setPointsPerSignup] = useState(signupConfig?.points_value || 1);
-  const [pointsPerUpgrade, setPointsPerUpgrade] = useState(upgradeConfig?.points_value || 5);
+  const [pointsPerSignup, setPointsPerSignup] = useState(1);
+  const [pointsPerUpgrade, setPointsPerUpgrade] = useState(5);
+
+  React.useEffect(() => {
+    if (signupConfig) setPointsPerSignup(signupConfig.points_value);
+    if (upgradeConfig) setPointsPerUpgrade(upgradeConfig.points_value);
+  }, [signupConfig, upgradeConfig]);
 
   const updatePointsMutation = useMutation({
     mutationFn: async ({ key, value }) => {
