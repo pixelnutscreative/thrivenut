@@ -301,14 +301,19 @@ function CommentSection({ post, currentUser, isAdmin }) {
   };
 
   const createMutation = useMutation({
-    mutationFn: () => base44.entities.GroupDiscussionComment.create({
-      post_id: post.id,
-      author_email: currentUser.email,
-      content: newComment
-    }),
+    mutationFn: async () => {
+      await base44.entities.GroupDiscussionComment.create({
+        post_id: post.id,
+        author_email: currentUser.email,
+        content: newComment
+      });
+      // Bump the parent post
+      await base44.entities.GroupDiscussionPost.update(post.id, { updated_date: new Date().toISOString() });
+    },
     onSuccess: () => {
       setNewComment('');
       queryClient.invalidateQueries(['postComments', post.id]);
+      queryClient.invalidateQueries(['groupDiscussion']); // Refresh list to update sort order
     }
   });
 

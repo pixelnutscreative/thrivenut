@@ -25,10 +25,16 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
   const [showHidden, setShowHidden] = useState(false);
   const canPostPublicly = isAdmin || preferences?.can_create_public_ads;
 
-  // 1. Fetch Posts
+  // 1. Fetch Posts (Announcements)
   const { data: posts = [] } = useQuery({
     queryKey: ['groupPosts', group.id],
     queryFn: () => base44.entities.GroupPost.filter({ group_id: group.id }, '-created_date'),
+  });
+
+  // 1b. Fetch Discussion Posts
+  const { data: discussions = [] } = useQuery({
+    queryKey: ['groupDiscussion', group.id],
+    queryFn: () => base44.entities.GroupDiscussionPost.filter({ group_id: group.id }, '-updated_date'),
   });
 
   // 2. Fetch Events
@@ -189,6 +195,7 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
     else if (item.type === 'resource') newParams.set('tab', 'resources');
     else if (item.type === 'training') newParams.set('tab', 'training');
     else if (item.type === 'qna') newParams.set('tab', 'qna');
+    else if (item.type === 'discussion') newParams.set('tab', 'discussion');
     
     setSearchParams(newParams);
   };
@@ -197,6 +204,7 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
   const feedItems = useMemo(() => {
     const allItems = [
       ...posts.map(i => ({ ...i, type: 'post' })),
+      ...discussions.map(i => ({ ...i, type: 'discussion', title: `Discussion: ${i.content?.substring(0, 50)}...` })),
       ...events.map(i => ({ ...i, type: 'event' })),
       ...resources.map(i => ({ ...i, type: 'resource' })),
       ...trainings.map(i => ({ ...i, type: 'training' })),
@@ -212,7 +220,6 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
       if (isPending && !isAdmin && !isAuthor) return false;
 
       // 2. Hidden Check
-      // If showing hidden, allow hidden items (but still check visibility rules)
       if (!showHidden && hiddenIds.includes(item.id)) return false;
 
       if (isAdmin) return true; // Admins see everything
@@ -227,13 +234,16 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
       return roleMatch && levelMatch;
     });
 
-    // Sort: Pinned posts first, then by created_date desc
+    // Sort: Pinned posts first, then by last activity (updated_date or created_date) desc
     return visible.sort((a, b) => {
       if (a.type === 'post' && a.is_pinned && !(b.type === 'post' && b.is_pinned)) return -1;
       if (!(a.type === 'post' && a.is_pinned) && b.type === 'post' && b.is_pinned) return 1;
-      return new Date(b.created_date) - new Date(a.created_date);
+      
+      const dateA = new Date(a.updated_date || a.created_date);
+      const dateB = new Date(b.updated_date || b.created_date);
+      return dateB - dateA;
     });
-  }, [posts, events, resources, trainings, qnas, hiddenIds, isAdmin, myMembership, currentUser, showHidden]);
+  }, [posts, discussions, events, resources, trainings, qnas, hiddenIds, isAdmin, myMembership, currentUser, showHidden]);
 
   return (
     <div className="space-y-6">
@@ -407,6 +417,7 @@ function FeedItemCard({ item, isAdmin, currentUser, onEdit, onDelete, onHide, on
   const getIcon = () => {
     switch(item.type) {
       case 'post': return <MessageSquare className="w-5 h-5 text-blue-500" />;
+      case 'discussion': return <MessageSquare className="w-5 h-5 text-indigo-500" />;
       case 'event': return <Calendar className="w-5 h-5 text-green-500" />;
       case 'resource': return <LinkIcon className="w-5 h-5 text-purple-500" />;
       case 'training': return <Video className="w-5 h-5 text-red-500" />;
@@ -417,7 +428,8 @@ function FeedItemCard({ item, isAdmin, currentUser, onEdit, onDelete, onHide, on
 
   const getLabel = () => {
     switch(item.type) {
-      case 'post': return 'Post';
+      case 'post': return 'Announcement';
+      case 'discussion': return 'Discussion';
       case 'event': return 'Event';
       case 'resource': return 'Resource';
       case 'training': return 'Training';
@@ -513,6 +525,20 @@ function FeedItemCard({ item, isAdmin, currentUser, onEdit, onDelete, onHide, on
       <CardContent>
         {item.type === 'post' && (
           <FeedContentDisplay content={item.content} />
+        )}
+
+        {item.type === 'discussion' && (
+          <div className="text-sm text-gray-600 space-y-2">
+             <FeedContentDisplay content={item.content} />
+             {item.media_url && (
+                <div className="mt-2">
+                   <img src={item.media_url} alt="Post content" className="rounded-lg max-h-48 object-cover bg-gray-100" />
+                </div>
+             )}
+             <div className="flex items-center gap-2 mt-2">
+                <span className="text-xs text-gray-400">by {item.author_email}</span>
+             </div>
+          </div>
         )}
         
         {item.type === 'event' && (
