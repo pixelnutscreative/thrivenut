@@ -55,6 +55,11 @@ export default function NotificationBell({ userEmail, isDark = false }) {
           return n.user_email === userEmail;
         }
         
+        // 2. Targeted notification to a specific group
+        if (n.group_id && !myGroupIds.has(n.group_id)) {
+          return false; // User is not in this targeted group
+        }
+
         // 3. Broadcast notification
         if (n.target_audience === 'all') return true;
         if (n.target_audience === 'tiktok_users' && hasTikTokAccess) return true;
@@ -201,24 +206,6 @@ export default function NotificationBell({ userEmail, isDark = false }) {
                   </div>
                 </div>
                 
-                {(notif.link || (notif.button_text && notif.button_url)) && (
-                  <Button
-                    size="sm"
-                    className="w-full mt-3 text-white"
-                    style={{ backgroundColor: notif.button_color || '#8b5cf6' }}
-                    onClick={() => {
-                      if (notif.button_text && notif.button_url) {
-                        handleNotificationClick(notif);
-                        window.open(notif.button_url, '_blank');
-                      } else {
-                        handleLinkClick(notif);
-                      }
-                    }}
-                  >
-                    {notif.button_text || 'View Item'}
-                  </Button>
-                )}
-
                 <div className="flex items-center gap-2 mt-3">
                   {notif.allow_save !== false && (
                     <Button
@@ -240,6 +227,23 @@ export default function NotificationBell({ userEmail, isDark = false }) {
                     <X className="w-3 h-3 mr-1" />
                     Dismiss
                   </Button>
+                  {(notif.link || (notif.button_text && notif.button_url)) && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        if (notif.button_text && notif.button_url) {
+                          handleNotificationClick(notif);
+                          window.open(notif.button_url, '_blank');
+                        } else {
+                          handleLinkClick(notif);
+                        }
+                      }}
+                    >
+                      <ExternalLink className="w-3 h-3 mr-1" />
+                      {notif.button_text || 'Go to item'}
+                    </Button>
+                  )}
                 </div>
               </motion.div>
             ))
