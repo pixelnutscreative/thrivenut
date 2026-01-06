@@ -45,6 +45,8 @@ Deno.serve(async (req) => {
             type: type || 'group_notification',
             link: link,
             is_read: false,
+            is_active: true,
+            group_id: group_id,
             created_at: new Date().toISOString()
         }));
         

@@ -78,6 +78,7 @@ function CreatePostForm({ group, currentUser, onCancel }) {
     onSuccess: async (newPost) => {
       queryClient.invalidateQueries(['groupDiscussion', group.id]);
       onCancel();
+      alert("Discussion posted successfully! Group members will be notified.");
 
       // Notify group members
       try {

@@ -188,6 +188,7 @@ function AddMeetingDialog({ groupId, currentUser }) {
       setIsOpen(false);
       const meetingTitle = data.title; // Capture title before reset
       setData({ title: '', meeting_date: '', attendees: '', video_url: '', transcript: '', hours: '0' });
+      alert("Meeting added! Members have been notified.");
 
       // Notify group members
       try {
