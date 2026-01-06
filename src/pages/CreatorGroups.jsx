@@ -652,7 +652,11 @@ export default function CreatorGroups() {
     const userStatus = activeMembership?.status;
     
     // Check disabled features first (Global Admin Toggle) - If it's disabled here, it's disabled for everyone
-    if (disabledFeatures.includes(id)) return false;
+    if (disabledFeatures.includes(id)) {
+      // EXCEPTION: Admins must always be able to access Members tab to manage the group
+      if (id === 'members' && isAdmin) return true;
+      return false;
+    }
 
     // Check for explicit permissions from Group Settings next
     const permissions = activeGroup?.role_tab_permissions;
