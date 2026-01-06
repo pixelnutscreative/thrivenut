@@ -42,7 +42,7 @@ export default function GroupProjectsTab({ group, currentUser, myMembership }) {
       <div className="w-full md:w-64 flex-shrink-0 flex flex-col gap-4">
         <div className="flex justify-between items-center">
           <h3 className="font-bold text-lg">Projects</h3>
-          {isOwnerOrAdmin(myMembership.role) && (
+          {isOwnerOrAdmin(myMembership?.role) && (
             <AddProjectDialog groupId={group.id} />
           )}
         </div>
@@ -127,8 +127,8 @@ function ProjectDetail({ projectId, group, currentUser, myMembership, onOpenRepo
   const totalHoursLogged = timeEntries.reduce((sum, entry) => sum + (entry.hours || 0), 0);
 
   const isHourlyEnabled = group.enable_retainer_management;
-  const canViewHours = isHourlyEnabled && (isOwnerOrAdmin(myMembership.role) || ['manager', 'virtual-assistant'].includes(myMembership.role));
-  const canLogTime = isHourlyEnabled && ['owner', 'admin', 'manager', 'virtual-assistant'].includes(myMembership.role);
+  const canViewHours = isHourlyEnabled && (isOwnerOrAdmin(myMembership?.role) || ['manager', 'virtual-assistant'].includes(myMembership?.role));
+  const canLogTime = isHourlyEnabled && ['owner', 'admin', 'manager', 'virtual-assistant'].includes(myMembership?.role);
 
   return (
     <>
@@ -172,7 +172,7 @@ function ProjectDetail({ projectId, group, currentUser, myMembership, onOpenRepo
            currentUser={currentUser}
            group={group}
            projectId={projectId}
-           canEdit={isOwnerOrAdmin(myMembership.role) || (task.created_by === currentUser?.email)} 
+           canEdit={isOwnerOrAdmin(myMembership?.role) || (task.created_by === currentUser?.email)} 
            canLogTime={canLogTime}
            />
         ))}
