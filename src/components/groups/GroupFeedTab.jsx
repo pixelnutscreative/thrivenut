@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Pin, MessageSquare, Trash2, Pencil, Calendar, Link as LinkIcon, Video, CheckCircle, Eye, EyeOff, FileText, Share2, CalendarPlus, Globe, History, ExternalLink } from 'lucide-react';
+import { Plus, Pin, MessageSquare, Trash2, Pencil, Calendar, Link as LinkIcon, Video, CheckCircle, Eye, EyeOff, FileText, Share2, CalendarPlus, Globe, History, ExternalLink, Briefcase, Printer, Sparkles, Clock } from 'lucide-react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import LevelSelector from './LevelSelector';
@@ -65,8 +65,33 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
     queryKey: ['myCompletions', group.id, currentUser?.email],
     queryFn: () => base44.entities.GroupTrainingCompletion.filter({ user_email: currentUser?.email }),
   });
+
+  // 6. Fetch Meetings
+  const { data: meetings = [] } = useQuery({
+    queryKey: ['groupMeetings', group.id],
+    queryFn: () => base44.entities.MeetingRecording.filter({ group_id: group.id }, '-meeting_date'),
+  });
+
+  // 7. Fetch Projects
+  const { data: projects = [] } = useQuery({
+    queryKey: ['groupProjects', group.id],
+    queryFn: () => base44.entities.GroupProject.filter({ group_id: group.id }, '-updated_date'),
+  });
+
+  // 8. Fetch Marketing Orders
+  const { data: orders = [] } = useQuery({
+    queryKey: ['groupOrders', group.id],
+    queryFn: () => base44.entities.MarketingOrder.filter({ group_id: group.id }, '-updated_date'),
+  });
+
+  // 9. Fetch Assets
+  const { data: assets = [] } = useQuery({
+    queryKey: ['groupAssets', group.id],
+    queryFn: () => base44.entities.MarketingAsset.filter({ group_id: group.id }, '-created_date'),
+  });
   
   // 6. Fetch Hidden Preferences
+  // 10. Fetch Hidden Preferences
   const { data: userGroupPref } = useQuery({
     queryKey: ['userGroupPref', group.id, currentUser?.email],
     queryFn: async () => {
@@ -196,6 +221,10 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
     else if (item.type === 'training') newParams.set('tab', 'training');
     else if (item.type === 'qna') newParams.set('tab', 'qna');
     else if (item.type === 'discussion') newParams.set('tab', 'discussion');
+    else if (item.type === 'meeting') newParams.set('tab', 'meetings');
+    else if (item.type === 'project') newParams.set('tab', 'projects');
+    else if (item.type === 'order') newParams.set('tab', 'marketing');
+    else if (item.type === 'asset') newParams.set('tab', 'assets');
     
     setSearchParams(newParams);
   };
@@ -209,10 +238,20 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
       ...resources.map(i => ({ ...i, type: 'resource' })),
       ...trainings.map(i => ({ ...i, type: 'training' })),
       ...qnas.map(i => ({ ...i, type: 'qna', title: `Q&A: ${i.question}` })),
+      ...meetings.map(i => ({ ...i, type: 'meeting', title: i.title || 'Meeting Recording', created_date: i.meeting_date })),
+      ...projects.map(i => ({ ...i, type: 'project' })),
+      ...orders.map(i => ({ ...i, type: 'order' })),
+      ...assets.map(i => ({ ...i, type: 'asset', title: i.name })),
     ];
 
     // Filter by visibility (admin or matching level) AND not hidden
     const visible = allItems.filter(item => {
+      // 0. Marketing Orders Visibility
+      if (item.type === 'order') {
+        if (!isAdmin && item.client_email !== currentUser?.email) return false;
+      }
+
+      // 1. Pending/Approval Check
       // 1. Pending/Approval Check
       const isPending = item.status && ['pending', 'review', 'draft'].includes(item.status);
       const isAuthor = item.submitted_by === currentUser?.email || item.created_by === currentUser?.email || item.author_email === currentUser?.email;
@@ -243,7 +282,7 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
       const dateB = new Date(b.updated_date || b.created_date);
       return dateB - dateA;
     });
-  }, [posts, discussions, events, resources, trainings, qnas, hiddenIds, isAdmin, myMembership, currentUser, showHidden]);
+  }, [posts, discussions, events, resources, trainings, qnas, meetings, projects, orders, assets, hiddenIds, isAdmin, myMembership, currentUser, showHidden]);
 
   return (
     <div className="space-y-6">
@@ -422,6 +461,10 @@ function FeedItemCard({ item, isAdmin, currentUser, onEdit, onDelete, onHide, on
       case 'resource': return <LinkIcon className="w-5 h-5 text-purple-500" />;
       case 'training': return <Video className="w-5 h-5 text-red-500" />;
       case 'qna': return <MessageSquare className="w-5 h-5 text-teal-500" />;
+      case 'meeting': return <Video className="w-5 h-5 text-rose-500" />;
+      case 'project': return <Briefcase className="w-5 h-5 text-indigo-500" />;
+      case 'order': return <Printer className="w-5 h-5 text-purple-500" />;
+      case 'asset': return <Sparkles className="w-5 h-5 text-pink-500" />;
       default: return <FileText className="w-5 h-5" />;
     }
   };
@@ -434,6 +477,10 @@ function FeedItemCard({ item, isAdmin, currentUser, onEdit, onDelete, onHide, on
       case 'resource': return 'Resource';
       case 'training': return 'Training';
       case 'qna': return 'Q&A';
+      case 'meeting': return 'Meeting';
+      case 'project': return 'Project';
+      case 'order': return 'Order';
+      case 'asset': return 'Asset';
       default: return 'Item';
     }
   };
@@ -576,6 +623,45 @@ function FeedItemCard({ item, isAdmin, currentUser, onEdit, onDelete, onHide, on
         {item.type === 'qna' && (
             <div className="text-sm text-gray-600 space-y-2">
                 <p>{item.answer ? "Answered" : "Waiting for answer"}</p>
+            </div>
+        )}
+
+        {item.type === 'meeting' && (
+            <div className="text-sm text-gray-600 space-y-2">
+                <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    <span>{new Date(item.meeting_date).toLocaleString()}</span>
+                </div>
+                {item.video_url && (
+                    <a href={item.video_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center gap-1">
+                        <Video className="w-3 h-3" /> Watch Recording
+                    </a>
+                )}
+            </div>
+        )}
+
+        {item.type === 'project' && (
+            <div className="text-sm text-gray-600 space-y-2">
+                <p>{item.description}</p>
+                <Badge variant="outline" className="mt-1">{item.status}</Badge>
+            </div>
+        )}
+
+        {item.type === 'order' && (
+            <div className="text-sm text-gray-600 space-y-2">
+                <p>Status: <Badge variant="outline">{item.status}</Badge></p>
+                {item.custom_status_label && <p className="text-xs text-gray-500">"{item.custom_status_label}"</p>}
+            </div>
+        )}
+
+        {item.type === 'asset' && (
+            <div className="text-sm text-gray-600 space-y-2">
+                {item.file_url && (
+                    <a href={item.file_url} target="_blank" rel="noopener noreferrer" className="text-pink-600 hover:underline flex items-center gap-1">
+                        <LinkIcon className="w-3 h-3" /> View Asset
+                    </a>
+                )}
+                {item.file_type && <Badge variant="secondary" className="ml-2">{item.file_type}</Badge>}
             </div>
         )}
       </CardContent>
