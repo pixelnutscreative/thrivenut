@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, Edit, Clock, Pill, Phone, PawPrint, Camera, CheckCircle, Circle, History, Dog } from 'lucide-react';
+import { Plus, Trash2, Edit, Clock, Pill, Phone, PawPrint, Camera, CheckCircle, Circle, History, Dog, Calendar } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
