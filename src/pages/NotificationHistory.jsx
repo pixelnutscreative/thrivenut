@@ -17,20 +17,50 @@ export default function NotificationHistory() {
 
   // Fetch all active notifications
   const { data: notifications = [] } = useQuery({
-    queryKey: ['notifications'],
+    queryKey: ['notifications', effectiveEmail],
     queryFn: async () => {
       const notifs = await base44.entities.Notification.filter({ is_active: true }, '-created_date');
       
       if (!effectiveEmail) return [];
       
-      // Filter based on user's TikTok access
-      const prefs = await base44.entities.UserPreferences.filter({ user_email: effectiveEmail });
-      const hasTikTokAccess = prefs[0]?.tiktok_access_approved;
+      // Parallel fetch: Preferences and Group Memberships
+      const [prefsRes, memberships] = await Promise.all([
+        base44.entities.UserPreferences.filter({ user_email: effectiveEmail }),
+        base44.entities.CreatorGroupMember.filter({ user_email: effectiveEmail, status: 'active' })
+      ]);
+
+      const hasTikTokAccess = prefsRes[0]?.tiktok_access_approved;
+      const myGroupIds = new Set(memberships.map(m => m.group_id));
       
       return notifs.filter(n => {
+        // 1. Targeted notification (Specific User)
+        if (n.user_email) {
+          return n.user_email === effectiveEmail;
+        }
+
+        // 2. Targeted/Group Notification (Group ID check)
+        if (n.group_id && !myGroupIds.has(n.group_id)) {
+          return false; // User is not in this group
+        }
+        
+        // 3. Link-based Group Check (Legacy fallback)
+        if (n.link && n.link.includes('/CreatorGroups?id=')) {
+           try {
+             const url = new URL(n.link, 'http://dummy.com');
+             const groupId = url.searchParams.get('id');
+             if (groupId && !myGroupIds.has(groupId)) {
+               return false;
+             }
+           } catch (e) {
+             // Ignore parsing errors
+           }
+        }
+
+        // 4. Audience Checks
         if (n.target_audience === 'all') return true;
         if (n.target_audience === 'tiktok_users' && hasTikTokAccess) return true;
         if (n.target_audience === 'admin' && user?.role === 'admin') return true;
+        
         return false;
       });
     },
