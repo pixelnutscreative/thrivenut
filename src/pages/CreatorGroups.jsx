@@ -1215,14 +1215,15 @@ export default function CreatorGroups() {
                           <div className="flex items-center gap-2">
                             <Input 
                               readOnly 
-                              value={`https://${window.location.hostname}/CreatorGroups?invite=${activeGroup.invite_code}&ref=${editingReferralCode}`} 
+                              value={`https://${window.location.hostname.includes('preview-sandbox') ? 'thrivenut.app' : window.location.hostname}/CreatorGroups?invite=${activeGroup.invite_code}&ref=${editingReferralCode}`} 
                               className="bg-gray-50 font-mono text-xs"
                             />
                             <Button 
                               size="icon" 
                               variant="outline" 
                               onClick={() => {
-                                navigator.clipboard.writeText(`https://${window.location.hostname}/CreatorGroups?invite=${activeGroup.invite_code}&ref=${editingReferralCode}`);
+                                const domain = window.location.hostname.includes('preview-sandbox') ? 'thrivenut.app' : window.location.hostname;
+                                navigator.clipboard.writeText(`https://${domain}/CreatorGroups?invite=${activeGroup.invite_code}&ref=${editingReferralCode}`);
                                 alert("Link copied!");
                               }}
                             >
