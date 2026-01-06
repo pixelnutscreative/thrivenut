@@ -95,7 +95,8 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
             answer, 
             status, 
             answered_by: currentUser?.email,
-            answered_date: new Date().toISOString()
+            answered_date: new Date().toISOString(),
+            updated_date: new Date().toISOString() // Explicitly bump for feed sorting
         });
 
         if (status === 'published' && originalQna) {
