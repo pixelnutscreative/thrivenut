@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
-import { MapPin, RotateCcw, Trophy, Users, Palette, Briefcase, Plane, Sparkles, Check, X } from 'lucide-react';
+import { MapPin, RotateCcw, Trophy, Users, Palette, Briefcase, Plane, Sparkles, Check, X, Calendar } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
