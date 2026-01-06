@@ -26,7 +26,7 @@ export default function GroupMeetingsTab({ group, currentUser, isAdmin }) {
           <h2 className="text-2xl font-bold">Meetings & Transcripts</h2>
           <p className="text-gray-500">Recordings, notes, and AI insights from our calls.</p>
         </div>
-        {isAdmin && <AddMeetingDialog groupId={group.id} />}
+        {isAdmin && <AddMeetingDialog groupId={group.id} currentUser={currentUser} />}
       </div>
 
       <div className="grid gap-4">
@@ -164,7 +164,7 @@ function MeetingCard({ meeting, isExpanded, onToggle, isAdmin }) {
   );
 }
 
-function AddMeetingDialog({ groupId }) {
+function AddMeetingDialog({ groupId, currentUser }) {
   const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
   const [data, setData] = useState({ 
@@ -183,10 +183,25 @@ function AddMeetingDialog({ groupId }) {
       hours: parseFloat(meeting.hours) || 0,
       attendees: meeting.attendees.split(',').map(e => e.trim()).filter(Boolean)
     }),
-    onSuccess: () => {
+    onSuccess: async (newMeeting) => {
       queryClient.invalidateQueries(['groupMeetings', groupId]);
       setIsOpen(false);
+      const meetingTitle = data.title; // Capture title before reset
       setData({ title: '', meeting_date: '', attendees: '', video_url: '', transcript: '', hours: '0' });
+
+      // Notify group members
+      try {
+        await base44.functions.invoke('notifyGroupMembers', {
+          group_id: groupId,
+          title: `New Meeting: ${meetingTitle}`,
+          message: `A new meeting has been added to the group.`,
+          link: `/CreatorGroups?id=${groupId}&tab=meetings`,
+          type: 'group_meeting_added',
+          exclude_email: currentUser?.email
+        });
+      } catch (err) {
+        console.error("Failed to send notification", err);
+      }
     }
   });
 

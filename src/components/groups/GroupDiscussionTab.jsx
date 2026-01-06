@@ -75,9 +75,23 @@ function CreatePostForm({ group, currentUser, onCancel }) {
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.GroupDiscussionPost.create({ ...data, group_id: group.id, author_email: currentUser.email }),
-    onSuccess: () => {
+    onSuccess: async (newPost) => {
       queryClient.invalidateQueries(['groupDiscussion', group.id]);
       onCancel();
+
+      // Notify group members
+      try {
+        await base44.functions.invoke('notifyGroupMembers', {
+          group_id: group.id,
+          title: `New Discussion: ${content.substring(0, 30)}${content.length > 30 ? '...' : ''}`,
+          message: `${currentUser.email} started a new discussion.`,
+          link: `/CreatorGroups?id=${group.id}&tab=discussion`,
+          type: 'group_discussion_post',
+          exclude_email: currentUser.email
+        });
+      } catch (err) {
+        console.error("Failed to send notification", err);
+      }
     }
   });
 
@@ -310,10 +324,24 @@ function CommentSection({ post, currentUser, isAdmin }) {
       // Bump the parent post
       await base44.entities.GroupDiscussionPost.update(post.id, { updated_date: new Date().toISOString() });
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       setNewComment('');
       queryClient.invalidateQueries(['postComments', post.id]);
       queryClient.invalidateQueries(['groupDiscussion']); // Refresh list to update sort order
+
+      // Notify group members
+      try {
+        await base44.functions.invoke('notifyGroupMembers', {
+          group_id: post.group_id,
+          title: `New Comment on Discussion`,
+          message: `${currentUser.email} commented on a discussion.`,
+          link: `/CreatorGroups?id=${post.group_id}&tab=discussion`,
+          type: 'group_discussion_comment',
+          exclude_email: currentUser.email
+        });
+      } catch (err) {
+        console.error("Failed to send notification", err);
+      }
     }
   });
 
