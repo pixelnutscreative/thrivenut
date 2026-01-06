@@ -88,18 +88,21 @@ export default function AnnouncementBar() {
                 base44.entities.Notification.filter({ group_id: gid, is_active: true })
             );
             const results = await Promise.all(promises);
-            groupAnnouncements = results.flat().map(n => ({
-                id: n.id,
-                message: n.message,
-                link: n.link,
-                background_color: n.button_color || '#8b5cf6', // Use button color as bg for group announcements
-                text_color: '#ffffff',
-                is_active: true,
-                schedule_type: 'manual',
-                display_order: 100, // Higher priority than global?
-                type: 'group_announcement',
-                group_id: n.group_id
-            }));
+            // Only include notifications explicitly marked as 'announcement'
+            groupAnnouncements = results.flat()
+                .filter(n => n.type === 'announcement')
+                .map(n => ({
+                    id: n.id,
+                    message: n.message,
+                    link: n.link,
+                    background_color: n.button_color || '#8b5cf6', // Use button color as bg for group announcements
+                    text_color: '#ffffff',
+                    is_active: true,
+                    schedule_type: 'manual',
+                    display_order: 100, // Higher priority than global?
+                    type: 'group_announcement',
+                    group_id: n.group_id
+                }));
         }
 
         return [...globalBars, ...groupAnnouncements];
