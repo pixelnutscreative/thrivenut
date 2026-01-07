@@ -658,6 +658,9 @@ export default function CreatorGroups() {
       return false;
     }
 
+    // Always enable Feed for everyone if not disabled (Core Feature)
+    if (id === 'feed') return true;
+
     // Check for explicit permissions from Group Settings next
     const permissions = activeGroup?.role_tab_permissions;
     if (permissions && permissions[id] !== undefined) {
@@ -718,6 +721,9 @@ export default function CreatorGroups() {
   const isVisibleToRegularMember = (id) => {
     // If disabled globally, it's not visible
     if (disabledFeatures.includes(id)) return false;
+
+    // Always enable Feed for everyone if not disabled
+    if (id === 'feed') return true;
 
     const permissions = activeGroup?.role_tab_permissions;
     if (permissions && permissions[id] !== undefined) {
