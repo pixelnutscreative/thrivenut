@@ -161,6 +161,14 @@ function OnboardingModal({ isOpen, user, onComplete }) {
 
       const prefs = await base44.entities.UserPreferences.filter({ user_email: user.email });
       
+      // Robustness: Find best existing record to update
+      let targetPrefId = null;
+      if (prefs.length > 0) {
+        // Prefer record with data to avoid updating a ghost/empty record
+        const bestMatch = prefs.find(p => p.nickname || p.profile_image_url) || prefs[0];
+        targetPrefId = bestMatch.id;
+      }
+
       const prefsData = {
         onboarding_completed: true,
         nickname: data.nickname,
@@ -188,8 +196,8 @@ function OnboardingModal({ isOpen, user, onComplete }) {
         nickname: data.nickname
       };
 
-      if (prefs[0]) {
-        await base44.entities.UserPreferences.update(prefs[0].id, prefsData);
+      if (targetPrefId) {
+        await base44.entities.UserPreferences.update(targetPrefId, prefsData);
       } else {
         await base44.entities.UserPreferences.create({
           user_email: user.email,
@@ -199,8 +207,14 @@ function OnboardingModal({ isOpen, user, onComplete }) {
 
       // Create/update profile
       const profiles = await base44.entities.UserProfile.filter({ user_email: user.email });
-      if (profiles[0]) {
-        await base44.entities.UserProfile.update(profiles[0].id, profileData);
+      let targetProfileId = null;
+      if (profiles.length > 0) {
+         const bestProfile = profiles.find(p => p.nickname || p.phone) || profiles[0];
+         targetProfileId = bestProfile.id;
+      }
+
+      if (targetProfileId) {
+        await base44.entities.UserProfile.update(targetProfileId, profileData);
       } else {
         await base44.entities.UserProfile.create(profileData);
       }
