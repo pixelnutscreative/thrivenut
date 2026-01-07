@@ -176,6 +176,32 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
     onSuccess: () => queryClient.invalidateQueries(['myCompletions'])
   });
 
+  const togglePinMutation = useMutation({
+    mutationFn: async ({ id, type, currentPinnedState }) => {
+      const field = type === 'discussion' ? 'pinned' : 'is_pinned';
+      const entityMap = {
+        'post': 'GroupPost',
+        'discussion': 'GroupDiscussionPost',
+        'event': 'GroupEvent',
+        'resource': 'GroupResource',
+        'training': 'GroupTraining'
+      };
+      
+      const entityName = entityMap[type];
+      if (!entityName) return; // Not pinnable
+
+      return base44.entities[entityName].update(id, { [field]: !currentPinnedState });
+    },
+    onSuccess: () => {
+      // Invalidate all potential queries to refresh the feed
+      queryClient.invalidateQueries(['groupPosts', group.id]);
+      queryClient.invalidateQueries(['groupDiscussion', group.id]);
+      queryClient.invalidateQueries(['groupEvents', group.id]);
+      queryClient.invalidateQueries(['groupResources', group.id]);
+      queryClient.invalidateQueries(['groupTraining', group.id]);
+    }
+  });
+
   // --- Handlers ---
   const handleEdit = (item) => {
     if (item.type === 'post') {
@@ -411,6 +437,7 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
               onDelete={item.type === 'post' ? () => deletePostMutation.mutate(item.id) : null}
               onHide={() => hideItemMutation.mutate(item.id)}
               onToggleComplete={() => toggleTrainingCompletion.mutate(item.id)}
+              onTogglePin={() => togglePinMutation.mutate({ id: item.id, type: item.type, currentPinnedState: item.is_pinned || item.pinned })}
               isCompleted={completions.some(c => c.training_id === item.id)}
               onClick={() => item.type !== 'post' && navigateToTab(item)}
               isHidden={hiddenIds.includes(item.id)}
@@ -455,7 +482,8 @@ function FeedContentDisplay({ content, className = "" }) {
   );
 }
 
-function FeedItemCard({ item, isAdmin, currentUser, onEdit, onDelete, onHide, onToggleComplete, isCompleted, onClick, isHidden }) {
+function FeedItemCard({ item, isAdmin, currentUser, onEdit, onDelete, onHide, onToggleComplete, onTogglePin, isCompleted, onClick, isHidden }) {
+  const { preferences } = useTheme();
   const [shareOpen, setShareOpen] = useState(false);
   const [addToDayOpen, setAddToDayOpen] = useState(false);
 
@@ -507,9 +535,15 @@ function FeedItemCard({ item, isAdmin, currentUser, onEdit, onDelete, onHide, on
             <Badge variant="secondary" className="text-[10px] flex items-center gap-1 group-hover:bg-gray-200 transition-colors">
               {getIcon()} {getLabel()}
             </Badge>
-            {item.is_pinned && <Badge className="bg-blue-100 text-blue-700 text-[10px]"><Pin className="w-3 h-3 mr-1" /> Pinned</Badge>}
+            {(item.is_pinned || item.pinned) && <Badge className="bg-blue-100 text-blue-700 text-[10px]"><Pin className="w-3 h-3 mr-1" /> Pinned</Badge>}
             {item.is_public && <Badge className="bg-indigo-100 text-indigo-700 text-[10px]"><Globe className="w-3 h-3 mr-1" /> Public</Badge>}
-            <span className="text-xs text-gray-400">{new Date(item.created_date).toLocaleDateString()}</span>
+            <span className="text-xs text-gray-400">
+              {new Date(item.created_date || item.start_time).toLocaleString('en-US', { 
+                month: 'numeric', day: 'numeric', year: 'numeric', 
+                hour: 'numeric', minute: '2-digit', 
+                timeZone: preferences?.user_timezone 
+              })}
+            </span>
           </div>
           <CardTitle className="text-lg group-hover:text-purple-600 transition-colors flex items-center gap-2">
             {item.title}
@@ -533,15 +567,27 @@ function FeedItemCard({ item, isAdmin, currentUser, onEdit, onDelete, onHide, on
           </Button>
 
           {item.type === 'training' && (
-            <Button 
-              variant="ghost"
-              size="icon"
-              onClick={onToggleComplete} 
-              title={isCompleted ? "Mark Incomplete" : "Mark Complete"}
-              className={`${isCompleted ? 'text-green-600' : 'text-gray-400 hover:text-gray-600'}`}
-            >
-              <CheckCircle className="w-5 h-5" />
-            </Button>
+          <Button 
+            variant="ghost"
+            size="icon"
+            onClick={onToggleComplete} 
+            title={isCompleted ? "Mark Incomplete" : "Mark Complete"}
+            className={`${isCompleted ? 'text-green-600' : 'text-gray-400 hover:text-gray-600'}`}
+          >
+            <CheckCircle className="w-5 h-5" />
+          </Button>
+          )}
+
+          {isAdmin && ['post', 'discussion', 'event', 'resource', 'training'].includes(item.type) && (
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={onTogglePin} 
+            title={(item.is_pinned || item.pinned) ? "Unpin" : "Pin to Top"}
+            className={`${(item.is_pinned || item.pinned) ? 'text-blue-600' : 'text-gray-400 hover:text-blue-600'}`}
+          >
+            <Pin className="w-5 h-5" />
+          </Button>
           )}
 
           <div className="flex gap-1 ml-2 pl-2 border-l">
@@ -598,7 +644,13 @@ function FeedItemCard({ item, isAdmin, currentUser, onEdit, onDelete, onHide, on
           <div className="text-sm text-gray-600 space-y-2">
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4" />
-              <span className="font-semibold">{new Date(item.start_time).toLocaleString()}</span>
+              <span className="font-semibold">
+                {new Date(item.start_time).toLocaleString('en-US', { 
+                  weekday: 'short', month: 'short', day: 'numeric', 
+                  hour: 'numeric', minute: '2-digit', 
+                  timeZone: preferences?.user_timezone 
+                })}
+              </span>
             </div>
             <FeedContentDisplay content={item.description} />
           </div>
