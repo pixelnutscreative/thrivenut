@@ -667,6 +667,9 @@ export default function CreatorGroups() {
        const hasPermission = attributes.some(attr => allowedList.includes(attr));
        
        if (isAdmin) return true;
+       // Ensure Feed is visible if enabled globally, preventing accidental lockout via permissions
+       if (id === 'feed' && !disabledFeatures.includes('feed')) return true;
+       
        return hasPermission;
     }
 
