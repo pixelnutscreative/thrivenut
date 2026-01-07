@@ -69,11 +69,19 @@ Deno.serve(async (req) => {
                 let myProfile = myProfiles[0];
                 
                 if (!myProfile) {
-                    // Create if doesn't exist
-                    myProfile = await base44.entities.UserProfile.create({
-                        user_email: user.email,
-                        ...profile_data
-                    });
+                    // Double check if doesn't exist to avoid race conditions
+                    const existingProfiles = await base44.entities.UserProfile.filter({ user_email: user.email });
+                    
+                    if (existingProfiles.length > 0) {
+                        myProfile = existingProfiles[0];
+                        await base44.entities.UserProfile.update(myProfile.id, profile_data);
+                    } else {
+                        // Create if doesn't exist
+                        myProfile = await base44.entities.UserProfile.create({
+                            user_email: user.email,
+                            ...profile_data
+                        });
+                    }
                 } else {
                     // Merge update (specifically for arrays like wish_list)
                     if (profile_data.wish_list && Array.isArray(profile_data.wish_list)) {
