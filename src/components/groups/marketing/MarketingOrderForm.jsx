@@ -96,6 +96,20 @@ export default function MarketingOrderForm({ group, onClose, existingOrder = nul
             {errors.title && <span className="text-red-500 text-sm">Required</span>}
           </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+                <Label>Target Budget (Optional)</Label>
+                <div className="relative">
+                    <span className="absolute left-3 top-2.5 text-gray-500">$</span>
+                    <Input type="number" step="0.01" {...register('budget')} className="pl-7" placeholder="0.00" />
+                </div>
+            </div>
+            <div className="space-y-2">
+                <Label>Needed By</Label>
+                <Input type="date" {...register('needed_by_date')} />
+            </div>
+          </div>
+
           <div className="space-y-2">
             <Label>Specs & Details</Label>
             <Textarea 
@@ -104,20 +118,6 @@ export default function MarketingOrderForm({ group, onClose, existingOrder = nul
                 className="min-h-[100px]"
             />
             {errors.description && <span className="text-red-500 text-sm">Required</span>}
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-                <Label>Needed By</Label>
-                <Input type="date" {...register('needed_by_date')} />
-            </div>
-            <div className="space-y-2">
-                <Label>Target Budget (Optional)</Label>
-                <div className="relative">
-                    <span className="absolute left-3 top-2.5 text-gray-500">$</span>
-                    <Input type="number" step="0.01" {...register('budget')} className="pl-7" placeholder="0.00" />
-                </div>
-            </div>
           </div>
 
           <div className="space-y-2">

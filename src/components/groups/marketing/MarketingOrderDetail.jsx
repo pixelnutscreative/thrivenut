@@ -357,20 +357,18 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
                           <span className="text-xs text-gray-400">Due</span>
                       </div>
                       
-                      {/* Budget Editing - Admin Only */}
-                      {isAdmin && (
-                          <div className="flex items-center gap-2">
-                              <span className="text-xs text-gray-400">$</span>
-                              <Input 
-                                 type="number"
-                                 placeholder="Budget"
-                                 value={order.budget || ''}
-                                 onChange={e => updateOrderMutation.mutate({ budget: parseFloat(e.target.value) })}
-                                 className="w-24 h-7 text-xs"
-                              />
-                              <span className="text-xs text-gray-400">Budget</span>
-                          </div>
-                      )}
+                      {/* Budget Editing */}
+                      <div className="flex items-center gap-2">
+                          <span className="text-xs text-gray-400">$</span>
+                          <Input 
+                             type="number"
+                             placeholder="Budget"
+                             value={order.budget || ''}
+                             onChange={e => updateOrderMutation.mutate({ budget: parseFloat(e.target.value) })}
+                             className="w-24 h-7 text-xs"
+                          />
+                          <span className="text-xs text-gray-400">Budget</span>
+                      </div>
                    </div>
                 ) : (
                    <div className="flex flex-wrap items-center gap-3 text-xs md:text-sm text-gray-500 mt-1">
@@ -381,15 +379,13 @@ export default function MarketingOrderDetail({ order, isAdmin, onClose, onEdit }
                        </span>
                        
                        {/* Budget Display */}
-                       {(order.budget || isAdmin) && (
-                           <>
-                               <span>•</span>
-                               <span className="flex items-center gap-1">
-                                   <span className="text-gray-400">Budget:</span>
-                                   <span className="font-medium text-green-600">{order.budget ? `$${order.budget}` : 'Not set'}</span>
-                               </span>
-                           </>
-                       )}
+                       <>
+                           <span>•</span>
+                           <span className="flex items-center gap-1">
+                               <span className="text-gray-400">Budget:</span>
+                               <span className="font-medium text-green-600">{order.budget ? `$${order.budget}` : 'Not set'}</span>
+                           </span>
+                       </>
                    </div>
                 )}
             </div>
