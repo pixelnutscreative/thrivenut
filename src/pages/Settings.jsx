@@ -108,6 +108,12 @@ export default function Settings() {
     queryKey: ['preferences', effectiveEmail],
     queryFn: async () => {
       const prefs = await base44.entities.UserPreferences.filter({ user_email: effectiveEmail }, '-updated_date');
+      // If multiple records exist, prefer the one with data (e.g. nickname)
+      // This prevents empty accidental duplicates from shadowing the real data
+      if (prefs.length > 1) {
+        const withData = prefs.find(p => p.nickname || p.profile_image_url);
+        if (withData) return withData;
+      }
       return prefs[0] || null;
     },
     enabled: !!effectiveEmail,
@@ -117,6 +123,11 @@ export default function Settings() {
     queryKey: ['userProfile', effectiveEmail],
     queryFn: async () => {
       const profiles = await base44.entities.UserProfile.filter({ user_email: effectiveEmail });
+      // Prefer profile with data
+      if (profiles.length > 1) {
+        const withData = profiles.find(p => p.phone || p.nickname || (p.social_links && Object.values(p.social_links).some(v => v)));
+        if (withData) return withData;
+      }
       return profiles[0] || null;
     },
     enabled: !!effectiveEmail,
