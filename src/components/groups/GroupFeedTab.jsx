@@ -233,7 +233,7 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
   const feedItems = useMemo(() => {
     const allItems = [
       ...posts.map(i => ({ ...i, type: 'post' })),
-      ...discussions.map(i => ({ ...i, type: 'discussion', title: `Discussion: ${i.content?.substring(0, 50)}...` })),
+      ...discussions.map(i => ({ ...i, type: 'discussion', title: `Discussion: ${i.content?.substring(0, 50)}...`, is_pinned: i.pinned })),
       ...events.map(i => ({ ...i, type: 'event' })),
       ...resources.map(i => ({ ...i, type: 'resource' })),
       ...trainings.map(i => ({ ...i, type: 'training' })),
@@ -252,7 +252,6 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
       }
 
       // 1. Pending/Approval Check
-      // 1. Pending/Approval Check
       const isPending = item.status && ['pending', 'review', 'draft'].includes(item.status);
       const isAuthor = item.submitted_by === currentUser?.email || item.created_by === currentUser?.email || item.author_email === currentUser?.email;
 
@@ -265,21 +264,28 @@ export default function GroupFeedTab({ group, currentUser, myMembership, isAdmin
       if (isAuthor) return true; // Authors see their own items
 
       // 3. Role Check
-      const roleMatch = !item.target_roles || item.target_roles.length === 0 || item.target_roles.includes(myMembership?.role);
+      // If role is undefined/null, we check if target_roles is empty (visible to all roles)
+      const myRole = myMembership?.role;
+      const roleMatch = !item.target_roles || item.target_roles.length === 0 || (myRole && item.target_roles.includes(myRole));
 
       // 4. Level Check
-      const levelMatch = !item.target_levels || item.target_levels.length === 0 || item.target_levels.includes(myMembership?.level);
+      // If level is undefined/null (e.g. legacy members), allow if target_levels is empty.
+      const myLevel = myMembership?.level;
+      const levelMatch = !item.target_levels || item.target_levels.length === 0 || (myLevel && item.target_levels.includes(myLevel));
 
       return roleMatch && levelMatch;
     });
 
-    // Sort: Pinned posts first, then by last activity (updated_date or created_date) desc
+    // Sort: Pinned items first, then by last activity (updated_date or created_date) desc
     return visible.sort((a, b) => {
-      if (a.type === 'post' && a.is_pinned && !(b.type === 'post' && b.is_pinned)) return -1;
-      if (!(a.type === 'post' && a.is_pinned) && b.type === 'post' && b.is_pinned) return 1;
+      const aPinned = a.is_pinned || a.pinned;
+      const bPinned = b.is_pinned || b.pinned;
+
+      if (aPinned && !bPinned) return -1;
+      if (!aPinned && bPinned) return 1;
       
-      const dateA = new Date(a.updated_date || a.created_date);
-      const dateB = new Date(b.updated_date || b.created_date);
+      const dateA = new Date(a.updated_date || a.created_date || a.start_time || 0);
+      const dateB = new Date(b.updated_date || b.created_date || b.start_time || 0);
       return dateB - dateA;
     });
   }, [posts, discussions, events, resources, trainings, qnas, meetings, projects, orders, assets, hiddenIds, isAdmin, myMembership, currentUser, showHidden]);
