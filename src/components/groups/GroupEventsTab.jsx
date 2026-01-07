@@ -509,9 +509,25 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
             <CardContent className="p-4 flex flex-col gap-4 flex-1">
               <div className="flex justify-between items-start w-full">
                 <div className={`p-2 rounded-lg text-center min-w-[70px] ${isPast ? 'bg-gray-200 text-gray-500' : 'bg-purple-100 text-purple-700'}`}>
-                  <div className="text-[10px] font-bold uppercase">{event.start_time ? format(new Date(event.start_time), 'MMM') : 'TBA'}</div>
-                  <div className="text-xl font-bold">{event.start_time ? format(new Date(event.start_time), 'd') : '--'}</div>
-                  <div className="text-[10px]">{event.start_time ? new Date(event.start_time).toLocaleTimeString([], {hour: 'numeric', minute:'2-digit'}) : ''}</div>
+                  <div className="text-[10px] font-bold uppercase">
+                    {event.start_time ? new Date(event.start_time).toLocaleDateString('en-US', { 
+                      month: 'short', 
+                      timeZone: preferences?.user_timezone 
+                    }) : 'TBA'}
+                  </div>
+                  <div className="text-xl font-bold">
+                    {event.start_time ? new Date(event.start_time).toLocaleDateString('en-US', { 
+                      day: 'numeric', 
+                      timeZone: preferences?.user_timezone 
+                    }) : '--'}
+                  </div>
+                  <div className="text-[10px]">
+                    {event.start_time ? new Date(event.start_time).toLocaleTimeString('en-US', { 
+                      hour: 'numeric', 
+                      minute: '2-digit', 
+                      timeZone: preferences?.user_timezone 
+                    }) : ''}
+                  </div>
                 </div>
                 
                 {(isAdmin || event.created_by === currentUser?.email) && (

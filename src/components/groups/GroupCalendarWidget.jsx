@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { useTheme } from '../shared/useTheme';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -8,6 +9,7 @@ import { Clock, Link as LinkIcon } from 'lucide-react';
 import { isSameDay, parseISO, format } from 'date-fns';
 
 export default function GroupCalendarWidget({ group, myMembership, isAdmin }) {
+  const { preferences } = useTheme();
   const [date, setDate] = useState(new Date());
 
   const { data: events = [] } = useQuery({
@@ -32,6 +34,13 @@ export default function GroupCalendarWidget({ group, myMembership, isAdmin }) {
     .sort((a, b) => new Date(a.start_time) - new Date(b.start_time))
     .slice(0, 3);
 
+  const formatEventDate = (dateStr, options) => {
+    return new Date(dateStr).toLocaleString('en-US', {
+      timeZone: preferences?.user_timezone,
+      ...options
+    });
+  };
+
   return (
     <Card className="border-0 shadow-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
       <CardHeader className="pb-2 pt-4 px-4">
@@ -47,10 +56,11 @@ export default function GroupCalendarWidget({ group, myMembership, isAdmin }) {
                         <div className="font-bold text-gray-900 dark:text-white mb-1 text-base">{event.title}</div>
                         <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
                             <span className="bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded font-medium">
-                                {format(new Date(event.start_time), 'MMM d')}
+                                {formatEventDate(event.start_time, { month: 'short', day: 'numeric' })}
                             </span>
                             <span className="flex items-center gap-1">
-                                <Clock className="w-4 h-4" /> {format(new Date(event.start_time), 'h:mm a')}
+                                <Clock className="w-4 h-4" /> 
+                                {formatEventDate(event.start_time, { hour: 'numeric', minute: '2-digit' })}
                             </span>
                         </div>
                     </div>
