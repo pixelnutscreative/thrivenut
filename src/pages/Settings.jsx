@@ -111,12 +111,13 @@ export default function Settings() {
       // If multiple records exist, prefer the one with data (e.g. nickname)
       // This prevents empty accidental duplicates from shadowing the real data
       if (prefs.length > 1) {
-        const withData = prefs.find(p => p.nickname || p.profile_image_url);
+        const withData = prefs.find(p => p.nickname || p.profile_image_url || (p.enabled_modules && p.enabled_modules.length > 0));
         if (withData) return withData;
       }
       return prefs[0] || null;
     },
     enabled: !!effectiveEmail,
+    refetchOnWindowFocus: false, // Prevent overwriting user edits on tab switch
   });
 
   const { data: userProfile, isLoading: profileLoading } = useQuery({
@@ -131,6 +132,7 @@ export default function Settings() {
       return profiles[0] || null;
     },
     enabled: !!effectiveEmail,
+    refetchOnWindowFocus: false, // Prevent overwriting user edits on tab switch
   });
 
   const [prefData, setPrefData] = useState({});
@@ -168,8 +170,12 @@ export default function Settings() {
     custom_clubs: []
   });
 
+  // Track if we've initialized data to prevent overwriting user edits
+  const [prefsInitialized, setPrefsInitialized] = useState(false);
+  const [profileInitialized, setProfileInitialized] = useState(false);
+
   useEffect(() => {
-    if (preferences) {
+    if (preferences && !prefsInitialized) {
       // Initialize with fetched preferences, ensuring all new fields are present
       setPrefData({
         nickname: '',
@@ -187,11 +193,12 @@ export default function Settings() {
         enable_night_prayer: false,
         ...preferences
       });
+      setPrefsInitialized(true);
     }
-  }, [preferences]);
+  }, [preferences, prefsInitialized]);
 
   useEffect(() => {
-    if (userProfile) {
+    if (userProfile && !profileInitialized) {
       setProfileData({
         ...userProfile,
         clothing_sizes: userProfile.clothing_sizes || {},
@@ -220,8 +227,9 @@ export default function Settings() {
         clubs: userProfile.clubs || [],
         custom_clubs: userProfile.custom_clubs || []
       });
+      setProfileInitialized(true);
     }
-  }, [userProfile]);
+  }, [userProfile, profileInitialized]);
 
   const updatePreferencesMutation = useMutation({
     mutationFn: async (data) => {
