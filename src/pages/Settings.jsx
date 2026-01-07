@@ -240,8 +240,19 @@ export default function Settings() {
       delete cleanData.updated_date;
       delete cleanData.created_by;
       
-      if (preferences) {
-        return await base44.entities.UserPreferences.update(preferences.id, cleanData);
+      // Double check for existing record to prevent duplicates
+      const existing = await base44.entities.UserPreferences.filter({ user_email: effectiveEmail });
+      // Prefer record with data if multiple exist
+      let targetId = preferences?.id;
+      
+      if (existing.length > 0) {
+        // Find best match if multiple
+        const bestMatch = existing.find(p => p.nickname || p.profile_image_url) || existing[0];
+        targetId = bestMatch.id;
+      }
+
+      if (targetId) {
+        return await base44.entities.UserPreferences.update(targetId, cleanData);
       } else {
         return await base44.entities.UserPreferences.create({
           user_email: effectiveEmail,
@@ -257,8 +268,18 @@ export default function Settings() {
 
   const updateUserProfileMutation = useMutation({
     mutationFn: async (data) => {
-      if (userProfile) {
-        return await base44.entities.UserProfile.update(userProfile.id, data);
+      // Double check for existing record to prevent duplicates
+      const existing = await base44.entities.UserProfile.filter({ user_email: effectiveEmail });
+      let targetId = userProfile?.id;
+      
+      if (existing.length > 0) {
+        // Find best match if multiple
+        const bestMatch = existing.find(p => p.phone || p.nickname) || existing[0];
+        targetId = bestMatch.id;
+      }
+
+      if (targetId) {
+        return await base44.entities.UserProfile.update(targetId, data);
       } else {
         return await base44.entities.UserProfile.create({
           user_email: effectiveEmail,
