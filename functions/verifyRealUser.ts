@@ -10,15 +10,16 @@ Deno.serve(async (req) => {
     }
 
     // Get or create verification record
+    const userEmail = user.email.toLowerCase();
     let verification = await base44.asServiceRole.entities.UserVerification.filter({
-      user_email: user.email
+      user_email: userEmail
     });
 
     if (verification.length === 0) {
       // Create new verification record
       const referralCode = sessionStorage.getItem('referral_code');
       verification = await base44.asServiceRole.entities.UserVerification.create({
-        user_email: user.email,
+        user_email: userEmail,
         signup_date: new Date().toISOString(),
         referral_code_used: referralCode || null,
         has_logged_in: true,
@@ -51,7 +52,7 @@ Deno.serve(async (req) => {
     // - Logged in at least once
     // - Active for 3+ unique days
     // - Completed onboarding (check UserPreferences)
-    const prefs = await base44.entities.UserPreferences.filter({ user_email: user.email });
+    const prefs = await base44.entities.UserPreferences.filter({ user_email: userEmail });
     const hasCompletedOnboarding = prefs[0]?.onboarding_completed || false;
 
     if (
@@ -77,18 +78,21 @@ Deno.serve(async (req) => {
       // Check if user should get social media suite access
       // 1. Check if they're in AIPlatformUser with includes_social_access
       const platformUser = await base44.asServiceRole.entities.AIPlatformUser.filter({
-        user_email: user.email
+        user_email: userEmail
       });
 
       if (platformUser.length > 0 && platformUser[0].includes_social_access) {
         // Grant social access via UserPreferences
-        if (prefs.length > 0) {
-          await base44.asServiceRole.entities.UserPreferences.update(prefs[0].id, {
+        // Refresh prefs to be sure
+        const existingPrefs = await base44.asServiceRole.entities.UserPreferences.filter({ user_email: userEmail });
+        
+        if (existingPrefs.length > 0) {
+          await base44.asServiceRole.entities.UserPreferences.update(existingPrefs[0].id, {
             tiktok_access_approved: true
           });
         } else {
           await base44.asServiceRole.entities.UserPreferences.create({
-            user_email: user.email,
+            user_email: userEmail,
             tiktok_access_approved: true,
             onboarding_completed: true
           });

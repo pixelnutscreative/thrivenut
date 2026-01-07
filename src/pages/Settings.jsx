@@ -102,11 +102,12 @@ export default function Settings() {
     });
   }, []);
 
-  const effectiveEmail = user ? getEffectiveUserEmail(user.email) : null;
+  const effectiveEmail = user ? getEffectiveUserEmail(user.email)?.toLowerCase() : null;
 
   const { data: preferences, isLoading: prefsLoading } = useQuery({
     queryKey: ['preferences', effectiveEmail],
     queryFn: async () => {
+      if (!effectiveEmail) return null;
       const prefs = await base44.entities.UserPreferences.filter({ user_email: effectiveEmail }, '-updated_date');
       // If multiple records exist, prefer the one with data (e.g. nickname)
       // This prevents empty accidental duplicates from shadowing the real data
@@ -240,15 +241,19 @@ export default function Settings() {
       delete cleanData.updated_date;
       delete cleanData.created_by;
       
-      // Double check for existing record to prevent duplicates
+      // Double check for existing record to prevent duplicates (force refresh from DB)
       const existing = await base44.entities.UserPreferences.filter({ user_email: effectiveEmail });
+      
       // Prefer record with data if multiple exist
-      let targetId = preferences?.id;
+      let targetId = null;
       
       if (existing.length > 0) {
         // Find best match if multiple
         const bestMatch = existing.find(p => p.nickname || p.profile_image_url) || existing[0];
         targetId = bestMatch.id;
+        
+        // If we found multiple, we should probably clean them up, but for now just update the best one
+        // and logging it might be good if we had a logger.
       }
 
       if (targetId) {
@@ -270,7 +275,7 @@ export default function Settings() {
     mutationFn: async (data) => {
       // Double check for existing record to prevent duplicates
       const existing = await base44.entities.UserProfile.filter({ user_email: effectiveEmail });
-      let targetId = userProfile?.id;
+      let targetId = null;
       
       if (existing.length > 0) {
         // Find best match if multiple
