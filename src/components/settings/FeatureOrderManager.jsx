@@ -19,27 +19,27 @@ const allFeatures = [
   { id: 'finance', name: 'Finance', description: 'Subscriptions and expenses', color: 'text-purple-400' },
 
   // Friends + Loved Ones
-  { id: 'people', name: 'Family & People', description: 'Family members and contacts', color: 'text-cyan-400' },
-  { id: 'parenting', name: 'Kid Controls', description: 'Manage kids\' access and tasks', color: 'text-cyan-400' },
-  { id: 'care_reminders', name: 'Care Reminders', description: 'Caregiving tasks', color: 'text-cyan-400' },
-  { id: 'pets', name: 'Pet Care', description: 'Pet schedules', color: 'text-cyan-400' },
+  { id: 'people', name: 'Family & People', description: 'Family members and contacts', color: 'text-blue-400' },
+  { id: 'parenting', name: 'Kid Controls', description: 'Manage kids\' access and tasks', color: 'text-blue-400' },
+  { id: 'care_reminders', name: 'Care Reminders', description: 'Caregiving tasks', color: 'text-blue-400' },
+  { id: 'pets', name: 'Pet Care', description: 'Pet schedules', color: 'text-blue-400' },
 
   // Faith & Spiritual
-  { id: 'prayer', name: 'Prayer Requests', description: 'Or Send Light & Love', color: 'text-lime-400' },
-  { id: 'holy_hitmakers', name: 'Holy Hitmakers', description: 'Faith-based AI music generation', color: 'text-lime-400' },
+  { id: 'prayer', name: 'Prayer Requests', description: 'Or Send Light & Love', color: 'text-teal-400' },
+  { id: 'holy_hitmakers', name: 'Holy Hitmakers', description: 'Faith-based AI music generation', color: 'text-teal-400' },
 
   // Mind + Body Health
-  { id: 'mental_health', name: 'Mental Health', description: 'Support tools', color: 'text-yellow-400' },
-  { id: 'wellness', name: 'Daily Wellness', description: 'Water, sleep, mood, self-care', color: 'text-yellow-400' },
-  { id: 'supplements', name: 'Supplements', description: 'Daily supplements', color: 'text-yellow-400' },
-  { id: 'medications', name: 'Medications', description: 'Medication tracking', color: 'text-yellow-400' },
-  { id: 'activity', name: 'Activity Tracker', description: 'Log movement and workouts', color: 'text-yellow-400' },
+  { id: 'mental_health', name: 'Mental Health', description: 'Support tools', color: 'text-lime-400' },
+  { id: 'wellness', name: 'Daily Wellness', description: 'Water, sleep, mood, self-care', color: 'text-lime-400' },
+  { id: 'supplements', name: 'Supplements', description: 'Daily supplements', color: 'text-lime-400' },
+  { id: 'medications', name: 'Medications', description: 'Medication tracking', color: 'text-lime-400' },
+  { id: 'activity', name: 'Activity Tracker', description: 'Log movement and workouts', color: 'text-lime-400' },
 
   // Creator Suite
-  { id: 'content_creator_center', name: 'Content Creator Center', description: 'Your hub for content strategy', color: 'text-orange-400' },
-  { id: 'motivations', name: 'Content Ideas', description: 'Saved inspirations', color: 'text-orange-400' },
-  { id: 'content_marketplace', name: 'Content Marketplace', description: 'Buy & sell designs', color: 'text-orange-400' },
-  { id: 'ai_music_suite', name: 'Create AI Music', description: 'Generators for various song types', color: 'text-orange-400' },
+  { id: 'content_creator_center', name: 'Content Creator Center', description: 'Your hub for content strategy', color: 'text-yellow-400' },
+  { id: 'motivations', name: 'Content Ideas', description: 'Saved inspirations', color: 'text-yellow-400' },
+  { id: 'content_marketplace', name: 'Content Marketplace', description: 'Buy & sell designs', color: 'text-yellow-400' },
+  { id: 'ai_music_suite', name: 'Create AI Music', description: 'Generators for various song types', color: 'text-yellow-400' },
   { id: 'tiktok', name: 'Social Media Suite', description: 'Full creator toolkit', color: 'text-orange-400', requiresTikTokAccess: true },
 
   // Share & Earn
