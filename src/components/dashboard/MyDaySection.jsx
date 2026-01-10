@@ -701,6 +701,26 @@ export default function MyDaySection({
 
     // Goals removed from My Day - they show in Active Goals section below
 
+    // Manual Events (Quick Events)
+    manualEvents.forEach(event => {
+      const timeOfDay = getTimeOfDayFromTimeString(event.time);
+      tasks.push({
+        id: `event_${event.id}`,
+        type: 'manual_event',
+        label: event.title,
+        sublabel: `${event.time ? event.time : ''} ${event.description ? '• ' + event.description : ''}`,
+        icon: event.is_urgent ? AlertTriangle : Calendar,
+        color: event.color || 'text-blue-500',
+        timeOfDay: timeOfDay,
+        order: getOrderFromTimeString(event.time),
+        is_urgent: event.is_urgent,
+        urgent_color: event.color,
+        externalLink: event.link,
+        hasTime: !!event.time,
+        displayTime: event.time
+      });
+    });
+
     // Google Calendar events
     if (googleCalendarData?.events && preferences?.show_google_calendar) {
       googleCalendarData.events.forEach(event => {
@@ -882,6 +902,10 @@ export default function MyDaySection({
       const originalTask = regularTasks.find(t => t.id === task.taskId);
       return originalTask?.status === 'completed';
     }
+    if (task.type === 'manual_event') {
+      const event = manualEvents.find(e => `event_${e.id}` === task.id);
+      return event?.is_completed;
+    }
     return false;
   };
 
@@ -970,6 +994,14 @@ export default function MyDaySection({
         completed_date: completedDate
       }).then(() => {
         queryClient.invalidateQueries({ queryKey: ['regularTasksMyDay'] });
+      });
+    } else if (task.type === 'manual_event') {
+      const eventId = task.id.replace('event_', '');
+      const newStatus = !isTaskComplete(task);
+      base44.entities.ExternalEvent.update(eventId, { is_completed: newStatus }).then(() => {
+        queryClient.invalidateQueries({ queryKey: ['manualEventsToday'] });
+        // Also invalidate urgent events in case it affects dashboard widget
+        queryClient.invalidateQueries({ queryKey: ['urgentEvents'] });
       });
     }
   };

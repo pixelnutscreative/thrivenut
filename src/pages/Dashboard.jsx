@@ -154,6 +154,20 @@ export default function Dashboard() {
     enabled: !!effectiveEmail && enabledModules.includes('people'),
   });
 
+  const { data: urgentEvents = [] } = useQuery({
+    queryKey: ['urgentEvents', effectiveEmail],
+    queryFn: async () => {
+      const events = await base44.entities.ExternalEvent.filter({ 
+        date: format(new Date(), 'yyyy-MM-dd'),
+        created_by: effectiveEmail,
+        is_urgent: true,
+        is_completed: false 
+      });
+      return events;
+    },
+    enabled: !!effectiveEmail,
+  });
+
   const updatePreferencesMutation = useMutation({
     mutationFn: async (data) => {
       if (preferences?.id) {
@@ -228,6 +242,7 @@ export default function Dashboard() {
   
   // --- DRAG AND DROP / LAYOUT LOGIC ---
   const defaultLayout = [
+    { id: 'urgent_events', visible: true, order: -1, width: 'full' },
     { id: 'daily_motivation', visible: true, order: 0, width: 'full' },
     { id: 'my_day', visible: true, order: 1, width: 'full' },
     { id: 'tasks', visible: true, order: 2, width: 'half' },
@@ -404,6 +419,16 @@ export default function Dashboard() {
   const renderWidget = (widget) => {
     // Visibility check already handled by visibleLayout filtering
     switch (widget.id) {
+      case 'urgent_events':
+        return (
+          <UrgentEventsCard 
+            events={urgentEvents} 
+            userEmail={effectiveEmail} 
+            onColorChange={(color) => {
+              // Optionally handle global color change or per-event
+            }}
+          />
+        );
       case 'daily_motivation':
         return (
           <DailyMotivationBanner
