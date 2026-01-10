@@ -81,8 +81,8 @@ export default function SavedMotivations() {
     enabled: !!effectiveEmail,
   });
 
-  // Priority: user self-selection > admin assignment > default to lets_go_nuts
-  const userPlatform = preferences?.ai_platform || platformUser?.platform || 'lets_go_nuts';
+  // Priority: admin assignment > user self-selection > default to lets_go_nuts
+  const userPlatform = platformUser?.platform || preferences?.ai_platform || 'lets_go_nuts';
 
   const categories = [...new Set(motivations.map(m => m.category || 'Uncategorized'))];
 
@@ -295,27 +295,7 @@ Each prompt should be:
               ))}
             </div>
 
-            {/* AI Platform Badge & Tools - Same as before */}
-            <Card className="bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200">
-              <CardContent className="p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-indigo-600" />
-                    <span className="text-sm font-medium text-indigo-800">
-                      Your AI Platform: <strong>{userPlatform === 'pixels_toolbox' ? "Pixel's AI Toolbox" : "Let's Go Nuts"}</strong>
-                    </span>
-                  </div>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => window.location.href = '/Settings#connections'}
-                    className="text-xs h-7"
-                  >
-                    Change
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            {/* AI Platform Badge Removed - Platform is now auto-detected from admin settings */}
 
             {/* Motivations Grid */}
             {isLoading ? (
