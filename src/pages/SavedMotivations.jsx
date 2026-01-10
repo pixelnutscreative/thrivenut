@@ -46,20 +46,9 @@ export default function SavedMotivations() {
   const { data: motivations = [], isLoading } = useQuery({
     queryKey: ['savedMotivations', effectiveEmail],
     queryFn: async () => {
-      const adminEmail = 'pixelnutscreative@gmail.com';
-      
-      // Fetch only user's own items and admin/system items
-      const [myMotivations, adminMotivations] = await Promise.all([
-        base44.entities.SavedMotivation.filter({ created_by: effectiveEmail }, '-created_date', 100),
-        base44.entities.SavedMotivation.filter({ created_by: adminEmail }, '-created_date', 100)
-      ]);
-      
-      // Combine and deduplicate by ID (in case user IS admin)
-      const allMotivations = [...myMotivations, ...adminMotivations];
-      const uniqueMotivations = Array.from(new Map(allMotivations.map(m => [m.id, m])).values());
-      
-      // Sort by date desc
-      return uniqueMotivations.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+      // Fetch ONLY the current user's own motivations
+      // This applies to everyone, including admin (admin only sees admin's own items)
+      return await base44.entities.SavedMotivation.filter({ created_by: effectiveEmail }, '-created_date', 100);
     },
     enabled: !!effectiveEmail,
   });
