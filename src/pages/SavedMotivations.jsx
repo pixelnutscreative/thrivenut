@@ -46,20 +46,21 @@ export default function SavedMotivations() {
   const { data: motivations = [], isLoading } = useQuery({
     queryKey: ['savedMotivations', effectiveEmail],
     queryFn: async () => {
-      // Fetch all motivations the user has access to (User's own + Public/Admin ones)
-      // We list all and filter in memory to ensure we catch everything relevant
-      const allMotivations = await base44.entities.SavedMotivation.list('-created_date');
-      
       const adminEmail = 'pixelnutscreative@gmail.com';
       
-      return allMotivations.filter(m => 
-        // Show my own items
-        m.created_by === effectiveEmail || 
-        // Show items created by Admin (System Content Ideas)
-        m.created_by === adminEmail ||
-        // Legacy: Check for specific "System" category if needed
-        m.category === 'Content Ideas'
-      );
+      // Fetch relevant motivations in parallel to ensure we get all data without pagination limits
+      const [myMotivations, adminMotivations, contentIdeas] = await Promise.all([
+        base44.entities.SavedMotivation.filter({ created_by: effectiveEmail }, '-created_date', 100),
+        base44.entities.SavedMotivation.filter({ created_by: adminEmail }, '-created_date', 100),
+        base44.entities.SavedMotivation.filter({ category: 'Content Ideas' }, '-created_date', 100)
+      ]);
+      
+      // Combine and deduplicate by ID
+      const allMotivations = [...myMotivations, ...adminMotivations, ...contentIdeas];
+      const uniqueMotivations = Array.from(new Map(allMotivations.map(m => [m.id, m])).values());
+      
+      // Sort by date desc
+      return uniqueMotivations.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
     },
     enabled: !!effectiveEmail,
   });
