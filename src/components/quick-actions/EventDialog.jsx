@@ -7,7 +7,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { format } from 'date-fns';
-import ColorPicker from '../shared/ColorPicker';
 
 export default function EventDialog({ isOpen, onClose, onSave, isLoading }) {
   const queryClient = useQueryClient();
@@ -16,7 +15,6 @@ export default function EventDialog({ isOpen, onClose, onSave, isLoading }) {
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
   const [isUrgent, setIsUrgent] = useState(false);
-  const [color, setColor] = useState('#ef4444');
 
   useEffect(() => {
     if (isOpen) {
@@ -25,13 +23,12 @@ export default function EventDialog({ isOpen, onClose, onSave, isLoading }) {
       setDate(format(new Date(), 'yyyy-MM-dd'));
       setTime(format(new Date(), 'HH:mm'));
       setIsUrgent(false);
-      setColor('#ef4444');
     }
   }, [isOpen]);
 
   const handleSubmit = () => {
     if (!title.trim()) return;
-    onSave({ title, description, date, time, is_urgent: isUrgent, color: isUrgent ? color : undefined });
+    onSave({ title, description, date, time, is_urgent: isUrgent });
     onClose();
   };
 
@@ -93,12 +90,6 @@ export default function EventDialog({ isOpen, onClose, onSave, isLoading }) {
             />
             <Label htmlFor="urgent" className="font-medium text-red-600 cursor-pointer">Mark as Urgent / Important</Label>
           </div>
-          {isUrgent && (
-            <div className="space-y-2">
-              <Label>Urgent Event Color</Label>
-              <ColorPicker color={color} onChange={setColor} label="Choose a color for this urgent event" />
-            </div>
-          )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
