@@ -48,15 +48,14 @@ export default function SavedMotivations() {
     queryFn: async () => {
       const adminEmail = 'pixelnutscreative@gmail.com';
       
-      // Fetch relevant motivations in parallel to ensure we get all data without pagination limits
-      const [myMotivations, adminMotivations, contentIdeas] = await Promise.all([
+      // Fetch only user's own items and admin/system items
+      const [myMotivations, adminMotivations] = await Promise.all([
         base44.entities.SavedMotivation.filter({ created_by: effectiveEmail }, '-created_date', 100),
-        base44.entities.SavedMotivation.filter({ created_by: adminEmail }, '-created_date', 100),
-        base44.entities.SavedMotivation.filter({ category: 'Content Ideas' }, '-created_date', 100)
+        base44.entities.SavedMotivation.filter({ created_by: adminEmail }, '-created_date', 100)
       ]);
       
-      // Combine and deduplicate by ID
-      const allMotivations = [...myMotivations, ...adminMotivations, ...contentIdeas];
+      // Combine and deduplicate by ID (in case user IS admin)
+      const allMotivations = [...myMotivations, ...adminMotivations];
       const uniqueMotivations = Array.from(new Map(allMotivations.map(m => [m.id, m])).values());
       
       // Sort by date desc
