@@ -251,8 +251,8 @@ export default function Layout({ children, currentPageName }) {
   {
     id: 'health',
     title: 'Mind + Body Health',
-    color: 'text-green-400', // Changed to Green
-    bgColor: 'bg-green-500/10',
+    color: 'text-lime-400', // Changed to Lime Green
+    bgColor: 'bg-lime-500/10',
     items: [
     { name: 'Mental Health', icon: Brain, path: 'MentalHealth', moduleId: 'mental_health' },
     { name: 'Daily Wellness', icon: Heart, path: 'Wellness', moduleId: 'wellness' },
