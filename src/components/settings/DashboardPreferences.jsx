@@ -341,7 +341,7 @@ export default function DashboardPreferences({ formData, setFormData }) {
                 className="mt-4 p-3 rounded-lg border cursor-pointer hover:bg-green-100 transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <Checkbox checked={formData.show_google_calendar} />
+                  <Checkbox checked={!!formData.show_google_calendar} />
                   <span className="text-sm">Show Google Calendar events in My Day</span>
                 </div>
               </div>
