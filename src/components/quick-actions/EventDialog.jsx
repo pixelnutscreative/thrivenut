@@ -7,7 +7,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { format } from 'date-fns';
-import ColorPicker from '../shared/ColorPicker';
 
 export default function EventDialog({ isOpen, onClose, onSave, isLoading }) {
   const queryClient = useQueryClient();
@@ -96,7 +95,15 @@ export default function EventDialog({ isOpen, onClose, onSave, isLoading }) {
           {isUrgent && (
             <div className="space-y-2">
               <Label>Urgent Event Color</Label>
-              <ColorPicker color={color} onChange={setColor} label="Choose a color for this urgent event" />
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={color}
+                  onChange={(e) => setColor(e.target.value)}
+                  className="h-10 w-10 p-1 rounded border border-gray-300 cursor-pointer"
+                />
+                <span className="text-sm text-gray-500">{color}</span>
+              </div>
             </div>
           )}
         </div>
