@@ -57,6 +57,18 @@ export default function Dashboard() {
     checkAuth();
   }, []);
 
+  const effectiveEmail = user ? getEffectiveUserEmail(user.email) : null;
+
+  const { data: preferences } = useQuery({
+    queryKey: ['preferences', effectiveEmail],
+    queryFn: async () => {
+      const prefs = await base44.entities.UserPreferences.filter({ user_email: effectiveEmail }, '-updated_date');
+      return prefs[0] || null;
+    },
+    enabled: !!effectiveEmail,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+
   // Auto-approve TikTok access if eligible
   useEffect(() => {
     const checkAccess = async () => {
@@ -75,18 +87,6 @@ export default function Dashboard() {
     };
     checkAccess();
   }, [user, preferences]);
-
-  const effectiveEmail = user ? getEffectiveUserEmail(user.email) : null;
-
-  const { data: preferences } = useQuery({
-    queryKey: ['preferences', effectiveEmail],
-    queryFn: async () => {
-      const prefs = await base44.entities.UserPreferences.filter({ user_email: effectiveEmail }, '-updated_date');
-      return prefs[0] || null;
-    },
-    enabled: !!effectiveEmail,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-  });
 
   const [prefKey, setPrefKey] = useState(0);
   useEffect(() => {
