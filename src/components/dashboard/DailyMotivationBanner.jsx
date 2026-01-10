@@ -375,26 +375,70 @@ ${type === 'scripture'
 }
 
 function HistoryList({ userEmail }) {
-  const [logs, setLogs] = useState([]);
-  
-  useEffect(() => {
-    if (userEmail) {
-      base44.entities.ContentGenerationLog.filter({ created_by: userEmail }, '-created_date', 50)
-        .then(setLogs)
-        .catch(console.error);
+  const queryClient = useQueryClient();
+  const [savedIds, setSavedIds] = useState(new Set());
+
+  const { data: logs = [], isLoading } = useQuery({
+    queryKey: ['generationHistory', userEmail],
+    queryFn: () => base44.entities.ContentGenerationLog.filter({ created_by: userEmail }, '-created_date', 50),
+    enabled: !!userEmail,
+    staleTime: 0
+  });
+
+  const saveMutation = useMutation({
+    mutationFn: async (log) => {
+       await base44.entities.SavedMotivation.create({
+        content: log.content,
+        reference: log.reference,
+        type: log.type,
+        category: 'Content Ideas'
+      });
+      return log.id;
+    },
+    onSuccess: (logId) => {
+       setSavedIds(prev => new Set(prev).add(logId));
+       queryClient.invalidateQueries({ queryKey: ['savedMotivations'] });
     }
-  }, [userEmail]);
+  });
+
+  if (isLoading) return <div className="flex justify-center p-4"><RefreshCw className="w-6 h-6 animate-spin text-purple-500" /></div>;
 
   if (logs.length === 0) return <p className="text-center text-gray-500">No history yet.</p>;
 
   return (
     <div className="space-y-3">
       {logs.map(log => (
-        <div key={log.id} className="p-3 bg-gray-50 rounded-lg text-sm border">
+        <div key={log.id} className="p-3 bg-gray-50 rounded-lg text-sm border hover:border-purple-200 transition-colors">
           <p className="font-medium text-gray-800">"{log.content}"</p>
-          <div className="flex justify-between items-center mt-2 text-xs text-gray-500">
-            <span className="capitalize badge bg-gray-200 px-1 rounded">{log.type}</span>
-            <span>{new Date(log.created_date).toLocaleDateString()}</span>
+          {log.reference && <p className="text-xs text-gray-500 mt-1 italic">— {log.reference}</p>}
+          
+          <div className="flex justify-between items-center mt-3">
+            <div className="flex items-center gap-2 text-xs text-gray-500">
+               <span className={`capitalize px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                 greetingTypeLabels[log.type]?.color || 'bg-gray-200 text-gray-700'
+               }`}>
+                 {log.type?.replace('_', ' ') || 'Quote'}
+               </span>
+               <span>{new Date(log.created_date).toLocaleDateString()}</span>
+            </div>
+            
+            <Button 
+              size="sm" 
+              variant="ghost" 
+              className={`h-7 px-2 text-xs ${savedIds.has(log.id) ? 'text-green-600 bg-green-50' : 'text-purple-600 hover:bg-purple-50'}`}
+              onClick={() => saveMutation.mutate(log)}
+              disabled={savedIds.has(log.id) || saveMutation.isPending}
+            >
+              {savedIds.has(log.id) ? (
+                <>
+                  <Check className="w-3 h-3 mr-1" /> Saved
+                </>
+              ) : (
+                <>
+                  <Heart className="w-3 h-3 mr-1" /> Save
+                </>
+              )}
+            </Button>
           </div>
         </div>
       ))}
