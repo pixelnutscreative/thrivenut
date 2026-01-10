@@ -119,6 +119,7 @@ export default function Settings() {
     },
     enabled: !!effectiveEmail,
     refetchOnWindowFocus: false, // Prevent overwriting user edits on tab switch
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
   const { data: userProfile, isLoading: profileLoading } = useQuery({
@@ -134,6 +135,7 @@ export default function Settings() {
     },
     enabled: !!effectiveEmail,
     refetchOnWindowFocus: false, // Prevent overwriting user edits on tab switch
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
   const [prefData, setPrefData] = useState({});
