@@ -76,7 +76,7 @@ const defaultMoodOptions = [
   { emoji: '😴', label: 'Tired', value: 'tired' },
 ];
 
-import GreetingTypesSettings from './GreetingTypesSettings';
+
 
 export default function WidgetSettingsV2({ formData, setFormData }) {
   const [showAddCustom, setShowAddCustom] = useState(false);
@@ -188,8 +188,6 @@ export default function WidgetSettingsV2({ formData, setFormData }) {
 
   return (
     <div className="space-y-6">
-      <GreetingTypesSettings formData={formData} setFormData={setFormData} />
-
       {/* Consolidated Quick Actions Card */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-2">
