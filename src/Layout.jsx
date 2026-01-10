@@ -229,8 +229,8 @@ export default function Layout({ children, currentPageName }) {
   {
     id: 'friends',
     title: 'Friends + Loved Ones',
-    color: 'text-cyan-400', // Turquoise
-    bgColor: 'bg-cyan-500/10',
+    color: 'text-indigo-400', // Changed to purple-blue
+    bgColor: 'bg-indigo-500/10',
     items: [
     { name: 'My People', icon: Users, path: 'People', moduleId: 'people' },
     { name: 'Kid Controls', icon: Lock, path: 'KidControls', moduleId: 'parenting' },
@@ -241,8 +241,8 @@ export default function Layout({ children, currentPageName }) {
   {
     id: 'faith',
     title: 'Faith & Spiritual',
-    color: 'text-lime-400', // Lime Green
-    bgColor: 'bg-lime-500/10',
+    color: 'text-teal-400', // Changed to Teal
+    bgColor: 'bg-teal-500/10',
     items: [
     { name: getPrayerName(), icon: Heart, path: 'PrayerRequests', moduleId: 'prayer' },
     { name: 'Holy Hitmakers', icon: Music, path: 'HolyHitmakers', requiresBibleBeliever: true, moduleId: 'holy_hitmakers' }]
@@ -251,8 +251,8 @@ export default function Layout({ children, currentPageName }) {
   {
     id: 'health',
     title: 'Mind + Body Health',
-    color: 'text-yellow-400', // Gold/Yellow
-    bgColor: 'bg-yellow-500/10',
+    color: 'text-green-400', // Changed to Green
+    bgColor: 'bg-green-500/10',
     items: [
     { name: 'Mental Health', icon: Brain, path: 'MentalHealth', moduleId: 'mental_health' },
     { name: 'Daily Wellness', icon: Heart, path: 'Wellness', moduleId: 'wellness' },
@@ -264,8 +264,8 @@ export default function Layout({ children, currentPageName }) {
   {
     id: 'creator',
     title: 'Creator Suite',
-    color: 'text-orange-400', // Orange
-    bgColor: 'bg-orange-500/10',
+    color: 'text-yellow-400', // Changed to Yellow
+    bgColor: 'bg-yellow-500/10',
     items: [
     { name: 'Content Creator Center', icon: Target, path: 'ContentCreatorHub', moduleId: 'content_creator_center' },
     // Affiliate Programs moved to Share & Earn
@@ -275,18 +275,23 @@ export default function Layout({ children, currentPageName }) {
       { name: 'Sunny Songbird', icon: Sun, path: 'SongGenerator' },
       { name: "Ping & Pong's Silly Songs", icon: Smile, externalUrl: 'https://sillysongs.pixelnutscreative.com' },
       { name: 'Holy Hitmakers', icon: Music, path: 'HolyHitmakers', requiresBibleBeliever: true }]
-    },
-    { name: 'Social Media Suite', icon: Share2, isSection: true, moduleId: 'tiktok', requiresTikTokAccess: true, subItems: [
-      { name: 'Social Shortcuts', icon: Link, path: 'SocialShortcuts' },
-      { name: 'Social Engagement', icon: MousePointerClick, path: 'TikTokEngagement' },
-      { name: 'Creator Contacts', icon: Users, path: 'TikTokContacts' },
-      { name: 'Content Calendar', icon: Calendar, path: 'LiveSchedule' },
-      { name: 'Discover Creators', icon: Search, path: 'DiscoverCreators' },
-      ...(isAdmin ? [{ name: 'Live Engagement (DEV)', icon: Activity, path: 'LiveEngagement' }] : []),
-      { name: 'Gift Gallery Gratitude', icon: Gift, path: 'WeeklyGifterGallery' },
-      { name: 'Love Aways', icon: Gift, path: 'LoveAway' }]
     }]
-
+  },
+  {
+    id: 'social',
+    title: 'Social Media Suite',
+    color: 'text-orange-400', // Changed to Orange
+    bgColor: 'bg-orange-500/10',
+    items: [
+      { name: 'Social Shortcuts', icon: Link, path: 'SocialShortcuts', moduleId: 'tiktok' },
+      { name: 'Social Engagement', icon: MousePointerClick, path: 'TikTokEngagement', moduleId: 'tiktok' },
+      { name: 'Creator Contacts', icon: Users, path: 'TikTokContacts', moduleId: 'tiktok' },
+      { name: 'Content Calendar', icon: Calendar, path: 'LiveSchedule', moduleId: 'tiktok' },
+      { name: 'Discover Creators', icon: Search, path: 'DiscoverCreators', moduleId: 'tiktok' },
+      ...(isAdmin ? [{ name: 'Live Engagement (DEV)', icon: Activity, path: 'LiveEngagement', moduleId: 'tiktok' }] : []),
+      { name: 'Gift Gallery Gratitude', icon: Gift, path: 'WeeklyGifterGallery', moduleId: 'tiktok' },
+      { name: 'Love Aways', icon: Gift, path: 'LoveAway', moduleId: 'tiktok' }
+    ]
   },
   {
     id: 'share_earn',
@@ -302,7 +307,7 @@ export default function Layout({ children, currentPageName }) {
   }];
 
 
-  const [collapsedGroups, setCollapsedGroups] = useState(['goals', 'friends', 'faith', 'health', 'creator', 'support']);
+  const [collapsedGroups, setCollapsedGroups] = useState(['goals', 'friends', 'faith', 'health', 'creator', 'social', 'support']);
 
   const toggleGroup = (groupId) => {
     setCollapsedGroups((previousGroups) =>
