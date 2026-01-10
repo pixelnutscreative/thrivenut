@@ -194,6 +194,19 @@ export default function Settings() {
         enable_night_reading: false,
         enable_morning_prayer: false,
         enable_night_prayer: false,
+        // Add explicit defaults for dashboard preferences to ensure they persist
+        intermittent_fasting: false,
+        enable_water_reminders: false,
+        enable_mood_checkins: false,
+        completed_tasks_display: 'show_checked',
+        dashboard_view_mode: 'detailed',
+        completed_items_color: 'green',
+        fasting_schedule: '16_8',
+        eating_window_start: '12:00',
+        eating_window_end: '20:00',
+        show_google_calendar: false,
+        google_calendar_connected: false,
+        journal_reminder_time: 'night',
         ...preferences
       });
       setPrefsInitialized(true);

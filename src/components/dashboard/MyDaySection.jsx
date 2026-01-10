@@ -152,7 +152,30 @@ export default function MyDaySection({
     red: { bg: 'bg-red-100', border: 'border-red-400', text: 'text-red-600' },
   };
   
-  const activeColor = completedColors[preferences?.completed_items_color || 'green'] || completedColors.green;
+  // Handle Hex Colors or Named Colors
+  const getActiveColor = () => {
+    const prefColor = preferences?.completed_items_color;
+    if (!prefColor) return completedColors.green;
+
+    // If it's a named color in our map
+    if (completedColors[prefColor]) return completedColors[prefColor];
+
+    // If it's a hex code, generic fallback or dynamic style
+    // For now, we'll return a dynamic object that components can use
+    if (prefColor.startsWith('#')) {
+      return {
+        bg: 'bg-opacity-20', // Fallback class, actual color set via style
+        border: 'border-opacity-50',
+        text: '', // Text color handled via style
+        isHex: true,
+        hex: prefColor
+      };
+    }
+
+    return completedColors.green;
+  };
+
+  const activeColor = getActiveColor();
 
   // Fetch medications
   const { data: medications = [] } = useQuery({
@@ -1150,11 +1173,18 @@ export default function MyDaySection({
                         onClick={() => handleToggleTask(task)}
                         className={`flex-shrink-0 flex flex-col items-center gap-1 min-w-[60px] ${isComplete ? 'opacity-50' : ''}`}
                       >
-                        <div className={`w-12 h-12 md:w-10 md:h-10 lg:w-9 lg:h-9 rounded-full flex items-center justify-center border-2 shadow-sm transition-all ${
-                          isComplete 
-                            ? `${activeColor.border} ${activeColor.bg} ${activeColor.text}`
-                            : 'border-purple-200 bg-white hover:border-purple-400 text-purple-600'
-                        }`}>
+                        <div 
+                          className={`w-12 h-12 md:w-10 md:h-10 lg:w-9 lg:h-9 rounded-full flex items-center justify-center border-2 shadow-sm transition-all ${
+                            isComplete 
+                              ? `${activeColor.border} ${activeColor.bg} ${activeColor.text}`
+                              : 'border-purple-200 bg-white hover:border-purple-400 text-purple-600'
+                          }`}
+                          style={isComplete && activeColor.isHex ? {
+                            backgroundColor: `${activeColor.hex}33`, // 20% opacity
+                            borderColor: activeColor.hex,
+                            color: activeColor.hex
+                          } : {}}
+                        >
                           <Clock className="w-5 h-5" />
                         </div>
                         <span className="text-[10px] font-medium bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">

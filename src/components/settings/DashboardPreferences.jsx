@@ -191,7 +191,7 @@ export default function DashboardPreferences({ formData, setFormData }) {
             }`}
           >
             <div className="flex items-start gap-3">
-              <Checkbox checked={formData.enable_water_reminders} />
+              <Checkbox checked={!!formData.enable_water_reminders} />
               <div>
                 <h4 className="font-semibold flex items-center gap-2">
                   <Droplet className="w-4 h-4 text-blue-500" />
@@ -209,7 +209,7 @@ export default function DashboardPreferences({ formData, setFormData }) {
             }`}
           >
             <div className="flex items-start gap-3">
-              <Checkbox checked={formData.enable_mood_checkins} />
+              <Checkbox checked={!!formData.enable_mood_checkins} />
               <div>
                 <h4 className="font-semibold flex items-center gap-2">
                   <Heart className="w-4 h-4 text-pink-500" />
@@ -411,7 +411,7 @@ export default function DashboardPreferences({ formData, setFormData }) {
             }`}
           >
             <div className="flex items-start gap-3">
-              <Checkbox checked={formData.intermittent_fasting} />
+              <Checkbox checked={!!formData.intermittent_fasting} />
               <div>
                 <h4 className="font-semibold">I practice intermittent fasting</h4>
                 <p className="text-sm text-gray-600">Track your fasting and eating windows</p>
@@ -419,7 +419,7 @@ export default function DashboardPreferences({ formData, setFormData }) {
             </div>
           </div>
 
-          {formData.intermittent_fasting && (
+          {!!formData.intermittent_fasting && (
             <div className="space-y-4 p-4 bg-green-50 rounded-xl">
               <div className="space-y-2">
                 <Label>Fasting Schedule</Label>
