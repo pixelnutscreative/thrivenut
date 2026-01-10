@@ -158,6 +158,13 @@ export default function Dashboard() {
     mutationFn: async (data) => {
       if (preferences?.id) {
         return await base44.entities.UserPreferences.update(preferences.id, data);
+      } else if (effectiveEmail) {
+        return await base44.entities.UserPreferences.create({
+          user_email: effectiveEmail,
+          dashboard_view_mode: 'detailed',
+          enabled_modules: DEFAULT_MODULES,
+          ...data
+        });
       }
     },
     onSuccess: () => {
@@ -197,6 +204,13 @@ export default function Dashboard() {
     mutationFn: async (enabled) => {
       if (preferences?.id) {
         return await base44.entities.UserPreferences.update(preferences.id, { show_google_calendar: enabled });
+      } else if (effectiveEmail) {
+        return await base44.entities.UserPreferences.create({
+          user_email: effectiveEmail,
+          dashboard_view_mode: 'detailed',
+          enabled_modules: DEFAULT_MODULES,
+          show_google_calendar: enabled
+        });
       }
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['preferences'] }),
@@ -421,8 +435,15 @@ export default function Dashboard() {
             onToggleCreatorCalendar={async (checked) => {
               if (preferences?.id) {
                 await base44.entities.UserPreferences.update(preferences.id, { show_creator_calendar_events: checked });
-                queryClient.invalidateQueries({ queryKey: ['preferences'] });
+              } else if (effectiveEmail) {
+                await base44.entities.UserPreferences.create({
+                  user_email: effectiveEmail,
+                  dashboard_view_mode: 'detailed',
+                  enabled_modules: DEFAULT_MODULES,
+                  show_creator_calendar_events: checked
+                });
               }
+              queryClient.invalidateQueries({ queryKey: ['preferences'] });
             }}
             onViewModeChange={(mode) => updatePreferencesMutation.mutate({ dashboard_view_mode: mode })}
           />
