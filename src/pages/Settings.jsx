@@ -235,30 +235,23 @@ export default function Settings() {
   const updatePreferencesMutation = useMutation({
     mutationFn: async (data) => {
       const cleanData = { ...data };
+      const targetId = data.id; // Use the ID from the loaded data to ensure we update the correct record
+      
       // Remove system fields that shouldn't be updated manually
       delete cleanData.id;
       delete cleanData.created_date;
       delete cleanData.updated_date;
       delete cleanData.created_by;
       
-      // Double check for existing record to prevent duplicates (force refresh from DB)
-      const existing = await base44.entities.UserPreferences.filter({ user_email: effectiveEmail });
-      
-      // Prefer record with data if multiple exist
-      let targetId = null;
-      
-      if (existing.length > 0) {
-        // Find best match if multiple
-        const bestMatch = existing.find(p => p.nickname || p.profile_image_url) || existing[0];
-        targetId = bestMatch.id;
-        
-        // If we found multiple, we should probably clean them up, but for now just update the best one
-        // and logging it might be good if we had a logger.
-      }
-
       if (targetId) {
         return await base44.entities.UserPreferences.update(targetId, cleanData);
       } else {
+        // Fallback: check if one exists anyway to avoid duplicates if ID was missing for some reason
+        const existing = await base44.entities.UserPreferences.filter({ user_email: effectiveEmail });
+        if (existing.length > 0) {
+           return await base44.entities.UserPreferences.update(existing[0].id, cleanData);
+        }
+        
         return await base44.entities.UserPreferences.create({
           user_email: effectiveEmail,
           ...cleanData,
@@ -726,7 +719,6 @@ export default function Settings() {
 
             <AIPersonalitySettings formData={prefData} setFormData={setPrefData} />
             <AddressingPreferences formData={prefData} setFormData={setPrefData} />
-            <MentalHealthSettings formData={prefData} setFormData={setPrefData} />
             <Card className="mb-4">
               <CardHeader>
                 <CardTitle className="text-base">General Preferences</CardTitle>

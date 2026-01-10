@@ -255,6 +255,55 @@ export default function DashboardPreferences({ formData, setFormData }) {
         </CardContent>
       </Card>
 
+      {/* Daily Greetings */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-yellow-500" />
+            Daily Greetings
+          </CardTitle>
+          <CardDescription>Select which types of daily messages you want to see</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {[
+            { id: 'scripture', name: 'Scripture', description: 'Daily Bible verse', icon: '📖' },
+            { id: 'positive_quote', name: 'Positive Quote', description: 'Uplifting quotes', icon: '✨' },
+            { id: 'motivational', name: 'Motivational', description: 'Get pumped up!', icon: '🔥' },
+            { id: 'affirmation', name: 'Daily Affirmation', description: 'Personalized affirmations', icon: '💜' }
+          ].map(greeting => {
+            const isSelected = formData.greeting_types?.includes(greeting.id);
+            return (
+              <div
+                key={greeting.id}
+                onClick={() => {
+                  const current = formData.greeting_types || [];
+                  const newTypes = isSelected
+                    ? current.filter(t => t !== greeting.id)
+                    : [...current, greeting.id];
+                  if (newTypes.length > 0) {
+                    setFormData({ ...formData, greeting_types: newTypes });
+                  } else {
+                    setFormData({ ...formData, greeting_types: [] });
+                  }
+                }}
+                className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                  isSelected ? 'border-yellow-400 bg-yellow-50' : 'border-gray-200 hover:border-yellow-300'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <Checkbox checked={isSelected} />
+                  <span>{greeting.icon}</span>
+                  <div>
+                    <h4 className="font-semibold">{greeting.name}</h4>
+                    <p className="text-sm text-gray-600">{greeting.description}</p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </CardContent>
+      </Card>
+
       {/* Google Calendar */}
       <Card>
         <CardHeader>
