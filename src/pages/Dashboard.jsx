@@ -48,23 +48,7 @@ export default function Dashboard() {
       try {
         const userData = await base44.auth.me();
         setUser(userData);
-
         base44.functions.invoke('verifyRealUser', {}).catch(() => {});
-
-        if (userData?.email) {
-          const prefs = await base44.entities.UserPreferences.filter({ user_email: userData.email }, '-updated_date');
-          if (prefs[0] && !prefs[0].tiktok_access_approved) {
-            try {
-              const preApproved = await base44.entities.PreApprovedEmail.filter({ 
-                email: userData.email.toLowerCase(), 
-                is_active: true 
-              });
-              if (preApproved.length > 0) {
-                await base44.entities.UserPreferences.update(prefs[0].id, { tiktok_access_approved: true });
-              }
-            } catch (e) {}
-          }
-        }
       } catch (error) {
         console.error('Auth error:', error);
       }
@@ -73,15 +57,35 @@ export default function Dashboard() {
     checkAuth();
   }, []);
 
+  // Auto-approve TikTok access if eligible
+  useEffect(() => {
+    const checkAccess = async () => {
+      if (user?.email && preferences && !preferences.tiktok_access_approved) {
+        try {
+          const preApproved = await base44.entities.PreApprovedEmail.filter({ 
+            email: user.email.toLowerCase(), 
+            is_active: true 
+          });
+          if (preApproved.length > 0) {
+            await base44.entities.UserPreferences.update(preferences.id, { tiktok_access_approved: true });
+            queryClient.invalidateQueries({ queryKey: ['preferences'] });
+          }
+        } catch (e) {}
+      }
+    };
+    checkAccess();
+  }, [user, preferences]);
+
   const effectiveEmail = user ? getEffectiveUserEmail(user.email) : null;
 
   const { data: preferences } = useQuery({
     queryKey: ['preferences', effectiveEmail],
     queryFn: async () => {
-      const prefs = await base44.entities.UserPreferences.filter({ user_email: effectiveEmail });
+      const prefs = await base44.entities.UserPreferences.filter({ user_email: effectiveEmail }, '-updated_date');
       return prefs[0] || null;
     },
     enabled: !!effectiveEmail,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
   const [prefKey, setPrefKey] = useState(0);
