@@ -138,7 +138,7 @@ export function FloatingSoundCloudPlayer({ playlistUrl, primaryColor, accentColo
 
 // Mobile popup that slides up from bottom - PERSISTENT IFRAME
 export function MobileSoundCloudPopup({ playlistUrl, primaryColor, accentColor, isHidden }) {
-  const [isOpen, setIsOpen] = useState(true); // Auto-open on load
+  const [isOpen, setIsOpen] = useState(false);
 
   if (!playlistUrl) return null;
   const embedDetails = getEmbedDetails(playlistUrl);
