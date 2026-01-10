@@ -291,7 +291,8 @@ export default function MyDaySection({
   const { data: manualEvents = [] } = useQuery({
     queryKey: ['manualEventsToday', today, userEmail],
     queryFn: async () => {
-      return await base44.entities.ExternalEvent.filter({ date: today, created_by: userEmail });
+      const events = await base44.entities.ExternalEvent.filter({ date: today, created_by: userEmail });
+      return events.map(event => ({ ...event, is_urgent: event.is_urgent, color: event.color }));
     },
     enabled: !!userEmail
   });
@@ -692,7 +693,9 @@ export default function MyDaySection({
           externalLink: event.htmlLink,
           isCalendarEvent: true,
           hasTime: !event.isAllDay,
-          displayTime: event.displayTime
+          displayTime: event.displayTime,
+          is_urgent: event.is_urgent,
+          urgent_color: event.color,
         });
       });
     }
@@ -725,6 +728,10 @@ export default function MyDaySection({
     const customOrder = localTaskOrder.length > 0 ? localTaskOrder : (preferences?.my_day_task_order || []);
     
     return tasks.sort((a, b) => {
+      // Urgent tasks always at the top
+      if (a.is_urgent && !b.is_urgent) return -1;
+      if (!a.is_urgent && b.is_urgent) return 1;
+
       // If custom order exists, use it first
       if (customOrder.length > 0) {
         const aCustomIdx = customOrder.indexOf(a.id);
@@ -1361,20 +1368,31 @@ export default function MyDaySection({
                     const Icon = task.icon;
                     const isComplete = isTaskComplete(task);
                     
+                    const isUrgent = task.is_urgent;
+                    const urgentStyle = isUrgent ? { borderColor: task.urgent_color || '#ef4444', backgroundColor: '#fff1f2' } : {};
+                    const iconStyle = isUrgent && task.urgent_color ? { color: task.urgent_color } : {};
+
                     return (
-                      <div key={task.id} className="flex items-center gap-3 p-3 bg-white rounded-lg border hover:border-purple-300 transition-colors group">
+                      <div 
+                        key={task.id} 
+                        className={`flex items-center gap-3 p-3 bg-white rounded-lg border transition-colors group ${isUrgent ? 'shadow-md border-l-4' : 'hover:border-purple-300'}`}
+                        style={urgentStyle}
+                      >
                         <Checkbox
                           checked={isComplete}
                           onCheckedChange={() => handleToggleTask(task)}
                           className="flex-shrink-0"
                         />
-                        <Icon className={`w-4 h-4 flex-shrink-0 ${task.color}`} />
+                        <Icon 
+                          className={`w-4 h-4 flex-shrink-0 ${!isUrgent ? task.color : (task.urgent_color ? '' : 'text-red-600')}`} 
+                          style={iconStyle}
+                        />
                         <div className="flex-1 min-w-0">
-                          <p className={`text-sm font-medium ${isComplete ? 'line-through text-gray-400' : ''}`}>
+                          <p className={`text-sm font-medium ${isComplete ? 'line-through text-gray-400' : ''} ${isUrgent ? 'font-bold' : ''}`} style={isUrgent && task.urgent_color ? { color: task.urgent_color } : {}}>
                             {task.label}
                           </p>
                           {task.sublabel && (
-                            <p className="text-xs text-gray-500">{task.sublabel}</p>
+                            <p className={`text-xs ${isUrgent ? '' : 'text-gray-500'}`} style={isUrgent && task.urgent_color ? { color: task.urgent_color, opacity: 0.8 } : {}}>{task.sublabel}</p>
                           )}
                         </div>
                         
