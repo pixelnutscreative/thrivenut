@@ -229,8 +229,8 @@ export default function Layout({ children, currentPageName }) {
   {
     id: 'friends',
     title: 'Friends + Loved Ones',
-    color: 'text-indigo-400', // Changed to purple-blue
-    bgColor: 'bg-indigo-500/10',
+    color: 'text-cyan-400', // Turquoise
+    bgColor: 'bg-cyan-500/10',
     items: [
     { name: 'My People', icon: Users, path: 'People', moduleId: 'people' },
     { name: 'Kid Controls', icon: Lock, path: 'KidControls', moduleId: 'parenting' },
