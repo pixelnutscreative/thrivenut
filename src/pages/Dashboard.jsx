@@ -424,6 +424,7 @@ export default function Dashboard() {
                 queryClient.invalidateQueries({ queryKey: ['preferences'] });
               }
             }}
+            onViewModeChange={(mode) => updatePreferencesMutation.mutate({ dashboard_view_mode: mode })}
           />
         );
       case 'tasks':

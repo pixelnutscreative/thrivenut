@@ -108,7 +108,8 @@ export default function MyDaySection({
   showGoogleCalendar = false,
   showCreatorCalendarEvents = true,
   onToggleGoogleCalendar,
-  onToggleCreatorCalendar
+  onToggleCreatorCalendar,
+  onViewModeChange
 }) {
   const [layoutMode, setLayoutMode] = useState('single');
   const queryClient = useQueryClient();
@@ -1143,7 +1144,10 @@ export default function MyDaySection({
               <Button 
                 variant="ghost" 
                 size="sm" 
-                onClick={() => setLocalViewMode('detailed')} 
+                onClick={() => {
+                  setLocalViewMode('detailed');
+                  if (onViewModeChange) onViewModeChange('detailed');
+                }} 
                 className="h-7 text-xs text-gray-500 hover:text-gray-900"
               >
                 <List className="w-3 h-3 mr-1" /> Detailed
@@ -1356,7 +1360,10 @@ export default function MyDaySection({
               <Button 
                 variant="ghost"
                 size="sm" 
-                onClick={() => setLocalViewMode('compact')} 
+                onClick={() => {
+                  setLocalViewMode('compact');
+                  if (onViewModeChange) onViewModeChange('compact');
+                }} 
                 className="h-7 text-xs text-white hover:bg-white/20"
               >
                 <Grid3X3 className="w-3 h-3 mr-1" /> Compact
