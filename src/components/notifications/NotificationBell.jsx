@@ -13,12 +13,13 @@ export default function NotificationBell({ userEmail, isDark = false }) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
+  const [dismissedLocally, setDismissedLocally] = useState([]);
 
   // Fetch notifications
   const { data: notifications = [] } = useQuery({
     queryKey: ['notifications', userEmail],
     queryFn: async () => {
-      const notifs = await base44.entities.Notification.filter({ is_active: true }, '-created_date');
+      const notifs = await base44.entities.Notification.filter({ is_active: true }, '-created_date', 100);
       
       if (!userEmail) return [];
       
@@ -74,13 +75,13 @@ export default function NotificationBell({ userEmail, isDark = false }) {
   const { data: readNotifications = [] } = useQuery({
     queryKey: ['notificationReads', userEmail],
     queryFn: async () => {
-      return await base44.entities.NotificationRead.filter({ user_email: userEmail });
+      return await base44.entities.NotificationRead.filter({ user_email: userEmail }, '-created_date', 1000);
     },
     enabled: !!userEmail,
   });
 
   const unreadNotifications = notifications.filter(
-    n => !readNotifications.some(r => r.notification_id === n.id)
+    n => !readNotifications.some(r => r.notification_id === n.id) && !dismissedLocally.includes(n.id)
   );
 
   const markAsReadMutation = useMutation({
@@ -147,6 +148,7 @@ export default function NotificationBell({ userEmail, isDark = false }) {
 
   const handleDismissNotification = (e, notificationId) => {
     e.stopPropagation();
+    setDismissedLocally(prev => [...prev, notificationId]);
     dismissNotificationMutation.mutate(notificationId);
   };
 
