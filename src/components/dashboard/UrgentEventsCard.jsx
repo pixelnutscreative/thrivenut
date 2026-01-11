@@ -74,6 +74,16 @@ export default function UrgentEventsCard({ events, publicCalendarEvents, alertCo
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [customColor, setCustomColor] = useState({ type: 'solid', solid: '#ef4444', gradientStart: '#ef4444', gradientEnd: '#dc2626' });
   const [editingEvent, setEditingEvent] = useState(null);
+
+  const updateEventMutation = useMutation({
+    mutationFn: async (data) => {
+      return await base44.entities.ExternalEvent.update(data.id, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['urgentEvents'] });
+      setEditingEvent(null);
+    },
+  });
   
   if (!events || events.length === 0) return null;
 
@@ -85,16 +95,6 @@ export default function UrgentEventsCard({ events, publicCalendarEvents, alertCo
     header: alertColor.startsWith('linear-gradient') ? alertColor.replace('linear-gradient', 'linear-gradient(to right,') : `linear-gradient(to right, ${alertColor}, ${alertColor})`,
     itemBorder: 'border-gray-200'
   } : (colorSchemes[alertColor] || colorSchemes.red);
-
-  const updateEventMutation = useMutation({
-    mutationFn: async (data) => {
-      return await base44.entities.ExternalEvent.update(data.id, data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['urgentEvents'] });
-      setEditingEvent(null);
-    },
-  });
 
   return (
     <motion.div
