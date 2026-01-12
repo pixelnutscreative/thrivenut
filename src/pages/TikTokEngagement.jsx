@@ -127,7 +127,7 @@ export default function TikTokEngagement() {
   });
 
   const openTikTok = (username) => {
-    window.open(`https://tiktok.com/@${username}`, '_blank');
+    window.location.href = `https://tiktok.com/@${username}`;
   };
 
   const getFrequencyLabel = (contact) => {
@@ -578,7 +578,7 @@ export default function TikTokEngagement() {
                         </Button>
                       </motion.div>
                       <Button 
-                        onClick={() => window.open(getUrl(), '_blank')} 
+                        onClick={() => window.location.href = getUrl()} 
                         className={`flex-1 h-9 text-sm overflow-hidden ${colorClass}`}
                       >
                         <ExternalLink className="w-3 h-3 mr-1 flex-shrink-0" />
@@ -622,7 +622,7 @@ export default function TikTokEngagement() {
                 <h3 className={`font-semibold ${textClass}`}>How to Properly Engage</h3>
                 <p className={`text-sm ${subtextClass}`}>Learn the best practices for meaningful engagement</p>
               </div>
-              <Button variant="outline" onClick={() => window.open('https://www.tiktok.com/@pixelnutscreative/video/7568313920054627598', '_blank')} className="border-blue-300 hover:bg-blue-100">
+              <Button variant="outline" onClick={() => window.location.href = 'https://www.tiktok.com/@pixelnutscreative/video/7568313920054627598'} className="border-blue-300 hover:bg-blue-100">
                 <ExternalLink className="w-4 h-4 mr-2" />
                 View Guide
               </Button>
