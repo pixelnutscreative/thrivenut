@@ -34,6 +34,7 @@ export default function SavedMotivations() {
   const [generatingPrompts, setGeneratingPrompts] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newMotivation, setNewMotivation] = useState({ content: '', category: 'Uncategorized', type: 'quote' });
+  const [isEnhancingText, setIsEnhancingText] = useState(false);
   const [showToolPicker, setShowToolPicker] = useState(null);
 
   // AI Generator State
@@ -94,7 +95,51 @@ export default function SavedMotivations() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.SavedMotivation.create(data),
+    mutationFn: async (data) => {
+      setIsEnhancingText(true);
+      try {
+        // Get tone preferences
+        const tone = preferences?.ai_personality_tone || 'encouraging';
+        const customTone = preferences?.custom_ai_tone_details || '';
+        
+        let systemPrompt = `You are a creative writing assistant. Your goal is to refine user ideas into short, impactful content suitable for social media.
+Personality/Tone: ${tone}
+${customTone ? `Additional Tone Instructions: ${customTone}` : ''}`;
+
+        let userPrompt = `Refine the following idea into a ${data.type}.`;
+
+        if (data.type === 'scripture') {
+            userPrompt += " It should be a scripture-inspired affirmation or paraphrase. Do not just cite a verse, make it personal, impactful, and consistent with the requested tone.";
+        } else if (data.type === 'quote') {
+            userPrompt += " Make it profound, memorable, and shareable.";
+        } else if (data.type === 'affirmation') {
+            userPrompt += " Use 'I' statements. Make it empowering and positive.";
+        } else if (data.type === 'motivational') {
+            userPrompt += " Make it energizing and action-oriented.";
+        }
+
+        userPrompt += "\n\nIdea to refine: " + data.content;
+
+        const response = await base44.integrations.Core.InvokeLLM({
+          prompt: `${systemPrompt}\n\n${userPrompt}`,
+          response_json_schema: {
+            type: "object",
+            properties: {
+              refined_text: { type: "string" }
+            }
+          }
+        });
+        
+        const refinedContent = response?.refined_text || data.content;
+        return base44.entities.SavedMotivation.create({ ...data, content: refinedContent });
+      } catch (error) {
+        console.error("AI Refinement failed", error);
+        // Fallback to original content
+        return base44.entities.SavedMotivation.create(data);
+      } finally {
+        setIsEnhancingText(false);
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['savedMotivations'] });
       setShowAddModal(false);
@@ -648,11 +693,11 @@ Each prompt should be:
               <Button variant="outline" onClick={() => setShowAddModal(false)}>Cancel</Button>
               <Button 
                 onClick={() => createMutation.mutate(newMotivation)}
-                disabled={!newMotivation.content || createMutation.isPending}
+                disabled={!newMotivation.content || createMutation.isPending || isEnhancingText}
                 className="bg-purple-600 hover:bg-purple-700"
               >
-                {createMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                Save
+                {(createMutation.isPending || isEnhancingText) ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                {isEnhancingText ? 'Enhancing...' : 'Save'}
               </Button>
             </DialogFooter>
           </DialogContent>
