@@ -512,20 +512,20 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
                   <div className="text-[10px] font-bold uppercase">
                     {event.start_time ? new Date(event.start_time).toLocaleDateString('en-US', { 
                       month: 'short', 
-                      timeZone: preferences?.user_timezone || undefined
+                      timeZone: (preferences?.user_timezone && preferences.user_timezone !== 'null') ? preferences.user_timezone : undefined
                     }) : 'TBA'}
                   </div>
                   <div className="text-xl font-bold">
                     {event.start_time ? new Date(event.start_time).toLocaleDateString('en-US', { 
                       day: 'numeric', 
-                      timeZone: preferences?.user_timezone || undefined
+                      timeZone: (preferences?.user_timezone && preferences.user_timezone !== 'null') ? preferences.user_timezone : undefined
                     }) : '--'}
                   </div>
                   <div className="text-[10px]">
                     {event.start_time ? new Date(event.start_time).toLocaleTimeString('en-US', { 
                       hour: 'numeric', 
                       minute: '2-digit', 
-                      timeZone: preferences?.user_timezone || undefined
+                      timeZone: (preferences?.user_timezone && preferences.user_timezone !== 'null') ? preferences.user_timezone : undefined
                     }) : ''}
                   </div>
                 </div>
