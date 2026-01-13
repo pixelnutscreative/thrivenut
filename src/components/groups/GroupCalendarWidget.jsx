@@ -36,7 +36,7 @@ export default function GroupCalendarWidget({ group, myMembership, isAdmin }) {
 
   const formatEventDate = (dateStr, options) => {
     return new Date(dateStr).toLocaleString('en-US', {
-      timeZone: preferences?.user_timezone,
+      timeZone: preferences?.user_timezone || undefined,
       ...options
     });
   };
