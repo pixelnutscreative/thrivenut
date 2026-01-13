@@ -59,6 +59,7 @@ export default function CreatorGroups() {
     resolveSlug();
   }, [slugParam, idParam]);
 
+  const navigate = useNavigate();
   const activeGroupId = idParam || resolvedGroupId;
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
@@ -418,7 +419,6 @@ export default function CreatorGroups() {
   };
 
   // Redirect Interested users to the Interested Dashboard
-  const navigate = useNavigate();
   useEffect(() => {
       if (isInterested && activeGroupId) {
           navigate(createPageUrl('GroupInterested') + `?groupId=${activeGroupId}`);
