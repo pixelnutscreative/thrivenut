@@ -135,9 +135,11 @@ export default function CreatorGroups() {
 
   // Fetch all groups for browse mode
   const { data: browseGroups = [] } = useQuery({
-    queryKey: ['browseGroups'],
+    queryKey: ['browseGroups', user?.email],
     queryFn: async () => {
-      return await base44.entities.CreatorGroup.filter({ status: 'active' });
+      // Use backend function to bypass RLS for public groups
+      const response = await base44.functions.invoke('getPublicGroups', {});
+      return response.data.groups;
     },
     enabled: browseMode && !activeGroupId
   });
