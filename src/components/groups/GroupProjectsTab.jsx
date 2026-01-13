@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { format } from 'date-fns';
-import { Plus, Play, Square, Clock, Calendar, User, FileText, Trash2, CheckCircle2, Circle, MoreVertical, FileDown, Pencil, History } from 'lucide-react';
+import { Plus, Play, Square, Clock, Calendar, User, FileText, Trash2, CheckCircle2, Circle, MoreVertical, FileDown, Pencil, History, AlertCircle } from 'lucide-react';
+import ProjectActionsMenu from './ProjectActionsMenu';
 import EditTaskDialog from './EditTaskDialog';
 import TimeReportDialog from './TimeReportDialog';
 
@@ -29,12 +30,31 @@ export default function GroupProjectsTab({ group, currentUser, myMembership }) {
     queryFn: () => base44.entities.GroupProject.filter({ group_id: group.id }),
   });
 
+  // Mutations for Project actions
+  const deleteProjectMutation = useMutation({
+    mutationFn: (projectIdToDelete) => base44.entities.GroupProject.delete(projectIdToDelete),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['groupProjects', group.id]);
+      setActiveProjectId(null); // Deselect project after deletion
+    },
+  });
+
+  const updateProjectMutation = useMutation({
+    mutationFn: ({ projectIdToUpdate, data }) => base44.entities.GroupProject.update(projectIdToUpdate, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['groupProjects', group.id]);
+      queryClient.invalidateQueries(['project', activeProjectId]);
+    },
+  });
+
   // Set default active project
   useEffect(() => {
     if (projects.length > 0 && !activeProjectId) {
       setActiveProjectId(projects[0].id);
+    } else if (projects.length === 0) {
+      setActiveProjectId(null); // Clear active project if no projects exist
     }
-  }, [projects]);
+  }, [projects, activeProjectId]);
 
   return (
     <div className="flex flex-col md:flex-row h-auto md:h-[calc(100vh-200px)] min-h-[600px] gap-6">
@@ -57,7 +77,16 @@ export default function GroupProjectsTab({ group, currentUser, myMembership }) {
                   : 'bg-white hover:bg-gray-50 border border-transparent'
               }`}
             >
-              <div className="font-medium truncate">{project.title}</div>
+              <div className="flex items-center justify-between">
+                <div className="font-medium truncate">{project.title}</div>
+                {isOwnerOrAdmin(myMembership?.role) && (
+                  <ProjectActionsMenu 
+                    project={project} 
+                    onDelete={(e) => { e.stopPropagation(); deleteProjectMutation.mutate(project.id); }}
+                    onEdit={(updatedData) => updateProjectMutation.mutate({ projectIdToUpdate: project.id, data: updatedData })}
+                  />
+                )}
+              </div>
               <div className="text-xs text-gray-500 mt-1 flex justify-between">
                 <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${
                   project.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-gray-100'
@@ -110,6 +139,16 @@ function ProjectDetail({ projectId, group, currentUser, myMembership, onOpenRepo
     queryKey: ['project', projectId],
     queryFn: async () => (await base44.entities.GroupProject.filter({ id: projectId }))[0]
   });
+
+  // Add this block for defensive programming
+  if (!project) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-6 text-center text-gray-500">
+        <AlertCircle className="w-10 h-10 mb-3" />
+        <p>Project details not found or failed to load.</p>
+      </div>
+    );
+  }
 
   const { data: tasks = [] } = useQuery({
     queryKey: ['projectTasks', projectId],
@@ -210,6 +249,11 @@ function TaskCard({ task, currentUser, group, projectId, canEdit, canLogTime }) 
     onSuccess: () => queryClient.invalidateQueries(['projectTasks', projectId])
   });
 
+  const deleteTaskMutation = useMutation({
+    mutationFn: (taskIdToDelete) => base44.entities.GroupTask.delete(taskIdToDelete),
+    onSuccess: () => queryClient.invalidateQueries(['projectTasks', projectId])
+  });
+
   const logTimeMutation = useMutation({
     mutationFn: (entry) => base44.entities.TimeEntry.create(entry),
     onSuccess: () => queryClient.invalidateQueries(['projectTime', projectId])
@@ -304,6 +348,22 @@ function TaskCard({ task, currentUser, group, projectId, canEdit, canLogTime }) 
            currentUser={currentUser}
            canEdit={canEdit} 
          />
+
+          {canEdit && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                if (window.confirm(`Are you sure you want to delete this task: ${task.title}?`)) {
+                  deleteTaskMutation.mutate(task.id);
+                }
+              }}
+              className="text-red-500 hover:text-red-600 hover:bg-red-50"
+              title="Delete Task"
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          )}
       </div>
     </div>
   );

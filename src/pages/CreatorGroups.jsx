@@ -1061,6 +1061,17 @@ export default function CreatorGroups() {
     );
   }
 
+  if (!activeGroup) {
+    return (
+        <div className="flex flex-col items-center justify-center h-screen p-6 text-center">
+            <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
+            <h2 className="text-xl font-bold text-gray-900">Error: Group Data Unavailable</h2>
+            <p className="text-gray-500 mt-2">There was an issue loading this group. Please try again or go back to your groups list.</p>
+            <Button className="mt-4" onClick={() => setSearchParams({})}>Back to My Groups</Button>
+        </div>
+    );
+  }
+
   // Override theme colors if group has a custom color
   const themeStyles = activeGroup.settings?.group_color ? {
     '--primary-color': activeGroup.settings.group_color,
