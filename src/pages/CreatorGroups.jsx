@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogT
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Users, Plus, Settings, Video, AlertCircle, ArrowLeft, Loader2, Building, Home, Heart, Sparkles, Brain, Briefcase, Calendar, MessageSquare, FileText, Bell, Eye, EyeOff, Link as LinkIcon, ExternalLink, Clock, Trash2, Filter, LayoutGrid, List, Lock, Printer, UserPlus } from 'lucide-react';
+import { Users, Plus, Settings, Video, AlertCircle, ArrowLeft, Loader2, Building, Home, Heart, Sparkles, Brain, Briefcase, Calendar, MessageSquare, FileText, Bell, Eye, EyeOff, Link as LinkIcon, ExternalLink, Clock, Trash2, Filter, LayoutGrid, List, Lock, Printer, UserPlus, Target } from 'lucide-react';
 import { useTheme } from '@/components/shared/useTheme';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -32,6 +32,7 @@ import MarketingOrdersTab from '../components/groups/marketing/MarketingOrdersTa
 import GroupDiscussionTab from '../components/groups/GroupDiscussionTab';
 import GroupAssetsTab from '../components/groups/GroupAssetsTab';
 import GroupAnnouncementBanner from '../components/groups/GroupAnnouncementBanner';
+import GroupSalesTab from '../components/groups/GroupSalesTab';
 
 export default function CreatorGroups() {
   const { user, preferences } = useTheme();
@@ -599,6 +600,7 @@ export default function CreatorGroups() {
     { id: 'qna', label: 'Q&A', icon: MessageSquare, color: 'teal' },
     { id: 'members', label: 'Members', icon: Users, color: 'orange' },
     { id: 'requests', label: 'Requests', icon: AlertCircle, color: 'gray' },
+    { id: 'sales', label: 'Sales Pipeline', icon: Target, color: 'green' },
   ];
 
   // Determine if this group is a "Client Group" (agency or client-portal)
@@ -661,6 +663,11 @@ export default function CreatorGroups() {
     // Always enable Feed for everyone if not disabled (Core Feature)
     if (id === 'feed') return true;
 
+    // Sales Tab - Only for Prospect groups
+    if (id === 'sales') {
+        return activeGroup.type === 'prospect';
+    }
+
     // Check for explicit permissions from Group Settings next
     const permissions = activeGroup?.role_tab_permissions;
     if (permissions && permissions[id] !== undefined) {
@@ -712,7 +719,10 @@ export default function CreatorGroups() {
     if (id === 'members' && !isAdmin) return false;
     
     // Admin Override
-    if (isAdmin) return true;
+    if (isAdmin) {
+      if (id === 'sales' && activeGroup.type !== 'prospect') return false;
+      return true;
+    }
 
     return !(groupPrefs?.hidden_tabs || []).includes(id);
   };
@@ -1559,6 +1569,12 @@ export default function CreatorGroups() {
           <TabsContent value="members" className="focus-visible:outline-none">
             {isTabEnabled('members') && (
               <GroupMembersTab group={activeGroup} currentUser={user} isAdmin={isAdmin} />
+            )}
+          </TabsContent>
+
+          <TabsContent value="sales" className="focus-visible:outline-none">
+            {isTabEnabled('sales') && (
+              <GroupSalesTab group={activeGroup} isAdmin={isAdmin} />
             )}
           </TabsContent>
 
