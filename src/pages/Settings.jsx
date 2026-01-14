@@ -182,8 +182,8 @@ export default function Settings() {
       // Initialize with fetched preferences, ensuring all new fields are present
       setPrefData({
         nickname: '',
-        user_timezone: '',
-        time_format: '12h',
+        user_timezone: preferences?.user_timezone || 'America/Los_Angeles',
+        time_format: preferences?.time_format || '12h',
         default_landing_page: 'Dashboard',
         greeting_types: [],
         ai_personality_tone: 'humorous',
@@ -250,7 +250,7 @@ export default function Settings() {
   const updatePreferencesMutation = useMutation({
     mutationFn: async (data) => {
       const cleanData = { ...data };
-      const targetId = data.id; // Use the ID from the loaded data to ensure we update the correct record
+      const targetId = preferences?.id || data.id; 
       
       // Remove system fields that shouldn't be updated manually
       delete cleanData.id;
@@ -261,12 +261,11 @@ export default function Settings() {
       if (targetId) {
         return await base44.entities.UserPreferences.update(targetId, cleanData);
       } else {
-        // Fallback: check if one exists anyway to avoid duplicates if ID was missing for some reason
+        // Fallback check
         const existing = await base44.entities.UserPreferences.filter({ user_email: effectiveEmail });
         if (existing.length > 0) {
            return await base44.entities.UserPreferences.update(existing[0].id, cleanData);
         }
-        
         return await base44.entities.UserPreferences.create({
           user_email: effectiveEmail,
           ...cleanData,
@@ -291,8 +290,9 @@ export default function Settings() {
         targetId = bestMatch.id;
       }
 
-      if (targetId) {
-        return await base44.entities.UserProfile.update(targetId, data);
+      const idToUpdate = userProfile?.id || targetId;
+      if (idToUpdate) {
+        return await base44.entities.UserProfile.update(idToUpdate, data);
       } else {
         return await base44.entities.UserProfile.create({
           user_email: effectiveEmail,
@@ -733,6 +733,7 @@ export default function Settings() {
             </Card>
 
             <AIPersonalitySettings formData={prefData} setFormData={setPrefData} />
+            <MentalHealthSettings formData={prefData} setFormData={setPrefData} />
             <AddressingPreferences formData={prefData} setFormData={setPrefData} />
             <Card className="mb-4">
               <CardHeader>

@@ -137,10 +137,10 @@ export default function Dashboard() {
   const enabledModules = preferences?.enabled_modules || DEFAULT_MODULES;
 
   const { data: selfCareLog } = useQuery({
-    queryKey: ['selfCareToday', format(new Date(), 'yyyy-MM-dd')],
+    queryKey: ['selfCareToday', format(new Date(), 'yyyy-MM-dd', { timeZone: preferences?.user_timezone || 'America/Los_Angeles' })],
     queryFn: async () => {
       const logs = await base44.entities.DailySelfCareLog.filter({ 
-        date: format(new Date(), 'yyyy-MM-dd'),
+        date: format(new Date(), 'yyyy-MM-dd', { timeZone: preferences?.user_timezone || 'America/Los_Angeles' }),
         created_by: user.email 
       });
       return logs[0] || null;
@@ -158,7 +158,7 @@ export default function Dashboard() {
     queryKey: ['urgentEvents', effectiveEmail],
     queryFn: async () => {
       const events = await base44.entities.ExternalEvent.filter({ 
-        date: format(new Date(), 'yyyy-MM-dd'),
+        date: format(new Date(), 'yyyy-MM-dd', { timeZone: preferences?.user_timezone || 'America/Los_Angeles' }),
         created_by: effectiveEmail,
         is_urgent: true,
         is_completed: false 
@@ -452,7 +452,11 @@ export default function Dashboard() {
             selfCareLog={selfCareLog}
             onToggleTask={(taskId, value) => selfCareMutation.mutate({ taskId, value })}
             onUpdateMealNotes={(noteKey, value) => mealNotesMutation.mutate({ noteKey, value })}
-            preferences={{ ...preferences, user_email: user?.email }}
+            preferences={{ 
+              ...preferences, 
+              user_timezone: preferences?.user_timezone || 'America/Los_Angeles',
+              user_email: user?.email 
+            }}
             viewMode={preferences?.dashboard_view_mode || 'detailed'}
             showGoogleCalendar={preferences?.show_google_calendar || false}
             showCreatorCalendarEvents={preferences?.show_creator_calendar_events !== false}
