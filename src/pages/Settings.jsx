@@ -27,7 +27,7 @@ import MoodEmojiSettings from '../components/settings/MoodEmojiSettings';
 import WidgetSettingsV2 from '../components/settings/WidgetSettingsV2';
 import MentalHealthSettings from '../components/settings/MentalHealthSettings';
 // ReferralsTab removed
-import AccountDeletionTab from '../components/settings/AccountDeletionTab';
+
 import AIPersonalitySettings from '../components/settings/AIPersonalitySettings';
 import AddressingPreferences from '../components/settings/AddressingPreferences';
 import OnboardingModal from '../components/onboarding/OnboardingModal';
@@ -35,12 +35,7 @@ import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
 import { useTheme } from '../components/shared/useTheme';
 import { useLocation, useNavigate } from 'react-router-dom';
 import People from './People';
-import ContactFormHeader from '../components/contacts/ContactFormHeader';
-import TikTokTabContent from '../components/contacts/TikTokTabContent';
-import PersonalTabContent from '../components/contacts/PersonalTabContent';
-import BusinessTabContent from '../components/contacts/BusinessTabContent';
-import ProfileFavoritesTab from '../components/contacts/ProfileFavoritesTab';
-import MomentsTabContent from '../components/contacts/MomentsTabContent';
+
 
 const AFFILIATE_TAG = 'pixelnuts-20';
 
@@ -82,8 +77,8 @@ export default function Settings() {
   const [saveStatus, setSaveStatus] = useState('idle'); // idle, saving, saved, error
   const isSavingAll = saveStatus === 'saving';
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('profile');
-  const [expandedTabs, setExpandedTabs] = useState(['profile']);
+  const [activeTab, setActiveTab] = useState('features');
+  const [expandedTabs, setExpandedTabs] = useState(['features']);
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
@@ -440,10 +435,9 @@ export default function Settings() {
           navigate(`#${v}`); 
         }} className="w-full">
           <TabsList className="grid grid-cols-4 md:grid-cols-8 gap-1 mb-6 bg-transparent h-auto">
-            {['profile', 'features', 'dashboard', 'preferences', 'bible'].map(tab => {
+            {['features', 'dashboard', 'preferences', 'bible'].map(tab => {
               let icon, label;
               switch(tab) {
-                case 'profile': icon = <User className="w-4 h-4" />; label = 'Profile'; break;
                 case 'features': icon = <PuzzleIcon className="w-4 h-4" />; label = 'Customize'; break;
                 case 'dashboard': icon = <CalendarIcon className="w-4 h-4" />; label = 'Dash'; break;
                 case 'preferences': icon = <Sliders className="w-4 h-4" />; label = 'Prefs'; break;
@@ -468,190 +462,6 @@ export default function Settings() {
               );
             })}
           </TabsList>
-
-          {/* PROFILE TAB */}
-          <TabsContent value="profile">
-            <Card>
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle>Profile</CardTitle>
-                  <Button 
-                    onClick={handleSave} 
-                    disabled={saveStatus === 'saving'}
-                    style={getSaveButtonStyle()}
-                    className={saveStatus === 'saved' ? 'text-white' : ''}
-                  >
-                    {getSaveButtonIcon()}
-                    {getSaveButtonText()}
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                    {/* Creator Profile Section with Tabs */}
-                    <div className="pt-4 space-y-4">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="font-semibold flex items-center gap-2"><Sparkles className="w-4 h-4" /> My Profile Card</h3>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-gray-500">Share Creator Info</span>
-                          <Switch 
-                            checked={profileData.privacy_settings?.share_creator_info}
-                            onCheckedChange={(checked) => updateProfileNested('privacy_settings', 'share_creator_info', checked)}
-                          />
-                        </div>
-                      </div>
-
-                      <Card className="border-2 border-purple-100 bg-white overflow-hidden">
-                        <CardContent className="p-0">
-                          <div className="p-4 bg-gray-50/50">
-                            <ContactFormHeader 
-                              formData={{
-                                ...profileData,
-                                real_name: profileData.real_name || user?.full_name,
-                                image_url: prefData.profile_image_url,
-                                color: profileData.favorite_color,
-                                clubs: profileData.clubs || [],
-                                custom_clubs: profileData.custom_clubs || []
-                              }} 
-                              setFormData={(newData) => {
-                                setProfileData(prev => ({
-                                  ...prev,
-                                  real_name: newData.real_name,
-                                  nickname: newData.nickname,
-                                  favorite_color: newData.color,
-                                  clubs: newData.clubs || [],
-                                  custom_clubs: newData.custom_clubs || []
-                                }));
-
-                                // Sync shared fields to UserPreferences
-                                setPrefData(prev => ({ 
-                                  ...prev, 
-                                  nickname: newData.nickname,
-                                  profile_image_url: newData.image_url 
-                                }));
-                              }}
-                              onSave={() => handleSave()}
-                              isSaving={updatePreferencesMutation.isPending || updateUserProfileMutation.isPending}
-                              isEditing={true}
-                              showIrlToggle={false}
-                              isProfile={true}
-                              primaryColor={primaryColor}
-                              hideSaveButtons={true}
-                            />
-                          </div>
-
-                          <Tabs defaultValue="personal" className="w-full">
-                            <TabsList className="w-full grid grid-cols-5 rounded-none border-b bg-gray-50/50 p-0 h-12">
-                              <TabsTrigger value="personal" className="rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:bg-white h-full text-xs px-1">
-                                Personal
-                              </TabsTrigger>
-                              <TabsTrigger value="favorites" className="rounded-none border-b-2 border-transparent data-[state=active]:border-pink-600 data-[state=active]:bg-white h-full text-xs px-1">
-                                Favorites
-                              </TabsTrigger>
-                              <TabsTrigger value="moments" className="rounded-none border-b-2 border-transparent data-[state=active]:border-indigo-600 data-[state=active]:bg-white h-full text-xs px-1">
-                                Moments
-                              </TabsTrigger>
-                              <TabsTrigger value="tiktok" className="rounded-none border-b-2 border-transparent data-[state=active]:border-purple-600 data-[state=active]:bg-white h-full text-xs px-1">
-                                TikTok
-                              </TabsTrigger>
-                              <TabsTrigger value="business" className="rounded-none border-b-2 border-transparent data-[state=active]:border-amber-600 data-[state=active]:bg-white h-full text-xs px-1">
-                                Business
-                              </TabsTrigger>
-                            </TabsList>
-
-                            <div className="p-4">
-                              <TabsContent value="personal" className="mt-0 space-y-4">
-                                <PersonalTabContent
-                                  formData={{
-                                    ...profileData,
-                                    email: user?.email,
-                                    phone: profileData.phone
-                                  }}
-                                  setFormData={(newData) => setProfileData(prev => ({ ...prev, ...newData }))}
-                                  isProfile={true}
-                                />
-                                <Card>
-                                  <CardContent className="pt-6 flex items-center justify-between">
-                                    <div>
-                                      <h3 className="font-semibold flex items-center gap-2"><Briefcase className="w-4 h-4" /> Work Schedule</h3>
-                                      <p className="text-sm text-gray-500">Manage your shifts and work hours</p>
-                                    </div>
-                                    <Button variant="outline" onClick={() => window.location.href = '/WorkSchedules'}>
-                                      Manage Schedule
-                                    </Button>
-                                  </CardContent>
-                                </Card>
-                              </TabsContent>
-
-                              <TabsContent value="favorites" className="mt-0">
-                                <ProfileFavoritesTab
-                                  formData={profileData}
-                                  setFormData={setProfileData}
-                                  isProfile={true}
-                                />
-                              </TabsContent>
-
-                              <TabsContent value="moments" className="mt-0">
-                                <div className="p-4 bg-white">
-                                  <MomentsTabContent
-                                    formData={profileData}
-                                    setFormData={setProfileData}
-                                    isProfile={true}
-                                  />
-                                </div>
-                              </TabsContent>
-
-                              <TabsContent value="tiktok" className="mt-0">
-                                <TikTokTabContent
-                                  formData={{
-                                    ...profileData,
-                                    username: prefData.tiktok_username,
-                                    display_name: profileData.display_name,
-                                    tiktok_username: profileData.tiktok_username
-                                    }}
-                                    setFormData={(newData) => {
-                                    setProfileData(prev => ({ 
-                                      ...prev, 
-                                      ...newData,
-                                      tiktok_username: newData.username // Sync username to profile data too
-                                    }));
-                                    if (newData.username !== prefData.tiktok_username) {
-                                      setPrefData(prev => ({ ...prev, tiktok_username: newData.username }));
-                                    }
-                                    }}
-                                  contacts={[]}
-                                  categories={[]}
-                                  isProfile={true}
-                                />
-                              </TabsContent>
-
-                              <TabsContent value="business" className="mt-0">
-                                <BusinessTabContent
-                                  formData={profileData}
-                                  setFormData={(newData) => setProfileData(prev => ({ ...prev, ...newData }))}
-                                  isProfile={true}
-                                />
-                              </TabsContent>
-                            </div>
-                          </Tabs>
-                        </CardContent>
-                      </Card>
-                    </div>
-
-                    {/* Delete Account Section */}
-                <div className="mt-8 pt-8 border-t border-gray-200">
-                  <Collapsible>
-                    <CollapsibleTrigger className="flex items-center justify-between w-full p-4 font-semibold text-lg hover:bg-gray-50 transition-colors rounded-t-lg">
-                      <h2>Delete Account</h2>
-                      <ChevronDown className="w-5 h-5 data-[state=open]:rotate-180 transition-transform" />
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <AccountDeletionTab userEmail={effectiveEmail} />
-                    </CollapsibleContent>
-                  </Collapsible>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
 
 
 
