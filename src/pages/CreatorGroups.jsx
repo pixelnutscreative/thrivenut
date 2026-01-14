@@ -763,13 +763,38 @@ export default function CreatorGroups() {
 
   // LIST OR BROWSE VIEW
   if (!activeGroup) {
-    const displayedGroups = browseMode 
-      ? Array.from(new Map([...(groups || []), ...(browseGroups || [])].filter(Boolean).map(g => [g?.id, g])).values())
-          .filter(g => g && g.id && (g.allow_public_discovery === true || isSuperAdmin || g.owner_email === user?.email || myMemberships.some(m => m.group_id === g.id)))
-      : groups.filter(g => {
+    // Robust filtering logic to prevent crashes
+    const getDisplayedGroups = () => {
+      // Safe access to arrays
+      const safeGroups = Array.isArray(groups) ? groups : [];
+      const safeBrowseGroups = Array.isArray(browseGroups) ? browseGroups : [];
+      const safeMemberships = Array.isArray(myMemberships) ? myMemberships : [];
+
+      if (!browseMode) {
+        return safeGroups.filter(g => {
+          if (!g || !g.id) return false;
           const pref = allGroupPrefs.find(p => p.group_id === g.id);
           return showHidden || !pref?.is_hidden_from_list;
         });
+      }
+
+      // Browse Mode: Combine my groups + public groups
+      const allGroupsMap = new Map();
+      
+      safeGroups.forEach(g => { if (g && g.id) allGroupsMap.set(g.id, g); });
+      safeBrowseGroups.forEach(g => { if (g && g.id) allGroupsMap.set(g.id, g); });
+
+      return Array.from(allGroupsMap.values()).filter(g => {
+        if (!g) return false;
+        const isPublic = g.allow_public_discovery === true;
+        const isOwner = g.owner_email === user?.email;
+        const isMember = safeMemberships.some(m => m.group_id === g.id);
+        
+        return isPublic || isSuperAdmin || isOwner || isMember;
+      });
+    };
+
+    const displayedGroups = getDisplayedGroups();
 
     return (
       <div className="p-6 max-w-5xl mx-auto space-y-8">
