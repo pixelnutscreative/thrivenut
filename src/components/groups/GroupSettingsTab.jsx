@@ -18,6 +18,8 @@ import ColorPicker from '../shared/ColorPicker';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import GroupAnnouncementsSettings from './GroupAnnouncementsSettings';
 import AgencyLiveCalendar from '@/pages/AgencyLiveCalendar';
+import GroupLogoUploader from './GroupLogoUploader';
+import ProspectManagementSettings from './ProspectManagementSettings';
 
 export default function GroupSettingsTab({ group }) {
   return (
