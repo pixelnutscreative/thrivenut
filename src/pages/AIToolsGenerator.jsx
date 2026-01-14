@@ -36,6 +36,15 @@ export default function AIToolsGenerator() {
     }
   });
 
+  // Fetch Custom GPTs
+  const { data: customGPTs = [] } = useQuery({
+    queryKey: ['customGPTs'],
+    queryFn: async () => {
+      const links = await base44.entities.AIToolLink.filter({ category: 'custom_gpt', is_active: true }, 'sort_order');
+      return links.sort((a, b) => a.tool_name.localeCompare(b.tool_name));
+    }
+  });
+
   // Fetch History
   const { data: history = [] } = useQuery({
     queryKey: ['generatedHistory', CATEGORY],
@@ -93,6 +102,9 @@ export default function AIToolsGenerator() {
           <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent gap-6">
             <TabsTrigger value="generate" className="rounded-none border-b-2 border-transparent data-[state=active]:border-pink-500 data-[state=active]:bg-transparent px-4 py-3">
               🎨 Studio
+            </TabsTrigger>
+            <TabsTrigger value="gpts" className="rounded-none border-b-2 border-transparent data-[state=active]:border-pink-500 data-[state=active]:bg-transparent px-4 py-3">
+              🤖 Custom GPTs
             </TabsTrigger>
             <TabsTrigger value="library" className="rounded-none border-b-2 border-transparent data-[state=active]:border-pink-500 data-[state=active]:bg-transparent px-4 py-3">
               📂 Gallery
@@ -234,6 +246,38 @@ export default function AIToolsGenerator() {
                     </CardContent>
                   </Card>
                 </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="gpts">
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {customGPTs.length === 0 ? (
+                  <div className="col-span-full text-center py-12 text-gray-500">
+                    No Custom GPTs found.
+                  </div>
+                ) : (
+                  customGPTs.map(tool => (
+                    <Card key={tool.id} className="hover:shadow-lg transition-all border-pink-100 h-full flex flex-col">
+                      <CardHeader>
+                        <div className="flex justify-between items-start gap-4">
+                          <CardTitle className="text-lg font-bold text-gray-800 leading-tight">{tool.tool_name}</CardTitle>
+                          <div className="p-2 bg-pink-50 rounded-lg shrink-0">
+                            <Brain className="w-5 h-5 text-pink-500" />
+                          </div>
+                        </div>
+                        <CardDescription className="line-clamp-3 mt-2">{tool.description}</CardDescription>
+                      </CardHeader>
+                      <CardContent className="mt-auto pt-0">
+                        <Button 
+                          className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white" 
+                          onClick={() => window.open(tool.pixels_toolbox_url, '_blank')}
+                        >
+                          <Sparkles className="w-4 h-4 mr-2" /> Open in ChatGPT
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
               </div>
             </TabsContent>
 
