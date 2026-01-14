@@ -39,8 +39,10 @@ export default function GroupSettingsTab({ group }) {
 
         <TabsContent value="general" className="space-y-6 mt-6">
           <GroupTabsManager group={group} />
+          <GroupLogoUploader group={group} />
           <RetainerSettings group={group} />
           <GroupNameSettings group={group} />
+          <ProspectManagementSettings group={group} />
           <GroupTypeSettings group={group} />
           <GroupShortcutsSettings group={group} />
           <GroupColorSettings group={group} />

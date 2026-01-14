@@ -635,6 +635,9 @@ export default function CreatorGroups() {
   const typeConfig = (groupTypes || []).find(gt => gt.key === activeGroup?.type);
   const allowed = typeConfig?.enabled_tabs && typeConfig.enabled_tabs.length > 0 ? new Set(typeConfig.enabled_tabs) : null;
   const defaultTab = allowed && !allowed.has('feed') ? (Array.from(allowed)[0] || 'feed') : 'feed';
+
+  // If prospect management is enabled, and it's the default tab, make it the default
+  if (activeGroup?.enable_prospect_management && defaultTab === 'sales') return 'sales';
   
   const currentTab = activeTab || defaultTab;
 
@@ -665,9 +668,9 @@ export default function CreatorGroups() {
     // Always enable Feed for everyone if not disabled (Core Feature)
     if (id === 'feed') return true;
 
-    // Sales Tab - Only for Prospect groups
+    // Sales Tab - Only if enabled for this group
     if (id === 'sales') {
-        return activeGroup.type === 'prospect';
+        return activeGroup.enable_prospect_management === true;
     }
 
     // Check for explicit permissions from Group Settings next
@@ -722,7 +725,7 @@ export default function CreatorGroups() {
     
     // Admin Override
     if (isAdmin) {
-      if (id === 'sales' && activeGroup.type !== 'prospect') return false;
+      if (id === 'sales' && !activeGroup.enable_prospect_management) return false;
       return true;
     }
 
@@ -890,7 +893,7 @@ export default function CreatorGroups() {
                         className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-xl ${iconClass}`}
                         style={iconStyle}
                       >
-                        {group.logo_url ? <img src={group.logo_url} alt="" className="w-full h-full object-cover rounded-xl" /> : group.name[0]}
+                        {group.logo_url ? <img src={group.logo_url} alt="Group Logo" className="w-full h-full object-cover rounded-xl" /> : group.name[0]}
                       </div>
                       <div className="flex flex-col items-end gap-1">
                         <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${colorClass.replace('text-', 'text-opacity-80 text-').replace('bg-', 'bg-opacity-50 bg-')}`}>
@@ -954,7 +957,7 @@ export default function CreatorGroups() {
                              className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm ${iconClass}`}
                              style={iconStyle}
                            >
-                              {group.name[0]}
+                              {group.logo_url ? <img src={group.logo_url} alt="Group Logo" className="w-full h-full object-cover rounded-lg" /> : group.name[0]}
                            </div>
                            {group.name}
                         </div>
@@ -1053,8 +1056,14 @@ export default function CreatorGroups() {
     );
   }
 
+  // Redirect non-members of public groups to GroupWelcome page
+  if (!isMember && !isAdmin && !isSuperAdmin && activeGroup.allow_public_discovery === true) {
+    navigate(createPageUrl('GroupWelcome') + `?groupId=${activeGroupId}`);
+    return null;
+  }
+
   // Private group guard (no preview unless discoverable or admin/owner)
-  if (!isMember && !isAdmin && !isSuperAdmin && activeGroup.owner_email !== user?.email && activeGroup.allow_public_discovery !== true) {
+  if (!isMember && !isAdmin && !isSuperAdmin && activeGroup.owner_email !== user?.email) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center space-y-4">
         <div className="w-16 h-16 bg-gray-100 text-gray-600 rounded-full flex items-center justify-center">
