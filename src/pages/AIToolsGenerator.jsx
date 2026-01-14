@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, Brain, Image as ImageIcon, Copy, Download, Sparkles, Save, Trash2 } from 'lucide-react';
+import { Loader2, Brain, Image as ImageIcon, Copy, Download, Sparkles, Save, Trash2, LayoutGrid, List, Filter, ExternalLink } from 'lucide-react';
 import { useTheme } from '../components/shared/useTheme';
 import { Badge } from '@/components/ui/badge';
 
@@ -27,6 +27,8 @@ export default function AIToolsGenerator() {
 
   const [generatedContent, setGeneratedContent] = useState('');
   const [copySuccess, setCopySuccess] = useState(false);
+  const [viewMode, setViewMode] = useState('grid');
+  const [resourceCategory, setResourceCategory] = useState('all');
 
   // Fetch Assets
   const { data: assets = [] } = useQuery({
@@ -103,11 +105,8 @@ export default function AIToolsGenerator() {
             <TabsTrigger value="generate" className="rounded-none border-b-2 border-transparent data-[state=active]:border-pink-500 data-[state=active]:bg-transparent px-4 py-3">
               🎨 Studio
             </TabsTrigger>
-            <TabsTrigger value="gpts" className="rounded-none border-b-2 border-transparent data-[state=active]:border-pink-500 data-[state=active]:bg-transparent px-4 py-3">
-              🤖 Custom GPTs
-            </TabsTrigger>
-            <TabsTrigger value="library" className="rounded-none border-b-2 border-transparent data-[state=active]:border-pink-500 data-[state=active]:bg-transparent px-4 py-3">
-              📂 Gallery
+            <TabsTrigger value="resources" className="rounded-none border-b-2 border-transparent data-[state=active]:border-pink-500 data-[state=active]:bg-transparent px-4 py-3">
+              📚 Resources
             </TabsTrigger>
             <TabsTrigger value="history" className="rounded-none border-b-2 border-transparent data-[state=active]:border-pink-500 data-[state=active]:bg-transparent px-4 py-3">
               📜 History
@@ -249,65 +248,151 @@ export default function AIToolsGenerator() {
               </div>
             </TabsContent>
 
-            <TabsContent value="gpts">
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {customGPTs.length === 0 ? (
-                  <div className="col-span-full text-center py-12 text-gray-500">
-                    No Custom GPTs found.
+            <TabsContent value="resources">
+              <div className="space-y-6">
+                {/* Filters */}
+                <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-white p-4 rounded-lg shadow-sm border">
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <Filter className="w-4 h-4 text-gray-500" />
+                    <Select value={resourceCategory} onValueChange={setResourceCategory}>
+                      <SelectTrigger className="w-[200px]">
+                        <SelectValue placeholder="Category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Resources</SelectItem>
+                        <SelectItem value="custom_gpt">Custom GPTs</SelectItem>
+                        <SelectItem value="image">Images & Graphics</SelectItem>
+                        <SelectItem value="video">Videos</SelectItem>
+                        <SelectItem value="document">Documents</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                ) : (
-                  customGPTs.map(tool => (
-                    <Card key={tool.id} className="hover:shadow-lg transition-all border-pink-100 h-full flex flex-col">
-                      <CardHeader>
-                        <div className="flex justify-between items-start gap-4">
-                          <CardTitle className="text-lg font-bold text-gray-800 leading-tight">{tool.tool_name}</CardTitle>
-                          <div className="p-2 bg-pink-50 rounded-lg shrink-0">
-                            <Brain className="w-5 h-5 text-pink-500" />
-                          </div>
-                        </div>
-                        <CardDescription className="line-clamp-3 mt-2">{tool.description}</CardDescription>
-                      </CardHeader>
-                      <CardContent className="mt-auto pt-0">
-                        <Button 
-                          className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white" 
-                          onClick={() => window.open(tool.pixels_toolbox_url, '_blank')}
-                        >
-                          <Sparkles className="w-4 h-4 mr-2" /> Open in ChatGPT
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  ))
-                )}
-              </div>
-            </TabsContent>
+                  
+                  <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg">
+                    <Button 
+                      size="sm" 
+                      variant={viewMode === 'grid' ? 'white' : 'ghost'} 
+                      className={`h-8 px-2 ${viewMode === 'grid' ? 'bg-white shadow-sm' : ''}`}
+                      onClick={() => setViewMode('grid')}
+                    >
+                      <LayoutGrid className="w-4 h-4" />
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant={viewMode === 'list' ? 'white' : 'ghost'}
+                      className={`h-8 px-2 ${viewMode === 'list' ? 'bg-white shadow-sm' : ''}`}
+                      onClick={() => setViewMode('list')}
+                    >
+                      <List className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
 
-            <TabsContent value="library">
-               <div className="grid md:grid-cols-3 gap-6">
-                {assets.length === 0 ? (
-                  <div className="col-span-3 text-center py-12 text-gray-500">
-                    No marketing assets available yet.
-                  </div>
-                ) : (
-                  assets.map(asset => (
-                    <Card key={asset.id} className="overflow-hidden">
-                      {asset.type === 'image' && (
-                        <div className="aspect-square bg-gray-100 relative group">
-                          <img src={asset.asset_url} alt={asset.title} className="w-full h-full object-cover" />
-                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                            <Button variant="secondary" size="sm" onClick={() => window.open(asset.asset_url, '_blank')}>
-                              <Download className="w-4 h-4 mr-2" /> Download
-                            </Button>
+                {/* Content */}
+                {(() => {
+                  const allResources = [
+                    ...customGPTs.map(t => ({...t, resourceType: 'custom_gpt'})),
+                    ...assets.map(a => ({...a, resourceType: a.type || 'image'}))
+                  ].filter(item => resourceCategory === 'all' || item.resourceType === resourceCategory);
+
+                  if (allResources.length === 0) {
+                    return (
+                      <div className="text-center py-16 text-gray-500 bg-gray-50 rounded-xl border border-dashed">
+                        <Brain className="w-12 h-12 mx-auto text-gray-300 mb-3" />
+                        <p>No resources found in this category.</p>
+                      </div>
+                    );
+                  }
+
+                  if (viewMode === 'list') {
+                    return (
+                      <div className="space-y-3">
+                        {allResources.map(item => (
+                          <div key={item.id} className="bg-white p-4 rounded-xl border hover:shadow-md transition-shadow flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                              {item.resourceType === 'custom_gpt' ? (
+                                <Brain className="w-6 h-6 text-pink-500" />
+                              ) : item.resourceType === 'image' && item.asset_url ? (
+                                <img src={item.asset_url} alt="" className="w-full h-full object-cover" />
+                              ) : (
+                                <ImageIcon className="w-6 h-6 text-blue-500" />
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-bold text-gray-900 truncate">{item.tool_name || item.title}</h3>
+                              <p className="text-sm text-gray-500 truncate">{item.description || item.caption}</p>
+                            </div>
+                            <div className="flex-shrink-0">
+                              {item.resourceType === 'custom_gpt' ? (
+                                <Button size="sm" variant="outline" onClick={() => window.open(item.pixels_toolbox_url, '_blank')}>
+                                  <Sparkles className="w-4 h-4 mr-2 text-pink-500" /> Open
+                                </Button>
+                              ) : (
+                                <Button size="sm" variant="outline" onClick={() => window.open(item.asset_url, '_blank')}>
+                                  <Download className="w-4 h-4 mr-2" /> Download
+                                </Button>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      )}
-                      <CardContent className="p-4">
-                        <h3 className="font-bold mb-1">{asset.title}</h3>
-                        <p className="text-xs text-gray-500 line-clamp-2">{asset.caption}</p>
-                      </CardContent>
-                    </Card>
-                  ))
-                )}
-               </div>
+                        ))}
+                      </div>
+                    );
+                  }
+
+                  // Grid View
+                  return (
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {allResources.map(item => {
+                        if (item.resourceType === 'custom_gpt') {
+                          return (
+                            <Card key={item.id} className="hover:shadow-lg transition-all border-pink-100 h-full flex flex-col group">
+                              <CardHeader>
+                                <div className="flex justify-between items-start gap-4">
+                                  <CardTitle className="text-lg font-bold text-gray-800 leading-tight">{item.tool_name}</CardTitle>
+                                  <div className="p-2 bg-pink-50 rounded-lg shrink-0 group-hover:bg-pink-100 transition-colors">
+                                    <Brain className="w-5 h-5 text-pink-500" />
+                                  </div>
+                                </div>
+                                <CardDescription className="line-clamp-3 mt-2">{item.description}</CardDescription>
+                              </CardHeader>
+                              <CardContent className="mt-auto pt-0">
+                                <Button 
+                                  className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white" 
+                                  onClick={() => window.open(item.pixels_toolbox_url, '_blank')}
+                                >
+                                  <Sparkles className="w-4 h-4 mr-2" /> Open in ChatGPT
+                                </Button>
+                              </CardContent>
+                            </Card>
+                          );
+                        } else {
+                          return (
+                            <Card key={item.id} className="overflow-hidden hover:shadow-lg transition-all h-full flex flex-col">
+                              {item.resourceType === 'image' && (
+                                <div className="aspect-video bg-gray-100 relative group/image">
+                                  <img src={item.asset_url} alt={item.title} className="w-full h-full object-cover" />
+                                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover/image:opacity-100 transition-opacity flex items-center justify-center">
+                                    <Button variant="secondary" size="sm" onClick={() => window.open(item.asset_url, '_blank')}>
+                                      <ExternalLink className="w-4 h-4 mr-2" /> View Full
+                                    </Button>
+                                  </div>
+                                </div>
+                              )}
+                              <CardContent className="p-4 flex-1 flex flex-col">
+                                <h3 className="font-bold mb-1">{item.title}</h3>
+                                <p className="text-xs text-gray-500 line-clamp-2 mb-4 flex-1">{item.caption}</p>
+                                <Button variant="outline" size="sm" className="w-full mt-auto" onClick={() => window.open(item.asset_url, '_blank')}>
+                                  <Download className="w-4 h-4 mr-2" /> Download
+                                </Button>
+                              </CardContent>
+                            </Card>
+                          );
+                        }
+                      })}
+                    </div>
+                  );
+                })()}
+              </div>
             </TabsContent>
 
             <TabsContent value="history">

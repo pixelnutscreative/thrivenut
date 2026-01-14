@@ -764,8 +764,8 @@ export default function CreatorGroups() {
   // LIST OR BROWSE VIEW
   if (!activeGroup) {
     const displayedGroups = browseMode 
-      ? Array.from(new Map([...groups, ...browseGroups].map(g => [g.id, g])).values())
-          .filter(g => g.allow_public_discovery === true || isSuperAdmin || g.owner_email === user?.email || myMemberships.some(m => m.group_id === g.id))
+      ? Array.from(new Map([...(groups || []), ...(browseGroups || [])].filter(Boolean).map(g => [g?.id, g])).values())
+          .filter(g => g && g.id && (g.allow_public_discovery === true || isSuperAdmin || g.owner_email === user?.email || myMemberships.some(m => m.group_id === g.id)))
       : groups.filter(g => {
           const pref = allGroupPrefs.find(p => p.group_id === g.id);
           return showHidden || !pref?.is_hidden_from_list;
