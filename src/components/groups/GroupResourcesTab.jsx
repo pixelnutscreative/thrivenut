@@ -40,26 +40,8 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
   const { data: resources = [] } = useQuery({
     queryKey: ['groupResources', group.id],
     queryFn: async () => {
-      const [groupRes, userRes] = await Promise.all([
-        base44.entities.GroupResource.filter({ group_id: group.id }, '-created_date'),
-        base44.entities.UserResource.filter({ group_id: group.id })
-      ]);
-
-      const mappedUserRes = userRes.map(ur => ({
-        ...ur,
-        id: `shared-${ur.id}`,
-        original_id: ur.id,
-        is_shared: true,
-        type: mapUserResourceCategory(ur.category),
-        submitted_by: ur.user_email,
-        status: 'approved',
-        created_date: ur.created_date || ur.updated_date,
-        description: ur.notes || ur.description // Use notes if description is empty
-      }));
-
-      return [...groupRes, ...mappedUserRes].sort((a, b) => 
-        new Date(b.created_date || 0) - new Date(a.created_date || 0)
-      );
+        const response = await base44.functions.invoke('fetchGroupResources', { groupId: group.id });
+        return response.data.resources || [];
     },
   });
 

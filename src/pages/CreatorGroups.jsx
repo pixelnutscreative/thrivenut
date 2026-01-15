@@ -470,9 +470,22 @@ export default function CreatorGroups() {
 
   const updatePrefsMutation = useMutation({
     mutationFn: async (newPrefs) => {
+      // Optimistic update for sorting
+      if (newPrefs.last_accessed_at) {
+         queryClient.setQueryData(['allGroupPrefs', user?.email], (old) => {
+            if (!old) return old;
+            return old.map(p => p.group_id === activeGroupId ? { ...p, last_accessed_at: newPrefs.last_accessed_at } : p);
+         });
+      }
+
       if (groupPrefs?.id) {
         return base44.entities.UserGroupPreference.update(groupPrefs.id, newPrefs);
       } else {
+        // Double check if preference exists but just wasn't loaded in 'groupPrefs' query yet (rare race condition)
+        const existing = await base44.entities.UserGroupPreference.filter({ user_email: user?.email, group_id: activeGroupId });
+        if (existing.length > 0) {
+             return base44.entities.UserGroupPreference.update(existing[0].id, newPrefs);
+        }
         return base44.entities.UserGroupPreference.create({ 
           user_email: user?.email, 
           group_id: activeGroupId, 
@@ -480,8 +493,24 @@ export default function CreatorGroups() {
         });
       }
     },
-    onSuccess: () => queryClient.invalidateQueries(['groupPrefs', user?.email, activeGroupId])
+    onSuccess: () => {
+        queryClient.invalidateQueries(['groupPrefs', user?.email, activeGroupId]);
+        queryClient.invalidateQueries(['allGroupPrefs']);
+    }
   });
+
+  // Track last accessed
+  useEffect(() => {
+    if (activeGroupId && user?.email && groupPrefs) {
+        // Only update if it's been more than 5 minutes or never set
+        const last = groupPrefs.last_accessed_at ? new Date(groupPrefs.last_accessed_at) : new Date(0);
+        const now = new Date();
+        const diff = now - last;
+        if (diff > 5 * 60 * 1000) {
+            updatePrefsMutation.mutate({ last_accessed_at: now.toISOString() });
+        }
+    }
+  }, [activeGroupId, user?.email, groupPrefs?.id]);
 
   // Shortcuts Query
   const { data: shortcuts = [] } = useQuery({
@@ -770,13 +799,46 @@ export default function CreatorGroups() {
       const safeBrowseGroups = Array.isArray(browseGroups) ? browseGroups : [];
       const safeMemberships = Array.isArray(myMemberships) ? myMemberships : [];
 
+      let resultGroups = [];
+
       if (!browseMode) {
-        return safeGroups.filter(g => {
+        resultGroups = safeGroups.filter(g => {
           if (!g || !g.id) return false;
           const pref = allGroupPrefs.find(p => p.group_id === g.id);
           return showHidden || !pref?.is_hidden_from_list;
         });
+      } else {
+        // Browse Mode: Combine my groups + public groups
+        const allGroupsMap = new Map();
+        
+        safeGroups.forEach(g => { if (g && g.id) allGroupsMap.set(g.id, g); });
+        safeBrowseGroups.forEach(g => { if (g && g.id) allGroupsMap.set(g.id, g); });
+
+        resultGroups = Array.from(allGroupsMap.values()).filter(g => {
+          if (!g) return false;
+          const isPublic = g.allow_public_discovery === true;
+          const isOwner = g.owner_email === user?.email;
+          const isMember = safeMemberships.some(m => m.group_id === g.id);
+          
+          return isPublic || isSuperAdmin || isOwner || isMember;
+        });
       }
+
+      // Sort by last accessed
+      return resultGroups.sort((a, b) => {
+          const prefA = allGroupPrefs.find(p => p.group_id === a.id);
+          const prefB = allGroupPrefs.find(p => p.group_id === b.id);
+          
+          const lastA = prefA?.last_accessed_at ? new Date(prefA.last_accessed_at) : new Date(0);
+          const lastB = prefB?.last_accessed_at ? new Date(prefB.last_accessed_at) : new Date(0);
+
+          if (lastA.getTime() !== lastB.getTime()) {
+              return lastB.getTime() - lastA.getTime();
+          }
+          
+          return new Date(b.created_date) - new Date(a.created_date);
+      });
+    };
 
       // Browse Mode: Combine my groups + public groups
       const allGroupsMap = new Map();
