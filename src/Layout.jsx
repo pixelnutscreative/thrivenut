@@ -43,6 +43,7 @@ export default function Layout({ children, currentPageName }) {
 
   // Authentication
   useEffect(() => {
+    document.title = "Thrive Nut";
     base44.auth.me().
     then(setUser).
     catch(() => setUser(null)).

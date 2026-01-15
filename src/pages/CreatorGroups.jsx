@@ -1332,14 +1332,14 @@ export default function CreatorGroups() {
                           <div className="flex items-center gap-2">
                             <Input 
                               readOnly 
-                              value={`https://${window.location.hostname.includes('preview-sandbox') ? 'thrive.pixelnutscreative.com' : window.location.hostname}/CreatorGroups?invite=${activeGroup.invite_code}&ref=${editingReferralCode}`} 
+                              value={`https://${window.location.hostname.includes('localhost') ? window.location.hostname : 'thrive.pixelnutscreative.com'}/CreatorGroups?invite=${activeGroup.invite_code}&ref=${editingReferralCode}`} 
                               className="bg-gray-50 font-mono text-xs"
                             />
                             <Button 
                               size="icon" 
                               variant="outline" 
                               onClick={() => {
-                                const domain = window.location.hostname.includes('preview-sandbox') ? 'thrive.pixelnutscreative.com' : window.location.hostname;
+                                const domain = window.location.hostname.includes('localhost') ? window.location.hostname : 'thrive.pixelnutscreative.com';
                                 navigator.clipboard.writeText(`https://${domain}/CreatorGroups?invite=${activeGroup.invite_code}&ref=${editingReferralCode}`);
                                 alert("Link copied!");
                               }}
