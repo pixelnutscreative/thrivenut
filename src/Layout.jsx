@@ -861,65 +861,8 @@ export default function Layout({ children, currentPageName }) {
           {/* Footer & SoundCloud */}
           {user &&
             <div className={`pt-6 mt-6 border-t ${menuBorderClass}`}>
-            <button
-                onClick={() => {
-                  const accounts = JSON.parse(localStorage.getItem('savedAccounts') || '[]');
-                  const currentEmail = user.email;
-
-                  let message = 'ACCOUNT MANAGER\n\n';
-                  if (accounts.length > 0) {
-                    message += 'Saved Accounts:\n';
-                    accounts.forEach((acc, idx) => {
-                      const isCurrent = acc.email === currentEmail;
-                      message += `${idx + 1}. ${acc.email}${isCurrent ? ' (current)' : ''}\n`;
-                    });
-                    message += '\n';
-                  }
-
-                  message += 'Options:\n';
-                  message += '1. Add this account to saved list\n';
-                  message += '2. Switch to different account\n';
-                  message += '3. Remove saved account\n';
-                  message += '4. Cancel\n\n';
-                  message += 'Enter number:';
-
-                  const choice = prompt(message);
-
-                  if (choice === '1') {
-                    const exists = accounts.find((a) => a.email === currentEmail);
-                    if (!exists) {
-                      accounts.push({ email: currentEmail, name: user.full_name });
-                      localStorage.setItem('savedAccounts', JSON.stringify(accounts));
-                      alert('Account saved! You can now switch between accounts easily.');
-                    } else {
-                      alert('This account is already saved.');
-                    }
-                  } else if (choice === '2') {
-                    if (accounts.length === 0) {
-                      alert('No saved accounts. Add accounts first!');
-                      return;
-                    }
-                    const accountsList = accounts.map((acc, idx) => `${idx + 1}. ${acc.email}`).join('\n');
-                    const selection = prompt(`Select account:\n${accountsList}\n\nEnter number:`);
-                    const selectedIdx = parseInt(selection) - 1;
-                    if (selectedIdx >= 0 && selectedIdx < accounts.length) {
-                      base44.auth.logout(createPageUrl('Home') + '?email=' + accounts[selectedIdx].email);
-                    }
-                  } else if (choice === '3') {
-                    if (accounts.length === 0) {
-                      alert('No saved accounts to remove.');
-                      return;
-                    }
-                    const accountsList = accounts.map((acc, idx) => `${idx + 1}. ${acc.email}`).join('\n');
-                    const selection = prompt(`Remove account:\n${accountsList}\n\nEnter number:`);
-                    const selectedIdx = parseInt(selection) - 1;
-                    if (selectedIdx >= 0 && selectedIdx < accounts.length) {
-                      accounts.splice(selectedIdx, 1);
-                      localStorage.setItem('savedAccounts', JSON.stringify(accounts));
-                      alert('Account removed from saved list.');
-                    }
-                  }
-                }}
+            <Link
+                to={createPageUrl('Profile')}
                 className={`w-full flex items-center justify-between gap-2 mb-4 px-2 py-2 rounded-lg ${menuHoverClass}`}>
 
               <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -933,7 +876,7 @@ export default function Layout({ children, currentPageName }) {
                   alt="Profile"
                   className="w-10 h-10 rounded-full object-cover border-2 border-gray-300 flex-shrink-0" />
 
-            </button>
+            </Link>
 
             <div className="flex items-center gap-1 mt-2">
               <Button
