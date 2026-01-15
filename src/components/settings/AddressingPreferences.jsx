@@ -9,22 +9,17 @@ export default function AddressingPreferences({ formData, setFormData }) {
     <Card className="mb-4">
       <CardHeader>
         <CardTitle className="text-base flex items-center gap-2"><User className="w-4 h-4" /> How should I address you?</CardTitle>
-        <CardDescription>Select your preference for personalized language (user, you, etc.)</CardDescription>
+        <CardDescription>Select your preference for personalized language</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <Label htmlFor="address-as">Used for personalized language (e.g. your username, etc.)</Label>
-        <Select value={formData.address_as || 'you'} onValueChange={(v) => setFormData({ ...formData, address_as: v })}>
+        <Label htmlFor="address-as">Used for personalized language</Label>
+        <Select value={formData.address_as || 'Queen'} onValueChange={(v) => setFormData({ ...formData, address_as: v })}>
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Select how the AI should address you" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="you">You</SelectItem>
-            <SelectItem value="nickname">My Nickname (e.g. {formData.nickname || 'Thrive user'})</SelectItem>
-            <SelectItem value="full_name">My Full Name (e.g. {formData.full_name || 'Thrive User'})</SelectItem>
-            <SelectItem value="queen">Queen</SelectItem>
-            <SelectItem value="king">King</SelectItem>
-            <SelectItem value="princess">Princess</SelectItem>
-            <SelectItem value="prince">Prince</SelectItem>
+            <SelectItem value="Queen">Queen</SelectItem>
+            <SelectItem value="King">King</SelectItem>
           </SelectContent>
         </Select>
       </CardContent>

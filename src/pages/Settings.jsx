@@ -25,7 +25,7 @@ import QuickActionsSettings from '../components/settings/QuickActionsSettings';
 import SoundCloudSettings from '../components/settings/SoundCloudSettings';
 import MoodEmojiSettings from '../components/settings/MoodEmojiSettings';
 import WidgetSettingsV2 from '../components/settings/WidgetSettingsV2';
-import MentalHealthSettings from '../components/settings/MentalHealthSettings';
+
 // ReferralsTab removed
 
 import AIPersonalitySettings from '../components/settings/AIPersonalitySettings';
@@ -77,8 +77,8 @@ export default function Settings() {
   const [saveStatus, setSaveStatus] = useState('idle'); // idle, saving, saved, error
   const isSavingAll = saveStatus === 'saving';
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('features');
-  const [expandedTabs, setExpandedTabs] = useState(['features']);
+  const [activeTab, setActiveTab] = useState('preferences');
+  const [expandedTabs, setExpandedTabs] = useState(['preferences']);
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
@@ -434,14 +434,13 @@ export default function Settings() {
           setActiveTab(v); 
           navigate(`#${v}`); 
         }} className="w-full">
-          <TabsList className="grid grid-cols-4 md:grid-cols-8 gap-1 mb-6 bg-transparent h-auto">
-            {['features', 'dashboard', 'preferences', 'bible'].map(tab => {
+          <TabsList className="grid grid-cols-3 md:grid-cols-6 gap-1 mb-6 bg-transparent h-auto">
+            {['preferences', 'dashboard', 'features'].map(tab => {
               let icon, label;
               switch(tab) {
+                case 'preferences': icon = <Sliders className="w-4 h-4" />; label = 'Preferences'; break;
+                case 'dashboard': icon = <CalendarIcon className="w-4 h-4" />; label = 'Dashboard'; break;
                 case 'features': icon = <PuzzleIcon className="w-4 h-4" />; label = 'Customize'; break;
-                case 'dashboard': icon = <CalendarIcon className="w-4 h-4" />; label = 'Dash'; break;
-                case 'preferences': icon = <Sliders className="w-4 h-4" />; label = 'Prefs'; break;
-                case 'bible': icon = <BookOpen className="w-4 h-4" />; label = 'Bible'; break;
               }
               
               const isActive = activeTab === tab;
@@ -542,9 +541,8 @@ export default function Settings() {
               </CardContent>
             </Card>
 
-            <AIPersonalitySettings formData={prefData} setFormData={setPrefData} />
-            <MentalHealthSettings formData={prefData} setFormData={setPrefData} />
             <AddressingPreferences formData={prefData} setFormData={setPrefData} />
+            <AIPersonalitySettings formData={prefData} setFormData={setPrefData} />
             <Card className="mb-4">
               <CardHeader>
                 <CardTitle className="text-base">General Preferences</CardTitle>
@@ -585,6 +583,108 @@ export default function Settings() {
                     ))}
                   </SelectContent>
                 </Select>
+              </CardContent>
+            </Card>
+
+            {/* Bible Settings Moved Here */}
+            <Card className="mb-4">
+              <CardContent className="pt-6 space-y-6">
+                <div className="flex items-center justify-between">
+                  <Label className="font-semibold text-base">Enable Bible Features</Label>
+                  <Switch 
+                    checked={prefData.enable_bible_options !== false}
+                    onCheckedChange={(checked) => setPrefData({ ...prefData, enable_bible_options: checked })}
+                  />
+                </div>
+
+                {(prefData.enable_bible_options !== false) && (
+                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="space-y-6">
+                    <div className="space-y-2">
+                      <Label>Preferred Bible Version</Label>
+                      <Select value={prefData.bible_version || 'NIV'} onValueChange={(v) => setPrefData({ ...prefData, bible_version: v })}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {bibleVersions.map(v => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                      {prefData.bible_version === 'custom' && (
+                        <Input
+                          placeholder="Enter your Bible translation name (e.g., 'The Message')"
+                          value={prefData.custom_bible_translation || ''}
+                          onChange={(e) => setPrefData({ ...prefData, custom_bible_translation: e.target.value })}
+                          className="mt-2"
+                        />
+                      )}
+                      <p className="text-xs text-gray-500">Only accurate, approved translations available.</p>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div className="space-y-4">
+                        <h4 className="font-medium">Daily Habits</h4>
+                        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <span>Morning Bible Reading</span>
+                          <Switch 
+                            checked={prefData.enable_morning_reading !== false}
+                            onCheckedChange={(checked) => setPrefData({ ...prefData, enable_morning_reading: checked })}
+                          />
+                        </div>
+                        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <span>Night Bible Reading</span>
+                          <Switch 
+                            checked={prefData.enable_night_reading}
+                            onCheckedChange={(checked) => setPrefData({ ...prefData, enable_night_reading: checked })}
+                          />
+                        </div>
+                        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <span>Morning Prayer</span>
+                          <Switch 
+                            checked={prefData.enable_morning_prayer}
+                            onCheckedChange={(checked) => setPrefData({ ...prefData, enable_morning_prayer: checked })}
+                          />
+                        </div>
+                        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <span>Night Prayer</span>
+                          <Switch 
+                            checked={prefData.enable_night_prayer}
+                            onCheckedChange={(checked) => setPrefData({ ...prefData, enable_night_prayer: checked })}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        <h4 className="font-medium">Reading Plans & Audio</h4>
+                        <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-xl space-y-2">
+                          <p className="text-sm text-indigo-800 mb-3">
+                            Follow a structured reading plan on Bible.com (YouVersion) to stay on track.
+                          </p>
+                          <a 
+                            href="https://www.bible.com/reading-plans" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm font-medium transition-colors"
+                          >
+                            <BookOpen className="w-4 h-4 mr-2" />
+                            Browse Reading Plans
+                          </a>
+                        </div>
+                        <div className="p-4 bg-purple-50 border border-purple-100 rounded-xl">
+                          <p className="text-sm text-purple-800 mb-3">
+                            Listen to the Bible being read aloud
+                          </p>
+                          <a 
+                            href="https://www.bible.com/audio-bible" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm font-medium transition-colors"
+                          >
+                            <BookOpen className="w-4 h-4 mr-2" />
+                            Listen to Audio Bible
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
               </CardContent>
             </Card>
 
@@ -808,115 +908,7 @@ export default function Settings() {
 
 
 
-          {/* BIBLE TAB */}
-          <TabsContent value="bible">
-            <div className="flex justify-end mb-4">
-              <Button onClick={handleSave} disabled={isSavingAll}>
-                <Save className="w-4 h-4 mr-2" />
-                {isSavingAll ? 'Saving...' : 'Save Changes'}
-              </Button>
-            </div>
-            <Card>
-              <CardContent className="pt-6 space-y-6">
-                <div className="flex items-center justify-between">
-                  <Label className="font-semibold text-base">Enable Bible Features</Label>
-                  <Switch 
-                    checked={prefData.enable_bible_options !== false}
-                    onCheckedChange={(checked) => setPrefData({ ...prefData, enable_bible_options: checked })}
-                  />
-                </div>
 
-                {(prefData.enable_bible_options !== false) && (
-                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="space-y-6">
-                    <div className="space-y-2">
-                      <Label>Preferred Bible Version</Label>
-                      <Select value={prefData.bible_version || 'NIV'} onValueChange={(v) => setPrefData({ ...prefData, bible_version: v })}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {bibleVersions.map(v => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                      {prefData.bible_version === 'custom' && (
-                        <Input
-                          placeholder="Enter your Bible translation name (e.g., 'The Message')"
-                          value={prefData.custom_bible_translation || ''}
-                          onChange={(e) => setPrefData({ ...prefData, custom_bible_translation: e.target.value })}
-                          className="mt-2"
-                        />
-                      )}
-                      <p className="text-xs text-gray-500">Only accurate, approved translations available.</p>
-                    </div>
-
-                    <div className="grid md:grid-cols-2 gap-6">
-                      <div className="space-y-4">
-                        <h4 className="font-medium">Daily Habits</h4>
-                        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                          <span>Morning Bible Reading</span>
-                          <Switch 
-                            checked={prefData.enable_morning_reading !== false}
-                            onCheckedChange={(checked) => setPrefData({ ...prefData, enable_morning_reading: checked })}
-                          />
-                        </div>
-                        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                          <span>Night Bible Reading</span>
-                          <Switch 
-                            checked={prefData.enable_night_reading}
-                            onCheckedChange={(checked) => setPrefData({ ...prefData, enable_night_reading: checked })}
-                          />
-                        </div>
-                        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                          <span>Morning Prayer</span>
-                          <Switch 
-                            checked={prefData.enable_morning_prayer}
-                            onCheckedChange={(checked) => setPrefData({ ...prefData, enable_morning_prayer: checked })}
-                          />
-                        </div>
-                        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                          <span>Night Prayer</span>
-                          <Switch 
-                            checked={prefData.enable_night_prayer}
-                            onCheckedChange={(checked) => setPrefData({ ...prefData, enable_night_prayer: checked })}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="space-y-4">
-                        <h4 className="font-medium">Reading Plans & Audio</h4>
-                        <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-xl space-y-2">
-                          <p className="text-sm text-indigo-800 mb-3">
-                            Follow a structured reading plan on Bible.com (YouVersion) to stay on track.
-                          </p>
-                          <a 
-                            href="https://www.bible.com/reading-plans" 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center justify-center w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm font-medium transition-colors"
-                          >
-                            <BookOpen className="w-4 h-4 mr-2" />
-                            Browse Reading Plans
-                          </a>
-                        </div>
-                        <div className="p-4 bg-purple-50 border border-purple-100 rounded-xl">
-                          <p className="text-sm text-purple-800 mb-3">
-                            Listen to the Bible being read aloud
-                          </p>
-                          <a 
-                            href="https://www.bible.com/audio-bible" 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center justify-center w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm font-medium transition-colors"
-                          >
-                            <BookOpen className="w-4 h-4 mr-2" />
-                            Listen to Audio Bible
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
 
 
 

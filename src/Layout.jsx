@@ -289,7 +289,7 @@ export default function Layout({ children, currentPageName }) {
       { name: 'Creator Contacts', icon: Users, path: 'TikTokContacts', moduleId: 'tiktok' },
       { name: 'Content Calendar', icon: Calendar, path: 'LiveSchedule', moduleId: 'tiktok' },
       { name: 'Discover Creators', icon: Search, path: 'DiscoverCreators', moduleId: 'tiktok' },
-      ...(isAdmin ? [{ name: 'Live Engagement (DEV)', icon: Activity, path: 'LiveEngagement', moduleId: 'tiktok' }] : []),
+      ...(isAdmin ? [{ name: 'Live Engagement', icon: Activity, path: 'LiveEngagement', moduleId: 'tiktok', badge: 'DEV' }] : []),
       { name: 'Gift Gallery Gratitude', icon: Gift, path: 'WeeklyGifterGallery', moduleId: 'tiktok' },
       { name: 'Love Aways', icon: Gift, path: 'LoveAway', moduleId: 'tiktok' }
     ]
@@ -772,7 +772,7 @@ export default function Layout({ children, currentPageName }) {
                                     <Icon className="w-5 h-5" />
                                     <span className="font-medium">{item.name}</span>
                                     {isLocked && <Lock className="w-3 h-3 text-amber-500" />}
-                                    {isDevMode && <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-bold border border-amber-200">DEV</span>}
+                                    {(isDevMode || item.badge === 'DEV') && <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-bold border border-amber-200">DEV</span>}
                                   </div>
                                   {!isLocked && (isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />)}
                                 </button>
@@ -843,10 +843,10 @@ export default function Layout({ children, currentPageName }) {
 
                               <div className="relative">
                                 <Icon className="w-5 h-5" />
-                                {isDevMode && <span className="absolute -top-1 -right-1 w-2 h-2 bg-amber-500 rounded-full border border-white"></span>}
+                                {(isDevMode || item.badge === 'DEV') && <span className="absolute -top-1 -right-1 w-2 h-2 bg-amber-500 rounded-full border border-white"></span>}
                               </div>
                               <span className="text-sm font-medium">{item.name}</span>
-                              {isDevMode && <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-bold border border-amber-200 opacity-80">DEV</span>}
+                              {(isDevMode || item.badge === 'DEV') && <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-bold border border-amber-200 opacity-80">DEV</span>}
                             </Link>);
 
                         })}
