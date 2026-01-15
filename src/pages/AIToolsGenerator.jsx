@@ -356,7 +356,6 @@ export default function AIToolsGenerator() {
                               </CardContent>
                             </Card>
                           );
-                        }
                       })}
                     </div>
                   );
