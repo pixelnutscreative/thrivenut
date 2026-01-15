@@ -51,6 +51,37 @@ export default function TikTokEngagement() {
     enabled: !!effectiveEmail,
   });
 
+  // Initialize justEngaged from preferences
+  React.useEffect(() => {
+    if (preferences && preferences.user_timezone) {
+      const userDate = new Date().toLocaleDateString('en-CA', { timeZone: preferences.user_timezone }); // YYYY-MM-DD format
+      
+      const log = preferences.daily_engagement_log || {};
+      if (log.date === userDate && log.engagements) {
+        setJustEngaged(log.engagements);
+      } else {
+        setJustEngaged({});
+      }
+    }
+  }, [preferences]);
+
+  const updateDailyLog = async (newEngagements) => {
+    if (!preferences?.id) return;
+    
+    const userDate = new Date().toLocaleDateString('en-CA', { timeZone: preferences.user_timezone || 'America/Los_Angeles' });
+    
+    try {
+      await base44.entities.UserPreferences.update(preferences.id, {
+        daily_engagement_log: {
+          date: userDate,
+          engagements: newEngagements
+        }
+      });
+    } catch (err) {
+      console.error("Failed to update daily log", err);
+    }
+  };
+
   const { data: contacts = [] } = useQuery({
     queryKey: ['tiktokContacts', effectiveEmail],
     queryFn: () => base44.entities.TikTokContact.filter({ created_by: effectiveEmail }, '-created_date'),
@@ -291,6 +322,7 @@ export default function TikTokEngagement() {
     setJustEngaged(prev => {
       const newState = { ...prev };
       delete newState[contactId];
+      updateDailyLog(newState); // Save deletion to persistent log
       return newState;
     });
   };
@@ -312,6 +344,9 @@ export default function TikTokEngagement() {
             [accountKey]: !(prev[contact.id]?.[accountKey])
           }
         };
+        
+        // Save to UserPreferences immediately
+        updateDailyLog(newState);
         
         // Check if ALL accounts are now checked after this toggle
         setTimeout(() => {
@@ -610,8 +645,8 @@ export default function TikTokEngagement() {
           </Link>
         </div>
 
-        {/* My Growth Tracker */}
-        <TikTokStatsWidget />
+        {/* My Growth Tracker - Hidden per user request */}
+        {/* <TikTokStatsWidget /> */}
 
         {/* Engagement Guide */}
         <Card className={isDark ? 'bg-gradient-to-r from-blue-900/30 to-cyan-900/30 border-blue-700' : 'bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200'}>
@@ -668,7 +703,10 @@ export default function TikTokEngagement() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setJustEngaged({})}
+                    onClick={() => {
+                        setJustEngaged({});
+                        updateDailyLog({});
+                    }}
                     className="text-gray-600 hover:text-gray-800"
                   >
                     Reset All Checkmarks

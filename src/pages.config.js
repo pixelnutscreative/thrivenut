@@ -60,6 +60,7 @@ import PictionaryHelper from './pages/PictionaryHelper';
 import PixelsParadise from './pages/PixelsParadise';
 import PrayerRequests from './pages/PrayerRequests';
 import Pricing from './pages/Pricing';
+import Profile from './pages/Profile';
 import PromotedOffers from './pages/PromotedOffers';
 import PromotionEngine from './pages/PromotionEngine';
 import QuickNotes from './pages/QuickNotes';
@@ -84,7 +85,6 @@ import WaterHistory from './pages/WaterHistory';
 import WeeklyGifterGallery from './pages/WeeklyGifterGallery';
 import Wellness from './pages/Wellness';
 import WorkSchedules from './pages/WorkSchedules';
-import Profile from './pages/Profile';
 import __Layout from './Layout.jsx';
 
 
@@ -151,6 +151,7 @@ export const PAGES = {
     "PixelsParadise": PixelsParadise,
     "PrayerRequests": PrayerRequests,
     "Pricing": Pricing,
+    "Profile": Profile,
     "PromotedOffers": PromotedOffers,
     "PromotionEngine": PromotionEngine,
     "QuickNotes": QuickNotes,
@@ -175,7 +176,6 @@ export const PAGES = {
     "WeeklyGifterGallery": WeeklyGifterGallery,
     "Wellness": Wellness,
     "WorkSchedules": WorkSchedules,
-    "Profile": Profile,
 }
 
 export const pagesConfig = {
