@@ -23,8 +23,8 @@ import React, { useState } from 'react';
  
    const defaultCategories = [
      'Course', 'Zoom Meeting', 'Login', 'Recipe', 'Movie', 'Book', 'Podcast', 'Audiobook', 'Affiliate Link', 'Affiliate Portal', 
-     'Communities', 'Tools', 'Inspiration', 'Other', 'Uncategorized'
-   ];
+     'Communities', 'Tools', 'Inspiration', 'Other', 'Uncategorized', 'Custom GPT'
+     ];
    
    const categoryIcons = {
      'Course': <BookOpen className="w-4 h-4" />,
@@ -41,8 +41,9 @@ import React, { useState } from 'react';
      'Tools': <Building className="w-4 h-4" />,
      'Inspiration': <Info className="w-4 h-4" />,
      'Other': <LinkIcon className="w-4 h-4" />,
-     'Uncategorized': <Info className="w-4 h-4" />
-   };
+     'Uncategorized': <Info className="w-4 h-4" />,
+     'Custom GPT': <Brain className="w-4 h-4" />
+     };
  
    export default function MyResources() {
      const queryClient = useQueryClient();

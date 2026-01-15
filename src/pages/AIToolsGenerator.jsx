@@ -38,14 +38,7 @@ export default function AIToolsGenerator() {
     }
   });
 
-  // Fetch Custom GPTs
-  const { data: customGPTs = [] } = useQuery({
-    queryKey: ['customGPTs'],
-    queryFn: async () => {
-      const links = await base44.entities.AIToolLink.filter({ category: 'custom_gpt', is_active: true }, 'sort_order');
-      return links.sort((a, b) => a.tool_name.localeCompare(b.tool_name));
-    }
-  });
+
 
   // Fetch History
   const { data: history = [] } = useQuery({
@@ -106,7 +99,7 @@ export default function AIToolsGenerator() {
               🎨 Studio
             </TabsTrigger>
             <TabsTrigger value="resources" className="rounded-none border-b-2 border-transparent data-[state=active]:border-pink-500 data-[state=active]:bg-transparent px-4 py-3">
-              📚 Resources
+              📚 Content Library
             </TabsTrigger>
             <TabsTrigger value="history" className="rounded-none border-b-2 border-transparent data-[state=active]:border-pink-500 data-[state=active]:bg-transparent px-4 py-3">
               📜 History
@@ -260,7 +253,7 @@ export default function AIToolsGenerator() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">All Resources</SelectItem>
-                        <SelectItem value="custom_gpt">Custom GPTs</SelectItem>
+
                         <SelectItem value="image">Images & Graphics</SelectItem>
                         <SelectItem value="video">Videos</SelectItem>
                         <SelectItem value="document">Documents</SelectItem>
@@ -291,7 +284,6 @@ export default function AIToolsGenerator() {
                 {/* Content */}
                 {(() => {
                   const allResources = [
-                    ...customGPTs.map(t => ({...t, resourceType: 'custom_gpt'})),
                     ...assets.map(a => ({...a, resourceType: a.type || 'image'}))
                   ].filter(item => resourceCategory === 'all' || item.resourceType === resourceCategory);
 
@@ -343,29 +335,6 @@ export default function AIToolsGenerator() {
                   return (
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                       {allResources.map(item => {
-                        if (item.resourceType === 'custom_gpt') {
-                          return (
-                            <Card key={item.id} className="hover:shadow-lg transition-all border-pink-100 h-full flex flex-col group">
-                              <CardHeader>
-                                <div className="flex justify-between items-start gap-4">
-                                  <CardTitle className="text-lg font-bold text-gray-800 leading-tight">{item.tool_name}</CardTitle>
-                                  <div className="p-2 bg-pink-50 rounded-lg shrink-0 group-hover:bg-pink-100 transition-colors">
-                                    <Brain className="w-5 h-5 text-pink-500" />
-                                  </div>
-                                </div>
-                                <CardDescription className="line-clamp-3 mt-2">{item.description}</CardDescription>
-                              </CardHeader>
-                              <CardContent className="mt-auto pt-0">
-                                <Button 
-                                  className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white" 
-                                  onClick={() => window.open(item.pixels_toolbox_url, '_blank')}
-                                >
-                                  <Sparkles className="w-4 h-4 mr-2" /> Open in ChatGPT
-                                </Button>
-                              </CardContent>
-                            </Card>
-                          );
-                        } else {
                           return (
                             <Card key={item.id} className="overflow-hidden hover:shadow-lg transition-all h-full flex flex-col">
                               {item.resourceType === 'image' && (
