@@ -840,22 +840,6 @@ export default function CreatorGroups() {
       });
     };
 
-      // Browse Mode: Combine my groups + public groups
-      const allGroupsMap = new Map();
-      
-      safeGroups.forEach(g => { if (g && g.id) allGroupsMap.set(g.id, g); });
-      safeBrowseGroups.forEach(g => { if (g && g.id) allGroupsMap.set(g.id, g); });
-
-      return Array.from(allGroupsMap.values()).filter(g => {
-        if (!g) return false;
-        const isPublic = g.allow_public_discovery === true;
-        const isOwner = g.owner_email === user?.email;
-        const isMember = safeMemberships.some(m => m.group_id === g.id);
-        
-        return isPublic || isSuperAdmin || isOwner || isMember;
-      });
-    };
-
     const displayedGroups = getDisplayedGroups();
 
     return (
