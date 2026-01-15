@@ -27,9 +27,40 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
     title: '', description: '', type: 'link', url: '', target_levels: [] 
   });
 
+  const mapUserResourceCategory = (cat) => {
+    if (!cat) return 'link';
+    const lower = cat.toLowerCase();
+    if (lower.includes('video')) return 'video';
+    if (lower.includes('audio') || lower.includes('podcast')) return 'audio';
+    if (lower.includes('image') || lower.includes('photo')) return 'image';
+    if (lower.includes('pdf') || lower.includes('doc')) return 'file';
+    return 'link';
+  };
+
   const { data: resources = [] } = useQuery({
     queryKey: ['groupResources', group.id],
-    queryFn: () => base44.entities.GroupResource.filter({ group_id: group.id }, '-created_date'),
+    queryFn: async () => {
+      const [groupRes, userRes] = await Promise.all([
+        base44.entities.GroupResource.filter({ group_id: group.id }, '-created_date'),
+        base44.entities.UserResource.filter({ group_id: group.id })
+      ]);
+
+      const mappedUserRes = userRes.map(ur => ({
+        ...ur,
+        id: `shared-${ur.id}`,
+        original_id: ur.id,
+        is_shared: true,
+        type: mapUserResourceCategory(ur.category),
+        submitted_by: ur.user_email,
+        status: 'approved',
+        created_date: ur.created_date || ur.updated_date,
+        description: ur.notes || ur.description // Use notes if description is empty
+      }));
+
+      return [...groupRes, ...mappedUserRes].sort((a, b) => 
+        new Date(b.created_date || 0) - new Date(a.created_date || 0)
+      );
+    },
   });
 
   // Handle Edit from URL
@@ -276,21 +307,29 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
                 <div className="flex-1">
                   <div className="flex justify-between">
                     <h4 className="font-semibold">{resource.title}</h4>
-                    {(isAdmin || resource.submitted_by === currentUser?.email) && (
-                      <div className="flex gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => handleEdit(resource)} className="text-gray-500 hover:text-purple-600" title="Edit">
-                          <Pencil className="w-5 h-5" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDuplicate(resource)} className="text-gray-500 hover:text-blue-600" title="Duplicate">
-                          <Plus className="w-5 h-5" />
-                        </Button>
-                        {isAdmin && (
-                          <Button variant="ghost" size="icon" onClick={() => { if(window.confirm('Delete this resource?')) deleteMutation.mutate(resource.id) }} className="text-red-500" title="Delete">
-                            <Trash2 className="w-5 h-5" />
-                          </Button>
-                        )}
-                      </div>
-                    )}
+                    <div className="flex gap-1">
+                      {resource.is_shared ? (
+                        <Badge variant="outline" className="text-xs text-blue-600 border-blue-200 bg-blue-50 h-6">
+                          Shared from My Stuff
+                        </Badge>
+                      ) : (
+                        (isAdmin || resource.submitted_by === currentUser?.email) && (
+                          <>
+                            <Button variant="ghost" size="icon" onClick={() => handleEdit(resource)} className="text-gray-500 hover:text-purple-600" title="Edit">
+                              <Pencil className="w-5 h-5" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => handleDuplicate(resource)} className="text-gray-500 hover:text-blue-600" title="Duplicate">
+                              <Plus className="w-5 h-5" />
+                            </Button>
+                            {isAdmin && (
+                              <Button variant="ghost" size="icon" onClick={() => { if(window.confirm('Delete this resource?')) deleteMutation.mutate(resource.id) }} className="text-red-500" title="Delete">
+                                <Trash2 className="w-5 h-5" />
+                              </Button>
+                            )}
+                          </>
+                        )
+                      )}
+                    </div>
                   </div>
                   <div className="prose prose-sm text-gray-600 max-w-none" dangerouslySetInnerHTML={{ __html: resource.description }} />
                   {resource.url && (
