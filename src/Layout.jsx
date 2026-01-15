@@ -194,7 +194,7 @@ export default function Layout({ children, currentPageName }) {
     id: 'core',
     items: [
     { name: getDashboardName(), icon: LayoutDashboard, path: 'Dashboard', alwaysShow: true },
-    { name: preferences?.my_resources_label || 'My Stuff', icon: Bookmark, path: 'MyResources', moduleId: 'my_resources' },
+    { name: preferences?.my_resources_label || 'My Stuff', icon: Bookmark, path: 'MyResources', moduleId: 'my_resources', alwaysShow: true },
     { 
       name: 'My Groups', 
       icon: Users, 
