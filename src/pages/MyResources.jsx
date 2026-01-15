@@ -9,7 +9,7 @@ import React, { useState } from 'react';
    import { Label } from '@/components/ui/label';
    import { Textarea } from '@/components/ui/textarea';
    import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-   import { Loader2, Plus, Search, ExternalLink, Trash2, Filter, Link as LinkIcon, Edit2, Users, Globe, Lock, Building, Info, Star, BookOpen, Mic, MonitorPlay, Video, Key, Calendar as CalendarIcon, Utensils, ShoppingBag, TriangleAlert, Camera, ScanText, X } from 'lucide-react';
+   import { Loader2, Plus, Search, ExternalLink, Trash2, Filter, Link as LinkIcon, Edit2, Users, Globe, Lock, Building, Info, Star, BookOpen, Mic, MonitorPlay, Video, Key, Calendar as CalendarIcon, Utensils, ShoppingBag, TriangleAlert, Camera, ScanText, X, Brain } from 'lucide-react';
    import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
    import { Command, CommandGroup, CommandItem, CommandList } from '@/components/ui/command';
    import ImageUploader from '../components/settings/ImageUploader';
