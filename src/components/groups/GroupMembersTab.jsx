@@ -154,14 +154,28 @@ function MemberRowItem({ member, group, isAdmin, currentUser, queryClient }) {
   const { data: profile } = useQuery({
      queryKey: ['memberProfile', member.user_email],
      queryFn: async () => {
-        // Try to find profile by email
-        const prefs = await base44.entities.UserPreferences.filter({ user_email: member.user_email });
-        return prefs[0] || null;
+        const email = member.user_email;
+        // Parallel fetch for efficiency: Try UserPreferences first, and User entity if admin
+        const [prefsList, usersList] = await Promise.all([
+            base44.entities.UserPreferences.filter({ user_email: email }),
+            isAdmin ? base44.entities.User.filter({ email: email }) : Promise.resolve([]) 
+        ]);
+        
+        const prefs = prefsList[0] || {};
+        const userRec = usersList[0] || {};
+        
+        return {
+            nickname: prefs.nickname,
+            full_name: userRec.full_name,
+            profile_image_url: prefs.profile_image_url,
+            email: email
+        };
      },
      staleTime: 1000 * 60 * 5 // 5 minutes
   });
   
-  const displayName = profile?.nickname || member.user_email;
+  // Prefer nickname, then full name, then email
+  const displayName = profile?.nickname || profile?.full_name || member.user_email;
   const avatarUrl = profile?.profile_image_url;
   const initial = (displayName || member.user_email)[0].toUpperCase();
 
