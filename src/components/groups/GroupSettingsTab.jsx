@@ -235,21 +235,27 @@ function MemberInviteSettings({ group }) {
       <CardContent className="space-y-8">
         
         {/* Who Can Invite Section */}
-        <div className="space-y-3">
-          <Label className="text-base font-semibold">Who can invite others?</Label>
-          <p className="text-sm text-gray-500">Admins and Owners can always invite. Select which other roles can also send invites.</p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            {roles.map(role => (
-              <label key={role} className="flex items-center gap-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  checked={allowedRoles.includes(role)}
-                  onChange={() => toggleAllowedRole(role)}
-                  className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-                />
-                <span className="text-sm font-medium capitalize">{role.replace('-', ' ')}</span>
-              </label>
-            ))}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between border p-4 rounded-lg">
+            <div className="space-y-1">
+              <Label className="text-base font-semibold">Allow Members to Invite</Label>
+              <p className="text-sm text-gray-500">If enabled, all active members can invite others using their referral link.</p>
+            </div>
+            <Switch 
+              checked={group.settings?.allow_member_invites === true}
+              onCheckedChange={(checked) => updateMutation.mutate({ allow_member_invites: checked })}
+            />
+          </div>
+
+          <div className="flex items-center justify-between border p-4 rounded-lg">
+            <div className="space-y-1">
+              <Label className="text-base font-semibold">Require Approval</Label>
+              <p className="text-sm text-gray-500">If enabled, new members (even with an invite link) must be approved by an admin.</p>
+            </div>
+            <Switch 
+              checked={group.settings?.require_approval === true}
+              onCheckedChange={(checked) => updateMutation.mutate({ require_approval: checked })}
+            />
           </div>
         </div>
 

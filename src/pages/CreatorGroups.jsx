@@ -242,32 +242,41 @@ export default function CreatorGroups() {
       const group = groups[0];
       
       const existing = await base44.entities.CreatorGroupMember.filter({ group_id: group.id, user_email: user?.email });
+      
+      // Determine initial status based on group settings
+      const requireApproval = group.settings?.require_approval === true;
+      const initialStatus = requireApproval ? 'pending' : 'active';
+
       if (existing.length > 0) {
-        // If pending, activate them since they have the invite code
+        // If pending, check if we can auto-activate or if approval is strictly required
         if (existing[0].status === 'pending') {
-          await base44.entities.CreatorGroupMember.update(existing[0].id, { status: 'active', role: 'member', joined_date: new Date().toISOString() });
-          return { group, existing: false, wasPending: true };
+          if (!requireApproval) {
+             await base44.entities.CreatorGroupMember.update(existing[0].id, { status: 'active', role: 'member', joined_date: new Date().toISOString() });
+             return { group, existing: false, wasPending: true, activated: true };
+          }
+          return { group, existing: true, status: 'pending' };
         }
-        return { group, existing: true };
+        return { group, existing: true, status: existing[0].status };
       }
 
       await base44.entities.CreatorGroupMember.create({
         group_id: group.id,
         user_email: user?.email,
         role: 'member',
-        status: 'active', // Auto-activate if using valid invite code
+        status: initialStatus,
         level: 'Member',
         joined_date: new Date().toISOString()
       });
-      return { group, existing: false };
+      return { group, existing: false, status: initialStatus };
     },
-    onSuccess: ({ group, existing, wasPending }) => {
-      if (wasPending) alert('Membership activated! Welcome to the group.');
+    onSuccess: ({ group, existing, wasPending, activated, status }) => {
+      if (wasPending && activated) alert('Membership activated! Welcome to the group.');
+      else if (status === 'pending') alert('Request sent! An admin will review your request shortly.');
       else if (existing) alert('You are already a member of this group!');
       else alert('Welcome! You have joined the group.');
       
       queryClient.invalidateQueries(['myGroupMemberships']);
-      setSearchParams({ id: group.id }); // Go to dashboard (might be restricted view if pending)
+      setSearchParams({ id: group.id });
     },
     onError: () => alert('Invalid invite code or error joining.')
   });
@@ -308,7 +317,8 @@ export default function CreatorGroups() {
   const isPending = activeMembership?.status === 'pending';
   const isInterested = activeMembership?.status === 'interested' || activeMembership?.pending_approval; // Treat pending approval as interested mode
   const isMember = !!activeMembership && (activeMembership.status === 'active' || activeMembership.status === 'trial');
-  const canInvite = isAdmin || (activeGroup?.settings?.allowed_invite_roles || []).includes(activeMembership?.role);
+  // Invite logic: Admins can always invite. Members can invite if allowed by settings.
+  const canInvite = isAdmin || (activeGroup?.settings?.allow_member_invites === true && activeMembership?.status === 'active');
 
   // Invite Mutation (Direct Add)
   const inviteMutation = useMutation({
@@ -323,7 +333,7 @@ export default function CreatorGroups() {
       if (existing.length > 0) {
         return base44.entities.CreatorGroupMember.update(existing[0].id, {
           role: roleToUse,
-          status: 'active',
+          status: 'active', // Direct invites are always active
           level: levelToUse,
           joined_date: existing[0].joined_date || new Date().toISOString()
         });
@@ -332,7 +342,7 @@ export default function CreatorGroups() {
         group_id: activeGroup.id,
         user_email: email,
         role: roleToUse,
-        status: 'active',
+        status: 'active', // Direct invites are always active
         level: levelToUse,
         joined_date: new Date().toISOString()
       });
@@ -1332,14 +1342,15 @@ export default function CreatorGroups() {
                           <div className="flex items-center gap-2">
                             <Input 
                               readOnly 
-                              value={`${window.location.origin}/CreatorGroups?invite=${activeGroup.invite_code}&ref=${editingReferralCode}`} 
+                              value={`${window.location.hostname === 'localhost' ? window.location.origin : 'https://thrive.pixelnutscreative.com'}/CreatorGroups?invite=${activeGroup.invite_code}&ref=${editingReferralCode}`} 
                               className="bg-gray-50 font-mono text-xs"
                             />
                             <Button 
                               size="icon" 
                               variant="outline" 
                               onClick={() => {
-                                navigator.clipboard.writeText(`${window.location.origin}/CreatorGroups?invite=${activeGroup.invite_code}&ref=${editingReferralCode}`);
+                                const baseUrl = window.location.hostname === 'localhost' ? window.location.origin : 'https://thrive.pixelnutscreative.com';
+                                navigator.clipboard.writeText(`${baseUrl}/CreatorGroups?invite=${activeGroup.invite_code}&ref=${editingReferralCode}`);
                                 alert("Link copied!");
                               }}
                             >
