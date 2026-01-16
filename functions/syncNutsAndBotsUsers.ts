@@ -29,33 +29,52 @@ Deno.serve(async (req) => {
         console.log(`Found target group: ${group.name} (${group.id})`);
 
         // 2. Get all AI Platform Users with has_nuts_and_bots = true
-        // We have to list all and filter because filter might not support boolean perfectly or just to be safe
         const allAiUsers = await base44.asServiceRole.entities.AIPlatformUser.list(undefined, 2000);
         const eligibleUsers = allAiUsers.filter(u => u.has_nuts_and_bots === true);
         console.log(`Found ${eligibleUsers.length} eligible Nuts + Bots users`);
 
         // 3. Sync them
         let addedCount = 0;
+        let updatedCount = 0;
         let skippedCount = 0;
         let errors = [];
 
         // Fetch existing members
         const existingMembers = await base44.asServiceRole.entities.CreatorGroupMember.filter({ group_id: group.id }, undefined, 2000);
-        const existingEmails = new Set(existingMembers.map(m => m.user_email.toLowerCase()));
+        const existingMemberMap = new Map();
+        existingMembers.forEach(m => existingMemberMap.set(m.user_email.toLowerCase(), m));
 
         for (const aiUser of eligibleUsers) {
             const email = aiUser.user_email?.trim().toLowerCase();
+            const name = aiUser.user_name || null;
+            
             if (!email) continue;
 
-            if (existingEmails.has(email)) {
-                skippedCount++;
+            const existingMember = existingMemberMap.get(email);
+
+            if (existingMember) {
+                // Update name if missing or different
+                if (name && (!existingMember.name || existingMember.name !== name)) {
+                    try {
+                        await base44.asServiceRole.entities.CreatorGroupMember.update(existingMember.id, { name: name });
+                        updatedCount++;
+                        console.log(`Updated name for ${email} to ${name}`);
+                    } catch (err) {
+                        console.error(`Failed to update ${email}: ${err.message}`);
+                        errors.push({ email, action: 'update', error: err.message });
+                    }
+                } else {
+                    skippedCount++;
+                }
                 continue;
             }
 
+            // Create new member
             try {
                 await base44.asServiceRole.entities.CreatorGroupMember.create({
                     group_id: group.id,
                     user_email: email,
+                    name: name,
                     role: 'member',
                     status: 'active',
                     level: 'Member', // Default level
@@ -63,10 +82,10 @@ Deno.serve(async (req) => {
                     source: 'nuts_bots_sync' 
                 });
                 addedCount++;
-                console.log(`Added ${email}`);
+                console.log(`Added ${email} with name ${name}`);
             } catch (err) {
                 console.error(`Failed to add ${email}: ${err.message}`);
-                errors.push({ email, error: err.message });
+                errors.push({ email, action: 'create', error: err.message });
             }
         }
 
@@ -75,6 +94,7 @@ Deno.serve(async (req) => {
             group_name: group.name,
             total_eligible: eligibleUsers.length,
             added: addedCount,
+            updated: updatedCount,
             skipped: skippedCount,
             errors: errors
         });
