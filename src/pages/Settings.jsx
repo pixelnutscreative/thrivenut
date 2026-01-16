@@ -256,8 +256,8 @@ export default function Settings() {
       if (targetId) {
         return await base44.entities.UserPreferences.update(targetId, cleanData);
       } else {
-        // Fallback check
-        const existing = await base44.entities.UserPreferences.filter({ user_email: effectiveEmail });
+        // Fallback check - Sort by updated_date desc to find the most recent active record
+        const existing = await base44.entities.UserPreferences.filter({ user_email: effectiveEmail }, '-updated_date');
         if (existing.length > 0) {
            return await base44.entities.UserPreferences.update(existing[0].id, cleanData);
         }

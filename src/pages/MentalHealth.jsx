@@ -70,14 +70,7 @@ export default function MentalHealth() {
     setLoading(false);
   }, []);
 
-  const { data: preferences } = useQuery({
-    queryKey: ['preferences', user?.email],
-    queryFn: async () => {
-      const prefs = await base44.entities.UserPreferences.filter({ user_email: user.email });
-      return prefs[0] || null;
-    },
-    enabled: !!user,
-  });
+  const { preferences, effectiveEmail } = useTheme();
 
   const [formData, setFormData] = useState({
     accessibility_mode: 'standard',
@@ -115,17 +108,23 @@ export default function MentalHealth() {
 
   const updatePreferencesMutation = useMutation({
     mutationFn: async (data) => {
-      if (preferences) {
+      if (preferences?.id) {
         return await base44.entities.UserPreferences.update(preferences.id, data);
       } else {
+        // Safety check to avoid duplicate creation
+        const existing = await base44.entities.UserPreferences.filter({ user_email: effectiveEmail }, '-updated_date');
+        if (existing.length > 0) {
+           return await base44.entities.UserPreferences.update(existing[0].id, data);
+        }
         return await base44.entities.UserPreferences.create({
-          user_email: user.email,
+          user_email: effectiveEmail,
           ...data,
           onboarding_completed: true
         });
       }
     },
     onSuccess: () => {
+      // Invalidate the useTheme query key
       queryClient.invalidateQueries({ queryKey: ['preferences'] });
     },
   });

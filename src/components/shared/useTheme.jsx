@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { getEffectiveUserEmail } from '../admin/ImpersonationBanner';
@@ -41,6 +40,9 @@ export function useTheme() {
 
   const primaryColor = preferences?.primary_color || '#1fd2ea';
   const accentColor = preferences?.accent_color || '#bd84f5';
+  
+  // Ensure robust defaults for critical fields
+  const userTimezone = preferences?.user_timezone || 'America/Los_Angeles';
 
   // Always light background for app
   const bgClass = 'bg-gradient-to-br from-teal-50 via-purple-50 to-blue-50';
@@ -65,7 +67,7 @@ export function useTheme() {
     mutedBgClass,
     user,
     effectiveEmail,
-    preferences,
+    preferences: preferences ? { ...preferences, user_timezone: userTimezone } : null,
     isLoading: userLoading || (!!effectiveEmail && prefsLoading),
   };
 }
