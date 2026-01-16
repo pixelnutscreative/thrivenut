@@ -174,8 +174,8 @@ function MemberRowItem({ member, group, isAdmin, currentUser, queryClient }) {
      staleTime: 1000 * 60 * 5 // 5 minutes
   });
   
-  // Prefer nickname, then full name, then email
-  const displayName = profile?.nickname || profile?.full_name || member.user_email;
+  // Prefer nickname, then full name, then cached name, then email
+  const displayName = profile?.nickname || profile?.full_name || member.name || member.user_email;
   const avatarUrl = profile?.profile_image_url;
   const initial = (displayName || member.user_email)[0].toUpperCase();
 
