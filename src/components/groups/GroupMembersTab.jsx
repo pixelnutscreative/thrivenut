@@ -150,6 +150,70 @@ function AddRetainerPackageDialog({ group, member, currentUser }) {
   );
 }
 
+function MemberRowItem({ member, group, isAdmin, currentUser, queryClient }) {
+  const { data: profile } = useQuery({
+     queryKey: ['memberProfile', member.user_email],
+     queryFn: async () => {
+        // Try to find profile by email
+        const prefs = await base44.entities.UserPreferences.filter({ user_email: member.user_email });
+        return prefs[0] || null;
+     },
+     staleTime: 1000 * 60 * 5 // 5 minutes
+  });
+  
+  const displayName = profile?.nickname || member.user_email;
+  const avatarUrl = profile?.profile_image_url;
+  const initial = (displayName || member.user_email)[0].toUpperCase();
+
+  return (
+    <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+      <div className="flex items-center gap-4">
+        {avatarUrl ? (
+            <img src={avatarUrl} alt={displayName} className="w-10 h-10 rounded-full object-cover border border-purple-200" />
+        ) : (
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-100 to-indigo-100 flex items-center justify-center text-purple-700 font-bold text-sm border border-purple-200">
+              {initial}
+            </div>
+        )}
+        <div>
+          <div className="font-medium text-gray-900 flex items-center gap-2">
+            {displayName}
+            {member.role === 'owner' && <Badge className="bg-purple-100 text-purple-800 border-purple-200 text-[10px] h-5 px-1.5">Owner</Badge>}
+            {member.role === 'admin' && <Badge className="bg-blue-100 text-blue-800 border-blue-200 text-[10px] h-5 px-1.5">Admin</Badge>}
+          </div>
+          <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
+            <span>Joined {new Date(member.joined_date || member.created_date).toLocaleDateString()}</span>
+            {member.level && member.level !== 'none' && (
+                <>
+                    <span>•</span>
+                    <span className="font-medium text-indigo-600">{member.level}</span>
+                </>
+            )}
+          </div>
+          {isAdmin && group.enable_retainer_management && (
+            <div className="flex gap-3 mt-1">
+              <AddRetainerPackageDialog group={group} member={member} currentUser={currentUser} />
+              <ViewRetainerHistoryDialog group={group} member={member} />
+            </div>
+          )}
+        </div>
+      </div>
+      
+      <div className="flex items-center gap-3">
+         {(isAdmin || group.owner_email === currentUser?.email) && (
+            <EditMemberDialog 
+                member={member} 
+                group={group} 
+                isAdmin={isAdmin} 
+                currentUser={currentUser} 
+                onUpdate={() => queryClient.invalidateQueries(['groupMembers', group.id])}
+            />
+         )}
+      </div>
+    </div>
+  );
+}
+
 function EditMemberDialog({ member, group, isAdmin, currentUser, onUpdate }) {
   const [role, setRole] = useState(member.role || 'member');
   const [level, setLevel] = useState(member.level || 'Member');
@@ -416,48 +480,14 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
           <div className="p-8 text-center text-gray-500 bg-white rounded-lg border">No active members found</div>
         ) : (
           activeMembers.map(member => (
-            <div key={member.id} className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-100 to-indigo-100 flex items-center justify-center text-purple-700 font-bold text-sm border border-purple-200">
-                  {member.user_email[0].toUpperCase()}
-                </div>
-                <div>
-                  <div className="font-medium text-gray-900 flex items-center gap-2">
-                    {member.user_email}
-                    {member.role === 'owner' && <Badge className="bg-purple-100 text-purple-800 border-purple-200 text-[10px] h-5 px-1.5">Owner</Badge>}
-                    {member.role === 'admin' && <Badge className="bg-blue-100 text-blue-800 border-blue-200 text-[10px] h-5 px-1.5">Admin</Badge>}
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
-                    <span>Joined {new Date(member.joined_date || member.created_date).toLocaleDateString()}</span>
-                    {member.level && member.level !== 'none' && (
-                        <>
-                            <span>•</span>
-                            <span className="font-medium text-indigo-600">{member.level}</span>
-                        </>
-                    )}
-                  </div>
-                  {isAdmin && group.enable_retainer_management && (
-                    <div className="flex gap-3 mt-1">
-                      <AddRetainerPackageDialog group={group} member={member} currentUser={currentUser} />
-                      <ViewRetainerHistoryDialog group={group} member={member} />
-                    </div>
-                  )}
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-3">
-                 {/* Only admins or owners can edit other members */}
-                 {(isAdmin || group.owner_email === currentUser?.email) && (
-                    <EditMemberDialog 
-                        member={member} 
-                        group={group} 
-                        isAdmin={isAdmin} 
-                        currentUser={currentUser} 
-                        onUpdate={() => queryClient.invalidateQueries(['groupMembers', group.id])}
-                    />
-                 )}
-              </div>
-            </div>
+            <MemberRowItem 
+                key={member.id} 
+                member={member} 
+                group={group} 
+                isAdmin={isAdmin} 
+                currentUser={currentUser}
+                queryClient={queryClient}
+            />
           ))
         )}
       </div>
