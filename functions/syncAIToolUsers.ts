@@ -5,19 +5,14 @@ Deno.serve(async (req) => {
         const base44 = createClientFromRequest(req);
         const user = await base44.auth.me();
         
-        // Allow this to be run by admins only (or service role if automated, but check user role for manual trigger)
-        // Since we might trigger this via test tool, we'll check if user exists.
-        // For automation, we might need to skip this check or use a secret key.
-        // Assuming manual trigger by admin for now.
+        // Admin check
         if (user && user.role !== 'admin' && user.email !== 'pixelnutscreative@gmail.com') {
              return Response.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // 1. Find the target group
-        // Try exact match first
+        // 1. Find the target group "Pixel's AI Toolbox"
         let groups = await base44.asServiceRole.entities.CreatorGroup.filter({ name: "Pixel's AI Toolbox" });
         if (groups.length === 0) {
-            // Try case insensitive search manually if regex not supported in basic filter or just list all
             const allGroups = await base44.asServiceRole.entities.CreatorGroup.list();
             const target = allGroups.find(g => g.name.toLowerCase().includes("toolbox") && g.name.toLowerCase().includes("pixel"));
             if (target) groups = [target];
@@ -30,24 +25,42 @@ Deno.serve(async (req) => {
         console.log(`Found target group: ${group.name} (${group.id})`);
 
         // 2. Get all AI Platform Users
-        const aiUsers = await base44.asServiceRole.entities.AIPlatformUser.list(undefined, 1000);
+        const aiUsers = await base44.asServiceRole.entities.AIPlatformUser.list(undefined, 2000);
         console.log(`Found ${aiUsers.length} AI Platform Users`);
 
         // 3. Sync them
         let addedCount = 0;
+        let updatedCount = 0;
         let skippedCount = 0;
         let errors = [];
 
-        // Fetch existing members for efficiency
-        const existingMembers = await base44.asServiceRole.entities.CreatorGroupMember.filter({ group_id: group.id }, undefined, 1000);
-        const existingEmails = new Set(existingMembers.map(m => m.user_email.toLowerCase()));
+        // Fetch existing members
+        const existingMembers = await base44.asServiceRole.entities.CreatorGroupMember.filter({ group_id: group.id }, undefined, 2000);
+        const existingMemberMap = new Map();
+        existingMembers.forEach(m => existingMemberMap.set(m.user_email.toLowerCase(), m));
 
         for (const aiUser of aiUsers) {
             const email = aiUser.user_email?.trim().toLowerCase();
+            const name = aiUser.user_name || null;
+            
             if (!email) continue;
 
-            if (existingEmails.has(email)) {
-                skippedCount++;
+            const existingMember = existingMemberMap.get(email);
+
+            if (existingMember) {
+                // Update name if missing or different
+                if (name && (!existingMember.name || existingMember.name !== name)) {
+                    try {
+                        await base44.asServiceRole.entities.CreatorGroupMember.update(existingMember.id, { name: name });
+                        updatedCount++;
+                        console.log(`Updated name for ${email} to ${name}`);
+                    } catch (err) {
+                        console.error(`Failed to update ${email}: ${err.message}`);
+                        errors.push({ email, action: 'update', error: err.message });
+                    }
+                } else {
+                    skippedCount++;
+                }
                 continue;
             }
 
@@ -55,17 +68,18 @@ Deno.serve(async (req) => {
                 await base44.asServiceRole.entities.CreatorGroupMember.create({
                     group_id: group.id,
                     user_email: email,
+                    name: name,
                     role: 'member',
                     status: 'active',
-                    level: 'Creator', // Default level for AI users? User screenshot shows "Creator"
+                    level: 'Creator', 
                     joined_date: new Date().toISOString(),
                     source: 'ai_tool_sync' 
                 });
                 addedCount++;
-                console.log(`Added ${email}`);
+                console.log(`Added ${email} with name ${name}`);
             } catch (err) {
                 console.error(`Failed to add ${email}: ${err.message}`);
-                errors.push({ email, error: err.message });
+                errors.push({ email, action: 'create', error: err.message });
             }
         }
 
@@ -74,6 +88,7 @@ Deno.serve(async (req) => {
             group_name: group.name,
             total_ai_users: aiUsers.length,
             added: addedCount,
+            updated: updatedCount,
             skipped: skippedCount,
             errors: errors
         });
