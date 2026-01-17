@@ -199,33 +199,40 @@ export default function MentalHealth() {
   };
 
   const handleSave = async () => {
-    setIsSaving(true);
-    setSaveDebug('🎯 SAVE STARTED...');
-    
-    // Ensure all profile fields are included
-    const dataToSend = {
-      user_email: user?.email, // Crucial for identifying the user's profile
-      ...profile // Include all fields from the profile state
-    };
-    
-    setSaveDebug(`📤 Sending: ${JSON.stringify(dataToSend, null, 2)}`);
-    
-    try {
-      // Use upsert to atomically create or update the record
-      setSaveDebug(`🔄 UPSERTING profile for ${user?.email}`);
-      await base44.entities.MentalHealthProfile.upsert({ user_email: user?.email }, dataToSend);
-      
-      // Invalidate and refetch the query to update UI with latest data
-      queryClient.invalidateQueries({ queryKey: ['mentalHealthProfile', user?.email] });
-      setSaveDebug('✅ SAVE SUCCESSFUL');
-      toast.success("Mental health profile saved!");
-    } catch (error) {
-      setSaveDebug(`❌ SAVE FAILED: ${error.message}\n\nFull error: ${JSON.stringify(error, null, 2)}`);
-      toast.error(`Save failed: ${error.message}`);
-    } finally {
-      setIsSaving(false);
-    }
+  setIsSaving(true);
+  setSaveDebug('🎯 SAVE STARTED...');
+  
+  // Ensure all profile fields are included
+  const dataToSend = {
+    user_email: user?.email, // Crucial for identifying the user's profile
+    ...profile // Include all fields from the profile state
   };
+  
+  setSaveDebug(`📤 Sending: ${JSON.stringify(dataToSend, null, 2)}`);
+  
+  try {
+    // Check if profile exists first
+    const existingProfile = mentalHealthProfile && Object.keys(mentalHealthProfile).length > 0;
+    
+    if (existingProfile) {
+      setSaveDebug(`📝 UPDATING profile #${mentalHealthProfile.id} for ${user?.email}`);
+      await base44.entities.MentalHealthProfile.update(mentalHealthProfile.id, dataToSend);
+    } else {
+      setSaveDebug(`➕ CREATING new profile for ${user?.email}`);
+      await base44.entities.MentalHealthProfile.create(dataToSend);
+    }
+    
+    // Invalidate and refetch the query to update UI with latest data
+    queryClient.invalidateQueries({ queryKey: ['mentalHealthProfile', user?.email] });
+    setSaveDebug('✅ SAVE SUCCESSFUL');
+    toast.success("Mental health profile saved!");
+  } catch (error) {
+    setSaveDebug(`❌ SAVE FAILED: ${error.message}\n\nFull error: ${JSON.stringify(error, null, 2)}`);
+    toast.error(`Save failed: ${error.message}`);
+  } finally {
+    setIsSaving(false);
+  }
+};
 
   const handleSubmitCustomItem = async () => {
     if (!customItemInput.trim() || !user?.email) return;
