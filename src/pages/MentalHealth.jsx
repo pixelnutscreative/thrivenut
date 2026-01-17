@@ -268,7 +268,7 @@ export default function MentalHealth() {
                           key={task.id}
                           onClick={() => toggleSelfCareTask(task.id)}
                           className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                            formData.required_self_care_tasks.includes(task.id)
+                            profile.required_self_care_tasks.includes(task.id)
                               ? `border-purple-500 ${isDark ? 'bg-purple-900/30' : 'bg-purple-50'}`
                               : `${isDark ? 'border-gray-600 hover:border-purple-400' : 'border-gray-200 hover:border-purple-300'}`
                           }`}
@@ -296,7 +296,7 @@ export default function MentalHealth() {
                           key={module.id}
                           onClick={() => toggleGatedModule(module.id)}
                           className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                            formData.gated_modules.includes(module.id)
+                            profile.gated_modules.includes(module.id)
                               ? `border-pink-500 ${isDark ? 'bg-pink-900/30' : 'bg-pink-50'}`
                               : `${isDark ? 'border-gray-600 hover:border-pink-400' : 'border-gray-200 hover:border-pink-300'}`
                           }`}
@@ -440,10 +440,10 @@ export default function MentalHealth() {
                     </Button>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {formData.improvement_goals?.filter(item => !improvementGoals.map(s => s.id).includes(item)).map(item => (
+                    {profile.improvement_goals?.filter(item => !improvementGoals.map(s => s.id).includes(item)).map(item => (
                       <span key={item} className={`px-3 py-1 rounded-full text-sm flex items-center gap-1 ${isDark ? 'bg-teal-900/50 text-teal-300' : 'bg-teal-100 text-teal-800'}`}>
                         <Sparkles className="w-3 h-3" />{item}
-                        <button onClick={() => setFormData(prev => ({ ...prev, improvement_goals: prev.improvement_goals.filter(i => i !== item) }))} className={`ml-1 hover:opacity-70 ${isDark ? 'text-teal-400' : 'text-teal-600'}`}>×</button>
+                        <button onClick={() => setProfile(prev => ({ ...prev, improvement_goals: prev.improvement_goals.filter(i => i !== item) }))} className={`ml-1 hover:opacity-70 ${isDark ? 'text-teal-400' : 'text-teal-600'}`}>×</button>
                       </span>
                     ))}
                   </div>
