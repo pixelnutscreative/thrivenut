@@ -585,6 +585,10 @@ export default function Layout({ children, currentPageName }) {
 
             <nav className="flex-1 p-6 space-y-1 overflow-y-auto">
               {menuGroups.map((group) => {
+                if (group.isSeparator) {
+                   return <Separator key={group.id} className="my-4 bg-white/10" />;
+                }
+
                 const isCollapsed = collapsedGroups.includes(group.id);
 
                 // Filter items based on permissions/modules to see if group should be visible
@@ -866,6 +870,10 @@ export default function Layout({ children, currentPageName }) {
 
           <nav className="flex-1 space-y-1 overflow-y-auto custom-scrollbar">
             {menuGroups.map((group) => {
+                if (group.isSeparator) {
+                   return <Separator key={group.id} className="my-4 bg-gray-200/50" />;
+                }
+
                 const isCollapsed = collapsedGroups.includes(group.id);
 
                 // Filter items based on permissions/modules to see if group should be visible
