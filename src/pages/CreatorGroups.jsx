@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Users, Plus, Settings, Video, AlertCircle, ArrowLeft, Loader2, Building, Home, Heart, Sparkles, Brain, Briefcase, Calendar, MessageSquare, FileText, Bell, Eye, EyeOff, Link as LinkIcon, ExternalLink, Clock, Trash2, Filter, LayoutGrid, List, Lock, Printer, UserPlus, Target, GraduationCap, HelpCircle } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useTheme } from '@/components/shared/useTheme';
 import { createPageUrl } from '../utils';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
@@ -1546,52 +1547,66 @@ export default function CreatorGroups() {
           )}
 
           <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-6">
-            <TabsList className="bg-white border p-1 rounded-xl h-auto flex-wrap gap-1 w-full justify-start">
-              {availableTabs.map(tab => {
-                const enabled = isTabEnabled(tab.id);
-                if (!enabled) return null; 
-                
-                // Check visibility for regular members
-                const isMemberVisible = isVisibleToRegularMember(tab.id);
-                const isAdminOnly = isAdmin && !isMemberVisible;
-                const isActive = currentTab === tab.id;
+            <TooltipProvider>
+              <TabsList className="bg-white border p-1 rounded-xl h-auto flex-wrap gap-1 w-full justify-start">
+                {availableTabs.map(tab => {
+                  const enabled = isTabEnabled(tab.id);
+                  if (!enabled) return null; 
+                  
+                  // Check visibility for regular members
+                  const isMemberVisible = isVisibleToRegularMember(tab.id);
+                  const isAdminOnly = isAdmin && !isMemberVisible;
+                  const isActive = currentTab === tab.id;
 
-                const Icon = tab.icon;
-                return (
-                  <TabsTrigger 
-                    key={tab.id} 
-                    value={tab.id} 
-                    title={tab.label + (isAdminOnly ? " (Admin Only)" : "")}
-                    className={`
-                      relative flex items-center transition-all duration-200 rounded-lg
-                      ${isActive ? `px-4 py-2 bg-${tab.color}-100 text-${tab.color}-700 shadow-sm` : 'px-3 py-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900'}
-                      ${isAdminOnly && !isActive ? 'opacity-40 grayscale' : ''}
-                    `}
-                  >
-                    <Icon className={`w-4 h-4 ${isActive ? 'mr-2' : ''}`} />
-                    {isActive && <span className="font-medium text-sm">{tab.label}</span>}
-                    
-                    {/* Admin indicator dot if minimized */}
-                    {isAdminOnly && !isActive && (
-                      <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-gray-400 rounded-full" title="Admin Only" />
-                    )}
-                  </TabsTrigger>
-                );
-              })}
-              
-              {isAdmin && (
-                <TabsTrigger 
-                  value="settings" 
-                  className={`
-                    ml-auto rounded-lg transition-all duration-200
-                    ${currentTab === 'settings' ? 'px-4 py-2 bg-gray-800 text-white' : 'px-3 py-2 text-gray-500 hover:bg-gray-100'}
-                  `}
-                >
-                  <Settings className={`w-4 h-4 ${currentTab === 'settings' ? 'mr-2' : ''}`} />
-                  {currentTab === 'settings' && <span>Settings</span>}
-                </TabsTrigger>
-              )}
-            </TabsList>
+                  const Icon = tab.icon;
+                  return (
+                    <Tooltip key={tab.id}>
+                      <TooltipTrigger asChild>
+                        <TabsTrigger 
+                          value={tab.id} 
+                          className={`
+                            relative flex items-center transition-all duration-200 rounded-lg
+                            ${isActive ? `px-4 py-2 bg-${tab.color}-100 text-${tab.color}-700 shadow-sm` : 'px-3 py-2 text-gray-500 md:hover:bg-gray-100 active:bg-gray-100 md:hover:text-gray-900'}
+                            ${isAdminOnly && !isActive ? 'opacity-40 grayscale' : ''}
+                          `}
+                        >
+                          <Icon className={`w-4 h-4 ${isActive ? 'mr-2' : ''}`} />
+                          {isActive && <span className="font-medium text-sm">{tab.label}</span>}
+                          
+                          {/* Admin indicator dot if minimized */}
+                          {isAdminOnly && !isActive && (
+                            <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-gray-400 rounded-full" title="Admin Only" />
+                          )}
+                        </TabsTrigger>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{tab.label}{isAdminOnly ? " (Admin Only)" : ""}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  );
+                })}
+                
+                {isAdmin && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <TabsTrigger 
+                        value="settings" 
+                        className={`
+                          ml-auto rounded-lg transition-all duration-200
+                          ${currentTab === 'settings' ? 'px-4 py-2 bg-gray-800 text-white' : 'px-3 py-2 text-gray-500 md:hover:bg-gray-100 active:bg-gray-100'}
+                        `}
+                      >
+                        <Settings className={`w-4 h-4 ${currentTab === 'settings' ? 'mr-2' : ''}`} />
+                        {currentTab === 'settings' && <span>Settings</span>}
+                      </TabsTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Group Settings</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+              </TabsList>
+            </TooltipProvider>
 
           <TabsContent value="feed" className="focus-visible:outline-none">
             {isTabEnabled('feed') && (
