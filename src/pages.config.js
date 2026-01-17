@@ -46,7 +46,6 @@ import LoveAway from './pages/LoveAway';
 import MasterContactDatabase from './pages/MasterContactDatabase';
 import Medications from './pages/Medications';
 import MeetThePixelNuts from './pages/MeetThePixelNuts';
-import MentalHealth from './pages/MentalHealth';
 import MyEvents from './pages/MyEvents';
 import MyLists from './pages/MyLists';
 import MyProfile from './pages/MyProfile';
@@ -85,6 +84,7 @@ import WaterHistory from './pages/WaterHistory';
 import WeeklyGifterGallery from './pages/WeeklyGifterGallery';
 import Wellness from './pages/Wellness';
 import WorkSchedules from './pages/WorkSchedules';
+import MentalHealth from './pages/MentalHealth';
 import __Layout from './Layout.jsx';
 
 
@@ -137,7 +137,6 @@ export const PAGES = {
     "MasterContactDatabase": MasterContactDatabase,
     "Medications": Medications,
     "MeetThePixelNuts": MeetThePixelNuts,
-    "MentalHealth": MentalHealth,
     "MyEvents": MyEvents,
     "MyLists": MyLists,
     "MyProfile": MyProfile,
@@ -176,6 +175,7 @@ export const PAGES = {
     "WeeklyGifterGallery": WeeklyGifterGallery,
     "Wellness": Wellness,
     "WorkSchedules": WorkSchedules,
+    "MentalHealth": MentalHealth,
 }
 
 export const pagesConfig = {

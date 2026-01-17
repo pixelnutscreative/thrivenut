@@ -81,6 +81,9 @@ export default function Settings() {
   const [expandedTabs, setExpandedTabs] = useState(['preferences']);
   const [showOnboarding, setShowOnboarding] = useState(false);
 
+  // Add this key prop to force remount when user changes
+  const settingsKey = `settings-${effectiveEmail || 'none'}`;
+
   useEffect(() => {
     const hash = location.hash.replace('#', '');
     if (hash) {
@@ -172,50 +175,29 @@ export default function Settings() {
   const [prefsInitialized, setPrefsInitialized] = useState(false);
   const [profileInitialized, setProfileInitialized] = useState(false);
 
+  // Always sync backend data to form when it arrives
   useEffect(() => {
-    if (preferences && !prefsInitialized) {
-      // Initialize with fetched preferences, ensuring all new fields are present
-      setPrefData({
-        nickname: '',
-        user_timezone: preferences?.user_timezone || 'America/Los_Angeles',
-        time_format: preferences?.time_format || '12h',
-        default_landing_page: 'Dashboard',
-        greeting_types: [],
-        ai_personality_tone: 'humorous',
-        custom_ai_tone_details: '',
-        address_as: 'you',
-        custom_bible_translation: '',
-        enable_morning_reading: false,
-        enable_night_reading: false,
-        enable_morning_prayer: false,
-        enable_night_prayer: false,
-        // Add explicit defaults for dashboard preferences to ensure they persist
-        intermittent_fasting: false,
-        enable_water_reminders: false,
-        enable_mood_checkins: false,
-        completed_tasks_display: 'show_checked',
-        dashboard_view_mode: 'detailed',
-        completed_items_color: 'green',
-        fasting_schedule: '16_8',
-        eating_window_start: '12:00',
-        eating_window_end: '20:00',
-        show_google_calendar: false,
-        google_calendar_connected: false,
-        journal_reminder_time: 'night',
-        ...preferences
-      });
-      setPrefsInitialized(true);
+    if (preferences) {
+      setPrefData(prev => ({
+        ...prev,
+        ...preferences,
+        // Explicitly preserve defaults if backend doesn't have them
+        user_timezone: preferences.user_timezone || prev.user_timezone || 'America/Los_Angeles',
+        time_format: preferences.time_format || prev.time_format || '12h',
+        default_landing_page: preferences.default_landing_page || prev.default_landing_page || 'Dashboard',
+        // Add any other fields that need defaults
+      }));
     }
-  }, [preferences, prefsInitialized]);
+  }, [preferences]);
 
+  // Always sync backend profile data
   useEffect(() => {
-    if (userProfile && !profileInitialized) {
-      setProfileData({
+    if (userProfile) {
+      setProfileData(prev => ({
+        ...prev,
         ...userProfile,
-        clothing_sizes: userProfile.clothing_sizes || {},
-        beauty_profile: userProfile.beauty_profile || {},
-        style_profile: userProfile.style_profile || {},
-        social_links: userProfile.social_links || {},
+        // Preserve defaults for nested objects
+        clothing_sizes: userProfile.clothing_sizes || prev.clothing_sizes || {},
         privacy_settings: {
           share_sizes: true,
           share_wishlist: true,
@@ -224,23 +206,13 @@ export default function Settings() {
           share_military: true,
           share_color: true,
           share_creator_info: true,
-          ...userProfile.privacy_settings
+          ...userProfile.privacy_settings,
+          ...prev.privacy_settings
         },
-        phonetic: userProfile.phonetic || '',
-        role: userProfile.role || [],
-        creator_notes: userProfile.creator_notes || '',
-        calendar_enabled: userProfile.calendar_enabled || false,
-        is_gifter: userProfile.is_gifter || false,
-        live_stream_types: userProfile.live_stream_types || [],
-        live_agency: userProfile.live_agency || '',
-        shop_agency: userProfile.shop_agency || '',
-        started_going_live: userProfile.started_going_live || '',
-        clubs: userProfile.clubs || [],
-        custom_clubs: userProfile.custom_clubs || []
-      });
-      setProfileInitialized(true);
+        // Add other nested defaults as needed
+      }));
     }
-  }, [userProfile, profileInitialized]);
+  }, [userProfile]);
 
   const updatePreferencesMutation = useMutation({
     mutationFn: async (data) => {
@@ -269,7 +241,8 @@ export default function Settings() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['preferences'] });
+      queryClient.invalidateQueries({ queryKey: ['preferences', effectiveEmail] });
+      queryClient.invalidateQueries({ queryKey: ['userProfile', effectiveEmail] });
     },
   });
 
@@ -405,7 +378,7 @@ export default function Settings() {
   }
 
   return (
-    <div className={`min-h-screen ${bgClass} p-4 md:p-8 pb-32`}>
+    <div key={settingsKey} className={`min-h-screen ${bgClass} p-4 md:p-8 pb-32`}>
       <OnboardingModal 
         isOpen={showOnboarding} 
         user={user} 
