@@ -146,24 +146,37 @@ export default function MentalHealth() {
   };
 
   const handleSave = async () => {
-    console.log("🎯 SAVE ATTEMPTED", { profile, user, mentalHealthProfile });
     setIsSaving(true);
+    setSaveDebug('🎯 SAVE STARTED...');
+    
+    const dataToSend = {
+      user_email: user?.email,
+      accessibility_mode: profile.accessibility_mode,
+      enable_self_care_gating: profile.enable_self_care_gating,
+      required_self_care_tasks: profile.required_self_care_tasks,
+      gated_modules: profile.gated_modules,
+      mental_health_struggles: profile.mental_health_struggles,
+      improvement_goals: profile.improvement_goals,
+      enable_ai_journaling: profile.enable_ai_journaling,
+      show_daily_affirmations: profile.show_daily_affirmations
+    };
+    
+    setSaveDebug(`📤 Sending: ${JSON.stringify(dataToSend, null, 2)}`);
+    
     try {
       if (mentalHealthProfile?.id) {
-        console.log("📝 UPDATING existing profile", mentalHealthProfile.id);
-        await base44.entities.MentalHealthProfile.update(mentalHealthProfile.id, profile);
+        setSaveDebug(`📝 UPDATING profile #${mentalHealthProfile.id}`);
+        await base44.entities.MentalHealthProfile.update(mentalHealthProfile.id, dataToSend);
       } else {
-        console.log("➕ CREATING new profile", user?.email);
-        await base44.entities.MentalHealthProfile.create({
-          ...profile,
-          user_email: user?.email
-        });
+        setSaveDebug(`➕ CREATING new profile for ${user?.email}`);
+        await base44.entities.MentalHealthProfile.create(dataToSend);
       }
+      
       queryClient.invalidateQueries({ queryKey: ['mentalHealthProfile', user?.email] });
-      console.log("✅ SAVE SUCCESS");
+      setSaveDebug('✅ SAVE SUCCESSFUL');
       toast.success("Mental health profile saved!");
     } catch (error) {
-      console.error("❌ SAVE FAILED:", error);
+      setSaveDebug(`❌ SAVE FAILED: ${error.message}\n\nFull error: ${JSON.stringify(error, null, 2)}`);
       toast.error(`Save failed: ${error.message}`);
     } finally {
       setIsSaving(false);
