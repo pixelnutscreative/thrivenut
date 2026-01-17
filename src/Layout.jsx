@@ -924,6 +924,10 @@ export default function Layout({ children, currentPageName }) {
                         className="overflow-hidden space-y-1">
 
                         {group.items.map((item) => {
+                          if (item.isSeparator) {
+                             return <Separator key={item.id} className="my-2 bg-gray-200/20" />;
+                          }
+
                           // Check global feature flags
                           let isDevMode = false;
                           if (item.moduleId) {
