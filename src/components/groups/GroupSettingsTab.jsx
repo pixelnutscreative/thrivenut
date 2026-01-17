@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { X, Plus, Save, Link as LinkIcon, Trash2, ArrowUp, ArrowDown, ChevronDown, ChevronRight, AlertTriangle, Settings, Users, FileText, Lock, Shield, GripVertical, Megaphone, Video } from 'lucide-react';
+import { X, Plus, Save, Link as LinkIcon, Trash2, ArrowUp, ArrowDown, ChevronDown, ChevronRight, AlertTriangle, Settings, Users, FileText, Lock, Shield, GripVertical, Megaphone, Video, Edit2 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
@@ -41,6 +41,7 @@ export default function GroupSettingsTab({ group }) {
 
         <TabsContent value="general" className="space-y-6 mt-6">
           <GroupTabsManager group={group} />
+          <GroupTabRenamingSettings group={group} />
           <GroupLogoUploader group={group} />
           <RetainerSettings group={group} />
           <GroupNameSettings group={group} />
@@ -1378,6 +1379,77 @@ function GroupExperienceSettings({ group }) {
             checked={group.force_landing_page || false}
             onCheckedChange={(checked) => updateGroupMutation.mutate({ force_landing_page: checked })}
           />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function GroupTabRenamingSettings({ group }) {
+  const queryClient = useQueryClient();
+  const [displayNames, setDisplayNames] = useState(group.settings?.display_names || {});
+  
+  const updateMutation = useMutation({
+    mutationFn: (data) => base44.entities.CreatorGroup.update(group.id, { 
+      settings: { ...group.settings, display_names: data } 
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['activeGroup', group.id]);
+      queryClient.invalidateQueries(['myGroupsDetails']);
+      alert('Tab names updated!');
+    }
+  });
+
+  const labels = {
+    feed: 'Feed',
+    discussion: 'Discussion',
+    events: 'Events',
+    meetings: 'Meetings',
+    projects: 'Projects',
+    marketing: 'Marketing Orders',
+    assets: 'Brand & Assets',
+    resources: 'Resources',
+    training: 'Training',
+    qna: 'Q&A',
+    members: 'Members',
+    requests: 'Requests'
+  };
+
+  // Only show active tabs based on GroupTabsManager logic (disabled_features)
+  const disabledFeatures = group.settings?.disabled_features || [];
+  const activeTabs = Object.keys(labels).filter(key => !disabledFeatures.includes(key));
+
+  const handleNameChange = (key, value) => {
+    setDisplayNames(prev => ({ ...prev, [key]: value }));
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Rename Tabs</CardTitle>
+        <CardDescription>Customize the display names for your group tabs.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {activeTabs.map(key => (
+            <div key={key} className="space-y-1">
+              <Label className="text-xs text-gray-500 uppercase">{labels[key]} (Default)</Label>
+              <div className="flex items-center gap-2">
+                <Edit2 className="w-4 h-4 text-gray-400" />
+                <Input 
+                  value={displayNames[key] || ''} 
+                  onChange={e => handleNameChange(key, e.target.value)}
+                  placeholder={labels[key]} 
+                  className="h-9"
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="flex justify-end pt-2">
+          <Button onClick={() => updateMutation.mutate(displayNames)} disabled={updateMutation.isPending}>
+            {updateMutation.isPending ? 'Saving...' : 'Save Names'}
+          </Button>
         </div>
       </CardContent>
     </Card>
