@@ -18,6 +18,10 @@ export default function DashboardGoalsSection({ userEmail }) {
     queryKey: ['activeGoals', userEmail],
     queryFn: () => base44.entities.Goal.filter({ status: 'active', created_by: userEmail }),
     enabled: !!userEmail,
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 2,
   });
 
   if (goals.length === 0) return null;

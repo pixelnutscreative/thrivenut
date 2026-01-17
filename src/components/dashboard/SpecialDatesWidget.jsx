@@ -8,21 +8,19 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { format, addDays, subDays, isSameDay, parseISO, isWithinInterval, startOfDay } from 'date-fns';
 
-export default function SpecialDatesWidget({ userEmail }) {
+export default function SpecialDatesWidget({ userEmail, tiktokContacts = [] }) {
   const [viewMode, setViewMode] = useState('upcoming'); // 'recent', 'today', 'upcoming'
   const [daysAhead, setDaysAhead] = useState("30");
   const [daysBack, setDaysBack] = useState("30");
-
-  const { data: tiktokContacts = [] } = useQuery({
-    queryKey: ['tiktokContacts', userEmail],
-    queryFn: () => base44.entities.TikTokContact.filter({ created_by: userEmail }),
-    enabled: !!userEmail,
-  });
 
   const { data: familyMembers = [] } = useQuery({
     queryKey: ['familyMembers', userEmail],
     queryFn: () => base44.entities.FamilyMember.filter({ created_by: userEmail }),
     enabled: !!userEmail,
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 2,
   });
 
   // Merge contacts and standardize fields

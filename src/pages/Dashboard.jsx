@@ -66,7 +66,10 @@ export default function Dashboard() {
       return prefs[0] || null;
     },
     enabled: !!effectiveEmail,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 2,
   });
 
   // Auto-approve TikTok access if eligible
@@ -146,12 +149,20 @@ export default function Dashboard() {
       return logs[0] || null;
     },
     enabled: !!user && enabledModules.includes('wellness'),
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 2,
   });
 
   const { data: tiktokContacts = [] } = useQuery({
     queryKey: ['tiktokContacts', effectiveEmail],
     queryFn: () => base44.entities.TikTokContact.filter({ created_by: effectiveEmail }),
     enabled: !!effectiveEmail && enabledModules.includes('people'),
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 2,
   });
 
   const { data: urgentEvents = [] } = useQuery({
@@ -166,6 +177,10 @@ export default function Dashboard() {
       return events;
     },
     enabled: !!effectiveEmail,
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 2,
   });
 
   const updatePreferencesMutation = useMutation({
@@ -501,7 +516,7 @@ export default function Dashboard() {
       case 'subscribed_events':
         return <SubscribedEventsSection userEmail={user?.email} primaryColor={primaryColor} />;
       case 'special_dates':
-        return <SpecialDatesWidget userEmail={effectiveEmail} />;
+        return <SpecialDatesWidget userEmail={effectiveEmail} tiktokContacts={tiktokContacts} />;
       case 'tiktok_battles':
         return <TikTokBattlesWidget userEmail={effectiveEmail} />;
       case 'live_schedule':

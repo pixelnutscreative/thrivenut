@@ -21,6 +21,10 @@ export default function DashboardHabitsSection({ userEmail }) {
       });
     },
     enabled: !!userEmail,
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 2,
   });
 
   const { data: habitLogs = [] } = useQuery({
@@ -30,6 +34,10 @@ export default function DashboardHabitsSection({ userEmail }) {
       return await base44.entities.HabitLog.filter({ created_by: userEmail }, '-date');
     },
     enabled: !!userEmail,
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 2,
   });
 
   const habitStats = useMemo(() => {

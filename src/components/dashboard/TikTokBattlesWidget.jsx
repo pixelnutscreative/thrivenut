@@ -23,6 +23,10 @@ export default function TikTokBattlesWidget({ userEmail }) {
         .slice(0, 5); // Take top 5
     },
     enabled: !!userEmail,
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 2,
   });
 
   return (

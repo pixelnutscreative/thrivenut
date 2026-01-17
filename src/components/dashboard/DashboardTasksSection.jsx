@@ -28,6 +28,10 @@ export default function DashboardTasksSection({ userEmail, viewMode = 'detailed'
       created_by: userEmail 
     }),
     enabled: !!userEmail,
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 2,
   });
 
   const completeTaskMutation = useMutation({

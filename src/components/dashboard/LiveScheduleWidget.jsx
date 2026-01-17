@@ -34,6 +34,10 @@ export default function LiveScheduleWidget({ userEmail }) {
       });
     },
     enabled: !!userEmail,
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 2,
   });
 
   return (
