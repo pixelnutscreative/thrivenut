@@ -609,6 +609,10 @@ export default function Layout({ children, currentPageName }) {
                           const isExpanded = expandedSections.includes(item.name);
                           const hasActiveSubItem = isSubItemActive(item);
 
+                          if (item.isSeparator) {
+                              return <Separator className="my-2 bg-white/10" key={Math.random()} />;
+                          }
+
                           // Section (Dropdown)
                           if (item.isSection) {
                             const isLocked = item.requiresTikTokAccess && !hasTikTokAccess;
@@ -884,6 +888,10 @@ export default function Layout({ children, currentPageName }) {
                           const isActive = currentPageName === item.path;
                           const isExpanded = expandedSections.includes(item.name);
                           const hasActiveSubItem = isSubItemActive(item);
+
+                          if (item.isSeparator) {
+                              return <Separator className="my-2 bg-white/10" key={Math.random()} />;
+                          }
 
                           // Section (Dropdown)
                           if (item.isSection) {
