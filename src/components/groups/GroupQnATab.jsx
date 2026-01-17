@@ -29,7 +29,7 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
     mutationFn: (data) => base44.entities.GroupQnA.create({ 
       ...data, 
       group_id: group.id, 
-      asked_by_email: currentUser?.email,
+      asked_by: currentUser?.email,
       status: 'pending'
     }),
     onSuccess: () => {
@@ -103,7 +103,7 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
             // Notify the asker
             await base44.functions.invoke('notifyGroupMembers', {
                 group_id: group.id,
-                target_email: originalQna.asked_by_email,
+                target_email: originalQna.asked_by,
                 title: `Your Question was Answered!`,
                 message: `Answer to: ${originalQna.question}`,
                 type: 'qna_answer',
@@ -117,7 +117,7 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
   // Filter visibility
   const visibleQnA = qnas.filter(q => {
     if (isAdmin) return true;
-    if (q.asked_by_email === currentUser?.email) return true;
+    if (q.asked_by === currentUser?.email) return true;
     
     const levelMatch = !q.target_levels || q.target_levels.length === 0 || q.target_levels.includes(myMembership?.level);
     const userMatch = !q.target_users || q.target_users.length === 0 || q.target_users.includes(myMembership?.user_email);
@@ -126,7 +126,7 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
   });
 
   const publishedQnA = visibleQnA.filter(q => q.status === 'published');
-  const myPendingQnA = qnas.filter(q => q.status === 'pending' && q.asked_by_email === currentUser?.email);
+  const myPendingQnA = qnas.filter(q => q.status === 'pending' && q.asked_by === currentUser?.email);
   const adminPendingQnA = isAdmin ? qnas.filter(q => q.status === 'pending') : [];
 
   return (
@@ -214,7 +214,7 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
                   <div className="font-semibold text-lg flex gap-2">
                     <span className="text-purple-600">Q:</span> {q.question}
                   </div>
-                  {(isAdmin || q.asked_by_email === currentUser?.email) && (
+                  {(isAdmin || q.asked_by === currentUser?.email) && (
                     <div className="flex gap-1">
                       <Button variant="ghost" size="sm" onClick={() => handleEdit(q)} className="text-gray-500 h-6 w-6 p-0 hover:text-purple-600">
                         <Pencil className="w-4 h-4" />
@@ -278,7 +278,7 @@ function AdminAnswerCard({ qna, onAnswer }) {
     <Card>
       <CardHeader className="pb-2">
         <CardTitle className="text-base">{qna.question}</CardTitle>
-        <p className="text-xs text-gray-500">Asked by {qna.asked_by_email}</p>
+        <p className="text-xs text-gray-500">Asked by {qna.asked_by}</p>
         {qna.details && <div className="text-sm mt-2 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: qna.details }} />}
       </CardHeader>
       <CardContent className="space-y-3">
