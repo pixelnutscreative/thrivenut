@@ -827,6 +827,7 @@ function GroupTabsManager({ group }) {
 
   const [items, setItems] = useState(fullOrder);
   const [disabledFeatures, setDisabledFeatures] = useState(group.settings?.disabled_features || []);
+  const [customNames, setCustomNames] = useState(group.settings?.display_names || {});
   const [hasChanges, setHasChanges] = useState(false);
 
   const updateMutation = useMutation({
@@ -865,8 +866,17 @@ function GroupTabsManager({ group }) {
   const handleSave = () => {
     updateMutation.mutate({
       tab_order: items,
-      disabled_features: disabledFeatures
+      disabled_features: disabledFeatures,
+      display_names: customNames
     });
+  };
+
+  const handleNameChange = (id, newName) => {
+    setCustomNames(prev => ({
+      ...prev,
+      [id]: newName
+    }));
+    setHasChanges(true);
   };
 
   const labels = {
@@ -910,10 +920,21 @@ function GroupTabsManager({ group }) {
                           <div {...provided.dragHandleProps} className="cursor-move p-1 text-gray-400 hover:text-gray-600">
                              <GripVertical className="w-5 h-5" />
                           </div>
-                          <div className="flex-1 flex items-center justify-between">
-                             <div className="flex flex-col">
-                               <span className={`font-medium ${isEnabled ? 'text-gray-900' : 'text-gray-500'}`}>{labels[id] || id}</span>
-                               {!isEnabled && <span className="text-xs text-gray-400">Hidden from group</span>}
+                          <div className="flex-1 flex items-center justify-between gap-4">
+                             <div className="flex flex-col flex-1">
+                               <div className="flex items-center gap-2">
+                                  <span className={`font-medium min-w-[120px] ${isEnabled ? 'text-gray-900' : 'text-gray-500'}`}>{labels[id] || id}</span>
+                                  {isEnabled && (
+                                    <Input 
+                                      className="h-7 w-48 text-sm" 
+                                      placeholder={`Rename ${labels[id]}...`}
+                                      value={customNames[id] || ''}
+                                      onChange={(e) => handleNameChange(id, e.target.value)}
+                                      onClick={(e) => e.stopPropagation()}
+                                    />
+                                  )}
+                               </div>
+                               {!isEnabled && <span className="text-xs text-gray-400 mt-1">Hidden from group</span>}
                              </div>
                              <Switch 
                                 checked={isEnabled} 

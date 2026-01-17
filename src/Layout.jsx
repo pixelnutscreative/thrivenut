@@ -4,6 +4,7 @@ import { createPageUrl } from './utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button.jsx';
+import { Separator } from '@/components/ui/separator';
 import {
   LayoutDashboard, Target, Heart, BookOpen, Settings, Menu, X, LogOut,
   TrendingUp, Users, Video, Pill, Gift, Brain, Home, ChevronDown,
@@ -233,14 +234,20 @@ export default function Layout({ children, currentPageName }) {
     bgColor: g.menu_color || 'bg-purple-600', // Ensure it has a background color
     isPinnedGroup: true, // Marker for specific styling if needed
     items: [
-        { name: 'Home', icon: Home, path: `CreatorGroups?id=${g.id}` },
-        { name: 'Feed', icon: MessageCircle, path: `CreatorGroups?id=${g.id}&tab=feed` },
-        { name: 'Events', icon: Calendar, path: `CreatorGroups?id=${g.id}&tab=events` },
-        { name: 'Resources', icon: BookOpen, path: `CreatorGroups?id=${g.id}&tab=resources` },
-        { name: 'Discussions', icon: MessageCircle, path: `CreatorGroups?id=${g.id}&tab=qna` },
-        { name: 'Members', icon: Users, path: `CreatorGroups?id=${g.id}&tab=members` },
+        { name: g.settings?.display_names?.home || 'Home', icon: Home, path: `CreatorGroups?id=${g.id}` },
+        { name: g.settings?.display_names?.feed || 'Feed', icon: MessageCircle, path: `CreatorGroups?id=${g.id}&tab=feed` },
+        { name: g.settings?.display_names?.events || 'Events', icon: Calendar, path: `CreatorGroups?id=${g.id}&tab=events` },
+        { name: g.settings?.display_names?.resources || 'Resources', icon: BookOpen, path: `CreatorGroups?id=${g.id}&tab=resources` },
+        { name: g.settings?.display_names?.qna || 'Discussions', icon: MessageCircle, path: `CreatorGroups?id=${g.id}&tab=qna` },
+        { name: g.settings?.display_names?.members || 'Members', icon: Users, path: `CreatorGroups?id=${g.id}&tab=members` },
     ]
   })),
+  {
+    id: 'separator',
+    items: [
+        { isSeparator: true }
+    ]
+  },
   {
     id: 'core',
     items: [
