@@ -46,7 +46,6 @@ import LoveAway from './pages/LoveAway';
 import MasterContactDatabase from './pages/MasterContactDatabase';
 import Medications from './pages/Medications';
 import MeetThePixelNuts from './pages/MeetThePixelNuts';
-import MentalHealth from './pages/MentalHealth';
 import mentalhealthTsx from './pages/MentalHealth.tsx';
 import MyEvents from './pages/MyEvents';
 import MyLists from './pages/MyLists';
@@ -68,7 +67,6 @@ import QuickNotes from './pages/QuickNotes';
 import RedeemGift from './pages/RedeemGift';
 import SalesTracking from './pages/SalesTracking';
 import SavedMotivations from './pages/SavedMotivations';
-import Settings from './pages/Settings';
 import settingsTsx from './pages/Settings.tsx';
 import ShareDashboard from './pages/ShareDashboard';
 import SocialShortcuts from './pages/SocialShortcuts';
@@ -87,6 +85,8 @@ import WaterHistory from './pages/WaterHistory';
 import WeeklyGifterGallery from './pages/WeeklyGifterGallery';
 import Wellness from './pages/Wellness';
 import WorkSchedules from './pages/WorkSchedules';
+import Settings from './pages/Settings';
+import MentalHealth from './pages/MentalHealth';
 import __Layout from './Layout.jsx';
 
 
@@ -139,7 +139,6 @@ export const PAGES = {
     "MasterContactDatabase": MasterContactDatabase,
     "Medications": Medications,
     "MeetThePixelNuts": MeetThePixelNuts,
-    "MentalHealth": MentalHealth,
     "MentalHealth.tsx": mentalhealthTsx,
     "MyEvents": MyEvents,
     "MyLists": MyLists,
@@ -161,7 +160,6 @@ export const PAGES = {
     "RedeemGift": RedeemGift,
     "SalesTracking": SalesTracking,
     "SavedMotivations": SavedMotivations,
-    "Settings": Settings,
     "Settings.tsx": settingsTsx,
     "ShareDashboard": ShareDashboard,
     "SocialShortcuts": SocialShortcuts,
@@ -180,6 +178,8 @@ export const PAGES = {
     "WeeklyGifterGallery": WeeklyGifterGallery,
     "Wellness": Wellness,
     "WorkSchedules": WorkSchedules,
+    "Settings": Settings,
+    "MentalHealth": MentalHealth,
 }
 
 export const pagesConfig = {
