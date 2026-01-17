@@ -77,6 +77,45 @@ Deno.serve(async (req) => {
             if (!member) return Response.json({ error: 'Member not found' }, { status: 404 });
 
             const group = await base44.entities.CreatorGroup.get(group_id);
+
+            // --- RESTRICTED MODE LOGIC START ---
+            if (group.restrict_new_members) {
+                const targetEmail = member.user_email;
+                
+                // Check if user is "new-ish" (only member of this group)
+                // We count active memberships.
+                const activeMemberships = await base44.entities.CreatorGroupMember.filter({ 
+                    user_email: targetEmail, 
+                    status: 'active' 
+                });
+                
+                // If they have 0 active memberships (about to be 1), or just this one (already active?)
+                // Since we are approving them now, they currently have 0 (or others).
+                const otherActiveGroups = activeMemberships.filter(m => m.group_id !== group_id);
+
+                if (otherActiveGroups.length === 0) {
+                     // Fetch or Create Preferences
+                     let prefs = await base44.entities.UserPreferences.filter({ user_email: targetEmail });
+                     let prefData = {
+                         user_email: targetEmail,
+                         enabled_modules: ['my_groups'], // Restrict to only groups
+                     };
+                     
+                     if (group.force_landing_page) {
+                         prefData.default_landing_page = `CreatorGroups?id=${group_id}`;
+                     }
+
+                     if (prefs.length === 0) {
+                         await base44.entities.UserPreferences.create(prefData);
+                     } else {
+                         // Only update if they haven't completed onboarding or explicit override
+                         // For now, force it as requested for "Social House" style groups
+                         await base44.entities.UserPreferences.update(prefs[0].id, prefData);
+                     }
+                }
+            }
+            // --- RESTRICTED MODE LOGIC END ---
+
             const updates = {
                 status: 'active',
                 role: 'member',
