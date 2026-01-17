@@ -85,8 +85,6 @@ import WaterHistory from './pages/WaterHistory';
 import WeeklyGifterGallery from './pages/WeeklyGifterGallery';
 import Wellness from './pages/Wellness';
 import WorkSchedules from './pages/WorkSchedules';
-import Settings from './pages/Settings';
-import MentalHealth from './pages/MentalHealth';
 import __Layout from './Layout.jsx';
 
 
@@ -178,8 +176,6 @@ export const PAGES = {
     "WeeklyGifterGallery": WeeklyGifterGallery,
     "Wellness": Wellness,
     "WorkSchedules": WorkSchedules,
-    "Settings": Settings,
-    "MentalHealth": MentalHealth,
 }
 
 export const pagesConfig = {
