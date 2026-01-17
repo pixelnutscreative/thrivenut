@@ -15,12 +15,14 @@ export default function SettingsPage() {
     user_email: currentUserEmail || '' 
   });
 
+  // Get current user
   useEffect(() => {
     base44.auth.me().then(user => {
       if (user?.email) setCurrentUserEmail(user.email);
     });
   }, []);
 
+  // Load settings
   const { data: userPreferences, isLoading } = useQuery({
     queryKey: ['userPreferences', currentUserEmail],
     queryFn: async () => {
@@ -33,6 +35,7 @@ export default function SettingsPage() {
       if (data) {
         setLocalPreferences(data);
       } else {
+        // First-time user defaults
         setLocalPreferences({
           user_email: currentUserEmail || '',
           nickname: '',
@@ -44,6 +47,7 @@ export default function SettingsPage() {
     }
   });
 
+  // Save settings
   const saveMutation = useMutation({
     mutationFn: async (data) => {
       if (!currentUserEmail) throw new Error("No user email");
@@ -86,6 +90,7 @@ export default function SettingsPage() {
           <TabsTrigger value="customize">Customize</TabsTrigger>
         </TabsList>
 
+        {/* PREFERENCES TAB */}
         <TabsContent value="preferences" className="space-y-4">
           <div>
             <Label className="block mb-2">Nickname</Label>
@@ -121,6 +126,7 @@ export default function SettingsPage() {
           </div>
         </TabsContent>
 
+        {/* DASHBOARD TAB */}
         <TabsContent value="dashboard" className="space-y-4">
           <div className="flex items-center justify-between p-4 border rounded">
             <Label>Hide Quick Action Labels</Label>
@@ -131,6 +137,7 @@ export default function SettingsPage() {
           </div>
         </TabsContent>
 
+        {/* CUSTOMIZE TAB */}
         <TabsContent value="customize" className="space-y-4">
           <div>
             <Label className="block mb-2">Primary Color</Label>
