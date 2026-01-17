@@ -76,6 +76,8 @@ export default function GroupSettingsTab({ group }) {
         </TabsContent>
 
         <TabsContent value="danger" className="space-y-6 mt-6">
+          <GroupMenuSettings group={group} />
+          <GroupExperienceSettings group={group} />
           <TransferOwnershipSettings group={group} />
           <DeleteGroupSettings group={group} />
         </TabsContent>
