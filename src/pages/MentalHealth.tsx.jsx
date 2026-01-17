@@ -6,13 +6,20 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 
+interface MentalHealthProfile {
+  id?: string;
+  user_email?: string;
+  conditions?: string[];
+  goals?: string[];
+}
+
 const CONDITIONS = ["Anxiety", "Depression", "ADHD", "PTSD", "OCD", "Bipolar", "Other"];
 const GOALS = ["Productivity", "Self-care", "Confidence", "Mindfulness", "Gratitude"];
 
 export default function MentalHealthPage() {
   const queryClient = useQueryClient();
-  const [currentUserEmail, setCurrentUserEmail] = useState(null);
-  const [profile, setProfile] = useState({
+  const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
+  const [profile, setProfile] = useState<MentalHealthProfile>({
     conditions: [],
     goals: []
   });
@@ -41,7 +48,7 @@ export default function MentalHealthPage() {
   });
 
   const saveMutation = useMutation({
-    mutationFn: async (data) => {
+    mutationFn: async (data: Partial<MentalHealthProfile>) => {
       if (!currentUserEmail) throw new Error("No user email");
       
       if (mentalHealthProfile?.id) {
@@ -56,7 +63,7 @@ export default function MentalHealthPage() {
     }
   });
 
-  const handleMultiSelect = (value, field, checked) => {
+  const handleMultiSelect = (value: string, field: 'conditions' | 'goals', checked: boolean) => {
     setProfile(prev => {
       const currentList = prev[field] || [];
       const newList = checked 
@@ -87,7 +94,7 @@ export default function MentalHealthPage() {
                 <Checkbox
                   id={`cond-${condition}`}
                   checked={profile.conditions?.includes(condition) || false}
-                  onCheckedChange={(checked) => handleMultiSelect(condition, 'conditions', checked)}
+                  onCheckedChange={(checked) => handleMultiSelect(condition, 'conditions', checked as boolean)}
                 />
                 <Label htmlFor={`cond-${condition}`}>{condition}</Label>
               </div>
@@ -103,7 +110,7 @@ export default function MentalHealthPage() {
                 <Checkbox
                   id={`goal-${goal}`}
                   checked={profile.goals?.includes(goal) || false}
-                  onCheckedChange={(checked) => handleMultiSelect(goal, 'goals', checked)}
+                  onCheckedChange={(checked) => handleMultiSelect(goal, 'goals', checked as boolean)}
                 />
                 <Label htmlFor={`goal-${goal}`}>{goal}</Label>
               </div>

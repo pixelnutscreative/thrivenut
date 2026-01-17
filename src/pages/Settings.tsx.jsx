@@ -8,10 +8,23 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 
+interface UserPreferences {
+  id?: string;
+  user_email: string;
+  nickname?: string;
+  user_timezone?: string;
+  default_landing_page?: string;
+  primary_color?: string;
+  accent_color?: string;
+  menu_color?: string;
+  hide_quick_action_labels?: boolean;
+  enabled_modules?: string[];
+}
+
 export default function SettingsPage() {
   const queryClient = useQueryClient();
-  const [currentUserEmail, setCurrentUserEmail] = useState(null);
-  const [localPreferences, setLocalPreferences] = useState({ 
+  const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
+  const [localPreferences, setLocalPreferences] = useState<UserPreferences>({ 
     user_email: currentUserEmail || '' 
   });
 
@@ -45,7 +58,7 @@ export default function SettingsPage() {
   });
 
   const saveMutation = useMutation({
-    mutationFn: async (data) => {
+    mutationFn: async (data: Partial<UserPreferences>) => {
       if (!currentUserEmail) throw new Error("No user email");
       
       if (userPreferences?.id) {
