@@ -46,7 +46,7 @@ import LoveAway from './pages/LoveAway';
 import MasterContactDatabase from './pages/MasterContactDatabase';
 import Medications from './pages/Medications';
 import MeetThePixelNuts from './pages/MeetThePixelNuts';
-import mentalhealthTsx from './pages/MentalHealth.tsx';
+import MentalHealth from './pages/MentalHealth';
 import MyEvents from './pages/MyEvents';
 import MyLists from './pages/MyLists';
 import MyProfile from './pages/MyProfile';
@@ -67,7 +67,7 @@ import QuickNotes from './pages/QuickNotes';
 import RedeemGift from './pages/RedeemGift';
 import SalesTracking from './pages/SalesTracking';
 import SavedMotivations from './pages/SavedMotivations';
-import settingsTsx from './pages/Settings.tsx';
+import Settings from './pages/Settings';
 import ShareDashboard from './pages/ShareDashboard';
 import SocialShortcuts from './pages/SocialShortcuts';
 import SongGenerator from './pages/SongGenerator';
@@ -85,8 +85,6 @@ import WaterHistory from './pages/WaterHistory';
 import WeeklyGifterGallery from './pages/WeeklyGifterGallery';
 import Wellness from './pages/Wellness';
 import WorkSchedules from './pages/WorkSchedules';
-import Settings from './pages/Settings';
-import MentalHealth from './pages/MentalHealth';
 import __Layout from './Layout.jsx';
 
 
@@ -139,7 +137,7 @@ export const PAGES = {
     "MasterContactDatabase": MasterContactDatabase,
     "Medications": Medications,
     "MeetThePixelNuts": MeetThePixelNuts,
-    "MentalHealth.tsx": mentalhealthTsx,
+    "MentalHealth": MentalHealth,
     "MyEvents": MyEvents,
     "MyLists": MyLists,
     "MyProfile": MyProfile,
@@ -160,7 +158,7 @@ export const PAGES = {
     "RedeemGift": RedeemGift,
     "SalesTracking": SalesTracking,
     "SavedMotivations": SavedMotivations,
-    "Settings.tsx": settingsTsx,
+    "Settings": Settings,
     "ShareDashboard": ShareDashboard,
     "SocialShortcuts": SocialShortcuts,
     "SongGenerator": SongGenerator,
@@ -178,8 +176,6 @@ export const PAGES = {
     "WeeklyGifterGallery": WeeklyGifterGallery,
     "Wellness": Wellness,
     "WorkSchedules": WorkSchedules,
-    "Settings": Settings,
-    "MentalHealth": MentalHealth,
 }
 
 export const pagesConfig = {
