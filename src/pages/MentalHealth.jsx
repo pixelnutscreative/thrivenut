@@ -208,17 +208,26 @@ export default function MentalHealth() {
             </h1>
             <p className={`${subtextClass} mt-1`}>Personalize your support, track your journey, and customize your experience</p>
           </div>
-          <Button
-            onClick={handleSave}
+          <Button 
+            onClick={async () => {
+              setIsSaving(true);
+              try {
+                if (mentalHealthProfile?.id) {
+                  await base44.entities.MentalHealthProfile.update(mentalHealthProfile.id, profile);
+                } else {
+                  await base44.entities.MentalHealthProfile.create({...profile, user_email: user?.email});
+                }
+                toast.success("Saved!");
+              } catch (e) {
+                toast.error("Save failed");
+              } finally {
+                setIsSaving(false);
+              }
+            }}
             disabled={isSaving}
             className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
           >
-            {isSaving ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4 mr-2" />
-            )}
-            Save Changes
+            {isSaving ? 'Saving...' : 'Save Changes'}
           </Button>
         </div>
 
