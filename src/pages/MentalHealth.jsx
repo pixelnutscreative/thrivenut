@@ -147,23 +147,7 @@ export default function MentalHealth() {
     }));
   };
 
-  const toggleStruggle = (id) => {
-    setFormData(prev => ({
-      ...prev,
-      mental_health_struggles: prev.mental_health_struggles.includes(id)
-        ? prev.mental_health_struggles.filter(s => s !== id)
-        : [...prev.mental_health_struggles, id]
-    }));
-  };
 
-  const toggleImprovement = (id) => {
-    setFormData(prev => ({
-      ...prev,
-      improvement_goals: prev.improvement_goals.includes(id)
-        ? prev.improvement_goals.filter(s => s !== id)
-        : [...prev.improvement_goals, id]
-    }));
-  };
 
   const handleSave = () => {
     updatePreferencesMutation.mutate(formData);
@@ -315,43 +299,59 @@ export default function MentalHealth() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <Label className={`font-medium mb-3 block ${textClass}`}>Things I'm working through...</Label>
-                <div className="flex flex-wrap gap-2">
-                  {struggles.map(item => (
-                    <button
-                      key={item.id}
-                      onClick={() => toggleStruggle(item.id)}
-                      className={`px-3 py-2 rounded-full border-2 text-sm transition-all ${
-                        formData.mental_health_struggles.includes(item.id)
-                          ? `border-purple-500 ${isDark ? 'bg-purple-900/50 text-purple-300' : 'bg-purple-100 text-purple-800'}`
-                          : `${isDark ? 'border-gray-600 hover:border-purple-400 text-gray-300' : 'border-gray-200 hover:border-purple-300'}`
-                      }`}
-                    >
-                      <span className="mr-1">{item.emoji}</span>
-                      {item.label}
-                    </button>
-                  ))}
-                </div>
+               <Label className={`font-medium mb-3 block ${textClass}`}>Things I'm working through...</Label>
+               <div className="flex flex-wrap gap-2">
+                 {struggles.map(item => (
+                   <div
+                     key={item.id}
+                     className={`px-3 py-2 rounded-full border-2 text-sm transition-all cursor-pointer ${
+                       formData.mental_health_struggles.includes(item.id)
+                         ? `border-purple-500 ${isDark ? 'bg-purple-900/50 text-purple-300' : 'bg-purple-100 text-purple-800'}`
+                         : `${isDark ? 'border-gray-600 hover:border-purple-400 text-gray-300' : 'border-gray-200 hover:border-purple-300'}`
+                     }`}
+                     onClick={() => {
+                       setFormData(prev => {
+                         const currentList = prev.mental_health_struggles || [];
+                         const newList = currentList.includes(item.id)
+                           ? currentList.filter(s => s !== item.id)
+                           : [...currentList, item.id];
+                         return { ...prev, mental_health_struggles: newList };
+                       });
+                     }}
+                   >
+                     <span className="mr-1">{item.emoji}</span>
+                     {item.label}
+                   </div>
+                 ))}
+               </div>
               </div>
 
               <div>
-                <Label className={`font-medium mb-3 block ${textClass}`}>Things I want to improve...</Label>
-                <div className="flex flex-wrap gap-2">
-                  {improvementGoals.map(item => (
-                    <button
-                      key={item.id}
-                      onClick={() => toggleImprovement(item.id)}
-                      className={`px-3 py-2 rounded-full border-2 text-sm transition-all ${
-                        formData.improvement_goals.includes(item.id)
-                          ? `border-pink-500 ${isDark ? 'bg-pink-900/50 text-pink-300' : 'bg-pink-100 text-pink-800'}`
-                          : `${isDark ? 'border-gray-600 hover:border-pink-400 text-gray-300' : 'border-gray-200 hover:border-pink-300'}`
-                      }`}
-                    >
-                      <span className="mr-1">{item.emoji}</span>
-                      {item.label}
-                    </button>
-                  ))}
-                </div>
+               <Label className={`font-medium mb-3 block ${textClass}`}>Things I want to improve...</Label>
+               <div className="flex flex-wrap gap-2">
+                 {improvementGoals.map(item => (
+                   <div
+                     key={item.id}
+                     className={`px-3 py-2 rounded-full border-2 text-sm transition-all cursor-pointer ${
+                       formData.improvement_goals.includes(item.id)
+                         ? `border-pink-500 ${isDark ? 'bg-pink-900/50 text-pink-300' : 'bg-pink-100 text-pink-800'}`
+                         : `${isDark ? 'border-gray-600 hover:border-pink-400 text-gray-300' : 'border-gray-200 hover:border-pink-300'}`
+                     }`}
+                     onClick={() => {
+                       setFormData(prev => {
+                         const currentList = prev.improvement_goals || [];
+                         const newList = currentList.includes(item.id)
+                           ? currentList.filter(s => s !== item.id)
+                           : [...currentList, item.id];
+                         return { ...prev, improvement_goals: newList };
+                       });
+                     }}
+                   >
+                     <span className="mr-1">{item.emoji}</span>
+                     {item.label}
+                   </div>
+                 ))}
+               </div>
               </div>
 
               {/* Custom Working On Bubbles */}
