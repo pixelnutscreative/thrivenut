@@ -12,7 +12,12 @@ export default function SettingsPage() {
   const queryClient = useQueryClient();
   const [currentUserEmail, setCurrentUserEmail] = useState(null);
   const [localPreferences, setLocalPreferences] = useState({ 
-    user_email: currentUserEmail || '' 
+    user_email: currentUserEmail || '',
+    nickname: '',
+    user_timezone: 'UTC',
+    default_landing_page: 'Dashboard',
+    hide_quick_action_labels: false,
+    primary_color: '#1fd2ea'
   });
 
   // Get current user
@@ -34,15 +39,6 @@ export default function SettingsPage() {
     onSuccess: (data) => {
       if (data) {
         setLocalPreferences(data);
-      } else {
-        // First-time user defaults
-        setLocalPreferences({
-          user_email: currentUserEmail || '',
-          nickname: '',
-          user_timezone: 'UTC',
-          default_landing_page: 'Dashboard',
-          hide_quick_action_labels: false,
-        });
       }
     }
   });
