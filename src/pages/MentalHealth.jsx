@@ -250,12 +250,12 @@ export default function MentalHealth() {
                   </p>
                 </div>
                 <Switch
-                  checked={formData.enable_self_care_gating}
-                  onCheckedChange={(val) => setFormData({...formData, enable_self_care_gating: val})}
+                  checked={profile.enable_self_care_gating}
+                  onCheckedChange={(val) => setProfile({...profile, enable_self_care_gating: val})}
                 />
               </div>
 
-              {formData.enable_self_care_gating && (
+              {profile.enable_self_care_gating && (
                 <>
                   <div className="space-y-3">
                     <Label className={`font-medium ${textClass}`}>Required Self-Care Tasks</Label>
@@ -274,7 +274,7 @@ export default function MentalHealth() {
                           }`}
                         >
                           <div className="flex items-center gap-3">
-                            <Checkbox checked={formData.required_self_care_tasks.includes(task.id)} />
+                             <Checkbox checked={profile.required_self_care_tasks.includes(task.id)} />
                             <div>
                               <span className={`font-medium ${textClass}`}>{task.label}</span>
                               <p className={`text-sm ${subtextClass}`}>{task.description}</p>
@@ -302,7 +302,7 @@ export default function MentalHealth() {
                           }`}
                         >
                           <div className="flex items-center gap-3">
-                            <Checkbox checked={formData.gated_modules.includes(module.id)} />
+                             <Checkbox checked={profile.gated_modules.includes(module.id)} />
                             <span className={`font-medium ${textClass}`}>{module.name}</span>
                           </div>
                         </div>
@@ -339,12 +339,12 @@ export default function MentalHealth() {
                    <div
                      key={item.id}
                      className={`px-3 py-2 rounded-full border-2 text-sm transition-all cursor-pointer ${
-                       formData.mental_health_struggles.includes(item.id)
+                       profile.mental_health_struggles.includes(item.id)
                          ? `border-purple-500 ${isDark ? 'bg-purple-900/50 text-purple-300' : 'bg-purple-100 text-purple-800'}`
                          : `${isDark ? 'border-gray-600 hover:border-purple-400 text-gray-300' : 'border-gray-200 hover:border-purple-300'}`
                      }`}
                      onClick={() => {
-                       setFormData(prev => {
+                       setProfile(prev => {
                          const currentList = prev.mental_health_struggles || [];
                          const newList = currentList.includes(item.id)
                            ? currentList.filter(s => s !== item.id)
@@ -367,12 +367,12 @@ export default function MentalHealth() {
                    <div
                      key={item.id}
                      className={`px-3 py-2 rounded-full border-2 text-sm transition-all cursor-pointer ${
-                       formData.improvement_goals.includes(item.id)
+                       profile.improvement_goals.includes(item.id)
                          ? `border-pink-500 ${isDark ? 'bg-pink-900/50 text-pink-300' : 'bg-pink-100 text-pink-800'}`
                          : `${isDark ? 'border-gray-600 hover:border-pink-400 text-gray-300' : 'border-gray-200 hover:border-pink-300'}`
                      }`}
                      onClick={() => {
-                       setFormData(prev => {
+                       setProfile(prev => {
                          const currentList = prev.improvement_goals || [];
                          const newList = currentList.includes(item.id)
                            ? currentList.filter(s => s !== item.id)
@@ -405,17 +405,17 @@ export default function MentalHealth() {
                     />
                     <Button onClick={() => {
                       if (!newCustomStruggle?.trim()) return;
-                      setFormData(prev => ({ ...prev, mental_health_struggles: [...(prev.mental_health_struggles || []), newCustomStruggle.trim()] }));
+                      setProfile(prev => ({ ...prev, mental_health_struggles: [...(prev.mental_health_struggles || []), newCustomStruggle.trim()] }));
                       setNewCustomStruggle('');
                     }}>
                       Add
                     </Button>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {formData.mental_health_struggles?.filter(item => !struggles.map(s => s.id).includes(item)).map(item => (
+                    {profile.mental_health_struggles?.filter(item => !struggles.map(s => s.id).includes(item)).map(item => (
                       <span key={item} className={`px-3 py-1 rounded-full text-sm flex items-center gap-1 ${isDark ? 'bg-purple-900/50 text-purple-300' : 'bg-purple-100 text-purple-800'}`}>
                         <Sparkles className="w-3 h-3" />{item}
-                        <button onClick={() => setFormData(prev => ({ ...prev, mental_health_struggles: prev.mental_health_struggles.filter(i => i !== item) }))} className={`ml-1 hover:opacity-70 ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>×</button>
+                        <button onClick={() => setProfile(prev => ({ ...prev, mental_health_struggles: prev.mental_health_struggles.filter(i => i !== item) }))} className={`ml-1 hover:opacity-70 ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>×</button>
                       </span>
                     ))}
                   </div>
@@ -433,7 +433,7 @@ export default function MentalHealth() {
                     />
                     <Button onClick={() => {
                       if (!newCustomGoal?.trim()) return;
-                      setFormData(prev => ({ ...prev, improvement_goals: [...(prev.improvement_goals || []), newCustomGoal.trim()] }));
+                      setProfile(prev => ({ ...prev, improvement_goals: [...(prev.improvement_goals || []), newCustomGoal.trim()] }));
                       setNewCustomGoal('');
                     }}>
                       Add
@@ -468,9 +468,9 @@ export default function MentalHealth() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div
-                onClick={() => setFormData({...formData, enable_ai_journaling: !formData.enable_ai_journaling})}
+                onClick={() => setProfile({...profile, enable_ai_journaling: !profile.enable_ai_journaling})}
                 className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                  formData.enable_ai_journaling
+                  profile.enable_ai_journaling
                     ? `border-purple-500 ${isDark ? 'bg-purple-900/30' : 'bg-purple-50'}`
                     : `${isDark ? 'border-gray-600 hover:border-purple-400' : 'border-gray-200 hover:border-purple-300'}`
                 }`}
@@ -485,14 +485,14 @@ export default function MentalHealth() {
                       </p>
                     </div>
                   </div>
-                  <Switch checked={formData.enable_ai_journaling} />
+                  <Switch checked={profile.enable_ai_journaling} />
                 </div>
               </div>
 
               <div
-                onClick={() => setFormData({...formData, show_daily_affirmations: !formData.show_daily_affirmations})}
+                onClick={() => setProfile({...profile, show_daily_affirmations: !profile.show_daily_affirmations})}
                 className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                  formData.show_daily_affirmations
+                  profile.show_daily_affirmations
                     ? `border-amber-500 ${isDark ? 'bg-amber-900/30' : 'bg-amber-50'}`
                     : `${isDark ? 'border-gray-600 hover:border-amber-400' : 'border-gray-200 hover:border-amber-300'}`
                 }`}
@@ -507,7 +507,7 @@ export default function MentalHealth() {
                       </p>
                     </div>
                   </div>
-                  <Switch checked={formData.show_daily_affirmations} />
+                  <Switch checked={profile.show_daily_affirmations} />
                 </div>
               </div>
 
