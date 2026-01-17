@@ -689,9 +689,10 @@ export default function CreatorGroups() {
   const disabledFeatures = activeGroup?.settings?.disabled_features || [];
 
   const isTabEnabled = (id) => {
-    const userRole = activeMembership?.role || 'member';
+    // If admin/owner but no membership record, force 'owner' role to pass checks
+    const userRole = activeMembership?.role || (isAdmin ? 'owner' : 'member');
     const userLevel = activeMembership?.level || 'Member';
-    const userStatus = activeMembership?.status;
+    const userStatus = activeMembership?.status || (isMember ? 'active' : undefined);
     
     // Check disabled features first (Global Admin Toggle) - If it's disabled here, it's disabled for everyone
     if (disabledFeatures.includes(id)) {
