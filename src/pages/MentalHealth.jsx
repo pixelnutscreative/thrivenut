@@ -63,7 +63,7 @@ const modules = [
 
 export default function MentalHealth() {
   const queryClient = useQueryClient();
-  const [user, setUser] = useState(null);
+  const { user, isDark, bgClass, textClass, cardBgClass, subtextClass } = useTheme(); // Assuming useTheme provides user and isDark
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [saveDebug, setSaveDebug] = useState('');
@@ -74,11 +74,9 @@ export default function MentalHealth() {
   const [newCustomGoal, setNewCustomGoal] = useState('');
 
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => {});
+    // base44.auth.me().then(setUser).catch(() => {}); // user comes from useTheme now
     setLoading(false);
   }, []);
-
-  const { preferences, effectiveEmail } = useTheme();
 
   const [profile, setProfile] = useState({
     accessibility_mode: 'standard',
@@ -93,21 +91,38 @@ export default function MentalHealth() {
     reduce_animations: false,
     use_checklists: false,
     is_bible_believer: false,
+    // Initialize all fields from the MentalHealthProfile schema
+    conditions: [],
+    diagnosed_by: '',
+    diagnosis_date: '',
+    treatment_plan: '',
+    emergency_contact_name: '',
+    emergency_contact_phone: '',
+    therapist_name: '',
+    therapist_phone: '',
+    require_medication_before_features: false,
+    restricted_features: [],
+    notes: '',
   });
 
   // Fetch MentalHealthProfile
   const { data: mentalHealthProfile } = useQuery({
     queryKey: ['mentalHealthProfile', user?.email],
     queryFn: async () => {
-      if (!user?.email) return null;
+      if (!user?.email) return {}; // Return empty object for new profiles
       const profiles = await base44.entities.MentalHealthProfile.filter({ user_email: user.email });
-      return profiles[0] || null;
+      return profiles[0] || {}; // Return empty object for new profiles
     },
     enabled: !!user?.email,
+    staleTime: 60000, // Cache for 1 minute
+    refetchOnWindowFocus: false, // Prevent refetching on tab focus
+    refetchOnReconnect: false,   // Prevent refetching on network reconnect
+    retry: 2,                    // Retry failed requests 2 times with exponential backoff
   });
 
   useEffect(() => {
-    if (mentalHealthProfile) {
+    // Only update if mentalHealthProfile exists and has changed
+    if (mentalHealthProfile && Object.keys(mentalHealthProfile).length > 0) {
       setProfile({
         accessibility_mode: mentalHealthProfile.accessibility_mode || 'standard',
         enable_self_care_gating: mentalHealthProfile.enable_self_care_gating || false,
@@ -115,16 +130,54 @@ export default function MentalHealth() {
         gated_modules: mentalHealthProfile.gated_modules || [],
         mental_health_struggles: mentalHealthProfile.mental_health_struggles || [],
         improvement_goals: mentalHealthProfile.improvement_goals || [],
-        enable_ai_journaling: mentalHealthProfile.enable_ai_journaling !== false,
+        enable_ai_journaling: mentalHealthProfile.enable_ai_journaling !== false, // Default to true if not specified
         show_daily_affirmations: mentalHealthProfile.show_daily_affirmations || false,
         use_simplified_interface: mentalHealthProfile.use_simplified_interface || false,
         reduce_animations: mentalHealthProfile.reduce_animations || false,
         use_checklists: mentalHealthProfile.use_checklists || false,
         is_bible_believer: mentalHealthProfile.is_bible_believer || false,
+        // Load all fields from fetched profile
+        conditions: mentalHealthProfile.conditions || [],
+        diagnosed_by: mentalHealthProfile.diagnosed_by || '',
+        diagnosis_date: mentalHealthProfile.diagnosis_date || '',
+        treatment_plan: mentalHealthProfile.treatment_plan || '',
+        emergency_contact_name: mentalHealthProfile.emergency_contact_name || '',
+        emergency_contact_phone: mentalHealthProfile.emergency_contact_phone || '',
+        therapist_name: mentalHealthProfile.therapist_name || '',
+        therapist_phone: mentalHealthProfile.therapist_phone || '',
+        require_medication_before_features: mentalHealthProfile.require_medication_before_features || false,
+        restricted_features: mentalHealthProfile.restricted_features || [],
+        notes: mentalHealthProfile.notes || '',
       });
+    } else {
+        // Reset to initial defaults if no profile is found or it's an empty object
+        setProfile({
+            accessibility_mode: 'standard',
+            enable_self_care_gating: false,
+            required_self_care_tasks: [],
+            gated_modules: [],
+            mental_health_struggles: [],
+            improvement_goals: [],
+            enable_ai_journaling: true,
+            show_daily_affirmations: false,
+            use_simplified_interface: false,
+            reduce_animations: false,
+            use_checklists: false,
+            is_bible_believer: false,
+            conditions: [],
+            diagnosed_by: '',
+            diagnosis_date: '',
+            treatment_plan: '',
+            emergency_contact_name: '',
+            emergency_contact_phone: '',
+            therapist_name: '',
+            therapist_phone: '',
+            require_medication_before_features: false,
+            restricted_features: [],
+            notes: '',
+        });
     }
   }, [mentalHealthProfile]);
-
 
 
   const toggleSelfCareTask = (taskId) => {
@@ -149,29 +202,20 @@ export default function MentalHealth() {
     setIsSaving(true);
     setSaveDebug('🎯 SAVE STARTED...');
     
+    // Ensure all profile fields are included
     const dataToSend = {
-      user_email: user?.email,
-      accessibility_mode: profile.accessibility_mode,
-      enable_self_care_gating: profile.enable_self_care_gating,
-      required_self_care_tasks: profile.required_self_care_tasks,
-      gated_modules: profile.gated_modules,
-      mental_health_struggles: profile.mental_health_struggles,
-      improvement_goals: profile.improvement_goals,
-      enable_ai_journaling: profile.enable_ai_journaling,
-      show_daily_affirmations: profile.show_daily_affirmations
+      user_email: user?.email, // Crucial for identifying the user's profile
+      ...profile // Include all fields from the profile state
     };
     
     setSaveDebug(`📤 Sending: ${JSON.stringify(dataToSend, null, 2)}`);
     
     try {
-      if (mentalHealthProfile?.id) {
-        setSaveDebug(`📝 UPDATING profile #${mentalHealthProfile.id}`);
-        await base44.entities.MentalHealthProfile.update(mentalHealthProfile.id, dataToSend);
-      } else {
-        setSaveDebug(`➕ CREATING new profile for ${user?.email}`);
-        await base44.entities.MentalHealthProfile.create(dataToSend);
-      }
+      // Use upsert to atomically create or update the record
+      setSaveDebug(`🔄 UPSERTING profile for ${user?.email}`);
+      await base44.entities.MentalHealthProfile.upsert({ user_email: user?.email }, dataToSend);
       
+      // Invalidate and refetch the query to update UI with latest data
       queryClient.invalidateQueries({ queryKey: ['mentalHealthProfile', user?.email] });
       setSaveDebug('✅ SAVE SUCCESSFUL');
       toast.success("Mental health profile saved!");
@@ -205,9 +249,7 @@ export default function MentalHealth() {
       setSubmittingCustomItem(false);
     }
   };
-
-  const { isDark, bgClass, textClass, cardBgClass, subtextClass } = useTheme();
-
+  
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
