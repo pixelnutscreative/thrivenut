@@ -115,6 +115,10 @@ export default function Layout({ children, currentPageName }) {
     enabled: !!effectiveEmail
   });
 
+  const pinnedGroups = useMemo(() => {
+    return myMenuGroups.filter(g => g.menu_pinned);
+  }, [myMenuGroups]);
+
   // Check for AI Platform Access (Nuts & Bots / Pixel's AI Toolbox)
   const { data: aiUser } = useQuery({
     queryKey: ['aiUser', effectiveEmail],
@@ -194,6 +198,23 @@ export default function Layout({ children, currentPageName }) {
   {
     id: 'core',
     items: [
+    // Pinned Groups
+    ...pinnedGroups.map(g => ({
+      name: g.name,
+      icon: Users,
+      isSection: true,
+      isPinnedGroup: true,
+      menuColor: g.menu_color || '#bd84f5',
+      path: `CreatorGroups?id=${g.id}`,
+      subItems: [
+        { name: 'Home', icon: Home, path: `CreatorGroups?id=${g.id}` },
+        { name: 'Feed', icon: MessageCircle, path: `CreatorGroups?id=${g.id}&tab=feed` },
+        { name: 'Events', icon: Calendar, path: `CreatorGroups?id=${g.id}&tab=events` },
+        { name: 'Resources', icon: BookOpen, path: `CreatorGroups?id=${g.id}&tab=resources` },
+        { name: 'Discussions', icon: MessageCircle, path: `CreatorGroups?id=${g.id}&tab=qna` },
+        { name: 'Members', icon: Users, path: `CreatorGroups?id=${g.id}&tab=members` },
+      ]
+    })),
     { name: getDashboardName(), icon: LayoutDashboard, path: 'Dashboard', alwaysShow: true },
     { name: preferences?.my_resources_label || 'My Stuff', icon: Bookmark, path: 'MyResources', moduleId: 'my_resources', alwaysShow: true },
     { 
@@ -203,7 +224,7 @@ export default function Layout({ children, currentPageName }) {
       moduleId: 'my_groups',
       subItems: [
          { name: 'Browse Groups', icon: Search, path: 'CreatorGroups?mode=browse' },
-         ...myMenuGroups.map(g => ({
+         ...myMenuGroups.filter(g => !g.menu_pinned).map(g => ({
            name: g.name,
            icon: Users,
            path: `CreatorGroups?id=${g.id}`
@@ -475,6 +496,33 @@ export default function Layout({ children, currentPageName }) {
               {menuGroups.map((group) => {
                 const isCollapsed = collapsedGroups.includes(group.id);
 
+                // Filter items based on permissions/modules to see if group should be visible
+                const visibleItems = group.items.filter(item => {
+                   // Feature Flag Check
+                   if (item.moduleId) {
+                     const isGloballyEnabled = getFeatureFlag(item.moduleId);
+                     if (!isGloballyEnabled && !isAdmin) return false;
+                   }
+
+                   // Admin Check
+                   if (item.adminOnly && !isAdmin) return false;
+
+                   // Kid Mode Check
+                   if (isKidMode) {
+                     if (!item.moduleId) return false;
+                     if (!enabledModules.includes(item.moduleId)) return false;
+                   }
+
+                   // Standard Module Check
+                   if (item.requiresBibleBeliever && !isBibleBeliever) return false;
+                   if (!isKidMode && item.moduleId && !enabledModules.includes(item.moduleId) && !item.alwaysShow) return false;
+
+                   return true;
+                });
+
+                // If no visible items in this group, hide the entire group
+                if (visibleItems.length === 0) return null;
+
                 return (
                   <div key={group.id} className="mb-2">
                     {group.title &&
@@ -523,13 +571,24 @@ export default function Layout({ children, currentPageName }) {
                           // Section (Dropdown)
                           if (item.isSection) {
                             const isLocked = item.requiresTikTokAccess && !hasTikTokAccess;
+                            // Pinned Group Styling
+                            const sectionStyle = item.isPinnedGroup ? {
+                              background: hasActiveSubItem ? `linear-gradient(to right, ${item.menuColor}, ${item.menuColor}DD)` : item.menuColor,
+                              color: '#ffffff',
+                              marginBottom: '8px',
+                              marginTop: '8px'
+                            } : {};
+
+                            const sectionClass = item.isPinnedGroup ? 
+                              `w-full flex items-center justify-between px-4 py-3 rounded-xl shadow-sm hover:opacity-90 transition-all text-white font-bold` :
+                              `w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${hasActiveSubItem ? menuActiveClass : `${menuTextClass} ${menuHoverClass}`}`;
+
                             return (
                               <div key={item.name}>
                                   <button
                                   onClick={() => isLocked ? setShowAccessGate(true) : toggleSection(item.name)}
-                                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
-                                  hasActiveSubItem ? menuActiveClass : `${menuTextClass} ${menuHoverClass}`}`
-                                  }>
+                                  className={sectionClass}
+                                  style={sectionStyle}>
 
                                     <div className="flex items-center gap-3">
                                       <Icon className="w-5 h-5" />
@@ -713,6 +772,33 @@ export default function Layout({ children, currentPageName }) {
             {menuGroups.map((group) => {
                 const isCollapsed = collapsedGroups.includes(group.id);
 
+                // Filter items based on permissions/modules to see if group should be visible
+                const visibleItems = group.items.filter(item => {
+                   // Feature Flag Check
+                   if (item.moduleId) {
+                     const isGloballyEnabled = getFeatureFlag(item.moduleId);
+                     if (!isGloballyEnabled && !isAdmin) return false;
+                   }
+
+                   // Admin Check
+                   if (item.adminOnly && !isAdmin) return false;
+
+                   // Kid Mode Check
+                   if (isKidMode) {
+                     if (!item.moduleId) return false;
+                     if (!enabledModules.includes(item.moduleId)) return false;
+                   }
+
+                   // Standard Module Check
+                   if (item.requiresBibleBeliever && !isBibleBeliever) return false;
+                   if (!isKidMode && item.moduleId && !enabledModules.includes(item.moduleId) && !item.alwaysShow) return false;
+
+                   return true;
+                });
+
+                // If no visible items in this group, hide the entire group
+                if (visibleItems.length === 0) return null;
+
                 return (
                   <div key={group.id} className="mb-2">
                   {group.title &&
@@ -761,13 +847,25 @@ export default function Layout({ children, currentPageName }) {
                           // Section (Dropdown)
                           if (item.isSection) {
                             const isLocked = item.requiresTikTokAccess && !hasTikTokAccess;
+
+                            // Pinned Group Styling
+                            const sectionStyle = item.isPinnedGroup ? {
+                              background: hasActiveSubItem ? `linear-gradient(to right, ${item.menuColor}, ${item.menuColor}DD)` : item.menuColor,
+                              color: '#ffffff',
+                              marginBottom: '8px',
+                              marginTop: '8px'
+                            } : {};
+
+                            const sectionClass = item.isPinnedGroup ? 
+                              `w-full flex items-center justify-between px-4 py-2 rounded-xl shadow-sm hover:opacity-90 transition-all text-white font-bold` :
+                              `w-full flex items-center justify-between px-4 py-2 rounded-xl transition-all ${hasActiveSubItem ? menuActiveClass : `${menuTextClass} ${menuHoverClass}`}`;
+
                             return (
                               <div key={item.name}>
                                 <button
                                   onClick={() => isLocked ? setShowAccessGate(true) : toggleSection(item.name)}
-                                  className={`w-full flex items-center justify-between px-4 py-2 rounded-xl transition-all ${
-                                  hasActiveSubItem ? menuActiveClass : `${menuTextClass} ${menuHoverClass}`}`
-                                  }>
+                                  className={sectionClass}
+                                  style={sectionStyle}>
 
                                   <div className="flex items-center gap-3">
                                     <Icon className="w-5 h-5" />
