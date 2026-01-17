@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -99,7 +100,7 @@ export default function MentalHealth() {
     queryKey: ['mentalHealthProfile', user?.email],
     queryFn: async () => {
       if (!user?.email) return null;
-      const profiles = await base44.entities.MentalHealthProfile.filter({ created_by: user.email });
+      const profiles = await base44.entities.MentalHealthProfile.filter({ user_email: user.email });
       return profiles[0] || null;
     },
     enabled: !!user?.email,
@@ -152,7 +153,7 @@ export default function MentalHealth() {
       } else {
         await base44.entities.MentalHealthProfile.create({
           ...profile,
-          user_email: user?.email
+          user_email: user.email
         });
       }
       queryClient.invalidateQueries({ queryKey: ['mentalHealthProfile', user?.email] });
@@ -209,25 +210,21 @@ export default function MentalHealth() {
             <p className={`${subtextClass} mt-1`}>Personalize your support, track your journey, and customize your experience</p>
           </div>
           <Button 
-            onClick={async () => {
-              setIsSaving(true);
-              try {
-                if (mentalHealthProfile?.id) {
-                  await base44.entities.MentalHealthProfile.update(mentalHealthProfile.id, profile);
-                } else {
-                  await base44.entities.MentalHealthProfile.create({...profile, user_email: user?.email});
-                }
-                toast.success("Saved!");
-              } catch (e) {
-                toast.error("Save failed");
-              } finally {
-                setIsSaving(false);
-              }
-            }}
+            onClick={handleSave}
             disabled={isSaving}
             className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
           >
-            {isSaving ? 'Saving...' : 'Save Changes'}
+            {isSaving ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4 mr-2" />
+                Save Changes
+              </>
+            )}
           </Button>
         </div>
 
