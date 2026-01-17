@@ -246,6 +246,14 @@ export default function MentalHealth() {
           </Button>
         </div>
 
+        {/* Debug Panel */}
+        {saveDebug && (
+          <div className={`p-4 rounded-lg border font-mono text-xs whitespace-pre-wrap ${isDark ? 'bg-gray-900 border-gray-700 text-gray-300' : 'bg-gray-100 border-gray-300 text-gray-900'}`}>
+            <strong>Debug Info:</strong>
+            {'\n'}{saveDebug}
+          </div>
+        )}
+
         {/* Crisis Resources - Always at the top */}
         <CrisisResourcesCard />
 
