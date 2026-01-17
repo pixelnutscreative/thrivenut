@@ -19,6 +19,9 @@ const ticketTypes = [
 const ADMIN_EMAIL = 'pixelnutscreative@gmail.com';
 
 export default function FloatingHelpButton({ pageName = 'Unknown', userEmail }) {
+  // Ensure pageName is always a string to prevent "pageName.toLowerCase is not a function" errors
+  const safePageName = String(pageName || 'Unknown');
+  
   const [open, setOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [formData, setFormData] = useState({
@@ -48,7 +51,7 @@ export default function FloatingHelpButton({ pageName = 'Unknown', userEmail }) 
       if (isAdmin) {
         return base44.entities.FeedbackItem.create({
           title: data.subject,
-          description: `[From: ${pageName} page]\n\n${data.description}`,
+          description: `[From: ${safePageName} page]\n\n${data.description}`,
           category: data.type === 'bug' ? 'bug' : data.type === 'feature_request' ? 'feature' : 'other',
           priority: data.priority,
           status: 'pending',
@@ -61,15 +64,15 @@ export default function FloatingHelpButton({ pageName = 'Unknown', userEmail }) 
         sender: 'admin',
         sender_type: 'admin',
         message: isBetaTester 
-          ? `Thanks for the beta feedback! 🧪 We got your ${data.type.replace('_', ' ')} from the ${pageName} page.\n\nYour input helps make Thrive Nut better for everyone! 💜`
-          : `Thanks for reaching out! 🎉 We got your message from the ${pageName} page.\n\nIf anything about your request isn't clear, could you tell us:\n• What were you trying to do?\n• What happened instead?\n• Any other details that might help?\n\nWe'll get back to you soon! 💜`,
+          ? `Thanks for the beta feedback! 🧪 We got your ${data.type.replace('_', ' ')} from the ${safePageName} page.\n\nYour input helps make Thrive Nut better for everyone! 💜`
+          : `Thanks for reaching out! 🎉 We got your message from the ${safePageName} page.\n\nIf anything about your request isn't clear, could you tell us:\n• What were you trying to do?\n• What happened instead?\n• Any other details that might help?\n\nWe'll get back to you soon! 💜`,
         timestamp: new Date().toISOString(),
       };
 
       return base44.entities.SupportTicket.create({
         ...data,
         user_email: userEmail,
-        description: `[From: ${pageName} page]${isBetaTester ? ' [BETA TESTER]' : ''}\n\n${data.description}`,
+        description: `[From: ${safePageName} page]${isBetaTester ? ' [BETA TESTER]' : ''}\n\n${data.description}`,
         messages: [autoResponse],
       });
     },
@@ -113,22 +116,22 @@ export default function FloatingHelpButton({ pageName = 'Unknown', userEmail }) 
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              {isAdmin ? (
-                <>
-                  <Code className="w-5 h-5 text-indigo-500" />
-                  Dev Note: {pageName}
-                </>
-              ) : isBetaTester ? (
-                <>
-                  <FlaskConical className="w-5 h-5 text-amber-500" />
-                  Beta Feedback: {pageName}
-                </>
-              ) : (
-                <>
-                  <HelpCircle className="w-5 h-5 text-purple-500" />
-                  Need Help on {pageName}?
-                </>
-              )}
+            {isAdmin ? (
+              <>
+                <Code className="w-5 h-5 text-indigo-500" />
+                Dev Note: {safePageName}
+              </>
+            ) : isBetaTester ? (
+              <>
+                <FlaskConical className="w-5 h-5 text-amber-500" />
+                Beta Feedback: {safePageName}
+              </>
+            ) : (
+              <>
+                <HelpCircle className="w-5 h-5 text-purple-500" />
+                Need Help on {safePageName}?
+              </>
+            )}
             </DialogTitle>
           </DialogHeader>
 
@@ -229,7 +232,7 @@ export default function FloatingHelpButton({ pageName = 'Unknown', userEmail }) 
               </div>
 
               <p className="text-xs text-gray-500">
-                📍 Page: <strong>{pageName}</strong>
+                📍 Page: <strong>{safePageName}</strong>
                 {isAdmin && ' • Dev notes go to FeedbackItem'}
                 {isBetaTester && ' • Thanks for testing! 💜'}
               </p>
