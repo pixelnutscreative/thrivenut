@@ -13,7 +13,6 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, Save, Brain, Heart, Sparkles, Eye, Shield, Zap, X } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { toast } from 'sonner';
 import CrisisResourcesCard from '../components/mental-health/CrisisResourcesCard';
 import { useTheme } from '../components/shared/useTheme';
 
