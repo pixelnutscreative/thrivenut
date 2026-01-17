@@ -19,65 +19,68 @@ export default function NotificationBell({ userEmail, isDark = false }) {
   const { data: notifications = [] } = useQuery({
     queryKey: ['notifications', userEmail],
     queryFn: async () => {
-      const notifs = await base44.entities.Notification.filter({ is_active: true }, '-created_date', 100);
-      
       if (!userEmail) return [];
+      
+      const notifs = await base44.entities.Notification.filter({ is_active: true }, '-created_date', 100);
       
       // Parallel fetch: Preferences and Group Memberships
       const [prefsRes, memberships] = await Promise.all([
         base44.entities.UserPreferences.filter({ user_email: userEmail }),
-        base44.entities.CreatorGroupMember.filter({ user_email: userEmail, status: 'active' }) // Only active memberships
+        base44.entities.CreatorGroupMember.filter({ user_email: userEmail, status: 'active' })
       ]);
 
       const hasTikTokAccess = (prefsRes && prefsRes[0]) ? prefsRes[0].tiktok_access_approved : false;
-      
-      // Create a set of group IDs the user is a member of
       const myGroupIds = new Set(memberships.map(m => m.group_id));
       
       if (!notifs) return [];
 
       return notifs.filter(n => {
-        // 1. Group Membership Check (if notification is linked to a group)
-        // Check if link contains /CreatorGroups?id=...
+        // Group Membership Check
         if (n.link && n.link.includes('/CreatorGroups?id=')) {
            try {
-             const url = new URL(n.link, 'http://dummy.com'); // dummy base for relative URLs
+             const url = new URL(n.link, 'http://dummy.com');
              const groupId = url.searchParams.get('id');
              if (groupId && !myGroupIds.has(groupId)) {
-               return false; // User is not in this group anymore
+               return false;
              }
-           } catch (e) {
-             // Ignore parsing errors
-           }
+           } catch (e) {}
         }
 
-        // 2. Targeted notification
+        // Targeted notification
         if (n.user_email) {
           return n.user_email === userEmail;
         }
         
-        // 2. Targeted notification to a specific group
+        // Targeted to group
         if (n.group_id && !myGroupIds.has(n.group_id)) {
-          return false; // User is not in this targeted group
+          return false;
         }
 
-        // 3. Broadcast notification
+        // Broadcast
         if (n.target_audience === 'all') return true;
         if (n.target_audience === 'tiktok_users' && hasTikTokAccess) return true;
         return false;
       });
     },
     enabled: !!userEmail,
-    refetchInterval: 30000, // Refetch every 30 seconds
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 2,
   });
 
   // Fetch which notifications the user has read
   const { data: readNotifications = [] } = useQuery({
     queryKey: ['notificationReads', userEmail],
     queryFn: async () => {
+      if (!userEmail) return [];
       return await base44.entities.NotificationRead.filter({ user_email: userEmail }, '-created_date', 1000);
     },
     enabled: !!userEmail,
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 2,
   });
 
   const unreadNotifications = notifications.filter(
