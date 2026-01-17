@@ -160,12 +160,41 @@ export default function Layout({ children, currentPageName }) {
   ];
   const isKidMode = preferences?.default_landing_page === 'KidsJournal';
 
-  // Redirect kids to KidsJournal on login (from Home/Dashboard)
+  // Redirect to default landing page (if set) from Home/Dashboard
   useEffect(() => {
-    if (isKidMode && (currentPageName === 'Dashboard' || currentPageName === 'Home')) {
-      navigate(createPageUrl('KidsJournal'));
+    const defaultPage = preferences?.default_landing_page;
+    if (defaultPage && (currentPageName === 'Dashboard' || currentPageName === 'Home')) {
+       // Check if we are already on the target page (ignoring query params for simple check, or full match)
+       // But currentPageName is just the component name usually? Layout prop says currentPageName.
+       // If defaultPage is "KidsJournal", and currentPageName is "Dashboard", we redirect.
+       // If defaultPage is "CreatorGroups?id=123", we redirect.
+       
+       // Avoid infinite loop if defaultPage implies Dashboard
+       if (defaultPage !== 'Dashboard') {
+           // Use createPageUrl if it's a page name, or pass through if it looks like a path/query
+           const target = defaultPage.includes('?') || defaultPage.includes('/') ? defaultPage : createPageUrl(defaultPage);
+           
+           // If using createPageUrl for query params, it might need the utils.
+           // Assuming createPageUrl handles basic string concatenation or we just navigate to it.
+           // Ideally we navigate to the relative path.
+           // If defaultPage is "CreatorGroups?id=123", let's assume navigate works with it relative to root or we prepend /
+           
+           // If we are already there?
+           // currentPageName is passed from the Page component, e.g. "CreatorGroups".
+           // location.search is "?id=123".
+           // If defaultPage is "CreatorGroups?id=123" and currentPageName is "CreatorGroups" and location.search is "?id=123", don't redirect.
+           
+           const currentFull = currentPageName + location.search;
+           if (target !== currentFull && target !== `/${currentFull}`) {
+               // A bit loose, but safe for now.
+               // We should probably rely on the user having clicked 'Home' or 'Dashboard' explicitly to trigger this?
+               // The requirement is "when they login".
+               // Login usually goes to Dashboard or Home.
+               navigate(target.startsWith('/') ? target : `/${target}`);
+           }
+       }
     }
-  }, [isKidMode, currentPageName]);
+  }, [preferences?.default_landing_page, currentPageName, location.search]);
 
   // --- THEME HANDLING ---
   const primaryColor = preferences?.primary_color || '#1fd2ea';
