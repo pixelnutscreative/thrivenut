@@ -624,20 +624,22 @@ export default function CreatorGroups() {
     }
   };
 
+  const displayNames = activeGroup?.settings?.display_names || {};
+
   const allTabs = [
-    { id: 'feed', label: 'Feed', icon: Bell, color: 'purple' },
-    { id: 'discussion', label: 'Discussion', icon: MessageSquare, color: 'teal' },
-    { id: 'events', label: 'Events', icon: Calendar, color: 'pink' },
-    { id: 'meetings', label: 'Meetings', icon: Video, color: 'rose' },
-    { id: 'projects', label: 'Projects', icon: Briefcase, color: 'indigo' },
-    { id: 'marketing', label: 'Marketing', icon: Printer, color: 'indigo' },
-    { id: 'assets', label: 'Brand & Assets', icon: Sparkles, color: 'pink' },
-    { id: 'resources', label: 'Resources', icon: FileText, color: 'amber' },
-    { id: 'training', label: 'Training', icon: Video, color: 'blue' },
-    { id: 'qna', label: 'Q&A', icon: MessageSquare, color: 'teal' },
-    { id: 'members', label: 'Members', icon: Users, color: 'orange' },
-    { id: 'requests', label: 'Requests', icon: AlertCircle, color: 'gray' },
-    { id: 'sales', label: 'Sales Pipeline', icon: Target, color: 'green' },
+    { id: 'feed', label: displayNames.feed || 'Feed', icon: Bell, color: 'purple' },
+    { id: 'discussion', label: displayNames.discussion || 'Discussion', icon: MessageSquare, color: 'teal' },
+    { id: 'events', label: displayNames.events || 'Events', icon: Calendar, color: 'pink' },
+    { id: 'meetings', label: displayNames.meetings || 'Meetings', icon: Video, color: 'rose' },
+    { id: 'projects', label: displayNames.projects || 'Projects', icon: Briefcase, color: 'indigo' },
+    { id: 'marketing', label: displayNames.marketing || 'Marketing', icon: Printer, color: 'indigo' },
+    { id: 'assets', label: displayNames.assets || 'Brand & Assets', icon: Sparkles, color: 'pink' },
+    { id: 'resources', label: displayNames.resources || 'Resources', icon: FileText, color: 'amber' },
+    { id: 'training', label: displayNames.training || 'Training', icon: Video, color: 'blue' },
+    { id: 'qna', label: displayNames.qna || 'Q&A', icon: MessageSquare, color: 'teal' },
+    { id: 'members', label: displayNames.members || 'Members', icon: Users, color: 'orange' },
+    { id: 'requests', label: displayNames.requests || 'Requests', icon: AlertCircle, color: 'gray' },
+    { id: 'sales', label: displayNames.sales || 'Sales Pipeline', icon: Target, color: 'green' },
   ];
 
   // Determine if this group is a "Client Group" (agency or client-portal)
