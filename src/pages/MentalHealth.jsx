@@ -390,12 +390,22 @@ export default function MentalHealth() {
                 
                 <div className="flex flex-wrap gap-2 mb-3">
                   {formData.mental_health_struggles.filter(item => !struggles.map(s => s.id).includes(item)).map(item => (
-                    <Badge key={item} className="bg-purple-100 text-purple-800 text-sm px-3 py-1 rounded-full cursor-pointer hover:bg-purple-200" onClick={() => toggleStruggle(item)}>
+                    <Badge key={item} className="bg-purple-100 text-purple-800 text-sm px-3 py-1 rounded-full cursor-pointer hover:bg-purple-200" onClick={() => {
+                      setFormData(prev => ({
+                        ...prev,
+                        mental_health_struggles: prev.mental_health_struggles.filter(s => s !== item)
+                      }));
+                    }}>
                       {item} <span className="ml-1">×</span>
                     </Badge>
                   ))}
                   {formData.improvement_goals.filter(item => !improvementGoals.map(s => s.id).includes(item)).map(item => (
-                    <Badge key={item} className="bg-pink-100 text-pink-800 text-sm px-3 py-1 rounded-full cursor-pointer hover:bg-pink-200" onClick={() => toggleImprovement(item)}>
+                    <Badge key={item} className="bg-pink-100 text-pink-800 text-sm px-3 py-1 rounded-full cursor-pointer hover:bg-pink-200" onClick={() => {
+                      setFormData(prev => ({
+                        ...prev,
+                        improvement_goals: prev.improvement_goals.filter(s => s !== item)
+                      }));
+                    }}>
                       {item} <span className="ml-1">×</span>
                     </Badge>
                   ))}
