@@ -66,6 +66,7 @@ export default function MentalHealth() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [saveDebug, setSaveDebug] = useState('');
   const [customItemInput, setCustomItemInput] = useState('');
   const [customItemCategory, setCustomItemCategory] = useState('conditions');
   const [submittingCustomItem, setSubmittingCustomItem] = useState(false);
