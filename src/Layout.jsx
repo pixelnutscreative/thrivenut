@@ -84,59 +84,73 @@ export default function Layout({ children, currentPageName }) {
   const currentlyImpersonating = isImpersonating();
 
   // Preferences Query
-  const { data: preferences } = useQuery({
-    queryKey: ['preferences', effectiveEmail],
-    queryFn: async () => {
-      if (!effectiveEmail) return null;
-      const prefs = await base44.entities.UserPreferences.filter({ user_email: effectiveEmail }, '-updated_date');
-      return prefs[0] || null;
-    },
-    enabled: !!effectiveEmail,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-  });
+const { data: preferences } = useQuery({
+  queryKey: ['preferences', effectiveEmail],
+  queryFn: async () => {
+    if (!effectiveEmail) return {}; // Changed from null to {}
+    const prefs = await base44.entities.UserPreferences.filter({ user_email: effectiveEmail }, '-updated_date');
+    return prefs[0] || {}; // Changed from null to {}
+  },
+  enabled: !!effectiveEmail,
+  staleTime: 60000, // Cache for 1 minute
+  refetchOnWindowFocus: false, // Prevent refetching on tab focus
+  refetchOnReconnect: false,   // Prevent refetching on network reconnect
+  retry: 2,                    // Retry failed requests 2 times
+});
 
   // Admin Check
   const realUserEmail = user?.email ? user.email.toLowerCase() : '';
   const adminEmails = ['pixelnutscreative@gmail.com', 'pixel@thrivenut.app'];
   const isAdmin = realUserEmail && adminEmails.includes(realUserEmail);
 
-  // Fetch My Groups for Menu
-  const { data: myMenuGroups = [] } = useQuery({
-    queryKey: ['myMenuGroups', effectiveEmail],
-    queryFn: async () => {
-      if (!effectiveEmail) return [];
-      const memberships = await base44.entities.CreatorGroupMember.filter({ user_email: effectiveEmail, status: 'active' });
-      if (memberships.length === 0) return [];
-      
-      const details = await Promise.all(memberships.map(m => base44.entities.CreatorGroup.filter({ id: m.group_id })));
-      const activeGroups = details.flat().filter(g => g && g.status === 'active');
-      // Deduplicate groups by ID to prevent menu duplicates
-      return Array.from(new Map(activeGroups.map(g => [g.id, g])).values());
-      },
-    enabled: !!effectiveEmail
-  });
+  /// Fetch My Groups for Menu
+const { data: myMenuGroups = [] } = useQuery({
+  queryKey: ['myMenuGroups', effectiveEmail],
+  queryFn: async () => {
+    if (!effectiveEmail) return [];
+    const memberships = await base44.entities.CreatorGroupMember.filter({ user_email: effectiveEmail, status: 'active' });
+    if (memberships.length === 0) return [];
+    
+    const details = await Promise.all(memberships.map(m => base44.entities.CreatorGroup.filter({ id: m.group_id })));
+    const activeGroups = details.flat().filter(g => g && g.status === 'active');
+    // Deduplicate groups by ID to prevent menu duplicates
+    return Array.from(new Map(activeGroups.map(g => [g.id, g])).values());
+    },
+  enabled: !!effectiveEmail,
+  staleTime: 60000, // Cache for 1 minute
+  refetchOnWindowFocus: false,
+  refetchOnReconnect: false,
+  retry: 2,
+});
 
   const pinnedGroups = useMemo(() => {
     return myMenuGroups.filter(g => g.menu_pinned);
   }, [myMenuGroups]);
 
   // Check for AI Platform Access (Nuts & Bots / Pixel's AI Toolbox)
-  const { data: aiUser } = useQuery({
-    queryKey: ['aiUser', effectiveEmail],
-    queryFn: async () => {
-      if (!effectiveEmail) return null;
-      const users = await base44.entities.AIPlatformUser.filter({ user_email: effectiveEmail });
-      return users[0] || null;
-    },
-    enabled: !!effectiveEmail
-  });
+const { data: aiUser } = useQuery({
+  queryKey: ['aiUser', effectiveEmail],
+  queryFn: async () => {
+    if (!effectiveEmail) return null; // Returns null when no user as requested
+    const users = await base44.entities.AIPlatformUser.filter({ user_email: effectiveEmail });
+    return users[0] || null;
+  },
+  enabled: !!effectiveEmail,
+  staleTime: 60000, // Cache for 1 minute
+  refetchOnWindowFocus: false,
+  refetchOnReconnect: false,
+  retry: 2,
+});
 
   // Fetch Global Feature Flags
-  const { data: featureFlags = [] } = useQuery({
-    queryKey: ['featureFlags'],
-    queryFn: () => base44.entities.FeatureFlag.list(),
-    staleTime: 60000 // Cache for 1 min
-  });
+const { data: featureFlags = [] } = useQuery({
+  queryKey: ['featureFlags'],
+  queryFn: () => base44.entities.FeatureFlag.list(),
+  staleTime: 60000, // Cache for 1 minute
+  refetchOnWindowFocus: false,
+  refetchOnReconnect: false,
+  retry: 2,
+});
 
   const getFeatureFlag = (featureId) => {
     const flag = featureFlags.find(f => f.feature_id === featureId);
