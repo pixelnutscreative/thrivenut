@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Save, Brain, Heart, Sparkles, Eye, Shield, Zap, X } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { toast } from 'sonner';
 import CrisisResourcesCard from '../components/mental-health/CrisisResourcesCard';
 import { useTheme } from '../components/shared/useTheme';
 
@@ -64,6 +65,8 @@ export default function MentalHealth() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [customItemInput, setCustomItemInput] = useState('');
+  const [customItemCategory, setCustomItemCategory] = useState('conditions');
+  const [submittingCustomItem, setSubmittingCustomItem] = useState(false);
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -377,32 +380,36 @@ export default function MentalHealth() {
                   <div className="flex-1">
                     <Label htmlFor="custom-item" className="sr-only">Add custom item</Label>
                     <div className="flex gap-2">
+                      <Select value={customItemCategory} onValueChange={setCustomItemCategory}>
+                        <SelectTrigger className="w-40">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="conditions">Working Through</SelectItem>
+                          <SelectItem value="goals">Want to Improve</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <Input
                         id="custom-item"
                         placeholder="Add custom item (e.g. 'Burnout')"
                         value={customItemInput}
                         onChange={(e) => setCustomItemInput(e.target.value)}
                         onKeyDown={(e) => {
-                          if (e.key === 'Enter' && customItemInput.trim()) {
+                          if (e.key === 'Enter' && customItemInput.trim() && !submittingCustomItem) {
                             e.preventDefault();
-                            toggleStruggle(customItemInput.trim());
-                            setCustomItemInput('');
+                            handleSubmitCustomItem();
                           }
                         }}
                       />
                       <Button 
-                        onClick={() => {
-                          if (customItemInput.trim()) {
-                            toggleStruggle(customItemInput.trim());
-                            setCustomItemInput('');
-                          }
-                        }}
+                        onClick={handleSubmitCustomItem}
+                        disabled={submittingCustomItem || !customItemInput.trim()}
                         variant="outline"
                       >
-                        Add
+                        {submittingCustomItem ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Submit'}
                       </Button>
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">Added to "Things I'm working through" by default</p>
+                    <p className="text-xs text-gray-500 mt-1">Submit for admin review (appears in your list when approved)</p>
                   </div>
                 </div>
               </div>
