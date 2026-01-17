@@ -18,7 +18,7 @@ const ticketTypes = [
 
 const ADMIN_EMAIL = 'pixelnutscreative@gmail.com';
 
-export default function FloatingHelpButton({ pageName, userEmail }) {
+export default function FloatingHelpButton({ pageName = 'Unknown', userEmail }) {
   const [open, setOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [formData, setFormData] = useState({

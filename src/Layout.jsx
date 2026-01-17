@@ -33,7 +33,7 @@ const iconMap = {
   Tablet, HelpCircle, MessageCircle, Briefcase, Palette, DollarSign, Activity, Megaphone
 };
 
-export default function Layout({ children, currentPageName }) {
+export default function Layout({ children, currentPageName = '' }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
