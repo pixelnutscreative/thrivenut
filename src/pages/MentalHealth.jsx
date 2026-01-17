@@ -68,6 +68,8 @@ export default function MentalHealth() {
   const [customItemInput, setCustomItemInput] = useState('');
   const [customItemCategory, setCustomItemCategory] = useState('conditions');
   const [submittingCustomItem, setSubmittingCustomItem] = useState(false);
+  const [newCustomStruggle, setNewCustomStruggle] = useState('');
+  const [newCustomGoal, setNewCustomGoal] = useState('');
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -381,69 +383,64 @@ export default function MentalHealth() {
                </div>
               </div>
 
-              {/* Custom Working On Bubbles */}
-              <div className="pt-4 border-t">
-                <Label className={`font-medium mb-2 block ${textClass}`}>Custom Items I'm Working On</Label>
-                <p className={`text-sm ${subtextClass} mb-3`}>
-                  Add your own custom items. Once submitted, admin can add them to the global list for others.
-                </p>
-                
-                <div className="flex flex-wrap gap-2 mb-3">
-                  {formData.mental_health_struggles.filter(item => !struggles.map(s => s.id).includes(item)).map(item => (
-                    <Badge key={item} className="bg-purple-100 text-purple-800 text-sm px-3 py-1 rounded-full cursor-pointer hover:bg-purple-200" onClick={() => {
-                      setFormData(prev => ({
-                        ...prev,
-                        mental_health_struggles: prev.mental_health_struggles.filter(s => s !== item)
-                      }));
+              {/* Custom Items Section */}
+              <div className="mt-8 border-t pt-6">
+                <h2 className={`text-xl font-semibold mb-4 ${textClass}`}>Custom Items</h2>
+                <p className={`text-sm ${subtextClass} mb-4`}>Add your own items. These will appear with your selections.</p>
+
+                {/* Things I'm working through */}
+                <div className="mb-6">
+                  <h3 className={`font-medium ${textClass} mb-2`}>Things I'm working through...</h3>
+                  <div className="flex gap-2 mb-3">
+                    <Input 
+                      placeholder="e.g., 'Burnout'" 
+                      value={newCustomStruggle} 
+                      onChange={(e) => setNewCustomStruggle(e.target.value)} 
+                      className="flex-1" 
+                    />
+                    <Button onClick={() => {
+                      if (!newCustomStruggle?.trim()) return;
+                      setFormData(prev => ({ ...prev, mental_health_struggles: [...(prev.mental_health_struggles || []), newCustomStruggle.trim()] }));
+                      setNewCustomStruggle('');
                     }}>
-                      {item} <span className="ml-1">×</span>
-                    </Badge>
-                  ))}
-                  {formData.improvement_goals.filter(item => !improvementGoals.map(s => s.id).includes(item)).map(item => (
-                    <Badge key={item} className="bg-pink-100 text-pink-800 text-sm px-3 py-1 rounded-full cursor-pointer hover:bg-pink-200" onClick={() => {
-                      setFormData(prev => ({
-                        ...prev,
-                        improvement_goals: prev.improvement_goals.filter(s => s !== item)
-                      }));
-                    }}>
-                      {item} <span className="ml-1">×</span>
-                    </Badge>
-                  ))}
+                      Add
+                    </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {formData.mental_health_struggles?.filter(item => !struggles.map(s => s.id).includes(item)).map(item => (
+                      <span key={item} className={`px-3 py-1 rounded-full text-sm flex items-center gap-1 ${isDark ? 'bg-purple-900/50 text-purple-300' : 'bg-purple-100 text-purple-800'}`}>
+                        <Sparkles className="w-3 h-3" />{item}
+                        <button onClick={() => setFormData(prev => ({ ...prev, mental_health_struggles: prev.mental_health_struggles.filter(i => i !== item) }))} className={`ml-1 hover:opacity-70 ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>×</button>
+                      </span>
+                    ))}
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <div className="flex-1">
-                    <Label htmlFor="custom-item" className="sr-only">Add custom item</Label>
-                    <div className="flex gap-2">
-                      <Select value={customItemCategory} onValueChange={setCustomItemCategory}>
-                        <SelectTrigger className="w-40">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="conditions">Working Through</SelectItem>
-                          <SelectItem value="goals">Want to Improve</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Input
-                        id="custom-item"
-                        placeholder="Add custom item (e.g. 'Burnout')"
-                        value={customItemInput}
-                        onChange={(e) => setCustomItemInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && customItemInput.trim() && !submittingCustomItem) {
-                            e.preventDefault();
-                            handleSubmitCustomItem();
-                          }
-                        }}
-                      />
-                      <Button 
-                        onClick={handleSubmitCustomItem}
-                        disabled={submittingCustomItem || !customItemInput.trim()}
-                        variant="outline"
-                      >
-                        {submittingCustomItem ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Submit'}
-                      </Button>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">Submit for admin review (appears in your list when approved)</p>
+
+                {/* Things I want to improve */}
+                <div>
+                  <h3 className={`font-medium ${textClass} mb-2`}>Things I want to improve...</h3>
+                  <div className="flex gap-2 mb-3">
+                    <Input 
+                      placeholder="e.g., 'Time Freedom'" 
+                      value={newCustomGoal} 
+                      onChange={(e) => setNewCustomGoal(e.target.value)} 
+                      className="flex-1" 
+                    />
+                    <Button onClick={() => {
+                      if (!newCustomGoal?.trim()) return;
+                      setFormData(prev => ({ ...prev, improvement_goals: [...(prev.improvement_goals || []), newCustomGoal.trim()] }));
+                      setNewCustomGoal('');
+                    }}>
+                      Add
+                    </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {formData.improvement_goals?.filter(item => !improvementGoals.map(s => s.id).includes(item)).map(item => (
+                      <span key={item} className={`px-3 py-1 rounded-full text-sm flex items-center gap-1 ${isDark ? 'bg-teal-900/50 text-teal-300' : 'bg-teal-100 text-teal-800'}`}>
+                        <Sparkles className="w-3 h-3" />{item}
+                        <button onClick={() => setFormData(prev => ({ ...prev, improvement_goals: prev.improvement_goals.filter(i => i !== item) }))} className={`ml-1 hover:opacity-70 ${isDark ? 'text-teal-400' : 'text-teal-600'}`}>×</button>
+                      </span>
+                    ))}
                   </div>
                 </div>
               </div>
