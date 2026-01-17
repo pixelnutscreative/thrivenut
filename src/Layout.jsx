@@ -12,7 +12,7 @@ import {
   Palette, Eye, Bookmark, HandMetal, PawPrint, Search, MousePointerClick,
   Calendar, Sun, Cross, Smile, FileText, StickyNote, Tablet, HelpCircle,
   MessageCircle, Briefcase, DollarSign, Activity, Wallet, Swords, Lightbulb, Zap,
-  Image as ImageIcon 
+  Image as ImageIcon, GraduationCap, Printer, AlertCircle, MessageSquare
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import TikTokAccessGate from './components/access/TikTokAccessGate';
@@ -226,22 +226,72 @@ export default function Layout({ children, currentPageName }) {
   // --- MENU GROUPS (Collapsible) ---
   const menuGroups = [
   // Pinned Groups (Top Level)
-  ...pinnedGroups.map(g => ({
-    id: g.id,
-    title: g.name, // Use title so it renders as a category header
-    icon: Users, // Icon to be displayed in the header
-    color: 'text-white',
-    bgColor: g.menu_color || 'bg-purple-600', // Ensure it has a background color
-    isPinnedGroup: true, // Marker for specific styling if needed
-    items: [
-        { name: g.settings?.display_names?.home || 'Home', icon: Home, path: `CreatorGroups?id=${g.id}` },
-        { name: g.settings?.display_names?.feed || 'Feed', icon: MessageCircle, path: `CreatorGroups?id=${g.id}&tab=feed` },
-        { name: g.settings?.display_names?.events || 'Events', icon: Calendar, path: `CreatorGroups?id=${g.id}&tab=events` },
-        { name: g.settings?.display_names?.resources || 'Resources', icon: BookOpen, path: `CreatorGroups?id=${g.id}&tab=resources` },
-        { name: g.settings?.display_names?.qna || 'Discussions', icon: MessageCircle, path: `CreatorGroups?id=${g.id}&tab=qna` },
-        { name: g.settings?.display_names?.members || 'Members', icon: Users, path: `CreatorGroups?id=${g.id}&tab=members` },
-    ]
-  })),
+  ...pinnedGroups.map(g => {
+    // Define all potential group tabs with their config
+    const allTabs = [
+      { id: 'home', name: g.settings?.display_names?.home || 'Home', icon: Home, path: `CreatorGroups?id=${g.id}` },
+      { id: 'feed', name: g.settings?.display_names?.feed || 'Feed', icon: Bell, path: `CreatorGroups?id=${g.id}&tab=feed` },
+      { id: 'discussion', name: g.settings?.display_names?.discussion || 'Discussion', icon: MessageSquare, path: `CreatorGroups?id=${g.id}&tab=discussion` },
+      { id: 'events', name: g.settings?.display_names?.events || 'Events', icon: Calendar, path: `CreatorGroups?id=${g.id}&tab=events` },
+      { id: 'meetings', name: g.settings?.display_names?.meetings || 'Meetings', icon: Video, path: `CreatorGroups?id=${g.id}&tab=meetings` },
+      { id: 'projects', name: g.settings?.display_names?.projects || 'Projects', icon: Briefcase, path: `CreatorGroups?id=${g.id}&tab=projects` },
+      { id: 'marketing', name: g.settings?.display_names?.marketing || 'Marketing', icon: Printer, path: `CreatorGroups?id=${g.id}&tab=marketing` },
+      { id: 'assets', name: g.settings?.display_names?.assets || 'Brand & Assets', icon: Sparkles, path: `CreatorGroups?id=${g.id}&tab=assets` },
+      { id: 'resources', name: g.settings?.display_names?.resources || 'Resources', icon: FileText, path: `CreatorGroups?id=${g.id}&tab=resources` },
+      { id: 'training', name: g.settings?.display_names?.training || 'Training', icon: GraduationCap, path: `CreatorGroups?id=${g.id}&tab=training` },
+      { id: 'qna', name: g.settings?.display_names?.qna || 'Q&A', icon: HelpCircle, path: `CreatorGroups?id=${g.id}&tab=qna` },
+      { id: 'requests', name: g.settings?.display_names?.requests || 'Requests', icon: AlertCircle, path: `CreatorGroups?id=${g.id}&tab=requests` },
+      { id: 'sales', name: g.settings?.display_names?.sales || 'Sales Pipeline', icon: Target, path: `CreatorGroups?id=${g.id}&tab=sales` },
+      { id: 'members', name: g.settings?.display_names?.members || 'Members', icon: Users, path: `CreatorGroups?id=${g.id}&tab=members` },
+    ];
+
+    const disabledFeatures = g.settings?.disabled_features || [];
+
+    // Filter items based on group settings
+    const filteredItems = allTabs.filter(tab => {
+       // Home is always visible
+       if (tab.id === 'home') return true;
+
+       // Check if disabled
+       if (disabledFeatures.includes(tab.id)) return false;
+
+       // Special checks
+       if (tab.id === 'sales' && !g.enable_prospect_management) return false;
+
+       // Note: We cannot fully replicate the complex role-based permissions (isTabEnabled) 
+       // from CreatorGroups.js here easily without membership context for each group,
+       // but respecting 'disabled_features' covers the main user request.
+       return true;
+    });
+
+    // Sort items based on group tab order preference
+    const tabOrder = g.settings?.tab_order || [];
+    if (tabOrder.length > 0) {
+      filteredItems.sort((a, b) => {
+        // Always keep Home first
+        if (a.id === 'home') return -1;
+        if (b.id === 'home') return 1;
+
+        const indexA = tabOrder.indexOf(a.id);
+        const indexB = tabOrder.indexOf(b.id);
+
+        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+        if (indexA !== -1) return -1;
+        if (indexB !== -1) return 1;
+        return 0;
+      });
+    }
+
+    return {
+      id: g.id,
+      title: g.name,
+      icon: Users,
+      color: 'text-white',
+      bgColor: g.menu_color || 'bg-purple-600',
+      isPinnedGroup: true,
+      items: filteredItems
+    };
+  }),
   {
     id: 'separator',
     items: [

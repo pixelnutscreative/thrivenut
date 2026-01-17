@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogT
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Users, Plus, Settings, Video, AlertCircle, ArrowLeft, Loader2, Building, Home, Heart, Sparkles, Brain, Briefcase, Calendar, MessageSquare, FileText, Bell, Eye, EyeOff, Link as LinkIcon, ExternalLink, Clock, Trash2, Filter, LayoutGrid, List, Lock, Printer, UserPlus, Target } from 'lucide-react';
+import { Users, Plus, Settings, Video, AlertCircle, ArrowLeft, Loader2, Building, Home, Heart, Sparkles, Brain, Briefcase, Calendar, MessageSquare, FileText, Bell, Eye, EyeOff, Link as LinkIcon, ExternalLink, Clock, Trash2, Filter, LayoutGrid, List, Lock, Printer, UserPlus, Target, GraduationCap, HelpCircle } from 'lucide-react';
 import { useTheme } from '@/components/shared/useTheme';
 import { createPageUrl } from '../utils';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
@@ -636,8 +636,8 @@ export default function CreatorGroups() {
     { id: 'marketing', label: displayNames.marketing || 'Marketing', icon: Printer, color: 'indigo' },
     { id: 'assets', label: displayNames.assets || 'Brand & Assets', icon: Sparkles, color: 'pink' },
     { id: 'resources', label: displayNames.resources || 'Resources', icon: FileText, color: 'amber' },
-    { id: 'training', label: displayNames.training || 'Training', icon: Video, color: 'blue' },
-    { id: 'qna', label: displayNames.qna || 'Q&A', icon: MessageSquare, color: 'teal' },
+    { id: 'training', label: displayNames.training || 'Training', icon: GraduationCap, color: 'blue' },
+    { id: 'qna', label: displayNames.qna || 'Q&A', icon: HelpCircle, color: 'teal' },
     { id: 'members', label: displayNames.members || 'Members', icon: Users, color: 'orange' },
     { id: 'requests', label: displayNames.requests || 'Requests', icon: AlertCircle, color: 'gray' },
     { id: 'sales', label: displayNames.sales || 'Sales Pipeline', icon: Target, color: 'green' },
