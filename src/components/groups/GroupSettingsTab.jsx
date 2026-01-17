@@ -1283,4 +1283,105 @@ function GroupShortcutsSettings({ group }) {
   );
 }
 
+function GroupMenuSettings({ group }) {
+  const queryClient = useQueryClient();
+  const updateGroupMutation = useMutation({
+    mutationFn: (data) => base44.entities.CreatorGroup.update(group.id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['myGroupsDetails']);
+      queryClient.invalidateQueries(['activeGroup', group.id]);
+    }
+  });
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">Menu & Display</CardTitle>
+        <CardDescription>Customize how this group appears in the app navigation.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <Label>Pin to Main Menu</Label>
+            <p className="text-sm text-gray-500">Show this group in the main sidebar above the categorized sections.</p>
+          </div>
+          <Switch
+            checked={group.menu_pinned || false}
+            onCheckedChange={(checked) => updateGroupMutation.mutate({ menu_pinned: checked })}
+          />
+        </div>
+
+        {group.menu_pinned && (
+          <div className="space-y-2">
+            <Label>Menu Color</Label>
+            <div className="flex gap-2 items-center">
+              <Input
+                type="color"
+                value={group.menu_color || '#8B5CF6'}
+                onChange={(e) => updateGroupMutation.mutate({ menu_color: e.target.value })}
+                className="w-12 h-10 p-1 cursor-pointer"
+              />
+              <Input
+                type="text"
+                value={group.menu_color || '#8B5CF6'}
+                onChange={(e) => updateGroupMutation.mutate({ menu_color: e.target.value })}
+                className="w-32"
+                placeholder="#8B5CF6"
+              />
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function GroupExperienceSettings({ group }) {
+  const queryClient = useQueryClient();
+  const updateGroupMutation = useMutation({
+    mutationFn: (data) => base44.entities.CreatorGroup.update(group.id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['myGroupsDetails']);
+      queryClient.invalidateQueries(['activeGroup', group.id]);
+    }
+  });
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">Member Experience</CardTitle>
+        <CardDescription>Control the onboarding and app experience for new members.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <Label>Restricted Feature Mode (Social House)</Label>
+            <p className="text-sm text-gray-500">
+              If enabled, <strong>NEW</strong> members joining this group will have all other app modules disabled by default (except My Groups).
+              Existing user preferences will not be changed.
+            </p>
+          </div>
+          <Switch
+            checked={group.restrict_new_members || false}
+            onCheckedChange={(checked) => updateGroupMutation.mutate({ restrict_new_members: checked })}
+          />
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <Label>Default Landing Page</Label>
+            <p className="text-sm text-gray-500">
+              If enabled, new members will be set to land on this group page when they log in.
+            </p>
+          </div>
+          <Switch
+            checked={group.force_landing_page || false}
+            onCheckedChange={(checked) => updateGroupMutation.mutate({ force_landing_page: checked })}
+          />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 // GroupTabOrderSettings removed, logic moved to GroupTabsManager
