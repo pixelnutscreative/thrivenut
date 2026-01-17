@@ -12,7 +12,7 @@ import {
   Palette, Eye, Bookmark, HandMetal, PawPrint, Search, MousePointerClick,
   Calendar, Sun, Cross, Smile, FileText, StickyNote, Tablet, HelpCircle,
   MessageCircle, Briefcase, DollarSign, Activity, Wallet, Swords, Lightbulb, Zap,
-  Image as ImageIcon, Megaphone
+  Image as ImageIcon, Megaphone, Printer
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import TikTokAccessGate from './components/access/TikTokAccessGate';
@@ -260,7 +260,7 @@ export default function Layout({ children, currentPageName = '' }) {
        { id: 'events', name: 'Events', icon: Calendar, path: `CreatorGroups?id=${g.id}&tab=events` },
        { id: 'meetings', name: 'Meetings', icon: Video, path: `CreatorGroups?id=${g.id}&tab=meetings` },
        { id: 'projects', name: 'Projects', icon: Briefcase, path: `CreatorGroups?id=${g.id}&tab=projects` },
-       { id: 'marketing', name: 'Marketing Orders', icon: Megaphone, path: `CreatorGroups?id=${g.id}&tab=marketing` },
+       { id: 'marketing', name: 'Marketing Orders', icon: Printer, path: `CreatorGroups?id=${g.id}&tab=marketing` },
        { id: 'assets', name: 'Brand & Assets', icon: Palette, path: `CreatorGroups?id=${g.id}&tab=assets` },
        { id: 'resources', name: 'Resources', icon: BookOpen, path: `CreatorGroups?id=${g.id}&tab=resources` },
        { id: 'training', name: 'Training', icon: Target, path: `CreatorGroups?id=${g.id}&tab=training` },
@@ -270,7 +270,9 @@ export default function Layout({ children, currentPageName = '' }) {
     ];
 
     // Filter based on disabled features in settings
-    const disabledFeatures = g.settings?.disabled_features || [];
+    // Ensure disabled_features is an array to prevent crashes
+    const rawDisabled = g.settings?.disabled_features;
+    const disabledFeatures = Array.isArray(rawDisabled) ? rawDisabled : [];
 
     return allTabs.filter(t => {
        // Home is always visible
@@ -283,9 +285,9 @@ export default function Layout({ children, currentPageName = '' }) {
        return isVisible(t.id);
     }).map(t => ({
        ...t,
-       name: customNames[t.id] || t.name // Apply custom name
+       name: (customNames && customNames[t.id]) || t.name // Apply custom name safely
     }));
-  };
+    };
 
   // --- MENU GROUPS (Collapsible) ---
   const menuGroups = [
@@ -1158,7 +1160,7 @@ export default function Layout({ children, currentPageName = '' }) {
           onClose={() => setShowAccessGate(false)} />
 
 
-      <FloatingHelpButton pageName={currentPageName} userEmail={user?.email} />
+      <FloatingHelpButton pageName={String(currentPageName || 'Unknown')} userEmail={user?.email} />
 
       {user && effectiveEmail && preferences && !mobileMenuOpen &&
         <QuickActionsBarV2
