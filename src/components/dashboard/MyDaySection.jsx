@@ -183,6 +183,10 @@ export default function MyDaySection({
     queryKey: ['activeMedications', userEmail],
     queryFn: () => base44.entities.Medication.filter({ is_active: true, created_by: userEmail }),
     enabled: !!userEmail,
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 2,
   });
 
   // Fetch medication logs
@@ -190,6 +194,10 @@ export default function MyDaySection({
     queryKey: ['medicationLogs', today, userEmail],
     queryFn: () => base44.entities.MedicationLog.filter({ date: today, created_by: userEmail }),
     enabled: !!userEmail,
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 2,
   });
 
   // Fetch supplements
@@ -197,6 +205,10 @@ export default function MyDaySection({
     queryKey: ['activeSupplements', userEmail],
     queryFn: () => base44.entities.Supplement.filter({ is_active: true, created_by: userEmail }),
     enabled: !!userEmail,
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 2,
   });
 
   // Fetch supplement logs
@@ -204,6 +216,10 @@ export default function MyDaySection({
     queryKey: ['supplementLogs', today, userEmail],
     queryFn: () => base44.entities.SupplementLog.filter({ date: today, created_by: userEmail }),
     enabled: !!userEmail,
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 2,
   });
 
   // Fetch pets
@@ -211,6 +227,10 @@ export default function MyDaySection({
     queryKey: ['pets', userEmail],
     queryFn: () => base44.entities.Pet.filter({ created_by: userEmail }),
     enabled: !!userEmail,
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 2,
   });
 
   // Fetch pet activity logs
@@ -218,6 +238,10 @@ export default function MyDaySection({
     queryKey: ['petActivityLogs', today, userEmail],
     queryFn: () => base44.entities.PetActivityLog.filter({ date: today, created_by: userEmail }),
     enabled: !!userEmail,
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 2,
   });
 
   // Fetch care reminders
@@ -225,6 +249,10 @@ export default function MyDaySection({
     queryKey: ['careReminders', userEmail],
     queryFn: () => base44.entities.CareReminder.filter({ is_active: true, created_by: userEmail }),
     enabled: !!userEmail,
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 2,
   });
 
   // Fetch content calendar items (recurring schedule)
@@ -232,6 +260,10 @@ export default function MyDaySection({
     queryKey: ['contentCalendarItems', userEmail],
     queryFn: () => base44.entities.ContentCalendarItem.filter({ created_by: userEmail }),
     enabled: !!userEmail,
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 2,
   });
 
   // Fetch live schedules to visit
@@ -239,6 +271,10 @@ export default function MyDaySection({
     queryKey: ['liveSchedules', userEmail],
     queryFn: () => base44.entities.LiveSchedule.filter({ created_by: userEmail }),
     enabled: !!userEmail,
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 2,
   });
 
   // Fetch active goals
@@ -246,6 +282,10 @@ export default function MyDaySection({
     queryKey: ['activeGoals', userEmail],
     queryFn: () => base44.entities.Goal.filter({ status: 'active', created_by: userEmail }),
     enabled: !!userEmail,
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 2,
   });
 
   // Fetch Google Calendar events - only if user has connected THEIR OWN calendar
@@ -257,8 +297,10 @@ export default function MyDaySection({
       return response.data;
     },
     enabled: !!userEmail && preferences?.show_google_calendar && preferences?.google_calendar_connected,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    retry: false,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 2,
   });
 
   // Fetch carryover tasks
@@ -269,6 +311,10 @@ export default function MyDaySection({
       created_by: userEmail 
     }),
     enabled: !!userEmail,
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 2,
   });
 
   // Fetch regular tasks to find timed ones
@@ -278,7 +324,11 @@ export default function MyDaySection({
       status: 'pending',
       created_by: userEmail
     }),
-    enabled: !!userEmail
+    enabled: !!userEmail,
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 2,
   });
 
   // Fetch TikTok contacts with engagement enabled for today
@@ -300,6 +350,10 @@ export default function MyDaySection({
       });
     },
     enabled: !!userEmail,
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 2,
   });
 
   // Fetch creator calendar events (lives from contacts with calendar_enabled)
@@ -310,6 +364,10 @@ export default function MyDaySection({
       created_by: userEmail 
     }),
     enabled: !!userEmail && preferences?.show_creator_calendar_events !== false,
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 2,
   });
 
   const { data: manualEvents = [] } = useQuery({
@@ -318,7 +376,11 @@ export default function MyDaySection({
       const events = await base44.entities.ExternalEvent.filter({ date: today, created_by: userEmail });
       return events.map(event => ({ ...event, is_urgent: event.is_urgent, color: event.color }));
     },
-    enabled: !!userEmail
+    enabled: !!userEmail,
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 2,
   });
 
   const { data: creatorEvents = [] } = useQuery({
@@ -334,7 +396,11 @@ export default function MyDaySection({
         return [];
       }
     },
-    enabled: preferences?.show_creator_calendar_events
+    enabled: preferences?.show_creator_calendar_events,
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 2,
   });
 
   // Show carryover modal if there are pending tasks
@@ -352,6 +418,10 @@ export default function MyDaySection({
       return logs[0] || null;
     },
     enabled: !!userEmail,
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 2,
   });
 
   // Sleep mutation
