@@ -47,6 +47,7 @@ import MasterContactDatabase from './pages/MasterContactDatabase';
 import Medications from './pages/Medications';
 import MeetThePixelNuts from './pages/MeetThePixelNuts';
 import MentalHealth from './pages/MentalHealth';
+import mentalhealthTsx from './pages/MentalHealth.tsx';
 import MyEvents from './pages/MyEvents';
 import MyLists from './pages/MyLists';
 import MyProfile from './pages/MyProfile';
@@ -68,6 +69,7 @@ import RedeemGift from './pages/RedeemGift';
 import SalesTracking from './pages/SalesTracking';
 import SavedMotivations from './pages/SavedMotivations';
 import Settings from './pages/Settings';
+import settingsTsx from './pages/Settings.tsx';
 import ShareDashboard from './pages/ShareDashboard';
 import SocialShortcuts from './pages/SocialShortcuts';
 import SongGenerator from './pages/SongGenerator';
@@ -138,6 +140,7 @@ export const PAGES = {
     "Medications": Medications,
     "MeetThePixelNuts": MeetThePixelNuts,
     "MentalHealth": MentalHealth,
+    "MentalHealth.tsx": mentalhealthTsx,
     "MyEvents": MyEvents,
     "MyLists": MyLists,
     "MyProfile": MyProfile,
@@ -159,6 +162,7 @@ export const PAGES = {
     "SalesTracking": SalesTracking,
     "SavedMotivations": SavedMotivations,
     "Settings": Settings,
+    "Settings.tsx": settingsTsx,
     "ShareDashboard": ShareDashboard,
     "SocialShortcuts": SocialShortcuts,
     "SongGenerator": SongGenerator,
