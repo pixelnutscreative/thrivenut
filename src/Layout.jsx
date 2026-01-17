@@ -161,18 +161,22 @@ export default function Layout({ children, currentPageName }) {
   ];
   const isKidMode = preferences?.default_landing_page === 'KidsJournal';
 
-  // Redirect to default landing page (if set) from Home/Dashboard - only once per session
+  // Only redirect once per session when first entering the app
   useEffect(() => {
-    const hasVisited = sessionStorage.getItem('hasVisited');
-    const defaultPage = preferences?.default_landing_page;
-    if (!hasVisited && defaultPage && (currentPageName === 'Dashboard' || currentPageName === 'Home')) {
-       if (defaultPage !== 'Dashboard') {
-           const target = defaultPage.includes('?') || defaultPage.includes('/') ? defaultPage : createPageUrl(defaultPage);
-           navigate(target.startsWith('/') ? target : `/${target}`);
-           sessionStorage.setItem('hasVisited', 'true');
-       }
+    const hasRedirectedThisSession = sessionStorage.getItem('hasRedirected');
+    
+    if (!hasRedirectedThisSession && preferences?.default_landing_page) {
+      const currentPath = location.pathname;
+      const targetPage = preferences.default_landing_page;
+      
+      // Only redirect if we're on Home/Dashboard and NOT already on target
+      if ((currentPath === '/' || currentPath === '/Dashboard') && 
+          currentPath !== `/${targetPage}`) {
+        navigate(`/${targetPage}`);
+        sessionStorage.setItem('hasRedirected', 'true');
+      }
     }
-  }, [preferences?.default_landing_page, currentPageName]);
+  }, [preferences?.default_landing_page, location, navigate]);
 
   // --- THEME HANDLING ---
   const primaryColor = preferences?.primary_color || '#1fd2ea';
