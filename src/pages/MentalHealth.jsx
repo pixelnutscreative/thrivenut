@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, Save, Brain, Heart, Sparkles, Eye, Shield, Zap, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
@@ -154,6 +155,29 @@ export default function MentalHealth() {
 
   const handleSave = () => {
     updatePreferencesMutation.mutate(formData);
+  };
+
+  const handleSubmitCustomItem = async () => {
+    if (!customItemInput.trim() || !user?.email) return;
+
+    setSubmittingCustomItem(true);
+    try {
+      await base44.entities.MentalHealthCustomItems.create({
+        user_email: user.email,
+        item_text: customItemInput.trim(),
+        category: customItemCategory,
+        status: 'pending'
+      });
+      
+      toast.success(`"${customItemInput.trim()}" submitted for admin review!`);
+      setCustomItemInput('');
+      setCustomItemCategory('conditions');
+    } catch (error) {
+      console.error('Submit custom item error:', error);
+      toast.error(`Error submitting item: ${error.message}`);
+    } finally {
+      setSubmittingCustomItem(false);
+    }
   };
 
   const { isDark, bgClass, textClass, cardBgClass, subtextClass } = useTheme();
