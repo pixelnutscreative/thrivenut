@@ -65,6 +65,7 @@ export default function MentalHealth() {
   const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [customItemInput, setCustomItemInput] = useState('');
   const [customItemCategory, setCustomItemCategory] = useState('conditions');
   const [submittingCustomItem, setSubmittingCustomItem] = useState(false);
@@ -78,7 +79,7 @@ export default function MentalHealth() {
 
   const { preferences, effectiveEmail } = useTheme();
 
-  const [formData, setFormData] = useState({
+  const [profile, setProfile] = useState({
     accessibility_mode: 'standard',
     enable_self_care_gating: false,
     required_self_care_tasks: [],
@@ -93,50 +94,40 @@ export default function MentalHealth() {
     is_bible_believer: false,
   });
 
-  useEffect(() => {
-    if (preferences) {
-      setFormData({
-        accessibility_mode: preferences.accessibility_mode || 'standard',
-        enable_self_care_gating: preferences.enable_self_care_gating || false,
-        required_self_care_tasks: preferences.required_self_care_tasks || [],
-        gated_modules: preferences.gated_modules || [],
-        mental_health_struggles: preferences.mental_health_struggles || [],
-        improvement_goals: preferences.improvement_goals || [],
-        enable_ai_journaling: preferences.enable_ai_journaling !== false,
-        show_daily_affirmations: preferences.show_daily_affirmations || false,
-        use_simplified_interface: preferences.use_simplified_interface || false,
-        reduce_animations: preferences.reduce_animations || false,
-        use_checklists: preferences.use_checklists || false,
-        is_bible_believer: preferences.is_bible_believer || false,
-      });
-    }
-  }, [preferences]);
-
-  const updatePreferencesMutation = useMutation({
-    mutationFn: async (data) => {
-      if (preferences?.id) {
-        return await base44.entities.UserPreferences.update(preferences.id, data);
-      } else {
-        // Safety check to avoid duplicate creation
-        const existing = await base44.entities.UserPreferences.filter({ user_email: effectiveEmail }, '-updated_date');
-        if (existing.length > 0) {
-           return await base44.entities.UserPreferences.update(existing[0].id, data);
-        }
-        return await base44.entities.UserPreferences.create({
-          user_email: effectiveEmail,
-          ...data,
-          onboarding_completed: true
-        });
-      }
+  // Fetch MentalHealthProfile
+  const { data: mentalHealthProfile } = useQuery({
+    queryKey: ['mentalHealthProfile', user?.email],
+    queryFn: async () => {
+      if (!user?.email) return null;
+      const profiles = await base44.entities.MentalHealthProfile.filter({ created_by: user.email });
+      return profiles[0] || null;
     },
-    onSuccess: () => {
-      // Invalidate the useTheme query key
-      queryClient.invalidateQueries({ queryKey: ['preferences'] });
-    },
+    enabled: !!user?.email,
   });
 
+  useEffect(() => {
+    if (mentalHealthProfile) {
+      setProfile({
+        accessibility_mode: mentalHealthProfile.accessibility_mode || 'standard',
+        enable_self_care_gating: mentalHealthProfile.enable_self_care_gating || false,
+        required_self_care_tasks: mentalHealthProfile.required_self_care_tasks || [],
+        gated_modules: mentalHealthProfile.gated_modules || [],
+        mental_health_struggles: mentalHealthProfile.mental_health_struggles || [],
+        improvement_goals: mentalHealthProfile.improvement_goals || [],
+        enable_ai_journaling: mentalHealthProfile.enable_ai_journaling !== false,
+        show_daily_affirmations: mentalHealthProfile.show_daily_affirmations || false,
+        use_simplified_interface: mentalHealthProfile.use_simplified_interface || false,
+        reduce_animations: mentalHealthProfile.reduce_animations || false,
+        use_checklists: mentalHealthProfile.use_checklists || false,
+        is_bible_believer: mentalHealthProfile.is_bible_believer || false,
+      });
+    }
+  }, [mentalHealthProfile]);
+
+
+
   const toggleSelfCareTask = (taskId) => {
-    setFormData(prev => ({
+    setProfile(prev => ({
       ...prev,
       required_self_care_tasks: prev.required_self_care_tasks.includes(taskId)
         ? prev.required_self_care_tasks.filter(id => id !== taskId)
@@ -145,7 +136,7 @@ export default function MentalHealth() {
   };
 
   const toggleGatedModule = (moduleId) => {
-    setFormData(prev => ({
+    setProfile(prev => ({
       ...prev,
       gated_modules: prev.gated_modules.includes(moduleId)
         ? prev.gated_modules.filter(id => id !== moduleId)
@@ -153,10 +144,24 @@ export default function MentalHealth() {
     }));
   };
 
-
-
-  const handleSave = () => {
-    updatePreferencesMutation.mutate(formData);
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      if (mentalHealthProfile?.id) {
+        await base44.entities.MentalHealthProfile.update(mentalHealthProfile.id, profile);
+      } else {
+        await base44.entities.MentalHealthProfile.create({
+          ...profile,
+          user_email: user?.email
+        });
+      }
+      queryClient.invalidateQueries({ queryKey: ['mentalHealthProfile', user?.email] });
+      toast.success("Mental health profile saved!");
+    } catch (error) {
+      toast.error(`Save failed: ${error.message}`);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleSubmitCustomItem = async () => {
@@ -205,10 +210,10 @@ export default function MentalHealth() {
           </div>
           <Button
             onClick={handleSave}
-            disabled={updatePreferencesMutation.isPending}
+            disabled={isSaving}
             className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
           >
-            {updatePreferencesMutation.isPending ? (
+            {isSaving ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
             ) : (
               <Save className="w-4 h-4 mr-2" />
