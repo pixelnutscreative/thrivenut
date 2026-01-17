@@ -301,24 +301,20 @@ export default function CreatorGroups() {
   const activeGroup = fetchedActiveGroup || groups.find(g => g.id === activeGroupId);
   const activeMembership = myMemberships.find(m => m.group_id === activeGroupId);
   
-  // DIAGNOSTIC LOGGING
-  if (activeGroupId && activeMembership) {
-    console.log('UI DIAGNOSIS:', {
-      group: activeGroup?.name,
-      email: user?.email,
-      membership: activeMembership,
-      role: activeMembership.role,
-      level: activeMembership.level,
-      status: activeMembership.status
-    });
-  }
+  // Robust Membership Checks
+  const isOwnerByEmail = activeGroup?.owner_email && user?.email && activeGroup.owner_email.toLowerCase() === user.email.toLowerCase();
+  
+  // Admin = Super Admin OR Owner (by email) OR Explicit Admin Role
+  const isAdmin = isSuperAdmin || isOwnerByEmail || (activeMembership && ['owner', 'admin', 'manager'].includes(activeMembership.role));
+  
+  // Member = Admin OR Active/Trial Status
+  const isMember = isAdmin || (!!activeMembership && (activeMembership.status === 'active' || activeMembership.status === 'trial'));
+  
+  const isPending = !isAdmin && activeMembership?.status === 'pending';
+  const isInterested = !isAdmin && (activeMembership?.status === 'interested' || activeMembership?.pending_approval); 
 
-  const isAdmin = activeMembership && ['owner', 'admin', 'manager'].includes(activeMembership.role);
-  const isPending = activeMembership?.status === 'pending';
-  const isInterested = activeMembership?.status === 'interested' || activeMembership?.pending_approval; // Treat pending approval as interested mode
-  const isMember = !!activeMembership && (activeMembership.status === 'active' || activeMembership.status === 'trial');
   // Invite logic: Admins can always invite. Members can invite if allowed by settings.
-  const canInvite = isAdmin || (activeGroup?.settings?.allow_member_invites === true && activeMembership?.status === 'active');
+  const canInvite = isAdmin || (activeGroup?.settings?.allow_member_invites === true && isMember);
 
   // Invite Mutation (Direct Add)
   const inviteMutation = useMutation({
