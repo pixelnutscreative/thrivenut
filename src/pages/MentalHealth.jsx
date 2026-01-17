@@ -145,19 +145,24 @@ export default function MentalHealth() {
   };
 
   const handleSave = async () => {
+    console.log("🎯 SAVE ATTEMPTED", { profile, user, mentalHealthProfile });
     setIsSaving(true);
     try {
       if (mentalHealthProfile?.id) {
+        console.log("📝 UPDATING existing profile", mentalHealthProfile.id);
         await base44.entities.MentalHealthProfile.update(mentalHealthProfile.id, profile);
       } else {
+        console.log("➕ CREATING new profile", user?.email);
         await base44.entities.MentalHealthProfile.create({
           ...profile,
-          user_email: user.email
+          user_email: user?.email
         });
       }
       queryClient.invalidateQueries({ queryKey: ['mentalHealthProfile', user?.email] });
+      console.log("✅ SAVE SUCCESS");
       toast.success("Mental health profile saved!");
     } catch (error) {
+      console.error("❌ SAVE FAILED:", error);
       toast.error(`Save failed: ${error.message}`);
     } finally {
       setIsSaving(false);
