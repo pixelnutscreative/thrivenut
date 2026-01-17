@@ -81,9 +81,6 @@ export default function Settings() {
   const [expandedTabs, setExpandedTabs] = useState(['preferences']);
   const [showOnboarding, setShowOnboarding] = useState(false);
 
-  // Add this key prop to force remount when user changes
-  const settingsKey = `settings-${effectiveEmail || 'none'}`;
-
   useEffect(() => {
     const hash = location.hash.replace('#', '');
     if (hash) {
@@ -101,6 +98,9 @@ export default function Settings() {
   }, []);
 
   const effectiveEmail = user ? getEffectiveUserEmail(user.email)?.toLowerCase() : null;
+
+  // Add this key prop to force remount when user changes
+  const settingsKey = `settings-${effectiveEmail || 'none'}`;
 
   const { data: preferences, isLoading: prefsLoading } = useQuery({
     queryKey: ['preferences', effectiveEmail],
@@ -271,7 +271,7 @@ export default function Settings() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['userProfile'] });
-      queryClient.invalidateQueries({ queryKey: ['userProfile', effectiveEmail] });
+      queryClient.invalidateQueries({ queryKey: ['userProfile', user?.email?.toLowerCase()] });
     },
     onError: (error) => {
       console.error('Save error:', error);
