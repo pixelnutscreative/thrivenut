@@ -4,6 +4,7 @@ import { createPageUrl } from './utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button.jsx';
+import { Separator } from '@/components/ui/separator';
 import {
   LayoutDashboard, Target, Heart, BookOpen, Settings, Menu, X, LogOut,
   TrendingUp, Users, Video, Pill, Gift, Brain, Home, ChevronDown,
@@ -11,7 +12,7 @@ import {
   Palette, Eye, Bookmark, HandMetal, PawPrint, Search, MousePointerClick,
   Calendar, Sun, Cross, Smile, FileText, StickyNote, Tablet, HelpCircle,
   MessageCircle, Briefcase, DollarSign, Activity, Wallet, Swords, Lightbulb, Zap,
-  Image as ImageIcon 
+  Image as ImageIcon, Megaphone
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import TikTokAccessGate from './components/access/TikTokAccessGate';
@@ -29,7 +30,7 @@ const iconMap = {
   Pill, Gift, Brain, Home, ChevronDown, ChevronRight, Bell, Share2, Music, Star,
   Lock, UserCog, Sparkles, Eye, Bookmark, HandMetal, PawPrint, Search,
   MousePointerClick, Calendar, Sun, Cross, Smile, FileText, StickyNote,
-  Tablet, HelpCircle, MessageCircle, Briefcase, Palette, DollarSign, Activity
+  Tablet, HelpCircle, MessageCircle, Briefcase, Palette, DollarSign, Activity, Megaphone
 };
 
 export default function Layout({ children, currentPageName }) {
@@ -107,8 +108,14 @@ export default function Layout({ children, currentPageName }) {
       const memberships = await base44.entities.CreatorGroupMember.filter({ user_email: effectiveEmail, status: 'active' });
       if (memberships.length === 0) return [];
       
-      const details = await Promise.all(memberships.map(m => base44.entities.CreatorGroup.filter({ id: m.group_id })));
-      const activeGroups = details.flat().filter(g => g && g.status === 'active');
+      const groups = await Promise.all(memberships.map(async (m) => {
+        const groupDetails = await base44.entities.CreatorGroup.filter({ id: m.group_id });
+        const group = groupDetails[0];
+        if (!group || group.status !== 'active') return null;
+        return { ...group, currentUserMembership: m };
+      }));
+
+      const activeGroups = groups.filter(g => g !== null);
       // Deduplicate groups by ID to prevent menu duplicates
       return Array.from(new Map(activeGroups.map(g => [g.id, g])).values());
       },
@@ -222,31 +229,83 @@ export default function Layout({ children, currentPageName }) {
     return isBibleBeliever ? 'Prayer Requests' : 'Send Light & Love';
   };
 
+  // Helper for tab names and visibility
+  const getGroupTabs = (g) => {
+    const role = g.currentUserMembership?.role || 'member';
+    const level = g.currentUserMembership?.level || 'Member';
+    const perms = g.role_tab_permissions || {};
+    const customNames = g.settings?.display_names || {};
+
+    // Helper to check if a tab is visible
+    const isVisible = (tabId, defaultVisible = true) => {
+       // Admin/Owner always sees all
+       if (role === 'admin' || role === 'owner') return true;
+
+       // If permissions are explicitly set for this tab, check them
+       if (perms[tabId]) {
+         return perms[tabId].includes(role) || perms[tabId].includes(level);
+       }
+
+       // Fallback to default visibility logic
+       // 'members' tab hidden by default for non-admins unless explicitly allowed
+       if (tabId === 'members') return false;
+
+       return defaultVisible;
+    };
+
+    const allTabs = [
+       { id: 'home', name: 'Home', icon: Home, path: `CreatorGroups?id=${g.id}`, visible: true },
+       { id: 'feed', name: 'Feed', icon: MessageCircle, path: `CreatorGroups?id=${g.id}&tab=feed` },
+       { id: 'discussion', name: 'Discussion', icon: MessageCircle, path: `CreatorGroups?id=${g.id}&tab=discussion` },
+       { id: 'events', name: 'Events', icon: Calendar, path: `CreatorGroups?id=${g.id}&tab=events` },
+       { id: 'meetings', name: 'Meetings', icon: Video, path: `CreatorGroups?id=${g.id}&tab=meetings` },
+       { id: 'projects', name: 'Projects', icon: Briefcase, path: `CreatorGroups?id=${g.id}&tab=projects` },
+       { id: 'marketing', name: 'Marketing Orders', icon: Megaphone, path: `CreatorGroups?id=${g.id}&tab=marketing` },
+       { id: 'assets', name: 'Brand & Assets', icon: Palette, path: `CreatorGroups?id=${g.id}&tab=assets` },
+       { id: 'resources', name: 'Resources', icon: BookOpen, path: `CreatorGroups?id=${g.id}&tab=resources` },
+       { id: 'training', name: 'Training', icon: Target, path: `CreatorGroups?id=${g.id}&tab=training` },
+       { id: 'qna', name: 'Q&A', icon: HelpCircle, path: `CreatorGroups?id=${g.id}&tab=qna` },
+       { id: 'requests', name: 'Requests', icon: FileText, path: `CreatorGroups?id=${g.id}&tab=requests` },
+       { id: 'members', name: 'Members', icon: Users, path: `CreatorGroups?id=${g.id}&tab=members` },
+    ];
+
+    // Filter based on disabled features in settings
+    const disabledFeatures = g.settings?.disabled_features || [];
+
+    return allTabs.filter(t => {
+       // Home is always visible
+       if (t.id === 'home') return true;
+
+       // Check if globally disabled for group
+       if (disabledFeatures.includes(t.id)) return false;
+
+       // Check permissions
+       return isVisible(t.id);
+    }).map(t => ({
+       ...t,
+       name: customNames[t.id] || t.name // Apply custom name
+    }));
+  };
+
   // --- MENU GROUPS (Collapsible) ---
   const menuGroups = [
   // Pinned Groups (Top Level)
   ...pinnedGroups.map(g => ({
     id: g.id,
-    title: g.name, // Use title so it renders as a category header
-    icon: Users, // Icon to be displayed in the header
+    title: g.name, 
+    icon: Users,
     color: 'text-white',
-    bgColor: g.menu_color || 'bg-purple-600', // Ensure it has a background color
-    isPinnedGroup: true, // Marker for specific styling if needed
-    items: [
-        { name: 'Home', icon: Home, path: `CreatorGroups?id=${g.id}` },
-        { name: 'Feed', icon: MessageCircle, path: `CreatorGroups?id=${g.id}&tab=feed` },
-        { name: 'Events', icon: Calendar, path: `CreatorGroups?id=${g.id}&tab=events` },
-        { name: 'Resources', icon: BookOpen, path: `CreatorGroups?id=${g.id}&tab=resources` },
-        { name: 'Discussions', icon: MessageCircle, path: `CreatorGroups?id=${g.id}&tab=qna` },
-        { name: 'Members', icon: Users, path: `CreatorGroups?id=${g.id}&tab=members` },
-    ]
+    bgColor: g.menu_color || 'bg-purple-600',
+    isPinnedGroup: true,
+    items: getGroupTabs(g) // Use dynamic tabs
   })),
+  // Separator Group
+  ...(pinnedGroups.length > 0 ? [{ id: 'separator-1', isSeparator: true }] : []),
   {
     id: 'core',
     items: [
-    { name: getDashboardName(), icon: LayoutDashboard, path: 'Dashboard', alwaysShow: true },
-    { name: preferences?.my_resources_label || 'My Stuff', icon: Bookmark, path: 'MyResources', moduleId: 'my_resources', alwaysShow: true },
-    { 
+    // Only show "My Groups" if there are non-pinned groups
+    ...(myMenuGroups.filter(g => !g.menu_pinned).length > 0 ? [{ 
       name: 'My Groups', 
       icon: Users, 
       isSection: true,
@@ -259,7 +318,10 @@ export default function Layout({ children, currentPageName }) {
            path: `CreatorGroups?id=${g.id}`
          }))
       ]
-    },
+    }] : [{ name: 'Browse Groups', icon: Search, path: 'CreatorGroups?mode=browse', moduleId: 'my_groups' }]),
+    { id: 'separator-2', isSeparator: true },
+    { name: getDashboardName(), icon: LayoutDashboard, path: 'Dashboard', alwaysShow: true },
+    { name: preferences?.my_resources_label || 'My Stuff', icon: Bookmark, path: 'MyResources', moduleId: 'my_resources', alwaysShow: true },
     { name: "Pixel's Place", icon: Sparkles, path: 'PixelsParadise', moduleId: 'pixels_place' }]
 
   },
