@@ -185,23 +185,44 @@ function ModulesView({ group, categories, modules, completedIds, isAdmin, curren
 
     const toggleCompletionMutation = useMutation({
         mutationFn: async (moduleId) => {
-            const existing = await base44.entities.GroupTrainingCompletion.filter({ 
-                user_email: currentUser?.email,
-                training_id: moduleId 
-            });
-            
-            if (existing.length > 0) {
-                return await base44.entities.GroupTrainingCompletion.delete(existing[0].id);
-            } else {
-                return await base44.entities.GroupTrainingCompletion.create({
-                    training_id: moduleId,
-                    group_id: group.id,
+            console.log("Toggling completion for module:", moduleId, "User:", currentUser?.email);
+            try {
+                const existing = await base44.entities.GroupTrainingCompletion.filter({ 
                     user_email: currentUser?.email,
-                    completed_date: new Date().toISOString()
+                    training_id: moduleId 
                 });
+                
+                console.log("Existing completion records found:", existing.length);
+
+                if (existing.length > 0) {
+                    console.log("Deleting completion record:", existing[0].id);
+                    const res = await base44.entities.GroupTrainingCompletion.delete(existing[0].id);
+                    console.log("Delete result:", res);
+                    return res;
+                } else {
+                    console.log("Creating new completion record");
+                    const res = await base44.entities.GroupTrainingCompletion.create({
+                        training_id: moduleId,
+                        group_id: group.id,
+                        user_email: currentUser?.email,
+                        completed_date: new Date().toISOString()
+                    });
+                    console.log("Create result:", res);
+                    return res;
+                }
+            } catch (error) {
+                console.error("Error toggling completion:", error);
+                throw error;
             }
         },
-        onSuccess: () => queryClient.invalidateQueries(['myCompletions', group.id])
+        onSuccess: () => {
+            console.log("Toggle success, invalidating queries");
+            queryClient.invalidateQueries(['myCompletions', group.id]);
+        },
+        onError: (error) => {
+            console.error("Toggle mutation failed:", error);
+            alert("Failed to update status: " + error.message);
+        }
     });
 
     const handleFileUpload = async (e) => {

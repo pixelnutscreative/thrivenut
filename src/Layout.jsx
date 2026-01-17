@@ -224,26 +224,26 @@ export default function Layout({ children, currentPageName }) {
 
   // --- MENU GROUPS (Collapsible) ---
   const menuGroups = [
-  {
-    id: 'core',
+  // Pinned Groups (Top Level)
+  ...pinnedGroups.map(g => ({
+    id: g.id,
+    title: g.name, // Use title so it renders as a category header
+    icon: Users, // Icon to be displayed in the header
+    color: 'text-white',
+    bgColor: g.menu_color || 'bg-purple-600', // Ensure it has a background color
+    isPinnedGroup: true, // Marker for specific styling if needed
     items: [
-    // Pinned Groups
-    ...pinnedGroups.map(g => ({
-      name: g.name,
-      icon: Users,
-      isSection: true,
-      isPinnedGroup: true,
-      menuColor: g.menu_color || '#bd84f5',
-      path: `CreatorGroups?id=${g.id}`,
-      subItems: [
         { name: 'Home', icon: Home, path: `CreatorGroups?id=${g.id}` },
         { name: 'Feed', icon: MessageCircle, path: `CreatorGroups?id=${g.id}&tab=feed` },
         { name: 'Events', icon: Calendar, path: `CreatorGroups?id=${g.id}&tab=events` },
         { name: 'Resources', icon: BookOpen, path: `CreatorGroups?id=${g.id}&tab=resources` },
         { name: 'Discussions', icon: MessageCircle, path: `CreatorGroups?id=${g.id}&tab=qna` },
         { name: 'Members', icon: Users, path: `CreatorGroups?id=${g.id}&tab=members` },
-      ]
-    })),
+    ]
+  })),
+  {
+    id: 'core',
+    items: [
     { name: getDashboardName(), icon: LayoutDashboard, path: 'Dashboard', alwaysShow: true },
     { name: preferences?.my_resources_label || 'My Stuff', icon: Bookmark, path: 'MyResources', moduleId: 'my_resources', alwaysShow: true },
     { 
@@ -557,9 +557,14 @@ export default function Layout({ children, currentPageName }) {
                     {group.title &&
                     <button
                       onClick={() => toggleGroup(group.id)}
-                      className={`w-full px-2 py-2 mt-4 mb-1 text-xs font-bold uppercase tracking-wider ${group.color} ${group.bgColor} rounded-lg flex items-center justify-between hover:opacity-80 transition-opacity`}>
+                      className={`w-full px-2 py-2 mt-4 mb-1 text-xs font-bold uppercase tracking-wider ${group.color} ${group.bgColor.startsWith('bg-') || group.bgColor.startsWith('#') ? group.bgColor : `bg-[${group.bgColor}]`} rounded-lg flex items-center justify-between hover:opacity-80 transition-opacity`}
+                      style={!group.bgColor.startsWith('bg-') ? { backgroundColor: group.bgColor } : {}}
+                      >
 
-                        <span>{group.title}</span>
+                        <div className="flex items-center gap-2">
+                          {group.icon && <group.icon className="w-4 h-4" />}
+                          <span>{group.title}</span>
+                        </div>
                         {isCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                       </button>
                     }
