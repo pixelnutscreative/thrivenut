@@ -855,33 +855,36 @@ export default function BattlePrep() {
 
                 <Card>
                    <CardHeader>
-                     <CardTitle className="text-base">Battle Inventory by Contact</CardTitle>
+                     <CardTitle className="text-base">Battle Inventory by Type</CardTitle>
                    </CardHeader>
                    <CardContent className="p-0">
                      <div className="max-h-[400px] overflow-y-auto">
                        {allActivePowerUps.length > 0 ? (
                          Object.entries(
                            allActivePowerUps.reduce((acc, item) => {
-                             if (!acc[item.contact_name]) {
-                               acc[item.contact_name] = [];
+                             if (!acc[item.type]) {
+                               acc[item.type] = [];
                              }
-                             acc[item.contact_name].push(item);
+                             acc[item.type].push(item);
                              return acc;
                            }, {})
                          )
-                         .sort(([nameA], [nameB]) => nameA.localeCompare(nameB))
-                         .map(([contactName, items]) => (
-                           <div key={contactName} className="border-b last:border-0">
-                             <div className="p-3 bg-slate-50 font-semibold text-sm sticky top-0">{contactName}</div>
-                             {items.map((item) => (
+                         .sort(([typeA], [typeB]) => typeA.localeCompare(typeB))
+                         .map(([type, items]) => (
+                           <div key={type} className="border-b last:border-0">
+                             <div className="p-3 bg-slate-50 font-semibold text-sm sticky top-0 flex items-center gap-2">
+                               {getIcon(type)}
+                               {type}
+                             </div>
+                             {items
+                               .sort((a, b) => a.contact_name.localeCompare(b.contact_name))
+                               .map((item) => (
                                <div key={item.id} className="flex justify-between items-center p-3 border-t text-sm hover:bg-blue-50">
                                  <div className="flex items-center gap-2">
-                                   <Badge variant="outline" className="text-xs">
-                                     {item.type}
-                                   </Badge>
+                                   <span className="text-xs text-slate-600">{item.contact_name}</span>
                                  </div>
                                  <div className="flex items-center gap-2">
-                                   <span className="font-medium">{item.quantity}</span>
+                                   <span className="font-medium text-sm">{item.quantity}</span>
                                    <Button 
                                      size="icon" 
                                      variant="ghost" 
