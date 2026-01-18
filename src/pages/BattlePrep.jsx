@@ -68,10 +68,14 @@ export default function BattlePrep() {
     queryFn: () => base44.entities.TikTokContact.list('display_name', 100),
   });
 
-  // Fetch Power Ups
+  // Fetch Power Ups (only user's own)
   const { data: powerUps = [] } = useQuery({
     queryKey: ['battlePowerUps'],
-    queryFn: () => base44.entities.BattlePowerUp.list('-acquired_date', 100),
+    queryFn: async () => {
+      const user = await base44.auth.me();
+      if (!user) return [];
+      return base44.entities.BattlePowerUp.filter({ created_by: user.email }, '-acquired_date', 100);
+    },
   });
 
   // Fetch Battle Plans (only user's own)
