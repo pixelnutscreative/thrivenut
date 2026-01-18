@@ -5,8 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Swords, Clock, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { format, parseISO, isAfter, startOfDay, addDays, toZonedTime } from 'date-fns-tz';
-import { formatInTimeZone } from 'date-fns-tz';
+import { format, parseISO, isAfter, startOfDay, addDays } from 'date-fns';
 
 export default function TikTokBattlesWidgetV2({ userEmail, userTimezone = 'UTC' }) {
   const [selectedDate, setSelectedDate] = useState(new Date());
