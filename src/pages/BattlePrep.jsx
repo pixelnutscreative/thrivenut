@@ -561,15 +561,15 @@ export default function BattlePrep() {
                           onValueChange={(v) => setActiveBattleId(v === 'new' ? null : v)}
                         >
                           <SelectTrigger>
-                            <SelectValue placeholder="Create New Plan" />
+                            <SelectValue placeholder="Select a Battle" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="new">+ Create New Plan</SelectItem>
+                            <SelectItem value="new">+ Create New Battle Plan</SelectItem>
                             {battlePlans
                               .filter(plan => !plan.battle_date || isAfter(parseISO(plan.battle_date), new Date()))
                               .map(plan => (
                                 <SelectItem key={plan.id} value={plan.id}>
-                                  VS {plan.opponent} ({plan.battle_date ? format(parseISO(plan.battle_date), 'MMM d h:mm a') : 'Unscheduled'})
+                                  VS {plan.opponent} • {plan.creator_name ? `Created by ${plan.creator_name}` : 'No creator'} • {plan.battle_date ? format(parseISO(plan.battle_date), 'MMM d h:mm a') : 'Unscheduled'}
                                 </SelectItem>
                               ))}
                           </SelectContent>
