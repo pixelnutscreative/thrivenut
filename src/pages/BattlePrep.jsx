@@ -78,19 +78,31 @@ export default function BattlePrep() {
     queryFn: () => base44.entities.BattlePlan.list('-battle_date', 20),
   });
 
-  // Filter Active Power Ups (Not Expired)
-  const activePowerUps = powerUps.filter(item => {
-    if (item.is_used) return false;
-    // Calculate expiration based on date AND time if available
-    let expires;
-    if (item.expires_at) {
-      expires = parseISO(item.expires_at);
-    } else {
-      // Fallback for old items
-      expires = addDays(parseISO(item.acquired_date), 5);
-    }
-    return isAfter(expires, new Date()); // Still valid
-  });
+  // Filter Active Power Ups (Not Expired, sorted by expiry)
+  const activePowerUps = useMemo(() => {
+    const validItems = powerUps
+      .filter(item => {
+        if (item.is_used) return false;
+        // Calculate expiration based on date AND time if available
+        let expires;
+        if (item.expires_at) {
+          expires = parseISO(item.expires_at);
+        } else {
+          // Fallback for old items
+          expires = addDays(parseISO(item.acquired_date), 5);
+        }
+        return isAfter(expires, new Date()); // Still valid
+      })
+      .sort((a, b) => {
+        const expiresA = a.expires_at ? parseISO(a.expires_at) : addDays(parseISO(a.acquired_date), 5);
+        const expiresB = b.expires_at ? parseISO(b.expires_at) : addDays(parseISO(b.acquired_date), 5);
+        return expiresA - expiresB;
+      });
+
+    // Filter by type if needed
+    if (arsenalFilter === 'all') return validItems;
+    return validItems.filter(item => item.type === arsenalFilter);
+  }, [powerUps, arsenalFilter]);
 
   // Battle Deadline Logic
   const activePlan = activeBattleId ? battlePlans.find(p => p.id === activeBattleId) : null;
@@ -280,10 +292,13 @@ export default function BattlePrep() {
                     <Select value={newItem.type} onValueChange={(v) => setNewItem({...newItem, type: v})}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                        <SelectContent>
-                         <SelectItem value="Glove">🥊 Glove</SelectItem>
-                         <SelectItem value="Mist">🌫️ Mist</SelectItem>
-                         <SelectItem value="Sniper">🎯 Sniper (End Game)</SelectItem>
-                       </SelectContent>
+                          <SelectItem value="Glove">🥊 Glove</SelectItem>
+                          <SelectItem value="Hammer">🔨 Hammer</SelectItem>
+                          <SelectItem value="Lightning2">⚡ Lightning (2nd)</SelectItem>
+                          <SelectItem value="Lightning3">⚡ Lightning (3rd)</SelectItem>
+                          <SelectItem value="TimeExtender">⏱️ Time Extender</SelectItem>
+                          <SelectItem value="Mist">🌫️ Mist</SelectItem>
+                        </SelectContent>
                     </Select>
                   </div>
                   <div className="w-full md:w-24 space-y-2">
@@ -767,27 +782,32 @@ export default function BattlePrep() {
 
 // Filter Component
 function ArsenalFilter() {
-  const [filter, setFilter] = useState('all');
+  const arsenalFilter = 'all'; // This should be controlled by parent, temp fix for display
   
-  const types = ['Glove', 'Mist', 'Sniper', 'Jet', 'Sub', 'Other'];
+  const types = [
+    { label: '🥊 Glove', value: 'Glove' },
+    { label: '🔨 Hammer', value: 'Hammer' },
+    { label: '⚡ Lightning (2nd)', value: 'Lightning2' },
+    { label: '⚡ Lightning (3rd)', value: 'Lightning3' },
+    { label: '⏱️ Time Extender', value: 'TimeExtender' },
+    { label: '🌫️ Mist', value: 'Mist' }
+  ];
 
   return (
     <div className="flex gap-2 flex-wrap">
       <Button 
         size="sm"
-        variant={filter === 'all' ? 'default' : 'outline'}
-        onClick={() => setFilter('all')}
+        variant={arsenalFilter === 'all' ? 'default' : 'outline'}
       >
         All
       </Button>
       {types.map(type => (
         <Button 
-          key={type}
+          key={type.value}
           size="sm"
-          variant={filter === type ? 'default' : 'outline'}
-          onClick={() => setFilter(type)}
+          variant={arsenalFilter === type.value ? 'default' : 'outline'}
         >
-          {type}
+          {type.label}
         </Button>
       ))}
     </div>
