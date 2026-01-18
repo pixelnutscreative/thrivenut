@@ -736,7 +736,7 @@ export default function BattlePrep() {
                       {activeBattleId && (
                         <div className="space-y-2 border-t pt-4">
                           <div className="flex items-center justify-between">
-                            <label className="text-sm font-medium">Battle Results & MVPs</label>
+                            <label className="text-sm font-medium">📊 Battle Results & MVPs</label>
                             <Button
                               size="sm"
                               variant="outline"
@@ -744,9 +744,10 @@ export default function BattlePrep() {
                               className="gap-2"
                             >
                               <Download className="w-4 h-4" />
-                              Download PDF
+                              📄 Download Battle Plan PDF
                             </Button>
                           </div>
+                          <p className="text-xs text-slate-500 mb-2">Enter MVP info after your battle completes</p>
                           <MVPTracker 
                             ourMVPs={battlePlans.find(p => p.id === activeBattleId)?.our_mvps || []}
                             opponentMVPs={battlePlans.find(p => p.id === activeBattleId)?.opponent_mvps || []}
