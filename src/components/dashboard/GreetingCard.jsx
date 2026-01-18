@@ -243,9 +243,22 @@ Respond ONLY with valid JSON (no markdown, no code blocks): {"text": "...", "typ
             aria-label="Next greeting"
           >
             <ChevronRight className="w-6 h-6" />
-          </button>
+            </button>
 
-          <div className="relative z-10 px-8">
+            <div className="absolute top-4 left-4 z-20">
+             <Button
+               size="sm"
+               onClick={() => generateNewGreetings()}
+               disabled={isGenerating}
+               variant="secondary"
+               className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+             >
+               {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4 mr-1" />}
+               {isGenerating ? 'Generating...' : 'Refresh'}
+             </Button>
+            </div>
+
+            <div className="relative z-10 px-8">
             <div className="flex items-center gap-2 mb-4">
               <Icon className="w-6 h-6" />
               <p className="text-xl font-medium opacity-90">{getGreeting()}, {userName}!</p>
