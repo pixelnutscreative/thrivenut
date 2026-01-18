@@ -4,9 +4,24 @@ import { Badge } from '@/components/ui/badge';
 import { Swords, Clock, AlertCircle } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { format, parseISO, isAfter } from 'date-fns';
+import { parseISO, isAfter } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 
-export default function TikTokBattlesWidget({ userEmail }) {
+export default function TikTokBattlesWidget({ userEmail, userTimezone = 'UTC' }) {
+  // Fetch user preferences for timezone
+  const { data: userPrefs = {} } = useQuery({
+    queryKey: ['userPrefs', userEmail],
+    queryFn: async () => {
+      if (!userEmail) return {};
+      const prefs = await base44.entities.UserPreferences.filter({ user_email: userEmail });
+      return prefs[0] || {};
+    },
+    enabled: !!userEmail,
+    staleTime: Infinity,
+  });
+
+  const timezone = userPrefs?.user_timezone || userTimezone || 'UTC';
+
   const { data: battles = [] } = useQuery({
     queryKey: ['upcomingBattles', userEmail],
     queryFn: async () => {
