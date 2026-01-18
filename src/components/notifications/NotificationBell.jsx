@@ -15,58 +15,53 @@ export default function NotificationBell({ userEmail, isDark = false }) {
   const [isOpen, setIsOpen] = useState(false);
   const [dismissedLocally, setDismissedLocally] = useState([]);
 
-  // Fetch notifications
-  const { data: notifications = [] } = useQuery({
-    queryKey: ['notifications', userEmail],
+  // Consolidates 3 API calls into 1 backend function call
+  const { data: notificationData } = useQuery({
+    queryKey: ['notificationData', userEmail],
     queryFn: async () => {
-      if (!userEmail) return [];
-      
-      const notifs = await base44.entities.Notification.filter({ is_active: true }, '-created_date', 100);
-      
-      // Parallel fetch: Preferences and Group Memberships
-      const [prefsRes, memberships] = await Promise.all([
-        base44.entities.UserPreferences.filter({ user_email: userEmail }),
-        base44.entities.CreatorGroupMember.filter({ user_email: userEmail, status: 'active' })
-      ]);
-
-      const hasTikTokAccess = (prefsRes && prefsRes[0]) ? prefsRes[0].tiktok_access_approved : false;
-      const myGroupIds = new Set(memberships.map(m => m.group_id));
-      
-      if (!notifs) return [];
-
-      return notifs.filter(n => {
-        // Group Membership Check
-        if (n.link && n.link.includes('/CreatorGroups?id=')) {
-           try {
-             const url = new URL(n.link, 'http://dummy.com');
-             const groupId = url.searchParams.get('id');
-             if (groupId && !myGroupIds.has(groupId)) {
-               return false;
-             }
-           } catch (e) {}
-        }
-
-        // Targeted notification
-        if (n.user_email) {
-          return n.user_email === userEmail;
-        }
-        
-        // Targeted to group
-        if (n.group_id && !myGroupIds.has(n.group_id)) {
-          return false;
-        }
-
-        // Broadcast
-        if (n.target_audience === 'all') return true;
-        if (n.target_audience === 'tiktok_users' && hasTikTokAccess) return true;
-        return false;
-      });
+      if (!userEmail) return null;
+      const response = await base44.functions.invoke('getNotificationData', { userEmail });
+      return response.data;
     },
     enabled: !!userEmail,
-    staleTime: 60000,
+    staleTime: 300000, // 5 minutes
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     retry: 2,
+  });
+
+  const preferences = notificationData?.preferences || {};
+  const myGroupIds = new Set(notificationData?.myGroupIds || []);
+  const allNotifications = notificationData?.notifications || [];
+  const hasTikTokAccess = preferences?.tiktok_access_approved || false;
+
+  // Filter notifications based on user access
+  const notifications = allNotifications.filter(n => {
+    // Group Membership Check
+    if (n.link && n.link.includes('/CreatorGroups?id=')) {
+       try {
+         const url = new URL(n.link, 'http://dummy.com');
+         const groupId = url.searchParams.get('id');
+         if (groupId && !myGroupIds.has(groupId)) {
+           return false;
+         }
+       } catch (e) {}
+    }
+
+    // Targeted notification
+    if (n.user_email) {
+      return n.user_email === userEmail;
+    }
+    
+    // Targeted to group
+    if (n.group_id && !myGroupIds.has(n.group_id)) {
+      return false;
+    }
+
+    // Broadcast
+    if (n.target_audience === 'all') return true;
+    if (n.target_audience === 'tiktok_users' && hasTikTokAccess) return true;
+    return false;
   });
 
   // Fetch which notifications the user has read
