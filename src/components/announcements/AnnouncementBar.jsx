@@ -10,7 +10,7 @@ export default function AnnouncementBar() {
     queryFn: async () => {
       try {
         const res = await base44.entities.PlatformConfig.filter({ platform_id: 'global_announcements' });
-        return res[0];
+        return res[0] || null;
       } catch (e) {
         return null;
       }
@@ -19,6 +19,7 @@ export default function AnnouncementBar() {
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     retry: 2,
+    enabled: false // Disabled until properly implemented
   });
 
   // If disabled by admin, return null immediately
