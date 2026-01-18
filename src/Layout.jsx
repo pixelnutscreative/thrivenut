@@ -108,11 +108,12 @@ const { data: myMenuGroups = [] } = useQuery({
   queryKey: ['myMenuGroups', effectiveEmail],
   queryFn: async () => {
     if (!effectiveEmail) return [];
+    // Consolidates N+1 query - reduces API calls from 1+N to 1
     const response = await base44.functions.invoke('getUserGroups', { userEmail: effectiveEmail });
     return response.data?.groups || [];
   },
   enabled: !!effectiveEmail,
-  staleTime: Infinity, // Group memberships rarely change - manual invalidation only
+  staleTime: 300000, // 5 minutes
   refetchOnWindowFocus: false,
   refetchOnReconnect: false,
   retry: 2,

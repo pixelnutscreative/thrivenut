@@ -22,19 +22,19 @@ Deno.serve(async (req) => {
       return Response.json({ groups: [] });
     }
 
-    // Fetch all group details in parallel
+    // Extract groupIds for a single efficient query
     const groupIds = memberships.map(m => m.group_id);
-    const groupPromises = groupIds.map(id => 
-      base44.asServiceRole.entities.CreatorGroup.filter({ id })
-    );
-    
-    const groupResults = await Promise.all(groupPromises);
-    const activeGroups = groupResults.flat().filter(g => g && g.status === 'active');
+
+    // Fetch all group details in one call using the $in operator
+    const groups = await base44.asServiceRole.entities.CreatorGroup.filter({ 
+      id: { $in: groupIds }, 
+      status: 'active' 
+    });
     
     // Deduplicate by ID
-    const uniqueGroups = Array.from(new Map(activeGroups.map(g => [g.id, g])).values());
+    const uniqueGroups = Array.from(new Map(groups.map(g => [g.id, g])).values());
 
-    return Response.json({ groups: uniqueGroups });
+    return Response.json({ groups: uniqueGroups, memberships });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
