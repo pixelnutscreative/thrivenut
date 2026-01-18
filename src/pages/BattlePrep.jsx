@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { format, addDays, addHours, isAfter, isBefore, parseISO } from 'date-fns';
+import { useQuery as useReactQuery } from '@tanstack/react-query';
 import { Swords, Shield, Zap, Skull, Wind, Users, Plus, Clock, Trash2, Edit2, Save, CheckCircle, Copy, Link as LinkIcon, Loader2, AlertTriangle, MessageCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import GloveAssignmentManager from '../components/battles/GloveAssignmentManager';
@@ -37,6 +38,20 @@ export default function BattlePrep() {
     glove_assignments: [],
     strategy_notes: ''
   });
+
+  // Get user preferences for battle timing options
+  const { data: preferences = {} } = useQuery({
+    queryKey: ['userPreferences'],
+    queryFn: async () => {
+      const user = await base44.auth.me();
+      if (!user) return {};
+      const prefs = await base44.entities.UserPreferences.filter({ user_email: user.email }, '-updated_date');
+      return prefs[0] || {};
+    },
+    staleTime: Infinity
+  });
+
+  const enabledDropTimings = preferences?.battle_drop_timings || ['beginning', 'first_bonus', 'middle_bonus', 'end'];
 
   const [activeBattleId, setActiveBattleId] = useState(null);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -392,10 +407,10 @@ export default function BattlePrep() {
                     <CardDescription>Plan your attack and defense</CardDescription>
                   </CardHeader>
                   <CardContent className="p-6 space-y-6">
-                    {/* Battle Selector */}
+                    {/* Battle Selector - Only Upcoming Battles */}
                     <div className="flex gap-4 items-end">
                       <div className="flex-1">
-                        <label className="text-sm font-medium mb-1 block">Active Plan</label>
+                        <label className="text-sm font-medium mb-1 block">Upcoming Battle</label>
                         <Select 
                           value={activeBattleId || 'new'} 
                           onValueChange={(v) => setActiveBattleId(v === 'new' ? null : v)}
@@ -405,11 +420,13 @@ export default function BattlePrep() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="new">+ Create New Plan</SelectItem>
-                            {battlePlans.map(plan => (
-                              <SelectItem key={plan.id} value={plan.id}>
-                                VS {plan.opponent} ({plan.battle_date ? format(parseISO(plan.battle_date), 'MMM d h:mm a') : 'Unscheduled'})
-                              </SelectItem>
-                            ))}
+                            {battlePlans
+                              .filter(plan => !plan.battle_date || isAfter(parseISO(plan.battle_date), new Date()))
+                              .map(plan => (
+                                <SelectItem key={plan.id} value={plan.id}>
+                                  VS {plan.opponent} ({plan.battle_date ? format(parseISO(plan.battle_date), 'MMM d h:mm a') : 'Unscheduled'})
+                                </SelectItem>
+                              ))}
                           </SelectContent>
                         </Select>
                       </div>
@@ -538,6 +555,7 @@ export default function BattlePrep() {
                         <GloveAssignmentManager 
                           assignments={activeBattleId ? (battlePlans.find(p => p.id === activeBattleId)?.glove_assignments || []) : newPlan.glove_assignments}
                           availableInventory={activePowerUps}
+                          enabledTimings={enabledDropTimings}
                           onUpdate={(assignments) => {
                             if (activeBattleId) {
                               updatePlanMutation.mutate({ id: activeBattleId, data: { glove_assignments: assignments } });
