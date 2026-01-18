@@ -92,7 +92,7 @@ const { data: preferences } = useQuery({
     return prefs[0] || {}; // Changed from null to {}
   },
   enabled: !!effectiveEmail,
-  staleTime: 60000, // Cache for 1 minute
+  staleTime: Infinity, // Never refetch automatically - manual invalidation on save
   refetchOnWindowFocus: false, // Prevent refetching on tab focus
   refetchOnReconnect: false,   // Prevent refetching on network reconnect
   retry: 2,                    // Retry failed requests 2 times
@@ -117,7 +117,7 @@ const { data: myMenuGroups = [] } = useQuery({
     return Array.from(new Map(activeGroups.map(g => [g.id, g])).values());
     },
   enabled: !!effectiveEmail,
-  staleTime: 60000, // Cache for 1 minute
+  staleTime: 300000, // 5 minutes
   refetchOnWindowFocus: false,
   refetchOnReconnect: false,
   retry: 2,
@@ -136,7 +136,7 @@ const { data: aiUser } = useQuery({
     return users[0] || null;
   },
   enabled: !!effectiveEmail,
-  staleTime: 60000, // Cache for 1 minute
+  staleTime: Infinity, // Subscription status rarely changes
   refetchOnWindowFocus: false,
   refetchOnReconnect: false,
   retry: 2,
@@ -146,7 +146,7 @@ const { data: aiUser } = useQuery({
 const { data: featureFlags = [] } = useQuery({
   queryKey: ['featureFlags'],
   queryFn: () => base44.entities.FeatureFlag.list(),
-  staleTime: 60000, // Cache for 1 minute
+  staleTime: Infinity, // Static data - manual invalidation only
   refetchOnWindowFocus: false,
   refetchOnReconnect: false,
   retry: 2,
