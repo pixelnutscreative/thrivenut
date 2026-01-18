@@ -16,11 +16,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 export default function BattlePrep() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('inventory');
-
-  // Get current user
-  useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => setUser(null));
-  }, []);
   
   // Inventory Form State
   const [newItem, setNewItem] = useState({
@@ -47,8 +42,6 @@ export default function BattlePrep() {
   const [modUsername, setModUsername] = useState('');
   const [generatedLink, setGeneratedLink] = useState('');
   const [shareLoading, setShareLoading] = useState(false);
-  const [user, setUser] = useState(null);
-  const [battleShareGroupId, setBattleShareGroupId] = useState(null);
 
   // Fetch Contacts for dropdown
   const { data: contacts = [] } = useQuery({
@@ -66,17 +59,6 @@ export default function BattlePrep() {
   const { data: battlePlans = [] } = useQuery({
     queryKey: ['battlePlans'],
     queryFn: () => base44.entities.BattlePlan.list('-battle_date', 20),
-  });
-
-  // Fetch user's groups for sharing
-  const { data: myGroups = [] } = useQuery({
-    queryKey: ['myGroupsForBattle', user?.email],
-    queryFn: async () => {
-      if (!user?.email) return [];
-      const response = await base44.functions.invoke('getUserGroups', { userEmail: user.email });
-      return response.data?.groups || [];
-    },
-    enabled: !!user?.email,
   });
 
   // Filter Active Power Ups (Not Expired)
@@ -142,21 +124,10 @@ export default function BattlePrep() {
   });
 
   const createPlanMutation = useMutation({
-    mutationFn: (data) => {
-      const battleData = {
-        ...data,
-        creator_name: user?.full_name || user?.email || 'Unknown'
-      };
-      if (battleShareGroupId) {
-        battleData.group_id = battleShareGroupId;
-        battleData.approval_status = 'pending'; // Non-owners need approval
-      }
-      return base44.entities.BattlePlan.create(battleData);
-    },
+    mutationFn: (data) => base44.entities.BattlePlan.create(data),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['battlePlans'] });
       setActiveBattleId(data.id);
-      setBattleShareGroupId(null);
       setNewPlan({ opponent: '', battle_date: '', mist_strategy: 'No', first_glove_assignee: '', bonus_glove_assignee: '', strategy_notes: '' });
     }
   });
