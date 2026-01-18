@@ -102,31 +102,17 @@ export default function BattlePrep() {
     enabled: true,
   });
 
-  // Fetch Contacts who have power-ups for current user (to support them)
-  const { data: giftingMeData = [] } = useQuery({
-    queryKey: ['giftingMeData'],
-    queryFn: async () => {
-      const user = await base44.auth.me();
-      if (!user) return [];
-      // Find all power-ups where contact_id matches current user's contact record
-      const contacts = await base44.entities.TikTokContact.list('display_name', 100);
-      const myContact = contacts.find(c => c.claimed_by_email === user.email);
-      if (!myContact) return [];
-      return base44.entities.BattlePowerUp.filter({ contact_id: myContact.id }, '-acquired_date', 100);
-    },
-  });
-
-  // Group gifters by contact
-  const giftingMeByGifter = useMemo(() => {
+  // Group power-ups by contact (who I have power-ups for)
+  const myPowerUpsByContact = useMemo(() => {
     const grouped = {};
-    giftingMeData.forEach(item => {
-      if (!grouped[item.created_by]) {
-        grouped[item.created_by] = [];
+    powerUps.forEach(item => {
+      if (!grouped[item.contact_name]) {
+        grouped[item.contact_name] = [];
       }
-      grouped[item.created_by].push(item);
+      grouped[item.contact_name].push(item);
     });
     return grouped;
-  }, [giftingMeData]);
+  }, [powerUps]);
 
   // Filter Active Power Ups (Not Expired, sorted by expiry) - UNFILTERED for inventory summary
   const allActivePowerUps = useMemo(() => {
@@ -605,7 +591,7 @@ export default function BattlePrep() {
                     : 'border-transparent text-gray-600 hover:text-gray-900'
                 }`}
               >
-                💝 Who's Gifting for Me ({Object.keys(giftingMeByGifter).length})
+                💝 Who I Have Power Ups For ({Object.keys(myPowerUpsByContact).length})
               </button>
             </div>
 
@@ -975,24 +961,24 @@ export default function BattlePrep() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      💝 Support from Your Network
+                      💝 My Power-Ups for Others
                     </CardTitle>
                     <CardDescription>
-                      People who have power-ups to support you in battles
+                      Track who you have power-ups for and support them in battles
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    {Object.keys(giftingMeByGifter).length === 0 ? (
+                    {Object.keys(myPowerUpsByContact).length === 0 ? (
                       <div className="text-center py-8 text-slate-500">
                         <Gift className="w-12 h-12 mx-auto mb-2 opacity-30" />
-                        <p>No one has power-ups for you yet!</p>
-                        <p className="text-xs mt-2">When your team members add power-ups for you, they'll show here.</p>
+                        <p>You don't have any power-ups yet!</p>
+                        <p className="text-xs mt-2">Log power-ups in the Inventory tab to track who you're supporting.</p>
                       </div>
                     ) : (
                       <div className="space-y-4">
-                        {Object.entries(giftingMeByGifter).map(([gifterEmail, items]) => (
-                          <div key={gifterEmail} className="border rounded-lg p-4 bg-slate-50">
-                            <div className="font-semibold text-slate-900 mb-3">{gifterEmail}</div>
+                        {Object.entries(myPowerUpsByContact).map(([contactName, items]) => (
+                          <div key={contactName} className="border rounded-lg p-4 bg-slate-50">
+                            <div className="font-semibold text-slate-900 mb-3">@{contactName}</div>
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                               {items.reduce((acc, item) => {
                                 const existing = acc.find(i => i.type === item.type);
