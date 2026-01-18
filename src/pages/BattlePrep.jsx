@@ -15,6 +15,7 @@ import { Swords, Shield, Zap, Skull, Wind, Users, Plus, Clock, Trash2, Edit2, Sa
 import { motion, AnimatePresence } from 'framer-motion';
 import GloveAssignmentManager from '../components/battles/GloveAssignmentManager';
 import MVPTracker from '../components/battles/MVPTracker';
+import BattlePosterManager from '../components/battles/BattlePosterManager';
 
 export default function BattlePrep() {
   const queryClient = useQueryClient();
