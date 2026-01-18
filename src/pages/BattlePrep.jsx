@@ -783,14 +783,20 @@ export default function BattlePrep() {
                       </div>
 
                       {!activeBattleId && (
-                        <Button 
-                          onClick={() => createPlanMutation.mutate(newPlan)}
-                          disabled={!newPlan.opponent}
-                          className="w-full bg-indigo-600 hover:bg-indigo-700"
-                        >
-                          Create Battle Plan
-                        </Button>
-                      )}
+                         <>
+                           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                             <h4 className="font-semibold text-blue-900 mb-2">➕ Create New Battle Plan</h4>
+                             <p className="text-sm text-blue-700 mb-4">Fill out the opponent and other details below, then click Create.</p>
+                           </div>
+                           <Button 
+                             onClick={() => createPlanMutation.mutate(newPlan)}
+                             disabled={!newPlan.opponent}
+                             className="w-full bg-indigo-600 hover:bg-indigo-700"
+                           >
+                             ⚔️ Create Battle Plan
+                           </Button>
+                         </>
+                       )}
                     </div>
                   </CardContent>
                 </Card>
