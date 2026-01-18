@@ -242,10 +242,13 @@ export default function Settings() {
         });
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['preferences', effectiveEmail] });
-      queryClient.refetchQueries({ queryKey: ['preferences', effectiveEmail] });
-      queryClient.invalidateQueries({ queryKey: ['userProfile', effectiveEmail] });
+    onSuccess: async () => {
+      // Critical: Invalidate cache immediately
+      await queryClient.invalidateQueries({ queryKey: ['preferences', effectiveEmail] });
+      await queryClient.invalidateQueries({ queryKey: ['userProfile', effectiveEmail] });
+      await queryClient.invalidateQueries({ queryKey: ['platformConfig'] });
+      // Force immediate refetch
+      await queryClient.refetchQueries({ queryKey: ['preferences', effectiveEmail] });
     },
   });
 
