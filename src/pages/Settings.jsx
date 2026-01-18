@@ -116,8 +116,10 @@ export default function Settings() {
       return prefs[0] || null;
     },
     enabled: !!effectiveEmail,
-    refetchOnWindowFocus: false, // Prevent overwriting user edits on tab switch
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 0, // Always fetch fresh data
+    cacheTime: 0, // Don't cache at all for settings
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 
   const { data: userProfile, isLoading: profileLoading } = useQuery({
