@@ -79,6 +79,18 @@ export default function BattlePrep() {
     queryFn: () => base44.entities.BattlePlan.list('-battle_date', 20),
   });
 
+  // Fetch User's Groups
+  const { data: myMenuGroups = [] } = useQuery({
+    queryKey: ['userGroups'],
+    queryFn: async () => {
+      const user = await base44.auth.me();
+      if (!user) return [];
+      const response = await base44.functions.invoke('getUserGroups', { userEmail: user.email });
+      return response.data?.groups || [];
+    },
+    enabled: true,
+  });
+
   // Filter Active Power Ups (Not Expired, sorted by expiry)
   const activePowerUps = useMemo(() => {
     const validItems = powerUps
