@@ -219,7 +219,6 @@ export default function Settings() {
   const updatePreferencesMutation = useMutation({
     mutationFn: async (data) => {
       const cleanData = { ...data };
-      const targetId = preferences?.id || data.id; 
       
       // Remove system fields that shouldn't be updated manually
       delete cleanData.id;
@@ -227,22 +226,27 @@ export default function Settings() {
       delete cleanData.updated_date;
       delete cleanData.created_by;
       
-      if (targetId) {
-        return await base44.entities.UserPreferences.update(targetId, cleanData);
+      console.log('📤 SAVING PREFERENCES:', { effectiveEmail, cleanData });
+      
+      // Always use filter-based update (correct SDK signature)
+      const existing = await base44.entities.UserPreferences.filter({ user_email: effectiveEmail }, '-updated_date');
+      
+      if (existing.length > 0) {
+        const result = await base44.entities.UserPreferences.update(existing[0].id, cleanData);
+        console.log('✅ PREFERENCES UPDATED:', result);
+        return result;
       } else {
-        // Fallback check - Sort by updated_date desc to find the most recent active record
-        const existing = await base44.entities.UserPreferences.filter({ user_email: effectiveEmail }, '-updated_date');
-        if (existing.length > 0) {
-           return await base44.entities.UserPreferences.update(existing[0].id, cleanData);
-        }
-        return await base44.entities.UserPreferences.create({
+        const result = await base44.entities.UserPreferences.create({
           user_email: effectiveEmail,
           ...cleanData,
           onboarding_completed: true
         });
+        console.log('✅ PREFERENCES CREATED:', result);
+        return result;
       }
     },
     onSuccess: async () => {
+      console.log('🔄 INVALIDATING & REFETCHING CACHE');
       // Critical: Invalidate cache immediately
       await queryClient.invalidateQueries({ queryKey: ['preferences', effectiveEmail] });
       await queryClient.invalidateQueries({ queryKey: ['userProfile', effectiveEmail] });
@@ -250,6 +254,9 @@ export default function Settings() {
       // Force immediate refetch
       await queryClient.refetchQueries({ queryKey: ['preferences', effectiveEmail] });
     },
+    onError: (error) => {
+      console.error('❌ PREFERENCES SAVE FAILED:', error);
+    }
   });
 
   const updateUserProfileMutation = useMutation({
