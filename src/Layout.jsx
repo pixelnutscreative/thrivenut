@@ -110,6 +110,7 @@ const { data: myMenuGroupsData = { groups: [], preferences: [] } } = useQuery({
     if (!effectiveEmail) return { groups: [], preferences: [] };
     // Consolidates N+1 query - reduces API calls from 1+N to 1
     const response = await base44.functions.invoke('getUserGroups', { userEmail: effectiveEmail });
+    console.log('🔍 Layout myMenuGroups received:', response.data?.groups?.length, 'groups');
     return response.data || { groups: [], preferences: [] };
   },
   enabled: !!effectiveEmail,
@@ -308,7 +309,7 @@ const { data: featureFlags = [] } = useQuery({
            icon: Users,
            path: `CreatorGroups?id=${g.id}`
          }))
-       ]
+      ]
     },
     { name: "Pixel's Place", icon: Sparkles, path: 'PixelsParadise', moduleId: 'pixels_place' }]
 
@@ -385,7 +386,7 @@ const { data: featureFlags = [] } = useQuery({
     color: 'text-orange-400', // Changed to Orange
     bgColor: 'bg-orange-500/10',
     items: [
-      { name: 'Social Shortcuts', icon: Link, path: 'SocialShortcuts', moduleId: 'tiktok' },
+      { name: 'Social Shortcuts', icon: LinkIcon, path: 'SocialShortcuts', moduleId: 'tiktok' },
       { name: 'Social Engagement', icon: MousePointerClick, path: 'TikTokEngagement', moduleId: 'tiktok' },
       { name: 'Creator Contacts', icon: Users, path: 'TikTokContacts', moduleId: 'tiktok' },
       { name: 'Content Calendar', icon: Calendar, path: 'LiveSchedule', moduleId: 'tiktok' },
