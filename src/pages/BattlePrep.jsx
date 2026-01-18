@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { format, addDays, addHours, isAfter, isBefore, parseISO } from 'date-fns';
 import { Swords, Shield, Zap, Skull, Wind, Users, Plus, Clock, Trash2, Edit2, Save, CheckCircle, Copy, Link as LinkIcon, Loader2, AlertTriangle, MessageCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import GloveAssignmentManager from '../components/battles/GloveAssignmentManager';
 
 export default function BattlePrep() {
   const queryClient = useQueryClient();
@@ -32,8 +33,7 @@ export default function BattlePrep() {
     opponent: '',
     battle_date: '',
     mist_strategy: 'No',
-    first_glove_assignee: '',
-    bonus_glove_assignee: '',
+    glove_assignments: [],
     strategy_notes: ''
   });
 
@@ -128,7 +128,7 @@ export default function BattlePrep() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['battlePlans'] });
       setActiveBattleId(data.id);
-      setNewPlan({ opponent: '', battle_date: '', mist_strategy: 'No', first_glove_assignee: '', bonus_glove_assignee: '', strategy_notes: '' });
+      setNewPlan({ opponent: '', battle_date: '', mist_strategy: 'No', glove_assignments: [], strategy_notes: '' });
     }
   });
 
@@ -533,29 +533,17 @@ export default function BattlePrep() {
                         </Select>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium text-blue-600">First Glove Assignment</label>
-                          <Input 
-                            placeholder="Who throws first?"
-                            value={activeBattleId ? (battlePlans.find(p => p.id === activeBattleId)?.first_glove_assignee || '') : newPlan.first_glove_assignee}
-                            onChange={(e) => activeBattleId 
-                              ? updatePlanMutation.mutate({ id: activeBattleId, data: { first_glove_assignee: e.target.value } })
-                              : setNewPlan({...newPlan, first_glove_assignee: e.target.value})
+                      <div className="space-y-2 border-t pt-4">
+                        <GloveAssignmentManager 
+                          assignments={activeBattleId ? (battlePlans.find(p => p.id === activeBattleId)?.glove_assignments || []) : newPlan.glove_assignments}
+                          onUpdate={(assignments) => {
+                            if (activeBattleId) {
+                              updatePlanMutation.mutate({ id: activeBattleId, data: { glove_assignments: assignments } });
+                            } else {
+                              setNewPlan({...newPlan, glove_assignments: assignments});
                             }
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium text-purple-600">Bonus Glove Assignment</label>
-                          <Input 
-                            placeholder="Who covers bonus?"
-                            value={activeBattleId ? (battlePlans.find(p => p.id === activeBattleId)?.bonus_glove_assignee || '') : newPlan.bonus_glove_assignee}
-                            onChange={(e) => activeBattleId 
-                              ? updatePlanMutation.mutate({ id: activeBattleId, data: { bonus_glove_assignee: e.target.value } })
-                              : setNewPlan({...newPlan, bonus_glove_assignee: e.target.value})
-                            }
-                          />
-                        </div>
+                          }}
+                        />
                       </div>
 
                       <div className="space-y-2">
