@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { format, addDays, addHours, isAfter, isBefore, parseISO } from 'date-fns';
 import { useMemo } from 'react';
-import { Swords, Shield, Zap, Skull, Wind, Users, Plus, Clock, Trash2, Edit2, Save, CheckCircle, Copy, Link as LinkIcon, Loader2, AlertTriangle, MessageCircle } from 'lucide-react';
+import { Swords, Shield, Zap, Skull, Wind, Users, Plus, Clock, Trash2, Edit2, Save, CheckCircle, Copy, Link as LinkIcon, Loader2, AlertTriangle, MessageCircle, Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import GloveAssignmentManager from '../components/battles/GloveAssignmentManager';
 import MVPTracker from '../components/battles/MVPTracker';
@@ -129,8 +129,8 @@ export default function BattlePrep() {
     return isBefore(expires, battleDeadline);
   });
 
-  // Aggregated Inventory
-  const inventorySummary = activePowerUps.reduce((acc, item) => {
+  // Aggregated Inventory (always from all items, not filtered)
+  const inventorySummary = allActivePowerUps.reduce((acc, item) => {
     if (!acc[item.type]) acc[item.type] = 0;
     acc[item.type] += item.quantity;
     return acc;
@@ -234,6 +234,122 @@ export default function BattlePrep() {
     navigator.clipboard.writeText(script);
     setScriptCopied(true);
     setTimeout(() => setScriptCopied(false), 2000);
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!activePlan) return;
+    
+    const { jsPDF } = await import('jspdf');
+    const doc = new jsPDF();
+    let yPos = 20;
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 15;
+    const contentWidth = pageWidth - 2 * margin;
+
+    // Title
+    doc.setFontSize(18);
+    doc.text('Battle Prep Sheet', margin, yPos);
+    yPos += 12;
+
+    // Battle Info
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'bold');
+    doc.text('Battle Information', margin, yPos);
+    yPos += 8;
+    doc.setFont(undefined, 'normal');
+    doc.setFontSize(10);
+    doc.text(`Opponent: ${activePlan.opponent}`, margin, yPos);
+    yPos += 6;
+    doc.text(`Date & Time: ${activePlan.battle_date ? format(parseISO(activePlan.battle_date), 'MMM d, yyyy h:mm a') : 'TBD'}`, margin, yPos);
+    yPos += 6;
+    doc.text(`Mist Strategy: ${activePlan.mist_strategy}`, margin, yPos);
+    yPos += 10;
+
+    // Glove Assignments
+    if (activePlan.glove_assignments && activePlan.glove_assignments.length > 0) {
+      doc.setFont(undefined, 'bold');
+      doc.setFontSize(11);
+      doc.text('Glove Assignments', margin, yPos);
+      yPos += 7;
+      doc.setFont(undefined, 'normal');
+      doc.setFontSize(9);
+
+      activePlan.glove_assignments.forEach((assignment, idx) => {
+        const contact = contacts.find(c => c.id === assignment.contact_id);
+        const contactName = contact?.display_name || assignment.contact_name || 'Unknown';
+        const text = `${idx + 1}. @${contactName} - ${assignment.type} at ${assignment.drop_timing || 'N/A'}`;
+        doc.text(text, margin + 5, yPos);
+        yPos += 5;
+        if (yPos > 270) {
+          doc.addPage();
+          yPos = 20;
+        }
+      });
+      yPos += 5;
+    }
+
+    // Strategy Notes
+    if (activePlan.strategy_notes) {
+      doc.setFont(undefined, 'bold');
+      doc.setFontSize(11);
+      doc.text('Strategy Notes', margin, yPos);
+      yPos += 7;
+      doc.setFont(undefined, 'normal');
+      doc.setFontSize(9);
+      const splitText = doc.splitTextToSize(activePlan.strategy_notes, contentWidth);
+      doc.text(splitText, margin, yPos);
+      yPos += splitText.length * 5 + 5;
+    }
+
+    // MVPs
+    if (activePlan.our_mvps && activePlan.our_mvps.length > 0) {
+      if (yPos > 250) {
+        doc.addPage();
+        yPos = 20;
+      }
+      doc.setFont(undefined, 'bold');
+      doc.setFontSize(11);
+      doc.text('Our MVPs', margin, yPos);
+      yPos += 7;
+      doc.setFont(undefined, 'normal');
+      doc.setFontSize(9);
+      activePlan.our_mvps.forEach((mvp) => {
+        doc.text(`${mvp.rank}. ${mvp.username} - ${mvp.gifts_received || 0} gifts`, margin + 5, yPos);
+        yPos += 5;
+      });
+      yPos += 5;
+    }
+
+    if (activePlan.opponent_mvps && activePlan.opponent_mvps.length > 0) {
+      doc.setFont(undefined, 'bold');
+      doc.setFontSize(11);
+      doc.text('Opponent MVPs', margin, yPos);
+      yPos += 7;
+      doc.setFont(undefined, 'normal');
+      doc.setFontSize(9);
+      activePlan.opponent_mvps.forEach((mvp) => {
+        doc.text(`${mvp.rank}. ${mvp.username} - ${mvp.gifts_received || 0} gifts`, margin + 5, yPos);
+        yPos += 5;
+      });
+      yPos += 10;
+    }
+
+    // Notes section for writing
+    if (yPos > 240) {
+      doc.addPage();
+      yPos = 20;
+    }
+    doc.setFont(undefined, 'bold');
+    doc.setFontSize(11);
+    doc.text('Additional Notes (Write In):', margin, yPos);
+    yPos += 8;
+    doc.setDrawColor(200);
+    for (let i = 0; i < 5; i++) {
+      doc.line(margin, yPos, pageWidth - margin, yPos);
+      yPos += 10;
+    }
+
+    doc.save(`Battle_Prep_vs_${activePlan.opponent}.pdf`);
   };
 
   const getIcon = (type) => {
@@ -610,7 +726,18 @@ export default function BattlePrep() {
 
                       {activeBattleId && (
                         <div className="space-y-2 border-t pt-4">
-                          <label className="text-sm font-medium">Battle Results & MVPs</label>
+                          <div className="flex items-center justify-between">
+                            <label className="text-sm font-medium">Battle Results & MVPs</label>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={handleDownloadPDF}
+                              className="gap-2"
+                            >
+                              <Download className="w-4 h-4" />
+                              Download PDF
+                            </Button>
+                          </div>
                           <MVPTracker 
                             ourMVPs={battlePlans.find(p => p.id === activeBattleId)?.our_mvps || []}
                             opponentMVPs={battlePlans.find(p => p.id === activeBattleId)?.opponent_mvps || []}
