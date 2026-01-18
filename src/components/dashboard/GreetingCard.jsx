@@ -69,6 +69,16 @@ export default function GreetingCard({ userName, user }) {
     setIsGenerating(true);
     try {
       const selectedTypes = preferences?.greeting_types || ['scripture', 'quote', 'affirmation'];
+      
+      // 🔍 DEBUG: Verify data
+      console.log('🔍 AI PROMPT INPUTS:', {
+        workingThrough: mentalHealth?.mental_health_struggles,
+        improvements: mentalHealth?.improvement_goals,
+        goals: goals?.map(g => g.title),
+        habits: habits,
+        selectedTypes: selectedTypes
+      });
+
       const workingThrough = mentalHealth?.mental_health_struggles?.join(', ') || 'general wellness';
       const improvements = mentalHealth?.improvement_goals?.join(', ') || 'personal growth';
       const goalTitles = goals.slice(0, 5).map(g => g.title).join(', ') || 'life goals';
