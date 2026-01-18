@@ -36,7 +36,8 @@ export default function BattlePrep() {
     battle_date: '',
     mist_strategy: 'No',
     glove_assignments: [],
-    strategy_notes: ''
+    strategy_notes: '',
+    group_ids: []
   });
 
   // Get user preferences for battle timing options
@@ -592,6 +593,29 @@ export default function BattlePrep() {
                           />
                         </div>
                       )}
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Share with Groups</label>
+                        <div className="space-y-2 max-h-32 overflow-y-auto">
+                          {myMenuGroups.map(group => (
+                            <label key={group.id} className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                checked={newPlan.group_ids?.includes(group.id) || false}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setNewPlan({...newPlan, group_ids: [...(newPlan.group_ids || []), group.id]});
+                                  } else {
+                                    setNewPlan({...newPlan, group_ids: newPlan.group_ids?.filter(id => id !== group.id) || []});
+                                  }
+                                }}
+                                className="w-4 h-4"
+                              />
+                              <span className="text-sm">{group.name}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
 
                       {!activeBattleId && (
                         <Button 

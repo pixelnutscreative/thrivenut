@@ -78,6 +78,8 @@ export default function GloveAssignmentManager({ assignments = [], onUpdate, ava
                     <SelectItem value="hammer">🔨 Hammer</SelectItem>
                     <SelectItem value="lightning2">⚡ Lightning (2nd)</SelectItem>
                     <SelectItem value="lightning3">⚡ Lightning (3rd)</SelectItem>
+                    <SelectItem value="time_extender">⏱️ Time Extender</SelectItem>
+                    <SelectItem value="mist">🌫️ Mist</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
