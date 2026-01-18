@@ -58,7 +58,11 @@ export default function LoveAway() {
 
   const { data: loveAways = [] } = useQuery({
     queryKey: ['loveAways'],
-    queryFn: () => base44.entities.LoveAway.list('-created_date'),
+    queryFn: async () => {
+      const user = await base44.auth.me();
+      if (!user) return [];
+      return base44.entities.LoveAway.filter({ created_by: user.email }, '-created_date');
+    },
   });
 
   // Filter out archived unless showing history

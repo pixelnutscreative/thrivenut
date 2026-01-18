@@ -20,6 +20,7 @@ import BattlePosterManager from '../components/battles/BattlePosterManager';
 export default function BattlePrep() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('inventory');
+  const [stationSubTab, setStationSubTab] = useState('strategy');
   const [arsenalFilter, setArsenalFilter] = useState('all');
   
   // Inventory Form State
@@ -100,6 +101,32 @@ export default function BattlePrep() {
     },
     enabled: true,
   });
+
+  // Fetch Contacts who have power-ups for current user (to support them)
+  const { data: giftingMeData = [] } = useQuery({
+    queryKey: ['giftingMeData'],
+    queryFn: async () => {
+      const user = await base44.auth.me();
+      if (!user) return [];
+      // Find all power-ups where contact_id matches current user's contact record
+      const contacts = await base44.entities.TikTokContact.list('display_name', 100);
+      const myContact = contacts.find(c => c.claimed_by_email === user.email);
+      if (!myContact) return [];
+      return base44.entities.BattlePowerUp.filter({ contact_id: myContact.id }, '-acquired_date', 100);
+    },
+  });
+
+  // Group gifters by contact
+  const giftingMeByGifter = useMemo(() => {
+    const grouped = {};
+    giftingMeData.forEach(item => {
+      if (!grouped[item.created_by]) {
+        grouped[item.created_by] = [];
+      }
+      grouped[item.created_by].push(item);
+    });
+    return grouped;
+  }, [giftingMeData]);
 
   // Filter Active Power Ups (Not Expired, sorted by expiry) - UNFILTERED for inventory summary
   const allActivePowerUps = useMemo(() => {
