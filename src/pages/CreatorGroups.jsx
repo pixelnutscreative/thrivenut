@@ -1142,6 +1142,7 @@ export default function CreatorGroups() {
     );
   }
 
+  // Redirect Interested users (handled in useEffect above)
   // Redirect non-members of public groups to GroupWelcome page
   if (!isMember && !isAdmin && !isSuperAdmin && activeGroup.allow_public_discovery === true) {
     navigate(createPageUrl('GroupWelcome') + `?groupId=${activeGroupId}`);
