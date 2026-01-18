@@ -153,15 +153,9 @@ export default function CreatorGroups() {
     }
   }, [groupTypes]);
 
-  // Fetch all group preferences for visibility
-  const { data: allGroupPrefs = [], refetch: refetchAllPrefs } = useQuery({
-    queryKey: ['allGroupPrefs', user?.email],
-    queryFn: async () => {
-      if (!user?.email) return [];
-      return await base44.entities.UserGroupPreference.filter({ user_email: user?.email });
-    },
-    enabled: !!user?.email
-  });
+  // Use preferences from consolidated data (eliminates duplicate query)
+  const allGroupPrefs = myGroupsData?.preferences || [];
+  const refetchAllPrefs = () => queryClient.invalidateQueries(['myGroupsConsolidated']);
 
   const toggleGroupVisibilityMutation = useMutation({
     mutationFn: async ({ groupId, isHidden }) => {
