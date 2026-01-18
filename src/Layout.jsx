@@ -298,20 +298,7 @@ const { data: featureFlags = [] } = useQuery({
     items: [
     { name: getDashboardName(), icon: LayoutDashboard, path: 'Dashboard', alwaysShow: true },
     { name: preferences?.my_resources_label || 'My Stuff', icon: Bookmark, path: 'MyResources', moduleId: 'my_resources', alwaysShow: true },
-    { 
-      name: 'Groups', 
-      icon: Users, 
-      isSection: true,
-      moduleId: 'my_groups',
-      subItems: [
-         { name: 'All My Groups', icon: Users, path: 'CreatorGroups' },
-         ...myMenuGroups.filter(g => !g.menu_pinned).map(g => ({
-           name: g.name,
-           icon: Users,
-           path: `CreatorGroups?id=${g.id}`
-         }))
-      ]
-    },
+    { name: 'Groups', icon: Users, path: 'CreatorGroups', moduleId: 'my_groups', alwaysShow: true },
     { name: "Pixel's Place", icon: Sparkles, path: 'PixelsParadise', moduleId: 'pixels_place' }]
 
   },
