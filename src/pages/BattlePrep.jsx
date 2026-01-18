@@ -166,7 +166,13 @@ export default function BattlePrep() {
   });
 
   const createPlanMutation = useMutation({
-    mutationFn: (data) => base44.entities.BattlePlan.create(data),
+    mutationFn: async (data) => {
+      const user = await base44.auth.me();
+      return base44.entities.BattlePlan.create({
+        ...data,
+        creator_name: user?.full_name || user?.email || 'Unknown'
+      });
+    },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['battlePlans'] });
       setActiveBattleId(data.id);
@@ -555,21 +561,20 @@ export default function BattlePrep() {
                     {/* Battle Selector - Only Upcoming Battles */}
                     <div className="flex gap-4 items-end">
                       <div className="flex-1">
-                        <label className="text-sm font-medium mb-1 block">Upcoming Battle</label>
+                        <label className="text-sm font-medium mb-1 block">Select Battle Plan to Edit</label>
                         <Select 
-                          value={activeBattleId || 'new'} 
-                          onValueChange={(v) => setActiveBattleId(v === 'new' ? null : v)}
+                          value={activeBattleId || ''} 
+                          onValueChange={(v) => setActiveBattleId(v || null)}
                         >
                           <SelectTrigger>
-                            <SelectValue placeholder="Select a Battle" />
+                            <SelectValue placeholder="Choose a battle to edit or scroll down to create new" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="new">+ Create New Battle Plan</SelectItem>
                             {battlePlans
                               .filter(plan => !plan.battle_date || isAfter(parseISO(plan.battle_date), new Date()))
                               .map(plan => (
                                 <SelectItem key={plan.id} value={plan.id}>
-                                  VS {plan.opponent} • {plan.creator_name ? `Created by ${plan.creator_name}` : 'No creator'} • {plan.battle_date ? format(parseISO(plan.battle_date), 'MMM d h:mm a') : 'Unscheduled'}
+                                  VS {plan.opponent} • {plan.creator_name ? `by ${plan.creator_name}` : 'No creator'} • {plan.battle_date ? format(parseISO(plan.battle_date), 'MMM d h:mm a') : 'Unscheduled'}
                                 </SelectItem>
                               ))}
                           </SelectContent>
@@ -580,7 +585,7 @@ export default function BattlePrep() {
                           variant="outline" 
                           onClick={() => setActiveBattleId(null)}
                         >
-                          New
+                          Create New
                         </Button>
                       )}
                     </div>
@@ -818,35 +823,53 @@ export default function BattlePrep() {
                 </Card>
 
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Who has Gloves?</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    <div className="max-h-[400px] overflow-y-auto">
-                      {activePowerUps.filter(i => i.type === 'Glove').map((item, idx) => (
-                        <div key={idx} className="flex justify-between items-center p-3 border-b last:border-0 hover:bg-slate-50">
-                          <span className="font-medium">{item.contact_name}</span>
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                              {item.quantity}
-                            </Badge>
-                            <Button 
-                              size="icon" 
-                              variant="ghost" 
-                              className="h-6 w-6"
-                              onClick={() => updateItemMutation.mutate({ id: item.id, data: { quantity: Math.max(0, item.quantity - 1) } })}
-                            >
-                              <span className="text-xs">-1</span>
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                      {activePowerUps.filter(i => i.type === 'Glove').length === 0 && (
-                        <p className="p-4 text-center text-slate-500 text-sm">No gloves in inventory.</p>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
+                   <CardHeader>
+                     <CardTitle className="text-base">Battle Inventory by Contact</CardTitle>
+                   </CardHeader>
+                   <CardContent className="p-0">
+                     <div className="max-h-[400px] overflow-y-auto">
+                       {allActivePowerUps.length > 0 ? (
+                         Object.entries(
+                           allActivePowerUps.reduce((acc, item) => {
+                             if (!acc[item.contact_name]) {
+                               acc[item.contact_name] = [];
+                             }
+                             acc[item.contact_name].push(item);
+                             return acc;
+                           }, {})
+                         )
+                         .sort(([nameA], [nameB]) => nameA.localeCompare(nameB))
+                         .map(([contactName, items]) => (
+                           <div key={contactName} className="border-b last:border-0">
+                             <div className="p-3 bg-slate-50 font-semibold text-sm sticky top-0">{contactName}</div>
+                             {items.map((item) => (
+                               <div key={item.id} className="flex justify-between items-center p-3 border-t text-sm hover:bg-blue-50">
+                                 <div className="flex items-center gap-2">
+                                   <Badge variant="outline" className="text-xs">
+                                     {item.type}
+                                   </Badge>
+                                 </div>
+                                 <div className="flex items-center gap-2">
+                                   <span className="font-medium">{item.quantity}</span>
+                                   <Button 
+                                     size="icon" 
+                                     variant="ghost" 
+                                     className="h-5 w-5"
+                                     onClick={() => updateItemMutation.mutate({ id: item.id, data: { quantity: Math.max(0, item.quantity - 1) } })}
+                                   >
+                                     <span className="text-xs">-1</span>
+                                   </Button>
+                                 </div>
+                               </div>
+                             ))}
+                           </div>
+                         ))
+                       ) : (
+                         <p className="p-4 text-center text-slate-500 text-sm">No items in inventory.</p>
+                       )}
+                     </div>
+                   </CardContent>
+                 </Card>
               </div>
 
             </div>
