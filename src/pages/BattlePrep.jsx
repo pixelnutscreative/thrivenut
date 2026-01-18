@@ -90,6 +90,27 @@ export default function BattlePrep() {
     },
   });
 
+  // Fetch Gifted Power-Ups (power-ups user gave to others)
+  const { data: giftedPowerUps = [] } = useQuery({
+    queryKey: ['giftedPowerUps'],
+    queryFn: async () => {
+      const user = await base44.auth.me();
+      if (!user) return [];
+      return base44.entities.GiftedPowerUp.filter({ created_by: user.email }, '-given_date', 100);
+    },
+  });
+
+  // Active gifted power-ups (not expired/used)
+  const activeGiftedPowerUps = useMemo(() => {
+    return giftedPowerUps
+      .filter(item => {
+        if (item.is_used) return false;
+        const expires = parseISO(item.expires_at);
+        return isAfter(expires, new Date());
+      })
+      .sort((a, b) => parseISO(a.expires_at) - parseISO(b.expires_at));
+  }, [giftedPowerUps]);
+
   // Fetch User's Groups
   const { data: myMenuGroups = [] } = useQuery({
     queryKey: ['userGroups'],
@@ -176,6 +197,27 @@ export default function BattlePrep() {
       queryClient.invalidateQueries({ queryKey: ['battlePowerUps'] });
       setNewItem({ ...newItem, contact_id: '', contact_name: '', quantity: 1 });
     }
+  });
+
+  const createGiftedMutation = useMutation({
+    mutationFn: (data) => {
+      const dateTimeString = `${data.given_date}T${data.given_time || '12:00'}:00`;
+      const giftDate = new Date(dateTimeString);
+      const expirationDate = addDays(giftDate, 5);
+      
+      return base44.entities.GiftedPowerUp.create({
+        ...data,
+        expires_at: expirationDate.toISOString()
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['giftedPowerUps'] });
+    }
+  });
+
+  const deleteGiftedMutation = useMutation({
+    mutationFn: (id) => base44.entities.GiftedPowerUp.delete(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['giftedPowerUps'] })
   });
 
   const updateItemMutation = useMutation({
@@ -593,6 +635,16 @@ export default function BattlePrep() {
               >
                 💝 Who I Have Power Ups For ({Object.keys(myPowerUpsByContact).length})
               </button>
+              <button
+                onClick={() => setStationSubTab('given')}
+                className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
+                  stationSubTab === 'given'
+                    ? 'border-indigo-600 text-indigo-600'
+                    : 'border-transparent text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                🎁 Power Ups I Gave ({activeGiftedPowerUps.length})
+              </button>
             </div>
 
             {stationSubTab === 'strategy' && (
@@ -1000,6 +1052,123 @@ export default function BattlePrep() {
                             </div>
                           </div>
                         ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+            )}
+
+            {stationSubTab === 'given' && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Log Power-Up Given</CardTitle>
+                    <CardDescription>Track power-ups you gave to others (expires 5 days after)</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <Input
+                        placeholder="Who did you give it to? (name or @username)"
+                        onChange={(e) => setNewItem({...newItem, contact_name: e.target.value})}
+                        value={newItem.contact_name}
+                      />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Type</label>
+                          <Select value={newItem.type} onValueChange={(v) => setNewItem({...newItem, type: v})}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Glove">🥊 Glove</SelectItem>
+                              <SelectItem value="Hammer">🔨 Hammer</SelectItem>
+                              <SelectItem value="Lightning2">⚡ Lightning (2nd)</SelectItem>
+                              <SelectItem value="Lightning3">⚡ Lightning (3rd)</SelectItem>
+                              <SelectItem value="TimeExtender">⏱️ Time Extender</SelectItem>
+                              <SelectItem value="Mist">🌫️ Mist</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Quantity</label>
+                          <Input 
+                            type="number" 
+                            min="1" 
+                            value={newItem.quantity}
+                            onChange={(e) => setNewItem({...newItem, quantity: parseInt(e.target.value) || 1})}
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Date Given</label>
+                          <Input 
+                            type="date" 
+                            value={newItem.acquired_date}
+                            onChange={(e) => setNewItem({...newItem, acquired_date: e.target.value})}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Time Given</label>
+                          <Select value={newItem.acquired_time} onValueChange={(v) => setNewItem({...newItem, acquired_time: v})}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {Array.from({ length: 24 }).map((_, i) => {
+                                const hour = i.toString().padStart(2, '0');
+                                return <SelectItem key={hour} value={`${hour}:00`}>{hour}:00</SelectItem>;
+                              })}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <Button 
+                        onClick={() => createGiftedMutation.mutate({ recipient_name: newItem.contact_name, type: newItem.type, quantity: newItem.quantity, given_date: newItem.acquired_date, given_time: newItem.acquired_time })}
+                        disabled={!newItem.contact_name}
+                        className="w-full bg-indigo-600 hover:bg-indigo-700"
+                      >
+                        <Plus className="w-4 h-4 mr-2" /> Log Power-Up Given
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Active Power-Ups Given</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {activeGiftedPowerUps.length === 0 ? (
+                      <p className="text-center text-slate-500 py-8">No active power-ups logged yet</p>
+                    ) : (
+                      <div className="space-y-3">
+                        {activeGiftedPowerUps.map(item => {
+                          const expires = parseISO(item.expires_at);
+                          const now = new Date();
+                          const hoursLeft = Math.max(0, Math.ceil((expires - now) / (1000 * 60 * 60)));
+                          const daysLeft = Math.ceil(hoursLeft / 24);
+                          return (
+                            <div key={item.id} className="flex justify-between items-center p-3 border rounded-lg bg-slate-50">
+                              <div>
+                                <div className="font-semibold text-slate-900">@{item.recipient_name}</div>
+                                <div className="text-sm text-slate-600 flex items-center gap-2">
+                                  <Badge variant="outline">{item.quantity} {item.type}</Badge>
+                                  <span className={daysLeft <= 1 ? "text-red-600 font-medium" : "text-slate-600"}>
+                                    Expires in {daysLeft > 1 ? `${daysLeft} days` : `${hoursLeft} hours`}
+                                  </span>
+                                </div>
+                              </div>
+                              <Button 
+                                size="sm" 
+                                variant="ghost"
+                                onClick={() => deleteGiftedMutation.mutate(item.id)}
+                                className="text-red-400 hover:text-red-600 hover:bg-red-50"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                   </CardContent>
