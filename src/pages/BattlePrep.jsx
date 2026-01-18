@@ -91,31 +91,31 @@ export default function BattlePrep() {
     enabled: true,
   });
 
-  // Filter Active Power Ups (Not Expired, sorted by expiry)
-  const activePowerUps = useMemo(() => {
-    const validItems = powerUps
+  // Filter Active Power Ups (Not Expired, sorted by expiry) - UNFILTERED for inventory summary
+  const allActivePowerUps = useMemo(() => {
+    return powerUps
       .filter(item => {
         if (item.is_used) return false;
-        // Calculate expiration based on date AND time if available
         let expires;
         if (item.expires_at) {
           expires = parseISO(item.expires_at);
         } else {
-          // Fallback for old items
           expires = addDays(parseISO(item.acquired_date), 5);
         }
-        return isAfter(expires, new Date()); // Still valid
+        return isAfter(expires, new Date());
       })
       .sort((a, b) => {
         const expiresA = a.expires_at ? parseISO(a.expires_at) : addDays(parseISO(a.acquired_date), 5);
         const expiresB = b.expires_at ? parseISO(b.expires_at) : addDays(parseISO(b.acquired_date), 5);
         return expiresA - expiresB;
       });
+  }, [powerUps]);
 
-    // Filter by type if needed
-    if (arsenalFilter === 'all') return validItems;
-    return validItems.filter(item => item.type === arsenalFilter);
-  }, [powerUps, arsenalFilter]);
+  // Filtered display list (respects arsenal filter)
+  const activePowerUps = useMemo(() => {
+    if (arsenalFilter === 'all') return allActivePowerUps;
+    return allActivePowerUps.filter(item => item.type === arsenalFilter);
+  }, [allActivePowerUps, arsenalFilter]);
 
   // Battle Deadline Logic
   const activePlan = activeBattleId ? battlePlans.find(p => p.id === activeBattleId) : null;
