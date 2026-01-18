@@ -585,8 +585,33 @@ export default function BattlePrep() {
 
           {/* BATTLE STATION TAB */}
           <TabsContent value="station" className="space-y-6">
+            {/* Station Sub-Tabs */}
+            <div className="flex gap-2 border-b flex-wrap">
+              <button
+                onClick={() => setStationSubTab('strategy')}
+                className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
+                  stationSubTab === 'strategy'
+                    ? 'border-indigo-600 text-indigo-600'
+                    : 'border-transparent text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                ⚔️ Battle Strategy
+              </button>
+              <button
+                onClick={() => setStationSubTab('gifters')}
+                className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
+                  stationSubTab === 'gifters'
+                    ? 'border-indigo-600 text-indigo-600'
+                    : 'border-transparent text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                💝 Who's Gifting for Me ({Object.keys(giftingMeByGifter).length})
+              </button>
+            </div>
+
+            {stationSubTab === 'strategy' && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              
+
               {/* Left Col: Battle Plan */}
               <div className="lg:col-span-2 space-y-6">
                 <Card className="bg-white shadow-lg border-indigo-100">
@@ -942,9 +967,63 @@ export default function BattlePrep() {
               </div>
 
             </div>
-          </TabsContent>
-        </Tabs>
-      </div>
+            )}
+
+            {stationSubTab === 'gifters' && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      💝 Support from Your Network
+                    </CardTitle>
+                    <CardDescription>
+                      People who have power-ups to support you in battles
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {Object.keys(giftingMeByGifter).length === 0 ? (
+                      <div className="text-center py-8 text-slate-500">
+                        <Gift className="w-12 h-12 mx-auto mb-2 opacity-30" />
+                        <p>No one has power-ups for you yet!</p>
+                        <p className="text-xs mt-2">When your team members add power-ups for you, they'll show here.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {Object.entries(giftingMeByGifter).map(([gifterEmail, items]) => (
+                          <div key={gifterEmail} className="border rounded-lg p-4 bg-slate-50">
+                            <div className="font-semibold text-slate-900 mb-3">{gifterEmail}</div>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                              {items.reduce((acc, item) => {
+                                const existing = acc.find(i => i.type === item.type);
+                                if (existing) {
+                                  existing.quantity += item.quantity;
+                                } else {
+                                  acc.push({ type: item.type, quantity: item.quantity });
+                                }
+                                return acc;
+                              }, []).sort((a, b) => a.type.localeCompare(b.type)).map(summed => (
+                                <div key={summed.type} className="bg-white p-3 rounded-lg border text-center">
+                                  <div className="flex items-center justify-center mb-2">
+                                    {getIcon(summed.type)}
+                                  </div>
+                                  <div className="text-sm font-semibold text-slate-900">{summed.quantity}</div>
+                                  <div className="text-xs text-slate-600">{summed.type}</div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+            )}
+            </TabsContent>
+            </Tabs>
+            </div>
 
       <Dialog open={showShareModal} onOpenChange={setShowShareModal}>
         <DialogContent>
