@@ -293,6 +293,16 @@ export default function CreatorGroups() {
 
   const activeGroup = fetchedActiveGroup || groups.find(g => g.id === activeGroupId);
   const activeMembership = myMemberships.find(m => m.group_id === activeGroupId);
+
+  // DEBUG LOG
+  console.log('🔍 DEBUG MEMBERSHIP:', {
+    userEmail: user?.email,
+    activeGroupId: activeGroupId,
+    myMembershipsCount: myMemberships?.length,
+    activeMembership: activeMembership,
+    isMember: isMember,
+    isAdmin: isAdmin
+  });
   
   // Robust Membership Checks
   const isOwnerByEmail = activeGroup?.owner_email && user?.email && activeGroup.owner_email.toLowerCase() === user.email.toLowerCase();
