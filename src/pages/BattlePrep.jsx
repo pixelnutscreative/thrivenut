@@ -262,14 +262,11 @@ export default function BattlePrep() {
                     <label className="text-sm font-medium">Type</label>
                     <Select value={newItem.type} onValueChange={(v) => setNewItem({...newItem, type: v})}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Glove">🥊 Glove</SelectItem>
-                        <SelectItem value="Mist">🌫️ Mist</SelectItem>
-                        <SelectItem value="Sniper">🎯 Sniper</SelectItem>
-                        <SelectItem value="Jet">✈️ Jet</SelectItem>
-                        <SelectItem value="Sub">🌊 Sub</SelectItem>
-                        <SelectItem value="Other">❓ Other</SelectItem>
-                      </SelectContent>
+                       <SelectContent>
+                         <SelectItem value="Glove">🥊 Glove</SelectItem>
+                         <SelectItem value="Mist">🌫️ Mist</SelectItem>
+                         <SelectItem value="Sniper">🎯 Sniper (End Game)</SelectItem>
+                       </SelectContent>
                     </Select>
                   </div>
                   <div className="w-full md:w-24 space-y-2">
