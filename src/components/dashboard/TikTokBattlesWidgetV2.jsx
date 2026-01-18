@@ -1,14 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Swords, Clock, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { format, parseISO, isAfter, startOfDay, addDays } from 'date-fns';
+import { format, parseISO, isAfter, startOfDay, addDays, toZonedTime } from 'date-fns-tz';
+import { formatInTimeZone } from 'date-fns-tz';
 
-export default function TikTokBattlesWidgetV2({ userEmail }) {
+export default function TikTokBattlesWidgetV2({ userEmail, userTimezone = 'UTC' }) {
   const [selectedDate, setSelectedDate] = useState(new Date());
+
+  // Fetch user preferences for timezone
+  const { data: userPrefs = {} } = useQuery({
+    queryKey: ['userPrefs', userEmail],
+    queryFn: async () => {
+      if (!userEmail) return {};
+      const prefs = await base44.entities.UserPreferences.filter({ user_email: userEmail });
+      return prefs[0] || {};
+    },
+    enabled: !!userEmail,
+    staleTime: Infinity,
+  });
+
+  const timezone = userPrefs?.user_timezone || userTimezone || 'UTC';
 
   const { data: battles = [] } = useQuery({
     queryKey: ['upcomingBattles', userEmail, selectedDate],
@@ -17,7 +32,6 @@ export default function TikTokBattlesWidgetV2({ userEmail }) {
         created_by: userEmail
       });
       
-      const now = new Date();
       const dayStart = startOfDay(selectedDate);
       const dayEnd = addDays(dayStart, 1);
 
