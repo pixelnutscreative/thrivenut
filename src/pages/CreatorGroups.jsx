@@ -22,6 +22,7 @@ import GroupMembersTab from '../components/groups/GroupMembersTab';
 import GroupFeedTab from '../components/groups/GroupFeedTab';
 import GroupQnATab from '../components/groups/GroupQnATab';
 import GroupEventsTab from '../components/groups/GroupEventsTab';
+import GroupBattleApprovals from '../components/groups/GroupBattleApprovals';
 import GroupResourcesTab from '../components/groups/GroupResourcesTab';
 import GroupSettingsTab from '../components/groups/GroupSettingsTab';
 import GroupProjectsTab from '../components/groups/GroupProjectsTab';
@@ -1620,7 +1621,10 @@ export default function CreatorGroups() {
 
           <TabsContent value="events" className="focus-visible:outline-none">
             {isTabEnabled('events') && (
-              <GroupEventsTab group={activeGroup} currentUser={user} myMembership={activeMembership} isAdmin={isAdmin} />
+              <div className="space-y-6">
+                {isAdmin && <GroupBattleApprovals groupId={activeGroupId} isAdmin={isAdmin} />}
+                <GroupEventsTab group={activeGroup} currentUser={user} myMembership={activeMembership} isAdmin={isAdmin} />
+              </div>
             )}
           </TabsContent>
 
