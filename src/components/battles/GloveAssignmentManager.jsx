@@ -1,15 +1,14 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Trash2 } from 'lucide-react';
 
-export default function GloveAssignmentManager({ assignments = [], onUpdate }) {
+export default function GloveAssignmentManager({ assignments = [], onUpdate, availableInventory = [] }) {
   const handleAdd = () => {
     if (assignments.length < 10) {
-      onUpdate([...assignments, { id: Date.now(), position: assignments.length + 1, assignee: '', type: 'glove' }]);
+      onUpdate([...assignments, { id: Date.now(), position: assignments.length + 1, contact_id: '', type: 'glove' }]);
     }
   };
 
@@ -19,6 +18,12 @@ export default function GloveAssignmentManager({ assignments = [], onUpdate }) {
 
   const handleChange = (id, field, value) => {
     onUpdate(assignments.map(a => a.id === id ? { ...a, [field]: value } : a));
+  };
+
+  // Get contact display info
+  const getContactName = (contactId) => {
+    const item = availableInventory.find(i => i.contact_id === contactId);
+    return item ? item.contact_name : '';
   };
 
   return (
@@ -35,13 +40,19 @@ export default function GloveAssignmentManager({ assignments = [], onUpdate }) {
               {idx + 1}
             </div>
             <div className="flex-1 space-y-1">
-              <label className="text-xs font-medium text-gray-600">Assignee</label>
-              <Input
-                placeholder="Who throws this?"
-                value={assignment.assignee}
-                onChange={(e) => handleChange(assignment.id, 'assignee', e.target.value)}
-                className="text-xs"
-              />
+              <label className="text-xs font-medium text-gray-600">Who throws this?</label>
+              <Select value={assignment.contact_id} onValueChange={(v) => handleChange(assignment.id, 'contact_id', v)}>
+                <SelectTrigger className="text-xs">
+                  <SelectValue placeholder="Select contact" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableInventory.map(item => (
+                    <SelectItem key={item.contact_id} value={item.contact_id}>
+                      {item.contact_name} ({item.type})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex-shrink-0 w-24">
               <label className="text-xs font-medium text-gray-600 block mb-1">Type</label>

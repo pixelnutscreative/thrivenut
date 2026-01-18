@@ -320,10 +320,13 @@ export default function BattlePrep() {
 
             {/* Inventory List */}
             <div className="grid gap-4">
-              <h3 className="font-semibold text-lg flex items-center gap-2">
-                Active Arsenal 
-                <Badge variant="secondary" className="ml-2">{activePowerUps.length} Items</Badge>
-              </h3>
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold text-lg flex items-center gap-2">
+                  Active Arsenal 
+                  <Badge variant="secondary" className="ml-2">{activePowerUps.length} Items</Badge>
+                </h3>
+                <ArsenalFilter />
+              </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {activePowerUps.map(item => {
@@ -536,6 +539,7 @@ export default function BattlePrep() {
                       <div className="space-y-2 border-t pt-4">
                         <GloveAssignmentManager 
                           assignments={activeBattleId ? (battlePlans.find(p => p.id === activeBattleId)?.glove_assignments || []) : newPlan.glove_assignments}
+                          availableInventory={activePowerUps}
                           onUpdate={(assignments) => {
                             if (activeBattleId) {
                               updatePlanMutation.mutate({ id: activeBattleId, data: { glove_assignments: assignments } });
@@ -703,6 +707,35 @@ export default function BattlePrep() {
           </div>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+// Filter Component
+function ArsenalFilter() {
+  const [filter, setFilter] = useState('all');
+  
+  const types = ['Glove', 'Mist', 'Sniper', 'Jet', 'Sub', 'Other'];
+
+  return (
+    <div className="flex gap-2 flex-wrap">
+      <Button 
+        size="sm"
+        variant={filter === 'all' ? 'default' : 'outline'}
+        onClick={() => setFilter('all')}
+      >
+        All
+      </Button>
+      {types.map(type => (
+        <Button 
+          key={type}
+          size="sm"
+          variant={filter === type ? 'default' : 'outline'}
+          onClick={() => setFilter(type)}
+        >
+          {type}
+        </Button>
+      ))}
     </div>
   );
 }
