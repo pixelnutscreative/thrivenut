@@ -78,13 +78,14 @@ export default function BattlePrep() {
     },
   });
 
-  // Fetch Battle Plans (only user's own)
+  // Fetch Battle Plans (user's own + group battles where user is creator)
   const { data: battlePlans = [] } = useQuery({
     queryKey: ['battlePlans'],
     queryFn: async () => {
       const user = await base44.auth.me();
       if (!user) return [];
-      return base44.entities.BattlePlan.filter({ created_by: user.email }, '-battle_date', 20);
+      // Get all battles created by user (personal and group battles user created)
+      return base44.entities.BattlePlan.filter({ created_by: user.email }, '-battle_date', 50);
     },
   });
 
