@@ -511,31 +511,6 @@ export default function BattlePrep() {
                           </div>
                         </div>
 
-                        {/* Share with Group */}
-                        {!activeBattleId && (
-                          <div className="space-y-2 border-t pt-4">
-                            <label className="text-sm font-medium">Share with Group</label>
-                            <Select value={battleShareGroupId || ''} onValueChange={(v) => setBattleShareGroupId(v || null)}>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Keep Private" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value={null}>📌 Keep Private</SelectItem>
-                                {myGroups.map(group => (
-                                  <SelectItem key={group.id} value={group.id}>
-                                    {group.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            {battleShareGroupId && (
-                              <p className="text-xs text-amber-600 bg-amber-50 p-2 rounded">
-                                ⏳ This battle will be sent to the group admin for approval.
-                              </p>
-                            )}
-                          </div>
-                        )}
-
                       <div className="space-y-2">
                         <label className="text-sm font-medium">Mist Strategy</label>
                         <Select 
