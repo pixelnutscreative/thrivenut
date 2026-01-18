@@ -832,22 +832,30 @@ export default function BattlePrep() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-3">
                       <div className="bg-slate-800 p-3 rounded-lg text-center">
                         <p className="text-slate-400 text-xs uppercase tracking-wider">Gloves</p>
-                        <p className="text-3xl font-bold text-blue-400">{inventorySummary['Glove'] || 0}</p>
+                        <p className="text-2xl font-bold text-blue-400">{inventorySummary['Glove'] || 0}</p>
+                      </div>
+                      <div className="bg-slate-800 p-3 rounded-lg text-center">
+                        <p className="text-slate-400 text-xs uppercase tracking-wider">Hammers</p>
+                        <p className="text-2xl font-bold text-orange-400">{inventorySummary['Hammer'] || 0}</p>
+                      </div>
+                      <div className="bg-slate-800 p-3 rounded-lg text-center">
+                        <p className="text-slate-400 text-xs uppercase tracking-wider">Lightning (2nd)</p>
+                        <p className="text-2xl font-bold text-purple-400">{inventorySummary['Lightning2'] || 0}</p>
+                      </div>
+                      <div className="bg-slate-800 p-3 rounded-lg text-center">
+                        <p className="text-slate-400 text-xs uppercase tracking-wider">Lightning (3rd)</p>
+                        <p className="text-2xl font-bold text-indigo-400">{inventorySummary['Lightning3'] || 0}</p>
+                      </div>
+                      <div className="bg-slate-800 p-3 rounded-lg text-center">
+                        <p className="text-slate-400 text-xs uppercase tracking-wider">Time Ext</p>
+                        <p className="text-2xl font-bold text-cyan-400">{inventorySummary['TimeExtender'] || 0}</p>
                       </div>
                       <div className="bg-slate-800 p-3 rounded-lg text-center">
                         <p className="text-slate-400 text-xs uppercase tracking-wider">Mist</p>
-                        <p className="text-3xl font-bold text-gray-400">{inventorySummary['Mist'] || 0}</p>
-                      </div>
-                      <div className="bg-slate-800 p-3 rounded-lg text-center">
-                        <p className="text-slate-400 text-xs uppercase tracking-wider">Snipers</p>
-                        <p className="text-3xl font-bold text-red-400">{inventorySummary['Sniper'] || 0}</p>
-                      </div>
-                      <div className="bg-slate-800 p-3 rounded-lg text-center">
-                        <p className="text-slate-400 text-xs uppercase tracking-wider">Jets</p>
-                        <p className="text-3xl font-bold text-yellow-400">{inventorySummary['Jet'] || 0}</p>
+                        <p className="text-2xl font-bold text-gray-400">{inventorySummary['Mist'] || 0}</p>
                       </div>
                     </div>
                   </CardContent>
