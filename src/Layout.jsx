@@ -103,14 +103,14 @@ const { data: preferences } = useQuery({
   const adminEmails = ['pixelnutscreative@gmail.com', 'pixel@thrivenut.app'];
   const isAdmin = realUserEmail && adminEmails.includes(realUserEmail);
 
-  /// Fetch My Groups for Menu
-const { data: myMenuGroups = [] } = useQuery({
+  /// Fetch My Groups for Menu (Consolidated with Preferences)
+const { data: myMenuGroupsData = { groups: [], preferences: [] } } = useQuery({
   queryKey: ['myMenuGroups', effectiveEmail],
   queryFn: async () => {
-    if (!effectiveEmail) return [];
+    if (!effectiveEmail) return { groups: [], preferences: [] };
     // Consolidates N+1 query - reduces API calls from 1+N to 1
     const response = await base44.functions.invoke('getUserGroups', { userEmail: effectiveEmail });
-    return response.data?.groups || [];
+    return response.data || { groups: [], preferences: [] };
   },
   enabled: !!effectiveEmail,
   staleTime: 300000, // 5 minutes
@@ -118,6 +118,8 @@ const { data: myMenuGroups = [] } = useQuery({
   refetchOnReconnect: false,
   retry: 2,
 });
+
+  const myMenuGroups = myMenuGroupsData.groups; // Already sorted by last_accessed_at from backend
 
   const pinnedGroups = useMemo(() => {
     return myMenuGroups.filter(g => g.menu_pinned);
@@ -295,18 +297,18 @@ const { data: featureFlags = [] } = useQuery({
     { name: getDashboardName(), icon: LayoutDashboard, path: 'Dashboard', alwaysShow: true },
     { name: preferences?.my_resources_label || 'My Stuff', icon: Bookmark, path: 'MyResources', moduleId: 'my_resources', alwaysShow: true },
     { 
-      name: 'My Groups', 
+      name: 'Groups', 
       icon: Users, 
       isSection: true,
       moduleId: 'my_groups',
       subItems: [
-         { name: 'Browse Groups', icon: Search, path: 'CreatorGroups?mode=browse' },
+         { name: 'All My Groups', icon: Users, path: 'CreatorGroups' },
          ...myMenuGroups.filter(g => !g.menu_pinned).map(g => ({
            name: g.name,
            icon: Users,
            path: `CreatorGroups?id=${g.id}`
          }))
-      ]
+       ]
     },
     { name: "Pixel's Place", icon: Sparkles, path: 'PixelsParadise', moduleId: 'pixels_place' }]
 
