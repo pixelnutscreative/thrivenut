@@ -70,11 +70,7 @@ export default function TikTokBattlesWidget({ userEmail, userTimezone = 'UTC' })
                 <div className="flex items-center gap-4 text-sm text-gray-600 pl-2">
                    <div className="flex items-center gap-1">
                      <Clock className="w-3 h-3" />
-                     {battle.battle_date ? (
-                       <span title={timezone}>
-                         {formatInTimeZone(parseISO(battle.battle_date), timezone, 'MMM d, h:mm a zzz')}
-                       </span>
-                     ) : 'TBD'}
+                     {battle.battle_date ? format(parseISO(battle.battle_date), 'MMM d, h:mm a') : 'TBD'}
                    </div>
                    {battle.creator_name && <div className="text-xs text-gray-500">by {battle.creator_name}</div>}
                  </div>
