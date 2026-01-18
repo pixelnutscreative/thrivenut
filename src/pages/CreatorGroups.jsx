@@ -294,16 +294,6 @@ export default function CreatorGroups() {
   const activeGroup = fetchedActiveGroup || groups.find(g => g.id === activeGroupId);
   const activeMembership = myMemberships.find(m => m.group_id === activeGroupId);
 
-  // DEBUG LOG
-  console.log('🔍 DEBUG MEMBERSHIP:', {
-    userEmail: user?.email,
-    activeGroupId: activeGroupId,
-    myMembershipsCount: myMemberships?.length,
-    activeMembership: activeMembership,
-    isMember: isMember,
-    isAdmin: isAdmin
-  });
-  
   // Robust Membership Checks
   const isOwnerByEmail = activeGroup?.owner_email && user?.email && activeGroup.owner_email.toLowerCase() === user.email.toLowerCase();
   
@@ -312,6 +302,16 @@ export default function CreatorGroups() {
   
   // Member = Admin OR Active/Trial Status
   const isMember = isAdmin || (!!activeMembership && (activeMembership.status === 'active' || activeMembership.status === 'trial'));
+
+  // DEBUG LOG (AFTER declarations)
+  console.log('🔍 DEBUG MEMBERSHIP:', {
+    userEmail: user?.email,
+    activeGroupId: activeGroupId,
+    myMembershipsCount: myMemberships?.length,
+    activeMembership: activeMembership,
+    isMember: isMember,
+    isAdmin: isAdmin
+  });
   
   const isPending = !isAdmin && activeMembership?.status === 'pending';
   const isInterested = !isAdmin && (activeMembership?.status === 'interested' || activeMembership?.pending_approval); 
