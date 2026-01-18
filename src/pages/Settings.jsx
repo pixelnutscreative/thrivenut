@@ -298,6 +298,8 @@ export default function Settings() {
     setSaveStatus('saving');
     const promises = [];
     
+    console.log('💾 SAVE INITIATED - Preferences & Profile', { prefData, profileData });
+    
     // Always save if we have data, regardless of whether record exists (mutation handles create)
     if (prefData && Object.keys(prefData).length > 0) {
       promises.push(updatePreferencesMutation.mutateAsync(prefData));
@@ -310,14 +312,16 @@ export default function Settings() {
     
     try {
       if (promises.length > 0) {
-        await Promise.all(promises);
+        const results = await Promise.all(promises);
+        console.log('✅ ALL SAVES SUCCESSFUL:', results);
         setSaveStatus('saved');
         setTimeout(() => setSaveStatus('idle'), 3000);
       } else {
+        console.warn('⚠️ NO DATA TO SAVE');
         setSaveStatus('idle');
       }
     } catch (error) {
-      console.error("Error saving settings:", error);
+      console.error("❌ ERROR SAVING SETTINGS:", error);
       setSaveStatus('error');
       setTimeout(() => setSaveStatus('idle'), 3000);
     }
