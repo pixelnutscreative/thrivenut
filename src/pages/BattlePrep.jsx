@@ -62,6 +62,7 @@ export default function BattlePrep() {
   const [modUsername, setModUsername] = useState('');
   const [generatedLink, setGeneratedLink] = useState('');
   const [shareLoading, setShareLoading] = useState(false);
+  const [editingId, setEditingId] = useState(null);
 
   // Fetch Contacts for dropdown
   const { data: contacts = [] } = useQuery({
