@@ -4,8 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Swords, Clock, AlertCircle } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { parseISO, isAfter } from 'date-fns';
-import { formatInTimeZone } from 'date-fns-tz';
+import { format, parseISO, isAfter } from 'date-fns';
 
 export default function TikTokBattlesWidget({ userEmail, userTimezone = 'UTC' }) {
   // Fetch user preferences for timezone
