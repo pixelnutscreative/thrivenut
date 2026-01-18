@@ -16,6 +16,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 export default function BattlePrep() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('inventory');
+
+  // Get current user
+  useEffect(() => {
+    base44.auth.me().then(setUser).catch(() => setUser(null));
+  }, []);
   
   // Inventory Form State
   const [newItem, setNewItem] = useState({
@@ -42,6 +47,8 @@ export default function BattlePrep() {
   const [modUsername, setModUsername] = useState('');
   const [generatedLink, setGeneratedLink] = useState('');
   const [shareLoading, setShareLoading] = useState(false);
+  const [user, setUser] = useState(null);
+  const [battleShareGroupId, setBattleShareGroupId] = useState(null);
 
   // Fetch Contacts for dropdown
   const { data: contacts = [] } = useQuery({
@@ -59,6 +66,17 @@ export default function BattlePrep() {
   const { data: battlePlans = [] } = useQuery({
     queryKey: ['battlePlans'],
     queryFn: () => base44.entities.BattlePlan.list('-battle_date', 20),
+  });
+
+  // Fetch user's groups for sharing
+  const { data: myGroups = [] } = useQuery({
+    queryKey: ['myGroupsForBattle', user?.email],
+    queryFn: async () => {
+      if (!user?.email) return [];
+      const response = await base44.functions.invoke('getUserGroups', { userEmail: user.email });
+      return response.data?.groups || [];
+    },
+    enabled: !!user?.email,
   });
 
   // Filter Active Power Ups (Not Expired)
@@ -124,10 +142,21 @@ export default function BattlePrep() {
   });
 
   const createPlanMutation = useMutation({
-    mutationFn: (data) => base44.entities.BattlePlan.create(data),
+    mutationFn: (data) => {
+      const battleData = {
+        ...data,
+        creator_name: user?.full_name || user?.email || 'Unknown'
+      };
+      if (battleShareGroupId) {
+        battleData.group_id = battleShareGroupId;
+        battleData.approval_status = 'pending'; // Non-owners need approval
+      }
+      return base44.entities.BattlePlan.create(battleData);
+    },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['battlePlans'] });
       setActiveBattleId(data.id);
+      setBattleShareGroupId(null);
       setNewPlan({ opponent: '', battle_date: '', mist_strategy: 'No', first_glove_assignee: '', bonus_glove_assignee: '', strategy_notes: '' });
     }
   });
@@ -499,17 +528,42 @@ export default function BattlePrep() {
                           />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-sm font-medium">Date & Time</label>
-                          <Input 
-                            type="datetime-local"
-                            value={activeBattleId ? (battlePlans.find(p => p.id === activeBattleId)?.battle_date || '') : newPlan.battle_date}
-                            onChange={(e) => activeBattleId 
-                              ? updatePlanMutation.mutate({ id: activeBattleId, data: { battle_date: e.target.value } })
-                              : setNewPlan({...newPlan, battle_date: e.target.value})
-                            }
-                          />
+                            <label className="text-sm font-medium">Date & Time</label>
+                            <Input 
+                              type="datetime-local"
+                              value={activeBattleId ? (battlePlans.find(p => p.id === activeBattleId)?.battle_date || '') : newPlan.battle_date}
+                              onChange={(e) => activeBattleId 
+                                ? updatePlanMutation.mutate({ id: activeBattleId, data: { battle_date: e.target.value } })
+                                : setNewPlan({...newPlan, battle_date: e.target.value})
+                              }
+                            />
+                          </div>
                         </div>
-                      </div>
+
+                        {/* Share with Group */}
+                        {!activeBattleId && (
+                          <div className="space-y-2 border-t pt-4">
+                            <label className="text-sm font-medium">Share with Group</label>
+                            <Select value={battleShareGroupId || ''} onValueChange={(v) => setBattleShareGroupId(v || null)}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Keep Private" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value={null}>📌 Keep Private</SelectItem>
+                                {myGroups.map(group => (
+                                  <SelectItem key={group.id} value={group.id}>
+                                    {group.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            {battleShareGroupId && (
+                              <p className="text-xs text-amber-600 bg-amber-50 p-2 rounded">
+                                ⏳ This battle will be sent to the group admin for approval.
+                              </p>
+                            )}
+                          </div>
+                        )}
 
                       <div className="space-y-2">
                         <label className="text-sm font-medium">Mist Strategy</label>
