@@ -108,16 +108,11 @@ const { data: myMenuGroups = [] } = useQuery({
   queryKey: ['myMenuGroups', effectiveEmail],
   queryFn: async () => {
     if (!effectiveEmail) return [];
-    const memberships = await base44.entities.CreatorGroupMember.filter({ user_email: effectiveEmail, status: 'active' });
-    if (memberships.length === 0) return [];
-    
-    const details = await Promise.all(memberships.map(m => base44.entities.CreatorGroup.filter({ id: m.group_id })));
-    const activeGroups = details.flat().filter(g => g && g.status === 'active');
-    // Deduplicate groups by ID to prevent menu duplicates
-    return Array.from(new Map(activeGroups.map(g => [g.id, g])).values());
-    },
+    const response = await base44.functions.invoke('getUserGroups', { userEmail: effectiveEmail });
+    return response.data?.groups || [];
+  },
   enabled: !!effectiveEmail,
-  staleTime: 300000, // 5 minutes
+  staleTime: Infinity, // Group memberships rarely change - manual invalidation only
   refetchOnWindowFocus: false,
   refetchOnReconnect: false,
   retry: 2,
