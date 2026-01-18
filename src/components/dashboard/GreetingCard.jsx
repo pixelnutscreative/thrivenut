@@ -289,18 +289,8 @@ Respond ONLY with valid JSON (no markdown, no code blocks): {"text": "...", "typ
               ))}
             </div>
 
-            {/* Buttons */}
-            <div className="flex gap-2 justify-between">
-              <Button
-                size="sm"
-                onClick={() => generateNewGreetings()}
-                disabled={isGenerating}
-                variant="secondary"
-                className="text-purple-600 hover:text-purple-700"
-              >
-                {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4 mr-1" />}
-                {isGenerating ? 'Generating...' : 'Refresh'}
-              </Button>
+            {/* Save Button */}
+            <div className="flex gap-2">
               <Button
                 size="sm"
                 onClick={() => savePostMutation.mutate()}
