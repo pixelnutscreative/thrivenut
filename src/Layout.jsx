@@ -381,7 +381,8 @@ const { data: featureFlags = [] } = useQuery({
       { name: 'Discover Creators', icon: Search, path: 'DiscoverCreators', moduleId: 'tiktok' },
       ...(isAdmin ? [{ name: 'Live Engagement', icon: Activity, path: 'LiveEngagement', moduleId: 'tiktok', badge: 'DEV' }] : []),
       { name: 'Gift Gallery Gratitude', icon: Gift, path: 'WeeklyGifterGallery', moduleId: 'tiktok' },
-      { name: 'Love Aways', icon: Gift, path: 'LoveAway', moduleId: 'tiktok' }
+      { name: 'Love Aways', icon: Gift, path: 'LoveAway', moduleId: 'tiktok' },
+      { name: 'Battle Prep', icon: Swords, path: 'BattlePrep', moduleId: 'tiktok' }
     ]
   },
   {
