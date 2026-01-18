@@ -19,6 +19,7 @@ import MVPTracker from '../components/battles/MVPTracker';
 export default function BattlePrep() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('inventory');
+  const [arsenalFilter, setArsenalFilter] = useState('all');
   
   // Inventory Form State
   const [newItem, setNewItem] = useState({
@@ -354,7 +355,7 @@ export default function BattlePrep() {
                   Active Arsenal 
                   <Badge variant="secondary" className="ml-2">{activePowerUps.length} Items</Badge>
                 </h3>
-                <ArsenalFilter />
+                <ArsenalFilter filter={arsenalFilter} onFilterChange={setArsenalFilter} />
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -781,9 +782,7 @@ export default function BattlePrep() {
 }
 
 // Filter Component
-function ArsenalFilter() {
-  const arsenalFilter = 'all'; // This should be controlled by parent, temp fix for display
-  
+function ArsenalFilter({ filter, onFilterChange }) {
   const types = [
     { label: '🥊 Glove', value: 'Glove' },
     { label: '🔨 Hammer', value: 'Hammer' },
@@ -797,7 +796,8 @@ function ArsenalFilter() {
     <div className="flex gap-2 flex-wrap">
       <Button 
         size="sm"
-        variant={arsenalFilter === 'all' ? 'default' : 'outline'}
+        variant={filter === 'all' ? 'default' : 'outline'}
+        onClick={() => onFilterChange('all')}
       >
         All
       </Button>
@@ -805,7 +805,8 @@ function ArsenalFilter() {
         <Button 
           key={type.value}
           size="sm"
-          variant={arsenalFilter === type.value ? 'default' : 'outline'}
+          variant={filter === type.value ? 'default' : 'outline'}
+          onClick={() => onFilterChange(type.value)}
         >
           {type.label}
         </Button>
