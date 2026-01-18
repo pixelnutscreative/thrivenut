@@ -277,7 +277,7 @@ Respond ONLY with valid JSON (no markdown, no code blocks): {"text": "...", "typ
             </div>
 
             {/* Buttons */}
-            <div className="flex gap-2 justify-center">
+            <div className="flex gap-2 justify-between">
               <Button
                 size="sm"
                 onClick={() => generateNewGreetings()}
