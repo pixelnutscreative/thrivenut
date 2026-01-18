@@ -627,14 +627,14 @@ export default function BattlePrep() {
                 ⚔️ Battle Strategy
               </button>
               <button
-                onClick={() => setStationSubTab('myPowerUps')}
+                onClick={() => setStationSubTab('given')}
                 className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
-                  stationSubTab === 'myPowerUps'
+                  stationSubTab === 'given'
                     ? 'border-indigo-600 text-indigo-600'
                     : 'border-transparent text-gray-600 hover:text-gray-900'
                 }`}
               >
-                💪 Power Ups I Have ({activePowerUps.length})
+                🎁 Power Ups I Gave ({activeGiftedPowerUps.length})
               </button>
             </div>
 
@@ -998,53 +998,112 @@ export default function BattlePrep() {
             </div>
             )}
 
-            {stationSubTab === 'myPowerUps' && (
+            {stationSubTab === 'given' && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2">
+              <div className="lg:col-span-2 space-y-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle>💪 Power Ups I Have</CardTitle>
-                    <CardDescription>Power-ups you have to use (expires 5 days after received)</CardDescription>
+                    <CardTitle>Log Power-Up Given</CardTitle>
+                    <CardDescription>Track power-ups you gave to others (expires 5 days after)</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    {activePowerUps.length === 0 ? (
-                      <p className="text-center text-slate-500 py-8">No active power-ups</p>
+                    <div className="space-y-4">
+                      <Input
+                        placeholder="Who did you give it to? (name or @username)"
+                        onChange={(e) => setNewItem({...newItem, contact_name: e.target.value})}
+                        value={newItem.contact_name}
+                      />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Type</label>
+                          <Select value={newItem.type} onValueChange={(v) => setNewItem({...newItem, type: v})}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Glove">🥊 Glove</SelectItem>
+                              <SelectItem value="Hammer">🔨 Hammer</SelectItem>
+                              <SelectItem value="Lightning2">⚡ Lightning (2nd)</SelectItem>
+                              <SelectItem value="Lightning3">⚡ Lightning (3rd)</SelectItem>
+                              <SelectItem value="TimeExtender">⏱️ Time Extender</SelectItem>
+                              <SelectItem value="Mist">🌫️ Mist</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Quantity</label>
+                          <Input 
+                            type="number" 
+                            min="1" 
+                            value={newItem.quantity}
+                            onChange={(e) => setNewItem({...newItem, quantity: parseInt(e.target.value) || 1})}
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Date Given</label>
+                          <Input 
+                            type="date" 
+                            value={newItem.acquired_date}
+                            onChange={(e) => setNewItem({...newItem, acquired_date: e.target.value})}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Time Given</label>
+                          <Select value={newItem.acquired_time} onValueChange={(v) => setNewItem({...newItem, acquired_time: v})}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {Array.from({ length: 24 }).map((_, i) => {
+                                const hour = i.toString().padStart(2, '0');
+                                return <SelectItem key={hour} value={`${hour}:00`}>{hour}:00</SelectItem>;
+                              })}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <Button 
+                        onClick={() => createGiftedMutation.mutate({ recipient_name: newItem.contact_name, type: newItem.type, quantity: newItem.quantity, given_date: newItem.acquired_date, given_time: newItem.acquired_time })}
+                        disabled={!newItem.contact_name}
+                        className="w-full bg-indigo-600 hover:bg-indigo-700"
+                      >
+                        <Plus className="w-4 h-4 mr-2" /> Log Power-Up Given
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Active Power-Ups Given</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {activeGiftedPowerUps.length === 0 ? (
+                      <p className="text-center text-slate-500 py-8">No active power-ups logged yet</p>
                     ) : (
                       <div className="space-y-3">
-                        {activePowerUps.map(item => {
+                        {activeGiftedPowerUps.map(item => {
                           const expires = parseISO(item.expires_at);
                           const now = new Date();
                           const hoursLeft = Math.max(0, Math.ceil((expires - now) / (1000 * 60 * 60)));
                           const daysLeft = Math.ceil(hoursLeft / 24);
                           return (
-                            <div key={item.id} className="flex justify-between items-center p-4 border rounded-lg bg-slate-50">
-                              <div className="flex-1">
-                                <div className="font-semibold text-slate-900">{item.quantity}x {item.type}</div>
-                                <div className="text-sm text-slate-600 flex items-center gap-3 mt-2">
-                                  <span>Expires: {format(expires, 'MMM d, h:mm a')}</span>
+                            <div key={item.id} className="flex justify-between items-center p-3 border rounded-lg bg-slate-50">
+                              <div>
+                                <div className="font-semibold text-slate-900">@{item.recipient_name}</div>
+                                <div className="text-sm text-slate-600 flex items-center gap-2">
+                                  <Badge variant="outline">{item.quantity} {item.type}</Badge>
                                   <span className={daysLeft <= 1 ? "text-red-600 font-medium" : "text-slate-600"}>
-                                    {daysLeft > 1 ? `${daysLeft} days left` : `${hoursLeft} hours left`}
+                                    Expires in {daysLeft > 1 ? `${daysLeft} days` : `${hoursLeft} hours`}
                                   </span>
                                 </div>
                               </div>
-                              <div className="flex gap-2">
-                                <Button 
-                                  size="sm"
-                                  onClick={() => setEditingId(editingId === item.id ? null : item.id)}
-                                  variant="outline"
-                                  className="text-blue-600 hover:bg-blue-50"
-                                >
-                                  {editingId === item.id ? 'Done' : 'Edit'}
-                                </Button>
-                                <Button 
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => deleteItemMutation.mutate(item.id)}
-                                  className="text-red-400 hover:text-red-600 hover:bg-red-50"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </div>
+                              <Button 
+                                size="sm" 
+                                variant="ghost"
+                                onClick={() => deleteGiftedMutation.mutate(item.id)}
+                                className="text-red-400 hover:text-red-600 hover:bg-red-50"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
                             </div>
                           );
                         })}
