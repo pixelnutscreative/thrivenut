@@ -73,10 +73,14 @@ export default function BattlePrep() {
     queryFn: () => base44.entities.BattlePowerUp.list('-acquired_date', 100),
   });
 
-  // Fetch Battle Plans
+  // Fetch Battle Plans (only user's own)
   const { data: battlePlans = [] } = useQuery({
     queryKey: ['battlePlans'],
-    queryFn: () => base44.entities.BattlePlan.list('-battle_date', 20),
+    queryFn: async () => {
+      const user = await base44.auth.me();
+      if (!user) return [];
+      return base44.entities.BattlePlan.filter({ created_by: user.email }, '-battle_date', 20);
+    },
   });
 
   // Fetch User's Groups
