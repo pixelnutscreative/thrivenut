@@ -626,24 +626,14 @@ export default function BattlePrep() {
                 ⚔️ Battle Strategy
               </button>
               <button
-                onClick={() => setStationSubTab('gifters')}
+                onClick={() => setStationSubTab('myPowerUps')}
                 className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
-                  stationSubTab === 'gifters'
+                  stationSubTab === 'myPowerUps'
                     ? 'border-indigo-600 text-indigo-600'
                     : 'border-transparent text-gray-600 hover:text-gray-900'
                 }`}
               >
-                💝 Who I Have Power Ups For ({Object.keys(myPowerUpsByContact).length})
-              </button>
-              <button
-                onClick={() => setStationSubTab('given')}
-                className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
-                  stationSubTab === 'given'
-                    ? 'border-indigo-600 text-indigo-600'
-                    : 'border-transparent text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                🎁 Power Ups I Gave ({activeGiftedPowerUps.length})
+                💪 Power Ups I Have ({activePowerUps.length})
               </button>
             </div>
 
@@ -1007,165 +997,53 @@ export default function BattlePrep() {
             </div>
             )}
 
-            {stationSubTab === 'gifters' && (
+            {stationSubTab === 'myPowerUps' && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2">
                 <Card>
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      💝 My Power-Ups for Others
-                    </CardTitle>
-                    <CardDescription>
-                      Track who you have power-ups for and support them in battles
-                    </CardDescription>
+                    <CardTitle>💪 Power Ups I Have</CardTitle>
+                    <CardDescription>Power-ups you have to use (expires 5 days after received)</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    {Object.keys(myPowerUpsByContact).length === 0 ? (
-                      <div className="text-center py-8 text-slate-500">
-                        <Gift className="w-12 h-12 mx-auto mb-2 opacity-30" />
-                        <p>You don't have any power-ups yet!</p>
-                        <p className="text-xs mt-2">Log power-ups in the Inventory tab to track who you're supporting.</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {Object.entries(myPowerUpsByContact).map(([contactName, items]) => (
-                          <div key={contactName} className="border rounded-lg p-4 bg-slate-50">
-                            <div className="font-semibold text-slate-900 mb-3">@{contactName}</div>
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                              {items.reduce((acc, item) => {
-                                const existing = acc.find(i => i.type === item.type);
-                                if (existing) {
-                                  existing.quantity += item.quantity;
-                                } else {
-                                  acc.push({ type: item.type, quantity: item.quantity });
-                                }
-                                return acc;
-                              }, []).sort((a, b) => a.type.localeCompare(b.type)).map(summed => (
-                                <div key={summed.type} className="bg-white p-3 rounded-lg border text-center">
-                                  <div className="flex items-center justify-center mb-2">
-                                    {getIcon(summed.type)}
-                                  </div>
-                                  <div className="text-sm font-semibold text-slate-900">{summed.quantity}</div>
-                                  <div className="text-xs text-slate-600">{summed.type}</div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-            )}
-
-            {stationSubTab === 'given' && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2 space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Log Power-Up Given</CardTitle>
-                    <CardDescription>Track power-ups you gave to others (expires 5 days after)</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <Input
-                        placeholder="Who did you give it to? (name or @username)"
-                        onChange={(e) => setNewItem({...newItem, contact_name: e.target.value})}
-                        value={newItem.contact_name}
-                      />
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium">Type</label>
-                          <Select value={newItem.type} onValueChange={(v) => setNewItem({...newItem, type: v})}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Glove">🥊 Glove</SelectItem>
-                              <SelectItem value="Hammer">🔨 Hammer</SelectItem>
-                              <SelectItem value="Lightning2">⚡ Lightning (2nd)</SelectItem>
-                              <SelectItem value="Lightning3">⚡ Lightning (3rd)</SelectItem>
-                              <SelectItem value="TimeExtender">⏱️ Time Extender</SelectItem>
-                              <SelectItem value="Mist">🌫️ Mist</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium">Quantity</label>
-                          <Input 
-                            type="number" 
-                            min="1" 
-                            value={newItem.quantity}
-                            onChange={(e) => setNewItem({...newItem, quantity: parseInt(e.target.value) || 1})}
-                          />
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium">Date Given</label>
-                          <Input 
-                            type="date" 
-                            value={newItem.acquired_date}
-                            onChange={(e) => setNewItem({...newItem, acquired_date: e.target.value})}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium">Time Given</label>
-                          <Select value={newItem.acquired_time} onValueChange={(v) => setNewItem({...newItem, acquired_time: v})}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              {Array.from({ length: 24 }).map((_, i) => {
-                                const hour = i.toString().padStart(2, '0');
-                                return <SelectItem key={hour} value={`${hour}:00`}>{hour}:00</SelectItem>;
-                              })}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                      <Button 
-                        onClick={() => createGiftedMutation.mutate({ recipient_name: newItem.contact_name, type: newItem.type, quantity: newItem.quantity, given_date: newItem.acquired_date, given_time: newItem.acquired_time })}
-                        disabled={!newItem.contact_name}
-                        className="w-full bg-indigo-600 hover:bg-indigo-700"
-                      >
-                        <Plus className="w-4 h-4 mr-2" /> Log Power-Up Given
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Active Power-Ups Given</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {activeGiftedPowerUps.length === 0 ? (
-                      <p className="text-center text-slate-500 py-8">No active power-ups logged yet</p>
+                    {activePowerUps.length === 0 ? (
+                      <p className="text-center text-slate-500 py-8">No active power-ups</p>
                     ) : (
                       <div className="space-y-3">
-                        {activeGiftedPowerUps.map(item => {
+                        {activePowerUps.map(item => {
                           const expires = parseISO(item.expires_at);
                           const now = new Date();
                           const hoursLeft = Math.max(0, Math.ceil((expires - now) / (1000 * 60 * 60)));
                           const daysLeft = Math.ceil(hoursLeft / 24);
                           return (
-                            <div key={item.id} className="flex justify-between items-center p-3 border rounded-lg bg-slate-50">
-                              <div>
-                                <div className="font-semibold text-slate-900">@{item.recipient_name}</div>
-                                <div className="text-sm text-slate-600 flex items-center gap-2">
-                                  <Badge variant="outline">{item.quantity} {item.type}</Badge>
+                            <div key={item.id} className="flex justify-between items-center p-4 border rounded-lg bg-slate-50">
+                              <div className="flex-1">
+                                <div className="font-semibold text-slate-900">{item.quantity}x {item.type}</div>
+                                <div className="text-sm text-slate-600 flex items-center gap-3 mt-2">
+                                  <span>Expires: {format(expires, 'MMM d, h:mm a')}</span>
                                   <span className={daysLeft <= 1 ? "text-red-600 font-medium" : "text-slate-600"}>
-                                    Expires in {daysLeft > 1 ? `${daysLeft} days` : `${hoursLeft} hours`}
+                                    {daysLeft > 1 ? `${daysLeft} days left` : `${hoursLeft} hours left`}
                                   </span>
                                 </div>
                               </div>
-                              <Button 
-                                size="sm" 
-                                variant="ghost"
-                                onClick={() => deleteGiftedMutation.mutate(item.id)}
-                                className="text-red-400 hover:text-red-600 hover:bg-red-50"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
+                              <div className="flex gap-2">
+                                <Button 
+                                  size="sm"
+                                  onClick={() => setEditingId(editingId === item.id ? null : item.id)}
+                                  variant="outline"
+                                  className="text-blue-600 hover:bg-blue-50"
+                                >
+                                  {editingId === item.id ? 'Done' : 'Edit'}
+                                </Button>
+                                <Button 
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => deleteItemMutation.mutate(item.id)}
+                                  className="text-red-400 hover:text-red-600 hover:bg-red-50"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
                             </div>
                           );
                         })}
