@@ -14,7 +14,11 @@ export default function AnnouncementBar() {
       } catch (e) {
         return null;
       }
-    }
+    },
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 2,
   });
 
   // If disabled by admin, return null immediately
@@ -48,7 +52,11 @@ export default function AnnouncementBar() {
       const memberships = await base44.entities.CreatorGroupMember.filter({ user_email: user.email, status: 'active' });
       return memberships.map(m => m.group_id);
     },
-    enabled: !!user?.email
+    enabled: !!user?.email,
+    staleTime: 300000, // 5 minutes
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 2,
   });
 
   const { data: bars = [] } = useQuery({
@@ -58,51 +66,11 @@ export default function AnnouncementBar() {
         // 1. Fetch Global Announcement Bars
         const globalBars = await base44.entities.AnnouncementBar.list('-display_order');
         
-        // 2. Fetch Group-Specific Notifications that act as bars
-        // Since we can't do complex OR queries easily, we'll fetch notifications 
-        // that have a group_id in our list.
-        // Assuming AnnouncementBar entity is used for GLOBAL system announcements
-        // and Notification entity (with group_id) is used for GROUP announcements.
-        // Or we can add group_id to AnnouncementBar entity itself?
-        // The user prompt said: "notification bar... just like we have in the admin... so when they post that up, it will show up at the top"
-        // Let's assume we are re-purposing AnnouncementBar for groups OR fetching Notifications that are meant to be announcements.
-        // Let's stick to modifying Notification entity as per plan, but display them HERE.
-        
+        // 2. Fetch Group Announcements via backend function (single request instead of N)
         let groupAnnouncements = [];
         if (myGroupIds.length > 0) {
-            // We need to fetch notifications for these groups that are "announcement" type?
-            // Or maybe simply ALL active notifications for the group are treated as announcements?
-            // User said "admin's can put an announcement and the bar that runs across the top"
-            // Let's look for notifications with type="announcement" and group_id IN myGroupIds
-            // Current Notification entity has type="system" default.
-            
-            // Since we can't filter by array includes easily in one call if not supported,
-            // we'll fetch by group_id for each group (or list all if volume low).
-            // Better: use the new group_id field in Notification.
-            
-            // For now, let's just fetch ALL active notifications for the user's groups.
-            // In a real app with many notifs this might be heavy, but for now it's ok.
-            // We'll filter client side for type='announcement' or just display the latest.
-            
-            const promises = myGroupIds.map(gid => 
-                base44.entities.Notification.filter({ group_id: gid, is_active: true })
-            );
-            const results = await Promise.all(promises);
-            // Only include notifications explicitly marked as 'announcement'
-            groupAnnouncements = results.flat()
-                .filter(n => n.type === 'announcement')
-                .map(n => ({
-                    id: n.id,
-                    message: n.message,
-                    link: n.link,
-                    background_color: n.button_color || '#8b5cf6', // Use button color as bg for group announcements
-                    text_color: '#ffffff',
-                    is_active: true,
-                    schedule_type: 'manual',
-                    display_order: 100, // Higher priority than global?
-                    type: 'group_announcement',
-                    group_id: n.group_id
-                }));
+          const response = await base44.functions.invoke('getGroupAnnouncements', { myGroupIds });
+          groupAnnouncements = response.data?.groupAnnouncements || [];
         }
 
         return [...globalBars, ...groupAnnouncements];
@@ -111,9 +79,11 @@ export default function AnnouncementBar() {
         return [];
       }
     },
-    refetchInterval: 30000,
-    retry: false,
-    enabled: !!user // Only fetch if we know the user
+    staleTime: 300000, // 5 minutes - replaces aggressive polling
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 2,
+    enabled: !!user
   });
 
   const isInSchedule = (bar) => {
