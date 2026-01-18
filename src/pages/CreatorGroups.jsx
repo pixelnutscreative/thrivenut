@@ -83,33 +83,27 @@ export default function CreatorGroups() {
   const canCreateAgency = isSuperAdmin || preferences?.can_create_agency;
   const isProTier = isSuperAdmin || preferences?.subscription_status === 'active' || preferences?.is_superfan;
 
-  // Fetch my groups
-  const { data: myMemberships = [], isLoading } = useQuery({
-    queryKey: ['myGroupMemberships', user?.email],
+  // Fetch my groups using consolidated backend function
+  const { data: myGroupsData, isLoading } = useQuery({
+    queryKey: ['myGroupsConsolidated', user?.email],
     queryFn: async () => {
-      if (!user?.email) return [];
-      return await base44.entities.CreatorGroupMember.filter({ user_email: user?.email });
+      if (!user?.email) return { memberships: [], groups: [] };
+      const response = await base44.functions.invoke('getUserGroups', { userEmail: user.email });
+      console.log('myGroupsData received:', response.data);
+      return response.data || { memberships: [], groups: [] };
     },
-    enabled: !!user?.email
+    enabled: !!user?.email,
+    staleTime: 300000, // 5 minutes
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 2,
   });
 
-  // Fetch group details for my memberships (for list view)
-  const { data: groups = [], isLoading: isLoadingGroups } = useQuery({
-    queryKey: ['myGroupsDetails', myMemberships],
-    queryFn: async () => {
-      if (myMemberships.length === 0) return [];
-      const groupPromises = myMemberships.map(async (m) => {
-        const results = await base44.entities.CreatorGroup.filter({ id: m.group_id });
-        return results[0];
-      });
-      const results = await Promise.all(groupPromises);
-      const validGroups = results.filter(Boolean);
-      // Deduplicate groups by ID
-      const uniqueGroups = Array.from(new Map(validGroups.map(g => [g.id, g])).values());
-      return uniqueGroups.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
-    },
-    enabled: myMemberships.length > 0 && !activeGroupId && !browseMode
-  });
+  const myMemberships = myGroupsData?.memberships || [];
+
+  // Use groups from consolidated data (already fetched)
+  const groups = myGroupsData?.groups || [];
+  const isLoadingGroups = false; // Already loaded with memberships
 
   // Fetch specific active group (even if not a member, for preview/join)
   const { data: fetchedActiveGroup, isLoading: isActiveGroupLoading } = useQuery({
@@ -193,6 +187,7 @@ export default function CreatorGroups() {
       await new Promise(resolve => setTimeout(resolve, 500));
     },
     onSuccess: () => {
+      queryClient.invalidateQueries(['myGroupsConsolidated']);
       queryClient.invalidateQueries(['myGroupsDetails']);
       queryClient.invalidateQueries(['myGroupMemberships']);
       queryClient.invalidateQueries(['activeGroup']);
@@ -221,6 +216,7 @@ export default function CreatorGroups() {
       return response.data;
     },
     onSuccess: (newGroup) => {
+      queryClient.invalidateQueries(['myGroupsConsolidated']);
       queryClient.invalidateQueries(['myGroupMemberships']);
       queryClient.invalidateQueries(['myGroupsDetails']);
       // Force close dialog immediately
@@ -277,6 +273,7 @@ export default function CreatorGroups() {
       else if (existing) alert('You are already a member of this group!');
       else alert('Welcome! You have joined the group.');
       
+      queryClient.invalidateQueries(['myGroupsConsolidated']);
       queryClient.invalidateQueries(['myGroupMemberships']);
       setSearchParams({ id: group.id });
     },
@@ -346,6 +343,7 @@ export default function CreatorGroups() {
       });
     },
     onSuccess: () => {
+      queryClient.invalidateQueries(['myGroupsConsolidated']);
       queryClient.invalidateQueries(['groupMembers', activeGroup.id]);
       setIsInviteOpen(false);
       setInviteEmail('');
@@ -460,6 +458,7 @@ export default function CreatorGroups() {
   const updateGroupMutation = useMutation({
     mutationFn: (data) => base44.entities.CreatorGroup.update(activeGroupId, data),
     onSuccess: () => {
+      queryClient.invalidateQueries(['myGroupsConsolidated']);
       queryClient.invalidateQueries(['myGroupsDetails']);
       queryClient.invalidateQueries(['activeGroup', activeGroupId]);
     }

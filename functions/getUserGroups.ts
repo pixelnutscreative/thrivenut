@@ -17,9 +17,12 @@ Deno.serve(async (req) => {
       user_email: effectiveEmail, 
       status: 'active' 
     });
+    
+    console.log('getUserGroups called for:', effectiveEmail);
+    console.log('memberships found:', memberships.length);
 
     if (memberships.length === 0) {
-      return Response.json({ groups: [] });
+      return Response.json({ groups: [], memberships: [] });
     }
 
     // Extract groupIds for a single efficient query
@@ -30,6 +33,8 @@ Deno.serve(async (req) => {
       id: { $in: groupIds }, 
       status: 'active' 
     });
+    
+    console.log('groups found:', groups.length);
     
     // Deduplicate by ID
     const uniqueGroups = Array.from(new Map(groups.map(g => [g.id, g])).values());
