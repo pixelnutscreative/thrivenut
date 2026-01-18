@@ -241,9 +241,9 @@ export default function Settings() {
       }
     },
     onSuccess: () => {
-      // Use user?.email instead of effectiveEmail to avoid ReferenceError
-      queryClient.invalidateQueries({ queryKey: ['preferences', user?.email?.toLowerCase()] });
-      queryClient.invalidateQueries({ queryKey: ['userProfile', user?.email?.toLowerCase()] });
+      queryClient.invalidateQueries({ queryKey: ['preferences', effectiveEmail] });
+      queryClient.refetchQueries({ queryKey: ['preferences', effectiveEmail] });
+      queryClient.invalidateQueries({ queryKey: ['userProfile', effectiveEmail] });
     },
   });
 

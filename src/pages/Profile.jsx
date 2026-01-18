@@ -175,7 +175,8 @@ export default function Profile() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['preferences'] });
+      queryClient.invalidateQueries({ queryKey: ['preferences', effectiveEmail] });
+      queryClient.refetchQueries({ queryKey: ['preferences', effectiveEmail] });
     },
   });
 
