@@ -13,6 +13,7 @@ import { format, addDays, addHours, isAfter, isBefore, parseISO } from 'date-fns
 import { Swords, Shield, Zap, Skull, Wind, Users, Plus, Clock, Trash2, Edit2, Save, CheckCircle, Copy, Link as LinkIcon, Loader2, AlertTriangle, MessageCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import GloveAssignmentManager from '../components/battles/GloveAssignmentManager';
+import MVPTracker from '../components/battles/MVPTracker';
 
 export default function BattlePrep() {
   const queryClient = useQueryClient();
@@ -559,6 +560,20 @@ export default function BattlePrep() {
                           }
                         />
                       </div>
+
+                      {activeBattleId && (
+                        <div className="space-y-2 border-t pt-4">
+                          <label className="text-sm font-medium">Battle Results & MVPs</label>
+                          <MVPTracker 
+                            ourMVPs={battlePlans.find(p => p.id === activeBattleId)?.our_mvps || []}
+                            opponentMVPs={battlePlans.find(p => p.id === activeBattleId)?.opponent_mvps || []}
+                            onUpdate={(side, mvps) => {
+                              const data = side === 'our' ? { our_mvps: mvps } : { opponent_mvps: mvps };
+                              updatePlanMutation.mutate({ id: activeBattleId, data });
+                            }}
+                          />
+                        </div>
+                      )}
 
                       {!activeBattleId && (
                         <Button 
