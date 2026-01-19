@@ -30,7 +30,7 @@ export default function AdminAnalytics() {
   const userActivity = {};
   let totalViews = 0;
   
-  // Live Visitors (last 10 minutes)
+  // Live Visitors (last 10 minutes) - NOW USING ACTIVE_TICK
   const now = new Date();
   const tenMinutesAgo = new Date(now.getTime() - 10 * 60 * 1000);
   const liveVisitors = {};
@@ -42,19 +42,29 @@ export default function AdminAnalytics() {
       
       if (event.user_email) {
         userActivity[event.user_email] = (userActivity[event.user_email] || 0) + 1;
-        
-        // Check if live
-        const eventTime = new Date(event.created_date); 
-        if (eventTime > tenMinutesAgo) {
-          if (!liveVisitors[event.user_email] || new Date(liveVisitors[event.user_email].time) < eventTime) {
-            liveVisitors[event.user_email] = {
-              path: path,
-              time: event.created_date
-            };
-          }
-        }
       }
       totalViews++;
+    }
+
+    // NEW: Track active time using active_tick events
+    if (event.event_type === 'active_tick' && event.user_email) {
+      const eventTime = new Date(event.created_date);
+      if (eventTime > tenMinutesAgo) {
+        if (!liveVisitors[event.user_email]) {
+          liveVisitors[event.user_email] = {
+            path: (event.path || '').split('?')[0],
+            lastSeen: event.created_date,
+            activeSeconds: 0
+          };
+        }
+        // Sum DELTA durations
+        liveVisitors[event.user_email].activeSeconds += (event.duration_seconds || 0);
+        // Update last seen to most recent
+        if (new Date(liveVisitors[event.user_email].lastSeen) < eventTime) {
+          liveVisitors[event.user_email].lastSeen = event.created_date;
+          liveVisitors[event.user_email].path = (event.path || '').split('?')[0];
+        }
+      }
     }
   });
 
@@ -82,7 +92,7 @@ export default function AdminAnalytics() {
             </span>
             Live Right Now
           </CardTitle>
-          <CardDescription>Users active in the last 10 minutes</CardDescription>
+          <CardDescription>Active time in last 10 minutes (SUM of active_tick durations)</CardDescription>
         </CardHeader>
         <CardContent>
           {Object.keys(liveVisitors).length === 0 ? (
@@ -93,16 +103,18 @@ export default function AdminAnalytics() {
                 <div 
                   key={email} 
                   onClick={() => setSelectedUser(email)}
-                  className="bg-white p-3 rounded-lg border border-purple-100 shadow-sm flex items-center justify-between cursor-pointer hover:border-purple-300 transition-colors"
+                  className="bg-white p-3 rounded-lg border border-purple-100 shadow-sm flex flex-col cursor-pointer hover:border-purple-300 transition-colors"
                 >
-                  <div className="truncate pr-2">
+                  <div className="truncate">
                     <p className="font-medium text-sm truncate text-purple-900" title={email}>{email}</p>
                     <p className="text-xs text-purple-600 truncate flex items-center gap-1" title={data.path}>
                       <Eye className="w-3 h-3" /> {data.path}
                     </p>
-                  </div>
-                  <div className="text-xs text-gray-400 whitespace-nowrap">
-                    {formatDistanceToNow(new Date(data.time), { addSuffix: true })}
+                    <div className="flex items-center gap-2 mt-1">
+                      <Clock className="w-3 h-3 text-green-600" />
+                      <span className="text-xs font-semibold text-green-700">{Math.round(data.activeSeconds)}s active</span>
+                      <span className="text-xs text-gray-400">({formatDistanceToNow(new Date(data.lastSeen), { addSuffix: true })})</span>
+                    </div>
                   </div>
                 </div>
               ))}

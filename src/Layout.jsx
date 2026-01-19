@@ -52,23 +52,122 @@ export default function Layout({ children, currentPageName }) {
     finally(() => setUserLoading(false));
   }, []);
 
-  // Analytics Tracking
+  // Active Time Tracking with DELTA ticks
+  const [sessionId] = useState(() => `sess-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
+  const [lastTickAt, setLastTickAt] = useState(null);
+  const [lastActivityAt, setLastActivityAt] = useState(() => Date.now());
+  const [isLeaderTab, setIsLeaderTab] = useState(false);
+
+  const IDLE_THRESHOLD = 120; // 120 seconds
+  const HEARTBEAT_INTERVAL = 30; // 30 seconds
+
+  // Leader tab election
   useEffect(() => {
-    if (user?.email) {
-      // Small delay to ensure we don't track rapid redirects
-      const timer = setTimeout(() => {
+    if (!user?.email) return;
+
+    const LEADER_KEY = 'thrivenut_leader';
+    const TIMEOUT = HEARTBEAT_INTERVAL * 1500; // 1.5x heartbeat
+
+    const claimLeadership = () => {
+      const leader = localStorage.getItem(LEADER_KEY);
+      const now = Date.now();
+      
+      if (!leader) {
+        localStorage.setItem(LEADER_KEY, JSON.stringify({ tab: sessionId, ts: now }));
+        setIsLeaderTab(true);
+      } else {
+        try {
+          const { tab, ts } = JSON.parse(leader);
+          if (tab === sessionId || now - ts > TIMEOUT) {
+            localStorage.setItem(LEADER_KEY, JSON.stringify({ tab: sessionId, ts: now }));
+            setIsLeaderTab(true);
+          } else {
+            setIsLeaderTab(false);
+          }
+        } catch {
+          localStorage.setItem(LEADER_KEY, JSON.stringify({ tab: sessionId, ts: now }));
+          setIsLeaderTab(true);
+        }
+      }
+    };
+
+    claimLeadership();
+    const leaderInterval = setInterval(claimLeadership, TIMEOUT / 2);
+
+    return () => {
+      clearInterval(leaderInterval);
+      const leader = localStorage.getItem(LEADER_KEY);
+      if (leader) {
+        try {
+          const { tab } = JSON.parse(leader);
+          if (tab === sessionId) localStorage.removeItem(LEADER_KEY);
+        } catch {}
+      }
+    };
+  }, [user?.email, sessionId]);
+
+  // Heartbeat - send active_tick with DELTA
+  useEffect(() => {
+    if (!user?.email || !isLeaderTab) return;
+
+    const tick = () => {
+      const now = Date.now();
+      const idleSeconds = (now - lastActivityAt) / 1000;
+      const isVisible = document.visibilityState === 'visible';
+      const isFocused = document.hasFocus();
+      const isActive = isVisible && isFocused && idleSeconds < IDLE_THRESHOLD;
+
+      if (isActive && lastTickAt) {
+        const delta = (now - lastTickAt) / 1000;
         base44.entities.AnalyticsEvent.create({
           user_email: user.email,
+          event_type: 'active_tick',
+          session_id: sessionId,
           path: location.pathname + location.search,
-          event_type: 'page_view',
+          duration_seconds: delta,
           metadata: {
-            referrer: document.referrer,
-            timestamp: new Date().toISOString()
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            idleSeconds: idleSeconds.toFixed(1),
+            visibility: document.visibilityState,
+            focused: isFocused
           }
-        }).catch(err => console.error("Analytics error", err));
-      }, 1000);
-      
-      return () => clearTimeout(timer);
+        }).catch(err => console.error('[Analytics] Tick error:', err));
+      }
+
+      setLastTickAt(now);
+    };
+
+    setLastTickAt(Date.now());
+    const interval = setInterval(tick, HEARTBEAT_INTERVAL * 1000);
+    return () => clearInterval(interval);
+  }, [user?.email, isLeaderTab, lastActivityAt, lastTickAt, sessionId, location.pathname, location.search]);
+
+  // Track user activity
+  useEffect(() => {
+    const updateActivity = () => setLastActivityAt(Date.now());
+    
+    window.addEventListener('mousemove', updateActivity);
+    window.addEventListener('keydown', updateActivity);
+    window.addEventListener('click', updateActivity);
+    window.addEventListener('scroll', updateActivity);
+
+    return () => {
+      window.removeEventListener('mousemove', updateActivity);
+      window.removeEventListener('keydown', updateActivity);
+      window.removeEventListener('click', updateActivity);
+      window.removeEventListener('scroll', updateActivity);
+    };
+  }, []);
+
+  // Log page_view on navigation (kept for compatibility)
+  useEffect(() => {
+    if (user?.email) {
+      base44.entities.AnalyticsEvent.create({
+        user_email: user.email,
+        path: location.pathname + location.search,
+        event_type: 'page_view',
+        metadata: { referrer: document.referrer }
+      }).catch(() => {});
     }
   }, [location.pathname, location.search, user?.email]);
 
