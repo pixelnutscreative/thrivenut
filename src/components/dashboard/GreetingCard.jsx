@@ -217,6 +217,25 @@ Respond ONLY with valid JSON (no markdown, no code blocks): {"text": "...", "typ
   const Icon = getIcon();
   const message = generatedGreetings[currentIndex];
 
+  if (!message) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+      >
+        <Card className="bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 text-white border-0 shadow-xl overflow-hidden">
+          <CardContent className="p-8 flex items-center justify-center min-h-[200px]">
+            <div className="text-center">
+              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3 opacity-70" />
+              <p className="text-white/80">Loading greeting...</p>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+    );
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -20 }}
