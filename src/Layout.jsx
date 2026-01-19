@@ -65,42 +65,43 @@ export default function Layout({ children, currentPageName }) {
   useEffect(() => {
     if (!user?.email) return;
 
-    const LEADER_KEY = 'thrivenut_leader';
-    const TIMEOUT = HEARTBEAT_INTERVAL * 1500; // 1.5x heartbeat
+    const LEADER_KEY = 'thrivenut_leader_tab';
+    const ELECTION_TIMEOUT = 45000; // 45 seconds (fixed value, not calculated from HEARTBEAT)
+    const LEADER_CHECK_INTERVAL = 22500; // Check every 22.5 seconds
 
     const claimLeadership = () => {
       const leader = localStorage.getItem(LEADER_KEY);
       const now = Date.now();
       
       if (!leader) {
-        localStorage.setItem(LEADER_KEY, JSON.stringify({ tab: sessionId, ts: now }));
+        localStorage.setItem(LEADER_KEY, JSON.stringify({ id: sessionId, ts: now }));
         setIsLeaderTab(true);
       } else {
         try {
-          const { tab, ts } = JSON.parse(leader);
-          if (tab === sessionId || now - ts > TIMEOUT) {
-            localStorage.setItem(LEADER_KEY, JSON.stringify({ tab: sessionId, ts: now }));
+          const { id, ts } = JSON.parse(leader);
+          if (id === sessionId || now - ts > ELECTION_TIMEOUT) {
+            localStorage.setItem(LEADER_KEY, JSON.stringify({ id: sessionId, ts: now }));
             setIsLeaderTab(true);
           } else {
             setIsLeaderTab(false);
           }
         } catch {
-          localStorage.setItem(LEADER_KEY, JSON.stringify({ tab: sessionId, ts: now }));
+          localStorage.setItem(LEADER_KEY, JSON.stringify({ id: sessionId, ts: now }));
           setIsLeaderTab(true);
         }
       }
     };
 
     claimLeadership();
-    const leaderInterval = setInterval(claimLeadership, TIMEOUT / 2);
+    const leaderInterval = setInterval(claimLeadership, LEADER_CHECK_INTERVAL);
 
     return () => {
       clearInterval(leaderInterval);
       const leader = localStorage.getItem(LEADER_KEY);
       if (leader) {
         try {
-          const { tab } = JSON.parse(leader);
-          if (tab === sessionId) localStorage.removeItem(LEADER_KEY);
+          const { id } = JSON.parse(leader);
+          if (id === sessionId) localStorage.removeItem(LEADER_KEY);
         } catch {}
       }
     };
@@ -117,27 +118,50 @@ export default function Layout({ children, currentPageName }) {
       const isFocused = document.hasFocus();
       const isActive = isVisible && isFocused && idleSeconds < IDLE_THRESHOLD;
 
-      if (isActive && lastTickAt) {
-        const delta = (now - lastTickAt) / 1000;
-        base44.entities.AnalyticsEvent.create({
-          user_email: user.email,
-          event_type: 'active_tick',
-          session_id: sessionId,
-          path: location.pathname + location.search,
-          duration_seconds: delta,
-          metadata: {
-            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-            idleSeconds: idleSeconds.toFixed(1),
-            visibility: document.visibilityState,
-            focused: isFocused
-          }
-        }).catch(err => console.error('[Analytics] Tick error:', err));
+      if (isActive) {
+        if (lastTickAt) {
+          const delta = (now - lastTickAt) / 1000;
+          base44.entities.AnalyticsEvent.create({
+            user_email: user.email,
+            event_type: 'active_tick',
+            session_id: sessionId,
+            path: location.pathname + location.search,
+            duration_seconds: delta,
+            metadata: {
+              timezone: (() => {
+                try {
+                  return Intl.DateTimeFormat().resolvedOptions().timeZone;
+                } catch (e) {
+                  console.warn('Could not determine timezone, using UTC', e);
+                  return 'UTC';
+                }
+              })(),
+              idleSeconds: idleSeconds.toFixed(1),
+              visibility: document.visibilityState,
+              focused: isFocused
+            }
+          }).catch(err => console.error('[Analytics] Tick error:', err));
+        }
+        setLastTickAt(now);
+      } else {
+        setLastTickAt(null);
       }
-
-      setLastTickAt(now);
     };
 
-    setLastTickAt(Date.now());
+    const initialCheck = () => {
+      const idleSeconds = (Date.now() - lastActivityAt) / 1000;
+      const isVisible = document.visibilityState === 'visible';
+      const isFocused = document.hasFocus();
+      const isActive = isVisible && isFocused && idleSeconds < IDLE_THRESHOLD;
+      
+      if (isActive) {
+        setLastTickAt(Date.now());
+      } else {
+        setLastTickAt(null);
+      }
+    };
+
+    initialCheck();
     const interval = setInterval(tick, HEARTBEAT_INTERVAL * 1000);
     return () => clearInterval(interval);
   }, [user?.email, isLeaderTab, lastActivityAt, lastTickAt, sessionId, location.pathname, location.search]);

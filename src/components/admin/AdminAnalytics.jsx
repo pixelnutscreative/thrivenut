@@ -58,7 +58,7 @@ export default function AdminAnalytics() {
           };
         }
         // Sum DELTA durations
-        liveVisitors[event.user_email].activeSeconds += (event.duration_seconds || 0);
+        liveVisitors[event.user_email].activeSeconds += (Number(event.duration_seconds) || 0);
         // Update last seen to most recent
         if (new Date(liveVisitors[event.user_email].lastSeen) < eventTime) {
           liveVisitors[event.user_email].lastSeen = event.created_date;
