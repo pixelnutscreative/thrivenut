@@ -662,10 +662,17 @@ export default function BattlePrep() {
                           </SelectTrigger>
                           <SelectContent>
                             {battlePlans
-                              .filter(plan => !plan.battle_date || isAfter(parseISO(plan.battle_date), new Date()))
+                              .filter(plan => {
+                                if (!plan.battle_date) return true;
+                                try {
+                                  return isAfter(parseISO(plan.battle_date), new Date());
+                                } catch (e) {
+                                  return true;
+                                }
+                              })
                               .map(plan => (
                                 <SelectItem key={plan.id} value={plan.id}>
-                                  VS {plan.opponent} • {plan.creator_name ? `by ${plan.creator_name}` : 'No creator'} • {plan.battle_date ? format(parseISO(plan.battle_date), 'MMM d h:mm a') : 'Unscheduled'}
+                                  VS {plan.opponent || 'TBD'} • {plan.creator_name ? `by ${plan.creator_name}` : 'No creator'} • {plan.battle_date ? format(parseISO(plan.battle_date), 'MMM d h:mm a') : 'Unscheduled'}
                                 </SelectItem>
                               ))}
                           </SelectContent>
