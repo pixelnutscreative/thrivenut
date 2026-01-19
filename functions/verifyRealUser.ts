@@ -11,23 +11,23 @@ Deno.serve(async (req) => {
 
     // Get or create verification record
     const userEmail = user.email.toLowerCase();
-    let verification = await base44.asServiceRole.entities.UserVerification.filter({
+    let verificationResults = await base44.asServiceRole.entities.UserVerification.filter({
       user_email: userEmail
     });
 
-    if (verification.length === 0) {
+    let verification;
+    if (verificationResults.length === 0) {
       // Create new verification record
-      const referralCode = sessionStorage.getItem('referral_code');
       verification = await base44.asServiceRole.entities.UserVerification.create({
         user_email: userEmail,
         signup_date: new Date().toISOString(),
-        referral_code_used: referralCode || null,
+        referral_code_used: null,
         has_logged_in: true,
         days_active: 1,
         last_activity_date: new Date().toISOString()
       });
     } else {
-      verification = verification[0];
+      verification = verificationResults[0];
       
       // Update activity
       const lastActivity = verification.last_activity_date ? new Date(verification.last_activity_date) : null;
