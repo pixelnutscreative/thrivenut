@@ -73,10 +73,6 @@ export default function DailyMotivationBanner({
     return season;
   };
 
-  useEffect(() => {
-    generateMotivations();
-  }, [greetingTypes, struggles, goals]);
-
   const generateMotivations = async () => {
     setLoading(true);
     
@@ -177,6 +173,10 @@ ${type === 'scripture'
     setLoading(false);
     logGeneration(newMotivations);
   };
+
+  useEffect(() => {
+    generateMotivations();
+  }, []);
 
   const saveMotivationMutation = useMutation({
     mutationFn: async (motivation) => {
