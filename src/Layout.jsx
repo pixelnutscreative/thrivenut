@@ -164,7 +164,7 @@ export default function Layout({ children, currentPageName }) {
     initialCheck();
     const interval = setInterval(tick, HEARTBEAT_INTERVAL * 1000);
     return () => clearInterval(interval);
-  }, [user?.email, isLeaderTab, lastActivityAt, lastTickAt, sessionId, location.pathname, location.search]);
+  }, [user?.email, isLeaderTab, lastActivityAt, sessionId, location.pathname, location.search]);
 
   // Track user activity
   useEffect(() => {
