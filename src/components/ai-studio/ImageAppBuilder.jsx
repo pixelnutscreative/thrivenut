@@ -21,6 +21,8 @@ export default function ImageAppBuilder({ primaryColor, accentColor }) {
   const [iconStyle, setIconStyle] = useState('');
   const [inputFields, setInputFields] = useState([]);
   const [generatingFields, setGeneratingFields] = useState(false);
+  const [draftId, setDraftId] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   const generateAppNames = async () => {
     if (!appIdea.trim()) return;
@@ -73,7 +75,7 @@ export default function ImageAppBuilder({ primaryColor, accentColor }) {
   const generateIconFromDescription = async (name, description) => {
     setGeneratingIcon(true);
     try {
-      const iconPromptText = `App icon design for "${name}". ${description}. Modern, clean, professional mobile app icon, centered symbol, flat design, simple color scheme, white or light background`;
+      const iconPromptText = `App icon for "${name}". Visual symbol representing: ${description}. Simple icon design, centered object/symbol, no text, flat style, clean, professional`;
       console.log('Generating icon with prompt:', iconPromptText);
       
       const response = await base44.integrations.Core.GenerateImage({
@@ -131,13 +133,20 @@ export default function ImageAppBuilder({ primaryColor, accentColor }) {
       const response = await base44.integrations.Core.InvokeLLM({
         prompt: `For the AI image generation app "${appName}" with description: "${appDescription}". 
 
-Suggest 3-5 essential input fields that users should provide before generating images. For each field include:
-- label: clear field name
-- type: one of: text, textarea, long_text, number, dropdown, slider, toggle, file_upload, image, language, url
+Suggest 4-6 essential input fields that users should provide before generating images. Be SUPER CREATIVE and think outside the box!
+
+For each field include:
+- label: clear, creative field name
+- type: one of: text, textarea, text_overlay, image, image_reference, url, fixed_url, toggle, number, dropdown, file_upload, language, slider
 - required: true or false
-- placeholder: helpful example text
-- options: array of strings (only for dropdown type)
-- min/max/step: for slider type
+- placeholder: helpful, inspiring example text
+- options: For dropdown types, provide 8-15 CREATIVE, DIVERSE options that users can customize. Think broadly and imaginatively!
+- min/max/step: for slider type (be creative with ranges)
+
+Examples of creative dropdown options:
+- Art styles: "Cyberpunk Neon", "Watercolor Dreams", "80s Retro Vibes", "Minimalist Zen", "Gothic Fantasy", "Pop Art Explosion", etc.
+- Moods: "Mysterious & Dark", "Bright & Cheerful", "Nostalgic", "Futuristic", "Whimsical", "Dramatic", "Serene", etc.
+- Color palettes: "Sunset Warmth", "Ocean Blues", "Forest Greens", "Monochrome", "Pastel Rainbow", "Neon Glow", etc.
 
 Return as JSON.`,
         response_json_schema: {
@@ -189,6 +198,74 @@ Return as JSON.`,
 
   const removeInputField = (id) => {
     setInputFields(inputFields.filter(f => f.id !== id));
+  };
+
+  const updateField = (id, key, value) => {
+    setInputFields(inputFields.map(f => 
+      f.id === id ? {...f, [key]: value} : f
+    ));
+  };
+
+  const addDropdownOption = (fieldId) => {
+    setInputFields(inputFields.map(f => {
+      if (f.id === fieldId) {
+        return {...f, options: [...(f.options || []), '']};
+      }
+      return f;
+    }));
+  };
+
+  const updateDropdownOption = (fieldId, optionIndex, value) => {
+    setInputFields(inputFields.map(f => {
+      if (f.id === fieldId) {
+        const newOptions = [...(f.options || [])];
+        newOptions[optionIndex] = value;
+        return {...f, options: newOptions};
+      }
+      return f;
+    }));
+  };
+
+  const removeDropdownOption = (fieldId, optionIndex) => {
+    setInputFields(inputFields.map(f => {
+      if (f.id === fieldId) {
+        return {...f, options: (f.options || []).filter((_, i) => i !== optionIndex)};
+      }
+      return f;
+    }));
+  };
+
+  const saveDraft = async () => {
+    setSaving(true);
+    try {
+      const draftData = {
+        name: appName || 'Untitled App',
+        description: appDescription,
+        app_icon_url: appIcon,
+        app_type: 'image',
+        config_json: {
+          appIdea,
+          inputFields,
+          iconPrompt,
+          iconStyle
+        },
+        is_published: false,
+        approval_status: 'draft'
+      };
+
+      if (draftId) {
+        await base44.entities.AIApp.update(draftId, draftData);
+      } else {
+        const newDraft = await base44.entities.AIApp.create(draftData);
+        setDraftId(newDraft.id);
+      }
+      alert('Draft saved successfully!');
+    } catch (error) {
+      console.error('Error saving draft:', error);
+      alert('Failed to save draft');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -399,45 +476,124 @@ Return as JSON.`,
                     </Button>
                   </div>
                   <Input 
-                    placeholder="e.g., Product Name"
-                    value={field.label}
-                    onChange={(e) => {
-                      const updated = inputFields.map(f => 
-                        f.id === field.id ? {...f, label: e.target.value} : f
-                      );
-                      setInputFields(updated);
-                    }}
+                   placeholder="e.g., Product Name"
+                   value={field.label}
+                   onChange={(e) => updateField(field.id, 'label', e.target.value)}
                   />
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label className="text-xs">Field Type</Label>
-                      <Select value={field.type}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="text">Text</SelectItem>
-                          <SelectItem value="textarea">Long Text</SelectItem>
-                          <SelectItem value="number">Number</SelectItem>
-                          <SelectItem value="dropdown">Dropdown</SelectItem>
-                          <SelectItem value="file">File Upload</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label className="text-xs">Required</Label>
-                      <Select value={field.required ? 'yes' : 'no'}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="yes">Yes</SelectItem>
-                          <SelectItem value="no">No</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                  <div>
+                   <Label className="text-xs">Placeholder Text</Label>
+                   <Input 
+                     placeholder="Hint text for users..."
+                     value={field.placeholder || ''}
+                     onChange={(e) => updateField(field.id, 'placeholder', e.target.value)}
+                     className="text-sm"
+                   />
                   </div>
-                </div>
+                  <div className="grid grid-cols-2 gap-3">
+                   <div>
+                     <Label className="text-xs">Field Type</Label>
+                     <Select value={field.type} onValueChange={(val) => updateField(field.id, 'type', val)}>
+                       <SelectTrigger>
+                         <SelectValue />
+                       </SelectTrigger>
+                       <SelectContent>
+                         <SelectItem value="text">Text</SelectItem>
+                         <SelectItem value="textarea">Long Text</SelectItem>
+                         <SelectItem value="text_overlay">Text Overlay (Spell-Checked)</SelectItem>
+                         <SelectItem value="image">Image</SelectItem>
+                         <SelectItem value="image_reference">Image Reference (with Strength)</SelectItem>
+                         <SelectItem value="url">URL</SelectItem>
+                         <SelectItem value="fixed_url">Fixed URL</SelectItem>
+                         <SelectItem value="toggle">Toggle</SelectItem>
+                         <SelectItem value="number">Number</SelectItem>
+                         <SelectItem value="dropdown">Dropdown</SelectItem>
+                         <SelectItem value="file_upload">File Upload</SelectItem>
+                         <SelectItem value="language">Language</SelectItem>
+                         <SelectItem value="slider">Slider</SelectItem>
+                       </SelectContent>
+                     </Select>
+                   </div>
+                   <div>
+                     <Label className="text-xs">Required</Label>
+                     <Select value={field.required ? 'yes' : 'no'} onValueChange={(val) => updateField(field.id, 'required', val === 'yes')}>
+                       <SelectTrigger>
+                         <SelectValue />
+                       </SelectTrigger>
+                       <SelectContent>
+                         <SelectItem value="yes">Yes</SelectItem>
+                         <SelectItem value="no">No</SelectItem>
+                       </SelectContent>
+                     </Select>
+                   </div>
+                  </div>
+
+                  {/* Dropdown Options */}
+                  {field.type === 'dropdown' && (
+                   <div className="border-t pt-3 space-y-2">
+                     <Label className="text-xs">Dropdown Options</Label>
+                     {(field.options || []).map((option, idx) => (
+                       <div key={idx} className="flex gap-2">
+                         <Input 
+                           value={option}
+                           onChange={(e) => updateDropdownOption(field.id, idx, e.target.value)}
+                           placeholder={`Option ${idx + 1}`}
+                           className="text-sm"
+                         />
+                         <Button 
+                           size="sm" 
+                           variant="ghost"
+                           onClick={() => removeDropdownOption(field.id, idx)}
+                           className="text-red-500"
+                         >
+                           <Trash2 className="w-4 h-4" />
+                         </Button>
+                       </div>
+                     ))}
+                     <Button 
+                       size="sm" 
+                       variant="outline" 
+                       onClick={() => addDropdownOption(field.id)}
+                       className="w-full"
+                     >
+                       <Plus className="w-4 h-4 mr-2" />
+                       Add Option
+                     </Button>
+                   </div>
+                  )}
+
+                  {/* Slider Settings */}
+                  {field.type === 'slider' && (
+                   <div className="border-t pt-3 grid grid-cols-3 gap-2">
+                     <div>
+                       <Label className="text-xs">Min</Label>
+                       <Input 
+                         type="number"
+                         value={field.min || 0}
+                         onChange={(e) => updateField(field.id, 'min', Number(e.target.value))}
+                         className="text-sm"
+                       />
+                     </div>
+                     <div>
+                       <Label className="text-xs">Max</Label>
+                       <Input 
+                         type="number"
+                         value={field.max || 100}
+                         onChange={(e) => updateField(field.id, 'max', Number(e.target.value))}
+                         className="text-sm"
+                       />
+                     </div>
+                     <div>
+                       <Label className="text-xs">Step</Label>
+                       <Input 
+                         type="number"
+                         value={field.step || 1}
+                         onChange={(e) => updateField(field.id, 'step', Number(e.target.value))}
+                         className="text-sm"
+                       />
+                     </div>
+                   </div>
+                  )}
+                  </div>
               ))}
               <Button onClick={addInputField} variant="outline" className="w-full">
                 <Plus className="w-4 h-4 mr-2" />
@@ -450,7 +606,10 @@ Return as JSON.`,
 
       {/* Save Button */}
       <div className="flex justify-end gap-3">
-        <Button variant="outline">Save Draft</Button>
+        <Button variant="outline" onClick={saveDraft} disabled={saving}>
+          {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+          Save Draft
+        </Button>
         <Button style={{ background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` }}>
           <Sparkles className="w-4 h-4 mr-2" />
           Save & Test App
