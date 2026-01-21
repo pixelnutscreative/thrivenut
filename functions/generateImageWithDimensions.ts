@@ -23,11 +23,7 @@ const makeGoogleImagenRequest = async (googleApiKey, prompt, aspectRatio, attemp
           parts: [{
             text: prompt
           }]
-        }],
-        generationConfig: {
-          aspectRatio: aspectRatio,
-          sampleCount: 1
-        }
+        }]
       })
     });
 
