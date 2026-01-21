@@ -15,44 +15,56 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Width and height are required' }, { status: 400 });
     }
 
-    // Try Nano Banana first (if API key available)
-    const nanoBananaKey = Deno.env.get('NANO_BANANA_API_KEY');
-    if (nanoBananaKey) {
-      try {
-        const response = await fetch('https://api.nanobanana.ai/v1/images/generations', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${nanoBananaKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            prompt: prompt,
-            width: width,
-            height: height,
-            num_inference_steps: 30,
-            guidance_scale: 7.5
-          })
-        });
+    // Normalize dimensions to valid Nano Banana sizes (must be multiples of 64)
+    const normalizeSize = (size) => {
+      const normalized = Math.round(size / 64) * 64;
+      return Math.max(512, normalized);
+    };
 
-        if (response.ok) {
-          const result = await response.json();
-          return Response.json({ 
-            url: result.images?.[0]?.url || result.image_url
-          });
-        }
-      } catch (e) {
-        console.warn('Nano Banana API failed, falling back to integration:', e.message);
-      }
+    const normalizedWidth = normalizeSize(width);
+    const normalizedHeight = normalizeSize(height);
+
+    console.log(`Generating image: ${normalizedWidth}x${normalizedHeight}`);
+
+    // Call Nano Banana API with explicit dimensions
+    const nanoBananaKey = Deno.env.get('NANO_BANANA_API_KEY');
+    if (!nanoBananaKey) {
+      return Response.json({ error: 'Image generation service not configured' }, { status: 500 });
     }
 
-    // Fallback to Core integration with dimension specification
-    const imageResponse = await base44.integrations.Core.GenerateImage({
-      prompt: `${prompt}\n\nMUST be exactly ${width}px × ${height}px (aspect ratio ${(width/height).toFixed(2)})`,
-      existing_image_urls: referenceImageUrls
+    const response = await fetch('https://api.nanobanana.ai/v1/images/generations', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${nanoBananaKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        prompt: prompt,
+        width: normalizedWidth,
+        height: normalizedHeight,
+        num_inference_steps: 25,
+        guidance_scale: 7.5
+      })
     });
 
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Nano Banana error:', errorText);
+      return Response.json({ error: 'Image generation failed' }, { status: 500 });
+    }
+
+    const result = await response.json();
+    const imageUrl = result.images?.[0]?.url || result.image?.[0]?.url;
+    
+    if (!imageUrl) {
+      console.error('No image URL in response:', result);
+      return Response.json({ error: 'No image generated' }, { status: 500 });
+    }
+
     return Response.json({ 
-      url: imageResponse.url
+      url: imageUrl,
+      width: normalizedWidth,
+      height: normalizedHeight
     });
 
   } catch (error) {
