@@ -5,8 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sparkles, Upload, Wand2, Plus, Trash2, Loader2 } from 'lucide-react';
+import { Sparkles, Upload, Wand2, Plus, Trash2, Loader2, Save, FolderOpen } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { useQuery } from '@tanstack/react-query';
+import ImageSizeSelector from './ImageSizeSelector';
+import SaveInputFieldModal from './SaveInputFieldModal';
 
 export default function ImageAppBuilder({ primaryColor, accentColor }) {
   const [appIdea, setAppIdea] = useState('');
@@ -23,6 +26,18 @@ export default function ImageAppBuilder({ primaryColor, accentColor }) {
   const [generatingFields, setGeneratingFields] = useState(false);
   const [draftId, setDraftId] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [selectedSizes, setSelectedSizes] = useState(['9:16']);
+  const [customWidth, setCustomWidth] = useState('');
+  const [customHeight, setCustomHeight] = useState('');
+  const [showSaveFieldModal, setShowSaveFieldModal] = useState(false);
+  const [fieldToSave, setFieldToSave] = useState(null);
+  const [showTemplates, setShowTemplates] = useState(false);
+
+  // Fetch saved templates
+  const { data: templates = [] } = useQuery({
+    queryKey: ['inputFieldTemplates'],
+    queryFn: () => base44.entities.InputFieldTemplate.list('-updated_date'),
+  });
 
   const generateAppNames = async () => {
     if (!appIdea.trim()) return;
@@ -235,6 +250,15 @@ Return as JSON.`,
     }));
   };
 
+  const addTemplateField = (template) => {
+    const newField = {
+      id: Date.now(),
+      ...template.field_config
+    };
+    setInputFields([...inputFields, newField]);
+    setShowTemplates(false);
+  };
+
   const saveDraft = async () => {
     setSaving(true);
     try {
@@ -247,7 +271,9 @@ Return as JSON.`,
           appIdea,
           inputFields,
           iconPrompt,
-          iconStyle
+          iconStyle,
+          imageSizes: selectedSizes,
+          customSize: customWidth && customHeight ? { width: parseInt(customWidth), height: parseInt(customHeight) } : null
         },
         is_published: false,
         approval_status: 'draft'
@@ -484,24 +510,54 @@ Return as JSON.`,
               <CardTitle>Input Fields Configuration</CardTitle>
               <CardDescription>Define what inputs users will provide</CardDescription>
             </div>
-            <Button 
-              size="sm"
-              onClick={generateInputFields}
-              disabled={!appDescription.trim() || generatingFields}
-              style={{ background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` }}
-            >
-              {generatingFields ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <>
-                  <Wand2 className="w-4 h-4 mr-2" />
-                  Generate with AI
-                </>
-              )}
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                size="sm"
+                variant="outline"
+                onClick={() => setShowTemplates(!showTemplates)}
+              >
+                <FolderOpen className="w-4 h-4 mr-2" />
+                Templates
+              </Button>
+              <Button 
+                size="sm"
+                onClick={generateInputFields}
+                disabled={!appDescription.trim() || generatingFields}
+                style={{ background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` }}
+              >
+                {generatingFields ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    <Wand2 className="w-4 h-4 mr-2" />
+                    Generate with AI
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
+          {showTemplates && templates.length > 0 && (
+            <div className="border rounded-lg p-4 bg-blue-50 space-y-2">
+              <p className="text-sm font-medium">Saved Templates</p>
+              <div className="grid grid-cols-2 gap-2">
+                {templates.map(template => (
+                  <Button
+                    key={template.id}
+                    size="sm"
+                    variant="outline"
+                    onClick={() => addTemplateField(template)}
+                    className="text-xs justify-start"
+                  >
+                    <Plus className="w-3 h-3 mr-1" />
+                    {template.name}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {inputFields.length === 0 ? (
             <div className="text-center py-8 border-2 border-dashed border-gray-200 rounded-lg">
               <p className="text-gray-500 mb-4">No input fields yet. Add fields or let AI suggest them.</p>
@@ -516,14 +572,28 @@ Return as JSON.`,
                 <div key={field.id} className="border rounded-lg p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <Label>Field Label</Label>
-                    <Button 
-                      size="sm" 
-                      variant="ghost" 
-                      onClick={() => removeInputField(field.id)}
-                      className="text-red-500 hover:text-red-600"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    <div className="flex gap-1">
+                      <Button 
+                        size="sm" 
+                        variant="ghost"
+                        onClick={() => {
+                          setFieldToSave(field);
+                          setShowSaveFieldModal(true);
+                        }}
+                        className="text-blue-500 hover:text-blue-600"
+                        title="Save as template"
+                      >
+                        <Save className="w-4 h-4" />
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        onClick={() => removeInputField(field.id)}
+                        className="text-red-500 hover:text-red-600"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                   <Input 
                    placeholder="e.g., Product Name"
@@ -654,6 +724,15 @@ Return as JSON.`,
         </CardContent>
       </Card>
 
+      <ImageSizeSelector
+        selectedSizes={selectedSizes}
+        setSelectedSizes={setSelectedSizes}
+        customWidth={customWidth}
+        setCustomWidth={setCustomWidth}
+        customHeight={customHeight}
+        setCustomHeight={setCustomHeight}
+      />
+
       {/* Save Button */}
       <div className="flex justify-end gap-3">
         <Button variant="outline" onClick={saveDraft} disabled={saving}>
@@ -668,7 +747,18 @@ Return as JSON.`,
           {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}
           Save & Test App
         </Button>
-      </div>
-    </div>
-  );
-}
+        </div>
+
+        <SaveInputFieldModal
+        isOpen={showSaveFieldModal}
+        onClose={() => setShowSaveFieldModal(false)}
+        field={fieldToSave}
+        onSuccess={() => {
+          setShowSaveFieldModal(false);
+          alert('Field saved as template!');
+        }}
+        primaryColor={primaryColor}
+        />
+        </div>
+        );
+        }
