@@ -68,7 +68,7 @@ const makeGoogleImagenRequest = async (googleApiKey, prompt, aspectRatio, attemp
     }
 
     const result = await response.json();
-    const imageUrl = result.images?.[0]?.url;
+    const imageUrl = result.candidates?.[0]?.image?.imageUri;
     
     if (!imageUrl) {
       console.error('No image URL in response:', JSON.stringify(result));
