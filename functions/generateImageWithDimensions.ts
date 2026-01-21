@@ -115,12 +115,12 @@ Deno.serve(async (req) => {
     const aspectRatio = getAspectRatio(width || 768, height || 768);
     console.log(`Generating image with aspect ratio: ${aspectRatio}`);
 
-    const googleApiKey = Deno.env.get('GOOGLE_API_KEY');
-    if (!googleApiKey) {
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+    if (!openaiApiKey) {
       return Response.json({ error: 'Image generation service not configured' }, { status: 500 });
     }
 
-    const result = await makeGoogleImagenRequest(googleApiKey, prompt, aspectRatio);
+    const result = await makeDalleRequest(openaiApiKey, prompt, width || 1024, height || 1024);
     
     if (result.error) {
       return Response.json({ error: result.error }, { status: result.status || 500 });
