@@ -3,16 +3,40 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { X, Sparkles, Loader2, Download } from 'lucide-react';
 import DynamicInput from './DynamicInput';
+import OptionalEnhancementsSelector from './OptionalEnhancementsSelector';
 import { base44 } from '@/api/base44Client';
+import { useQuery } from '@tanstack/react-query';
 
 export default function AppPreview({ app, onClose, primaryColor, accentColor }) {
   const [inputs, setInputs] = useState({});
   const [generating, setGenerating] = useState(false);
   const [generatedImage, setGeneratedImage] = useState(null);
+  const [selectedCharacter, setSelectedCharacter] = useState(null);
+  const [selectedBrand, setSelectedBrand] = useState(null);
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
   const handleInputChange = (label, value) => {
     setInputs({ ...inputs, [label]: value });
   };
+
+  // Fetch character, brand, and product data for enriching prompts
+  const { data: characterData } = useQuery({
+    queryKey: ['character', selectedCharacter],
+    queryFn: () => base44.entities.CharacterReference.filter({ id: selectedCharacter }),
+    enabled: !!selectedCharacter,
+  });
+
+  const { data: brandData } = useQuery({
+    queryKey: ['brand', selectedBrand],
+    queryFn: () => base44.entities.Brand.filter({ id: selectedBrand }),
+    enabled: !!selectedBrand,
+  });
+
+  const { data: productData } = useQuery({
+    queryKey: ['product', selectedProduct],
+    queryFn: () => base44.entities.BrandProduct.filter({ id: selectedProduct }),
+    enabled: !!selectedProduct,
+  });
 
   const generateImage = async () => {
     setGenerating(true);
@@ -23,12 +47,44 @@ export default function AppPreview({ app, onClose, primaryColor, accentColor }) 
         if (value) prompt += `${key}: ${value}. `;
       });
 
+      // Add character reference if selected
+      if (characterData?.[0]) {
+        const char = characterData[0];
+        prompt += `Character: ${char.prompt_snippet || char.description}. `;
+      }
+
+      // Add brand context if selected
+      if (brandData?.[0]) {
+        const brand = brandData[0];
+        prompt += `Brand context: ${brand.description}. Brand tone: ${brand.tone_voice}. `;
+      }
+
+      // Add product context if selected
+      if (productData?.[0]) {
+        const product = productData[0];
+        prompt += `Product: ${product.name}. ${product.description}. `;
+      }
+
+      // Use character reference images if available
+      const referenceImages = characterData?.[0]?.images?.filter(Boolean) || [];
+
       const response = await base44.integrations.Core.GenerateImage({
-        prompt: prompt.trim()
+        prompt: prompt.trim(),
+        existing_image_urls: referenceImages.length > 0 ? referenceImages : undefined
       });
 
       if (response?.url) {
         setGeneratedImage(response.url);
+        
+        // Save to AIAppOutput for The Closet
+        await base44.entities.AIAppOutput.create({
+          app_id: app.id,
+          output_url: response.url,
+          prompt_text: prompt.trim(),
+          character_reference_id: selectedCharacter,
+          brand_id: selectedBrand,
+          style_template_id: selectedProduct,
+        });
       }
     } catch (error) {
       console.error('Error generating image:', error);
@@ -77,6 +133,15 @@ export default function AppPreview({ app, onClose, primaryColor, accentColor }) 
                   onChange={handleInputChange}
                 />
               ))}
+
+              <OptionalEnhancementsSelector
+                selectedCharacter={selectedCharacter}
+                setSelectedCharacter={setSelectedCharacter}
+                selectedBrand={selectedBrand}
+                setSelectedBrand={setSelectedBrand}
+                selectedProduct={selectedProduct}
+                setSelectedProduct={setSelectedProduct}
+              />
 
               <Button
                 onClick={generateImage}
