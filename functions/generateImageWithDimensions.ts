@@ -13,17 +13,21 @@ const getAspectRatio = (width, height) => {
 
 const makeGoogleImagenRequest = async (googleApiKey, prompt, aspectRatio, attempt = 1) => {
   try {
-    const response = await fetch('https://generativelanguage.googleapis.com/v1/images/generate', {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/imagen-3-fast:generateContent?key=${googleApiKey}`, {
       method: 'POST',
       headers: {
-        'x-goog-api-key': googleApiKey,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        prompt: prompt,
-        aspectRatio: aspectRatio,
-        sampleCount: 1,
-        seed: 0
+        contents: [{
+          parts: [{
+            text: prompt
+          }]
+        }],
+        generationConfig: {
+          aspectRatio: aspectRatio,
+          sampleCount: 1
+        }
       })
     });
 
