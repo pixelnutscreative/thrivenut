@@ -75,12 +75,27 @@ export default function AppPreview({ app, onClose, primaryColor, accentColor }) 
       const product = products.find(p => p.id === productId);
 
       // Build base prompt using app's actual name and description
-      let basePrompt = `Create an image for "${app.name}": ${app.description}\n\n`;
+      let basePrompt = `Create an image in the style of "${app.name}": ${app.description}\n\n`;
+      
+      // Check if text overlay is provided
+      let hasTextOverlay = false;
       
       // Add user inputs
       Object.entries(inputs).forEach(([key, value]) => {
-        if (value) basePrompt += `${key}: ${value}\n`;
+        if (value) {
+          if (key.toLowerCase().includes('text overlay') || key.toLowerCase().includes('text on image')) {
+            basePrompt += `Include this text on the image: "${value}"\n`;
+            hasTextOverlay = true;
+          } else {
+            basePrompt += `${key}: ${value}\n`;
+          }
+        }
       });
+      
+      // Explicitly state no text unless user provided it
+      if (!hasTextOverlay) {
+        basePrompt += `\nIMPORTANT: Do not include any text, words, or letters in the image.`;
+      }
 
       // Add context
       if (character) {
