@@ -40,6 +40,7 @@ import AdminAnalytics from '../components/admin/AdminAnalytics';
 import AdminGiftCodesContent from '../components/admin/AdminGiftCodesContent';
 import AdminFeatureFlags from '../components/admin/AdminFeatureFlags';
 import AdminCustomCoins from '../components/admin/AdminCustomCoins';
+import AdminNanoBananaTest from '../components/admin/AdminNanoBananaTest';
 
 const ADMIN_EMAILS = ['pixelnutscreative@gmail.com', 'pixel@thrivenut.app'];
 
@@ -204,7 +205,8 @@ export default function Admin() {
                       <TabsTrigger value="notifications">Notifications</TabsTrigger>
                       <TabsTrigger value="announcements">Announcements</TabsTrigger>
                       <TabsTrigger value="groups">Groups</TabsTrigger>
-<TabsTrigger value="groupTypes">Group Types</TabsTrigger>
+                      <TabsTrigger value="groupTypes">Group Types</TabsTrigger>
+                      <TabsTrigger value="apitest">API Test</TabsTrigger>
                     </TabsList>
                   </div>
                   
@@ -216,7 +218,8 @@ export default function Admin() {
                   <TabsContent value="notifications"><AdminNotificationsContent userEmail={user?.email} /></TabsContent>
                   <TabsContent value="announcements"><AdminAnnouncementsContent /></TabsContent>
                   <TabsContent value="groups"><AdminGroupsContent /></TabsContent>
-<TabsContent value="groupTypes"><AdminGroupTypesContent /></TabsContent>
+                  <TabsContent value="groupTypes"><AdminGroupTypesContent /></TabsContent>
+                  <TabsContent value="apitest"><AdminNanoBananaTest /></TabsContent>
                 </Tabs>
               </CardContent>
             </Card>

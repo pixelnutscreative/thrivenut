@@ -77,6 +77,7 @@ import SuperFanAccess from './pages/SuperFanAccess';
 import Supplements from './pages/Supplements';
 import Support from './pages/Support';
 import Tasks from './pages/Tasks';
+import TheCloset from './pages/TheCloset';
 import ThriveGenerator from './pages/ThriveGenerator';
 import TikTokContacts from './pages/TikTokContacts';
 import TikTokEngagement from './pages/TikTokEngagement';
@@ -86,7 +87,6 @@ import WaterHistory from './pages/WaterHistory';
 import WeeklyGifterGallery from './pages/WeeklyGifterGallery';
 import Wellness from './pages/Wellness';
 import WorkSchedules from './pages/WorkSchedules';
-import TheCloset from './pages/TheCloset';
 import __Layout from './Layout.jsx';
 
 
@@ -170,6 +170,7 @@ export const PAGES = {
     "Supplements": Supplements,
     "Support": Support,
     "Tasks": Tasks,
+    "TheCloset": TheCloset,
     "ThriveGenerator": ThriveGenerator,
     "TikTokContacts": TikTokContacts,
     "TikTokEngagement": TikTokEngagement,
@@ -179,7 +180,6 @@ export const PAGES = {
     "WeeklyGifterGallery": WeeklyGifterGallery,
     "Wellness": Wellness,
     "WorkSchedules": WorkSchedules,
-    "TheCloset": TheCloset,
 }
 
 export const pagesConfig = {
