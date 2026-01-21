@@ -13,7 +13,7 @@ import {
   Calendar, Sun, Cross, Smile, FileText, StickyNote, Tablet, HelpCircle,
   MessageCircle, Briefcase, DollarSign, Activity, Wallet, Swords, Lightbulb, Zap,
   Image as ImageIcon, GraduationCap, Printer, AlertCircle, MessageSquare,
-  Link as LinkIcon
+  Link as LinkIcon, FolderOpen
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import TikTokAccessGate from './components/access/TikTokAccessGate';
@@ -483,6 +483,7 @@ const { data: featureFlags = [] } = useQuery({
     items: [
     { name: 'Content Creator Center', icon: Target, path: 'ContentCreatorHub', moduleId: 'content_creator_center' },
     { name: 'AI App Creator', icon: Sparkles, path: 'AIGeneratorStudio', moduleId: 'content_creator_center', badge: 'DEV' },
+    { name: 'The Closet', icon: FolderOpen, path: 'TheCloset', moduleId: 'content_creator_center', badge: 'DEV' },
     // Affiliate Programs moved to Share & Earn
     { name: 'Content Ideas', icon: Lightbulb, path: 'SavedMotivations', moduleId: 'motivations' },
     { name: 'Content Marketplace', icon: Briefcase, path: 'ContentMarketplace', highlight: true, moduleId: 'content_marketplace' },

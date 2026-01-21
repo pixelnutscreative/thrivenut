@@ -13,13 +13,19 @@ import { Card } from '@/components/ui/card';
 export default function AppPreview({ app, onClose, primaryColor, accentColor }) {
   const [inputs, setInputs] = useState({});
   const [generating, setGenerating] = useState(false);
-  const [generatedImage, setGeneratedImage] = useState(null);
-  const [selectedSize, setSelectedSize] = useState('9:16');
+  const [generatedImages, setGeneratedImages] = useState([]);
+  const [selectedSizes, setSelectedSizes] = useState(['9:16']);
   const [customWidth, setCustomWidth] = useState('');
   const [customHeight, setCustomHeight] = useState('');
   const [upscaling, setUpscaling] = useState(false);
   const [promptUsed, setPromptUsed] = useState('');
   const queryClient = useQueryClient();
+
+  const toggleSize = (size) => {
+    setSelectedSizes(prev => 
+      prev.includes(size) ? prev.filter(s => s !== size) : [...prev, size]
+    );
+  };
 
   // Fetch past outputs for this app
   const { data: pastOutputs = [] } = useQuery({
@@ -27,26 +33,19 @@ export default function AppPreview({ app, onClose, primaryColor, accentColor }) 
     queryFn: () => base44.entities.AIAppOutput.filter({ app_id: app.id }, '-created_date'),
   });
 
-  const getSizeConfig = () => {
-    const sizes = {
-      '9:16': { width: 1080, height: 1920 },
-      '1:1': { width: 1080, height: 1080 },
-      '16:9': { width: 1920, height: 1080 },
-      'fb-cover': { width: 820, height: 312 },
-      'yt-thumbnail': { width: 1280, height: 720 },
-      'linkedin-banner': { width: 1584, height: 396 },
-      'ig-landscape': { width: 1080, height: 566 },
-    };
-    
-    if (selectedSize === 'custom' && customWidth && customHeight) {
-      return { width: parseInt(customWidth), height: parseInt(customHeight) };
-    }
-    
-    return sizes[selectedSize] || sizes['9:16'];
+  const sizeConfigs = {
+    '9:16': { width: 1080, height: 1920, label: '9:16' },
+    '1:1': { width: 1080, height: 1080, label: '1:1' },
+    '16:9': { width: 1920, height: 1080, label: '16:9' },
+    'fb': { width: 820, height: 312, label: 'FB' },
+    'yt': { width: 1280, height: 720, label: 'YT' },
+    'li': { width: 1584, height: 396, label: 'LI' },
+    'ig': { width: 1080, height: 566, label: 'IG' },
   };
 
   const handleGenerate = async () => {
     setGenerating(true);
+    const results = [];
     try {
       // Fetch global context
       const [characters, brands, products] = await Promise.all([
@@ -63,45 +62,55 @@ export default function AppPreview({ app, onClose, primaryColor, accentColor }) 
       const brand = brands.find(b => b.id === brandId);
       const product = products.find(p => p.id === productId);
 
-      // Build prompt using app's actual name and description
-      let prompt = `Create an image for "${app.name}": ${app.description}\n\n`;
+      // Build base prompt using app's actual name and description
+      let basePrompt = `Create an image for "${app.name}": ${app.description}\n\n`;
       
       // Add user inputs
       Object.entries(inputs).forEach(([key, value]) => {
-        if (value) prompt += `${key}: ${value}\n`;
+        if (value) basePrompt += `${key}: ${value}\n`;
       });
 
       // Add context
       if (character) {
-        prompt += `\nCharacter Reference: ${character.name} - ${character.description}`;
-        if (character.prompt_snippet) prompt += `\n${character.prompt_snippet}`;
+        basePrompt += `\nCharacter Reference: ${character.name} - ${character.description}`;
+        if (character.prompt_snippet) basePrompt += `\n${character.prompt_snippet}`;
       }
       if (brand) {
-        prompt += `\nBrand Style: ${brand.name} - ${brand.description}`;
-        if (brand.tone_voice) prompt += ` (Tone: ${brand.tone_voice})`;
+        basePrompt += `\nBrand Style: ${brand.name} - ${brand.description}`;
+        if (brand.tone_voice) basePrompt += ` (Tone: ${brand.tone_voice})`;
       }
       if (product) {
-        prompt += `\nFeaturing Product: ${product.name} - ${product.description}`;
+        basePrompt += `\nFeaturing Product: ${product.name} - ${product.description}`;
       }
 
-      const sizeConfig = getSizeConfig();
-      prompt += `\n\nImage dimensions: ${sizeConfig.width}x${sizeConfig.height}`;
+      // Generate image for each selected size
+      for (const sizeKey of selectedSizes) {
+        const sizeConfig = sizeConfigs[sizeKey];
+        if (!sizeConfig) continue;
 
-      setPromptUsed(prompt);
+        const prompt = `${basePrompt}\n\nImage dimensions: ${sizeConfig.width}x${sizeConfig.height}`;
+        
+        const response = await base44.integrations.Core.GenerateImage({ prompt });
+        
+        results.push({
+          url: response.url,
+          size: sizeKey,
+          prompt
+        });
 
-      const response = await base44.integrations.Core.GenerateImage({ prompt });
-      setGeneratedImage(response.url);
+        // Save output
+        await base44.entities.AIAppOutput.create({
+          app_id: app.id,
+          output_url: response.url,
+          prompt_text: prompt,
+          character_reference_id: characterRef,
+          brand_id: brandId,
+          product_id: productId
+        });
+      }
 
-      // Save output
-      await base44.entities.AIAppOutput.create({
-        app_id: app.id,
-        output_url: response.url,
-        prompt_text: prompt,
-        character_reference_id: characterRef,
-        brand_id: brandId,
-        product_id: productId
-      });
-
+      setGeneratedImages(results);
+      setPromptUsed(basePrompt);
       queryClient.invalidateQueries(['appOutputs', app.id]);
     } catch (error) {
       console.error('Generation error:', error);
@@ -111,16 +120,19 @@ export default function AppPreview({ app, onClose, primaryColor, accentColor }) 
     }
   };
 
-  const handleUpscale = async () => {
-    if (!generatedImage) return;
+  const handleUpscale = async (imageUrl) => {
     setUpscaling(true);
     try {
       const upscalePrompt = `Upscale and enhance this image to 4K quality with maximum detail and clarity. ${promptUsed}`;
       const response = await base44.integrations.Core.GenerateImage({ 
         prompt: upscalePrompt,
-        existing_image_urls: [generatedImage]
+        existing_image_urls: [imageUrl]
       });
-      setGeneratedImage(response.url);
+      
+      // Update the specific image
+      setGeneratedImages(prev => prev.map(img => 
+        img.url === imageUrl ? { ...img, url: response.url } : img
+      ));
     } catch (error) {
       console.error('Upscale error:', error);
       alert('Failed to upscale image');
@@ -154,29 +166,22 @@ export default function AppPreview({ app, onClose, primaryColor, accentColor }) 
           </TabsList>
 
           <TabsContent value="create" className="space-y-4 mt-4">
-            {/* Size Selector */}
-            <div className="border rounded-lg p-4 bg-gray-50">
-              <Label className="text-sm font-medium mb-3 block">Image Size</Label>
-              <div className="grid grid-cols-4 gap-2">
-                {['9:16', '1:1', '16:9', 'fb-cover', 'yt-thumbnail', 'linkedin-banner', 'ig-landscape', 'custom'].map(size => (
+            {/* Size Selector - Compact Multi-Select */}
+            <div className="border rounded-lg p-3 bg-gray-50">
+              <Label className="text-xs font-medium mb-2 block text-gray-600">Image Sizes (select multiple)</Label>
+              <div className="flex flex-wrap gap-1.5">
+                {Object.entries(sizeConfigs).map(([key, config]) => (
                   <Button
-                    key={size}
-                    variant={selectedSize === size ? 'default' : 'outline'}
+                    key={key}
+                    variant={selectedSizes.includes(key) ? 'default' : 'outline'}
                     size="sm"
-                    onClick={() => setSelectedSize(size)}
-                    className="text-xs"
+                    onClick={() => toggleSize(key)}
+                    className="text-xs h-7 px-2"
                   >
-                    {size === 'custom' ? 'Custom' : size}
+                    {config.label}
                   </Button>
                 ))}
               </div>
-              {selectedSize === 'custom' && (
-                <div className="flex gap-2 mt-3">
-                  <Input type="number" placeholder="Width" value={customWidth} onChange={(e) => setCustomWidth(e.target.value)} />
-                  <span className="mt-2">×</span>
-                  <Input type="number" placeholder="Height" value={customHeight} onChange={(e) => setCustomHeight(e.target.value)} />
-                </div>
-              )}
             </div>
 
             {/* Dynamic Inputs */}
@@ -210,32 +215,41 @@ export default function AppPreview({ app, onClose, primaryColor, accentColor }) 
               )}
             </Button>
 
-            {/* Result */}
-            {generatedImage && (
+            {/* Results */}
+            {generatedImages.length > 0 && (
               <div className="space-y-3">
-                <img src={generatedImage} alt="Generated" className="w-full rounded-lg shadow-lg" />
-                <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => window.open(generatedImage, '_blank')}
-                    className="flex-1"
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    Download
-                  </Button>
-                  <Button 
-                    variant="outline"
-                    onClick={handleUpscale}
-                    disabled={upscaling}
-                    className="flex-1"
-                  >
-                    {upscaling ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <ArrowUp className="w-4 h-4 mr-2" />}
-                    Upscale
-                  </Button>
+                <div className="grid gap-3">
+                  {generatedImages.map((img, idx) => (
+                    <div key={idx} className="border rounded-lg p-3 bg-white">
+                      <p className="text-xs font-medium text-gray-500 mb-2">{sizeConfigs[img.size]?.label}</p>
+                      <img src={img.url} alt={`Generated ${img.size}`} className="w-full rounded-lg shadow-lg mb-2" />
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => window.open(img.url, '_blank')}
+                          className="flex-1"
+                        >
+                          <Download className="w-4 h-4 mr-2" />
+                          Download
+                        </Button>
+                        <Button 
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleUpscale(img.url)}
+                          disabled={upscaling}
+                          className="flex-1"
+                        >
+                          {upscaling ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <ArrowUp className="w-4 h-4 mr-2" />}
+                          Upscale
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
                 {promptUsed && (
                   <details className="text-xs bg-gray-50 p-3 rounded">
-                    <summary className="cursor-pointer font-medium text-gray-700">View Prompt Used</summary>
+                    <summary className="cursor-pointer font-medium text-gray-700">View Base Prompt</summary>
                     <p className="mt-2 text-gray-600 whitespace-pre-wrap">{promptUsed}</p>
                   </details>
                 )}
