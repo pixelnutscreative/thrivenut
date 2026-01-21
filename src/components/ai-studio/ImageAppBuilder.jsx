@@ -74,15 +74,26 @@ export default function ImageAppBuilder({ primaryColor, accentColor }) {
     setGeneratingIcon(true);
     try {
       const iconPromptText = `App icon design for "${name}". ${description}. Modern, clean, professional mobile app icon, centered symbol, flat design, simple color scheme, white or light background`;
-      const { data } = await base44.functions.invoke('generateImageWithNanoBanana', {
+      console.log('Generating icon with prompt:', iconPromptText);
+      
+      const response = await base44.functions.invoke('generateImageWithNanoBanana', {
         prompt: iconPromptText,
         style: 'app icon, flat design, minimalist, professional',
         width: 512,
         height: 512
       });
-      setAppIcon(data.image_url);
+      
+      console.log('Icon response:', response);
+      
+      if (response?.data?.image_url) {
+        setAppIcon(response.data.image_url);
+        console.log('Icon set to:', response.data.image_url);
+      } else {
+        console.error('No image URL in response:', response);
+      }
     } catch (error) {
       console.error('Error generating icon:', error);
+      alert('Failed to generate icon. Check console for details.');
     } finally {
       setGeneratingIcon(false);
     }
@@ -93,15 +104,25 @@ export default function ImageAppBuilder({ primaryColor, accentColor }) {
     
     setGeneratingIcon(true);
     try {
-      const { data } = await base44.functions.invoke('generateImageWithNanoBanana', {
+      console.log('Generating custom icon...');
+      const response = await base44.functions.invoke('generateImageWithNanoBanana', {
         prompt: iconPrompt,
         style: iconStyle || 'app icon style, clean, modern',
         width: 512,
         height: 512
       });
-      setAppIcon(data.image_url);
+      
+      console.log('Custom icon response:', response);
+      
+      if (response?.data?.image_url) {
+        setAppIcon(response.data.image_url);
+        console.log('Custom icon set to:', response.data.image_url);
+      } else {
+        console.error('No image URL in response:', response);
+      }
     } catch (error) {
       console.error('Error generating icon:', error);
+      alert('Failed to generate icon. Check console for details.');
     } finally {
       setGeneratingIcon(false);
     }
@@ -253,16 +274,21 @@ Return as JSON.`,
           <div>
             <Label>App Icon</Label>
             <div className="flex gap-4 items-start">
-              {/* Icon Preview */}
-              {(appIcon || generatingIcon) && (
-                <div className="w-32 h-32 border-2 rounded-lg overflow-hidden flex items-center justify-center bg-gray-50">
-                  {generatingIcon ? (
+              {/* Icon Preview - Always show when icon exists or is loading */}
+              <div className="w-32 h-32 border-2 rounded-lg overflow-hidden flex items-center justify-center bg-gray-50">
+                {generatingIcon ? (
+                  <div className="flex flex-col items-center gap-2">
                     <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
-                  ) : (
-                    <img src={appIcon} alt="App icon" className="w-full h-full object-cover" />
-                  )}
-                </div>
-              )}
+                    <p className="text-xs text-gray-500">Generating...</p>
+                  </div>
+                ) : appIcon ? (
+                  <img src={appIcon} alt="App icon" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="text-center p-4">
+                    <Sparkles className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                    <p className="text-xs text-gray-400">Icon will appear here</p>
+                  </div>
+                )}
 
               <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Manual Upload */}
