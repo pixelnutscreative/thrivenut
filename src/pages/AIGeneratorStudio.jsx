@@ -12,6 +12,7 @@ import AppPreview from '../components/ai-studio/AppPreview';
 export default function AIGeneratorStudio() {
   const [activeTab, setActiveTab] = useState('image');
   const [user, setUser] = useState(null);
+  const [previewApp, setPreviewApp] = useState(null);
 
   // Fetch user and preferences
   useEffect(() => {
@@ -31,6 +32,15 @@ export default function AIGeneratorStudio() {
 
   const primaryColor = preferences?.primary_color || '#1fd2ea';
   const accentColor = preferences?.accent_color || '#bd84f5';
+
+  useEffect(() => {
+    window.onAppSaved = (app) => {
+      setPreviewApp(app);
+    };
+    return () => {
+      delete window.onAppSaved;
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 p-6">
