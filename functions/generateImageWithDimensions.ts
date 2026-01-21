@@ -43,9 +43,7 @@ const makeDalleRequest = async (openaiApiKey, prompt, width, height, attempt = 1
       body: JSON.stringify({
         prompt: prompt,
         n: 1,
-        size: dalleSize,
-        quality: 'standard',
-        style: 'vivid'
+        size: dalleSize
       })
     });
 
