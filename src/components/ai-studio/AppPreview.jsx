@@ -66,6 +66,18 @@ export default function AppPreview({ app, onClose, primaryColor, accentColor }) 
   };
 
   const handleGenerate = async () => {
+    // Validate required fields
+    const missingRequired = app.config_json?.inputFields?.filter(f => f.required && !inputs[f.label])?.map(f => f.label) || [];
+    if (missingRequired.length > 0) {
+      alert(`Please fill in required fields: ${missingRequired.join(', ')}`);
+      return;
+    }
+
+    if (selectedSizes.length === 0) {
+      alert('Please select at least one size');
+      return;
+    }
+
     setGenerating(true);
     const results = [];
     try {
@@ -192,7 +204,7 @@ export default function AppPreview({ app, onClose, primaryColor, accentColor }) 
       queryClient.invalidateQueries(['appOutputs', app.id]);
     } catch (error) {
       console.error('Generation error:', error);
-      alert('Failed to generate image');
+      alert(`Failed to generate image: ${error.message}`);
     } finally {
       setGenerating(false);
     }
