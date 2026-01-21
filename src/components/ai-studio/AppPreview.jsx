@@ -84,8 +84,12 @@ export default function AppPreview({ app, onClose, primaryColor, accentColor }) 
       const brand = brands.find(b => b.id === brandId);
       const product = products.find(p => p.id === productId);
 
-      // Build base prompt using app's actual name and description
-      let basePrompt = `Create an image in the style of "${app.name}": ${app.description}\n\n`;
+      // Build base prompt using app's actual name, description, and style
+      let basePrompt = `Create an image in the style of "${app.name}": ${app.description}`;
+      if (app.config_json?.stylePrompt) {
+        basePrompt += `\n\nStyle: ${app.config_json.stylePrompt}`;
+      }
+      basePrompt += `\n\n`;
       
       // Check if text overlay is provided
       let hasTextOverlay = false;
