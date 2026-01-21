@@ -130,19 +130,30 @@ export default function GlobalContextHeader({ primaryColor, accentColor }) {
                     </Button>
                   )}
                 </div>
-                <Select value={selectedCharacter || ''} onValueChange={setSelectedCharacter}>
-                  <SelectTrigger className="text-xs">
-                    <SelectValue placeholder="None - Optional" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={null}>None</SelectItem>
-                    {characters.map((char) => (
-                      <SelectItem key={char.id} value={char.id}>
-                        {char.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="flex gap-1">
+                  <Select value={selectedCharacter || ''} onValueChange={setSelectedCharacter}>
+                    <SelectTrigger className="text-xs">
+                      <SelectValue placeholder="None - Optional" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={null}>None</SelectItem>
+                      {characters.map((char) => (
+                        <SelectItem key={char.id} value={char.id}>
+                          {char.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="px-2"
+                    onClick={() => setShowAddCharacter(true)}
+                    title="Add Character"
+                  >
+                    <Plus className="w-3 h-3" />
+                  </Button>
+                </div>
                 {selectedCharacterData && (
                   <div className="p-2 bg-white rounded border border-blue-100 space-y-1">
                     <p className="text-xs text-gray-600">{selectedCharacterData.description}</p>
@@ -178,22 +189,33 @@ export default function GlobalContextHeader({ primaryColor, accentColor }) {
                     </Button>
                   )}
                 </div>
-                <Select value={selectedBrand || ''} onValueChange={(val) => {
-                  setSelectedBrand(val);
-                  setSelectedProduct(null);
-                }}>
-                  <SelectTrigger className="text-xs">
-                    <SelectValue placeholder="None - Optional" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={null}>None</SelectItem>
-                    {brands.map((brand) => (
-                      <SelectItem key={brand.id} value={brand.id}>
-                        {brand.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="flex gap-1">
+                  <Select value={selectedBrand || ''} onValueChange={(val) => {
+                    setSelectedBrand(val);
+                    setSelectedProduct(null);
+                  }}>
+                    <SelectTrigger className="text-xs">
+                      <SelectValue placeholder="None - Optional" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={null}>None</SelectItem>
+                      {brands.map((brand) => (
+                        <SelectItem key={brand.id} value={brand.id}>
+                          {brand.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="px-2"
+                    onClick={() => setShowAddBrand(true)}
+                    title="Add Brand"
+                  >
+                    <Plus className="w-3 h-3" />
+                  </Button>
+                </div>
                 {selectedBrandData && (
                   <div className="p-2 bg-white rounded border border-purple-100 space-y-1">
                     <p className="text-xs text-gray-600">{selectedBrandData.description}</p>
@@ -222,23 +244,35 @@ export default function GlobalContextHeader({ primaryColor, accentColor }) {
                     </Button>
                   )}
                 </div>
-                <Select 
-                  value={selectedProduct || ''} 
-                  onValueChange={setSelectedProduct}
-                  disabled={!selectedBrand}
-                >
-                  <SelectTrigger className="text-xs">
-                    <SelectValue placeholder={selectedBrand ? "None - Optional" : "Select brand first"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={null}>None</SelectItem>
-                    {products.map((product) => (
-                      <SelectItem key={product.id} value={product.id}>
-                        {product.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="flex gap-1">
+                  <Select 
+                    value={selectedProduct || ''} 
+                    onValueChange={setSelectedProduct}
+                    disabled={!selectedBrand}
+                  >
+                    <SelectTrigger className="text-xs">
+                      <SelectValue placeholder={selectedBrand ? "None - Optional" : "Select brand first"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={null}>None</SelectItem>
+                      {products.map((product) => (
+                        <SelectItem key={product.id} value={product.id}>
+                          {product.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="px-2"
+                    disabled={!selectedBrand}
+                    onClick={() => setShowAddProduct(true)}
+                    title="Add Product/Offer"
+                  >
+                    <Plus className="w-3 h-3" />
+                  </Button>
+                </div>
                 {selectedProductData && (
                   <div className="p-2 bg-white rounded border border-orange-100 space-y-1">
                     <p className="text-xs text-gray-600">{selectedProductData.description}</p>
