@@ -124,19 +124,21 @@ export default function AppPreview({ app, onClose, primaryColor, accentColor }) 
         basePrompt += `\nFeaturing Product: ${product.name} - ${product.description}`;
       }
 
-      // Generate ONE base image first with EXACT dimensions in prompt
+      // Generate ONE base image first with EXACT dimensions
       const firstSize = selectedSizes[0];
       const firstConfig = getSizeConfig(firstSize);
-      const firstPrompt = `${basePrompt}\n\nCRITICAL: Output image must be EXACTLY ${firstConfig.width} pixels wide by ${firstConfig.height} pixels tall. Aspect ratio: ${(firstConfig.width / firstConfig.height).toFixed(2)}`;
+      const firstPrompt = `${basePrompt}`;
       
       // Prepare reference images from character
       const referenceImages = character?.images?.filter(Boolean) || [];
       
-      const firstResponse = await base44.integrations.Core.GenerateImage({ 
+      const firstResponse = await base44.functions.invoke('generateImageWithDimensions', {
         prompt: firstPrompt,
-        file_urls: referenceImages.length > 0 ? referenceImages : undefined
+        width: firstConfig.width,
+        height: firstConfig.height,
+        referenceImageUrls: referenceImages
       });
-      const baseImageUrl = firstResponse.url;
+      const baseImageUrl = firstResponse.data.url;
       
       results.push({
         url: baseImageUrl,
@@ -159,16 +161,17 @@ export default function AppPreview({ app, onClose, primaryColor, accentColor }) 
         const sizeKey = selectedSizes[i];
         const sizeConfig = getSizeConfig(sizeKey);
         
-        const resizePrompt = `Recreate this EXACT image with identical composition, colors, style, and content. CRITICAL: Output must be EXACTLY ${sizeConfig.width} pixels wide by ${sizeConfig.height} pixels tall. Aspect ratio: ${(sizeConfig.width / sizeConfig.height).toFixed(2)}. ${basePrompt}`;
+        const resizePrompt = `Recreate this EXACT image with identical composition, colors, style, and content. ${basePrompt}`;
         
-        const response = await base44.integrations.Core.GenerateImage({ 
+        const response = await base44.functions.invoke('generateImageWithDimensions', {
           prompt: resizePrompt,
-          existing_image_urls: [baseImageUrl],
-          file_urls: referenceImages.length > 0 ? referenceImages : undefined
+          width: sizeConfig.width,
+          height: sizeConfig.height,
+          referenceImageUrls: [baseImageUrl, ...referenceImages]
         });
         
         results.push({
-          url: response.url,
+          url: response.data.url,
           size: sizeKey,
           prompt: resizePrompt
         });
@@ -176,7 +179,7 @@ export default function AppPreview({ app, onClose, primaryColor, accentColor }) 
         // Save output
         await base44.entities.AIAppOutput.create({
           app_id: app.id,
-          output_url: response.url,
+          output_url: response.data.url,
           prompt_text: resizePrompt,
           character_reference_id: characterRef,
           brand_id: brandId,
