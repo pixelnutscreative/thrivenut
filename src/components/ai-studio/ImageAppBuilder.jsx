@@ -76,18 +76,15 @@ export default function ImageAppBuilder({ primaryColor, accentColor }) {
       const iconPromptText = `App icon design for "${name}". ${description}. Modern, clean, professional mobile app icon, centered symbol, flat design, simple color scheme, white or light background`;
       console.log('Generating icon with prompt:', iconPromptText);
       
-      const response = await base44.functions.invoke('generateImageWithNanoBanana', {
-        prompt: iconPromptText,
-        style: 'app icon, flat design, minimalist, professional',
-        width: 512,
-        height: 512
+      const response = await base44.integrations.Core.GenerateImage({
+        prompt: iconPromptText
       });
       
       console.log('Icon response:', response);
       
-      if (response?.data?.image_url) {
-        setAppIcon(response.data.image_url);
-        console.log('Icon set to:', response.data.image_url);
+      if (response?.url) {
+        setAppIcon(response.url);
+        console.log('Icon set to:', response.url);
       } else {
         console.error('No image URL in response:', response);
       }
@@ -105,18 +102,16 @@ export default function ImageAppBuilder({ primaryColor, accentColor }) {
     setGeneratingIcon(true);
     try {
       console.log('Generating custom icon...');
-      const response = await base44.functions.invoke('generateImageWithNanoBanana', {
-        prompt: iconPrompt,
-        style: iconStyle || 'app icon style, clean, modern',
-        width: 512,
-        height: 512
+      const fullPrompt = `${iconPrompt}. ${iconStyle || 'app icon style, clean, modern'}`;
+      const response = await base44.integrations.Core.GenerateImage({
+        prompt: fullPrompt
       });
       
       console.log('Custom icon response:', response);
       
-      if (response?.data?.image_url) {
-        setAppIcon(response.data.image_url);
-        console.log('Custom icon set to:', response.data.image_url);
+      if (response?.url) {
+        setAppIcon(response.url);
+        console.log('Custom icon set to:', response.url);
       } else {
         console.error('No image URL in response:', response);
       }
