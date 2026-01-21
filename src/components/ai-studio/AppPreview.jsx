@@ -3,12 +3,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, Download, Wand2, ArrowUp, FolderOpen, X } from 'lucide-react';
+import { Loader2, Download, Wand2, ArrowUp, FolderOpen, X, Trash2, Edit2, Tags } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import DynamicInput from './DynamicInput';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 export default function AppPreview({ app, onClose, primaryColor, accentColor }) {
   const [inputs, setInputs] = useState({});
@@ -25,6 +26,9 @@ export default function AppPreview({ app, onClose, primaryColor, accentColor }) 
   const [customHeight, setCustomHeight] = useState(savedCustomSize?.height?.toString() || '');
   const [upscaling, setUpscaling] = useState(false);
   const [promptUsed, setPromptUsed] = useState('');
+  const [editingOutput, setEditingOutput] = useState(null);
+  const [editName, setEditName] = useState('');
+  const [editKeywords, setEditKeywords] = useState('');
   const queryClient = useQueryClient();
 
   const toggleSize = (size) => {
@@ -201,6 +205,38 @@ export default function AppPreview({ app, onClose, primaryColor, accentColor }) 
     }
   };
 
+  const handleDelete = async (outputId) => {
+    if (!confirm('Delete this image?')) return;
+    try {
+      await base44.entities.AIAppOutput.delete(outputId);
+      queryClient.invalidateQueries(['appOutputs', app.id]);
+    } catch (error) {
+      console.error('Delete error:', error);
+      alert('Failed to delete');
+    }
+  };
+
+  const handleStartEdit = (output) => {
+    setEditingOutput(output);
+    setEditName(output.name || '');
+    setEditKeywords(output.keywords?.join(', ') || '');
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingOutput) return;
+    try {
+      await base44.entities.AIAppOutput.update(editingOutput.id, {
+        name: editName,
+        keywords: editKeywords.split(',').map(k => k.trim()).filter(Boolean)
+      });
+      queryClient.invalidateQueries(['appOutputs', app.id]);
+      setEditingOutput(null);
+    } catch (error) {
+      console.error('Update error:', error);
+      alert('Failed to update');
+    }
+  };
+
   return (
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
@@ -354,20 +390,82 @@ export default function AppPreview({ app, onClose, primaryColor, accentColor }) 
                 <p>No images yet. Create your first one!</p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {pastOutputs.map(output => (
-                  <Card key={output.id} className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow">
-                    <img 
-                      src={output.output_url} 
-                      alt="Past output" 
-                      className="w-full h-48 object-cover"
-                      onClick={() => window.open(output.output_url, '_blank')}
-                    />
-                    {output.prompt_text && (
-                      <details className="p-2 text-xs bg-gray-50">
-                        <summary className="cursor-pointer font-medium">Prompt</summary>
-                        <p className="mt-1 text-gray-600 line-clamp-3">{output.prompt_text}</p>
-                      </details>
+                  <Card key={output.id} className="overflow-hidden">
+                    {editingOutput?.id === output.id ? (
+                      <div className="p-4 space-y-3">
+                        <Input 
+                          placeholder="Name this image..."
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                        />
+                        <Input 
+                          placeholder="Keywords (comma-separated)"
+                          value={editKeywords}
+                          onChange={(e) => setEditKeywords(e.target.value)}
+                        />
+                        <div className="flex gap-2">
+                          <Button size="sm" onClick={handleSaveEdit} className="flex-1">Save</Button>
+                          <Button size="sm" variant="outline" onClick={() => setEditingOutput(null)} className="flex-1">Cancel</Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="relative group">
+                          <img 
+                            src={output.output_url} 
+                            alt={output.name || "Generated image"} 
+                            className="w-full h-48 object-cover cursor-pointer"
+                            onClick={() => window.open(output.output_url, '_blank')}
+                          />
+                          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                            <Button 
+                              size="icon"
+                              variant="secondary"
+                              className="h-8 w-8"
+                              onClick={() => handleStartEdit(output)}
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </Button>
+                            <Button 
+                              size="icon"
+                              variant="destructive"
+                              className="h-8 w-8"
+                              onClick={() => handleDelete(output.id)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                        
+                        <div className="p-3 space-y-2">
+                          {output.name && (
+                            <p className="font-medium text-sm">{output.name}</p>
+                          )}
+                          
+                          {output.keywords && output.keywords.length > 0 && (
+                            <div className="flex flex-wrap gap-1">
+                              {output.keywords.map((keyword, idx) => (
+                                <Badge key={idx} variant="secondary" className="text-xs">
+                                  {keyword}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                          
+                          {output.prompt_text && (
+                            <details className="text-xs bg-gray-50 p-2 rounded">
+                              <summary className="cursor-pointer font-medium text-gray-700">Full Prompt</summary>
+                              <p className="mt-2 text-gray-600 whitespace-pre-wrap">{output.prompt_text}</p>
+                            </details>
+                          )}
+                          
+                          <p className="text-xs text-gray-400">
+                            {new Date(output.created_date).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </>
                     )}
                   </Card>
                 ))}
