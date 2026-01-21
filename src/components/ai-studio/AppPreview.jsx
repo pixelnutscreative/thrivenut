@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, Download, Wand2, ArrowUp, FolderOpen, X, Trash2, Edit2, Tags } from 'lucide-react';
+import { Loader2, Download, Wand2, ArrowUp, FolderOpen, X, Trash2, Edit2, Tags, Copy, Share2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import DynamicInput from './DynamicInput';
@@ -237,6 +237,24 @@ export default function AppPreview({ app, onClose, primaryColor, accentColor }) 
     }
   };
 
+  const handleCopyPrompt = (prompt) => {
+    navigator.clipboard.writeText(prompt);
+    alert('Prompt copied to clipboard!');
+  };
+
+  const handleSharePrompt = async (output) => {
+    try {
+      await base44.entities.AIAppOutput.update(output.id, {
+        is_shared: true
+      });
+      queryClient.invalidateQueries(['appOutputs', app.id]);
+      alert('Prompt shared to library!');
+    } catch (error) {
+      console.error('Share error:', error);
+      alert('Failed to share');
+    }
+  };
+
   return (
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
@@ -458,6 +476,31 @@ export default function AppPreview({ app, onClose, primaryColor, accentColor }) 
                             <details className="text-xs bg-gray-50 p-2 rounded">
                               <summary className="cursor-pointer font-medium text-gray-700">Full Prompt</summary>
                               <p className="mt-2 text-gray-600 whitespace-pre-wrap">{output.prompt_text}</p>
+                              <div className="flex gap-1 mt-2">
+                                <Button
+                                  size="xs"
+                                  variant="outline"
+                                  className="h-6 text-xs flex-1"
+                                  onClick={() => handleCopyPrompt(output.prompt_text)}
+                                >
+                                  <Copy className="w-3 h-3 mr-1" />
+                                  Copy
+                                </Button>
+                                {!output.is_shared && (
+                                  <Button
+                                    size="xs"
+                                    variant="outline"
+                                    className="h-6 text-xs flex-1"
+                                    onClick={() => handleSharePrompt(output)}
+                                  >
+                                    <Share2 className="w-3 h-3 mr-1" />
+                                    Share
+                                  </Button>
+                                )}
+                                {output.is_shared && (
+                                  <span className="text-xs text-green-600 flex items-center px-2">✓ Shared</span>
+                                )}
+                              </div>
                             </details>
                           )}
                           
