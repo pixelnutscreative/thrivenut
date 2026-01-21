@@ -521,6 +521,14 @@ Return as JSON.`,
               </Button>
               <Button 
                 size="sm"
+                variant="outline"
+                onClick={addDefaultFields}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Defaults
+              </Button>
+              <Button 
+                size="sm"
                 onClick={generateInputFields}
                 disabled={!appDescription.trim() || generatingFields}
                 style={{ background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` }}
