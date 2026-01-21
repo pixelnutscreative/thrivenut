@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import GlobalContextHeader from '../components/ai-studio/GlobalContextHeader';
 import ImageAppBuilder from '../components/ai-studio/ImageAppBuilder';
+import AppPreview from '../components/ai-studio/AppPreview';
 
 export default function AIGeneratorStudio() {
   const [activeTab, setActiveTab] = useState('image');
@@ -178,6 +179,15 @@ export default function AIGeneratorStudio() {
           </CardContent>
         </Card>
       </div>
+
+      {previewApp && (
+        <AppPreview 
+          app={previewApp}
+          onClose={() => setPreviewApp(null)}
+          primaryColor={primaryColor}
+          accentColor={accentColor}
+        />
+      )}
     </div>
   );
 }
