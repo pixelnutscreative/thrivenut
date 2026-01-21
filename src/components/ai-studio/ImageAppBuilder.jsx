@@ -268,6 +268,56 @@ Return as JSON.`,
     }
   };
 
+  const saveAndTest = async () => {
+    if (!appName.trim()) {
+      alert('Please provide an app name');
+      return;
+    }
+    if (inputFields.length === 0) {
+      alert('Please add at least one input field');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const appData = {
+        name: appName,
+        description: appDescription,
+        app_icon_url: appIcon,
+        app_type: 'image',
+        config_json: {
+          appIdea,
+          inputFields,
+          iconPrompt,
+          iconStyle
+        },
+        is_published: false,
+        approval_status: 'draft'
+      };
+
+      let savedApp;
+      if (draftId) {
+        await base44.entities.AIApp.update(draftId, appData);
+        savedApp = { id: draftId, ...appData };
+      } else {
+        savedApp = await base44.entities.AIApp.create(appData);
+        setDraftId(savedApp.id);
+      }
+
+      // Trigger onSave callback if provided
+      if (window.onAppSaved) {
+        window.onAppSaved(savedApp);
+      }
+      
+      alert('App saved successfully! Opening preview...');
+    } catch (error) {
+      console.error('Error saving app:', error);
+      alert('Failed to save app');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* App Info Section */}
@@ -610,8 +660,12 @@ Return as JSON.`,
           {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
           Save Draft
         </Button>
-        <Button style={{ background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` }}>
-          <Sparkles className="w-4 h-4 mr-2" />
+        <Button 
+          onClick={saveAndTest} 
+          disabled={saving}
+          style={{ background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` }}
+        >
+          {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}
           Save & Test App
         </Button>
       </div>
