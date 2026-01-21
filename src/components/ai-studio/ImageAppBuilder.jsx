@@ -289,8 +289,9 @@ Return as JSON.`,
                     <p className="text-xs text-gray-400">Icon will appear here</p>
                   </div>
                 )}
+                </div>
 
-              <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Manual Upload */}
                 <label className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors cursor-pointer">
                   <input
