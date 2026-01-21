@@ -112,22 +112,18 @@ export default function ImageAppBuilder({ primaryColor, accentColor }) {
     
     setGeneratingFields(true);
     try {
-      const { data } = await base44.functions.invoke('generateImageWithNanoBanana', {
-        prompt: `For the image generation app "${appName}" (${appDescription}), suggest 3-5 input fields users should fill out before generating images. Return a JSON array.`,
-        // This should actually use LLM not image generation - fixing below
-      });
-      
-      // Actually use LLM for this
       const response = await base44.integrations.Core.InvokeLLM({
         prompt: `For the AI image generation app "${appName}" with description: "${appDescription}". 
 
 Suggest 3-5 essential input fields that users should provide before generating images. For each field include:
 - label: clear field name
-- type: text, textarea, number, dropdown, or file
+- type: one of: text, textarea, long_text, number, dropdown, slider, toggle, file_upload, image, language, url
 - required: true or false
 - placeholder: helpful example text
+- options: array of strings (only for dropdown type)
+- min/max/step: for slider type
 
-Return as JSON array.`,
+Return as JSON.`,
         response_json_schema: {
           type: "object",
           properties: {
@@ -139,7 +135,11 @@ Return as JSON array.`,
                   label: { type: "string" },
                   type: { type: "string" },
                   required: { type: "boolean" },
-                  placeholder: { type: "string" }
+                  placeholder: { type: "string" },
+                  options: { type: "array", items: { type: "string" } },
+                  min: { type: "number" },
+                  max: { type: "number" },
+                  step: { type: "number" }
                 },
                 required: ["label", "type", "required"]
               }
@@ -266,11 +266,26 @@ Return as JSON array.`,
 
               <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Manual Upload */}
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors cursor-pointer">
+                <label className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors cursor-pointer">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      try {
+                        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+                        setAppIcon(file_url);
+                      } catch (error) {
+                        console.error('Error uploading icon:', error);
+                      }
+                    }}
+                  />
                   <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
                   <p className="text-sm text-gray-600 mb-1">Upload Icon</p>
                   <p className="text-xs text-gray-400">PNG, JPG (Square)</p>
-                </div>
+                </label>
 
                 {/* AI Generated */}
                 <div className="border-2 border-dashed rounded-lg p-4" style={{ borderColor: primaryColor }}>
