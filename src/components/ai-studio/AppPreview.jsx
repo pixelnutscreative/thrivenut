@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { X, Sparkles, Loader2, Download } from 'lucide-react';
 import DynamicInput from './DynamicInput';
-import OptionalEnhancementsSelector from './OptionalEnhancementsSelector';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 
@@ -11,9 +10,11 @@ export default function AppPreview({ app, onClose, primaryColor, accentColor }) 
   const [inputs, setInputs] = useState({});
   const [generating, setGenerating] = useState(false);
   const [generatedImage, setGeneratedImage] = useState(null);
-  const [selectedCharacter, setSelectedCharacter] = useState(null);
-  const [selectedBrand, setSelectedBrand] = useState(null);
-  const [selectedProduct, setSelectedProduct] = useState(null);
+  
+  // Read from global context (set by GlobalContextHeader)
+  const selectedCharacter = window.AI_GLOBAL_CHARACTER || null;
+  const selectedBrand = window.AI_GLOBAL_BRAND || null;
+  const selectedProduct = window.AI_GLOBAL_PRODUCT || null;
 
   const handleInputChange = (label, value) => {
     setInputs({ ...inputs, [label]: value });
@@ -133,15 +134,6 @@ export default function AppPreview({ app, onClose, primaryColor, accentColor }) 
                   onChange={handleInputChange}
                 />
               ))}
-
-              <OptionalEnhancementsSelector
-                selectedCharacter={selectedCharacter}
-                setSelectedCharacter={setSelectedCharacter}
-                selectedBrand={selectedBrand}
-                setSelectedBrand={setSelectedBrand}
-                selectedProduct={selectedProduct}
-                setSelectedProduct={setSelectedProduct}
-              />
 
               <Button
                 onClick={generateImage}
