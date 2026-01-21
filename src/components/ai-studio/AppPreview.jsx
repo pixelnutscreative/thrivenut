@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { X, Sparkles, Loader2, Download } from 'lucide-react';
 import DynamicInput from './DynamicInput';
 import { base44 } from '@/api/base44Client';
@@ -10,6 +12,7 @@ export default function AppPreview({ app, onClose, primaryColor, accentColor }) 
   const [inputs, setInputs] = useState({});
   const [generating, setGenerating] = useState(false);
   const [generatedImage, setGeneratedImage] = useState(null);
+  const [includePrompt, setIncludePrompt] = useState(false);
   
   // Read from global context (set by GlobalContextHeader)
   const selectedCharacter = window.AI_GLOBAL_CHARACTER || null;
@@ -81,7 +84,7 @@ export default function AppPreview({ app, onClose, primaryColor, accentColor }) 
         await base44.entities.AIAppOutput.create({
           app_id: app.id,
           output_url: response.url,
-          prompt_text: prompt.trim(),
+          prompt_text: includePrompt ? prompt.trim() : null,
           character_reference_id: selectedCharacter,
           brand_id: selectedBrand,
           style_template_id: selectedProduct,
@@ -134,6 +137,17 @@ export default function AppPreview({ app, onClose, primaryColor, accentColor }) 
                   onChange={handleInputChange}
                 />
               ))}
+
+              <div className="flex items-center space-x-2 pt-2 border-t">
+                <Switch 
+                  id="include-prompt" 
+                  checked={includePrompt}
+                  onCheckedChange={setIncludePrompt}
+                />
+                <Label htmlFor="include-prompt" className="text-sm text-gray-600">
+                  Save prompt with image (visible in The Closet)
+                </Label>
+              </div>
 
               <Button
                 onClick={generateImage}

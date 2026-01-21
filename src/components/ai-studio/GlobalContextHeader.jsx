@@ -1,15 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { User, Briefcase, Package, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { User, Briefcase, Package, X, ChevronDown, ChevronUp, Plus } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import AddCharacterModal from './AddCharacterModal';
+import AddBrandModal from './AddBrandModal';
+import AddProductModal from './AddProductModal';
 
 export default function GlobalContextHeader({ primaryColor, accentColor }) {
   const [user, setUser] = useState(null);
   const [isOpen, setIsOpen] = useState(true);
+  const queryClient = useQueryClient();
+  
+  // Modals
+  const [showAddCharacter, setShowAddCharacter] = useState(false);
+  const [showAddBrand, setShowAddBrand] = useState(false);
+  const [showAddProduct, setShowAddProduct] = useState(false);
   
   // Load from localStorage
   const [selectedCharacter, setSelectedCharacter] = useState(() => 
@@ -243,6 +252,40 @@ export default function GlobalContextHeader({ primaryColor, accentColor }) {
           </CollapsibleContent>
         </CardContent>
       </Collapsible>
+
+      <AddCharacterModal 
+        isOpen={showAddCharacter} 
+        onClose={() => setShowAddCharacter(false)}
+        onSuccess={(newChar) => {
+          queryClient.invalidateQueries(['characters']);
+          setSelectedCharacter(newChar.id);
+          setShowAddCharacter(false);
+        }}
+        primaryColor={primaryColor}
+      />
+
+      <AddBrandModal 
+        isOpen={showAddBrand} 
+        onClose={() => setShowAddBrand(false)}
+        onSuccess={(newBrand) => {
+          queryClient.invalidateQueries(['brands']);
+          setSelectedBrand(newBrand.id);
+          setShowAddBrand(false);
+        }}
+        primaryColor={primaryColor}
+      />
+
+      <AddProductModal 
+        isOpen={showAddProduct} 
+        onClose={() => setShowAddProduct(false)}
+        brandId={selectedBrand}
+        onSuccess={(newProduct) => {
+          queryClient.invalidateQueries(['products']);
+          setSelectedProduct(newProduct.id);
+          setShowAddProduct(false);
+        }}
+        primaryColor={primaryColor}
+      />
     </Card>
   );
 }
