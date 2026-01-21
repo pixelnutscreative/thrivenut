@@ -125,7 +125,13 @@ export default function AppPreview({ app, onClose, primaryColor, accentColor }) 
       const firstConfig = getSizeConfig(firstSize);
       const firstPrompt = `${basePrompt}\n\nCRITICAL: Output image must be EXACTLY ${firstConfig.width} pixels wide by ${firstConfig.height} pixels tall. Aspect ratio: ${(firstConfig.width / firstConfig.height).toFixed(2)}`;
       
-      const firstResponse = await base44.integrations.Core.GenerateImage({ prompt: firstPrompt });
+      // Prepare reference images from character
+      const referenceImages = character?.images?.filter(Boolean) || [];
+      
+      const firstResponse = await base44.integrations.Core.GenerateImage({ 
+        prompt: firstPrompt,
+        file_urls: referenceImages.length > 0 ? referenceImages : undefined
+      });
       const baseImageUrl = firstResponse.url;
       
       results.push({
@@ -153,7 +159,8 @@ export default function AppPreview({ app, onClose, primaryColor, accentColor }) 
         
         const response = await base44.integrations.Core.GenerateImage({ 
           prompt: resizePrompt,
-          existing_image_urls: [baseImageUrl]
+          existing_image_urls: [baseImageUrl],
+          file_urls: referenceImages.length > 0 ? referenceImages : undefined
         });
         
         results.push({
