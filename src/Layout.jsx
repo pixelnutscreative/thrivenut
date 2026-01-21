@@ -482,6 +482,7 @@ const { data: featureFlags = [] } = useQuery({
     bgColor: 'bg-yellow-500/10',
     items: [
     { name: 'Content Creator Center', icon: Target, path: 'ContentCreatorHub', moduleId: 'content_creator_center' },
+    { name: 'AI App Creator', icon: Sparkles, path: 'AIGeneratorStudio', moduleId: 'content_creator_center', badge: 'DEV' },
     // Affiliate Programs moved to Share & Earn
     { name: 'Content Ideas', icon: Lightbulb, path: 'SavedMotivations', moduleId: 'motivations' },
     { name: 'Content Marketplace', icon: Briefcase, path: 'ContentMarketplace', highlight: true, moduleId: 'content_marketplace' },
