@@ -33,14 +33,26 @@ export default function AppPreview({ app, onClose, primaryColor, accentColor }) 
     queryFn: () => base44.entities.AIAppOutput.filter({ app_id: app.id }, '-created_date'),
   });
 
-  const sizeConfigs = {
-    '9:16': { width: 1080, height: 1920, label: '9:16' },
-    '1:1': { width: 1080, height: 1080, label: '1:1' },
-    '16:9': { width: 1920, height: 1080, label: '16:9' },
-    'fb': { width: 820, height: 312, label: 'FB' },
-    'yt': { width: 1280, height: 720, label: 'YT' },
-    'li': { width: 1584, height: 396, label: 'LI' },
-    'ig': { width: 1080, height: 566, label: 'IG' },
+  const getSizeConfig = (sizeKey) => {
+    const configs = {
+      '9:16': { width: 1080, height: 1920, label: '9:16' },
+      '1:1': { width: 1080, height: 1080, label: '1:1' },
+      '16:9': { width: 1920, height: 1080, label: '16:9' },
+      'fb': { width: 820, height: 312, label: 'FB' },
+      'yt': { width: 1280, height: 720, label: 'YT' },
+      'li': { width: 1584, height: 396, label: 'LI' },
+      'ig': { width: 1080, height: 566, label: 'IG' },
+    };
+    
+    if (sizeKey === 'custom' && customWidth && customHeight) {
+      return { 
+        width: parseInt(customWidth), 
+        height: parseInt(customHeight), 
+        label: `${customWidth}×${customHeight}` 
+      };
+    }
+    
+    return configs[sizeKey] || configs['9:16'];
   };
 
   const handleGenerate = async () => {
@@ -83,26 +95,53 @@ export default function AppPreview({ app, onClose, primaryColor, accentColor }) 
         basePrompt += `\nFeaturing Product: ${product.name} - ${product.description}`;
       }
 
-      // Generate image for each selected size
-      for (const sizeKey of selectedSizes) {
-        const sizeConfig = sizeConfigs[sizeKey];
-        if (!sizeConfig) continue;
+      // Generate ONE base image first
+      const firstSize = selectedSizes[0];
+      const firstConfig = getSizeConfig(firstSize);
+      const firstPrompt = `${basePrompt}\n\nImage dimensions: ${firstConfig.width}x${firstConfig.height}`;
+      
+      const firstResponse = await base44.integrations.Core.GenerateImage({ prompt: firstPrompt });
+      const baseImageUrl = firstResponse.url;
+      
+      results.push({
+        url: baseImageUrl,
+        size: firstSize,
+        prompt: firstPrompt
+      });
 
-        const prompt = `${basePrompt}\n\nImage dimensions: ${sizeConfig.width}x${sizeConfig.height}`;
+      // Save first output
+      await base44.entities.AIAppOutput.create({
+        app_id: app.id,
+        output_url: baseImageUrl,
+        prompt_text: firstPrompt,
+        character_reference_id: characterRef,
+        brand_id: brandId,
+        product_id: productId
+      });
+
+      // Generate same image in other sizes
+      for (let i = 1; i < selectedSizes.length; i++) {
+        const sizeKey = selectedSizes[i];
+        const sizeConfig = getSizeConfig(sizeKey);
         
-        const response = await base44.integrations.Core.GenerateImage({ prompt });
+        const resizePrompt = `${basePrompt}\n\nResize/recreate this exact same image to ${sizeConfig.width}x${sizeConfig.height} dimensions. Maintain the exact same composition, style, and content.`;
+        
+        const response = await base44.integrations.Core.GenerateImage({ 
+          prompt: resizePrompt,
+          existing_image_urls: [baseImageUrl]
+        });
         
         results.push({
           url: response.url,
           size: sizeKey,
-          prompt
+          prompt: resizePrompt
         });
 
         // Save output
         await base44.entities.AIAppOutput.create({
           app_id: app.id,
           output_url: response.url,
-          prompt_text: prompt,
+          prompt_text: resizePrompt,
           character_reference_id: characterRef,
           brand_id: brandId,
           product_id: productId
@@ -169,19 +208,41 @@ export default function AppPreview({ app, onClose, primaryColor, accentColor }) 
             {/* Size Selector - Compact Multi-Select */}
             <div className="border rounded-lg p-3 bg-gray-50">
               <Label className="text-xs font-medium mb-2 block text-gray-600">Image Sizes (select multiple)</Label>
-              <div className="flex flex-wrap gap-1.5">
-                {Object.entries(sizeConfigs).map(([key, config]) => (
-                  <Button
-                    key={key}
-                    variant={selectedSizes.includes(key) ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => toggleSize(key)}
-                    className="text-xs h-7 px-2"
-                  >
-                    {config.label}
-                  </Button>
-                ))}
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {['9:16', '1:1', '16:9', 'fb', 'yt', 'li', 'ig', 'custom'].map(key => {
+                  const config = getSizeConfig(key);
+                  return (
+                    <Button
+                      key={key}
+                      variant={selectedSizes.includes(key) ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => toggleSize(key)}
+                      className="text-xs h-7 px-2"
+                    >
+                      {config.label}
+                    </Button>
+                  );
+                })}
               </div>
+              {selectedSizes.includes('custom') && (
+                <div className="flex gap-2 items-center">
+                  <Input 
+                    type="number" 
+                    placeholder="Width" 
+                    value={customWidth} 
+                    onChange={(e) => setCustomWidth(e.target.value)}
+                    className="h-8 text-xs"
+                  />
+                  <span className="text-xs">×</span>
+                  <Input 
+                    type="number" 
+                    placeholder="Height" 
+                    value={customHeight} 
+                    onChange={(e) => setCustomHeight(e.target.value)}
+                    className="h-8 text-xs"
+                  />
+                </div>
+              )}
             </div>
 
             {/* Dynamic Inputs */}
@@ -221,7 +282,7 @@ export default function AppPreview({ app, onClose, primaryColor, accentColor }) 
                 <div className="grid gap-3">
                   {generatedImages.map((img, idx) => (
                     <div key={idx} className="border rounded-lg p-3 bg-white">
-                      <p className="text-xs font-medium text-gray-500 mb-2">{sizeConfigs[img.size]?.label}</p>
+                      <p className="text-xs font-medium text-gray-500 mb-2">{getSizeConfig(img.size).label}</p>
                       <img src={img.url} alt={`Generated ${img.size}`} className="w-full rounded-lg shadow-lg mb-2" />
                       <div className="flex gap-2">
                         <Button 
