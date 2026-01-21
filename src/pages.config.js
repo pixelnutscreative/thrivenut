@@ -1,3 +1,4 @@
+import AIGeneratorStudio from './pages/AIGeneratorStudio';
 import AIImageGenerator from './pages/AIImageGenerator';
 import AIToolsGenerator from './pages/AIToolsGenerator';
 import ActivityTracker from './pages/ActivityTracker';
@@ -85,11 +86,11 @@ import WaterHistory from './pages/WaterHistory';
 import WeeklyGifterGallery from './pages/WeeklyGifterGallery';
 import Wellness from './pages/Wellness';
 import WorkSchedules from './pages/WorkSchedules';
-import AIGeneratorStudio from './pages/AIGeneratorStudio';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
+    "AIGeneratorStudio": AIGeneratorStudio,
     "AIImageGenerator": AIImageGenerator,
     "AIToolsGenerator": AIToolsGenerator,
     "ActivityTracker": ActivityTracker,
@@ -177,7 +178,6 @@ export const PAGES = {
     "WeeklyGifterGallery": WeeklyGifterGallery,
     "Wellness": Wellness,
     "WorkSchedules": WorkSchedules,
-    "AIGeneratorStudio": AIGeneratorStudio,
 }
 
 export const pagesConfig = {

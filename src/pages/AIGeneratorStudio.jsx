@@ -2,17 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Sparkles, Image as ImageIcon, FileText, Code, MessageCircle, Video, Music, Volume2 } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { Sparkles, Image as ImageIcon, FileText, Code, MessageCircle, Video, Music, Volume2, Folder } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import GlobalContextHeader from '../components/ai-studio/GlobalContextHeader';
 import ImageAppBuilder from '../components/ai-studio/ImageAppBuilder';
 import AppPreview from '../components/ai-studio/AppPreview';
 
 export default function AIGeneratorStudio() {
-  const [activeTab, setActiveTab] = useState('image');
+  const [activeTab, setActiveTab] = useState('my-apps');
   const [user, setUser] = useState(null);
   const [previewApp, setPreviewApp] = useState(null);
+  const queryClient = useQueryClient();
 
   // Fetch user and preferences
   useEffect(() => {
@@ -33,14 +34,25 @@ export default function AIGeneratorStudio() {
   const primaryColor = preferences?.primary_color || '#1fd2ea';
   const accentColor = preferences?.accent_color || '#bd84f5';
 
+  // Fetch user's apps
+  const { data: myApps = [] } = useQuery({
+    queryKey: ['myApps', user?.email],
+    queryFn: async () => {
+      if (!user?.email) return [];
+      return await base44.entities.AIApp.filter({ created_by: user.email }, '-updated_date');
+    },
+    enabled: !!user?.email,
+  });
+
   useEffect(() => {
     window.onAppSaved = (app) => {
+      queryClient.invalidateQueries(['myApps']);
       setPreviewApp(app);
     };
     return () => {
       delete window.onAppSaved;
     };
-  }, []);
+  }, [queryClient]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 p-6">
@@ -70,7 +82,11 @@ export default function AIGeneratorStudio() {
           </CardHeader>
           <CardContent>
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid grid-cols-4 lg:grid-cols-8 gap-2 h-auto p-2">
+              <TabsList className="grid grid-cols-4 lg:grid-cols-9 gap-2 h-auto p-2">
+                <TabsTrigger value="my-apps" className="flex flex-col items-center gap-1 p-3">
+                  <Folder className="w-5 h-5" />
+                  <span className="text-xs">My Apps</span>
+                </TabsTrigger>
                 <TabsTrigger value="image" className="flex flex-col items-center gap-1 p-3">
                   <ImageIcon className="w-5 h-5" />
                   <span className="text-xs">Image</span>
@@ -104,6 +120,56 @@ export default function AIGeneratorStudio() {
                   <span className="text-xs">More</span>
                 </TabsTrigger>
               </TabsList>
+
+              <TabsContent value="my-apps" className="mt-6">
+                {myApps.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Folder className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-2xl font-bold mb-2">No Apps Yet</h3>
+                    <p className="text-gray-600 mb-6">Create your first AI app to get started</p>
+                    <Button 
+                      size="lg" 
+                      onClick={() => setActiveTab('image')}
+                      style={{ background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` }}
+                    >
+                      <ImageIcon className="w-5 h-5 mr-2" />
+                      Create Image App
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {myApps.map(app => (
+                      <Card 
+                        key={app.id} 
+                        className="overflow-hidden hover:shadow-lg transition-all cursor-pointer border-2 hover:border-purple-300" 
+                        onClick={() => setPreviewApp(app)}
+                      >
+                        <CardHeader className="p-4 bg-gradient-to-br from-purple-50 to-blue-50">
+                          <div className="flex items-start gap-3">
+                            {app.app_icon_url ? (
+                              <img src={app.app_icon_url} alt={app.name} className="w-16 h-16 rounded-lg object-cover shadow-md" />
+                            ) : (
+                              <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-purple-400 to-blue-400 flex items-center justify-center">
+                                <Sparkles className="w-8 h-8 text-white" />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <CardTitle className="text-base truncate">{app.name}</CardTitle>
+                              <p className="text-xs text-gray-500 line-clamp-2 mt-1">{app.description}</p>
+                            </div>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="p-4 bg-white">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-gray-600 capitalize">{app.app_type}</span>
+                            <span className="text-gray-500">{app.usage_count || 0} uses</span>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
 
               <TabsContent value="image" className="mt-6">
                 <ImageAppBuilder primaryColor={primaryColor} accentColor={accentColor} />
