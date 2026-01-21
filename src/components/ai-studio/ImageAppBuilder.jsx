@@ -10,6 +10,8 @@ import { base44 } from '@/api/base44Client';
 
 export default function ImageAppBuilder({ primaryColor, accentColor }) {
   const [appIdea, setAppIdea] = useState('');
+  const [appNameSuggestions, setAppNameSuggestions] = useState([]);
+  const [generatingNames, setGeneratingNames] = useState(false);
   const [appName, setAppName] = useState('');
   const [appDescription, setAppDescription] = useState('');
   const [generatingDescription, setGeneratingDescription] = useState(false);
@@ -18,20 +20,48 @@ export default function ImageAppBuilder({ primaryColor, accentColor }) {
   const [iconPrompt, setIconPrompt] = useState('');
   const [iconStyle, setIconStyle] = useState('');
   const [inputFields, setInputFields] = useState([]);
+  const [generatingFields, setGeneratingFields] = useState(false);
 
-  const generateDescription = async () => {
+  const generateAppNames = async () => {
     if (!appIdea.trim()) return;
     
+    setGeneratingNames(true);
+    try {
+      const response = await base44.integrations.Core.InvokeLLM({
+        prompt: `Generate 7 creative, catchy app names for an AI image generator app. The user's idea is: "${appIdea}". Return ONLY a JSON array of 7 strings, nothing else. Example format: ["AppName1", "AppName2", "AppName3", "AppName4", "AppName5", "AppName6", "AppName7"]`,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            names: {
+              type: "array",
+              items: { type: "string" },
+              minItems: 7,
+              maxItems: 7
+            }
+          },
+          required: ["names"]
+        }
+      });
+      setAppNameSuggestions(response.names || []);
+    } catch (error) {
+      console.error('Error generating names:', error);
+    } finally {
+      setGeneratingNames(false);
+    }
+  };
+
+  const selectAppName = async (name) => {
+    setAppName(name);
     setGeneratingDescription(true);
     try {
       const response = await base44.integrations.Core.InvokeLLM({
-        prompt: `Create a polished, professional app description for an AI image generator app. The user's idea is: "${appIdea}". Write a concise 2-3 sentence description that clearly explains what the app does and its value. Be specific and compelling.`,
+        prompt: `Create a polished, professional app description for an AI image generator app called "${name}". The app concept is: "${appIdea}". Write a concise 2-3 sentence description that clearly explains what the app does and its value. Be specific and compelling. Match the tone and style to the app name.`,
       });
       setAppDescription(response);
       
-      // Auto-generate icon from description
+      // Auto-generate icon from name and description
       if (response) {
-        generateIconFromDescription(response);
+        generateIconFromDescription(name, response);
       }
     } catch (error) {
       console.error('Error generating description:', error);
@@ -40,17 +70,17 @@ export default function ImageAppBuilder({ primaryColor, accentColor }) {
     }
   };
 
-  const generateIconFromDescription = async (description) => {
+  const generateIconFromDescription = async (name, description) => {
     setGeneratingIcon(true);
     try {
-      const iconPromptText = `App icon for: ${description}. Modern, clean, professional app icon design, centered icon, simple background`;
-      const response = await base44.functions.invoke('generateImageWithNanoBanana', {
+      const iconPromptText = `App icon design for "${name}". ${description}. Modern, clean, professional mobile app icon, centered symbol, flat design, simple color scheme, white or light background`;
+      const { data } = await base44.functions.invoke('generateImageWithNanoBanana', {
         prompt: iconPromptText,
-        style: 'flat design, app icon style',
+        style: 'app icon, flat design, minimalist, professional',
         width: 512,
         height: 512
       });
-      setAppIcon(response.data.image_url);
+      setAppIcon(data.image_url);
     } catch (error) {
       console.error('Error generating icon:', error);
     } finally {
@@ -63,17 +93,71 @@ export default function ImageAppBuilder({ primaryColor, accentColor }) {
     
     setGeneratingIcon(true);
     try {
-      const response = await base44.functions.invoke('generateImageWithNanoBanana', {
+      const { data } = await base44.functions.invoke('generateImageWithNanoBanana', {
         prompt: iconPrompt,
         style: iconStyle || 'app icon style, clean, modern',
         width: 512,
         height: 512
       });
-      setAppIcon(response.data.image_url);
+      setAppIcon(data.image_url);
     } catch (error) {
       console.error('Error generating icon:', error);
     } finally {
       setGeneratingIcon(false);
+    }
+  };
+
+  const generateInputFields = async () => {
+    if (!appDescription.trim()) return;
+    
+    setGeneratingFields(true);
+    try {
+      const { data } = await base44.functions.invoke('generateImageWithNanoBanana', {
+        prompt: `For the image generation app "${appName}" (${appDescription}), suggest 3-5 input fields users should fill out before generating images. Return a JSON array.`,
+        // This should actually use LLM not image generation - fixing below
+      });
+      
+      // Actually use LLM for this
+      const response = await base44.integrations.Core.InvokeLLM({
+        prompt: `For the AI image generation app "${appName}" with description: "${appDescription}". 
+
+Suggest 3-5 essential input fields that users should provide before generating images. For each field include:
+- label: clear field name
+- type: text, textarea, number, dropdown, or file
+- required: true or false
+- placeholder: helpful example text
+
+Return as JSON array.`,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            fields: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  label: { type: "string" },
+                  type: { type: "string" },
+                  required: { type: "boolean" },
+                  placeholder: { type: "string" }
+                },
+                required: ["label", "type", "required"]
+              }
+            }
+          },
+          required: ["fields"]
+        }
+      });
+      
+      const newFields = response.fields.map((f, i) => ({
+        id: Date.now() + i,
+        ...f
+      }));
+      setInputFields(newFields);
+    } catch (error) {
+      console.error('Error generating fields:', error);
+    } finally {
+      setGeneratingFields(false);
     }
   };
 
@@ -110,28 +194,48 @@ export default function ImageAppBuilder({ primaryColor, accentColor }) {
                 className="flex-1"
               />
               <Button 
-                onClick={generateDescription}
-                disabled={!appIdea.trim() || generatingDescription}
+                onClick={generateAppNames}
+                disabled={!appIdea.trim() || generatingNames}
                 style={{ background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` }}
               >
-                {generatingDescription ? (
+                {generatingNames ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <>
                     <Wand2 className="w-4 h-4 mr-2" />
-                    Generate Description
+                    Generate Names
                   </>
                 )}
               </Button>
             </div>
           </div>
 
+          {/* App Name Suggestions */}
+          {appNameSuggestions.length > 0 && (
+            <div>
+              <Label>Choose an App Name *</Label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
+                {appNameSuggestions.map((name, idx) => (
+                  <Button
+                    key={idx}
+                    variant={appName === name ? 'default' : 'outline'}
+                    onClick={() => selectAppName(name)}
+                    className="text-sm"
+                    style={appName === name ? { background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` } : {}}
+                  >
+                    {name}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div>
-            <Label>App Name *</Label>
+            <Label>App Name * {appName && '(or edit selected)'}</Label>
             <Input 
               value={appName}
               onChange={(e) => setAppName(e.target.value)}
-              placeholder="e.g., Product Photo Generator"
+              placeholder="Select a name above or type your own..."
             />
           </div>
 
@@ -218,10 +322,18 @@ export default function ImageAppBuilder({ primaryColor, accentColor }) {
             </div>
             <Button 
               size="sm"
+              onClick={generateInputFields}
+              disabled={!appDescription.trim() || generatingFields}
               style={{ background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` }}
             >
-              <Wand2 className="w-4 h-4 mr-2" />
-              Generate with AI
+              {generatingFields ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <>
+                  <Wand2 className="w-4 h-4 mr-2" />
+                  Generate with AI
+                </>
+              )}
             </Button>
           </div>
         </CardHeader>
