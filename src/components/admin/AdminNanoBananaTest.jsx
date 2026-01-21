@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,21 +19,20 @@ export default function AdminNanoBananaTest() {
     setResult(null);
 
     try {
-      const response = await fetch('/api/functions/generateImageWithDimensions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, width, height })
+      const response = await base44.functions.invoke('generateImageWithDimensions', {
+        prompt,
+        width,
+        height,
+        referenceImageUrls: []
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.error || 'Unknown error');
+      if (response.data?.error) {
+        setError(response.data.error);
       } else {
-        setResult(data);
+        setResult(response.data);
       }
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Unknown error');
     } finally {
       setLoading(false);
     }
