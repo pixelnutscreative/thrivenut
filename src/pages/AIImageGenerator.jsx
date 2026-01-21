@@ -3,11 +3,13 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Image as ImageIcon, Download, Copy, RefreshCw, Sparkles, Share2, Wand2 } from 'lucide-react';
+import { Loader2, Image as ImageIcon, Download, Copy, RefreshCw, Sparkles, Share2, Wand2, ArrowLeft, LayoutDashboard } from 'lucide-react';
 import { useTheme } from '../components/shared/useTheme';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '../utils';
 
 export default function AIImageGenerator() {
-  const { bgClass } = useTheme();
+  const { bgClass, primaryColor, accentColor } = useTheme();
   const [prompt, setPrompt] = useState('');
   const [loading, setLoading] = useState(false);
   const [enhancing, setEnhancing] = useState(false);
@@ -81,6 +83,25 @@ export default function AIImageGenerator() {
   return (
     <div className={`min-h-screen ${bgClass} p-4 md:p-8`}>
       <div className="max-w-4xl mx-auto space-y-6">
+        {/* Navigation */}
+        <div className="flex items-center gap-3 mb-4">
+          <Link to={createPageUrl('Dashboard')}>
+            <Button variant="outline" size="sm">
+              <LayoutDashboard className="w-4 h-4 mr-2" />
+              Dashboard
+            </Button>
+          </Link>
+          <Link to={createPageUrl('AIGeneratorStudio')}>
+            <Button 
+              size="sm" 
+              style={{ background: `linear-gradient(to right, ${primaryColor}, ${accentColor})`, color: 'white' }}
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              AI App Creator
+            </Button>
+          </Link>
+        </div>
+
         <div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">AI Image Generator</h1>
           <p className="text-gray-600">Turn your ideas into visuals instantly.</p>
