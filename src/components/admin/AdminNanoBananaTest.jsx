@@ -19,47 +19,19 @@ export default function AdminNanoBananaTest() {
     setResult(null);
 
     try {
-      const apiKey = prompt('Enter your Nano Banana API key:');
-      if (!apiKey) {
-        setError('API key required');
-        setLoading(false);
-        return;
-      }
-
-      const normalizeSize = (size) => {
-        const normalized = Math.round(size / 64) * 64;
-        return Math.max(512, normalized);
-      };
-
-      const normalizedWidth = normalizeSize(width);
-      const normalizedHeight = normalizeSize(height);
-
-      const response = await fetch('https://api.nanobanana.ai/v1/images/generations', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          prompt: prompt,
-          width: normalizedWidth,
-          height: normalizedHeight,
-          num_inference_steps: 25,
-          guidance_scale: 7.5
-        })
+      const response = await base44.functions.invoke('generateImageWithDimensions', {
+        prompt,
+        width,
+        height,
+        referenceImageUrls: []
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.error?.message || data.message || JSON.stringify(data));
+      if (response.data?.error) {
+        setError(response.data.error);
+      } else if (response.data?.url) {
+        setResult(response.data);
       } else {
-        const imageUrl = data.images?.[0]?.url || data.image?.[0]?.url;
-        if (imageUrl) {
-          setResult({ url: imageUrl, width: normalizedWidth, height: normalizedHeight });
-        } else {
-          setError('No image URL in response: ' + JSON.stringify(data));
-        }
+        setError('Invalid response: ' + JSON.stringify(response.data));
       }
     } catch (err) {
       setError(err.message || 'Unknown error');
