@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { User, Building2, Package, Sparkles } from 'lucide-react';
+import { User, Building2, Package } from 'lucide-react';
 
-export default function GlobalContextHeader() {
+export default function GlobalContextHeader({ primaryColor, accentColor }) {
   const [selectedCharacter, setSelectedCharacter] = useState(null);
-  const [selectedBrand, setSelectedBrand] = useState(null);
-  const [selectedOffer, setSelectedOffer] = useState(null);
+  const [brandName, setBrandName] = useState('');
+  const [offerName, setOfferName] = useState('');
 
   // Fetch character references
   const { data: characters = [] } = useQuery({
@@ -18,25 +19,13 @@ export default function GlobalContextHeader() {
     staleTime: 300000,
   });
 
-  // Fetch brands
-  const { data: brands = [] } = useQuery({
-    queryKey: ['brands'],
-    queryFn: () => base44.entities.Brand.list('-updated_date'),
-    staleTime: 300000,
-  });
-
-  // Fetch offers for selected brand
-  const { data: offers = [] } = useQuery({
-    queryKey: ['brandProducts', selectedBrand],
-    queryFn: () => base44.entities.BrandProduct.filter({ brand_id: selectedBrand }),
-    enabled: !!selectedBrand,
-    staleTime: 300000,
-  });
-
   return (
-    <Card className="bg-gradient-to-r from-purple-600 via-pink-500 to-orange-500 text-white shadow-xl">
+    <Card 
+      className="text-white shadow-xl"
+      style={{ background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` }}
+    >
       <CardContent className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Character Reference */}
           <div>
             <label className="text-sm font-medium mb-2 flex items-center gap-2">
@@ -61,51 +50,28 @@ export default function GlobalContextHeader() {
           <div>
             <label className="text-sm font-medium mb-2 flex items-center gap-2">
               <Building2 className="w-4 h-4" />
-              Brand
+              Brand Name
             </label>
-            <Select value={selectedBrand || ''} onValueChange={setSelectedBrand}>
-              <SelectTrigger className="bg-white/20 border-white/30 text-white">
-                <SelectValue placeholder="Select brand..." />
-              </SelectTrigger>
-              <SelectContent>
-                {brands.map(brand => (
-                  <SelectItem key={brand.id} value={brand.id}>
-                    {brand.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Input 
+              value={brandName}
+              onChange={(e) => setBrandName(e.target.value)}
+              placeholder="Enter brand name..."
+              className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
+            />
           </div>
 
           {/* Offer */}
           <div>
             <label className="text-sm font-medium mb-2 flex items-center gap-2">
               <Package className="w-4 h-4" />
-              Offer
+              Offer Name
             </label>
-            <Select value={selectedOffer || ''} onValueChange={setSelectedOffer} disabled={!selectedBrand}>
-              <SelectTrigger className="bg-white/20 border-white/30 text-white">
-                <SelectValue placeholder="Select offer..." />
-              </SelectTrigger>
-              <SelectContent>
-                {offers.map(offer => (
-                  <SelectItem key={offer.id} value={offer.id}>
-                    {offer.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Create Button */}
-          <div>
-            <Button 
-              size="lg" 
-              className="w-full bg-white text-purple-600 hover:bg-white/90 font-bold shadow-lg"
-            >
-              <Sparkles className="w-4 h-4 mr-2" />
-              Create with Current Settings
-            </Button>
+            <Input 
+              value={offerName}
+              onChange={(e) => setOfferName(e.target.value)}
+              placeholder="Enter offer name..."
+              className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
+            />
           </div>
         </div>
 
@@ -113,12 +79,6 @@ export default function GlobalContextHeader() {
         <div className="flex gap-2 mt-4">
           <Button size="sm" variant="secondary" className="bg-white/20 hover:bg-white/30 text-white border-white/30">
             + Add Character
-          </Button>
-          <Button size="sm" variant="secondary" className="bg-white/20 hover:bg-white/30 text-white border-white/30">
-            + Add Brand
-          </Button>
-          <Button size="sm" variant="secondary" className="bg-white/20 hover:bg-white/30 text-white border-white/30">
-            + Add Offer
           </Button>
         </div>
       </CardContent>

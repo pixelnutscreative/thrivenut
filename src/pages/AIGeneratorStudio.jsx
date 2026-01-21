@@ -1,12 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Sparkles, Image as ImageIcon, FileText, Code, MessageCircle, Video, Music, Volume2 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
 import GlobalContextHeader from '../components/ai-studio/GlobalContextHeader';
+import ImageAppBuilder from '../components/ai-studio/ImageAppBuilder';
 
 export default function AIGeneratorStudio() {
   const [activeTab, setActiveTab] = useState('image');
+  const [user, setUser] = useState(null);
+
+  // Fetch user and preferences
+  useEffect(() => {
+    base44.auth.me().then(setUser).catch(() => setUser(null));
+  }, []);
+
+  const { data: preferences } = useQuery({
+    queryKey: ['preferences', user?.email],
+    queryFn: async () => {
+      if (!user?.email) return null;
+      const prefs = await base44.entities.UserPreferences.filter({ user_email: user.email });
+      return prefs[0] || null;
+    },
+    enabled: !!user?.email,
+    staleTime: Infinity,
+  });
+
+  const primaryColor = preferences?.primary_color || '#1fd2ea';
+  const accentColor = preferences?.accent_color || '#bd84f5';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 p-6">
@@ -14,8 +37,11 @@ export default function AIGeneratorStudio() {
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
-            <Sparkles className="w-10 h-10 text-purple-600" />
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 via-pink-500 to-orange-500 bg-clip-text text-transparent">
+            <Sparkles className="w-10 h-10" style={{ color: primaryColor }} />
+            <h1 
+              className="text-4xl font-bold bg-clip-text text-transparent"
+              style={{ backgroundImage: `linear-gradient(to right, ${primaryColor}, ${accentColor})` }}
+            >
               AI App Creator
             </h1>
           </div>
@@ -23,7 +49,7 @@ export default function AIGeneratorStudio() {
         </div>
 
         {/* Global Context Header */}
-        <GlobalContextHeader />
+        <GlobalContextHeader primaryColor={primaryColor} accentColor={accentColor} />
 
         {/* Main Tabbed Interface */}
         <Card className="mt-8 shadow-xl">
@@ -69,15 +95,7 @@ export default function AIGeneratorStudio() {
               </TabsList>
 
               <TabsContent value="image" className="mt-6">
-                <div className="text-center py-12">
-                  <ImageIcon className="w-16 h-16 text-purple-500 mx-auto mb-4" />
-                  <h3 className="text-2xl font-bold mb-2">Image App Builder</h3>
-                  <p className="text-gray-600 mb-6">Create AI-powered image generation apps with custom inputs</p>
-                  <Button size="lg" className="bg-gradient-to-r from-purple-600 to-pink-500">
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    Start Building
-                  </Button>
-                </div>
+                <ImageAppBuilder primaryColor={primaryColor} accentColor={accentColor} />
               </TabsContent>
 
               <TabsContent value="text" className="mt-6">
