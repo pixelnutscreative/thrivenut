@@ -201,6 +201,16 @@ Return as JSON.`,
     }
   };
 
+  const addDefaultFields = () => {
+    const defaults = [
+      { id: Date.now(), label: 'Main Subject', type: 'text', placeholder: 'What is the main focus?', required: true },
+      { id: Date.now() + 1, label: 'Color Scheme', type: 'text', placeholder: 'e.g., warm, cool, vibrant', required: false },
+      { id: Date.now() + 2, label: 'Mood/Feeling', type: 'dropdown', options: ['energetic', 'calm', 'dramatic', 'playful', 'elegant', 'mysterious'], required: false },
+      { id: Date.now() + 3, label: 'Text Overlay', type: 'text', placeholder: 'Text to add on image', required: false }
+    ];
+    setInputFields([...inputFields, ...defaults]);
+  };
+
   const addInputField = () => {
     setInputFields([...inputFields, {
       id: Date.now(),
