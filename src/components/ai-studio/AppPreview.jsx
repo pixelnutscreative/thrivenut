@@ -14,9 +14,15 @@ export default function AppPreview({ app, onClose, primaryColor, accentColor }) 
   const [inputs, setInputs] = useState({});
   const [generating, setGenerating] = useState(false);
   const [generatedImages, setGeneratedImages] = useState([]);
-  const [selectedSizes, setSelectedSizes] = useState(['9:16']);
-  const [customWidth, setCustomWidth] = useState('');
-  const [customHeight, setCustomHeight] = useState('');
+  
+  // Load saved sizes from app config
+  const savedSizes = app.config_json?.imageSizes || ['9:16'];
+  const savedCustomSize = app.config_json?.customSize || null;
+  const allowUserDimensions = app.config_json?.allowUserDimensions || false;
+  
+  const [selectedSizes, setSelectedSizes] = useState(savedSizes);
+  const [customWidth, setCustomWidth] = useState(savedCustomSize?.width?.toString() || '');
+  const [customHeight, setCustomHeight] = useState(savedCustomSize?.height?.toString() || '');
   const [upscaling, setUpscaling] = useState(false);
   const [promptUsed, setPromptUsed] = useState('');
   const queryClient = useQueryClient();
@@ -110,10 +116,10 @@ export default function AppPreview({ app, onClose, primaryColor, accentColor }) 
         basePrompt += `\nFeaturing Product: ${product.name} - ${product.description}`;
       }
 
-      // Generate ONE base image first
+      // Generate ONE base image first with EXACT dimensions in prompt
       const firstSize = selectedSizes[0];
       const firstConfig = getSizeConfig(firstSize);
-      const firstPrompt = `${basePrompt}\n\nImage dimensions: ${firstConfig.width}x${firstConfig.height}`;
+      const firstPrompt = `${basePrompt}\n\nCRITICAL: Output image must be EXACTLY ${firstConfig.width} pixels wide by ${firstConfig.height} pixels tall. Aspect ratio: ${(firstConfig.width / firstConfig.height).toFixed(2)}`;
       
       const firstResponse = await base44.integrations.Core.GenerateImage({ prompt: firstPrompt });
       const baseImageUrl = firstResponse.url;
@@ -139,7 +145,7 @@ export default function AppPreview({ app, onClose, primaryColor, accentColor }) 
         const sizeKey = selectedSizes[i];
         const sizeConfig = getSizeConfig(sizeKey);
         
-        const resizePrompt = `${basePrompt}\n\nResize/recreate this exact same image to ${sizeConfig.width}x${sizeConfig.height} dimensions. Maintain the exact same composition, style, and content.`;
+        const resizePrompt = `Recreate this EXACT image with identical composition, colors, style, and content. CRITICAL: Output must be EXACTLY ${sizeConfig.width} pixels wide by ${sizeConfig.height} pixels tall. Aspect ratio: ${(sizeConfig.width / sizeConfig.height).toFixed(2)}. ${basePrompt}`;
         
         const response = await base44.integrations.Core.GenerateImage({ 
           prompt: resizePrompt,
@@ -220,45 +226,53 @@ export default function AppPreview({ app, onClose, primaryColor, accentColor }) 
           </TabsList>
 
           <TabsContent value="create" className="space-y-4 mt-4">
-            {/* Size Selector - Compact Multi-Select */}
-            <div className="border rounded-lg p-3 bg-gray-50">
-              <Label className="text-xs font-medium mb-2 block text-gray-600">Image Sizes (select multiple)</Label>
-              <div className="flex flex-wrap gap-1.5 mb-2">
-                {['9:16', '1:1', '16:9', 'fb', 'yt', 'li', 'ig', 'custom'].map(key => {
-                  const config = getSizeConfig(key);
-                  return (
-                    <Button
-                      key={key}
-                      variant={selectedSizes.includes(key) ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => toggleSize(key)}
-                      className="text-xs h-7 px-2"
-                    >
-                      {config.label}
-                    </Button>
-                  );
-                })}
-              </div>
-              {selectedSizes.includes('custom') && (
-                <div className="flex gap-2 items-center">
-                  <Input 
-                    type="number" 
-                    placeholder="Width" 
-                    value={customWidth} 
-                    onChange={(e) => setCustomWidth(e.target.value)}
-                    className="h-8 text-xs"
-                  />
-                  <span className="text-xs">×</span>
-                  <Input 
-                    type="number" 
-                    placeholder="Height" 
-                    value={customHeight} 
-                    onChange={(e) => setCustomHeight(e.target.value)}
-                    className="h-8 text-xs"
-                  />
+            {/* Size Selector - Only show if user dimensions allowed OR show configured sizes */}
+            {allowUserDimensions ? (
+              <div className="border rounded-lg p-3 bg-gray-50">
+                <Label className="text-xs font-medium mb-2 block text-gray-600">Image Sizes (select multiple)</Label>
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {['9:16', '1:1', '16:9', 'fb', 'yt', 'li', 'ig', 'custom'].map(key => {
+                    const config = getSizeConfig(key);
+                    return (
+                      <Button
+                        key={key}
+                        variant={selectedSizes.includes(key) ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => toggleSize(key)}
+                        className="text-xs h-7 px-2"
+                      >
+                        {config.label}
+                      </Button>
+                    );
+                  })}
                 </div>
-              )}
-            </div>
+                {selectedSizes.includes('custom') && (
+                  <div className="flex gap-2 items-center">
+                    <Input 
+                      type="number" 
+                      placeholder="Width" 
+                      value={customWidth} 
+                      onChange={(e) => setCustomWidth(e.target.value)}
+                      className="h-8 text-xs"
+                    />
+                    <span className="text-xs">×</span>
+                    <Input 
+                      type="number" 
+                      placeholder="Height" 
+                      value={customHeight} 
+                      onChange={(e) => setCustomHeight(e.target.value)}
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="border rounded-lg p-2 bg-blue-50">
+                <p className="text-xs text-gray-600">
+                  Generating in: {selectedSizes.map(s => getSizeConfig(s).label).join(', ')}
+                </p>
+              </div>
+            )}
 
             {/* Dynamic Inputs */}
             {app.config_json?.inputFields?.map(field => (

@@ -32,6 +32,7 @@ export default function ImageAppBuilder({ primaryColor, accentColor }) {
   const [showSaveFieldModal, setShowSaveFieldModal] = useState(false);
   const [fieldToSave, setFieldToSave] = useState(null);
   const [showTemplates, setShowTemplates] = useState(false);
+  const [allowUserDimensions, setAllowUserDimensions] = useState(false);
 
   // Fetch saved templates
   const { data: templates = [] } = useQuery({
@@ -193,7 +194,7 @@ Return as JSON.`,
         id: Date.now() + i,
         ...f
       }));
-      setInputFields(newFields);
+      setInputFields([...inputFields, ...newFields]);
     } catch (error) {
       console.error('Error generating fields:', error);
     } finally {
@@ -283,7 +284,8 @@ Return as JSON.`,
           iconPrompt,
           iconStyle,
           imageSizes: selectedSizes,
-          customSize: customWidth && customHeight ? { width: parseInt(customWidth), height: parseInt(customHeight) } : null
+          customSize: customWidth && customHeight ? { width: parseInt(customWidth), height: parseInt(customHeight) } : null,
+          allowUserDimensions
         },
         is_published: false,
         approval_status: 'draft'
@@ -325,7 +327,10 @@ Return as JSON.`,
           appIdea,
           inputFields,
           iconPrompt,
-          iconStyle
+          iconStyle,
+          imageSizes: selectedSizes,
+          customSize: customWidth && customHeight ? { width: parseInt(customWidth), height: parseInt(customHeight) } : null,
+          allowUserDimensions
         },
         is_published: false,
         approval_status: 'draft'
@@ -742,14 +747,35 @@ Return as JSON.`,
         </CardContent>
       </Card>
 
-      <ImageSizeSelector
-        selectedSizes={selectedSizes}
-        setSelectedSizes={setSelectedSizes}
-        customWidth={customWidth}
-        setCustomWidth={setCustomWidth}
-        customHeight={customHeight}
-        setCustomHeight={setCustomHeight}
-      />
+      <Card>
+        <CardHeader>
+          <CardTitle>Image Size Settings</CardTitle>
+          <CardDescription>Configure what image sizes your app will generate</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <ImageSizeSelector
+            selectedSizes={selectedSizes}
+            setSelectedSizes={setSelectedSizes}
+            customWidth={customWidth}
+            setCustomWidth={setCustomWidth}
+            customHeight={customHeight}
+            setCustomHeight={setCustomHeight}
+          />
+          
+          <div className="flex items-center gap-2 pt-2 border-t">
+            <input
+              type="checkbox"
+              id="allowUserDimensions"
+              checked={allowUserDimensions}
+              onChange={(e) => setAllowUserDimensions(e.target.checked)}
+              className="rounded"
+            />
+            <Label htmlFor="allowUserDimensions" className="text-sm cursor-pointer">
+              Allow users to select custom dimensions when generating
+            </Label>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Save Button */}
       <div className="flex justify-end gap-3">
