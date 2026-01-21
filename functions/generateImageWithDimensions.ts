@@ -49,16 +49,16 @@ Deno.serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Nano Banana error:', errorText);
-      return Response.json({ error: 'Image generation failed' }, { status: 500 });
+      console.error('Nano Banana API error:', response.status, errorText);
+      return Response.json({ error: `Nano Banana API error (${response.status}): ${errorText}` }, { status: 500 });
     }
 
     const result = await response.json();
     const imageUrl = result.images?.[0]?.url || result.image?.[0]?.url;
     
     if (!imageUrl) {
-      console.error('No image URL in response:', result);
-      return Response.json({ error: 'No image generated' }, { status: 500 });
+      console.error('No image URL in response:', JSON.stringify(result));
+      return Response.json({ error: `Image generation failed - no URL returned: ${JSON.stringify(result)}` }, { status: 500 });
     }
 
     return Response.json({ 
