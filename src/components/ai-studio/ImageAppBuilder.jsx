@@ -14,6 +14,7 @@ export default function ImageAppBuilder({ primaryColor, accentColor }) {
   const [appDescription, setAppDescription] = useState('');
   const [generatingDescription, setGeneratingDescription] = useState(false);
   const [appIcon, setAppIcon] = useState(null);
+  const [generatingIcon, setGeneratingIcon] = useState(false);
   const [iconPrompt, setIconPrompt] = useState('');
   const [iconStyle, setIconStyle] = useState('');
   const [inputFields, setInputFields] = useState([]);
@@ -27,10 +28,52 @@ export default function ImageAppBuilder({ primaryColor, accentColor }) {
         prompt: `Create a polished, professional app description for an AI image generator app. The user's idea is: "${appIdea}". Write a concise 2-3 sentence description that clearly explains what the app does and its value. Be specific and compelling.`,
       });
       setAppDescription(response);
+      
+      // Auto-generate icon from description
+      if (response) {
+        generateIconFromDescription(response);
+      }
     } catch (error) {
       console.error('Error generating description:', error);
     } finally {
       setGeneratingDescription(false);
+    }
+  };
+
+  const generateIconFromDescription = async (description) => {
+    setGeneratingIcon(true);
+    try {
+      const iconPromptText = `App icon for: ${description}. Modern, clean, professional app icon design, centered icon, simple background`;
+      const response = await base44.functions.invoke('generateImageWithNanoBanana', {
+        prompt: iconPromptText,
+        style: 'flat design, app icon style',
+        width: 512,
+        height: 512
+      });
+      setAppIcon(response.data.image_url);
+    } catch (error) {
+      console.error('Error generating icon:', error);
+    } finally {
+      setGeneratingIcon(false);
+    }
+  };
+
+  const generateCustomIcon = async () => {
+    if (!iconPrompt.trim()) return;
+    
+    setGeneratingIcon(true);
+    try {
+      const response = await base44.functions.invoke('generateImageWithNanoBanana', {
+        prompt: iconPrompt,
+        style: iconStyle || 'app icon style, clean, modern',
+        width: 512,
+        height: 512
+      });
+      setAppIcon(response.data.image_url);
+    } catch (error) {
+      console.error('Error generating icon:', error);
+    } finally {
+      setGeneratingIcon(false);
     }
   };
 
@@ -105,39 +148,60 @@ export default function ImageAppBuilder({ primaryColor, accentColor }) {
           {/* App Icon */}
           <div>
             <Label>App Icon</Label>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-              {/* Manual Upload */}
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors cursor-pointer">
-                <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                <p className="text-sm text-gray-600 mb-1">Upload Icon</p>
-                <p className="text-xs text-gray-400">PNG, JPG (Square)</p>
-              </div>
-
-              {/* AI Generated */}
-              <div className="border-2 border-dashed rounded-lg p-4" style={{ borderColor: primaryColor }}>
-                <div className="flex items-center gap-2 mb-3">
-                  <Wand2 className="w-4 h-4" style={{ color: primaryColor }} />
-                  <p className="text-sm font-medium">Generate with AI</p>
+            <div className="flex gap-4 items-start">
+              {/* Icon Preview */}
+              {(appIcon || generatingIcon) && (
+                <div className="w-32 h-32 border-2 rounded-lg overflow-hidden flex items-center justify-center bg-gray-50">
+                  {generatingIcon ? (
+                    <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+                  ) : (
+                    <img src={appIcon} alt="App icon" className="w-full h-full object-cover" />
+                  )}
                 </div>
-                <Input 
-                  value={iconPrompt}
-                  onChange={(e) => setIconPrompt(e.target.value)}
-                  placeholder="Describe the icon you want..."
-                  className="mb-2"
-                />
-                <Input 
-                  value={iconStyle}
-                  onChange={(e) => setIconStyle(e.target.value)}
-                  placeholder="Style (optional): flat, 3D, minimalist..."
-                />
-                <Button 
-                  size="sm" 
-                  className="w-full mt-3"
-                  style={{ background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` }}
-                >
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Generate Icon
-                </Button>
+              )}
+
+              <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Manual Upload */}
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors cursor-pointer">
+                  <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                  <p className="text-sm text-gray-600 mb-1">Upload Icon</p>
+                  <p className="text-xs text-gray-400">PNG, JPG (Square)</p>
+                </div>
+
+                {/* AI Generated */}
+                <div className="border-2 border-dashed rounded-lg p-4" style={{ borderColor: primaryColor }}>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Wand2 className="w-4 h-4" style={{ color: primaryColor }} />
+                    <p className="text-sm font-medium">Custom Icon</p>
+                  </div>
+                  <Input 
+                    value={iconPrompt}
+                    onChange={(e) => setIconPrompt(e.target.value)}
+                    placeholder="Describe the icon you want..."
+                    className="mb-2"
+                  />
+                  <Input 
+                    value={iconStyle}
+                    onChange={(e) => setIconStyle(e.target.value)}
+                    placeholder="Style: flat, 3D, minimalist..."
+                  />
+                  <Button 
+                    size="sm" 
+                    className="w-full mt-3"
+                    onClick={generateCustomIcon}
+                    disabled={!iconPrompt.trim() || generatingIcon}
+                    style={{ background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` }}
+                  >
+                    {generatingIcon ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Generate
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
