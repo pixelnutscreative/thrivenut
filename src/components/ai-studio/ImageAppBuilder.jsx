@@ -5,15 +5,34 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sparkles, Upload, Wand2, Plus, Trash2 } from 'lucide-react';
+import { Sparkles, Upload, Wand2, Plus, Trash2, Loader2 } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
 
 export default function ImageAppBuilder({ primaryColor, accentColor }) {
+  const [appIdea, setAppIdea] = useState('');
   const [appName, setAppName] = useState('');
   const [appDescription, setAppDescription] = useState('');
+  const [generatingDescription, setGeneratingDescription] = useState(false);
   const [appIcon, setAppIcon] = useState(null);
   const [iconPrompt, setIconPrompt] = useState('');
   const [iconStyle, setIconStyle] = useState('');
   const [inputFields, setInputFields] = useState([]);
+
+  const generateDescription = async () => {
+    if (!appIdea.trim()) return;
+    
+    setGeneratingDescription(true);
+    try {
+      const response = await base44.integrations.Core.InvokeLLM({
+        prompt: `Create a polished, professional app description for an AI image generator app. The user's idea is: "${appIdea}". Write a concise 2-3 sentence description that clearly explains what the app does and its value. Be specific and compelling.`,
+      });
+      setAppDescription(response);
+    } catch (error) {
+      console.error('Error generating description:', error);
+    } finally {
+      setGeneratingDescription(false);
+    }
+  };
 
   const addInputField = () => {
     setInputFields([...inputFields, {
@@ -39,6 +58,32 @@ export default function ImageAppBuilder({ primaryColor, accentColor }) {
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
+            <Label>App Idea *</Label>
+            <div className="flex gap-2">
+              <Input 
+                value={appIdea}
+                onChange={(e) => setAppIdea(e.target.value)}
+                placeholder="Briefly describe your app idea..."
+                className="flex-1"
+              />
+              <Button 
+                onClick={generateDescription}
+                disabled={!appIdea.trim() || generatingDescription}
+                style={{ background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` }}
+              >
+                {generatingDescription ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    <Wand2 className="w-4 h-4 mr-2" />
+                    Generate Description
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+
+          <div>
             <Label>App Name *</Label>
             <Input 
               value={appName}
@@ -48,11 +93,11 @@ export default function ImageAppBuilder({ primaryColor, accentColor }) {
           </div>
 
           <div>
-            <Label>App Description</Label>
+            <Label>App Description (editable)</Label>
             <Textarea 
               value={appDescription}
               onChange={(e) => setAppDescription(e.target.value)}
-              placeholder="Describe what your app does..."
+              placeholder="Generated description will appear here..."
               rows={3}
             />
           </div>
