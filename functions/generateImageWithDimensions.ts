@@ -96,7 +96,7 @@ Deno.serve(async (req) => {
     const aspectRatio = getAspectRatio(width || 768, height || 768);
     console.log(`Generating image with aspect ratio: ${aspectRatio}`);
 
-    const googleApiKey = Deno.env.get('GOOGLE_API_KEY');
+    const googleApiKey = Deno.env.get('NANO_BANANA_API_KEY');
     if (!googleApiKey) {
       return Response.json({ error: 'Image generation service not configured' }, { status: 500 });
     }
