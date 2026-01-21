@@ -33,6 +33,8 @@ export default function ImageAppBuilder({ primaryColor, accentColor }) {
   const [fieldToSave, setFieldToSave] = useState(null);
   const [showTemplates, setShowTemplates] = useState(false);
   const [allowUserDimensions, setAllowUserDimensions] = useState(false);
+  const [stylePrompt, setStylePrompt] = useState('');
+  const [generatingStylePrompt, setGeneratingStylePrompt] = useState(false);
 
   // Fetch saved templates
   const { data: templates = [] } = useQuery({
@@ -160,7 +162,6 @@ For each field include:
 - min/max/step: for slider type (be creative with ranges)
 
 Examples of creative dropdown options:
-- Art styles: "Cyberpunk Neon", "Watercolor Dreams", "80s Retro Vibes", "Minimalist Zen", "Gothic Fantasy", "Pop Art Explosion", etc.
 - Moods: "Mysterious & Dark", "Bright & Cheerful", "Nostalgic", "Futuristic", "Whimsical", "Dramatic", "Serene", etc.
 - Color palettes: "Sunset Warmth", "Ocean Blues", "Forest Greens", "Monochrome", "Pastel Rainbow", "Neon Glow", etc.
 
@@ -190,15 +191,39 @@ Return as JSON.`,
         }
       });
       
-      const newFields = response.fields.map((f, i) => ({
-        id: Date.now() + i,
-        ...f
-      }));
+      // Filter out duplicates - check if field labels already exist
+      const existingLabels = new Set(inputFields.map(f => f.label.toLowerCase()));
+      const newFields = response.fields
+        .filter(f => !existingLabels.has(f.label.toLowerCase()))
+        .map((f, i) => ({
+          id: Date.now() + i,
+          ...f
+        }));
+      
       setInputFields([...inputFields, ...newFields]);
     } catch (error) {
       console.error('Error generating fields:', error);
     } finally {
       setGeneratingFields(false);
+    }
+  };
+
+  const generateStylePromptFromImage = async (file) => {
+    setGeneratingStylePrompt(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      
+      const response = await base44.integrations.Core.InvokeLLM({
+        prompt: `Analyze this image and create a detailed style prompt that captures its visual characteristics, mood, colors, composition, and artistic style. Be specific and descriptive so it can be used to generate similar images.`,
+        file_urls: [file_url]
+      });
+      
+      setStylePrompt(response);
+    } catch (error) {
+      console.error('Error generating style prompt:', error);
+      alert('Failed to generate style prompt from image');
+    } finally {
+      setGeneratingStylePrompt(false);
     }
   };
 
@@ -209,7 +234,12 @@ Return as JSON.`,
       { id: Date.now() + 2, label: 'Mood/Feeling', type: 'dropdown', options: ['energetic', 'calm', 'dramatic', 'playful', 'elegant', 'mysterious'], required: false },
       { id: Date.now() + 3, label: 'Text Overlay', type: 'text', placeholder: 'Text to add on image', required: false }
     ];
-    setInputFields([...inputFields, ...defaults]);
+    
+    // Filter out duplicates - check if default labels already exist
+    const existingLabels = new Set(inputFields.map(f => f.label.toLowerCase()));
+    const newDefaults = defaults.filter(d => !existingLabels.has(d.label.toLowerCase()));
+    
+    setInputFields([...inputFields, ...newDefaults]);
   };
 
   const addInputField = () => {
@@ -744,6 +774,40 @@ Return as JSON.`,
               </Button>
             </>
           )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>App Style</CardTitle>
+          <CardDescription>Define the visual style for this app</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label>Style Prompt Description</Label>
+            <p className="text-xs text-gray-500 mb-2">Describe what this app generates or upload an image for AI to analyze</p>
+            <Textarea
+              value={stylePrompt}
+              onChange={(e) => setStylePrompt(e.target.value)}
+              placeholder="e.g., Whimsical Dr. Seuss-inspired artwork with vibrant colors, fantastical creatures, and playful compositions..."
+              rows={3}
+              className="mb-2"
+            />
+            <label className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors cursor-pointer block">
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) generateStylePromptFromImage(file);
+                }}
+              />
+              <Upload className="w-6 h-6 mx-auto mb-2 text-gray-400" />
+              <p className="text-sm text-gray-600 mb-1">Upload image to generate style prompt</p>
+              <p className="text-xs text-gray-400">PNG, JPG</p>
+            </label>
+          </div>
         </CardContent>
       </Card>
 

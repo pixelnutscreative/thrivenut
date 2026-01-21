@@ -76,17 +76,21 @@ export default function DynamicInput({ field, value, onChange }) {
     case 'slider':
       return (
         <div>
-          <Label>{field.label} {field.required && '*'}</Label>
-          <div className="flex items-center gap-4">
-            <Slider
-              value={[value || field.min || 0]}
-              onValueChange={(val) => handleChange(val[0])}
-              min={field.min || 0}
-              max={field.max || 100}
-              step={field.step || 1}
-              className="flex-1"
-            />
-            <span className="text-sm font-medium w-12">{value || field.min || 0}</span>
+          <div className="flex items-center justify-between mb-2">
+            <Label>{field.label} {field.required && '*'}</Label>
+            <span className="text-sm font-medium text-gray-600">{value ?? field.min ?? 0}</span>
+          </div>
+          <Slider
+            value={[value ?? field.min ?? 0]}
+            onValueChange={(val) => handleChange(val[0])}
+            min={field.min ?? 0}
+            max={field.max ?? 100}
+            step={field.step ?? 1}
+            className="w-full"
+          />
+          <div className="flex justify-between text-xs text-gray-500 mt-1">
+            <span>{field.min ?? 0}</span>
+            <span>{field.max ?? 100}</span>
           </div>
         </div>
       );
