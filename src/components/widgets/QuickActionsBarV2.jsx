@@ -233,13 +233,24 @@ export default function QuickActionsBarV2({
             }
 
             if (action.id === 'mood' && moodLog?.mood) {
-              const emojiMap = {
-                amazing: '🤩', good: '😊', okay: '😐', low: '😔', struggling: '😢',
-                great: '😄', anxious: '😰', angry: '😡', sad: '😢', loved: '🥰', motivated: '💪', tired: '😴'
-              };
-              // Check user custom moods too
-              const customEmoji = preferences?.custom_mood_options?.find(m => m.value === moodLog.mood)?.emoji;
-              const emoji = customEmoji || emojiMap[moodLog.mood] || '😐';
+              // Default moods
+              const defaultMoodOptions = [
+                { emoji: '😄', value: 'great' },
+                { emoji: '🙂', value: 'good' },
+                { emoji: '😐', value: 'okay' },
+                { emoji: '😔', value: 'low' },
+                { emoji: '😰', value: 'anxious' },
+                { emoji: '😡', value: 'angry' },
+                { emoji: '😢', value: 'sad' },
+                { emoji: '🥰', value: 'loved' },
+                { emoji: '💪', value: 'motivated' },
+                { emoji: '😴', value: 'tired' },
+              ];
+              
+              // Build full mood list: defaults + custom
+              const allMoods = [...defaultMoodOptions, ...(preferences?.custom_mood_options || [])];
+              const foundMood = allMoods.find(m => m.value === moodLog.mood);
+              const emoji = foundMood?.emoji || '😐';
               
               displayContent = <span className="text-xl">{emoji}</span>;
             }
@@ -272,7 +283,7 @@ export default function QuickActionsBarV2({
       </div>
 
       {/* Modals */}
-      <MoodDialog isOpen={openModal === 'mood'} onClose={() => setOpenModal(null)} onSave={logMoodMutation.mutate} isLoading={logMoodMutation.isPending} topMoodEmojis={preferences?.custom_mood_options || []} />
+      <MoodDialog isOpen={openModal === 'mood'} onClose={() => setOpenModal(null)} onSave={logMoodMutation.mutate} isLoading={logMoodMutation.isPending} preferences={preferences} />
       <FoodDialog isOpen={openModal === 'food'} onClose={() => setOpenModal(null)} onSave={logFoodMutation.mutate} isLoading={logFoodMutation.isPending} />
       <NoteDialog isOpen={openModal === 'note'} onClose={() => setOpenModal(null)} onSave={logNoteMutation.mutate} isLoading={logNoteMutation.isPending} />
       <IdeaDialog isOpen={openModal === 'idea'} onClose={() => setOpenModal(null)} onSave={logIdeaMutation.mutate} isLoading={logIdeaMutation.isPending} />

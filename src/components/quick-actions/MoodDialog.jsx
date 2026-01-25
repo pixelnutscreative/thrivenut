@@ -7,10 +7,28 @@ import { Textarea } from '@/components/ui/textarea';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 
-export default function MoodDialog({ isOpen, onClose, onSave, isLoading, topMoodEmojis = [] }) {
+export default function MoodDialog({ isOpen, onClose, onSave, isLoading, preferences }) {
   const queryClient = useQueryClient();
   const [mood, setMood] = useState('');
   const [note, setNote] = useState('');
+
+  // Default moods
+  const defaultMoodOptions = [
+    { emoji: '😄', label: 'Great', value: 'great' },
+    { emoji: '🙂', label: 'Good', value: 'good' },
+    { emoji: '😐', label: 'Okay', value: 'okay' },
+    { emoji: '😔', label: 'Low', value: 'low' },
+    { emoji: '😰', label: 'Anxious', value: 'anxious' },
+    { emoji: '😡', label: 'Angry', value: 'angry' },
+    { emoji: '😢', label: 'Sad', value: 'sad' },
+  ];
+
+  // Build full mood list: defaults + custom
+  const allMoods = [...defaultMoodOptions, ...(preferences?.custom_mood_options || [])];
+  
+  // Get top 7 selected moods (or defaults if not configured)
+  const topMoodValues = preferences?.top_mood_emojis || defaultMoodOptions.slice(0, 7).map(m => m.value);
+  const topMoodEmojis = allMoods.filter(m => topMoodValues.includes(m.value));
 
   useEffect(() => {
     if (isOpen) {
@@ -35,27 +53,15 @@ export default function MoodDialog({ isOpen, onClose, onSave, isLoading, topMood
           <div className="space-y-2">
             <Label>How are you feeling?</Label>
             <div className="flex flex-wrap gap-2">
-              {topMoodEmojis.length > 0 ? (
-                topMoodEmojis.map((m, index) => (
-                  <Button
-                    key={index}
-                    variant={mood === m.value ? 'default' : 'outline'}
-                    onClick={() => setMood(m.value)}
-                    className={`${mood === m.value ? m.color : ''}`}
-                  >
-                    {m.emoji} {m.label}
-                  </Button>
-                ))
-              ) : (
-                // Default mood buttons if preferences are not set or empty
-                <>
-                  <Button variant={mood === 'great' ? 'default' : 'outline'} onClick={() => setMood('great')}>😊 Great</Button>
-                  <Button variant={mood === 'good' ? 'default' : 'outline'} onClick={() => setMood('good')}>🙂 Good</Button>
-                  <Button variant={mood === 'okay' ? 'default' : 'outline'} onClick={() => setMood('okay')}>😐 Okay</Button>
-                  <Button variant={mood === 'low' ? 'default' : 'outline'} onClick={() => setMood('low')}>🙁 Low</Button>
-                  <Button variant={mood === 'anxious' ? 'default' : 'outline'} onClick={() => setMood('anxious')}>😟 Anxious</Button>
-                </>
-              )}
+              {topMoodEmojis.map((m, index) => (
+                <Button
+                  key={index}
+                  variant={mood === m.value ? 'default' : 'outline'}
+                  onClick={() => setMood(m.value)}
+                >
+                  {m.emoji} {m.label}
+                </Button>
+              ))}
             </div>
           </div>
           <div className="space-y-2">

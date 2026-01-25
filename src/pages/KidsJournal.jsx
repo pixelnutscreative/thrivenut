@@ -249,17 +249,34 @@ export default function KidsJournal() {
     }
   });
 
-  // --- UI HELPERS ---
-  const moods = [
-    { icon: '😃', value: 'happy', label: 'Happy' },
-    { icon: '🙂', value: 'good', label: 'Good' },
-    { icon: '😐', value: 'okay', label: 'Okay' },
-    { icon: '😕', value: 'confused', label: 'Confused' },
-    { icon: '😢', value: 'sad', label: 'Sad' },
-    { icon: '😠', value: 'mad', label: 'Mad' },
-    { icon: '😴', value: 'tired', label: 'Tired' },
-    { icon: '🤒', value: 'sick', label: 'Sick' },
+  // Fetch user preferences for custom moods
+  const { data: preferences } = useQuery({
+    queryKey: ['preferences', user?.email],
+    queryFn: async () => {
+      if (!user?.email) return null;
+      const prefs = await base44.entities.UserPreferences.filter({ user_email: user.email });
+      return prefs[0] || null;
+    },
+    enabled: !!user?.email
+  });
+
+  // Default moods
+  const defaultMoodOptions = [
+    { emoji: '😄', label: 'Great', value: 'great' },
+    { emoji: '🙂', label: 'Good', value: 'good' },
+    { emoji: '😐', label: 'Okay', value: 'okay' },
+    { emoji: '😔', label: 'Low', value: 'low' },
+    { emoji: '😰', label: 'Anxious', value: 'anxious' },
+    { emoji: '😡', label: 'Angry', value: 'angry' },
+    { emoji: '😢', label: 'Sad', value: 'sad' },
   ];
+
+  // Build full mood list: defaults + custom
+  const allMoods = [...defaultMoodOptions, ...(preferences?.custom_mood_options || [])];
+  
+  // Get top 7 selected moods (or defaults if not configured)
+  const topMoodValues = preferences?.top_mood_emojis || defaultMoodOptions.slice(0, 7).map(m => m.value);
+  const moods = allMoods.filter(m => topMoodValues.includes(m.value));
 
   const weatherIcons = [
     { icon: Sun, value: 'sunny', color: 'text-yellow-500' },
@@ -511,7 +528,7 @@ export default function KidsJournal() {
                                 className={`text-2xl p-2 rounded-xl transition-all ${entryData.feeling === m.value ? 'bg-green-100 scale-110 shadow-sm ring-2 ring-green-400' : 'hover:bg-gray-50 grayscale hover:grayscale-0'}`}
                                 title={m.label}
                              >
-                                {m.icon}
+                                {m.emoji}
                              </button>
                           ))}
                        </div>
