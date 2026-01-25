@@ -14,7 +14,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   BookOpen, Calendar, Sparkles, Brain, Shield, ChevronDown, ChevronUp, Search, 
   Plus, X, Eye, EyeOff, Filter, ArrowUpDown, Music, History, Trash2, RotateCcw, 
-  ExternalLink, Type, Star, Image as ImageIcon, Loader2 
+  ExternalLink, Type, Star, Image as ImageIcon, Loader2, Settings as SettingsIcon 
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -23,17 +23,21 @@ import EncryptionModal from '../components/journal/EncryptionModal';
 import { useTheme } from '../components/shared/useTheme';
 import CryptoJS from 'crypto-js';
 
-const moodTags = [
-  { value: 'grateful', label: 'Grateful', emoji: '🙏', color: 'bg-green-100 text-green-800' },
-  { value: 'reflective', label: 'Reflective', emoji: '🤔', color: 'bg-purple-100 text-purple-800' },
-  { value: 'excited', label: 'Excited', emoji: '🎉', color: 'bg-yellow-100 text-yellow-800' },
-  { value: 'anxious', label: 'Anxious', emoji: '😰', color: 'bg-orange-100 text-orange-800' },
-  { value: 'peaceful', label: 'Peaceful', emoji: '☮️', color: 'bg-blue-100 text-blue-800' },
-  { value: 'motivated', label: 'Motivated', emoji: '💪', color: 'bg-red-100 text-red-800' },
-  { value: 'tired', label: 'Tired', emoji: '😴', color: 'bg-gray-100 text-gray-800' },
-  { value: 'frustrated', label: 'Frustrated', emoji: '😤', color: 'bg-rose-100 text-rose-800' },
-  { value: 'sad', label: 'Sad', emoji: '😢', color: 'bg-slate-100 text-slate-800' },
-  { value: 'angry', label: 'Angry', emoji: '😠', color: 'bg-red-100 text-red-800' }
+const defaultMoodOptions = [
+  { emoji: '😄', label: 'Great', value: 'great', color: 'bg-green-100 text-green-800' },
+  { emoji: '🙂', label: 'Good', value: 'good', color: 'bg-blue-100 text-blue-800' },
+  { emoji: '😐', label: 'Okay', value: 'okay', color: 'bg-gray-100 text-gray-800' },
+  { emoji: '😔', label: 'Low', value: 'low', color: 'bg-purple-100 text-purple-800' },
+  { emoji: '😰', label: 'Anxious', value: 'anxious', color: 'bg-orange-100 text-orange-800' },
+  { emoji: '😡', label: 'Angry', value: 'angry', color: 'bg-red-100 text-red-800' },
+  { emoji: '😢', label: 'Sad', value: 'sad', color: 'bg-slate-100 text-slate-800' },
+  { emoji: '🙏', label: 'Grateful', value: 'grateful', color: 'bg-green-100 text-green-800' },
+  { emoji: '🤔', label: 'Reflective', value: 'reflective', color: 'bg-purple-100 text-purple-800' },
+  { emoji: '🎉', label: 'Excited', value: 'excited', color: 'bg-yellow-100 text-yellow-800' },
+  { emoji: '☮️', label: 'Peaceful', value: 'peaceful', color: 'bg-blue-100 text-blue-800' },
+  { emoji: '💪', label: 'Motivated', value: 'motivated', color: 'bg-red-100 text-red-800' },
+  { emoji: '😴', label: 'Tired', value: 'tired', color: 'bg-gray-100 text-gray-800' },
+  { emoji: '😤', label: 'Frustrated', value: 'frustrated', color: 'bg-rose-100 text-rose-800' }
 ];
 
 const entryTypes = [
@@ -121,6 +125,12 @@ export default function Journal() {
     document.head.appendChild(link);
     return () => document.head.removeChild(link);
   }, []);
+
+  // Build mood tags from defaults + custom preferences
+  const moodTags = React.useMemo(() => {
+    const custom = preferences?.custom_mood_options || [];
+    return [...defaultMoodOptions, ...custom];
+  }, [preferences]);
 
   React.useEffect(() => {
     const loadUser = async () => {
@@ -680,6 +690,8 @@ export default function Journal() {
                         onValueChange={(val) => {
                           if (val === 'custom') {
                             setIsCustomMood(true);
+                          } else if (val === 'edit_settings') {
+                            window.location.href = '/Settings#widgets-v2';
                           } else {
                             setFormData({...formData, mood_tag: val});
                           }
@@ -696,6 +708,12 @@ export default function Journal() {
                             </SelectItem>
                           ))}
                           <SelectItem value="custom">✨ Custom Mood...</SelectItem>
+                          <SelectItem value="edit_settings">
+                            <span className="flex items-center gap-2 text-purple-600">
+                              <SettingsIcon className="w-3 h-3" />
+                              Edit Mood Options
+                            </span>
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     ) : (
