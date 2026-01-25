@@ -288,6 +288,15 @@ export default function Journal() {
     }
   });
 
+  const deleteEntryMutation = useMutation({
+    mutationFn: async (id) => {
+      return await base44.entities.JournalEntry.delete(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['journalEntries'] });
+    }
+  });
+
   const handleSubmit = () => {
     if (!formData.content.trim()) return;
     
@@ -1006,26 +1015,44 @@ export default function Journal() {
                             )}
                           </div>
                           <div className="flex flex-col items-end gap-1">
-                            {/* Hide/Unhide Button */}
-                            <Button
-                              size="sm"
-                              className={`h-7 w-7 p-0 transition-colors ${
-                                entry.is_hidden 
-                                  ? 'bg-gray-200 text-gray-500 hover:bg-gray-300' 
-                                  : 'text-white shadow-sm'
-                              }`}
-                              style={!entry.is_hidden ? { backgroundColor: preferences?.favorite_color || '#9333ea' } : {}}
-                              title={entry.is_hidden ? "Hidden (Click to Unhide)" : "Visible (Click to Hide)"}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                updateEntryMutation.mutate({ 
-                                  id: entry.id, 
-                                  data: { is_hidden: !entry.is_hidden } 
-                                });
-                              }}
-                            >
-                              {entry.is_hidden ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                            </Button>
+                            <div className="flex gap-1">
+                              {/* Hide/Unhide Button */}
+                              <Button
+                                size="sm"
+                                className={`h-7 w-7 p-0 transition-colors ${
+                                  entry.is_hidden 
+                                    ? 'bg-gray-200 text-gray-500 hover:bg-gray-300' 
+                                    : 'text-white shadow-sm'
+                                }`}
+                                style={!entry.is_hidden ? { backgroundColor: preferences?.favorite_color || '#9333ea' } : {}}
+                                title={entry.is_hidden ? "Hidden (Click to Unhide)" : "Visible (Click to Hide)"}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  updateEntryMutation.mutate({ 
+                                    id: entry.id, 
+                                    data: { is_hidden: !entry.is_hidden } 
+                                  });
+                                }}
+                              >
+                                {entry.is_hidden ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                              </Button>
+
+                              {/* Delete Button */}
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 w-7 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                title="Delete Entry"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (confirm('Are you sure you want to delete this journal entry? This cannot be undone.')) {
+                                    deleteEntryMutation.mutate(entry.id);
+                                  }
+                                }}
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
+                            </div>
 
                             {entryType && entryType.value !== 'general' && (
                               <Badge variant="outline" className="text-[10px] mt-1">{entryType.label}</Badge>
