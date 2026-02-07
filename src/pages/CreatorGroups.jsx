@@ -298,8 +298,8 @@ export default function CreatorGroups() {
   // Robust Membership Checks
   const isOwnerByEmail = (activeGroup?.owner_email && user?.email && activeGroup.owner_email.toLowerCase() === user.email.toLowerCase()) || false;
   
-  // Admin = Super Admin OR Owner (by email) OR Explicit Admin Role
-  const isAdmin = isSuperAdmin || isOwnerByEmail || (activeMembership && ['owner', 'admin', 'manager'].includes(activeMembership.role));
+  // Admin = Super Admin OR Owner (by email) OR Explicit Admin Role OR Agency Owner Level
+  const isAdmin = isSuperAdmin || isOwnerByEmail || (activeMembership && (['owner', 'admin', 'manager'].includes(activeMembership.role) || activeMembership.level === 'Agency Owner'));
 
   // Member = Admin OR Active/Trial Status
   const isMember = isAdmin || (!!activeMembership && (activeMembership.status === 'active' || activeMembership.status === 'trial'));

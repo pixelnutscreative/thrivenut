@@ -10,11 +10,13 @@ Deno.serve(async (req) => {
     }
 
     const { userEmail } = await req.json();
-    const effectiveEmail = userEmail || user.email;
+    const rawEmail = userEmail || user.email;
+    // Handle case sensitivity by checking both as-is and lowercase
+    const emailsToCheck = [...new Set([rawEmail, rawEmail.toLowerCase(), rawEmail.charAt(0).toUpperCase() + rawEmail.slice(1)])];
 
     // Fetch user's active group memberships
     const memberships = await base44.asServiceRole.entities.CreatorGroupMember.filter({ 
-      user_email: effectiveEmail, 
+      user_email: { $in: emailsToCheck }, 
       status: 'active' 
     });
     
@@ -23,7 +25,7 @@ Deno.serve(async (req) => {
 
     // Fetch groups owned by the user directly
     const ownedGroups = await base44.asServiceRole.entities.CreatorGroup.filter({
-      owner_email: effectiveEmail,
+      owner_email: { $in: emailsToCheck },
       status: 'active'
     });
 
