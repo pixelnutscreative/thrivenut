@@ -331,6 +331,21 @@ export default function CreatorGroups() {
   // Invite logic: Admins can always invite. Members can invite if allowed by settings.
   const canInvite = isAdmin || (activeGroup?.settings?.allow_member_invites === true && isMember);
 
+  // Auto-fix Owner Membership if missing
+  useEffect(() => {
+    if (activeGroup && isOwnerByEmail && !activeMembership && !isLoadingGroups) {
+        console.log('👑 Owner missing from member list. Attempting auto-fix...');
+        base44.functions.invoke('updateMemberStatus', { 
+            action: 'fix_owner_membership', 
+            group_id: activeGroup.id, 
+            user_email: user.email 
+        }).then(() => {
+            queryClient.invalidateQueries(['myGroupsConsolidated']);
+            queryClient.invalidateQueries(['activeGroup']);
+        }).catch(err => console.error('Failed to fix owner membership:', err));
+    }
+  }, [activeGroup?.id, isOwnerByEmail, activeMembership, isLoadingGroups]);
+
   // Invite Mutation (Direct Add)
   const inviteMutation = useMutation({
     mutationFn: async (data) => {

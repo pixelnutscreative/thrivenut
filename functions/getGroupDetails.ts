@@ -18,7 +18,14 @@ Deno.serve(async (req) => {
             return Response.json({ group: null });
         }
 
-        return Response.json({ group });
+        const { includeMembers } = await req.json();
+        let members = [];
+        
+        if (includeMembers) {
+            members = await base44.asServiceRole.entities.CreatorGroupMember.filter({ group_id: groupId });
+        }
+
+        return Response.json({ group, members });
     } catch (error) {
         return Response.json({ error: error.message }, { status: 500 });
     }

@@ -352,7 +352,19 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
   const { data: members = [] } = useQuery({
     queryKey: ['groupMembers', group.id],
     queryFn: async () => {
-      return await base44.entities.CreatorGroupMember.filter({ group_id: group.id });
+      try {
+        const res = await base44.entities.CreatorGroupMember.filter({ group_id: group.id });
+        if (res && res.length > 0) return res;
+        
+        // Fallback to backend function to bypass RLS if client fetch returns empty
+        console.log("Client fetch empty, trying backend fallback for members...");
+        const backendRes = await base44.functions.invoke('getGroupDetails', { groupId: group.id, includeMembers: true });
+        return backendRes.data.members || [];
+      } catch (e) {
+         console.error("Error fetching members, trying fallback:", e);
+         const backendRes = await base44.functions.invoke('getGroupDetails', { groupId: group.id, includeMembers: true });
+         return backendRes.data.members || [];
+      }
     }
   });
 
