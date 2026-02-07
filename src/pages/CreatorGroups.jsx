@@ -296,10 +296,21 @@ export default function CreatorGroups() {
   const activeMembership = myMemberships.find(m => m.group_id === activeGroupId);
 
   // Robust Membership Checks
-  const isOwnerByEmail = activeGroup?.owner_email && user?.email && activeGroup.owner_email.toLowerCase() === user.email.toLowerCase();
+  const isOwnerByEmail = (activeGroup?.owner_email && user?.email && activeGroup.owner_email.toLowerCase() === user.email.toLowerCase()) || false;
   
   // Admin = Super Admin OR Owner (by email) OR Explicit Admin Role
   const isAdmin = isSuperAdmin || isOwnerByEmail || (activeMembership && ['owner', 'admin', 'manager'].includes(activeMembership.role));
+
+  if (activeGroup && !isMember && !isAdmin) {
+     console.log('🔒 Access Denied Debug:', {
+        groupName: activeGroup.name,
+        ownerEmail: activeGroup.owner_email,
+        userEmail: user?.email,
+        isOwnerByEmail,
+        activeMembership,
+        isSuperAdmin
+     });
+  }
   
   // Member = Admin OR Active/Trial Status
   const isMember = isAdmin || (!!activeMembership && (activeMembership.status === 'active' || activeMembership.status === 'trial'));
@@ -1143,13 +1154,14 @@ export default function CreatorGroups() {
 
   // Redirect Interested users (handled in useEffect above)
   // Redirect non-members of public groups to GroupWelcome page
-  if (!isMember && !isAdmin && !isSuperAdmin && activeGroup.allow_public_discovery === true) {
+  // Double check owner status to prevent false redirects for creators
+  if (!isMember && !isAdmin && !isSuperAdmin && !isOwnerByEmail && activeGroup.allow_public_discovery === true) {
     navigate(createPageUrl('GroupWelcome') + `?groupId=${activeGroupId}`);
     return null;
   }
 
   // Private group guard (no preview unless discoverable or admin/owner)
-  if (!isMember && !isAdmin && !isSuperAdmin && activeGroup.owner_email !== user?.email) {
+  if (!isMember && !isAdmin && !isSuperAdmin && !isOwnerByEmail) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center space-y-4">
         <div className="w-16 h-16 bg-gray-100 text-gray-600 rounded-full flex items-center justify-center">

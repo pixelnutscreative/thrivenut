@@ -13,10 +13,11 @@ Deno.serve(async (req) => {
     // 1. Create the Group
     const group = await base44.entities.CreatorGroup.create({
       name,
-      owner_email: user.email,
+      owner_email: user.email.toLowerCase(),
       invite_code: Math.random().toString(36).substring(7).toUpperCase(),
       status: 'active',
       type,
+      allow_public_discovery: true, // Default to true for agencies/communities so they have a landing page
       ...funnel_content
     });
 
