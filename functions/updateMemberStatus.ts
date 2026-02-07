@@ -24,6 +24,36 @@ Deno.serve(async (req) => {
         let member = members[0];
         
         // 3. Logic Switch
+        if (action === 'fix_owner_membership') {
+            const group = await base44.asServiceRole.entities.CreatorGroup.get(group_id);
+            if (!group) return Response.json({ error: 'Group not found' }, { status: 404 });
+            
+            // Verify ownership
+            if ((group.owner_email || '').toLowerCase() !== (currentUser.email || '').toLowerCase()) {
+                return Response.json({ error: 'Unauthorized: You are not the owner of this group' }, { status: 403 });
+            }
+
+            const existing = await base44.asServiceRole.entities.CreatorGroupMember.filter({ group_id, user_email: currentUser.email });
+            
+            if (existing.length === 0) {
+                await base44.asServiceRole.entities.CreatorGroupMember.create({
+                    group_id,
+                    user_email: currentUser.email,
+                    role: 'owner',
+                    status: 'active',
+                    level: 'Owner',
+                    joined_date: new Date().toISOString()
+                });
+            } else {
+                await base44.asServiceRole.entities.CreatorGroupMember.update(existing[0].id, {
+                    role: 'owner',
+                    status: 'active',
+                    level: 'Owner'
+                });
+            }
+            return Response.json({ status: 'success', message: 'Owner membership fixed' });
+        }
+
         if (action === 'become_interested') {
             // Self-action: Invited -> Interested
             if (!member) {
