@@ -457,12 +457,12 @@ export default function CreatorGroups() {
     if (link) setEditingReferralCode(link.referral_code);
   };
 
-  // Redirect Interested users to the Interested Dashboard
-  useEffect(() => {
-      if (isInterested && activeGroupId) {
-          navigate(createPageUrl('GroupInterested') + `?groupId=${activeGroupId}`);
-      }
-  }, [isInterested, activeGroupId, navigate]);
+  // Redirect Interested users to the Interested Dashboard - DISABLED BY USER REQUEST
+  // useEffect(() => {
+  //     if (isInterested && activeGroupId) {
+  //         navigate(createPageUrl('GroupInterested') + `?groupId=${activeGroupId}`);
+  //     }
+  // }, [isInterested, activeGroupId, navigate]);
 
   // Handle Referrals when joining
   const referralCode = searchParams.get('ref');
@@ -1168,12 +1168,12 @@ export default function CreatorGroups() {
   }
 
   // Redirect Interested users (handled in useEffect above)
-  // Redirect non-members of public groups to GroupWelcome page
+  // Redirect non-members of public groups to GroupWelcome page - DISABLED BY USER REQUEST
   // Double check owner status to prevent false redirects for creators
-  if (!isMember && !isAdmin && !isSuperAdmin && !isOwnerByEmail && activeGroup.allow_public_discovery === true) {
-    navigate(createPageUrl('GroupWelcome') + `?groupId=${activeGroupId}`);
-    return null;
-  }
+  // if (!isMember && !isAdmin && !isSuperAdmin && !isOwnerByEmail && activeGroup.allow_public_discovery === true) {
+  //   navigate(createPageUrl('GroupWelcome') + `?groupId=${activeGroupId}`);
+  //   return null;
+  // }
 
   // Private group guard (no preview unless discoverable or admin/owner)
   if (!isMember && !isAdmin && !isSuperAdmin && !isOwnerByEmail) {
