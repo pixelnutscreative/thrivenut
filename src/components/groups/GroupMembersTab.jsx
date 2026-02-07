@@ -392,15 +392,8 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
   const pendingMembers = dedupedMembers.filter(m => m.status === 'pending' || m.pending_approval);
   const activeMembers = dedupedMembers.filter(m => m.status !== 'pending' && !m.pending_approval);
 
-  if (!isAdmin && myMembership?.role !== 'owner') {
-    return (
-      <div className="p-8 text-center text-gray-500 bg-gray-50 rounded-lg">
-        <h3 className="text-lg font-semibold">Members</h3>
-        <p>Member list is only visible to admins.</p>
-        <p className="mt-2 text-sm">{activeMembers.length} Active Members</p>
-      </div>
-    );
-  }
+  // Member list visibility check removed to allow members to see each other
+
 
   return (
     <div className="space-y-6">

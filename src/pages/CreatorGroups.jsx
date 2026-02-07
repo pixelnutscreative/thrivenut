@@ -733,9 +733,8 @@ export default function CreatorGroups() {
     }
 
     // If Custom Navigation is enabled, and the tab is NOT disabled (checked above), 
-    // it should be enabled for everyone (unless it's 'members' or explicitly restricted)
+    // it should be enabled for everyone
     if (hasCustomNavigation) {
-       if (id === 'members' && !isAdmin) return false;
        return true; 
     }
 
@@ -762,10 +761,11 @@ export default function CreatorGroups() {
     }
 
     if (isClientGroup) {
-        if (id === 'members' && !isAdmin) return false;
+        // Client groups might restrict members tab, but let's allow it if not explicitly disabled
+        // if (id === 'members' && !isAdmin) return false;
     }
     
-    if (id === 'members' && !isAdmin) return false;
+    // if (id === 'members' && !isAdmin) return false;
     
     // Admin Override
     if (isAdmin) {
@@ -791,17 +791,15 @@ export default function CreatorGroups() {
     
     // If Custom Navigation is enabled, and not disabled, it IS visible to members
     if (hasCustomNavigation) {
-       if (id === 'members') return false;
        return true;
     }
     
     // Fallback defaults for member role (Legacy/Default)
     if (isClientGroup) {
-        return ['feed', 'events', 'qna', 'resources', 'training', 'discussion'].includes(id);
+        return ['feed', 'events', 'qna', 'resources', 'training', 'discussion', 'members'].includes(id);
     }
 
     if (allowed && !allowed.has(id)) return false;
-    if (id === 'members') return false;
     return true;
   };
 
