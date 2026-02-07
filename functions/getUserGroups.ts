@@ -21,16 +21,26 @@ Deno.serve(async (req) => {
     console.log('getUserGroups called for:', effectiveEmail);
     console.log('memberships found:', memberships.length);
 
-    if (memberships.length === 0) {
+    // Fetch groups owned by the user directly
+    const ownedGroups = await base44.asServiceRole.entities.CreatorGroup.filter({
+      owner_email: effectiveEmail,
+      status: 'active'
+    });
+
+    // Extract groupIds from memberships
+    const memberGroupIds = memberships.map(m => m.group_id);
+    const ownedGroupIds = ownedGroups.map(g => g.id);
+    
+    // Combine IDs (unique)
+    const allGroupIds = [...new Set([...memberGroupIds, ...ownedGroupIds])];
+
+    if (allGroupIds.length === 0) {
       return Response.json({ groups: [], memberships: [], preferences: [] });
     }
 
-    // Extract groupIds for a single efficient query
-    const groupIds = memberships.map(m => m.group_id);
-
-    // Fetch all group details in one call using the $in operator
+    // Fetch all group details
     const groups = await base44.asServiceRole.entities.CreatorGroup.filter({ 
-      id: { $in: groupIds }, 
+      id: { $in: allGroupIds }, 
       status: 'active' 
     });
     
