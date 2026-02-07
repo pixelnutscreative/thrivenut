@@ -301,6 +301,9 @@ export default function CreatorGroups() {
   // Admin = Super Admin OR Owner (by email) OR Explicit Admin Role
   const isAdmin = isSuperAdmin || isOwnerByEmail || (activeMembership && ['owner', 'admin', 'manager'].includes(activeMembership.role));
 
+  // Member = Admin OR Active/Trial Status
+  const isMember = isAdmin || (!!activeMembership && (activeMembership.status === 'active' || activeMembership.status === 'trial'));
+
   if (activeGroup && !isMember && !isAdmin) {
      console.log('🔒 Access Denied Debug:', {
         groupName: activeGroup.name,
@@ -311,9 +314,6 @@ export default function CreatorGroups() {
         isSuperAdmin
      });
   }
-  
-  // Member = Admin OR Active/Trial Status
-  const isMember = isAdmin || (!!activeMembership && (activeMembership.status === 'active' || activeMembership.status === 'trial'));
 
   // DEBUG LOG (AFTER declarations)
   console.log('🔍 DEBUG MEMBERSHIP:', {
