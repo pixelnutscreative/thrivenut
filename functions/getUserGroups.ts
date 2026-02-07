@@ -10,11 +10,11 @@ Deno.serve(async (req) => {
     }
 
     const { userEmail } = await req.json();
-    const rawEmail = userEmail || user.email;
+    const effectiveEmail = userEmail || user.email;
     // Handle case sensitivity by checking both as-is, lowercase, uppercase, and trimmed
-    const trimmed = rawEmail.trim();
+    const trimmed = effectiveEmail.trim();
     const emailsToCheck = [...new Set([
-        rawEmail, 
+        effectiveEmail, 
         trimmed, 
         trimmed.toLowerCase(), 
         trimmed.toUpperCase(),
@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
     // Fetch UserGroupPreferences for sorting
     const preferences = await base44.asServiceRole.entities.UserGroupPreference.filter({
       user_email: effectiveEmail,
-      group_id: { $in: groupIds }
+      group_id: { $in: allGroupIds }
     });
     
     console.log('preferences found:', preferences.length);
