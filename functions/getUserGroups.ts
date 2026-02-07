@@ -11,13 +11,22 @@ Deno.serve(async (req) => {
 
     const { userEmail } = await req.json();
     const rawEmail = userEmail || user.email;
-    // Handle case sensitivity by checking both as-is and lowercase
-    const emailsToCheck = [...new Set([rawEmail, rawEmail.toLowerCase(), rawEmail.charAt(0).toUpperCase() + rawEmail.slice(1)])];
+    // Handle case sensitivity by checking both as-is, lowercase, uppercase, and trimmed
+    const trimmed = rawEmail.trim();
+    const emailsToCheck = [...new Set([
+        rawEmail, 
+        trimmed, 
+        trimmed.toLowerCase(), 
+        trimmed.toUpperCase(),
+        trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase()
+    ])];
 
-    // Fetch user's active group memberships
+    console.log('getUserGroups checking emails:', emailsToCheck);
+
+    // Fetch user's active or trial group memberships
     const memberships = await base44.asServiceRole.entities.CreatorGroupMember.filter({ 
       user_email: { $in: emailsToCheck }, 
-      status: 'active' 
+      status: { $in: ['active', 'trial'] } 
     });
     
     console.log('getUserGroups called for:', effectiveEmail);
