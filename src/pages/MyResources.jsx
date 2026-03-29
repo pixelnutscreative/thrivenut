@@ -322,6 +322,22 @@ import React, { useState } from 'react';
                </button>
              </div>
 
+             <Button variant="outline" size="sm" onClick={async () => {
+               try {
+                 const res = await base44.functions.invoke('exportLinksCsv');
+                 const blob = new Blob([res.data], { type: 'text/csv' });
+                 const url = window.URL.createObjectURL(blob);
+                 const a = document.createElement('a');
+                 a.href = url;
+                 a.download = 'links_export.csv';
+                 a.click();
+               } catch (e) {
+                 alert('Failed to export CSV');
+                 console.error(e);
+               }
+             }}>
+               <LinkIcon className="w-4 h-4 mr-2" /> Export Links
+             </Button>
              <Button variant="outline" size="sm" onClick={() => {
                const newName = prompt('Rename "My Stuff" to:', preferences?.my_resources_label || 'My Stuff');
                if (newName && newName.trim()) {
