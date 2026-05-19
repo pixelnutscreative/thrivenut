@@ -4,6 +4,9 @@ import { useQuery } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Shield, Star, UserCog, Users, Gift, Settings, Palette, Clock, MessageSquare, ListTodo, Squirrel, FolderOpen, Merge, Mail, Menu, Sparkles, DollarSign, Award } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '../utils';
+import { Button } from '@/components/ui/button';
 
 // Import the individual admin components/pages as content
 import AdminSuperFanContent from '../components/admin/AdminSuperFanContent';
@@ -71,12 +74,20 @@ export default function Admin() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
-            <Shield className="w-8 h-8 text-purple-600" />
-            Admin Panel
-          </h1>
-          <p className="text-gray-600 mt-1">Manage users, access, and app settings</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
+              <Shield className="w-8 h-8 text-purple-600" />
+              Admin Panel
+            </h1>
+            <p className="text-gray-600 mt-1">Manage users, access, and app settings</p>
+          </div>
+          <Link to={createPageUrl('PixelBoard')}>
+            <Button className="bg-[#2D1B69] hover:bg-[#6B3FA0] text-white">
+              <MessageSquare className="w-4 h-4 mr-2 text-[#24C4D6]" />
+              Pixel Board
+            </Button>
+          </Link>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

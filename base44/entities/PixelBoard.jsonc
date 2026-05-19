@@ -1,0 +1,83 @@
+{
+  "name": "PixelBoard",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "details": {
+      "type": "string"
+    },
+    "asked_by": {
+      "type": "string",
+      "enum": [
+        "Nikole",
+        "Pixel Poster"
+      ],
+      "default": "Nikole"
+    },
+    "question_type": {
+      "type": "string",
+      "enum": [
+        "General",
+        "Technical",
+        "Design",
+        "Urgent",
+        "Other"
+      ],
+      "default": "General"
+    },
+    "answer_type": {
+      "type": "string",
+      "enum": [
+        "Text",
+        "Multiple Choice",
+        "Yes/No"
+      ],
+      "default": "Text"
+    },
+    "choices": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "nikole_response": {
+      "type": "string"
+    },
+    "pixel_response": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Open",
+        "Answered",
+        "Reviewed"
+      ],
+      "default": "Open"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "Low",
+        "Medium",
+        "High",
+        "Critical"
+      ],
+      "default": "Medium"
+    },
+    "nikole_read": {
+      "type": "boolean",
+      "default": false
+    },
+    "pixel_read": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "title"
+  ]
+}
