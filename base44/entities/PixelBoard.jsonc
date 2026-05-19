@@ -18,22 +18,10 @@
     },
     "question_type": {
       "type": "string",
-      "enum": [
-        "General",
-        "Technical",
-        "Design",
-        "Urgent",
-        "Other"
-      ],
-      "default": "General"
+      "default": "Question"
     },
     "answer_type": {
       "type": "string",
-      "enum": [
-        "Text",
-        "Multiple Choice",
-        "Yes/No"
-      ],
       "default": "Text"
     },
     "choices": {
@@ -49,24 +37,16 @@
     "pixel_response": {
       "type": "string"
     },
+    "nikole_attachment_url": {
+      "type": "string"
+    },
     "status": {
       "type": "string",
-      "enum": [
-        "Unanswered",
-        "Answered",
-        "Reviewed"
-      ],
       "default": "Unanswered"
     },
     "priority": {
       "type": "string",
-      "enum": [
-        "Low",
-        "Medium",
-        "High",
-        "Critical"
-      ],
-      "default": "Medium"
+      "default": "Normal"
     },
     "nikole_read": {
       "type": "boolean",
@@ -77,6 +57,10 @@
       "default": false
     },
     "batch_ready": {
+      "type": "boolean",
+      "default": false
+    },
+    "pinned": {
       "type": "boolean",
       "default": false
     }
