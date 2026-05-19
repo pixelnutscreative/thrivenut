@@ -1,24 +1,37 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
-        const { groupId, includeMembers } = await req.json();
+        
+        let payload = {};
+        if (req.method === 'POST') {
+            try {
+                // Some invocations might pass empty body or it might be consumed
+                const clonedReq = req.clone();
+                const text = await clonedReq.text();
+                if (text) payload = JSON.parse(text);
+            } catch (e) {
+                console.log("Error parsing body", e);
+            }
+        }
+        const url = new URL(req.url);
+        const groupId = payload.groupId || url.searchParams.get('groupId');
+        const includeMembers = payload.includeMembers || url.searchParams.get('includeMembers') === 'true';
 
         if (!groupId) {
             return Response.json({ error: 'Group ID is required' }, { status: 400 });
         }
 
         // Use service role to fetch group regardless of RLS
-        // This is necessary so we can show "This group is private" screen with the group name
         const groups = await base44.asServiceRole.entities.CreatorGroup.filter({ id: groupId });
         const group = groups[0];
 
         if (!group) {
             return Response.json({ group: null });
         }
-        let members = [];
         
+        let members = [];
         if (includeMembers) {
             members = await base44.asServiceRole.entities.CreatorGroupMember.filter({ group_id: groupId });
         }

@@ -41,13 +41,14 @@ export default function GroupSettingsTab({ group }) {
 
         <TabsContent value="general" className="space-y-6 mt-6">
           <GroupTabsManager group={group} />
+          <GroupNameSettings group={group} />
+          <GroupAppearanceSettings group={group} />
+          <GroupExperienceSettings group={group} />
+          <GroupTypeSettings group={group} />
           <GroupLogoUploader group={group} />
           <RetainerSettings group={group} />
-          <GroupNameSettings group={group} />
           <ProspectManagementSettings group={group} />
-          <GroupTypeSettings group={group} />
           <GroupShortcutsSettings group={group} />
-          <GroupColorSettings group={group} />
           <CryptoTickerSettings group={group} />
         </TabsContent>
 
@@ -76,8 +77,6 @@ export default function GroupSettingsTab({ group }) {
         </TabsContent>
 
         <TabsContent value="danger" className="space-y-6 mt-6">
-          <GroupMenuSettings group={group} />
-          <GroupExperienceSettings group={group} />
           <TransferOwnershipSettings group={group} />
           <DeleteGroupSettings group={group} />
         </TabsContent>
@@ -86,30 +85,66 @@ export default function GroupSettingsTab({ group }) {
   );
 }
 
-function GroupColorSettings({ group }) {
+function GroupAppearanceSettings({ group }) {
   const queryClient = useQueryClient();
   const updateMutation = useMutation({
-    mutationFn: (color) => base44.entities.CreatorGroup.update(group.id, { settings: { ...group.settings, group_color: color } }),
-    onSuccess: () => queryClient.invalidateQueries(['myGroupsDetails'])
+    mutationFn: async (data) => {
+      const current = await base44.entities.CreatorGroup.get(group.id);
+      const payload = { ...data };
+      if (data.settings) {
+         payload.settings = { ...current.settings, ...data.settings };
+      }
+      return base44.entities.CreatorGroup.update(group.id, payload);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['myGroupsDetails']);
+      queryClient.invalidateQueries(['activeGroup', group.id]);
+    }
   });
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Group Theme Color</CardTitle>
-        <CardDescription>Customize the primary color for this group.</CardDescription>
+        <CardTitle>Appearance & Display</CardTitle>
+        <CardDescription>Customize colors and how this group appears in the app navigation.</CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="flex items-center gap-4">
-          <ColorPicker 
-            color={group.settings?.group_color || '#8b5cf6'} 
-            onChange={(c) => updateMutation.mutate(c)} 
-            label="Pick a color"
-          />
-          <div className="text-sm text-gray-500">
-            Selected: <span className="font-mono font-medium text-gray-700">{group.settings?.group_color || '#8b5cf6'}</span>
+      <CardContent className="space-y-6">
+        <div className="space-y-2">
+          <Label>Group Theme Color</Label>
+          <div className="flex items-center gap-4">
+            <ColorPicker 
+              color={group.settings?.group_color || '#8b5cf6'} 
+              onChange={(c) => updateMutation.mutate({ settings: { group_color: c } })} 
+              label="Pick a color"
+            />
+            <div className="text-sm text-gray-500 font-mono">{group.settings?.group_color || '#8b5cf6'}</div>
           </div>
         </div>
+
+        <div className="flex items-center justify-between pt-4 border-t">
+          <div className="space-y-0.5">
+            <Label>Pin to Main Menu</Label>
+            <p className="text-sm text-gray-500">Show this group in the main sidebar above the categorized sections.</p>
+          </div>
+          <Switch
+            checked={group.menu_pinned || false}
+            onCheckedChange={(checked) => updateMutation.mutate({ menu_pinned: checked })}
+          />
+        </div>
+
+        {group.menu_pinned && (
+          <div className="space-y-2">
+            <Label>Sidebar Menu Color</Label>
+            <div className="flex gap-2 items-center">
+              <Input
+                type="color"
+                value={group.menu_color || '#8B5CF6'}
+                onChange={(e) => updateMutation.mutate({ menu_color: e.target.value })}
+                className="w-12 h-10 p-1 cursor-pointer"
+              />
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -118,7 +153,10 @@ function GroupColorSettings({ group }) {
 function CryptoTickerSettings({ group }) {
   const queryClient = useQueryClient();
   const updateMutation = useMutation({
-    mutationFn: (data) => base44.entities.CreatorGroup.update(group.id, data),
+    mutationFn: async (hide_ticker) => {
+      const current = await base44.entities.CreatorGroup.get(group.id);
+      return base44.entities.CreatorGroup.update(group.id, { settings: { ...current.settings, hide_ticker } });
+    },
     onSuccess: () => queryClient.invalidateQueries(['myGroupsDetails'])
   });
 
@@ -132,7 +170,7 @@ function CryptoTickerSettings({ group }) {
         <span className="text-sm text-gray-600">Show ticker on dashboard</span>
         <Switch
           checked={!(group.settings?.hide_ticker === true)}
-          onCheckedChange={(checked) => updateMutation.mutate({ settings: { ...(group.settings || {}), hide_ticker: !checked } })}
+          onCheckedChange={(checked) => updateMutation.mutate(!checked)}
         />
       </CardContent>
     </Card>
@@ -142,7 +180,16 @@ function CryptoTickerSettings({ group }) {
 function RetainerSettings({ group }) {
   const queryClient = useQueryClient();
   const updateMutation = useMutation({
-    mutationFn: (data) => base44.entities.CreatorGroup.update(group.id, data),
+    mutationFn: async (data) => {
+      if (data.settings) {
+        const current = await base44.entities.CreatorGroup.get(group.id);
+        return base44.entities.CreatorGroup.update(group.id, { 
+            enable_retainer_management: data.enable_retainer_management !== undefined ? data.enable_retainer_management : current.enable_retainer_management,
+            settings: { ...current.settings, ...data.settings } 
+        });
+      }
+      return base44.entities.CreatorGroup.update(group.id, data);
+    },
     onSuccess: () => queryClient.invalidateQueries(['myGroupsDetails'])
   });
 
@@ -170,7 +217,7 @@ function RetainerSettings({ group }) {
           </div>
           <Switch
             checked={!(group.settings?.hide_retainer_balance === true)}
-            onCheckedChange={(checked) => updateMutation.mutate({ settings: { ...group.settings, hide_retainer_balance: !checked } })}
+            onCheckedChange={(checked) => updateMutation.mutate({ settings: { hide_retainer_balance: !checked } })}
           />
         </CardContent>
       )}
@@ -191,7 +238,10 @@ function MemberInviteSettings({ group }) {
   const [newQuestion, setNewQuestion] = useState('');
 
   const updateMutation = useMutation({
-    mutationFn: (data) => base44.entities.CreatorGroup.update(group.id, { settings: { ...group.settings, ...data } }),
+    mutationFn: async (data) => {
+      const current = await base44.entities.CreatorGroup.get(group.id);
+      return base44.entities.CreatorGroup.update(group.id, { settings: { ...current.settings, ...data } });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['activeGroup', group.id]);
       alert('Invite settings updated!');
@@ -831,9 +881,12 @@ function GroupTabsManager({ group }) {
   const [hasChanges, setHasChanges] = useState(false);
 
   const updateMutation = useMutation({
-    mutationFn: (data) => base44.entities.CreatorGroup.update(group.id, { 
-      settings: { ...group.settings, ...data } 
-    }),
+    mutationFn: async (data) => {
+      const current = await base44.entities.CreatorGroup.get(group.id);
+      return base44.entities.CreatorGroup.update(group.id, { 
+        settings: { ...current.settings, ...data } 
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['activeGroup', group.id]);
       queryClient.invalidateQueries(['myGroupsDetails']);
@@ -1304,58 +1357,7 @@ function GroupShortcutsSettings({ group }) {
   );
 }
 
-function GroupMenuSettings({ group }) {
-  const queryClient = useQueryClient();
-  const updateGroupMutation = useMutation({
-    mutationFn: (data) => base44.entities.CreatorGroup.update(group.id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['myGroupsDetails']);
-      queryClient.invalidateQueries(['activeGroup', group.id]);
-    }
-  });
 
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">Menu & Display</CardTitle>
-        <CardDescription>Customize how this group appears in the app navigation.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
-            <Label>Pin to Main Menu</Label>
-            <p className="text-sm text-gray-500">Show this group in the main sidebar above the categorized sections.</p>
-          </div>
-          <Switch
-            checked={group.menu_pinned || false}
-            onCheckedChange={(checked) => updateGroupMutation.mutate({ menu_pinned: checked })}
-          />
-        </div>
-
-        {group.menu_pinned && (
-          <div className="space-y-2">
-            <Label>Menu Color</Label>
-            <div className="flex gap-2 items-center">
-              <Input
-                type="color"
-                value={group.menu_color || '#8B5CF6'}
-                onChange={(e) => updateGroupMutation.mutate({ menu_color: e.target.value })}
-                className="w-12 h-10 p-1 cursor-pointer"
-              />
-              <Input
-                type="text"
-                value={group.menu_color || '#8B5CF6'}
-                onChange={(e) => updateGroupMutation.mutate({ menu_color: e.target.value })}
-                className="w-32"
-                placeholder="#8B5CF6"
-              />
-            </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
 
 function GroupExperienceSettings({ group }) {
   const queryClient = useQueryClient();

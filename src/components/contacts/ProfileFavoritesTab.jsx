@@ -79,7 +79,7 @@ export default function ProfileFavoritesTab({
           <div className="flex items-center gap-2">
             <Globe className={`w-4 h-4 ${viewMode === 'theirs' ? 'text-purple-600' : 'text-gray-400'}`} />
             <span className="text-sm font-medium text-purple-900">
-              {viewMode === 'theirs' ? `Viewing ${publicProfile?.nickname || 'Creator'}'s Profile` : 'Editing My Notes'}
+              {viewMode === 'theirs' ? `Viewing ${linkedData?.nickname || 'Creator'}'s Profile` : 'Editing My Notes'}
             </span>
           </div>
           <div className="flex items-center gap-2">
