@@ -140,16 +140,6 @@ function ProjectDetail({ projectId, group, currentUser, myMembership, onOpenRepo
     queryFn: async () => (await base44.entities.GroupProject.filter({ id: projectId }))[0]
   });
 
-  // Add this block for defensive programming
-  if (!project) {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center p-6 text-center text-gray-500">
-        <AlertCircle className="w-10 h-10 mb-3" />
-        <p>Project details not found or failed to load.</p>
-      </div>
-    );
-  }
-
   const { data: tasks = [] } = useQuery({
     queryKey: ['projectTasks', projectId],
     queryFn: () => base44.entities.GroupTask.filter({ project_id: projectId }, 'sort_order'),
@@ -168,6 +158,16 @@ function ProjectDetail({ projectId, group, currentUser, myMembership, onOpenRepo
   const isHourlyEnabled = group.enable_retainer_management;
   const canViewHours = isHourlyEnabled && (isOwnerOrAdmin(myMembership?.role) || ['manager', 'virtual-assistant'].includes(myMembership?.role));
   const canLogTime = isHourlyEnabled && ['owner', 'admin', 'manager', 'virtual-assistant'].includes(myMembership?.role);
+
+  // Add this block for defensive programming after all hooks
+  if (!project) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-6 text-center text-gray-500">
+        <AlertCircle className="w-10 h-10 mb-3" />
+        <p>Project details not found or failed to load.</p>
+      </div>
+    );
+  }
 
   return (
     <>

@@ -4,27 +4,6 @@ import { base44 } from '@/api/base44Client';
 import { X } from 'lucide-react';
 
 export default function AnnouncementBar() {
-  // Check if global announcements are enabled in PlatformConfig
-  const { data: config } = useQuery({
-    queryKey: ['platformConfigAnnouncements'],
-    queryFn: async () => {
-      try {
-        const res = await base44.entities.PlatformConfig.filter({ platform_id: 'global_announcements' });
-        return res[0] || null;
-      } catch (e) {
-        return null;
-      }
-    },
-    staleTime: Infinity,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-    retry: 2,
-    enabled: false // Disabled until properly implemented
-  });
-
-  // If disabled by admin, return null immediately
-  if (config && config.is_enabled === false) return null;
-
   // Persist dismissed announcements to localStorage
   const [dismissed, setDismissed] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -44,6 +23,24 @@ export default function AnnouncementBar() {
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => setUser(null));
   }, []);
+
+  // Check if global announcements are enabled in PlatformConfig
+  const { data: config } = useQuery({
+    queryKey: ['platformConfigAnnouncements'],
+    queryFn: async () => {
+      try {
+        const res = await base44.entities.PlatformConfig.filter({ platform_id: 'global_announcements' });
+        return res[0] || null;
+      } catch (e) {
+        return null;
+      }
+    },
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 2,
+    enabled: false // Disabled until properly implemented
+  });
 
   // Fetch user's active groups to filter group-specific announcements
   const { data: myGroupIds = [] } = useQuery({

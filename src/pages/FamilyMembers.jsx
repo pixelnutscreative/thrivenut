@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, Plus, Calendar, Trash2, Edit, Save, Gift, Shirt, Palette, Heart, Check, ExternalLink, Camera, Sparkles, MessageCircle, Music, Utensils, Coffee, TriangleAlert, User, Eye, Globe } from 'lucide-react';
+import { Users, Plus, Calendar, Trash2, Edit, Save, Gift, Shirt, Palette, Heart, Check, ExternalLink, Camera, Sparkles, MessageCircle, Music, Utensils, Coffee, TriangleAlert, User, Eye, Globe, BookOpen } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../components/shared/useTheme';
 import ImageUploader from '../components/settings/ImageUploader';

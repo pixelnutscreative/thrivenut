@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Plus, Edit, Trash2, Tag, Calendar, DollarSign, Package } from 'lucide-react';
+import { Loader2, Plus, Edit, Trash2, Tag, Calendar, DollarSign, Package, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 
 const INTERVALS = [

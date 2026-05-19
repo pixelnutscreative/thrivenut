@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ShoppingCart, Download, Heart, Sparkles } from 'lucide-react';
+import { ShoppingCart, Download, Heart, Sparkles, Loader2 } from 'lucide-react';
 
 export default function MarketplaceStoreTab({ userEmail, primaryColor, accentColor }) {
   const queryClient = useQueryClient();

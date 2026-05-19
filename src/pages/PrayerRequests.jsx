@@ -894,7 +894,9 @@ export default function PrayerRequests() {
             </DialogTitle>
           </DialogHeader>
           
-          {showPrayerHistory && (
+          {showPrayerHistory && (() => {
+            const currentPrayerHistory = getPrayerHistoryForRequest(showPrayerHistory.id);
+            return (
             <div className="space-y-4">
               <div className="p-3 bg-gray-50 rounded-lg">
                 <p className="font-medium">{showPrayerHistory.title}</p>
@@ -902,10 +904,10 @@ export default function PrayerRequests() {
               
               <div className="space-y-2">
                 <p className="text-sm font-medium text-gray-700">
-                  You've {showPrayerHistory.request_type === 'light_and_love' ? 'sent love' : 'prayed'} {prayerHistory.length} time{prayerHistory.length !== 1 ? 's' : ''}:
+                  You've {showPrayerHistory.request_type === 'light_and_love' ? 'sent love' : 'prayed'} {currentPrayerHistory.length} time{currentPrayerHistory.length !== 1 ? 's' : ''}:
                 </p>
                 <div className="max-h-60 overflow-y-auto space-y-1">
-                  {prayerHistory.map((prayer, idx) => (
+                  {currentPrayerHistory.map((prayer, idx) => (
                     <div key={prayer.id} className="p-2 bg-purple-50 rounded text-sm flex items-center justify-between">
                       <span className="text-purple-700">#{idx + 1}</span>
                       <span className="text-gray-600 text-xs">
@@ -924,7 +926,8 @@ export default function PrayerRequests() {
                 Close
               </Button>
             </div>
-          )}
+            );
+          })()}
         </DialogContent>
       </Dialog>
     </div>

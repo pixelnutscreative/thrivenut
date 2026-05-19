@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Pencil, Trash2, Coins, Loader2, Save } from 'lucide-react';
+import { Plus, Pencil, Trash2, Coins, Loader2, Save, DollarSign } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function AdminCustomCoins() {

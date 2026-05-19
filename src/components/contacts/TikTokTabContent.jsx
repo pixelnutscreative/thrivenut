@@ -11,7 +11,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { 
   Plus, Gift, Users, Heart, Video, Moon, ShoppingBag, 
   MessageCircle, BookOpen, DollarSign, Calendar, Sparkles, 
-  Pencil, Flame, Zap, Award, X, ChevronDown, ChevronRight, Sticker, Trash2, Building2, Lightbulb
+  Pencil, Flame, Zap, Award, X, ChevronDown, ChevronRight, Sticker, Trash2, Building2, Lightbulb, Loader2
 } from 'lucide-react';
 import QuickAddContactSelect from './QuickAddContactSelect';
 import { base44 } from '@/api/base44Client';

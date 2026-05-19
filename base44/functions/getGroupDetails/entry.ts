@@ -3,7 +3,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
-        const { groupId } = await req.json();
+        const { groupId, includeMembers } = await req.json();
 
         if (!groupId) {
             return Response.json({ error: 'Group ID is required' }, { status: 400 });
@@ -17,8 +17,6 @@ Deno.serve(async (req) => {
         if (!group) {
             return Response.json({ group: null });
         }
-
-        const { includeMembers } = await req.json();
         let members = [];
         
         if (includeMembers) {

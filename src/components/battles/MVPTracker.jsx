@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Trash2, Upload, Loader2 } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
 
 export default function MVPTracker({ ourMVPs = [], opponentMVPs = [], onUpdate, isLoading = false }) {
   const [mode, setMode] = useState('manual'); // 'manual' or 'upload'

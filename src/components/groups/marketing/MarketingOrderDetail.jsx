@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Send, FileText, Image as ImageIcon, DollarSign, Edit, Trash2, Archive, Check, Upload, Reply, Save, X, ExternalLink } from 'lucide-react';
+import { Loader2, Send, FileText, Image as ImageIcon, DollarSign, Edit, Trash2, Archive, Check, Upload, Reply, Save, X, ExternalLink, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 

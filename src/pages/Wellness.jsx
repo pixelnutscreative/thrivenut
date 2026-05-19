@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -295,7 +295,7 @@ export default function Wellness() {
     return format(new Date(isoString), 'h:mm a');
   };
 
-  const { bgClass, textClass, cardBgClass, subtextClass } = useTheme();
+  const { bgClass, textClass, cardBgClass, subtextClass, isDark } = useTheme();
 
   return (
     <div className={`min-h-screen ${bgClass} p-4 md:p-8`}>
