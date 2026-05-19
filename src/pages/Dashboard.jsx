@@ -29,6 +29,7 @@ import GreetingCard from '../components/dashboard/GreetingCard';
 import SpecialDatesWidget from '../components/dashboard/SpecialDatesWidget';
 import TikTokBattlesWidget from '../components/dashboard/TikTokBattlesWidget';
 import LiveScheduleWidget from '../components/dashboard/LiveScheduleWidget';
+import PixelBoardWidget from '../components/dashboard/PixelBoardWidget';
 import { format, startOfWeek, addDays } from 'date-fns';
 import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
 import { useTheme } from '../components/shared/useTheme';
@@ -255,6 +256,7 @@ export default function Dashboard() {
   // --- DRAG AND DROP / LAYOUT LOGIC ---
   const defaultLayout = [
     { id: 'urgent_events', visible: true, order: -1, width: 'full' },
+    { id: 'pixel_board', visible: true, order: -0.5, width: 'full' },
     { id: 'daily_motivation', visible: true, order: 0, width: 'full' },
     { id: 'my_day', visible: true, order: 1, width: 'full' },
     { id: 'tasks', visible: true, order: 2, width: 'half' },
@@ -284,6 +286,7 @@ export default function Dashboard() {
     if (widget.id === 'special_dates' && !enabledModules.includes('people')) return false;
     if ((widget.id === 'tiktok_battles' || widget.id === 'live_schedule') && !enabledModules.includes('tiktok')) return false;
     if (widget.id === 'crypto_ticker') return false; 
+    if (widget.id === 'pixel_board' && !isAdmin) return false;
     
     return true;
   };
@@ -441,6 +444,8 @@ export default function Dashboard() {
             }}
           />
         );
+      case 'pixel_board':
+        return <PixelBoardWidget />;
       case 'daily_motivation':
         return (
           <DailyMotivationBanner
