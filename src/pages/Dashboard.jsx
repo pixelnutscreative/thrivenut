@@ -102,10 +102,7 @@ export default function Dashboard() {
 
   // Check onboarding status but DO NOT auto-show the modal
   const hasCompletedOnboarding = useMemo(() => {
-    if (!user || preferences === undefined) return true; // Don't prompt if loading
-    return !!(preferences?.onboarding_completed || 
-             localStorage.getItem(`onboarding_completed_${user.email}`) === 'true' ||
-             isAdmin);
+    return true; // Force disable onboarding entirely
   }, [user, preferences, isAdmin]);
 
   // Handle referral code initialization silently in background if needed

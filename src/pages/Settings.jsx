@@ -228,11 +228,8 @@ export default function Settings() {
       
       console.log('📤 SAVING PREFERENCES:', { effectiveEmail, cleanData });
       
-      // Always use filter-based update (correct SDK signature)
-      const existing = await base44.entities.UserPreferences.filter({ user_email: effectiveEmail }, '-updated_date');
-      
-      if (existing.length > 0) {
-        const result = await base44.entities.UserPreferences.update(existing[0].id, cleanData);
+      if (preferences?.id) {
+        const result = await base44.entities.UserPreferences.update(preferences.id, cleanData);
         console.log('✅ PREFERENCES UPDATED:', result);
         return result;
       } else {
@@ -261,6 +258,12 @@ export default function Settings() {
 
   const updateUserProfileMutation = useMutation({
     mutationFn: async (data) => {
+      const cleanData = { ...data };
+      delete cleanData.id;
+      delete cleanData.created_date;
+      delete cleanData.updated_date;
+      delete cleanData.created_by;
+
       // Double check for existing record to prevent duplicates
       const existing = await base44.entities.UserProfile.filter({ user_email: effectiveEmail });
       let targetId = null;
@@ -273,11 +276,11 @@ export default function Settings() {
 
       const idToUpdate = userProfile?.id || targetId;
       if (idToUpdate) {
-        return await base44.entities.UserProfile.update(idToUpdate, data);
+        return await base44.entities.UserProfile.update(idToUpdate, cleanData);
       } else {
         return await base44.entities.UserProfile.create({
           user_email: effectiveEmail,
-          ...data
+          ...cleanData
         });
       }
     },
