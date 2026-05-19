@@ -52,11 +52,11 @@
     "status": {
       "type": "string",
       "enum": [
-        "Open",
+        "Unanswered",
         "Answered",
         "Reviewed"
       ],
-      "default": "Open"
+      "default": "Unanswered"
     },
     "priority": {
       "type": "string",
@@ -73,6 +73,10 @@
       "default": false
     },
     "pixel_read": {
+      "type": "boolean",
+      "default": false
+    },
+    "batch_ready": {
       "type": "boolean",
       "default": false
     }

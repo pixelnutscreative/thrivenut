@@ -10,9 +10,10 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Plus, MessageSquare, Inbox, CheckCircle2, Send, X, ArrowLeft } from 'lucide-react';
+import { Plus, MessageSquare, Inbox, CheckCircle2, Send, X, ArrowLeft, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
+import { useToast } from '@/components/ui/use-toast';
 
 const priorityEmojis = {
   Low: '🟢',
@@ -22,13 +23,14 @@ const priorityEmojis = {
 };
 
 const statusColors = {
-  Open: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+  Unanswered: 'bg-yellow-100 text-yellow-800 border-yellow-200',
   Answered: 'bg-blue-100 text-blue-800 border-blue-200',
   Reviewed: 'bg-green-100 text-green-800 border-green-200'
 };
 
 export default function PixelBoard() {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [isAskModalOpen, setIsAskModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('from_pixel');
   
@@ -50,7 +52,7 @@ export default function PixelBoard() {
 
   // Mutations
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.PixelBoard.create({ ...data, asked_by: 'Nikole', status: 'Open' }),
+    mutationFn: (data) => base44.entities.PixelBoard.create({ ...data, asked_by: 'Nikole', status: 'Unanswered', batch_ready: false }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pixelBoard'] });
       setIsAskModalOpen(false);
@@ -68,8 +70,22 @@ export default function PixelBoard() {
   const fromPixel = items.filter(i => i.asked_by === 'Pixel Poster');
   const myQuestions = items.filter(i => i.asked_by === 'Nikole');
   
+  const waitingToSend = myQuestions.filter(i => i.status === 'Unanswered' && !i.batch_ready);
+  
   const unreadFromPixel = fromPixel.filter(i => !i.nikole_read).length;
-  const unreadMyQuestions = myQuestions.filter(i => !i.nikole_read && i.status !== 'Open').length;
+  const unreadMyQuestions = myQuestions.filter(i => !i.nikole_read && i.status !== 'Unanswered').length;
+
+  const handleSendBatch = () => {
+    if (waitingToSend.length === 0) return;
+    const mostRecent = waitingToSend[0];
+    updateMutation.mutate({ id: mostRecent.id, data: { batch_ready: true } });
+    
+    toast({
+      title: "Sent! Pixel Poster is on it 🩵",
+      description: `${waitingToSend.length} questions sent successfully.`,
+      duration: 3000,
+    });
+  };
 
   const handleAskSubmit = () => {
     if (!newQuestion.title) return;
@@ -98,7 +114,8 @@ export default function PixelBoard() {
   // Render Card Component
   const BoardCard = ({ item, isFromPixel }) => {
     const [responseText, setResponseText] = useState(item.nikole_response || '');
-    const isUnread = !item.nikole_read && (isFromPixel || item.status !== 'Open');
+    const isUnread = !item.nikole_read && (isFromPixel || item.status !== 'Unanswered');
+    const showPixelBadge = item.pixel_read === true && item.nikole_read === false;
 
     return (
       <Card 
@@ -108,9 +125,15 @@ export default function PixelBoard() {
         onMouseEnter={() => { if (isUnread) markAsRead(item.id); }}
       >
         <div className="p-1.5 bg-gray-50 flex items-center justify-between border-b border-gray-100">
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
             <span title={`Priority: ${item.priority}`}>{priorityEmojis[item.priority]}</span>
             <Badge variant="outline" className="text-xs text-gray-500 bg-white">{item.question_type}</Badge>
+            {showPixelBadge && (
+              <Badge className="bg-red-50 text-red-600 border-red-200 text-[10px] px-1.5 flex items-center gap-1 shadow-sm">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+                📬 From Pixel Poster
+              </Badge>
+            )}
           </div>
           <Badge className={`text-[10px] uppercase font-bold border ${statusColors[item.status]}`}>
             {item.status}
@@ -126,7 +149,7 @@ export default function PixelBoard() {
           {isFromPixel ? (
             <div className="mt-4 pt-4 border-t border-gray-100">
               <Label className="text-xs text-[#6B3FA0] font-bold uppercase mb-2 block">Your Response</Label>
-              {item.status === 'Open' ? (
+              {item.status === 'Unanswered' ? (
                 <div className="space-y-3">
                   <Textarea 
                     placeholder="Type your answer for Pixel Poster..." 
@@ -365,6 +388,21 @@ export default function PixelBoard() {
             </TabsContent>
 
             <TabsContent value="my_questions">
+              {waitingToSend.length > 0 && (
+                <div className="mb-8 flex flex-col items-center justify-center p-6 bg-white/10 border border-white/20 rounded-2xl">
+                  <p className="text-white/80 font-medium mb-3 text-sm">
+                    {waitingToSend.length} {waitingToSend.length === 1 ? 'question' : 'questions'} waiting to send
+                  </p>
+                  <Button 
+                    onClick={handleSendBatch}
+                    className="bg-[#24C4D6] hover:bg-[#1EABC0] text-white font-bold px-8 py-6 rounded-full shadow-[0_0_20px_rgba(36,196,214,0.4)] hover:shadow-[0_0_30px_rgba(36,196,214,0.6)] hover:scale-105 transition-all text-lg"
+                  >
+                    <CheckCircle2 className="w-6 h-6 mr-2" /> 
+                    I'm Done — Send to Pixel Poster
+                  </Button>
+                </div>
+              )}
+
               {isLoading ? (
                 <div className="text-center p-12 text-white/50">Loading board...</div>
               ) : myQuestions.length === 0 ? (
