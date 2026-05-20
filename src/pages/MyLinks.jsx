@@ -22,7 +22,7 @@ export default function MyLinks() {
   const [filterType, setFilterType] = useState('All');
   const [filterCategory, setFilterCategory] = useState('All');
   const [filterSubcategory, setFilterSubcategory] = useState('All');
-  const [filterTag, setFilterTag] = useState('');
+  const [filterTag, setFilterTag] = useState('All');
   const [filterHotButton, setFilterHotButton] = useState(false);
   const [groupBy, setGroupBy] = useState('category');
   
@@ -255,7 +255,7 @@ export default function MyLinks() {
       if (filterType !== 'All' && r.resource_type !== filterType) return false;
       if (filterCategory !== 'All' && r.category !== filterCategory) return false;
       if (filterSubcategory !== 'All' && r.subcategory !== filterSubcategory) return false;
-      if (filterTag && !(r.tags || []).includes(filterTag)) return false;
+      if (filterTag !== 'All' && !(r.tags || []).includes(filterTag)) return false;
       if (filterHotButton && !r.is_hot_button) return false;
       return true;
     });
@@ -307,7 +307,7 @@ export default function MyLinks() {
     if (filterName === 'type') setFilterType('All');
     if (filterName === 'category') setFilterCategory('All');
     if (filterName === 'subcategory') setFilterSubcategory('All');
-    if (filterName === 'tag') setFilterTag('');
+    if (filterName === 'tag') setFilterTag('All');
     if (filterName === 'hotButton') setFilterHotButton(false);
   };
 
@@ -480,7 +480,7 @@ export default function MyLinks() {
                   <SelectValue placeholder="Tag" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={null}>All Tags</SelectItem>
+                  <SelectItem value="All">All Tags</SelectItem>
                   {tags.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                 </SelectContent>
               </Select>
@@ -522,12 +522,12 @@ export default function MyLinks() {
         </div>
 
         {/* Active Filters */}
-        {(filterType !== 'All' || filterCategory !== 'All' || filterSubcategory !== 'All' || filterTag || filterHotButton) && (
+        {(filterType !== 'All' || filterCategory !== 'All' || filterSubcategory !== 'All' || filterTag !== 'All' || filterHotButton) && (
           <div className="flex flex-wrap gap-2 pt-2">
             {filterType !== 'All' && <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-600">Type: {filterType} <button onClick={() => removeFilter('type')}><X className="w-3 h-3 hover:text-slate-900" /></button></span>}
             {filterCategory !== 'All' && <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-indigo-50 text-indigo-700">Category: {filterCategory} <button onClick={() => removeFilter('category')}><X className="w-3 h-3 hover:text-indigo-900" /></button></span>}
             {filterSubcategory !== 'All' && <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-purple-50 text-purple-700">Sub: {filterSubcategory} <button onClick={() => removeFilter('subcategory')}><X className="w-3 h-3 hover:text-purple-900" /></button></span>}
-            {filterTag && <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-600">Tag: {filterTag} <button onClick={() => removeFilter('tag')}><X className="w-3 h-3 hover:text-slate-900" /></button></span>}
+            {filterTag !== 'All' && <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-600">Tag: {filterTag} <button onClick={() => removeFilter('tag')}><X className="w-3 h-3 hover:text-slate-900" /></button></span>}
             {filterHotButton && <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-orange-100 text-orange-700">Hot Buttons <button onClick={() => removeFilter('hotButton')}><X className="w-3 h-3 hover:text-orange-900" /></button></span>}
           </div>
         )}
