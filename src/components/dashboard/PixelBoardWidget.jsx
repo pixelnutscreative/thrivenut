@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogT
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
-import { MessageSquare, ChevronDown, ChevronRight, CheckCircle2, Plus, Paperclip, Loader2, Pin, X, ChevronUp, RefreshCw, Bell } from 'lucide-react';
+import { MessageSquare, ChevronDown, ChevronRight, CheckCircle2, Plus, Paperclip, Loader2, Pin, X, ChevronUp, RefreshCw, Bell, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import moment from 'moment';
 
@@ -35,6 +35,20 @@ const typeColors = {
 };
 
 const defaultTypeColor = 'bg-gray-100 text-gray-700 border-gray-200';
+
+const cardColorStyles = {
+  'Turquoise': 'bg-[#24C4D6]/20 border-[#24C4D6]/50',
+  'Lime Green': 'bg-[#a3e635]/20 border-[#a3e635]/50',
+  'Lavender': 'bg-[#a78bfa]/20 border-[#a78bfa]/50',
+  'Red (Urgent)': 'bg-[#ef4444]/20 border-[#ef4444]/50',
+  'Yellow (Important)': 'bg-[#facc15]/20 border-[#facc15]/50',
+  'Orange (Action Needed)': 'bg-[#f97316]/20 border-[#f97316]/50',
+  'Default': 'bg-white/5 border-white/10',
+};
+
+const categories = [
+  "Thrive", "Personal", "Projects", "Pixel Tours", "Websites", "Offers", "AI Tools", "Other"
+];
 
 function getStatusInfo(item) {
   if (item.status === 'Done') return { label: 'DONE', icon: '✅', color: 'text-green-400 bg-green-400/10 border-green-400/20' };
@@ -155,8 +169,23 @@ const CardExpandable = ({ item, updateMutation }) => {
                 </a>
               )}
             </div>
+
+            <div className="flex items-center gap-2 mt-2 w-full sm:w-auto">
+              <Select value={item.card_color || 'Default'} onValueChange={v => updateMutation.mutate({ id: item.id, data: { card_color: v } })}>
+                <SelectTrigger className="h-8 text-xs bg-black/20 border-white/10 text-white w-[110px]"><SelectValue placeholder="Color" /></SelectTrigger>
+                <SelectContent>
+                  {Object.keys(cardColorStyles).map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={item.category || 'Other'} onValueChange={v => updateMutation.mutate({ id: item.id, data: { category: v } })}>
+                <SelectTrigger className="h-8 text-xs bg-black/20 border-white/10 text-white w-[110px]"><SelectValue placeholder="Category" /></SelectTrigger>
+                <SelectContent>
+                  {categories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
             
-            <div className="flex gap-2 shrink-0 flex-wrap">
+            <div className="flex gap-2 shrink-0 flex-wrap w-full sm:w-auto justify-end">
               <Button size="sm" variant="secondary" className="bg-white/10 text-white hover:bg-white/20 h-8" onClick={handleHold}>
                 HOLD
               </Button>
@@ -191,9 +220,12 @@ const BoardCard = ({ item, updateMutation }) => {
     }
   };
 
+  const colorClass = cardColorStyles[item.card_color || 'Default'] || cardColorStyles['Default'];
+  const readClass = !item.nikole_read ? 'border-l-4 border-l-[#24C4D6] shadow-[0_0_15px_rgba(36,196,214,0.15)]' : '';
+
   return (
     <div 
-      className={`bg-white/5 border ${!item.nikole_read ? 'border-l-4 border-l-[#24C4D6] border-y-white/10 border-r-white/10 shadow-[0_0_15px_rgba(36,196,214,0.15)]' : 'border-white/10'} p-4 rounded-xl relative overflow-hidden transition-all`}
+      className={`border ${colorClass} ${readClass} p-4 rounded-xl relative overflow-hidden transition-all flex flex-col h-full`}
       onMouseEnter={handleMarkRead}
       onClick={handleMarkRead}
     >
@@ -249,9 +281,11 @@ const BoardCard = ({ item, updateMutation }) => {
         </div>
       )}
 
-      {item.status !== 'Done' && (
-        <CardExpandable item={item} updateMutation={updateMutation} />
-      )}
+      <div className="mt-auto">
+        {item.status !== 'Done' && (
+          <CardExpandable item={item} updateMutation={updateMutation} />
+        )}
+      </div>
     </div>
   );
 };
@@ -263,13 +297,18 @@ export default function PixelBoardWidget() {
   const [isAskModalOpen, setIsAskModalOpen] = useState(false);
   const [isHistoryExpanded, setIsHistoryExpanded] = useState(false);
   
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeCategory, setActiveCategory] = useState('All');
+
   const [newQuestion, setNewQuestion] = useState({
     title: '',
     details: '',
     question_type: 'Question',
     answer_type: 'Text',
     choices: [''],
-    priority: 'Normal'
+    priority: 'Normal',
+    category: 'Other',
+    card_color: 'Default'
   });
 
   const { data: items = [], isLoading, isFetching } = useQuery({
@@ -287,7 +326,7 @@ export default function PixelBoardWidget() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pixelBoard'] });
       setIsAskModalOpen(false);
-      setNewQuestion({ title: '', details: '', question_type: 'Question', answer_type: 'Text', choices: [''], priority: 'Normal' });
+      setNewQuestion({ title: '', details: '', question_type: 'Question', answer_type: 'Text', choices: [''], priority: 'Normal', category: 'Other', card_color: 'Default' });
       toast({ title: "Draft saved. Ready to batch send." });
     }
   });
@@ -363,6 +402,19 @@ export default function PixelBoardWidget() {
     return new Date(b.created_date) - new Date(a.created_date);
   });
 
+  const filteredActiveItems = sortedActiveItems.filter(item => {
+    if (activeCategory !== 'All' && item.category !== activeCategory) return false;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      const matchTitle = item.title?.toLowerCase().includes(q);
+      const matchDetails = item.details?.toLowerCase().includes(q);
+      const matchResponse = item.nikole_response?.toLowerCase().includes(q) || item.pixel_response?.toLowerCase().includes(q);
+      const matchChoices = item.choices?.some(c => c.toLowerCase().includes(q));
+      if (!matchTitle && !matchDetails && !matchResponse && !matchChoices) return false;
+    }
+    return true;
+  });
+
   return (
     <Card className="bg-gradient-to-br from-[#2D1B69] to-[#6B3FA0] border-0 shadow-lg overflow-hidden flex flex-col max-h-[800px]">
       <Collapsible open={isOpen} onOpenChange={setIsOpen} className="w-full flex-shrink-0">
@@ -412,15 +464,39 @@ export default function PixelBoardWidget() {
             exit={{ height: 0, opacity: 0 }}
             className="flex flex-col flex-1 overflow-hidden"
           >
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-4 pt-0 border-t border-white/10 space-y-3">
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-4 pt-0 border-t border-white/10">
+              
+              <div className="flex flex-wrap gap-3 items-center py-4">
+                <div className="relative w-full sm:w-64">
+                  <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-white/40 w-4 h-4" />
+                  <Input 
+                    placeholder="Search titles, details, answers..." 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-8 bg-black/20 border-white/10 text-white h-9 rounded-full focus-visible:ring-[#24C4D6]"
+                  />
+                </div>
+                <Select value={activeCategory} onValueChange={setActiveCategory}>
+                  <SelectTrigger className="w-full sm:w-40 h-9 bg-black/20 border-white/10 text-white rounded-full">
+                    <SelectValue placeholder="Category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All Categories</SelectItem>
+                    {categories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+
               {isLoading ? (
                 <div className="py-8 text-center text-white/50"><Loader2 className="w-6 h-6 animate-spin mx-auto" /></div>
-              ) : sortedActiveItems.length === 0 ? (
+              ) : filteredActiveItems.length === 0 ? (
                 <div className="text-center p-6 text-white/50 text-sm">
-                  The board is completely clear!
+                  {sortedActiveItems.length === 0 ? "The board is completely clear!" : "No items match your search."}
                 </div>
               ) : (
-                sortedActiveItems.map(item => <BoardCard key={item.id} item={item} updateMutation={updateMutation} />)
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredActiveItems.map(item => <BoardCard key={item.id} item={item} updateMutation={updateMutation} />)}
+                </div>
               )}
 
               {/* Closed Items */}
@@ -485,6 +561,26 @@ export default function PixelBoardWidget() {
                             <SelectItem value="When You Get To It">⚪ When You Get To It</SelectItem>
                             <SelectItem value="Normal">🔵 Normal</SelectItem>
                             <SelectItem value="Urgent">🔥 Urgent</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Category</Label>
+                        <Select value={newQuestion.category} onValueChange={v => setNewQuestion({...newQuestion, category: v})}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {categories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Card Color</Label>
+                        <Select value={newQuestion.card_color} onValueChange={v => setNewQuestion({...newQuestion, card_color: v})}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {Object.keys(cardColorStyles).map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                           </SelectContent>
                         </Select>
                       </div>
