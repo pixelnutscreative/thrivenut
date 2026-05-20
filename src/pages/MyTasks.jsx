@@ -10,16 +10,22 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Textarea } from '@/components/ui/textarea';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Upload, X, Check, Table, LayoutTemplate, Send, Settings, Trash2, Edit2, Loader2, GripVertical, Sparkles } from 'lucide-react';
+import { Plus, Upload, X, Check, Table, LayoutTemplate, Send, Settings, Trash2, Edit2, Loader2, GripVertical, Sparkles, Search } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function MyTasks() {
   const queryClient = useQueryClient();
   const [view, setView] = useState('kanban');
   
-  // Filtering
+  // Filtering & Search
+  const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
+  const [subcategoryFilter, setSubcategoryFilter] = useState('All');
   const [priorityFilter, setPriorityFilter] = useState('All');
+  const [statusFilter, setStatusFilter] = useState('All');
+
+  // Bulk Edit
+  const [selectedTasks, setSelectedTasks] = useState([]);
 
   // Sheet / Edit
   const [editingTask, setEditingTask] = useState(null);
@@ -143,13 +149,51 @@ export default function MyTasks() {
     }
   });
 
+  const bulkUpdateMutation = useMutation({
+    mutationFn: async ({ ids, updates }) => {
+      for (const id of ids) {
+        await base44.entities.CreatorTask.update(id, updates);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['creator_tasks'] });
+      setSelectedTasks([]);
+      toast.success("Tasks updated");
+    }
+  });
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids) => {
+      for (const id of ids) {
+        await base44.entities.CreatorTask.delete(id);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['creator_tasks'] });
+      setSelectedTasks([]);
+      toast.success("Tasks deleted");
+    }
+  });
+
+  // Derived Category Lists
+  const parentCategories = useMemo(() => categories.filter(c => !c.parent_category_id), [categories]);
+  const subCategories = useMemo(() => categories.filter(c => c.parent_category_id), [categories]);
+
   const filteredTasks = useMemo(() => {
     return tasks.filter(t => {
+      if (searchQuery) {
+         const q = searchQuery.toLowerCase();
+         const matchTitle = t.title?.toLowerCase().includes(q);
+         const matchDetails = t.details?.toLowerCase().includes(q);
+         if (!matchTitle && !matchDetails) return false;
+      }
       if (categoryFilter !== 'All' && t.category_id !== categoryFilter) return false;
+      if (subcategoryFilter !== 'All' && t.subcategory_id !== subcategoryFilter) return false;
       if (priorityFilter !== 'All' && t.priority_id !== priorityFilter) return false;
+      if (statusFilter !== 'All' && t.status_id !== statusFilter) return false;
       return true;
     });
-  }, [tasks, categoryFilter, priorityFilter]);
+  }, [tasks, searchQuery, categoryFilter, subcategoryFilter, priorityFilter, statusFilter]);
 
   const columns = useMemo(() => {
     const cols = {};
@@ -208,6 +252,7 @@ export default function MyTasks() {
         status_id: editingTask.status_id,
         priority_id: editingTask.priority_id,
         category_id: editingTask.category_id,
+        subcategory_id: editingTask.subcategory_id,
         custom_fields: editingTask.custom_fields
       }
     });
@@ -345,7 +390,6 @@ export default function MyTasks() {
     const validTasks = newTasks.filter(t => t.title !== 'Untitled Task' || Object.keys(t.custom_fields).length > 0 || t.details);
     
     await bulkCreateMutation.mutateAsync(validTasks);
-    // Reload metadata just in case we added categories
     queryClient.invalidateQueries({ queryKey: ['task_categories'] });
     queryClient.invalidateQueries({ queryKey: ['task_statuses'] });
     queryClient.invalidateQueries({ queryKey: ['task_priorities'] });
@@ -356,6 +400,19 @@ export default function MyTasks() {
   const getPriority = (id) => priorities.find(p => p.id === id);
   const getCategory = (id) => categories.find(c => c.id === id);
 
+  const availableSubsForEditing = useMemo(() => {
+    if (!editingTask?.category_id) return [];
+    return subCategories.filter(s => s.parent_category_id === editingTask.category_id);
+  }, [editingTask?.category_id, subCategories]);
+
+  // Remove chips 
+  const removeFilter = (filterType) => {
+    if (filterType === 'category') { setCategoryFilter('All'); setSubcategoryFilter('All'); }
+    if (filterType === 'subcategory') setSubcategoryFilter('All');
+    if (filterType === 'priority') setPriorityFilter('All');
+    if (filterType === 'status') setStatusFilter('All');
+  };
+
   if (loadingTasks || loadingStatuses || loadingPriorities || loadingCategories) {
     return <div className="min-h-screen flex items-center justify-center bg-slate-50"><Loader2 className="w-8 h-8 text-[#24C4D6] animate-spin" /></div>;
   }
@@ -364,11 +421,20 @@ export default function MyTasks() {
     <div className="min-h-screen bg-slate-50 p-6 font-sans">
       <div className="max-w-[1400px] mx-auto space-y-6">
         
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+        {/* Header & Search */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
           <div>
             <h1 className="text-3xl font-bold text-slate-800 tracking-tight">My Tasks</h1>
             <p className="text-slate-500 mt-1">Manage and organize your content creator tasks.</p>
+          </div>
+          <div className="flex-1 max-w-md w-full relative">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+            <Input 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search tasks..." 
+              className="pl-9 bg-slate-50 border-slate-200"
+            />
           </div>
           <div className="flex items-center gap-3">
             <Button 
@@ -389,52 +455,134 @@ export default function MyTasks() {
           </div>
         </div>
 
-        {/* Filter Bar */}
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-          <div className="flex items-center gap-4 w-full sm:w-auto">
+        {/* Filter Bar & View Toggle */}
+        <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+          <div className="flex items-center gap-4 w-full xl:w-auto">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-slate-500">View:</span>
-              <div className="flex bg-slate-100 p-1 rounded-lg">
+              <div className="flex bg-slate-100 p-1 rounded-lg shrink-0">
                 <button 
                   onClick={() => setView('kanban')} 
                   className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${view === 'kanban' ? 'bg-white shadow text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
                 >
-                  <LayoutTemplate className="w-4 h-4 inline-block mr-1.5" />
-                  Kanban
+                  <LayoutTemplate className="w-4 h-4 inline-block md:mr-1.5" />
+                  <span className="hidden md:inline">Kanban</span>
                 </button>
                 <button 
                   onClick={() => setView('list')} 
                   className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${view === 'list' ? 'bg-white shadow text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
                 >
-                  <Table className="w-4 h-4 inline-block mr-1.5" />
-                  List
+                  <Table className="w-4 h-4 inline-block md:mr-1.5" />
+                  <span className="hidden md:inline">List</span>
                 </button>
               </div>
             </div>
-          </div>
-          
-          <div className="flex items-center gap-3 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-[140px] bg-slate-50 border-none">
-                <SelectValue placeholder="Category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="All">All Categories</SelectItem>
-                {categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
 
-            <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-              <SelectTrigger className="w-[140px] bg-slate-50 border-none">
-                <SelectValue placeholder="Priority" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="All">All Priorities</SelectItem>
-                {priorities.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <div className="h-6 w-px bg-slate-200 hidden xl:block" />
+            
+            <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto">
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger className="w-[140px] bg-slate-50 border-none h-9">
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="All">All Categories</SelectItem>
+                  {parentCategories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+
+              {categoryFilter !== 'All' && subCategories.filter(s => s.parent_category_id === categoryFilter).length > 0 && (
+                <Select value={subcategoryFilter} onValueChange={setSubcategoryFilter}>
+                  <SelectTrigger className="w-[140px] bg-slate-50 border-none h-9">
+                    <SelectValue placeholder="Subcategory" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All Subcategories</SelectItem>
+                    {subCategories.filter(s => s.parent_category_id === categoryFilter).map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              )}
+
+              <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                <SelectTrigger className="w-[140px] bg-slate-50 border-none h-9">
+                  <SelectValue placeholder="Priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="All">All Priorities</SelectItem>
+                  {priorities.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+
+              {view === 'list' && (
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-[140px] bg-slate-50 border-none h-9">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All Statuses</SelectItem>
+                    {statuses.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+          </div>
+
+          {/* Active Filter Chips */}
+          <div className="flex flex-wrap gap-2 w-full xl:w-auto xl:justify-end">
+             {categoryFilter !== 'All' && (
+               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-indigo-50 text-indigo-700">
+                 Category: {getCategory(categoryFilter)?.name}
+                 <button onClick={() => removeFilter('category')}><X className="w-3 h-3 hover:text-indigo-900" /></button>
+               </span>
+             )}
+             {subcategoryFilter !== 'All' && (
+               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-indigo-50 text-indigo-700">
+                 Sub: {getCategory(subcategoryFilter)?.name}
+                 <button onClick={() => removeFilter('subcategory')}><X className="w-3 h-3 hover:text-indigo-900" /></button>
+               </span>
+             )}
+             {priorityFilter !== 'All' && (
+               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-rose-50 text-rose-700">
+                 Priority: {getPriority(priorityFilter)?.name}
+                 <button onClick={() => removeFilter('priority')}><X className="w-3 h-3 hover:text-rose-900" /></button>
+               </span>
+             )}
+             {statusFilter !== 'All' && view === 'list' && (
+               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-emerald-50 text-emerald-700">
+                 Status: {getStatus(statusFilter)?.name}
+                 <button onClick={() => removeFilter('status')}><X className="w-3 h-3 hover:text-emerald-900" /></button>
+               </span>
+             )}
           </div>
         </div>
+
+        {/* Bulk Action Toolbar (List View Only) */}
+        {view === 'list' && selectedTasks.length > 0 && (
+          <div className="flex items-center gap-4 p-3 bg-[#24C4D6]/10 border border-[#24C4D6]/20 rounded-xl shadow-sm animate-in fade-in slide-in-from-top-2">
+            <span className="text-sm font-semibold text-[#1e9ba8]">{selectedTasks.length} selected</span>
+            <div className="h-4 w-px bg-[#24C4D6]/30" />
+            
+            <Select onValueChange={(val) => bulkUpdateMutation.mutate({ ids: selectedTasks, updates: { status_id: val } })}>
+              <SelectTrigger className="h-8 w-[130px] bg-white text-xs border-[#24C4D6]/30 text-slate-700"><SelectValue placeholder="Set Status" /></SelectTrigger>
+              <SelectContent>{statuses.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
+            </Select>
+
+            <Select onValueChange={(val) => bulkUpdateMutation.mutate({ ids: selectedTasks, updates: { priority_id: val } })}>
+              <SelectTrigger className="h-8 w-[130px] bg-white text-xs border-[#24C4D6]/30 text-slate-700"><SelectValue placeholder="Set Priority" /></SelectTrigger>
+              <SelectContent>{priorities.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
+            </Select>
+
+            <Select onValueChange={(val) => bulkUpdateMutation.mutate({ ids: selectedTasks, updates: { category_id: val, subcategory_id: null } })}>
+              <SelectTrigger className="h-8 w-[140px] bg-white text-xs border-[#24C4D6]/30 text-slate-700"><SelectValue placeholder="Set Category" /></SelectTrigger>
+              <SelectContent>{parentCategories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+            </Select>
+
+            <Button size="sm" variant="destructive" className="h-8 ml-auto" onClick={() => {
+              if (confirm(`Delete ${selectedTasks.length} tasks?`)) bulkDeleteMutation.mutate(selectedTasks);
+            }}>
+              <Trash2 className="w-4 h-4 mr-1.5" /> Delete
+            </Button>
+          </div>
+        )}
 
         {/* KANBAN VIEW */}
         {view === 'kanban' && (
@@ -461,7 +609,9 @@ export default function MyTasks() {
                       >
                         {(columns[status.id] || []).map((task, idx) => {
                           const cat = getCategory(task.category_id);
+                          const sub = getCategory(task.subcategory_id);
                           const prio = getPriority(task.priority_id);
+                          const cardColor = sub?.color || cat?.color || 'transparent';
                           
                           return (
                             <Draggable key={task.id} draggableId={task.id} index={idx}>
@@ -473,19 +623,26 @@ export default function MyTasks() {
                                   className="mb-3"
                                 >
                                   <Card 
-                                    className="bg-white border border-slate-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer group"
+                                    className="bg-white border-y border-r border-l-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer group relative overflow-hidden"
                                     onClick={() => openTask(task)}
                                   >
-                                    <CardContent className="p-4 flex flex-col gap-3">
+                                    <div className="absolute left-0 top-0 bottom-0 w-1.5" style={{ backgroundColor: cardColor !== 'transparent' ? cardColor : '#e2e8f0' }} />
+                                    <CardContent className="p-4 pl-5 flex flex-col gap-3">
                                       <div className="flex justify-between items-start gap-2">
                                         <h4 className="font-medium text-slate-800 text-sm leading-snug">{task.title}</h4>
                                       </div>
                                       
                                       <div className="flex flex-wrap gap-2 mt-auto">
                                         {cat && (
-                                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider"
+                                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md tracking-wider"
                                                 style={{ backgroundColor: `${cat.color}20`, color: cat.color }}>
                                             {cat.name}
+                                          </span>
+                                        )}
+                                        {sub && (
+                                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md tracking-wider"
+                                                style={{ backgroundColor: `${sub.color}20`, color: sub.color }}>
+                                            {sub.name}
                                           </span>
                                         )}
                                         {prio && (
@@ -560,34 +717,66 @@ export default function MyTasks() {
               <table className="w-full text-sm text-left">
                 <thead className="bg-slate-50 text-slate-600 font-medium border-b border-slate-100">
                   <tr>
-                    <th className="px-6 py-4">Title</th>
-                    <th className="px-6 py-4">Category</th>
-                    <th className="px-6 py-4">Priority</th>
-                    <th className="px-6 py-4">Status</th>
-                    <th className="px-6 py-4">Details</th>
-                    <th className="px-6 py-4"></th>
+                    <th className="px-4 py-4 w-12 text-center">
+                      <input 
+                        type="checkbox" 
+                        className="rounded border-slate-300 text-[#24C4D6] focus:ring-[#24C4D6]"
+                        checked={selectedTasks.length === filteredTasks.length && filteredTasks.length > 0}
+                        onChange={e => {
+                          if (e.target.checked) setSelectedTasks(filteredTasks.map(t => t.id));
+                          else setSelectedTasks([]);
+                        }}
+                      />
+                    </th>
+                    <th className="px-4 py-4">Title</th>
+                    <th className="px-4 py-4">Category</th>
+                    <th className="px-4 py-4">Subcategory</th>
+                    <th className="px-4 py-4">Priority</th>
+                    <th className="px-4 py-4">Status</th>
+                    <th className="px-4 py-4">Details</th>
+                    <th className="px-4 py-4"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {filteredTasks.map(task => {
                     const cat = getCategory(task.category_id);
+                    const sub = getCategory(task.subcategory_id);
                     const prio = getPriority(task.priority_id);
                     return (
-                      <tr key={task.id} className="hover:bg-slate-50 transition-colors group">
-                        <td className="px-6 py-4 font-medium text-slate-800">
+                      <tr key={task.id} className={`hover:bg-slate-50 transition-colors group ${selectedTasks.includes(task.id) ? 'bg-slate-50' : ''}`}>
+                        <td className="px-4 py-4 text-center">
+                          <input 
+                            type="checkbox"
+                            className="rounded border-slate-300 text-[#24C4D6] focus:ring-[#24C4D6]"
+                            checked={selectedTasks.includes(task.id)}
+                            onChange={e => {
+                              if (e.target.checked) setSelectedTasks([...selectedTasks, task.id]);
+                              else setSelectedTasks(selectedTasks.filter(id => id !== task.id));
+                            }}
+                          />
+                        </td>
+                        <td className="px-4 py-4 font-medium text-slate-800">
                           <button onClick={() => openTask(task)} className="hover:text-[#24C4D6] hover:underline text-left">
                             {task.title}
                           </button>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-4 py-4">
                           {cat && (
-                            <span className="text-[10px] font-bold px-2 py-1 rounded-md uppercase"
+                            <span className="text-[10px] font-bold px-2 py-1 rounded-md"
                                   style={{ backgroundColor: `${cat.color}20`, color: cat.color }}>
                               {cat.name}
                             </span>
                           )}
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-4 py-4">
+                          {sub && (
+                            <span className="text-[10px] font-bold px-2 py-1 rounded-md"
+                                  style={{ backgroundColor: `${sub.color}20`, color: sub.color }}>
+                              {sub.name}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-4">
                           {prio && (
                             <span className="text-[10px] font-bold px-2 py-1 rounded-md uppercase"
                                   style={{ backgroundColor: `${prio.color}20`, color: prio.color }}>
@@ -595,7 +784,7 @@ export default function MyTasks() {
                             </span>
                           )}
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-4 py-4">
                           <Select 
                             value={task.status_id} 
                             onValueChange={(val) => updateMutation.mutate({ id: task.id, data: { status_id: val }})}
@@ -608,10 +797,10 @@ export default function MyTasks() {
                             </SelectContent>
                           </Select>
                         </td>
-                        <td className="px-6 py-4 text-slate-500 max-w-[200px] truncate">
+                        <td className="px-4 py-4 text-slate-500 max-w-[200px] truncate">
                           {task.details || '-'}
                         </td>
-                        <td className="px-6 py-4 text-right">
+                        <td className="px-4 py-4 text-right">
                           {!task.send_to_pixelboard && (
                             <Button size="sm" variant="ghost" className="text-[#24C4D6] h-8 opacity-0 group-hover:opacity-100" onClick={() => sendToPixelBoard(task)}>
                               <Send className="w-4 h-4" />
@@ -623,8 +812,8 @@ export default function MyTasks() {
                   })}
                   {filteredTasks.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
-                        No tasks found. Create one to get started!
+                      <td colSpan={8} className="px-6 py-12 text-center text-slate-500">
+                        No tasks found. Try adjusting filters or create a new task!
                       </td>
                     </tr>
                   )}
@@ -683,15 +872,30 @@ export default function MyTasks() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-slate-600">Category</label>
-                <Select value={editingTask.category_id || ''} onValueChange={v => setEditingTask({...editingTask, category_id: v})}>
-                  <SelectTrigger className="bg-white"><SelectValue placeholder="Select Category" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">No Category</SelectItem>
-                    {categories.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-slate-600">Category</label>
+                  <Select value={editingTask.category_id || ''} onValueChange={v => setEditingTask({...editingTask, category_id: v === 'none' ? null : v, subcategory_id: null})}>
+                    <SelectTrigger className="bg-white"><SelectValue placeholder="No Category" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No Category</SelectItem>
+                      {parentCategories.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {availableSubsForEditing.length > 0 && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-slate-600">Subcategory</label>
+                    <Select value={editingTask.subcategory_id || ''} onValueChange={v => setEditingTask({...editingTask, subcategory_id: v === 'none' ? null : v})}>
+                      <SelectTrigger className="bg-white"><SelectValue placeholder="No Subcategory" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">No Subcategory</SelectItem>
+                        {availableSubsForEditing.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -761,44 +965,86 @@ export default function MyTasks() {
           </DialogHeader>
           <Tabs defaultValue="categories" className="mt-4">
             <TabsList className="grid grid-cols-3 w-full max-w-md">
-              <TabsTrigger value="categories">Categories</TabsTrigger>
+              <TabsTrigger value="categories">Categories & Subs</TabsTrigger>
               <TabsTrigger value="statuses">Statuses</TabsTrigger>
               <TabsTrigger value="priorities">Priorities</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="categories" className="space-y-4 pt-4">
-              <div className="grid gap-3">
-                {categories.map(cat => (
-                  <div key={cat.id} className="flex items-center gap-3 bg-slate-50 p-3 rounded-lg border border-slate-100">
-                    <input 
-                      type="color" 
-                      defaultValue={cat.color || '#24C4D6'} 
-                      onBlur={e => base44.entities.TaskCategory.update(cat.id, { color: e.target.value }).then(() => queryClient.invalidateQueries(['task_categories']))}
-                      className="w-8 h-8 rounded cursor-pointer border-0 p-0"
-                    />
-                    <Input 
-                      defaultValue={cat.name}
-                      onBlur={e => {
-                        if (e.target.value !== cat.name) {
-                          base44.entities.TaskCategory.update(cat.id, { name: e.target.value }).then(() => queryClient.invalidateQueries(['task_categories']))
+            <TabsContent value="categories" className="space-y-6 pt-4">
+              <div className="grid gap-6">
+                {parentCategories.map(cat => (
+                  <div key={cat.id} className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <div className="flex items-center gap-3">
+                      <input 
+                        type="color" 
+                        defaultValue={cat.color || '#24C4D6'} 
+                        onBlur={e => base44.entities.TaskCategory.update(cat.id, { color: e.target.value }).then(() => queryClient.invalidateQueries(['task_categories']))}
+                        className="w-8 h-8 rounded cursor-pointer border-0 p-0 shrink-0"
+                      />
+                      <Input 
+                        defaultValue={cat.name}
+                        onBlur={e => {
+                          if (e.target.value !== cat.name) {
+                            base44.entities.TaskCategory.update(cat.id, { name: e.target.value }).then(() => queryClient.invalidateQueries(['task_categories']))
+                          }
+                        }}
+                        className="bg-white flex-1 font-semibold text-slate-800"
+                      />
+                      <Button variant="ghost" size="icon" className="text-red-500" onClick={() => {
+                        if (confirm("Delete category and its subcategories?")) {
+                          base44.entities.TaskCategory.delete(cat.id).then(() => queryClient.invalidateQueries(['task_categories']));
                         }
-                      }}
-                      className="bg-white flex-1"
-                    />
-                    <Button variant="ghost" size="icon" className="text-red-500" onClick={() => {
-                      if (confirm("Delete category?")) {
-                        base44.entities.TaskCategory.delete(cat.id).then(() => queryClient.invalidateQueries(['task_categories']));
-                      }
-                    }}>
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                      }}>
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+
+                    {/* Subcategories inside this parent */}
+                    <div className="pl-11 pt-3 space-y-2">
+                      {subCategories.filter(s => s.parent_category_id === cat.id).map(sub => (
+                        <div key={sub.id} className="flex items-center gap-3">
+                          <div className="w-4 h-px bg-slate-300" />
+                          <input 
+                            type="color" 
+                            defaultValue={sub.color || cat.color || '#cbd5e1'} 
+                            onBlur={e => base44.entities.TaskCategory.update(sub.id, { color: e.target.value }).then(() => queryClient.invalidateQueries(['task_categories']))}
+                            className="w-6 h-6 rounded cursor-pointer border-0 p-0 shrink-0"
+                          />
+                          <Input 
+                            defaultValue={sub.name}
+                            onBlur={e => {
+                              if (e.target.value !== sub.name) {
+                                base44.entities.TaskCategory.update(sub.id, { name: e.target.value }).then(() => queryClient.invalidateQueries(['task_categories']))
+                              }
+                            }}
+                            className="bg-white h-8 text-sm flex-1"
+                          />
+                          <Button variant="ghost" size="sm" className="text-slate-400 hover:text-red-500 h-8 px-2" onClick={() => {
+                            if (confirm("Delete subcategory?")) {
+                              base44.entities.TaskCategory.delete(sub.id).then(() => queryClient.invalidateQueries(['task_categories']));
+                            }
+                          }}>
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      ))}
+                      <div className="flex items-center gap-3 pl-7">
+                        <Button variant="ghost" size="sm" className="text-[#24C4D6] hover:bg-[#24C4D6]/10 h-8" onClick={() => {
+                          base44.entities.TaskCategory.create({ name: 'New Subcategory', parent_category_id: cat.id, color: cat.color })
+                            .then(() => queryClient.invalidateQueries(['task_categories']));
+                        }}>
+                          <Plus className="w-3 h-3 mr-1" /> Add Subcategory
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 ))}
-                <Button variant="outline" className="border-dashed" onClick={() => {
+                
+                <Button variant="outline" className="border-dashed h-12" onClick={() => {
                   base44.entities.TaskCategory.create({ name: 'New Category', color: '#cbd5e1' })
                     .then(() => queryClient.invalidateQueries(['task_categories']));
                 }}>
-                  <Plus className="w-4 h-4 mr-2" /> Add Category
+                  <Plus className="w-4 h-4 mr-2" /> Add Parent Category
                 </Button>
               </div>
             </TabsContent>

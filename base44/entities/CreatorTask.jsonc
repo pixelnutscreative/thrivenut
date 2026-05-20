@@ -17,6 +17,9 @@
     "category_id": {
       "type": "string"
     },
+    "subcategory_id": {
+      "type": "string"
+    },
     "source": {
       "type": "string",
       "default": "Manual"
