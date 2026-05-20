@@ -29,6 +29,9 @@
       "type": "string",
       "default": "Uncategorized"
     },
+    "subcategory": {
+      "type": "string"
+    },
     "tags": {
       "type": "array",
       "items": {
@@ -39,6 +42,21 @@
     "is_favorite": {
       "type": "boolean",
       "default": false
+    },
+    "is_hot_button": {
+      "type": "boolean",
+      "default": false
+    },
+    "hot_button_label": {
+      "type": "string"
+    },
+    "hot_button_icon": {
+      "type": "string",
+      "default": "\ud83d\udd25"
+    },
+    "hot_button_order": {
+      "type": "number",
+      "default": 0
     },
     "color": {
       "type": "string"
