@@ -8,11 +8,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Calendar, MapPin, Link as LinkIcon, Plus, Trash2, Pencil, Share2, CalendarPlus } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { format } from 'date-fns';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import LevelSelector from './LevelSelector';
 import MemberSelector from './MemberSelector';
+import TimezoneSelector from '../shared/TimezoneSelector';
 
 const toLocalISOString = (dateString) => {
   if (!dateString) return '';
@@ -38,7 +40,8 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
     link: '',
     location: '',
     target_levels: [],
-    target_users: []
+    target_users: [],
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
   });
 
   const { data: events = [] } = useQuery({
@@ -185,7 +188,8 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
       link: event.link || '',
       location: event.location || '',
       target_levels: event.target_levels || [],
-      target_users: event.target_users || []
+      target_users: event.target_users || [],
+      timezone: event.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
     });
     setIsDialogOpen(true);
   };
@@ -202,7 +206,8 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
       link: '',
       location: '',
       target_levels: [],
-      target_users: []
+      target_users: [],
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
     });
   };
 
@@ -276,10 +281,15 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
   };
 
   const visibleEvents = events.filter(event => {
+    const eventTime = new Date(event.start_time).getTime();
+    if (Date.now() - eventTime > 24 * 60 * 60 * 1000) return false;
+    
     if (isAdmin) return true;
     const levelMatch = !event.target_levels || event.target_levels.length === 0 || event.target_levels.includes(myMembership?.level);
     const userMatch = !event.target_users || event.target_users.length === 0 || event.target_users.includes(myMembership?.user_email);
     return levelMatch && userMatch;
+  }).sort((a, b) => {
+    return new Date(a.start_time) - new Date(b.start_time);
   });
 
   return (
@@ -341,6 +351,7 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
                         />
                         <Input
                           type="datetime-local"
+                          min={occ.start_time || undefined}
                           value={occ.end_time || ''}
                           onChange={e => {
                             const occurrences = [...(formData.occurrences || [])];
@@ -474,6 +485,15 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
                 <Input placeholder="Link (Zoom, etc)" value={formData.link} onChange={e => setFormData({...formData, link: e.target.value})} />
                 <Input placeholder="Location (Optional)" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} />
                 
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Event Timezone</label>
+                  <TimezoneSelector 
+                    value={formData.timezone} 
+                    onChange={tz => setFormData({...formData, timezone: tz})} 
+                  />
+                  <p className="text-xs text-gray-500">Events are saved relative to this timezone, and automatically localized for each viewer.</p>
+                </div>
+
                 <LevelSelector 
                   group={group} 
                   selectedLevels={formData.target_levels} 
@@ -577,14 +597,39 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
               </div>
 
               <div className="pt-3 border-t flex gap-2 justify-between mt-auto">
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  className={`text-xs h-8 flex-1 ${isPast ? 'text-gray-500 border-gray-300' : 'text-purple-600 border-purple-200 hover:bg-purple-50'}`}
-                  onClick={() => handleAddToMyDay(event)}
-                >
-                  <CalendarPlus className="w-3 h-3 mr-1" /> Add
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className={`text-xs h-8 flex-1 ${isPast ? 'text-gray-500 border-gray-300' : 'text-purple-600 border-purple-200 hover:bg-purple-50'}`}
+                    >
+                      <CalendarPlus className="w-3 h-3 mr-1" /> Add to Calendar
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem onClick={() => window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&dates=${event.start_time.replace(/[-:]/g,'').split('.')[0]}Z/${event.end_time ? event.end_time.replace(/[-:]/g,'').split('.')[0]+'Z' : event.start_time.replace(/[-:]/g,'').split('.')[0]+'Z'}&details=${encodeURIComponent(event.description || '')}`)}>
+                      Google Calendar
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => window.open(`https://outlook.live.com/calendar/0/deeplink/compose?subject=${encodeURIComponent(event.title)}&body=${encodeURIComponent(event.description || '')}&startdt=${event.start_time}&enddt=${event.end_time || event.start_time}`)}>
+                      Outlook
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => {
+                      const ics = `BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nSUMMARY:${event.title}\nDESCRIPTION:${event.description || ''}\nDTSTART:${event.start_time.replace(/[-:]/g,'').split('.')[0]}Z\nDTEND:${(event.end_time || event.start_time).replace(/[-:]/g,'').split('.')[0]}Z\nEND:VEVENT\nEND:VCALENDAR`;
+                      const blob = new Blob([ics], { type: 'text/calendar' });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = 'event.ics';
+                      a.click();
+                    }}>
+                      Apple Calendar
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleAddToMyDay(event)}>
+                      Thrive Nut My Day
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <Button 
                   size="sm" 
                   variant="ghost" 

@@ -28,6 +28,8 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
     title: '', description: '', type: 'link', url: '', target_levels: [] 
   });
 
+  const [expandedResource, setExpandedResource] = useState(null);
+
   const mapUserResourceCategory = (cat) => {
     if (!cat) return 'link';
     const lower = cat.toLowerCase();
@@ -199,11 +201,15 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
     }
   };
 
+  const allowedResourceLevels = group.settings?.allowed_resource_levels || ['Member'];
+  const canUpload = isAdmin || allowedResourceLevels.includes(myMembership?.level);
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold">Shared Resources</h3>
-        <Dialog open={isDialogOpen} onOpenChange={(open) => !open && handleCloseDialog()}>
+        {canUpload && (
+          <Dialog open={isDialogOpen} onOpenChange={(open) => !open && handleCloseDialog()}>
           <DialogTrigger asChild>
             <Button 
               onClick={() => setIsDialogOpen(true)} 
@@ -272,6 +278,7 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
             </div>
           </DialogContent>
         </Dialog>
+        )}
       </div>
 
       <Tabs defaultValue="library" className="w-full">
@@ -287,10 +294,10 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
             <Card key={resource.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-4 flex gap-4 items-start">
                 <div className="p-3 bg-gray-100 rounded-lg">{getIcon(resource.type)}</div>
-                <div className="flex-1">
-                  <div className="flex justify-between">
-                    <h4 className="font-semibold">{resource.title}</h4>
-                    <div className="flex gap-1">
+                <div className="flex-1 w-full" onClick={() => setExpandedResource(expandedResource === resource.id ? null : resource.id)}>
+                  <div className="flex justify-between items-start">
+                    <h4 className="font-semibold hover:text-purple-600 cursor-pointer pr-4">{resource.title}</h4>
+                    <div className="flex gap-1 flex-shrink-0" onClick={e => e.stopPropagation()}>
                       {resource.is_shared ? (
                         <Badge variant="outline" className="text-xs text-blue-600 border-blue-200 bg-blue-50 h-6">
                           Shared from My Stuff
@@ -314,22 +321,27 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
                       )}
                     </div>
                   </div>
-                  <div className="prose prose-sm text-gray-600 max-w-none" dangerouslySetInnerHTML={{ __html: resource.description }} />
-                  {resource.url && (
-                    <a 
-                      href={resource.url} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="inline-flex items-center gap-1 text-sm text-purple-600 mt-2 hover:underline"
-                    >
-                      Open Resource <ExternalLink className="w-3 h-3" />
-                    </a>
-                  )}
-                  
-                  {resource.transcript && (
-                      <div className="mt-2">
-                          <ContentQAModal transcript={resource.transcript} contentTitle={resource.title} />
-                      </div>
+                  <div className={`prose prose-sm text-gray-600 max-w-none ${expandedResource === resource.id ? '' : 'line-clamp-2'}`} dangerouslySetInnerHTML={{ __html: resource.description }} />
+                  {expandedResource === resource.id && (
+                    <>
+                      {resource.url && (
+                        <a 
+                          href={resource.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="inline-flex items-center gap-1 text-sm text-purple-600 mt-2 hover:underline"
+                          onClick={e => e.stopPropagation()}
+                        >
+                          Open Resource <ExternalLink className="w-3 h-3" />
+                        </a>
+                      )}
+                      
+                      {resource.transcript && (
+                          <div className="mt-2" onClick={e => e.stopPropagation()}>
+                              <ContentQAModal transcript={resource.transcript} contentTitle={resource.title} />
+                          </div>
+                      )}
+                    </>
                   )}
 
                   <div className="text-xs text-gray-400 mt-2 space-y-1">

@@ -151,13 +151,7 @@ export default function GroupRequestsTab({ group, currentUser, myMembership, isA
   });
 
   // Permission Check
-  const canCreate = isAdmin || (
-      requestSettings.enabled && (
-          (!requestSettings.allowed_levels?.length && !requestSettings.allowed_users?.length) ||
-          requestSettings.allowed_levels?.includes(myMembership?.level) ||
-          requestSettings.allowed_users?.includes(currentUser?.email)
-      )
-  );
+  const canCreate = true; // All user levels should be able to submit support tickets
 
   // Filtering
   const visibleRequests = requests.filter(req => {
@@ -250,6 +244,7 @@ export default function GroupRequestsTab({ group, currentUser, myMembership, isA
                   <SelectItem value="feature">Feature Request</SelectItem>
                   <SelectItem value="access">Access Request</SelectItem>
                   <SelectItem value="other">Other</SelectItem>
+                  <SelectItem value="youtube">YouTube Request</SelectItem>
                 </SelectContent>
               </Select>
               <Textarea 

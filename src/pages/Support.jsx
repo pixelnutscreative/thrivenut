@@ -64,10 +64,18 @@ export default function Support() {
 
   const { isDark, bgClass } = useTheme();
 
+  const isAdmin = ['pixelnutscreative@gmail.com', 'pixel@thrivenut.app'].includes(user?.email?.toLowerCase());
+
   const { data: myTickets = [] } = useQuery({
     queryKey: ['myTickets', user?.email],
     queryFn: () => base44.entities.SupportTicket.filter({ user_email: user.email }, '-created_date'),
     enabled: !!user?.email,
+  });
+  
+  const { data: allTickets = [] } = useQuery({
+    queryKey: ['allTickets'],
+    queryFn: () => base44.entities.SupportTicket.list('-created_date'),
+    enabled: !!isAdmin,
   });
 
   const { data: betaTester } = useQuery({
@@ -302,9 +310,10 @@ export default function Support() {
         )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-3' : 'grid-cols-2'}`}>
             <TabsTrigger value="new" className="text-sm">Submit Ticket</TabsTrigger>
             <TabsTrigger value="history" className="text-sm">My Tickets ({myTickets.length})</TabsTrigger>
+            {isAdmin && <TabsTrigger value="admin" className="text-sm">Admin ({allTickets.length})</TabsTrigger>}
           </TabsList>
 
           <TabsContent value="new" className="mt-4">
@@ -434,6 +443,38 @@ export default function Support() {
             </Card>
           </TabsContent>
 
+          {isAdmin && (
+            <TabsContent value="admin" className="mt-4 space-y-4">
+              {allTickets.map(ticket => (
+                <Card 
+                  key={ticket.id} 
+                  className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+                  onClick={() => setSelectedTicket(ticket)}
+                >
+                  <div className={`h-1 ${
+                    ticket.status === 'resolved' ? 'bg-green-500' : 
+                    ticket.status === 'in_progress' ? 'bg-amber-500' : 'bg-blue-500'
+                  }`} />
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Badge className={statusColors[ticket.status] || statusColors.open}>
+                            {statusLabels[ticket.status] || 'Open'}
+                          </Badge>
+                          <span className="text-xs font-bold text-gray-600">{ticket.user_email}</span>
+                        </div>
+                        <h3 className="font-semibold text-gray-800">{ticket.subject}</h3>
+                      </div>
+                      <div className="text-right text-xs text-gray-500">
+                        {new Date(ticket.created_date).toLocaleDateString()}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </TabsContent>
+          )}
           <TabsContent value="history" className="mt-4 space-y-4">
             {myTickets.length === 0 ? (
               <Card>
@@ -594,6 +635,30 @@ export default function Support() {
                         </div>
                       </div>
                     ))}
+                  </div>
+                )}
+
+                {isAdmin && (
+                  <div className="p-3 bg-gray-100 rounded-lg border border-gray-200">
+                    <Label className="mb-2 block">Admin Controls (Status)</Label>
+                    <Select 
+                      value={selectedTicket.status} 
+                      onValueChange={(v) => {
+                        base44.entities.SupportTicket.update(selectedTicket.id, { status: v }).then(() => {
+                           queryClient.invalidateQueries({ queryKey: ['allTickets'] });
+                           setSelectedTicket({...selectedTicket, status: v});
+                        });
+                      }}
+                    >
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="open">Open</SelectItem>
+                        <SelectItem value="in_progress">In Progress</SelectItem>
+                        <SelectItem value="waiting_on_user">Waiting on User</SelectItem>
+                        <SelectItem value="resolved">Resolved</SelectItem>
+                        <SelectItem value="closed">Closed</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 )}
 

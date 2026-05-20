@@ -49,13 +49,15 @@ Deno.serve(async (req) => {
         // 3. Fetch Broad Context Data
         
         // Parallel fetching for speed
-        const [resources, meetings, projects, posts, events, orders] = await Promise.all([
+        const [resources, meetings, projects, posts, events, orders, qnas, trainings] = await Promise.all([
             base44.entities.GroupResource.filter({ group_id: groupId }),
             base44.entities.MeetingRecording.filter({ group_id: groupId }),
             base44.entities.GroupProject.filter({ group_id: groupId }),
             base44.entities.GroupPost.filter({ group_id: groupId }, '-created_date', 20), // Last 20 posts
             base44.entities.GroupEvent.filter({ group_id: groupId }),
-            base44.entities.MarketingOrder.filter({ group_id: groupId })
+            base44.entities.MarketingOrder.filter({ group_id: groupId }),
+            base44.entities.GroupQnA.filter({ group_id: groupId }),
+            base44.entities.GroupTraining.filter({ group_id: groupId })
         ]);
 
         // Tasks (nested in projects)
@@ -97,6 +99,16 @@ Deno.serve(async (req) => {
         if (events.length > 0) {
             context += "\n--- UPCOMING EVENTS ---\n";
             events.forEach(e => context += `- ${e.title} at ${e.start_time}\n`);
+        }
+
+        if (qnas.length > 0) {
+            context += "\n--- Q&A ---\n";
+            qnas.forEach(q => context += `- Q: ${q.question}\n  A: ${q.answer || 'Unanswered'}\n`);
+        }
+
+        if (trainings.length > 0) {
+            context += "\n--- TRAINING ---\n";
+            trainings.forEach(t => context += `- ${t.title}: ${t.description || ''}\n`);
         }
 
         if (orders.length > 0) {

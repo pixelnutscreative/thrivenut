@@ -20,6 +20,7 @@ import GroupAnnouncementsSettings from './GroupAnnouncementsSettings';
 import AgencyLiveCalendar from '@/pages/AgencyLiveCalendar';
 import GroupLogoUploader from './GroupLogoUploader';
 import ProspectManagementSettings from './ProspectManagementSettings';
+import LevelSelector from './LevelSelector';
 
 export default function GroupSettingsTab({ group }) {
   return (
@@ -69,6 +70,7 @@ export default function GroupSettingsTab({ group }) {
         {group.type !== 'client-portal' && (
           <TabsContent value="content" className="space-y-6 mt-6">
             <FunnelContentSettings group={group} />
+            <ResourceAccessSettings group={group} />
           </TabsContent>
         )}
 
@@ -443,6 +445,38 @@ function MemberLevelsSettings({ group }) {
           <Button onClick={handleSave} disabled={updateMutation.isPending}>
             {updateMutation.isPending ? 'Saving...' : 'Save Levels'}
           </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ResourceAccessSettings({ group }) {
+  const queryClient = useQueryClient();
+  const [allowedLevels, setAllowedLevels] = useState(group.settings?.allowed_resource_levels || []);
+
+  const updateMutation = useMutation({
+    mutationFn: async (data) => {
+      const current = await base44.entities.CreatorGroup.get(group.id);
+      return base44.entities.CreatorGroup.update(group.id, { settings: { ...current.settings, ...data } });
+    },
+    onSuccess: () => queryClient.invalidateQueries(['myGroupsDetails'])
+  });
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Resource Uploads</CardTitle>
+        <CardDescription>Control which levels can upload resources (Admins always can).</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <LevelSelector 
+          group={group} 
+          selectedLevels={allowedLevels} 
+          onChange={setAllowedLevels} 
+        />
+        <div className="flex justify-end pt-4">
+          <Button onClick={() => updateMutation.mutate({ allowed_resource_levels: allowedLevels })}>Save Settings</Button>
         </div>
       </CardContent>
     </Card>

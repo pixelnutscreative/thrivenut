@@ -150,7 +150,7 @@ function AddRetainerPackageDialog({ group, member, currentUser }) {
   );
 }
 
-function MemberRowItem({ member, group, isAdmin, currentUser, queryClient }) {
+function MemberRowItem({ member, group, isAdmin, currentUser, queryClient, allMembers }) {
   const { data: profile } = useQuery({
      queryKey: ['memberProfile', member.user_email],
      queryFn: async () => {
@@ -221,6 +221,7 @@ function MemberRowItem({ member, group, isAdmin, currentUser, queryClient }) {
                 isAdmin={isAdmin} 
                 currentUser={currentUser} 
                 onUpdate={() => queryClient.invalidateQueries(['groupMembers', group.id])}
+                allMembers={allMembers}
             />
          )}
       </div>
@@ -228,15 +229,18 @@ function MemberRowItem({ member, group, isAdmin, currentUser, queryClient }) {
   );
 }
 
-function EditMemberDialog({ member, group, isAdmin, currentUser, onUpdate }) {
+function EditMemberDialog({ member, group, isAdmin, currentUser, onUpdate, allMembers }) {
   const [role, setRole] = useState(member.role || 'member');
   const [level, setLevel] = useState(member.level || 'Member');
+  const [assignedManager, setAssignedManager] = useState(member.assigned_manager || 'none');
   const [isOpen, setIsOpen] = useState(false);
+  const managers = (allMembers || []).filter(m => m.role === 'manager');
 
   // Sync state when member changes or dialog opens
   React.useEffect(() => {
     setRole(member.role || 'member');
     setLevel(member.level || 'Member');
+    setAssignedManager(member.assigned_manager || 'none');
   }, [member, isOpen]);
 
   const updateRoleMutation = useMutation({
@@ -245,6 +249,7 @@ function EditMemberDialog({ member, group, isAdmin, currentUser, onUpdate }) {
         const promises = [];
         if (role !== member.role) promises.push(base44.entities.CreatorGroupMember.update(member.id, { role }));
         if (level !== member.level) promises.push(base44.entities.CreatorGroupMember.update(member.id, { level: level === 'none' ? null : level }));
+        if (assignedManager !== (member.assigned_manager || 'none')) promises.push(base44.entities.CreatorGroupMember.update(member.id, { assigned_manager: assignedManager === 'none' ? null : assignedManager }));
         await Promise.all(promises);
     },
     onSuccess: () => {
@@ -293,14 +298,13 @@ function EditMemberDialog({ member, group, isAdmin, currentUser, onUpdate }) {
             {canEdit ? (
                 <>
                     <div className="space-y-2">
-                        <Label>Role</Label>
-                        <Select value={role} onValueChange={setRole}>
+                        <Label>Permission / Role</Label>
+                        <Select value={role} onValueChange={v => { setRole(v); setLevel(v === 'admin' ? 'Admin' : v === 'manager' ? 'Manager' : 'Creator'); }}>
                             <SelectTrigger>
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent className="z-[60]">
-                                <SelectItem value="member">Member</SelectItem>
-                                <SelectItem value="client">Client</SelectItem>
+                                <SelectItem value="member">Creator / Member</SelectItem>
                                 <SelectItem value="manager">Manager</SelectItem>
                                 <SelectItem value="admin">Admin</SelectItem>
                                 <SelectItem value="virtual-assistant">Virtual Assistant</SelectItem>
@@ -308,15 +312,14 @@ function EditMemberDialog({ member, group, isAdmin, currentUser, onUpdate }) {
                         </Select>
                     </div>
                     <div className="space-y-2">
-                        <Label>Level</Label>
-                        <Select value={level} onValueChange={setLevel}>
+                        <Label>Assigned Manager</Label>
+                        <Select value={assignedManager} onValueChange={setAssignedManager}>
                             <SelectTrigger>
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent className="z-[60]">
-                                <SelectItem value="none">No Level</SelectItem>
-                                <SelectItem value="Member">Member (Default)</SelectItem>
-                                {group.member_levels?.map(l => <SelectItem key={l} value={l}>{l}</SelectItem>)}
+                                <SelectItem value="none">Unassigned</SelectItem>
+                                {managers.map(m => <SelectItem key={m.user_email} value={m.user_email}>{m.user_email}</SelectItem>)}
                             </SelectContent>
                         </Select>
                     </div>
@@ -404,7 +407,12 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
   const pendingMembers = dedupedMembers.filter(m => m.status === 'pending' || m.pending_approval);
   const activeMembers = dedupedMembers.filter(m => m.status !== 'pending' && !m.pending_approval);
 
-  // Member list visibility check removed to allow members to see each other
+  const isManager = myMembership?.role === 'manager';
+  const visibleMembers = activeMembers.filter(m => {
+    if (isAdmin) return true; // Admins/owners see everyone
+    if (isManager) return m.assigned_manager === currentUser?.email || m.user_email === currentUser?.email;
+    return false; // Creators don't see members list at all
+  });
 
 
   return (
@@ -495,10 +503,10 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
       )}
 
       <div className="space-y-2">
-        {activeMembers.length === 0 ? (
-          <div className="p-8 text-center text-gray-500 bg-white rounded-lg border">No active members found</div>
+        {visibleMembers.length === 0 ? (
+          <div className="p-8 text-center text-gray-500 bg-white rounded-lg border">No visible members found</div>
         ) : (
-          activeMembers.map(member => (
+          visibleMembers.map(member => (
             <MemberRowItem 
                 key={member.id} 
                 member={member} 
@@ -506,6 +514,7 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
                 isAdmin={isAdmin} 
                 currentUser={currentUser}
                 queryClient={queryClient}
+                allMembers={activeMembers}
             />
           ))
         )}

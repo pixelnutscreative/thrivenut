@@ -236,9 +236,11 @@ export default function CreatorGroups() {
       
       const existing = await base44.entities.CreatorGroupMember.filter({ group_id: group.id, user_email: user?.email });
       
-      // Determine initial status based on group settings
       const requireApproval = group.settings?.require_approval === true;
-      const initialStatus = requireApproval ? 'pending' : 'active';
+      // Auto-approve invite link users at Creator level
+      const initialStatus = 'active';
+      const initialLevel = 'Creator';
+      const initialRole = group.settings?.default_invite_role || 'member';
 
       if (existing.length > 0) {
         // If pending, check if we can auto-activate or if approval is strictly required
@@ -255,11 +257,21 @@ export default function CreatorGroups() {
       await base44.entities.CreatorGroupMember.create({
         group_id: group.id,
         user_email: user?.email,
-        role: 'member',
+        role: initialRole,
         status: initialStatus,
-        level: 'Member',
+        level: initialLevel,
         joined_date: new Date().toISOString()
       });
+      
+      // Restricted Feature Mode (Social House)
+      if (group.restrict_new_members) {
+        const prefs = await base44.entities.UserPreferences.filter({ user_email: user?.email });
+        if (prefs.length > 0) {
+           await base44.entities.UserPreferences.update(prefs[0].id, {
+               enabled_modules: ['my_groups'] // Disable all other modules
+           });
+        }
+      }
       return { group, existing: false, status: initialStatus };
     },
     onSuccess: ({ group, existing, wasPending, activated, status }) => {
@@ -280,15 +292,8 @@ export default function CreatorGroups() {
     if (inviteCode && user?.email && !sessionStorage.getItem(sessionKey)) {
       sessionStorage.setItem(sessionKey, 'true');
       
-      // Use setTimeout to allow render to complete before blocking with confirm
-      setTimeout(() => {
-        if (window.confirm('Do you want to join this group?')) {
-          joinMutation.mutate(inviteCode);
-        } else {
-          // Remove invite param if they cancel
-          setSearchParams({});
-        }
-      }, 100);
+      // Auto-add them to the group
+      joinMutation.mutate(inviteCode);
     }
   }, [inviteCode, user]);
 
@@ -786,12 +791,12 @@ export default function CreatorGroups() {
         return true;
     }
 
+    if (id === 'members' && !isAdmin && activeMembership?.role !== 'manager') return false;
+
     if (isClientGroup) {
         // Client groups might restrict members tab, but let's allow it if not explicitly disabled
         // if (id === 'members' && !isAdmin) return false;
     }
-    
-    // if (id === 'members' && !isAdmin) return false;
     
     // Admin Override
     if (isAdmin) {
@@ -1000,12 +1005,16 @@ export default function CreatorGroups() {
                 <Card key={group.id} className={`hover:shadow-lg transition-all cursor-pointer group ${isHidden ? 'opacity-60 bg-gray-50' : ''}`} onClick={() => setSearchParams({ id: group.id })}>
                   <CardContent className="p-6">
                     <div className="flex justify-between items-start mb-4">
-                      <div 
-                        className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-xl ${iconClass}`}
-                        style={iconStyle}
-                      >
-                        {group.logo_url ? <img src={group.logo_url} alt="Group Logo" className="w-full h-full object-cover rounded-xl" /> : group.name[0]}
+                      <div className="flex items-center gap-3">
+                        <div 
+                          className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg ${iconClass}`}
+                          style={iconStyle}
+                        >
+                          {group.logo_url ? <img src={group.logo_url} alt="Group Logo" className="w-full h-full object-cover rounded-xl" /> : group.name[0]}
+                        </div>
+                        <h3 className="text-xl font-bold group-hover:text-purple-600 transition-colors">{group.name}</h3>
                       </div>
+                      
                       <div className="flex flex-col items-end gap-1">
                         <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${colorClass.replace('text-', 'text-opacity-80 text-').replace('bg-', 'bg-opacity-50 bg-')}`}>
                           {getGroupLabel(group.type)}
@@ -1023,15 +1032,7 @@ export default function CreatorGroups() {
                         )}
                       </div>
                     </div>
-                    <h3 className="text-xl font-bold mb-2 group-hover:text-purple-600 transition-colors">{group.name}</h3>
-                    <p className="text-sm text-gray-500 line-clamp-2 mb-4">{group.description || 'No description yet.'}</p>
-                    <div className="text-xs text-gray-400 flex items-center gap-1">
-                      {isMember ? (
-                        <><GroupIcon className="w-3 h-3" /> Enter Dashboard</>
-                      ) : (
-                        <><Eye className="w-3 h-3" /> View Details</>
-                      )}
-                    </div>
+                    <p className="text-sm text-gray-500 line-clamp-2 mb-2">{group.description || 'No description yet.'}</p>
                   </CardContent>
                 </Card>
               );
@@ -1215,7 +1216,7 @@ export default function CreatorGroups() {
   return (
     <div className="min-h-screen bg-gray-50/50" style={themeStyles}>
       {/* Header */}
-      <div className="bg-white border-b sticky top-0 z-10 px-6 py-4 shadow-sm">
+      <div className="border-b sticky top-0 z-10 px-6 py-4 shadow-sm transition-colors" style={{ backgroundColor: activeGroup.settings?.menu_color || activeGroup.settings?.group_color || '#ffffff', color: (activeGroup.settings?.menu_color || activeGroup.settings?.group_color) ? '#ffffff' : '#111827' }}>
         <div className="max-w-6xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" onClick={() => setSearchParams(browseMode ? { mode: 'browse' } : {})}>
@@ -1244,7 +1245,7 @@ export default function CreatorGroups() {
              )}
             <Dialog>
               <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="hidden sm:flex">
+                <Button variant="outline" size="sm" className="hidden">
                   <Eye className="w-4 h-4 mr-2" /> Customize View
                 </Button>
               </DialogTrigger>
@@ -1576,6 +1577,8 @@ export default function CreatorGroups() {
             />
           )}
 
+          <h2 className="text-3xl font-bold mb-4">{displayNames[currentTab] || allTabs.find(t => t.id === currentTab)?.label || 'Dashboard'}</h2>
+          <h2 className="text-3xl font-bold mb-4">{displayNames[currentTab] || allTabs.find(t => t.id === currentTab)?.label || 'Dashboard'}</h2>
           <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-6">
             <TooltipProvider>
               <TabsList className="bg-white border p-1 rounded-xl h-auto flex-wrap gap-1 w-full justify-start">

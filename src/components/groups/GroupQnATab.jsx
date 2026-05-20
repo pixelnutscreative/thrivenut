@@ -119,6 +119,8 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
     if (isAdmin) return true;
     if (q.asked_by_email === currentUser?.email) return true;
     
+    if (q.status !== 'published') return false;
+
     const levelMatch = !q.target_levels || q.target_levels.length === 0 || q.target_levels.includes(myMembership?.level);
     const userMatch = !q.target_users || q.target_users.length === 0 || q.target_users.includes(myMembership?.user_email);
     
@@ -249,7 +251,7 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
         {isAdmin && (
           <TabsContent value="pending" className="space-y-4 mt-4">
             {adminPendingQnA.map(q => (
-              <AdminAnswerCard key={q.id} qna={q} onAnswer={(data) => answerMutation.mutate({...data, originalQna: q})} />
+              <AdminAnswerCard key={q.id} qna={q} group={group} onAnswer={(data) => answerMutation.mutate({...data, originalQna: q})} />
             ))}
             {adminPendingQnA.length === 0 && <div className="text-center py-8 text-gray-500">No pending questions.</div>}
           </TabsContent>
@@ -272,8 +274,9 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
   );
 }
 
-function AdminAnswerCard({ qna, onAnswer }) {
+function AdminAnswerCard({ qna, onAnswer, group }) {
   const [answer, setAnswer] = useState('');
+  const [targetLevels, setTargetLevels] = useState([]);
   
   return (
     <Card>
@@ -292,11 +295,19 @@ function AdminAnswerCard({ qna, onAnswer }) {
             placeholder="Write your answer..."
           />
         </div>
-        <div className="flex gap-2 justify-end">
+        <div className="space-y-2 border-t pt-2 mt-2">
+            <h4 className="text-sm font-semibold">Visibility (Who can see this answer?)</h4>
+            <LevelSelector group={group} selectedLevels={targetLevels} onChange={setTargetLevels} />
+        </div>
+        <div className="flex gap-2 justify-end mt-4">
           <Button variant="outline" size="sm" onClick={() => onAnswer({ id: qna.id, status: 'rejected' })} className="text-red-500">
             Reject
           </Button>
-          <Button size="sm" onClick={() => onAnswer({ id: qna.id, answer, status: 'published' })} disabled={!answer}>
+          <Button size="sm" onClick={() => {
+              onAnswer({ id: qna.id, answer, status: 'published', target_levels: targetLevels });
+              base44.entities.GroupQnA.update(qna.id, { target_levels: targetLevels });
+              setAnswer('');
+          }} disabled={!answer}>
             Publish Answer
           </Button>
         </div>
