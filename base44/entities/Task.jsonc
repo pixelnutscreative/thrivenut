@@ -1,0 +1,118 @@
+{
+  "name": "Task",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "details": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "due_time": {
+      "type": "string"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "high",
+        "medium",
+        "low",
+        "Urgent",
+        "Normal",
+        "When You Get To It"
+      ],
+      "default": "Normal"
+    },
+    "is_urgent": {
+      "type": "boolean",
+      "default": false
+    },
+    "category": {
+      "type": "string"
+    },
+    "assigned_to_family_id": {
+      "type": "string"
+    },
+    "assigned_to_name": {
+      "type": "string"
+    },
+    "requires_photo_proof": {
+      "type": "boolean",
+      "default": false
+    },
+    "completion_photo_url": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "completed",
+        "deferred",
+        "To Do",
+        "In Progress",
+        "Done",
+        "On Hold"
+      ],
+      "default": "To Do"
+    },
+    "completed_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "is_recurring": {
+      "type": "boolean",
+      "default": false
+    },
+    "recurrence_pattern": {
+      "type": "string",
+      "enum": [
+        "daily",
+        "weekly",
+        "monthly"
+      ]
+    },
+    "recurrence_days": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "carried_over_from": {
+      "type": "string",
+      "format": "date"
+    },
+    "carry_over_count": {
+      "type": "number",
+      "default": 0
+    },
+    "custom_fields": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "Manual",
+        "CSV Import",
+        "PixelBoard"
+      ],
+      "default": "Manual"
+    },
+    "send_to_pixelboard": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "title"
+  ]
+}

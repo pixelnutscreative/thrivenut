@@ -10,6 +10,7 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import PixelBoard from './pages/PixelBoard';
+import MyTasks from './pages/MyTasks';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -53,6 +54,11 @@ const AuthenticatedApp = () => {
       <Route path="/PixelBoard" element={
         <LayoutWrapper currentPageName="PixelBoard">
           <PixelBoard />
+        </LayoutWrapper>
+      } />
+      <Route path="/MyTasks" element={
+        <LayoutWrapper currentPageName="MyTasks">
+          <MyTasks />
         </LayoutWrapper>
       } />
       {Object.entries(Pages).map(([path, Page]) => (
