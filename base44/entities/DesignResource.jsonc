@@ -1,0 +1,115 @@
+{
+  "name": "DesignResource",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Resource name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Brief description of the resource"
+    },
+    "link": {
+      "type": "string",
+      "description": "Affiliate or resource URL"
+    },
+    "badge": {
+      "type": "string",
+      "description": "Optional badge text (e.g., \ud83d\udd25 Recommended, \ud83d\udc8e One-Time)"
+    },
+    "gpt_image_url": {
+      "type": "string",
+      "description": "Square image for Custom GPT carousel display"
+    },
+    "category": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Resource categories (multi-select)"
+    },
+    "keywords": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Search keywords for this resource"
+    },
+    "sort_order": {
+      "type": "number",
+      "default": 100,
+      "description": "Display order"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Show on public page"
+    },
+    "is_featured": {
+      "type": "boolean",
+      "default": false,
+      "description": "Show in featured section at top"
+    },
+    "is_recurring": {
+      "type": "boolean",
+      "default": false,
+      "description": "Recurring class/workshop"
+    },
+    "schedule": {
+      "type": "string",
+      "description": "Schedule info for recurring classes (e.g., 'Weekdays 3pm PST')"
+    },
+    "resource_type": {
+      "type": "string"
+    },
+    "subcategory": {
+      "type": "string"
+    },
+    "button_text": {
+      "type": "string"
+    },
+    "share_to_groups": {
+      "type": "string"
+    },
+    "date_added": {
+      "type": "string"
+    },
+    "zoom_source": {
+      "type": "string"
+    },
+    "image_icon": {
+      "type": "string"
+    },
+    "color": {
+      "type": "string"
+    },
+    "chad_url": {
+      "type": "string"
+    },
+    "notebooklm_url": {
+      "type": "string"
+    },
+    "report_for_lm": {
+      "type": "string"
+    },
+    "source": {
+      "type": "string"
+    },
+    "is_hot_button": {
+      "type": "boolean"
+    },
+    "hot_button_label": {
+      "type": "string"
+    },
+    "hot_button_icon": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "link"
+  ]
+}
