@@ -1,0 +1,36 @@
+{
+  "name": "CreatorTask",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "details": {
+      "type": "string"
+    },
+    "status_id": {
+      "type": "string"
+    },
+    "priority_id": {
+      "type": "string"
+    },
+    "category_id": {
+      "type": "string"
+    },
+    "source": {
+      "type": "string",
+      "default": "Manual"
+    },
+    "custom_fields": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "send_to_pixelboard": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "title"
+  ]
+}

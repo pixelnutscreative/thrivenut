@@ -1,0 +1,19 @@
+{
+  "name": "TaskPriority",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "level": {
+      "type": "number",
+      "default": 0
+    },
+    "color": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}
