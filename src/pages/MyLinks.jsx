@@ -59,7 +59,11 @@ export default function MyLinks() {
   const subcategories = useMemo(() => Array.from(new Set(resources.map(r => r.subcategory).filter(Boolean))), [resources]);
   const tags = useMemo(() => {
     const t = new Set();
-    resources.forEach(r => (r.tags || []).forEach(tag => t.add(tag)));
+    resources.forEach(r => (r.tags || []).forEach(tag => {
+      if (tag && typeof tag === 'string' && tag.trim() !== '') {
+        t.add(tag.trim());
+      }
+    }));
     return Array.from(t);
   }, [resources]);
 
