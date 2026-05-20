@@ -48,32 +48,28 @@
       "type": "string",
       "default": "Normal"
     },
+    "importance": {
+      "type": "boolean",
+      "default": false
+    },
     "category": {
       "type": "string",
       "enum": [
-        "Thrive",
+        "ThriveNut",
         "Personal",
         "Projects",
         "Pixel Tours",
         "Websites",
         "Offers",
         "AI Tools",
+        "Social Media",
         "Other"
       ],
       "default": "Other"
     },
     "card_color": {
       "type": "string",
-      "enum": [
-        "Default",
-        "Turquoise",
-        "Lime Green",
-        "Lavender",
-        "Red (Urgent)",
-        "Yellow (Important)",
-        "Orange (Action Needed)"
-      ],
-      "default": "Default"
+      "default": ""
     },
     "nikole_read": {
       "type": "boolean",

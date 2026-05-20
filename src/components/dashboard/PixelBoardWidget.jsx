@@ -36,19 +36,57 @@ const typeColors = {
 
 const defaultTypeColor = 'bg-gray-100 text-gray-700 border-gray-200';
 
-const cardColorStyles = {
-  'Turquoise': 'bg-[#24C4D6]/20 border-[#24C4D6]/50',
-  'Lime Green': 'bg-[#a3e635]/20 border-[#a3e635]/50',
-  'Lavender': 'bg-[#a78bfa]/20 border-[#a78bfa]/50',
-  'Red (Urgent)': 'bg-[#ef4444]/20 border-[#ef4444]/50',
-  'Yellow (Important)': 'bg-[#facc15]/20 border-[#facc15]/50',
-  'Orange (Action Needed)': 'bg-[#f97316]/20 border-[#f97316]/50',
-  'Default': 'bg-white/5 border-white/10',
+const colors = {
+  red: { bg: 'bg-[#EF4444]/5', border: 'border-l-[#EF4444]' },
+  turquoise: { bg: 'bg-[#24C4D6]/5', border: 'border-l-[#24C4D6]' },
+  lime: { bg: 'bg-[#A7E063]/5', border: 'border-l-[#A7E063]' },
+  lavender: { bg: 'bg-[#C8A4F2]/5', border: 'border-l-[#C8A4F2]' },
+  orange: { bg: 'bg-[#F97316]/5', border: 'border-l-[#F97316]' },
+  yellow: { bg: 'bg-[#EAB308]/5', border: 'border-l-[#EAB308]' },
+  grey: { bg: 'bg-[#A8A8A8]/5', border: 'border-l-[#A8A8A8]' }
+};
+
+const hexColors = {
+  red: '#EF4444', turquoise: '#24C4D6', lime: '#A7E063',
+  lavender: '#C8A4F2', orange: '#F97316', yellow: '#EAB308', grey: '#A8A8A8'
 };
 
 const categories = [
-  "Thrive", "Personal", "Projects", "Pixel Tours", "Websites", "Offers", "AI Tools", "Other"
+  "ThriveNut", "Personal", "Pixel Tours", "Websites", "Offers", "AI Tools", "Projects", "Social Media", "Other"
 ];
+
+function getCardColor(item) {
+  if (item.status === 'Done') return 'grey';
+  if (item.card_color) return item.card_color;
+  if (item.asked_by === 'Pixel Poster' && !item.nikole_read) return 'lime';
+  if (item.priority === 'Urgent' || item.priority === 'Critical') return 'red';
+  if (item.priority === 'When You Get To It' || item.priority === 'Low') return 'lavender';
+  return 'turquoise';
+}
+
+function getEisenhowerBadge(item) {
+  const isUrgent = item.priority === 'Urgent' || item.priority === 'Critical';
+  const isImportant = item.importance;
+  if (isUrgent && isImportant) return { label: 'DO NOW', color: 'bg-red-500 text-white border-red-600' };
+  if (isUrgent && !isImportant) return { label: 'DELEGATE', color: 'bg-orange-500 text-white border-orange-600' };
+  if (!isUrgent && isImportant) return { label: 'SCHEDULE', color: 'bg-[#24C4D6] text-white border-[#1EABC0]' };
+  return { label: 'DROP IT', color: 'bg-gray-500 text-white border-gray-600' };
+}
+
+const HighlightText = ({ text, highlight }) => {
+  if (!text) return null;
+  if (!highlight) return <>{text}</>;
+  const parts = text.toString().split(new RegExp(`(${highlight})`, 'gi'));
+  return (
+    <>
+      {parts.map((part, i) => 
+        part.toLowerCase() === highlight.toLowerCase() ? 
+          <span key={i} className="bg-yellow-400/40 text-yellow-100 px-0.5 rounded">{part}</span> : 
+          part
+      )}
+    </>
+  );
+};
 
 function getStatusInfo(item) {
   if (item.status === 'Done') return { label: 'DONE', icon: '✅', color: 'text-green-400 bg-green-400/10 border-green-400/20' };
@@ -171,10 +209,11 @@ const CardExpandable = ({ item, updateMutation }) => {
             </div>
 
             <div className="flex items-center gap-2 mt-2 w-full sm:w-auto">
-              <Select value={item.card_color || 'Default'} onValueChange={v => updateMutation.mutate({ id: item.id, data: { card_color: v } })}>
+              <Select value={item.card_color || ''} onValueChange={v => updateMutation.mutate({ id: item.id, data: { card_color: v === 'auto' ? '' : v } })}>
                 <SelectTrigger className="h-8 text-xs bg-black/20 border-white/10 text-white w-[110px]"><SelectValue placeholder="Color" /></SelectTrigger>
                 <SelectContent>
-                  {Object.keys(cardColorStyles).map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  <SelectItem value="auto">Auto</SelectItem>
+                  {Object.keys(hexColors).map(c => <SelectItem key={c} value={c} className="capitalize">{c}</SelectItem>)}
                 </SelectContent>
               </Select>
               <Select value={item.category || 'Other'} onValueChange={v => updateMutation.mutate({ id: item.id, data: { category: v } })}>
@@ -208,10 +247,9 @@ const CardExpandable = ({ item, updateMutation }) => {
   );
 };
 
-const BoardCard = ({ item, updateMutation }) => {
+const BoardCard = ({ item, updateMutation, searchQuery }) => {
   const [detailsExpanded, setDetailsExpanded] = useState(false);
   const statusInfo = getStatusInfo(item);
-  const pConf = priorityConfig[item.priority] || priorityConfig['Normal'];
   const tColor = typeColors[item.question_type] || defaultTypeColor;
   
   const handleMarkRead = () => {
@@ -220,68 +258,63 @@ const BoardCard = ({ item, updateMutation }) => {
     }
   };
 
-  const colorClass = cardColorStyles[item.card_color || 'Default'] || cardColorStyles['Default'];
-  const readClass = !item.nikole_read ? 'border-l-4 border-l-[#24C4D6] shadow-[0_0_15px_rgba(36,196,214,0.15)]' : '';
+  const colorKey = getCardColor(item);
+  const colorClasses = colors[colorKey] || colors.turquoise;
+  const eBadge = getEisenhowerBadge(item);
+  const glowClass = item.asked_by === 'Pixel Poster' && !item.nikole_read ? 'shadow-[0_0_15px_rgba(167,224,99,0.3)]' : '';
 
   return (
     <div 
-      className={`border ${colorClass} ${readClass} p-4 rounded-xl relative overflow-hidden transition-all flex flex-col h-full`}
+      className={`border border-y-white/10 border-r-white/10 border-l-4 ${colorClasses.border} ${colorClasses.bg} ${glowClass} p-3 rounded-xl relative flex flex-col h-full transition-all group`}
       onMouseEnter={handleMarkRead}
       onClick={handleMarkRead}
     >
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex flex-wrap items-center gap-1.5">
-          <Badge variant="outline" className={`text-[10px] px-1.5 py-0 border ${statusInfo.color}`}>
-            {statusInfo.icon} {statusInfo.label}
-          </Badge>
-          <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-white/10 text-white border-white/20">
-            {item.asked_by === 'Nikole' ? '📝 From You' : '🤖 From Pixel Poster'}
-          </Badge>
-          <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${tColor}`}>
-            {item.question_type}
-          </Badge>
-          <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${pConf.color}`}>
-            {pConf.emoji} {item.priority}
-          </Badge>
-          {item.pinned && <Pin className="w-3 h-3 text-[#6B3FA0]" />}
-        </div>
-        <span className="text-[10px] text-white/40 shrink-0">{moment(item.created_date).fromNow()}</span>
-      </div>
+      {!item.nikole_read && (
+        <div className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full bg-[#24C4D6] animate-pulse shadow-[0_0_8px_#24C4D6]" />
+      )}
       
-      <h4 className="font-bold text-white text-base mb-1">{item.title}</h4>
+      <div className="flex items-center gap-1.5 mb-2 flex-wrap pr-4">
+        <div className="w-2 h-2 rounded-full shrink-0" style={{backgroundColor: hexColors[colorKey]}} />
+        <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-black/20 text-white/80 border-white/10 uppercase tracking-wider">{item.category || 'Other'}</Badge>
+        <Badge variant="outline" className={`text-[9px] px-1.5 py-0 uppercase tracking-wider ${tColor}`}>{item.question_type}</Badge>
+      </div>
+
+      <h4 className="font-bold text-white text-sm mb-1 line-clamp-2 leading-tight">
+        <HighlightText text={item.title} highlight={searchQuery} />
+      </h4>
       
       {item.details && (
-        <div className="mb-2">
-          <div className={`text-xs text-white/60 whitespace-pre-wrap ${!detailsExpanded ? 'line-clamp-2' : ''}`}>
-            {item.details}
-          </div>
-          {item.details.length > 80 && (
-            <button onClick={(e) => { e.stopPropagation(); setDetailsExpanded(!detailsExpanded); }} className="text-[#24C4D6] text-[10px] font-semibold mt-0.5 hover:underline">
-              {detailsExpanded ? 'Show less' : 'Read more'}
-            </button>
-          )}
+        <div className="text-[11px] text-white/50 mb-2 whitespace-pre-wrap line-clamp-1">
+          <HighlightText text={item.details} highlight={searchQuery} />
         </div>
       )}
+
+      <div className="absolute top-3 right-8 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 backdrop-blur-md p-1 rounded-full">
+         {Object.keys(hexColors).map(c => (
+           <button key={c} onClick={(e) => { e.stopPropagation(); updateMutation.mutate({ id: item.id, data: { card_color: c } }); }} className="w-3 h-3 rounded-full hover:scale-125 transition-transform" style={{ backgroundColor: hexColors[c] }} title={c} />
+         ))}
+      </div>
 
       {item.pixel_response && (
-        <div className="mt-3 relative ml-2">
-          <div className="absolute -top-2 left-2 text-[#24C4D6]">
-            <svg width="12" height="9" viewBox="0 0 20 15" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M0 15L10 0L20 15H0Z" /></svg>
-          </div>
-          <div className="p-3 bg-[#24C4D6]/10 border border-[#24C4D6]/30 rounded-xl rounded-tl-sm text-[#24C4D6] text-xs whitespace-pre-wrap">
-            <span className="font-bold block mb-1">Pixel Poster:</span>
-            {item.pixel_response}
-          </div>
-        </div>
-      )}
-      
-      {item.nikole_response && (
-        <div className="mt-2 text-xs text-white/50 italic border-l-2 border-white/20 pl-2">
-          You: {item.nikole_response}
-        </div>
+         <div className="mt-2 mb-2 p-2 bg-[#24C4D6]/10 border border-[#24C4D6]/30 rounded-lg text-[#24C4D6] text-[11px] line-clamp-2">
+           <span className="font-bold">Pixel:</span> <HighlightText text={item.pixel_response} highlight={searchQuery} />
+         </div>
       )}
 
-      <div className="mt-auto">
+      {item.nikole_response && (
+         <div className="mt-1 mb-2 text-[11px] text-white/50 italic border-l-2 border-white/20 pl-2 line-clamp-1">
+           You: <HighlightText text={item.nikole_response} highlight={searchQuery} />
+         </div>
+      )}
+
+      <div className="mt-auto pt-2 flex items-center justify-between">
+        <div className="flex gap-1.5 items-center">
+          <span className="text-[10px] text-white/50 bg-white/5 px-1.5 py-0.5 rounded">{item.asked_by === 'Nikole' ? 'From You' : 'From Pixel'}</span>
+          <Badge className={`text-[9px] px-1.5 py-0 uppercase tracking-wider ${eBadge.color}`}>{eBadge.label}</Badge>
+        </div>
+      </div>
+
+      <div className="mt-2">
         {item.status !== 'Done' && (
           <CardExpandable item={item} updateMutation={updateMutation} />
         )}
@@ -307,8 +340,9 @@ export default function PixelBoardWidget() {
     answer_type: 'Text',
     choices: [''],
     priority: 'Normal',
+    importance: false,
     category: 'Other',
-    card_color: 'Default'
+    card_color: ''
   });
 
   const { data: items = [], isLoading, isFetching } = useQuery({
@@ -326,7 +360,7 @@ export default function PixelBoardWidget() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pixelBoard'] });
       setIsAskModalOpen(false);
-      setNewQuestion({ title: '', details: '', question_type: 'Question', answer_type: 'Text', choices: [''], priority: 'Normal', category: 'Other', card_color: 'Default' });
+      setNewQuestion({ title: '', details: '', question_type: 'Question', answer_type: 'Text', choices: [''], priority: 'Normal', importance: false, category: 'Other', card_color: '' });
       toast({ title: "Draft saved. Ready to batch send." });
     }
   });
@@ -466,25 +500,40 @@ export default function PixelBoardWidget() {
           >
             <div className="flex-1 overflow-y-auto custom-scrollbar p-4 pt-0 border-t border-white/10">
               
-              <div className="flex flex-wrap gap-3 items-center py-4">
-                <div className="relative w-full sm:w-64">
-                  <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-white/40 w-4 h-4" />
-                  <Input 
-                    placeholder="Search titles, details, answers..." 
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-8 bg-black/20 border-white/10 text-white h-9 rounded-full focus-visible:ring-[#24C4D6]"
-                  />
+              <div className="py-3 border-b border-white/5 mb-4">
+                <div className="flex items-center justify-between mb-3 flex-wrap gap-3">
+                  <div className="relative w-full sm:max-w-md">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40 w-4 h-4" />
+                    <Input 
+                      placeholder="Search titles, details, answers..." 
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-9 bg-black/20 border-white/10 text-white h-9 rounded-full focus-visible:ring-[#24C4D6]"
+                    />
+                  </div>
+                  {searchQuery && (
+                    <div className="text-xs text-white/50 font-bold">{filteredActiveItems.length} results</div>
+                  )}
                 </div>
-                <Select value={activeCategory} onValueChange={setActiveCategory}>
-                  <SelectTrigger className="w-full sm:w-40 h-9 bg-black/20 border-white/10 text-white rounded-full">
-                    <SelectValue placeholder="Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="All">All Categories</SelectItem>
-                    {categories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                
+                {/* Horizontal Scrollable Categories */}
+                <div className="flex overflow-x-auto custom-scrollbar gap-2 pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
+                  <button 
+                    onClick={() => setActiveCategory('All')}
+                    className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${activeCategory === 'All' ? 'bg-[#24C4D6]/20 text-[#24C4D6] border-[#24C4D6]/30' : 'bg-white/5 text-white/60 border-white/10 hover:bg-white/10'}`}
+                  >
+                    All
+                  </button>
+                  {categories.map(c => (
+                    <button 
+                      key={c}
+                      onClick={() => setActiveCategory(c)}
+                      className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${activeCategory === c ? 'bg-[#24C4D6]/20 text-[#24C4D6] border-[#24C4D6]/30' : 'bg-white/5 text-white/60 border-white/10 hover:bg-white/10'}`}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {isLoading ? (
@@ -494,8 +543,8 @@ export default function PixelBoardWidget() {
                   {sortedActiveItems.length === 0 ? "The board is completely clear!" : "No items match your search."}
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {filteredActiveItems.map(item => <BoardCard key={item.id} item={item} updateMutation={updateMutation} />)}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 auto-rows-fr gap-3">
+                  {filteredActiveItems.map(item => <BoardCard key={item.id} item={item} updateMutation={updateMutation} searchQuery={searchQuery} />)}
                 </div>
               )}
 
@@ -544,7 +593,10 @@ export default function PixelBoardWidget() {
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label>Type</Label>
-                        <Select value={newQuestion.question_type} onValueChange={v => setNewQuestion({...newQuestion, question_type: v})}>
+                        <Select value={newQuestion.question_type} onValueChange={v => {
+                          const autoImportant = v === 'Bug' || v === 'Decision Needed';
+                          setNewQuestion({...newQuestion, question_type: v, importance: autoImportant});
+                        }}>
                           <SelectTrigger><SelectValue /></SelectTrigger>
                           <SelectContent>
                             {Object.keys(typeColors).map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
@@ -564,6 +616,16 @@ export default function PixelBoardWidget() {
                           </SelectContent>
                         </Select>
                       </div>
+                      <div className="space-y-2">
+                        <Label>Importance</Label>
+                        <Select value={newQuestion.importance ? "true" : "false"} onValueChange={v => setNewQuestion({...newQuestion, importance: v === "true"})}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="true">⭐ Important</SelectItem>
+                            <SelectItem value="false">Not Important</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
@@ -577,10 +639,11 @@ export default function PixelBoardWidget() {
                       </div>
                       <div className="space-y-2">
                         <Label>Card Color</Label>
-                        <Select value={newQuestion.card_color} onValueChange={v => setNewQuestion({...newQuestion, card_color: v})}>
+                        <Select value={newQuestion.card_color || 'auto'} onValueChange={v => setNewQuestion({...newQuestion, card_color: v === 'auto' ? '' : v})}>
                           <SelectTrigger><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            {Object.keys(cardColorStyles).map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                            <SelectItem value="auto">Auto Mode</SelectItem>
+                            {Object.keys(hexColors).map(c => <SelectItem key={c} value={c} className="capitalize">{c}</SelectItem>)}
                           </SelectContent>
                         </Select>
                       </div>
