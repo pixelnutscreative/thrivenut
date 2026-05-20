@@ -421,6 +421,7 @@ const { data: featureFlags = [] } = useQuery({
     items: [
     { name: getDashboardName(), icon: LayoutDashboard, path: 'Dashboard', alwaysShow: true },
     { name: preferences?.my_resources_label || 'My Stuff', icon: Bookmark, path: 'MyResources', moduleId: 'my_resources', alwaysShow: true },
+    { name: 'My Links & Resources', icon: LinkIcon, path: 'MyLinks', moduleId: 'my_resources', alwaysShow: true },
     { name: 'Groups', icon: Users, path: 'CreatorGroups', moduleId: 'my_groups', alwaysShow: true },
     { name: "Pixel's Place", icon: Sparkles, path: 'PixelsParadise', moduleId: 'pixels_place' }]
 

@@ -11,6 +11,7 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import PixelBoard from './pages/PixelBoard';
 import MyTasks from './pages/MyTasks';
+import MyLinks from './pages/MyLinks';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -59,6 +60,11 @@ const AuthenticatedApp = () => {
       <Route path="/MyTasks" element={
         <LayoutWrapper currentPageName="MyTasks">
           <MyTasks />
+        </LayoutWrapper>
+      } />
+      <Route path="/MyLinks" element={
+        <LayoutWrapper currentPageName="MyLinks">
+          <MyLinks />
         </LayoutWrapper>
       } />
       {Object.entries(Pages).map(([path, Page]) => (

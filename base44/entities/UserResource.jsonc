@@ -1,0 +1,58 @@
+{
+  "name": "UserResource",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "url": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "resource_type": {
+      "type": "string",
+      "enum": [
+        "Website",
+        "Spreadsheet",
+        "App",
+        "Tool",
+        "Client",
+        "Project",
+        "Doc",
+        "Other"
+      ],
+      "default": "Other"
+    },
+    "category": {
+      "type": "string",
+      "default": "Uncategorized"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "is_favorite": {
+      "type": "boolean",
+      "default": false
+    },
+    "color": {
+      "type": "string"
+    },
+    "last_opened": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "url"
+  ]
+}

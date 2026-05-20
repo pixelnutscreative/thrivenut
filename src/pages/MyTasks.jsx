@@ -65,10 +65,12 @@ export default function MyTasks() {
       if (res.length === 0 && user) {
         // Seed defaults
         const defaults = [
-          { name: 'To Do', order: 0, color: '#e2e8f0' },
-          { name: 'In Progress', order: 1, color: '#fef08a' },
-          { name: 'Done', order: 2, color: '#A7E063' },
-          { name: 'On Hold', order: 3, color: '#fca5a5' }
+          { name: 'New', order: 0, color: '#24C4D6' },
+          { name: 'Active', order: 1, color: '#60a5fa' },
+          { name: 'To Do', order: 2, color: '#e2e8f0' },
+          { name: 'In Progress', order: 3, color: '#fef08a' },
+          { name: 'Done', order: 4, color: '#A7E063' },
+          { name: 'On Hold', order: 5, color: '#fca5a5' }
         ];
         await base44.entities.TaskStatus.bulkCreate(defaults);
         return base44.entities.TaskStatus.filter({ created_by: user.email }, 'order');
@@ -238,6 +240,14 @@ export default function MyTasks() {
   };
 
   const openTask = (task) => {
+    const newStatus = statuses.find(s => s.name === 'New');
+    const activeStatus = statuses.find(s => s.name === 'Active') || statuses.find(s => s.name === 'To Do');
+    
+    if (newStatus && activeStatus && task.status_id === newStatus.id) {
+      task.status_id = activeStatus.id;
+      updateMutation.mutate({ id: task.id, data: { status_id: activeStatus.id } });
+    }
+
     setEditingTask({ ...task, custom_fields: task.custom_fields || {} });
     setIsSheetOpen(true);
   };
@@ -623,13 +633,18 @@ export default function MyTasks() {
                                   className="mb-3"
                                 >
                                   <Card 
-                                    className="bg-white border-y border-r border-l-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer group relative overflow-hidden"
+                                    className={`bg-white border-y border-r border-l-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer group relative overflow-hidden ${status.name === 'On Hold' ? 'opacity-50 bg-slate-50' : ''}`}
                                     onClick={() => openTask(task)}
                                   >
-                                    <div className="absolute left-0 top-0 bottom-0 w-1.5" style={{ backgroundColor: cardColor !== 'transparent' ? cardColor : '#e2e8f0' }} />
+                                    <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${status.name === 'On Hold' ? 'opacity-50' : ''}`} style={{ backgroundColor: cardColor !== 'transparent' ? cardColor : '#e2e8f0' }} />
                                     <CardContent className="p-4 pl-5 flex flex-col gap-3">
-                                      <div className="flex justify-between items-start gap-2">
-                                        <h4 className="font-medium text-slate-800 text-sm leading-snug">{task.title}</h4>
+                                      <div className="flex justify-between items-start gap-2 relative">
+                                        <h4 className={`font-medium text-sm leading-snug pr-6 ${status.name === 'On Hold' ? 'text-slate-500' : 'text-slate-800'}`}>{task.title}</h4>
+                                        {status.name === 'New' && (
+                                          <div className="absolute -top-1 -right-1 w-3 h-3 bg-[#24C4D6] rounded-full shadow-[0_0_8px_rgba(36,196,214,0.8)] animate-pulse flex items-center justify-center">
+                                            <Sparkles className="w-2 h-2 text-white" />
+                                          </div>
+                                        )}
                                       </div>
                                       
                                       <div className="flex flex-wrap gap-2 mt-auto">
@@ -743,7 +758,7 @@ export default function MyTasks() {
                     const sub = getCategory(task.subcategory_id);
                     const prio = getPriority(task.priority_id);
                     return (
-                      <tr key={task.id} className={`hover:bg-slate-50 transition-colors group ${selectedTasks.includes(task.id) ? 'bg-slate-50' : ''}`}>
+                      <tr key={task.id} className={`hover:bg-slate-50 transition-colors group ${selectedTasks.includes(task.id) ? 'bg-slate-50' : ''} ${getStatus(task.status_id)?.name === 'On Hold' ? 'opacity-50' : ''}`}>
                         <td className="px-4 py-4 text-center">
                           <input 
                             type="checkbox"
