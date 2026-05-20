@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
-import { MessageSquare, ChevronDown, ChevronRight, CheckCircle2, Eye, Plus, Send, Paperclip, Loader2, Pin, Search, X, Clock, ChevronUp } from 'lucide-react';
+import { MessageSquare, ChevronDown, ChevronRight, CheckCircle2, Eye, Plus, Send, Paperclip, Loader2, Pin, Search, X, Clock, ChevronUp, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import moment from 'moment';
 
@@ -118,12 +118,14 @@ export default function PixelBoardWidget() {
 
   const handleSendBatch = () => {
     if (waitingToSend.length === 0) return;
-    const mostRecent = waitingToSend[0];
-    updateMutation.mutate({ id: mostRecent.id, data: { batch_ready: true } });
+    
+    waitingToSend.forEach(item => {
+      updateMutation.mutate({ id: item.id, data: { batch_ready: true } });
+    });
     
     toast({
       title: "Sent! Pixel Poster is on it 🩵",
-      description: `${waitingToSend.length} questions sent successfully.`,
+      description: `${waitingToSend.length} ${waitingToSend.length === 1 ? 'question' : 'questions'} sent successfully.`,
       duration: 3000,
     });
   };
@@ -184,11 +186,18 @@ export default function PixelBoardWidget() {
   };
 
   const QuestionCard = ({ item }) => {
-    const [responseText, setResponseText] = useState(item.nikole_response || '');
+    const [responseText, setResponseText] = useState(() => {
+      const saved = localStorage.getItem(`pixelboard_draft_${item.id}`);
+      return saved !== null ? saved : (item.nikole_response || '');
+    });
     const [uploading, setUploading] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
     const [expanded, setExpanded] = useState(false);
     const fileInputRef = useRef(null);
+
+    React.useEffect(() => {
+      localStorage.setItem(`pixelboard_draft_${item.id}`, responseText);
+    }, [responseText, item.id]);
 
     const handleDone = async () => {
       if (!responseText.trim() && !item.nikole_attachment_url) return;
@@ -197,6 +206,7 @@ export default function PixelBoardWidget() {
         id: item.id, 
         data: { nikole_response: responseText, status: 'Answered', nikole_read: true, pixel_read: false } 
       });
+      localStorage.removeItem(`pixelboard_draft_${item.id}`);
       setTimeout(() => setShowSuccess(false), 2000);
     };
 
@@ -399,8 +409,17 @@ export default function PixelBoardWidget() {
                   <span>{unreadAnswers} Answers Ready</span>
                 </Badge>
               </div>
-              <div className="text-white/70">
-                {isOpen ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={(e) => { e.stopPropagation(); queryClient.invalidateQueries({ queryKey: ['pixelBoard'] }); }}
+                  className="p-1 hover:bg-white/10 rounded-full text-white/70 hover:text-white transition-colors"
+                  title="Refresh"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                </button>
+                <div className="text-white/70">
+                  {isOpen ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+                </div>
               </div>
             </div>
           </div>
