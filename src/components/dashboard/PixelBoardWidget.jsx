@@ -262,14 +262,20 @@ const BoardCard = ({ item, updateMutation, searchQuery }) => {
   const colorClasses = colors[colorKey] || colors.turquoise;
   const eBadge = getEisenhowerBadge(item);
   const glowClass = item.asked_by === 'Pixel Poster' && !item.nikole_read ? 'shadow-[0_0_15px_rgba(167,224,99,0.3)]' : '';
+  const isQueued = item.batch_ready && item.status === 'Unanswered';
 
   return (
     <div 
-      className={`border border-y-white/10 border-r-white/10 border-l-4 ${colorClasses.border} ${colorClasses.bg} ${glowClass} p-3 rounded-xl relative flex flex-col h-full transition-all group`}
+      className={`border border-y-white/10 border-r-white/10 border-l-4 ${colorClasses.border} ${colorClasses.bg} ${glowClass} p-3 rounded-xl relative flex flex-col h-full transition-all group ${isQueued ? 'opacity-60' : ''}`}
       onMouseEnter={handleMarkRead}
       onClick={handleMarkRead}
     >
-      {!item.nikole_read && (
+      {isQueued && (
+        <div className="absolute top-2 right-2">
+          <Badge className="bg-green-500 hover:bg-green-600 text-white border-green-600 text-[9px] px-1.5 py-0 uppercase tracking-wider">✅ Queued</Badge>
+        </div>
+      )}
+      {!item.nikole_read && !isQueued && (
         <div className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full bg-[#24C4D6] animate-pulse shadow-[0_0_8px_#24C4D6]" />
       )}
       
@@ -419,13 +425,16 @@ export default function PixelBoardWidget() {
   };
 
   const sortedActiveItems = [...activeItems].sort((a, b) => {
-    if (!a.nikole_read && b.nikole_read) return -1;
-    if (a.nikole_read && !b.nikole_read) return 1;
-    
     const aReady = a.batch_ready && a.status === 'Unanswered' ? 1 : 0;
     const bReady = b.batch_ready && b.status === 'Unanswered' ? 1 : 0;
-    if (aReady > bReady) return -1;
-    if (aReady < bReady) return 1;
+    
+    // 1. Ready items always go to the very bottom
+    if (aReady > bReady) return 1;
+    if (aReady < bReady) return -1;
+
+    // 2. Unread items to the top (among non-ready ones)
+    if (!a.nikole_read && b.nikole_read) return -1;
+    if (a.nikole_read && !b.nikole_read) return 1;
     
     const pScore = { 'Urgent': 4, 'Critical': 4, 'High': 3, 'Medium': 2, 'Normal': 1, 'When You Get To It': 0, 'Low': 0 };
     const pA = pScore[a.priority] || 0;
