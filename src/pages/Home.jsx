@@ -329,13 +329,21 @@ export default function Home() {
               Go to Dashboard <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           ) : (
-            <Button 
-              onClick={handleLogin}
-              variant="outline"
-              className="border-purple-400 text-purple-400 hover:bg-purple-400/10"
-            >
-              Log In
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button 
+                onClick={handleLogin}
+                variant="outline"
+                className="border-purple-400 text-purple-400 hover:bg-purple-400/10 hidden sm:flex"
+              >
+                Log In
+              </Button>
+              <Button 
+                onClick={handleGetStarted}
+                className="bg-gradient-to-r from-teal-500 to-purple-500 hover:from-teal-600 hover:to-purple-600 border-0"
+              >
+                Sign Up
+              </Button>
+            </div>
           )}
         </div>
       </header>

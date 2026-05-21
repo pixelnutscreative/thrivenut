@@ -8,6 +8,7 @@ import { pagesConfig } from './pages.config'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
+import React, { useEffect } from 'react';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import PixelBoard from './pages/PixelBoard';
 import MyTasks from './pages/MyTasks';
@@ -22,6 +23,13 @@ const MainPage = mainPageKey ? Pages[mainPageKey] : <></>;
 const LayoutWrapper = ({ children, currentPageName }) => Layout ?
   <Layout currentPageName={currentPageName}>{children}</Layout>
   : <>{children}</>;
+
+const RegisterRedirect = ({ navigateToLogin }) => {
+  useEffect(() => {
+    navigateToLogin();
+  }, [navigateToLogin]);
+  return null;
+};
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, isAuthenticated, navigateToLogin } = useAuth();
@@ -54,6 +62,7 @@ const AuthenticatedApp = () => {
           <MainPage />
         </LayoutWrapper>
       } />
+      <Route path="/register" element={<RegisterRedirect navigateToLogin={navigateToLogin} />} />
       <Route path="/PixelBoard" element={
         <LayoutWrapper currentPageName="PixelBoard">
           <PixelBoard />
