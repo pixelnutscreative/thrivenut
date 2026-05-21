@@ -129,32 +129,20 @@ export default function PixelBoard() {
     
     const loadingToastId = toast.loading("Sending batch...");
     try {
-      let token = '';
-      if (typeof base44.auth.getAccessToken === 'function') {
-        token = await base44.auth.getAccessToken();
-      } else if (base44.auth.session && base44.auth.session.access_token) {
-        token = base44.auth.session.access_token;
-      } else if (base44.auth.session && typeof base44.auth.session === 'function') {
-        const sess = await base44.auth.session();
-        token = sess?.access_token || '';
-      }
-
       const res = await fetch('https://pixel-poster-9e462e4f.base44.app/functions/sendItBatch', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ count: batchedItems.length })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
       });
 
       if (!res.ok) {
         throw new Error('Network response was not ok');
       }
 
+      const result = await res.json();
       queryClient.invalidateQueries({ queryKey: ['pixelBoard'] });
       toast.dismiss(loadingToastId);
-      toast.success(`✅ ${batchedItems.length} cards sent to Daisy!`);
+      toast.success(result.message || `✅ ${batchedItems.length} cards sent to Daisy!`);
     } catch (err) {
       console.error(err);
       toast.dismiss(loadingToastId);
