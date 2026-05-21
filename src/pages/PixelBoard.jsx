@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
@@ -6,56 +6,71 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/components/ui/use-toast';
-import { Plus, MessageSquare, Inbox, CheckCircle2, Send, X, ArrowLeft, Search, Paperclip, Loader2, Pin, Clock, ChevronDown, ChevronUp, ChevronRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { createPageUrl } from '../utils';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { toast } from 'sonner';
+import { Plus, Search, Loader2, LayoutGrid, List as ListIcon, ChevronRight, ChevronDown, CheckCircle2, PauseCircle, Clock, Brain } from 'lucide-react';
 import moment from 'moment';
 
+const KANBAN_COLUMNS = [
+  { id: 'New', label: '💬 New' },
+  { id: 'Thinking', label: '🤔 Thinking' },
+  { id: 'Needs GO', label: '⏳ Needs GO' },
+  { id: 'In Progress', label: '🔄 In Progress' },
+  { id: 'Hold', label: '⏸️ Hold' },
+  { id: 'Done', label: '✅ Done' }
+];
+
 const priorityConfig = {
-  'Urgent': { emoji: '🔥', color: 'bg-red-100 text-red-700 border-red-200' },
-  'Normal': { emoji: '🔵', color: 'bg-[#24C4D6]/20 text-[#0D626C] border-[#24C4D6]/30' },
-  'When You Get To It': { emoji: '⚪', color: 'bg-gray-100 text-gray-700 border-gray-200' },
-  // Fallbacks for old data
-  'Critical': { emoji: '🔴', color: 'bg-red-100 text-red-700 border-red-200' },
-  'High': { emoji: '🟠', color: 'bg-orange-100 text-orange-700 border-orange-200' },
-  'Medium': { emoji: '🟡', color: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
-  'Low': { emoji: '🟢', color: 'bg-green-100 text-green-700 border-green-200' },
+  'Urgent': { emoji: '🔥', color: 'bg-red-100 text-red-700' },
+  'Normal': { emoji: '🔵', color: 'bg-[#24C4D6]/20 text-[#0D626C]' },
+  'When You Get To It': { emoji: '⚪', color: 'bg-slate-100 text-slate-700' },
+  'Critical': { emoji: '🔴', color: 'bg-red-100 text-red-700' },
+  'High': { emoji: '🟠', color: 'bg-orange-100 text-orange-700' },
+  'Medium': { emoji: '🟡', color: 'bg-yellow-100 text-yellow-700' },
+  'Low': { emoji: '🟢', color: 'bg-green-100 text-green-700' }
 };
 
-const typeColors = {
-  'Bug': 'bg-orange-100 text-orange-700 border-orange-200',
-  'Task': 'bg-blue-100 text-blue-700 border-blue-200',
-  'Question': 'bg-purple-100 text-purple-700 border-purple-200',
-  'Idea': 'bg-lime-100 text-lime-800 border-lime-200',
-  'Decision Needed': 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  'Decision': 'bg-yellow-100 text-yellow-800 border-yellow-200'
+const CATEGORIES = ["ThriveNut", "Personal", "Projects", "Pixel Tours", "Websites", "Offers", "AI Tools", "Social Media", "Other"];
+
+const mapStatus = (s) => {
+  if (['New', 'Thinking', 'Needs GO', 'In Progress', 'Hold', 'Done'].includes(s)) return s;
+  if (s === 'Unanswered') return 'New';
+  if (s === 'Answered') return 'Needs GO';
+  if (s === 'Reviewed') return 'Done';
+  return 'New';
 };
 
-const defaultTypeColor = 'bg-gray-100 text-gray-700 border-gray-200';
+const getTurnIndicator = (item) => {
+  const s = mapStatus(item.status);
+  if (s === 'Done') return null;
+  if (s === 'Needs GO') return "👤 Nikole's turn";
+  if (!item.pixel_response) return "🤖 Daisy's turn";
+  if (item.nikole_read === false) return "👤 Nikole's turn";
+  return "🤖 Daisy's turn";
+};
 
-const statuses = ['Unanswered', 'Answered', 'Reviewed', 'Done'];
+const isNikolesTurn = (item) => getTurnIndicator(item) === "👤 Nikole's turn";
 
 export default function PixelBoard() {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
-  const [isAskModalOpen, setIsAskModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('from_pixel');
+  const [viewMode, setViewMode] = useState('kanban'); // 'kanban' | 'list'
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilter, setActiveFilter] = useState('All');
+  const [categoryFilter, setCategoryFilter] = useState('All');
+  const [myTurnFilter, setMyTurnFilter] = useState(false);
+  const [isAskModalOpen, setIsAskModalOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [isDoneCollapsed, setIsDoneCollapsed] = useState(true);
+  const [newResponse, setNewResponse] = useState('');
   
   const [newQuestion, setNewQuestion] = useState({
     title: '',
     details: '',
-    question_type: 'Question',
-    answer_type: 'Text',
-    choices: [''],
-    priority: 'Normal'
+    category: 'Other',
+    priority: 'Normal',
+    card_color: '#24C4D6'
   });
 
   const { data: items = [], isLoading } = useQuery({
@@ -64,567 +79,341 @@ export default function PixelBoard() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.PixelBoard.create({ ...data, asked_by: 'Nikole', status: 'Unanswered', batch_ready: false }),
+    mutationFn: (data) => base44.entities.PixelBoard.create({ ...data, status: 'New', asked_by: 'Nikole' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pixelBoard'] });
       setIsAskModalOpen(false);
-      setNewQuestion({ title: '', details: '', question_type: 'Question', answer_type: 'Text', choices: [''], priority: 'Normal' });
-      setActiveTab('my_questions');
+      setNewQuestion({ title: '', details: '', category: 'Other', priority: 'Normal', card_color: '#24C4D6' });
+      toast.success("Ticket created!");
     }
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.PixelBoard.update(id, data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['pixelBoard'] })
+    onSuccess: (updatedItem) => {
+      queryClient.invalidateQueries({ queryKey: ['pixelBoard'] });
+      if (selectedItem && selectedItem.id === updatedItem.id) {
+        setSelectedItem(updatedItem);
+      }
+    }
   });
 
-  const uploadFile = async (file) => {
-    try {
-      const response = await base44.integrations.Core.UploadFile({ file });
-      return response.file_url;
-    } catch (e) {
-      toast({ title: 'Upload failed', description: e.message, variant: 'destructive' });
-      return null;
-    }
-  };
-
-  const fromPixel = items.filter(i => i.asked_by === 'Pixel Poster');
-  const myQuestions = items.filter(i => i.asked_by === 'Nikole');
-  
-  const waitingToSend = myQuestions.filter(i => i.status === 'Unanswered' && !i.batch_ready);
-  
-  const unreadFromPixel = fromPixel.filter(i => !i.nikole_read).length;
-  const unreadMyQuestions = myQuestions.filter(i => !i.nikole_read && i.status !== 'Unanswered').length;
-
-  const handleSendBatch = () => {
-    if (waitingToSend.length === 0) return;
-    const mostRecent = waitingToSend[0];
-    updateMutation.mutate({ id: mostRecent.id, data: { batch_ready: true } });
-    
-    toast({
-      title: "Sent! Pixel Poster is on it 🩵",
-      description: `${waitingToSend.length} questions sent successfully.`,
-      duration: 3000,
-    });
-  };
+  const filteredItems = useMemo(() => {
+    return items.filter(item => {
+      if (searchQuery && !item.title.toLowerCase().includes(searchQuery.toLowerCase()) && !(item.details || '').toLowerCase().includes(searchQuery.toLowerCase())) return false;
+      if (categoryFilter !== 'All' && item.category !== categoryFilter) return false;
+      if (myTurnFilter && !isNikolesTurn(item)) return false;
+      return true;
+    }).sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+  }, [items, searchQuery, categoryFilter, myTurnFilter]);
 
   const handleAskSubmit = () => {
     if (!newQuestion.title) return;
-    const data = { ...newQuestion };
-    if (data.answer_type !== 'Multiple Choice') {
-      data.choices = [];
-    }
-    createMutation.mutate(data);
+    createMutation.mutate(newQuestion);
   };
 
-  const filters = ['All', '🔥 Urgent', 'Bug', 'Task', 'Question', 'Idea', 'Decision Needed'];
-
-  const filterAndSort = (list) => {
-    return list.filter(item => {
-      const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                            (item.details || '').toLowerCase().includes(searchQuery.toLowerCase());
-      if (!matchesSearch) return false;
-      
-      if (activeFilter === 'All') return true;
-      if (activeFilter === '🔥 Urgent') return item.priority === 'Urgent' || item.priority === 'Critical' || item.priority === 'High';
-      return item.question_type === activeFilter;
-    }).sort((a, b) => {
-      if (a.pinned && !b.pinned) return -1;
-      if (!a.pinned && b.pinned) return 1;
-      return new Date(b.created_date) - new Date(a.created_date);
-    });
-  };
-
-  const BoardCard = ({ item, isFromPixel }) => {
-    const [responseText, setResponseText] = useState(item.nikole_response || '');
-    const [uploading, setUploading] = useState(false);
-    const [showSuccess, setShowSuccess] = useState(false);
-    const [expanded, setExpanded] = useState(false);
-    const fileInputRef = useRef(null);
-
-    const isUnread = !item.nikole_read && (isFromPixel || item.status !== 'Unanswered');
-    const showPixelBadge = item.pixel_read === true && item.nikole_read === false;
+  const handleSendResponse = () => {
+    if (!newResponse.trim() || !selectedItem) return;
     
+    const currentResponses = selectedItem.nikole_response || '';
+    const separator = currentResponses ? '\n\n' : '';
+    
+    updateMutation.mutate({ 
+      id: selectedItem.id, 
+      data: { 
+        nikole_response: currentResponses + separator + newResponse,
+        status: 'Thinking',
+        nikole_read: true,
+        pixel_read: false
+      } 
+    });
+    setNewResponse('');
+    toast.success("Response sent!");
+  };
+
+  const updateStatus = (id, newStatus) => {
+    updateMutation.mutate({ id, data: { status: newStatus } });
+  };
+
+  const TicketCard = ({ item }) => {
+    const s = mapStatus(item.status);
+    const isDone = s === 'Done';
+    const turn = getTurnIndicator(item);
     const pConf = priorityConfig[item.priority] || priorityConfig['Normal'];
-    const tColor = typeColors[item.question_type] || defaultTypeColor;
-
-    const daysOld = moment().diff(moment(item.created_date), 'days');
-    const isOldUrgent = (item.priority === 'Urgent' || item.priority === 'Critical') && item.status === 'Unanswered' && daysOld > 0;
-
-    const markAsRead = () => {
-      if (isUnread) updateMutation.mutate({ id: item.id, data: { nikole_read: true } });
-    };
-
-    const submitResponse = async () => {
-      if (!responseText.trim() && !item.nikole_attachment_url) return;
-      
-      setShowSuccess(true);
-      await updateMutation.mutateAsync({ 
-        id: item.id, 
-        data: { nikole_response: responseText, status: 'Answered', pixel_read: false, nikole_read: true } 
-      });
-      setTimeout(() => setShowSuccess(false), 2000);
-    };
-
-    const handleFileUpload = async (e) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-      
-      const reader = new FileReader();
-      reader.onload = async (event) => {
-        const base64Str = event.target.result;
-        setUploading(true);
-        const url = await uploadFile(base64Str);
-        setUploading(false);
-        if (url) {
-          updateMutation.mutate({ id: item.id, data: { nikole_attachment_url: url } });
-        }
-      };
-      reader.readAsDataURL(file);
-    };
-
-    const advanceStatus = () => {
-      const idx = statuses.indexOf(item.status);
-      if (idx >= 0 && idx < statuses.length - 1) {
-        updateMutation.mutate({ id: item.id, data: { status: statuses[idx + 1], nikole_read: true } });
-      }
-    };
-
-    const StatusTrail = () => {
-      const currentIndex = statuses.indexOf(item.status);
-      return (
-        <div className="flex items-center gap-1 mt-3 mb-4 opacity-70 scale-90 origin-left">
-          {statuses.map((s, idx) => (
-            <React.Fragment key={s}>
-              <div className={`text-[10px] uppercase font-bold tracking-wider ${idx <= currentIndex ? 'text-[#24C4D6]' : 'text-gray-400'}`}>
-                {s}
-              </div>
-              {idx < statuses.length - 1 && <ChevronRight className="w-3 h-3 text-gray-300 mx-0.5" />}
-            </React.Fragment>
-          ))}
-        </div>
-      );
-    };
 
     return (
       <Card 
-        className={`border-0 overflow-hidden transition-all duration-300 bg-white ${
-          isUnread ? 'ring-2 ring-[#24C4D6] shadow-[0_0_15px_rgba(36,196,214,0.3)]' : 'shadow-md hover:shadow-lg'
-        }`}
-        onMouseEnter={markAsRead}
+        onClick={() => {
+          setSelectedItem(item);
+          if (item.nikole_read === false) {
+            updateMutation.mutate({ id: item.id, data: { nikole_read: true } });
+          }
+        }}
+        className={`cursor-pointer transition-all duration-200 border-2 ${isDone ? 'bg-slate-50 border-slate-200 opacity-70' : 'bg-white border-slate-100 hover:border-[#24C4D6]/50 hover:shadow-md'} overflow-hidden relative`}
+        style={{ borderLeftColor: !isDone && item.card_color ? item.card_color : undefined, borderLeftWidth: !isDone && item.card_color ? '6px' : undefined }}
       >
-        <div className="p-2.5 bg-gray-50 flex flex-wrap items-center justify-between border-b border-gray-100 gap-2">
-          <div className="flex items-center gap-2 flex-wrap">
-            <Badge variant="outline" className={`text-xs ${pConf.color}`}>
-              {pConf.emoji} {item.priority}
-            </Badge>
-            <Badge variant="outline" className={`text-xs ${tColor}`}>
-              {item.question_type}
-            </Badge>
-            {showPixelBadge && (
-              <Badge className="bg-red-50 text-red-600 border-red-200 text-[10px] px-1.5 flex items-center gap-1 shadow-sm">
-                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
-                📬 From Pixel Poster
-              </Badge>
-            )}
-            {isOldUrgent && (
-              <Badge className="bg-orange-50 text-orange-600 border-orange-200 text-[10px] px-1.5 flex items-center gap-1 shadow-sm">
-                <Clock className="w-3 h-3" /> Waiting {daysOld} {daysOld === 1 ? 'day' : 'days'}
-              </Badge>
-            )}
+        <CardContent className="p-4 flex flex-col gap-3">
+          <div className="flex justify-between items-start gap-2">
+            <h4 className={`font-bold text-sm ${isDone ? 'line-through text-slate-500' : 'text-slate-800'} leading-tight`}>{item.title}</h4>
           </div>
           
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-400">{moment(item.created_date).fromNow()}</span>
-            <button 
-              onClick={() => updateMutation.mutate({ id: item.id, data: { pinned: !item.pinned } })}
-              className={`p-1.5 rounded-md hover:bg-gray-200 transition-colors ${item.pinned ? 'text-[#6B3FA0] bg-purple-100' : 'text-gray-400'}`}
-            >
-              <Pin className="w-3 h-3" />
-            </button>
+          <div className="flex flex-wrap gap-1.5 items-center">
+            <Badge variant="secondary" className="text-[10px] bg-slate-100 text-slate-600 hover:bg-slate-200">{item.category}</Badge>
+            <Badge variant="outline" className={`text-[10px] ${pConf.color} border-0`}>{pConf.emoji} {item.priority}</Badge>
           </div>
-        </div>
-        
-        <CardContent className="p-5">
-          <StatusTrail />
 
-          <h3 className="font-bold text-gray-900 text-xl mb-2 leading-tight">{item.title}</h3>
-          
-          {item.details && (
-            <div className="mb-4">
-              <div className={`text-sm text-gray-500 whitespace-pre-wrap ${!expanded ? 'line-clamp-2' : ''}`}>
-                {item.details}
-              </div>
-              {item.details.length > 100 && (
-                <button 
-                  onClick={() => setExpanded(!expanded)} 
-                  className="text-[#24C4D6] text-xs font-semibold mt-1 flex items-center hover:underline"
-                >
-                  {expanded ? 'Show less' : 'Read more'} {expanded ? <ChevronUp className="w-3 h-3 ml-1" /> : <ChevronDown className="w-3 h-3 ml-1" />}
-                </button>
-              )}
+          {turn && !isDone && (
+            <div className={`text-[10px] font-medium px-2 py-1 rounded-md inline-flex items-center w-fit ${turn.includes('Nikole') ? 'bg-[#24C4D6]/10 text-[#0D626C]' : 'bg-[#C8A4F2]/20 text-[#6B3FA0]'}`}>
+              {turn}
             </div>
           )}
-
-          {!isFromPixel && item.pixel_response && (
-            <div className="mb-5 relative">
-              <div className="absolute -top-3 left-4 text-[#24C4D6]">
-                <svg width="20" height="15" viewBox="0 0 20 15" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M0 15L10 0L20 15H0Z" />
-                </svg>
-              </div>
-              <div className="p-4 bg-[#24C4D6] bg-opacity-10 border border-[#24C4D6]/30 rounded-xl rounded-tl-sm text-[#0D626C] text-sm whitespace-pre-wrap">
-                <strong>Pixel Poster says:</strong><br/>
-                {item.pixel_response}
-              </div>
-            </div>
-          )}
-
-          {item.choices && item.choices.length > 0 && item.choices[0] !== '' && (
-            <div className="flex flex-wrap gap-2 mb-4">
-              {item.choices.map((choice, i) => (
-                <button
-                  key={i}
-                  onClick={() => setResponseText(prev => prev ? `${prev}\n${choice}` : choice)}
-                  className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 border border-gray-200 text-gray-700 text-xs rounded-full transition-colors font-medium"
-                >
-                  {choice}
-                </button>
-              ))}
-            </div>
-          )}
-
-          <div className="mt-4 pt-4 border-t border-gray-100">
-            <Label className="text-xs text-[#6B3FA0] font-bold uppercase mb-2 block">Your Response</Label>
-            
-            <div className="relative mb-3">
-              <Textarea 
-                placeholder={item.status === 'Done' ? 'Completed.' : 'Type your answer or notes here...'} 
-                className="min-h-[100px] bg-gray-50 border-gray-200 focus-visible:ring-[#24C4D6] text-sm resize-y"
-                value={responseText}
-                onChange={(e) => setResponseText(e.target.value)}
-              />
-              
-              <div className="absolute bottom-2 left-2 flex gap-2">
-                <input 
-                  type="file" 
-                  ref={fileInputRef} 
-                  className="hidden" 
-                  onChange={handleFileUpload} 
-                  accept="image/*,.pdf,.doc,.docx"
-                />
-                <Button 
-                  size="icon" 
-                  variant="ghost" 
-                  className="h-8 w-8 text-gray-400 hover:text-[#6B3FA0] bg-white border border-gray-200 shadow-sm"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploading}
-                  title="Attach file"
-                >
-                  {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
-                </Button>
-              </div>
-
-              <AnimatePresence>
-                {showSuccess && (
-                  <motion.div 
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0, opacity: 0 }}
-                    className="absolute inset-0 flex items-center justify-center bg-white/80 backdrop-blur-sm rounded-md z-10"
-                  >
-                    <div className="bg-green-100 text-green-600 p-3 rounded-full shadow-lg flex items-center gap-2">
-                      <CheckCircle2 className="w-6 h-6" />
-                      <span className="font-bold">Sent!</span>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-            
-            {item.nikole_attachment_url && (
-              <div className="mb-3">
-                <a href={item.nikole_attachment_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-xs text-[#24C4D6] bg-[#24C4D6]/10 px-3 py-1.5 rounded-lg border border-[#24C4D6]/20 hover:bg-[#24C4D6]/20 transition-colors">
-                  <Paperclip className="w-3 h-3" /> View Attachment
-                </a>
-              </div>
-            )}
-
-            <div className="flex gap-2">
-              <Button 
-                className="flex-1 bg-[#24C4D6] hover:bg-[#1EABC0] text-white font-semibold"
-                onClick={submitResponse}
-              >
-                <Send className="w-4 h-4 mr-2" /> Save & Answer
-              </Button>
-              {item.status === 'Answered' && !isFromPixel && (
-                <Button 
-                  variant="outline"
-                  className="border-[#24C4D6] text-[#24C4D6] hover:bg-[#24C4D6] hover:text-white"
-                  onClick={advanceStatus}
-                >
-                  <CheckCircle2 className="w-4 h-4 mr-2" /> Mark Reviewed
-                </Button>
-              )}
-              {item.status === 'Reviewed' && (
-                <Button 
-                  variant="outline"
-                  className="border-green-500 text-green-600 hover:bg-green-500 hover:text-white"
-                  onClick={advanceStatus}
-                >
-                  <CheckCircle2 className="w-4 h-4 mr-2" /> Mark Done
-                </Button>
-              )}
-            </div>
-          </div>
         </CardContent>
       </Card>
     );
   };
 
-  const FilterSection = () => (
-    <div className="flex flex-col md:flex-row gap-4 mb-6">
-      <div className="relative flex-1 max-w-md">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-        <Input 
-          placeholder="Search questions or details..." 
-          className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/50 h-12 rounded-full focus-visible:ring-[#24C4D6]"
-          value={searchQuery}
-          onChange={e => setSearchQuery(e.target.value)}
-        />
-      </div>
-      <div className="flex flex-wrap gap-2 items-center">
-        {filters.map(f => (
-          <button
-            key={f}
-            onClick={() => setActiveFilter(f)}
-            className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
-              activeFilter === f 
-                ? 'bg-[#24C4D6] text-white shadow-[0_0_10px_rgba(36,196,214,0.4)]' 
-                : 'bg-white/10 text-white/70 hover:bg-white/20'
-            }`}
-          >
-            {f}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#2D1B69] to-[#6B3FA0] p-4 md:p-8 pb-32">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="min-h-screen bg-slate-50 p-4 md:p-8 font-sans">
+      <div className="max-w-[1400px] mx-auto space-y-6">
         
-        {/* Header */}
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        {/* Header & Controls */}
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border-2 border-slate-200 shadow-sm">
           <div>
-            <div className="flex items-center gap-2 mb-2">
-              <Link to={createPageUrl('Admin')}>
-                <Button variant="ghost" size="sm" className="text-white/70 hover:text-white hover:bg-white/10 p-0 h-auto">
-                  <ArrowLeft className="w-4 h-4 mr-1" /> Back to Admin
-                </Button>
-              </Link>
-            </div>
-            <h1 className="text-3xl md:text-4xl font-bold text-white flex items-center gap-3">
-              <MessageSquare className="w-8 h-8 text-[#24C4D6]" />
-              Pixel Board
+            <h1 className="text-3xl font-bold text-slate-800 flex items-center gap-3">
+              <span className="text-[#24C4D6]">#</span> PixelBoard
             </h1>
-            <p className="text-purple-200 mt-1">Direct communication hub with Pixel Poster</p>
+            <p className="text-slate-500 mt-1 font-medium">Ticket system & chat with Daisy</p>
           </div>
 
-          <Dialog open={isAskModalOpen} onOpenChange={setIsAskModalOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-[#24C4D6] hover:bg-[#1EABC0] text-white font-bold px-6 py-6 rounded-full shadow-[0_0_15px_rgba(36,196,214,0.3)] hover:shadow-[0_0_25px_rgba(36,196,214,0.5)] transition-all">
-                <Plus className="w-5 h-5 mr-2" /> Ask Pixel Poster
+          <div className="flex flex-wrap items-center gap-3">
+            <Button 
+              variant="outline"
+              className={`border-2 ${myTurnFilter ? 'border-[#24C4D6] bg-[#24C4D6]/10 text-[#0D626C]' : 'border-slate-200 text-slate-600'}`}
+              onClick={() => setMyTurnFilter(!myTurnFilter)}
+            >
+              🙋‍♀️ My Turn
+            </Button>
+            
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="w-[140px] border-2 border-slate-200 font-medium">
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="All">All Categories</SelectItem>
+                {CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              </SelectContent>
+            </Select>
+
+            <div className="flex bg-slate-100 rounded-lg p-1 border-2 border-slate-200">
+              <Button size="sm" variant={viewMode === 'kanban' ? 'default' : 'ghost'} onClick={() => setViewMode('kanban')} className={viewMode === 'kanban' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500'}>
+                <LayoutGrid className="w-4 h-4" />
               </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle className="text-xl font-bold text-[#6B3FA0]">Ask Pixel Poster</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label>Title / Summary (Required)</Label>
-                  <Input 
-                    placeholder="What do you need?" 
-                    value={newQuestion.title}
-                    onChange={e => setNewQuestion({...newQuestion, title: e.target.value})}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Details</Label>
-                  <Textarea 
-                    placeholder="Provide more context..."
-                    className="min-h-[100px]"
-                    value={newQuestion.details}
-                    onChange={e => setNewQuestion({...newQuestion, details: e.target.value})}
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Question Type</Label>
-                    <Select value={newQuestion.question_type} onValueChange={v => setNewQuestion({...newQuestion, question_type: v})}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Bug">Bug</SelectItem>
-                        <SelectItem value="Task">Task</SelectItem>
-                        <SelectItem value="Question">Question</SelectItem>
-                        <SelectItem value="Idea">Idea</SelectItem>
-                        <SelectItem value="Decision Needed">Decision Needed</SelectItem>
-                        <SelectItem value="General">General</SelectItem>
-                        <SelectItem value="Other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Priority</Label>
-                    <Select value={newQuestion.priority} onValueChange={v => setNewQuestion({...newQuestion, priority: v})}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="When You Get To It">⚪ When You Get To It</SelectItem>
-                        <SelectItem value="Normal">🔵 Normal</SelectItem>
-                        <SelectItem value="Urgent">🔥 Urgent</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Answer Format</Label>
-                  <Select value={newQuestion.answer_type} onValueChange={v => setNewQuestion({...newQuestion, answer_type: v})}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Text">Text Response</SelectItem>
-                      <SelectItem value="Yes/No">Yes / No</SelectItem>
-                      <SelectItem value="Multiple Choice">Multiple Choice</SelectItem>
-                      <SelectItem value="Both">Both</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                {(newQuestion.answer_type === 'Multiple Choice' || newQuestion.answer_type === 'Both') && (
-                  <div className="space-y-2 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                    <Label>Choices</Label>
-                    {newQuestion.choices.map((choice, i) => (
-                      <div key={i} className="flex gap-2 mb-2">
-                        <Input 
-                          value={choice} 
-                          placeholder={`Option ${i+1}`}
-                          onChange={e => {
-                            const newChoices = [...newQuestion.choices];
-                            newChoices[i] = e.target.value;
-                            setNewQuestion({...newQuestion, choices: newChoices});
-                          }}
-                        />
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          onClick={() => {
-                            const newChoices = newQuestion.choices.filter((_, idx) => idx !== i);
-                            setNewQuestion({...newQuestion, choices: newChoices.length ? newChoices : ['']});
-                          }}
-                        >
-                          <X className="w-4 h-4 text-red-400" />
-                        </Button>
-                      </div>
-                    ))}
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => setNewQuestion({...newQuestion, choices: [...newQuestion.choices, '']})}
-                      className="w-full text-xs"
-                    >
-                      <Plus className="w-3 h-3 mr-1" /> Add Choice
-                    </Button>
-                  </div>
-                )}
-              </div>
-              <DialogFooter>
-                <Button variant="ghost" onClick={() => setIsAskModalOpen(false)}>Cancel</Button>
-                <Button onClick={handleAskSubmit} disabled={!newQuestion.title || createMutation.isPending} className="bg-[#6B3FA0] hover:bg-[#522f7a]">
-                  Submit Question
+              <Button size="sm" variant={viewMode === 'list' ? 'default' : 'ghost'} onClick={() => setViewMode('list')} className={viewMode === 'list' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500'}>
+                <ListIcon className="w-4 h-4" />
+              </Button>
+            </div>
+
+            <Dialog open={isAskModalOpen} onOpenChange={setIsAskModalOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-[#24C4D6] hover:bg-[#1db0c0] text-white font-bold shadow-md hover:shadow-lg transition-all border-2 border-[#24C4D6]">
+                  <Plus className="w-4 h-4 mr-2" /> New Ticket
                 </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader>
+                  <DialogTitle className="text-xl font-bold text-slate-800">Create Ticket</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label className="font-bold text-slate-700">Title</Label>
+                    <Input placeholder="What needs doing?" value={newQuestion.title} onChange={e => setNewQuestion({...newQuestion, title: e.target.value})} className="border-2 border-slate-200 focus-visible:ring-[#24C4D6]" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="font-bold text-slate-700">Details</Label>
+                    <Textarea placeholder="Provide context..." value={newQuestion.details} onChange={e => setNewQuestion({...newQuestion, details: e.target.value})} className="min-h-[100px] border-2 border-slate-200 focus-visible:ring-[#24C4D6]" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="font-bold text-slate-700">Category</Label>
+                      <Select value={newQuestion.category} onValueChange={v => setNewQuestion({...newQuestion, category: v})}>
+                        <SelectTrigger className="border-2 border-slate-200"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="font-bold text-slate-700">Priority</Label>
+                      <Select value={newQuestion.priority} onValueChange={v => setNewQuestion({...newQuestion, priority: v})}>
+                        <SelectTrigger className="border-2 border-slate-200"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="When You Get To It">⚪ When You Get To It</SelectItem>
+                          <SelectItem value="Normal">🔵 Normal</SelectItem>
+                          <SelectItem value="Urgent">🔥 Urgent</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="font-bold text-slate-700">Card Color Accent</Label>
+                    <div className="flex gap-2">
+                      {['#24C4D6', '#C8A4F2', '#F472B6', '#FBBF24', '#34D399', '#94A3B8'].map(color => (
+                        <button key={color} onClick={() => setNewQuestion({...newQuestion, card_color: color})} className={`w-8 h-8 rounded-full border-2 ${newQuestion.card_color === color ? 'border-slate-800 scale-110' : 'border-transparent'}`} style={{ backgroundColor: color }} />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="ghost" onClick={() => setIsAskModalOpen(false)}>Cancel</Button>
+                  <Button onClick={handleAskSubmit} disabled={!newQuestion.title || createMutation.isPending} className="bg-[#24C4D6] hover:bg-[#1db0c0] text-white">Create Ticket</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
-        <FilterSection />
+        {/* Board / List View */}
+        {isLoading ? (
+          <div className="flex justify-center p-12"><Loader2 className="w-8 h-8 animate-spin text-[#24C4D6]" /></div>
+        ) : viewMode === 'kanban' ? (
+          <div className="flex gap-6 overflow-x-auto pb-4 snap-x">
+            {KANBAN_COLUMNS.map(col => {
+              const colItems = filteredItems.filter(item => mapStatus(item.status) === col.id);
+              if (col.id === 'Done' && isDoneCollapsed) {
+                return (
+                  <div key={col.id} className="min-w-[60px] max-w-[60px] bg-slate-100/50 rounded-2xl border-2 border-slate-200 border-dashed flex flex-col items-center py-4 cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => setIsDoneCollapsed(false)}>
+                    <div className="rotate-90 whitespace-nowrap font-bold text-slate-500 mt-10 tracking-widest uppercase">{col.label} ({colItems.length})</div>
+                  </div>
+                );
+              }
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 bg-white/10 p-1 rounded-xl h-14 shadow-md">
-            <TabsTrigger 
-              value="from_pixel" 
-              className="rounded-lg text-white data-[state=active]:bg-white data-[state=active]:text-[#2D1B69] font-bold text-sm md:text-base h-full relative transition-all"
-            >
-              <Inbox className="w-5 h-5 mr-2 opacity-70" />
-              📥 From Pixel Poster
-              {unreadFromPixel > 0 && (
-                <Badge className="absolute -top-2 -right-2 bg-[#24C4D6] text-white border-white shadow-sm">
-                  {unreadFromPixel}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger 
-              value="my_questions" 
-              className="rounded-lg text-white data-[state=active]:bg-white data-[state=active]:text-[#2D1B69] font-bold text-sm md:text-base h-full relative transition-all"
-            >
-              <MessageSquare className="w-5 h-5 mr-2 opacity-70" />
-              💬 My Questions
-              {unreadMyQuestions > 0 && (
-                <Badge className="absolute -top-2 -right-2 bg-[#24C4D6] text-white border-white shadow-sm">
-                  {unreadMyQuestions}
-                </Badge>
-              )}
-            </TabsTrigger>
-          </TabsList>
-
-          <div className="mt-8">
-            <TabsContent value="from_pixel" className="focus:outline-none">
-              {isLoading ? (
-                <div className="text-center p-12 text-white/50 flex flex-col items-center"><Loader2 className="w-8 h-8 animate-spin mb-2" />Loading board...</div>
-              ) : filterAndSort(fromPixel).length === 0 ? (
-                <div className="text-center p-12 bg-white/5 rounded-2xl border border-white/10 text-white/70">
-                  <Inbox className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>No messages matching your filters.</p>
+              return (
+                <div key={col.id} className="min-w-[280px] max-w-[280px] w-[280px] flex flex-col gap-3 snap-start">
+                  <div className="flex items-center justify-between pb-2 border-b-2 border-slate-200">
+                    <h3 className="font-bold text-slate-700">{col.label}</h3>
+                    <Badge variant="secondary" className="bg-slate-200 text-slate-600 border-0">{colItems.length}</Badge>
+                  </div>
+                  {col.id === 'Done' && (
+                    <Button variant="ghost" size="sm" className="w-full text-xs text-slate-500 -mt-2" onClick={() => setIsDoneCollapsed(true)}>Minimize</Button>
+                  )}
+                  <div className="flex flex-col gap-3 overflow-y-auto max-h-[70vh] custom-scrollbar pr-1 pb-4">
+                    {colItems.map(item => <TicketCard key={item.id} item={item} />)}
+                    {colItems.length === 0 && <div className="text-sm text-slate-400 text-center py-6 border-2 border-dashed border-slate-200 rounded-xl">Empty</div>}
+                  </div>
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filterAndSort(fromPixel).map(item => <BoardCard key={item.id} item={item} isFromPixel={true} />)}
-                </div>
-              )}
-            </TabsContent>
-
-            <TabsContent value="my_questions" className="focus:outline-none">
-              {waitingToSend.length > 0 && activeFilter === 'All' && !searchQuery && (
-                <div className="mb-8 flex flex-col items-center justify-center p-6 bg-white/10 border border-white/20 rounded-2xl shadow-lg">
-                  <p className="text-white/80 font-medium mb-3 text-sm">
-                    {waitingToSend.length} {waitingToSend.length === 1 ? 'question' : 'questions'} waiting to send
-                  </p>
-                  <Button 
-                    onClick={handleSendBatch}
-                    className="bg-[#24C4D6] hover:bg-[#1EABC0] text-white font-bold px-8 py-6 rounded-full shadow-[0_0_20px_rgba(36,196,214,0.4)] hover:shadow-[0_0_30px_rgba(36,196,214,0.6)] hover:scale-105 transition-all text-lg"
-                  >
-                    <CheckCircle2 className="w-6 h-6 mr-2" /> 
-                    I'm Done — Send to Pixel Poster
-                  </Button>
-                </div>
-              )}
-
-              {isLoading ? (
-                <div className="text-center p-12 text-white/50 flex flex-col items-center"><Loader2 className="w-8 h-8 animate-spin mb-2" />Loading board...</div>
-              ) : filterAndSort(myQuestions).length === 0 ? (
-                <div className="text-center p-12 bg-white/5 rounded-2xl border border-white/10 text-white/70">
-                  <MessageSquare className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>No questions matching your filters.</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filterAndSort(myQuestions).map(item => <BoardCard key={item.id} item={item} isFromPixel={false} />)}
-                </div>
-              )}
-            </TabsContent>
+              );
+            })}
           </div>
-        </Tabs>
+        ) : (
+          <div className="bg-white rounded-2xl border-2 border-slate-200 shadow-sm overflow-hidden">
+            <div className="grid grid-cols-12 gap-4 p-4 font-bold text-slate-500 border-b-2 border-slate-100 text-sm">
+              <div className="col-span-5">Title</div>
+              <div className="col-span-2">Status</div>
+              <div className="col-span-2">Category</div>
+              <div className="col-span-2">Priority</div>
+              <div className="col-span-1">Turn</div>
+            </div>
+            <div className="flex flex-col">
+              {filteredItems.map(item => {
+                const s = mapStatus(item.status);
+                const turn = getTurnIndicator(item);
+                const pConf = priorityConfig[item.priority] || priorityConfig['Normal'];
+                return (
+                  <div key={item.id} onClick={() => setSelectedItem(item)} className="grid grid-cols-12 gap-4 p-4 items-center border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors">
+                    <div className="col-span-5 font-bold text-slate-800 truncate pr-4">{item.title}</div>
+                    <div className="col-span-2"><Badge variant="outline" className="border-slate-200 bg-white text-slate-600">{s}</Badge></div>
+                    <div className="col-span-2"><Badge variant="secondary" className="bg-slate-100 text-slate-600">{item.category}</Badge></div>
+                    <div className="col-span-2"><span className="text-sm">{pConf.emoji} {item.priority}</span></div>
+                    <div className="col-span-1 text-sm font-medium text-slate-500">{turn ? turn.split(' ')[0] : '-'}</div>
+                  </div>
+                );
+              })}
+              {filteredItems.length === 0 && <div className="p-8 text-center text-slate-500">No tickets found.</div>}
+            </div>
+          </div>
+        )}
+
+        {/* Thread Panel */}
+        <Sheet open={!!selectedItem} onOpenChange={(open) => !open && setSelectedItem(null)}>
+          <SheetContent className="w-full sm:max-w-2xl md:max-w-3xl overflow-y-auto bg-slate-50 p-0 border-l-2 border-slate-200">
+            {selectedItem && (
+              <div className="flex flex-col h-full">
+                {/* Header */}
+                <div className="p-6 bg-white border-b-2 border-slate-200 sticky top-0 z-10">
+                  <div className="flex items-start justify-between gap-4 mb-4 pr-8">
+                    <h2 className="text-2xl font-bold text-slate-800 leading-tight">{selectedItem.title}</h2>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <Select value={mapStatus(selectedItem.status)} onValueChange={(v) => updateStatus(selectedItem.id, v)}>
+                      <SelectTrigger className="w-[160px] border-2 border-slate-200 bg-white font-bold h-9">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {KANBAN_COLUMNS.map(c => <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <Badge variant="secondary" className="bg-slate-100 text-slate-600 border-0">{selectedItem.category}</Badge>
+                    <span className="text-sm text-slate-500 ml-auto">Opened {moment(selectedItem.created_date).fromNow()}</span>
+                  </div>
+                </div>
+
+                {/* Thread Body */}
+                <div className="flex-1 p-6 space-y-6">
+                  {/* Details Bubble */}
+                  {selectedItem.details && (
+                    <div className="flex flex-col items-center mb-8">
+                      <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Original Context</span>
+                      <div className="bg-white p-5 rounded-2xl border-2 border-slate-200 shadow-sm text-slate-700 whitespace-pre-wrap text-sm w-full">
+                        {selectedItem.details}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Interleaved Chat (Approximate since we only have single text fields, we will show Nikole then Daisy, or just split by paragraphs if we wanted, but sticking to fields) */}
+                  {selectedItem.nikole_response && (
+                    <div className="flex flex-col items-end">
+                      <span className="text-xs font-bold text-[#0D626C] mb-1 px-1">👤 NIKOLE</span>
+                      <div className="bg-[#24C4D6] text-white p-4 rounded-2xl rounded-tr-sm shadow-sm max-w-[85%] whitespace-pre-wrap text-sm">
+                        {selectedItem.nikole_response}
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedItem.pixel_response && (
+                    <div className="flex flex-col items-start mt-4">
+                      <span className="text-xs font-bold text-[#6B3FA0] mb-1 px-1">🤖 DAISY</span>
+                      <div className="bg-[#C8A4F2] text-slate-900 p-4 rounded-2xl rounded-tl-sm shadow-sm max-w-[85%] whitespace-pre-wrap text-sm">
+                        {selectedItem.pixel_response}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Footer Controls */}
+                <div className="p-6 bg-white border-t-2 border-slate-200 sticky bottom-0">
+                  <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Add your response</Label>
+                  <Textarea 
+                    placeholder="Type your message to Daisy..." 
+                    className="min-h-[100px] border-2 border-slate-200 focus-visible:ring-[#24C4D6] mb-3 resize-none"
+                    value={newResponse}
+                    onChange={e => setNewResponse(e.target.value)}
+                  />
+                  <div className="flex items-center justify-between">
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, 'Done')} className="border-slate-200 hover:bg-slate-100 text-slate-600"><CheckCircle2 className="w-4 h-4 mr-1" /> Done</Button>
+                      <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, 'Needs GO')} className="border-slate-200 hover:bg-orange-50 text-orange-600"><Clock className="w-4 h-4 mr-1" /> Needs GO</Button>
+                      <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, 'Hold')} className="border-slate-200 hover:bg-red-50 text-red-600"><PauseCircle className="w-4 h-4 mr-1" /> Hold</Button>
+                      <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, 'Thinking')} className="border-slate-200 hover:bg-purple-50 text-purple-600"><Brain className="w-4 h-4 mr-1" /> Thinking</Button>
+                    </div>
+                    <Button onClick={handleSendResponse} className="bg-[#24C4D6] hover:bg-[#1db0c0] text-white font-bold px-6">
+                      SEND
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </SheetContent>
+        </Sheet>
       </div>
     </div>
   );
