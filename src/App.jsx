@@ -13,6 +13,7 @@ import PixelBoard from './pages/PixelBoard';
 import MyTasks from './pages/MyTasks';
 import MyLinks from './pages/MyLinks';
 import MySheets from './pages/MySheets';
+import PromptLibrary from './pages/PromptLibrary';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -71,6 +72,11 @@ const AuthenticatedApp = () => {
       <Route path="/MySheets" element={
         <LayoutWrapper currentPageName="MySheets">
           <MySheets />
+        </LayoutWrapper>
+      } />
+      <Route path="/PromptLibrary" element={
+        <LayoutWrapper currentPageName="PromptLibrary">
+          <PromptLibrary />
         </LayoutWrapper>
       } />
       {Object.entries(Pages).map(([path, Page]) => (
