@@ -79,6 +79,9 @@
       "type": "boolean",
       "default": false
     },
+    "batch_id": {
+      "type": "string"
+    },
     "batch_ready": {
       "type": "boolean",
       "default": false
@@ -94,6 +97,14 @@
     "ready_for_daisy": {
       "type": "boolean",
       "default": false
+    },
+    "thread": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "default": []
     }
   },
   "required": [

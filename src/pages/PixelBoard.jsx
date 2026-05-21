@@ -162,20 +162,64 @@ export default function PixelBoard() {
   const handleSendResponse = () => {
     if (!newResponse.trim() || !selectedItem) return;
     
-    const currentResponses = selectedItem.nikole_response || '';
-    const separator = currentResponses ? '\n\n' : '';
+    const messageText = newResponse.trim();
+    let currentThread = selectedItem.thread || [];
+    
+    // Migration of old responses if thread is empty
+    if (currentThread.length === 0 && (selectedItem.nikole_response || selectedItem.pixel_response)) {
+      if (selectedItem.nikole_response) {
+        currentThread.push({ sender: 'nikole', message: selectedItem.nikole_response, timestamp: selectedItem.created_date });
+      }
+      if (selectedItem.pixel_response) {
+        currentThread.push({ sender: 'daisy', message: selectedItem.pixel_response, timestamp: selectedItem.updated_date || selectedItem.created_date });
+      }
+      currentThread.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    }
+    
+    const newMessage = {
+      sender: 'nikole',
+      message: messageText,
+      timestamp: new Date().toISOString()
+    };
+    
+    let newThread = [...currentThread, newMessage];
+    let updates = { nikole_read: true, pixel_read: false };
+    
+    // Auto-update status
+    if (mapStatus(selectedItem.status) === 'Needs GO') {
+      updates.status = 'In Progress';
+    }
+    
+    // Squirrel Catcher
+    const squirrelRegex = /\b(oh also|and another thing|speaking of|by the way|btw|oh wait|squirrel)\b/i;
+    const squirrelMatch = messageText.match(squirrelRegex);
+    
+    if (squirrelMatch) {
+      const tangentText = messageText.substring(squirrelMatch.index);
+      const title = tangentText.substring(0, 60) + (tangentText.length > 60 ? '...' : '');
+      
+      createMutation.mutate({
+        title,
+        details: tangentText,
+        category: selectedItem.category,
+        priority: 'Normal',
+        card_color: '#24C4D6'
+      });
+      
+      newThread.push({
+        sender: 'system',
+        message: `→ New card created: ${title}`,
+        timestamp: new Date().toISOString()
+      });
+    }
+    
+    updates.thread = newThread;
     
     updateMutation.mutate({ 
       id: selectedItem.id, 
-      data: { 
-        nikole_response: currentResponses + separator + newResponse,
-        status: 'Thinking',
-        nikole_read: true,
-        pixel_read: false
-      } 
+      data: updates 
     });
     setNewResponse('');
-    toast.success("Response sent!");
   };
 
   const updateStatus = (id, newStatus) => {
@@ -189,6 +233,12 @@ export default function PixelBoard() {
     const pConf = priorityConfig[item.priority] || priorityConfig['Normal'];
     const isUrgent = item.priority === 'Urgent';
     const borderColor = item.card_color || '#e2e8f0'; // fallback to light grey if no color
+    
+    const hasMention = useMemo(() => {
+      const th = item.thread || [];
+      const text = th.filter(m => m.sender === 'nikole').map(m => m.message).join(' ') + ' ' + (item.nikole_response || '');
+      return /@\w+/.test(text) || /\b(Naomi|Suzy|Carlos|Gwen)\b/i.test(text);
+    }, [item.thread, item.nikole_response]);
 
     return (
       <Card 
@@ -204,6 +254,7 @@ export default function PixelBoard() {
         <CardContent className="p-4 flex flex-col gap-3 w-full">
           <div className="flex justify-between items-start gap-2">
             <h4 className={`font-bold text-[15px] ${isDone ? 'line-through text-slate-500' : 'text-slate-800'} leading-tight break-words whitespace-normal min-w-0 flex-1 block`}>{item.title || 'Untitled Ticket'}</h4>
+            {hasMention && <div className="text-lg" title="Involves external person">👤</div>}
           </div>
           
           <div className="flex flex-wrap gap-1.5 items-center">
@@ -603,28 +654,68 @@ export default function PixelBoard() {
                     </div>
                   )}
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Nikole's Response Area */}
-                    <div className="flex flex-col">
-                      <Label className="text-xs font-bold text-[#0D626C] mb-2 px-1 uppercase tracking-wider">👤 NIKOLE'S RESPONSE</Label>
+                  {/* Thread Area */}
+                  <div className="flex flex-col bg-white border-2 border-slate-200 rounded-2xl shadow-sm overflow-hidden h-[400px]">
+                    <div className="flex-1 p-4 overflow-y-auto space-y-4 custom-scrollbar bg-slate-50">
+                      {(() => {
+                        let th = selectedItem.thread || [];
+                        if (th.length === 0 && (selectedItem.nikole_response || selectedItem.pixel_response)) {
+                          th = [];
+                          if (selectedItem.nikole_response) th.push({ sender: 'nikole', message: selectedItem.nikole_response, timestamp: selectedItem.created_date });
+                          if (selectedItem.pixel_response) th.push({ sender: 'daisy', message: selectedItem.pixel_response, timestamp: selectedItem.updated_date || selectedItem.created_date });
+                          th.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+                        }
+                        
+                        if (th.length === 0) {
+                          return <div className="text-center text-slate-400 text-sm mt-10">No messages yet. Start the conversation!</div>;
+                        }
+
+                        return th.map((msg, i) => {
+                          if (msg.sender === 'system') {
+                            return (
+                              <div key={i} className="flex justify-center my-2">
+                                <span className="bg-slate-200 text-slate-500 text-xs px-3 py-1 rounded-full font-medium">
+                                  {msg.message}
+                                </span>
+                              </div>
+                            );
+                          }
+
+                          const isNikole = msg.sender === 'nikole';
+                          return (
+                            <div key={i} className={`flex flex-col ${isNikole ? 'items-start' : 'items-end'}`}>
+                              <span className="text-[10px] font-bold text-slate-400 mb-1 px-1">
+                                {isNikole ? '👤 NIKOLE' : '🤖 DAISY'} • {moment(msg.timestamp).format('MMM D, h:mm A')}
+                              </span>
+                              <div className={`p-3 rounded-2xl max-w-[85%] whitespace-pre-wrap text-sm shadow-sm ${
+                                isNikole 
+                                  ? 'bg-[#e8fffe] text-[#0D626C] rounded-tl-sm border border-[#24C4D6]/20' 
+                                  : 'bg-[#f0f0f0] text-slate-800 rounded-tr-sm border border-slate-200'
+                              }`}>
+                                {msg.message}
+                              </div>
+                            </div>
+                          );
+                        });
+                      })()}
+                    </div>
+                    
+                    <div className="p-3 bg-white border-t border-slate-200 flex gap-2 items-end">
                       <Textarea 
-                        defaultValue={selectedItem.nikole_response || ''}
-                        className="min-h-[200px] border-2 border-[#24C4D6]/30 bg-[#24C4D6]/5 focus-visible:ring-[#24C4D6] resize-y text-slate-800"
-                        onBlur={(e) => {
-                          if (e.target.value !== selectedItem.nikole_response) {
-                            updateMutation.mutate({ id: selectedItem.id, data: { nikole_response: e.target.value, nikole_read: true, pixel_read: false } });
-                            toast.success("Nikole's response saved!");
+                        value={newResponse}
+                        onChange={e => setNewResponse(e.target.value)}
+                        placeholder="Message Daisy... (e.g. 'oh wait, also check...')"
+                        className="min-h-[44px] max-h-[120px] border-slate-200 focus-visible:ring-[#24C4D6] resize-none"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSendResponse();
                           }
                         }}
                       />
-                    </div>
-
-                    {/* Daisy's Response Area */}
-                    <div className="flex flex-col">
-                      <Label className="text-xs font-bold text-[#6B3FA0] mb-2 px-1 uppercase tracking-wider">🤖 DAISY'S RESPONSE</Label>
-                      <div className="flex-1 min-h-[200px] p-4 bg-[#C8A4F2]/10 border-2 border-[#C8A4F2]/30 rounded-md whitespace-pre-wrap text-sm text-slate-800 custom-scrollbar overflow-y-auto">
-                        {selectedItem.pixel_response || <span className="text-slate-400 italic">Waiting for Daisy to respond...</span>}
-                      </div>
+                      <Button onClick={handleSendResponse} className="bg-[#24C4D6] hover:bg-[#1db0c0] text-white shrink-0 h-[44px]">
+                        Send 💬
+                      </Button>
                     </div>
                   </div>
                 </div>
