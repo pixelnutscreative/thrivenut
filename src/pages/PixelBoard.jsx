@@ -11,13 +11,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { toast } from 'sonner';
-import { Plus, Search, Loader2, LayoutGrid, List as ListIcon, ChevronRight, ChevronDown, CheckCircle2, PauseCircle, Clock, Brain } from 'lucide-react';
+import { Plus, Search, Loader2, LayoutGrid, List as ListIcon, ChevronRight, ChevronDown, CheckCircle2, PauseCircle, Clock, Brain, Paperclip, X } from 'lucide-react';
 import moment from 'moment';
 
 const KANBAN_COLUMNS = [
   { id: 'New', label: '💬 New' },
   { id: 'Thinking', label: '🤔 Thinking' },
   { id: 'Needs GO', label: '⏳ Needs GO' },
+  { id: 'Waiting on Daisy', label: '⏳ Waiting on Daisy' },
   { id: 'In Progress', label: '🔄 In Progress' },
   { id: 'Hold', label: '⏸️ Hold' },
   { id: 'Done', label: '✅ Done' }
@@ -36,7 +37,7 @@ const priorityConfig = {
 const CATEGORIES = ["ThriveNut", "Personal", "Projects", "Pixel Tours", "Websites", "Offers", "AI Tools", "Social Media", "Other"];
 
 const mapStatus = (s) => {
-  if (['New', 'Thinking', 'Needs GO', 'In Progress', 'Hold', 'Done'].includes(s)) return s;
+  if (['New', 'Thinking', 'Needs GO', 'Waiting on Daisy', 'In Progress', 'Hold', 'Done'].includes(s)) return s;
   if (s === 'Unanswered') return 'New';
   if (s === 'Answered') return 'Needs GO';
   if (s === 'Reviewed') return 'Done';
@@ -77,6 +78,9 @@ export default function PixelBoard() {
   const [batchSelectedIds, setBatchSelectedIds] = useState([]);
   const [isDoneCollapsed, setIsDoneCollapsed] = useState(true);
   const [newResponse, setNewResponse] = useState('');
+  const [newImage, setNewImage] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = React.useRef(null);
   
   const [newQuestion, setNewQuestion] = useState({
     title: '',
@@ -122,7 +126,6 @@ export default function PixelBoard() {
 
   const handleSendBatch = async () => {
     if (batchSelectedIds.length === 0) return;
-    const batchId = new Date().toISOString();
     
     const loadingToastId = toast.loading("Sending batch...");
     try {
@@ -130,13 +133,16 @@ export default function PixelBoard() {
         base44.entities.PixelBoard.update(id, {
           ready_for_daisy: true,
           batch_ready: true,
-          batch_id: batchId
+          status: 'Waiting on Daisy',
+          batch_id: null
         })
       ));
       queryClient.invalidateQueries({ queryKey: ['pixelBoard'] });
+      
+      const count = batchSelectedIds.length;
       setBatchSelectedIds([]);
       toast.dismiss(loadingToastId);
-      toast.success("🚀 Sent! Daisy's on it.");
+      toast.success(`🚀 ${count} cards sent to Daisy!`);
     } catch (err) {
       toast.dismiss(loadingToastId);
       toast.error("Failed to send batch.");
@@ -159,8 +165,22 @@ export default function PixelBoard() {
     createMutation.mutate(newQuestion);
   };
 
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploading(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      setNewImage(file_url);
+    } catch (error) {
+      toast.error('Upload failed');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handleSendResponse = () => {
-    if (!newResponse.trim() || !selectedItem) return;
+    if ((!newResponse.trim() && !newImage) || !selectedItem) return;
     
     const messageText = newResponse.trim();
     let currentThread = selectedItem.thread || [];
@@ -179,6 +199,7 @@ export default function PixelBoard() {
     const newMessage = {
       sender: 'nikole',
       message: messageText,
+      image_url: newImage,
       timestamp: new Date().toISOString()
     };
     
@@ -220,6 +241,7 @@ export default function PixelBoard() {
       data: updates 
     });
     setNewResponse('');
+    setNewImage(null);
   };
 
   const updateStatus = (id, newStatus) => {
@@ -693,6 +715,11 @@ export default function PixelBoard() {
                                   : 'bg-[#f0f0f0] text-slate-800 rounded-tr-sm border border-slate-200'
                               }`}>
                                 {msg.message}
+                                {msg.image_url && (
+                                  <div className={msg.message ? 'mt-2' : ''}>
+                                    <img src={msg.image_url} alt="Attached" className="max-w-full rounded-md border border-black/10 max-h-64 object-contain" />
+                                  </div>
+                                )}
                               </div>
                             </div>
                           );
@@ -700,7 +727,36 @@ export default function PixelBoard() {
                       })()}
                     </div>
                     
+                    {newImage && (
+                      <div className="px-4 py-2 bg-white border-t border-slate-200">
+                        <div className="relative inline-block">
+                          <img src={newImage} alt="Upload preview" className="h-20 rounded-md border border-slate-200 object-cover" />
+                          <button 
+                            onClick={() => setNewImage(null)}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 shadow-sm"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
                     <div className="p-3 bg-white border-t border-slate-200 flex gap-2 items-end">
+                      <input 
+                        type="file" 
+                        ref={fileInputRef} 
+                        className="hidden" 
+                        accept="image/png, image/jpeg, image/gif, image/webp"
+                        onChange={handleImageUpload}
+                      />
+                      <Button 
+                        variant="outline" 
+                        size="icon" 
+                        className="shrink-0 h-[44px] w-[44px] border-slate-200 hover:bg-slate-100"
+                        disabled={isUploading}
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        {isUploading ? <Loader2 className="w-4 h-4 animate-spin text-slate-500" /> : <Paperclip className="w-4 h-4 text-slate-500" />}
+                      </Button>
                       <Textarea 
                         value={newResponse}
                         onChange={e => setNewResponse(e.target.value)}
