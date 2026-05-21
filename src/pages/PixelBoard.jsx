@@ -334,6 +334,7 @@ export default function PixelBoard() {
                 <span className="font-bold text-[#0D626C]">📦 {items.filter(i => i.in_batch).length} cards in batch</span>
                 <Button 
                   onClick={async () => {
+                    const loadingId = toast.loading("Sending to Daisy...");
                     try {
                       const res = await fetch('https://pixel-poster-9e462e4f.base44.app/functions/sendItBatch', {
                         method: 'POST',
@@ -341,9 +342,11 @@ export default function PixelBoard() {
                         body: JSON.stringify({})
                       });
                       const data = await res.json();
-                      alert(data.message || 'Sent to Daisy!');
+                      toast.dismiss(loadingId);
+                      toast.success(data.message || 'Sent to Daisy!');
                     } catch(e) {
-                      alert('Error: ' + e.message);
+                      toast.dismiss(loadingId);
+                      toast.error('Error: ' + e.message);
                     }
                   }} 
                   className="bg-[#24C4D6] hover:bg-[#1db0c0] text-white font-bold shadow-md hover:shadow-lg transition-all"
