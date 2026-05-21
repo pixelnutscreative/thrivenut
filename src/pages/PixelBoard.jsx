@@ -154,6 +154,8 @@ export default function PixelBoard() {
     const isDone = s === 'Done';
     const turn = getTurnIndicator(item);
     const pConf = priorityConfig[item.priority] || priorityConfig['Normal'];
+    const isUrgent = item.priority === 'Urgent';
+    const borderColor = item.card_color || '#e2e8f0'; // fallback to light grey if no color
 
     return (
       <Card 
@@ -163,17 +165,18 @@ export default function PixelBoard() {
             updateMutation.mutate({ id: item.id, data: { nikole_read: true } });
           }
         }}
-        className={`cursor-pointer transition-all duration-200 border-2 ${isDone ? 'bg-slate-50 border-slate-200 opacity-70' : 'bg-white border-slate-100 hover:border-[#24C4D6]/50 hover:shadow-md'} overflow-hidden relative`}
-        style={{ borderLeftColor: !isDone && item.card_color ? item.card_color : undefined, borderLeftWidth: !isDone && item.card_color ? '6px' : undefined }}
+        className={`cursor-pointer transition-all duration-200 border-2 ${isDone ? 'bg-slate-50 border-slate-200 opacity-70' : 'bg-white border-slate-200 hover:border-[#24C4D6]/50 hover:shadow-md'} overflow-hidden relative ${isUrgent && !isDone ? 'ring-2 ring-red-500 shadow-[0_0_10px_rgba(239,68,68,0.2)]' : ''}`}
+        style={{ borderLeftColor: !isDone ? (isUrgent ? '#EF4444' : borderColor) : undefined, borderLeftWidth: !isDone ? '8px' : undefined }}
       >
         <CardContent className="p-4 flex flex-col gap-3">
           <div className="flex justify-between items-start gap-2">
-            <h4 className={`font-bold text-sm ${isDone ? 'line-through text-slate-500' : 'text-slate-800'} leading-tight`}>{item.title}</h4>
+            <h4 className={`font-bold text-sm ${isDone ? 'line-through text-slate-500' : 'text-slate-800'} leading-tight break-words whitespace-normal min-w-0 flex-1`}>{item.title || 'Untitled Ticket'}</h4>
           </div>
           
           <div className="flex flex-wrap gap-1.5 items-center">
             <Badge variant="secondary" className="text-[10px] bg-slate-100 text-slate-600 hover:bg-slate-200">{item.category}</Badge>
             <Badge variant="outline" className={`text-[10px] ${pConf.color} border-0`}>{pConf.emoji} {item.priority}</Badge>
+            {s !== 'New' && <Badge variant="outline" className="text-[10px] bg-white border-slate-200 text-slate-500">{s}</Badge>}
           </div>
 
           {turn && !isDone && (
@@ -376,87 +379,184 @@ export default function PixelBoard() {
           </div>
         )}
 
-        {/* Thread Panel */}
-        <Sheet open={!!selectedItem} onOpenChange={(open) => !open && setSelectedItem(null)}>
-          <SheetContent className="w-full sm:max-w-2xl md:max-w-3xl overflow-y-auto bg-slate-50 p-0 border-l-2 border-slate-200">
+        {/* Thread Panel Modal */}
+        <Dialog open={!!selectedItem} onOpenChange={(open) => {
+          if (!open) {
+            setSelectedItem(null);
+          }
+        }}>
+          <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-hidden flex flex-col p-0 bg-slate-50">
             {selectedItem && (
-              <div className="flex flex-col h-full">
+              <div className="flex flex-col h-full overflow-hidden">
                 {/* Header */}
-                <div className="p-6 bg-white border-b-2 border-slate-200 sticky top-0 z-10">
-                  <div className="flex items-start justify-between gap-4 mb-4 pr-8">
+                <div className="p-6 bg-white border-b-2 border-slate-200 flex-shrink-0">
+                  <div className="flex items-start justify-between gap-4 mb-4">
                     <h2 className="text-2xl font-bold text-slate-800 leading-tight">{selectedItem.title}</h2>
                   </div>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <Select value={mapStatus(selectedItem.status)} onValueChange={(v) => updateStatus(selectedItem.id, v)}>
-                      <SelectTrigger className="w-[160px] border-2 border-slate-200 bg-white font-bold h-9">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {KANBAN_COLUMNS.map(c => <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                    <Badge variant="secondary" className="bg-slate-100 text-slate-600 border-0">{selectedItem.category}</Badge>
-                    <span className="text-sm text-slate-500 ml-auto">Opened {moment(selectedItem.created_date).fromNow()}</span>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-center">
+                    <div className="space-y-1">
+                      <Label className="text-xs font-bold text-slate-500">Status</Label>
+                      <Select value={mapStatus(selectedItem.status)} onValueChange={(v) => updateStatus(selectedItem.id, v)}>
+                        <SelectTrigger className="w-full border-2 border-slate-200 bg-white font-bold h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {KANBAN_COLUMNS.map(c => <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="space-y-1">
+                      <Label className="text-xs font-bold text-slate-500">Priority</Label>
+                      <Select value={selectedItem.priority || 'Normal'} onValueChange={(v) => updateMutation.mutate({ id: selectedItem.id, data: { priority: v } })}>
+                        <SelectTrigger className="w-full border-2 border-slate-200 bg-white font-bold h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="When You Get To It">⚪ When You Get To It</SelectItem>
+                          <SelectItem value="Normal">🔵 Normal</SelectItem>
+                          <SelectItem value="Medium">🟡 Medium</SelectItem>
+                          <SelectItem value="High">🟠 High</SelectItem>
+                          <SelectItem value="Critical">🔴 Critical</SelectItem>
+                          <SelectItem value="Urgent">🔥 Urgent</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label className="text-xs font-bold text-slate-500">Category</Label>
+                      <Select value={selectedItem.category || 'Other'} onValueChange={(v) => updateMutation.mutate({ id: selectedItem.id, data: { category: v } })}>
+                        <SelectTrigger className="w-full border-2 border-slate-200 bg-white font-bold h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="space-y-1">
+                      <Label className="text-xs font-bold text-slate-500">Card Color</Label>
+                      <div className="flex gap-1 h-9 items-center">
+                        {['#ffffff', '#24C4D6', '#C8A4F2', '#F472B6', '#FBBF24', '#34D399'].map(color => (
+                          <button 
+                            key={color} 
+                            onClick={() => updateMutation.mutate({ id: selectedItem.id, data: { card_color: color } })} 
+                            className={`w-6 h-6 rounded-full border-2 ${selectedItem.card_color === color ? 'border-slate-800 scale-110' : 'border-slate-300'}`} 
+                            style={{ backgroundColor: color }} 
+                          />
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                {/* Thread Body */}
-                <div className="flex-1 p-6 space-y-6">
-                  {/* Details Bubble */}
+                {/* Body (Scrollable) */}
+                <div className="flex-1 p-6 space-y-6 overflow-y-auto">
+                  {/* Custom Fields Section */}
+                  <div className="bg-white p-5 rounded-2xl border-2 border-slate-200 shadow-sm">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wider">Custom Fields</h3>
+                      <Button variant="outline" size="sm" onClick={() => {
+                        const key = window.prompt("Enter new field name (e.g., Email Draft, GHL Tag):");
+                        if (key && key.trim()) {
+                          const val = window.prompt(`Enter value for ${key}:`);
+                          if (val !== null) {
+                            const newFields = { ...(selectedItem.custom_fields || {}), [key.trim()]: val };
+                            updateMutation.mutate({ id: selectedItem.id, data: { custom_fields: newFields } });
+                          }
+                        }
+                      }}>
+                        <Plus className="w-4 h-4 mr-1" /> Add Field
+                      </Button>
+                    </div>
+                    {selectedItem.custom_fields && Object.keys(selectedItem.custom_fields).length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {Object.entries(selectedItem.custom_fields).map(([k, v]) => (
+                          <div key={k} className="flex flex-col gap-1 p-3 bg-slate-50 rounded-xl border border-slate-200 relative group">
+                            <span className="text-xs font-bold text-slate-500 uppercase">{k}</span>
+                            <div className="flex items-center gap-2">
+                              <Input 
+                                defaultValue={v}
+                                className="h-8 text-sm border-transparent bg-transparent hover:border-slate-300 focus:bg-white transition-all px-1"
+                                onBlur={(e) => {
+                                  if (e.target.value !== v) {
+                                    const newFields = { ...selectedItem.custom_fields, [k]: e.target.value };
+                                    updateMutation.mutate({ id: selectedItem.id, data: { custom_fields: newFields } });
+                                  }
+                                }}
+                              />
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-8 px-2 text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                                onClick={() => {
+                                  const newFields = { ...selectedItem.custom_fields };
+                                  delete newFields[k];
+                                  updateMutation.mutate({ id: selectedItem.id, data: { custom_fields: newFields } });
+                                }}
+                              >
+                                Delete
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-sm text-slate-400 text-center py-4 border-2 border-dashed border-slate-100 rounded-xl">No custom fields added yet.</div>
+                    )}
+                  </div>
+
+                  {/* Details */}
                   {selectedItem.details && (
-                    <div className="flex flex-col items-center mb-8">
-                      <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Original Context</span>
-                      <div className="bg-white p-5 rounded-2xl border-2 border-slate-200 shadow-sm text-slate-700 whitespace-pre-wrap text-sm w-full">
+                    <div className="bg-white p-5 rounded-2xl border-2 border-slate-200 shadow-sm">
+                      <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Original Context / Details</Label>
+                      <div className="text-slate-700 whitespace-pre-wrap text-sm w-full">
                         {selectedItem.details}
                       </div>
                     </div>
                   )}
 
-                  {/* Interleaved Chat (Approximate since we only have single text fields, we will show Nikole then Daisy, or just split by paragraphs if we wanted, but sticking to fields) */}
-                  {selectedItem.nikole_response && (
-                    <div className="flex flex-col items-end">
-                      <span className="text-xs font-bold text-[#0D626C] mb-1 px-1">👤 NIKOLE</span>
-                      <div className="bg-[#24C4D6] text-white p-4 rounded-2xl rounded-tr-sm shadow-sm max-w-[85%] whitespace-pre-wrap text-sm">
-                        {selectedItem.nikole_response}
-                      </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Nikole's Response Area */}
+                    <div className="flex flex-col">
+                      <Label className="text-xs font-bold text-[#0D626C] mb-2 px-1 uppercase tracking-wider">👤 NIKOLE'S RESPONSE</Label>
+                      <Textarea 
+                        defaultValue={selectedItem.nikole_response || ''}
+                        className="min-h-[200px] border-2 border-[#24C4D6]/30 bg-[#24C4D6]/5 focus-visible:ring-[#24C4D6] resize-y text-slate-800"
+                        onBlur={(e) => {
+                          if (e.target.value !== selectedItem.nikole_response) {
+                            updateMutation.mutate({ id: selectedItem.id, data: { nikole_response: e.target.value, nikole_read: true, pixel_read: false } });
+                            toast.success("Nikole's response saved!");
+                          }
+                        }}
+                      />
                     </div>
-                  )}
 
-                  {selectedItem.pixel_response && (
-                    <div className="flex flex-col items-start mt-4">
-                      <span className="text-xs font-bold text-[#6B3FA0] mb-1 px-1">🤖 DAISY</span>
-                      <div className="bg-[#C8A4F2] text-slate-900 p-4 rounded-2xl rounded-tl-sm shadow-sm max-w-[85%] whitespace-pre-wrap text-sm">
-                        {selectedItem.pixel_response}
+                    {/* Daisy's Response Area */}
+                    <div className="flex flex-col">
+                      <Label className="text-xs font-bold text-[#6B3FA0] mb-2 px-1 uppercase tracking-wider">🤖 DAISY'S RESPONSE</Label>
+                      <div className="flex-1 min-h-[200px] p-4 bg-[#C8A4F2]/10 border-2 border-[#C8A4F2]/30 rounded-md whitespace-pre-wrap text-sm text-slate-800 custom-scrollbar overflow-y-auto">
+                        {selectedItem.pixel_response || <span className="text-slate-400 italic">Waiting for Daisy to respond...</span>}
                       </div>
                     </div>
-                  )}
+                  </div>
                 </div>
 
                 {/* Footer Controls */}
-                <div className="p-6 bg-white border-t-2 border-slate-200 sticky bottom-0">
-                  <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Add your response</Label>
-                  <Textarea 
-                    placeholder="Type your message to Daisy..." 
-                    className="min-h-[100px] border-2 border-slate-200 focus-visible:ring-[#24C4D6] mb-3 resize-none"
-                    value={newResponse}
-                    onChange={e => setNewResponse(e.target.value)}
-                  />
-                  <div className="flex items-center justify-between">
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, 'Done')} className="border-slate-200 hover:bg-slate-100 text-slate-600"><CheckCircle2 className="w-4 h-4 mr-1" /> Done</Button>
-                      <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, 'Needs GO')} className="border-slate-200 hover:bg-orange-50 text-orange-600"><Clock className="w-4 h-4 mr-1" /> Needs GO</Button>
-                      <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, 'Hold')} className="border-slate-200 hover:bg-red-50 text-red-600"><PauseCircle className="w-4 h-4 mr-1" /> Hold</Button>
-                      <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, 'Thinking')} className="border-slate-200 hover:bg-purple-50 text-purple-600"><Brain className="w-4 h-4 mr-1" /> Thinking</Button>
-                    </div>
-                    <Button onClick={handleSendResponse} className="bg-[#24C4D6] hover:bg-[#1db0c0] text-white font-bold px-6">
-                      SEND
-                    </Button>
+                <div className="p-4 bg-white border-t-2 border-slate-200 flex-shrink-0 flex items-center justify-between">
+                  <span className="text-sm text-slate-500">Opened {moment(selectedItem.created_date).fromNow()}</span>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, 'Done')} className="border-slate-200 hover:bg-slate-100 text-slate-600"><CheckCircle2 className="w-4 h-4 mr-1" /> Done</Button>
+                    <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, 'Needs GO')} className="border-slate-200 hover:bg-orange-50 text-orange-600"><Clock className="w-4 h-4 mr-1" /> Needs GO</Button>
+                    <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, 'Hold')} className="border-slate-200 hover:bg-red-50 text-red-600"><PauseCircle className="w-4 h-4 mr-1" /> Hold</Button>
+                    <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, 'Thinking')} className="border-slate-200 hover:bg-purple-50 text-purple-600"><Brain className="w-4 h-4 mr-1" /> Thinking</Button>
                   </div>
                 </div>
               </div>
             )}
-          </SheetContent>
-        </Sheet>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

@@ -86,6 +86,10 @@
     "pinned": {
       "type": "boolean",
       "default": false
+    },
+    "custom_fields": {
+      "type": "object",
+      "additionalProperties": true
     }
   },
   "required": [
