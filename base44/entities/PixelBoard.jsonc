@@ -79,6 +79,10 @@
       "type": "boolean",
       "default": false
     },
+    "in_batch": {
+      "type": "boolean",
+      "default": false
+    },
     "batch_id": {
       "type": "string"
     },

@@ -75,7 +75,6 @@ export default function PixelBoard() {
   const [needsMeFilter, setNeedsMeFilter] = useState(true);
   const [isAskModalOpen, setIsAskModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
-  const [batchSelectedIds, setBatchSelectedIds] = useState([]);
   const [isDoneCollapsed, setIsDoneCollapsed] = useState(true);
   const [newResponse, setNewResponse] = useState('');
   const [newImage, setNewImage] = useState(null);
@@ -125,27 +124,41 @@ export default function PixelBoard() {
   });
 
   const handleSendBatch = async () => {
-    if (batchSelectedIds.length === 0) return;
+    const batchedItems = items.filter(i => i.in_batch);
+    if (batchedItems.length === 0) return;
     
     const loadingToastId = toast.loading("Sending batch...");
     try {
-      await Promise.all(batchSelectedIds.map(id => 
-        base44.entities.PixelBoard.update(id, {
-          ready_for_daisy: true,
-          batch_ready: true,
-          status: 'Waiting on Daisy',
-          batch_id: null
-        })
-      ));
+      let token = '';
+      if (typeof base44.auth.getAccessToken === 'function') {
+        token = await base44.auth.getAccessToken();
+      } else if (base44.auth.session && base44.auth.session.access_token) {
+        token = base44.auth.session.access_token;
+      } else if (base44.auth.session && typeof base44.auth.session === 'function') {
+        const sess = await base44.auth.session();
+        token = sess?.access_token || '';
+      }
+
+      const res = await fetch('https://pixel-poster-9e462e4f.base44.app/functions/sendItBatch', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ count: batchedItems.length })
+      });
+
+      if (!res.ok) {
+        throw new Error('Network response was not ok');
+      }
+
       queryClient.invalidateQueries({ queryKey: ['pixelBoard'] });
-      
-      const count = batchSelectedIds.length;
-      setBatchSelectedIds([]);
       toast.dismiss(loadingToastId);
-      toast.success(`🚀 ${count} cards sent to Daisy!`);
+      toast.success(`✅ ${batchedItems.length} cards sent to Daisy!`);
     } catch (err) {
+      console.error(err);
       toast.dismiss(loadingToastId);
-      toast.error("Failed to send batch.");
+      toast.error("❌ Something went wrong — try again");
     }
   };
 
@@ -295,18 +308,14 @@ export default function PixelBoard() {
             {!isDone && (
               <Button 
                 size="sm" 
-                variant={batchSelectedIds.includes(item.id) ? 'default' : 'outline'}
-                className={`h-7 px-2 text-[10px] font-bold z-10 ${batchSelectedIds.includes(item.id) ? 'bg-[#24C4D6] hover:bg-[#1db0c0] text-white border-0' : 'border-[#24C4D6] text-[#0D626C] hover:bg-[#24C4D6]/10'}`}
+                variant={item.in_batch ? 'default' : 'outline'}
+                className={`h-7 px-2 text-[10px] font-bold z-10 ${item.in_batch ? 'bg-[#24C4D6] hover:bg-[#1db0c0] text-white border-0' : 'border-[#24C4D6] text-[#0D626C] hover:bg-[#24C4D6]/10'}`}
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (batchSelectedIds.includes(item.id)) {
-                    setBatchSelectedIds(prev => prev.filter(id => id !== item.id));
-                  } else {
-                    setBatchSelectedIds(prev => [...prev, item.id]);
-                  }
+                  updateMutation.mutate({ id: item.id, data: { in_batch: !item.in_batch } });
                 }}
               >
-                {batchSelectedIds.includes(item.id) ? '✓ In Batch' : '+ Add to Batch'}
+                {item.in_batch ? '✓ In Batch' : '+ Add to Batch'}
               </Button>
             )}
           </div>
@@ -332,9 +341,9 @@ export default function PixelBoard() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            {batchSelectedIds.length > 0 && (
+            {items.filter(i => i.in_batch).length > 0 && (
               <div className="flex items-center gap-3 bg-[#24C4D6]/10 px-4 py-2 rounded-lg border-2 border-[#24C4D6]/20 mr-2">
-                <span className="font-bold text-[#0D626C]">📦 {batchSelectedIds.length} cards in batch</span>
+                <span className="font-bold text-[#0D626C]">📦 {items.filter(i => i.in_batch).length} cards in batch</span>
                 <Button 
                   onClick={handleSendBatch} 
                   className="bg-[#24C4D6] hover:bg-[#1db0c0] text-white font-bold shadow-md hover:shadow-lg transition-all"
@@ -539,17 +548,14 @@ export default function PixelBoard() {
                       }}
                     />
                     <Button 
-                      variant={batchSelectedIds.includes(selectedItem.id) ? 'default' : 'outline'}
-                      className={`font-bold flex-shrink-0 ${batchSelectedIds.includes(selectedItem.id) ? 'bg-[#24C4D6] hover:bg-[#1db0c0] text-white border-0' : 'border-[#24C4D6] text-[#0D626C] hover:bg-[#24C4D6]/10'}`}
+                      variant={selectedItem.in_batch ? 'default' : 'outline'}
+                      className={`font-bold flex-shrink-0 ${selectedItem.in_batch ? 'bg-[#24C4D6] hover:bg-[#1db0c0] text-white border-0' : 'border-[#24C4D6] text-[#0D626C] hover:bg-[#24C4D6]/10'}`}
                       onClick={() => {
-                        if (batchSelectedIds.includes(selectedItem.id)) {
-                          setBatchSelectedIds(prev => prev.filter(id => id !== selectedItem.id));
-                        } else {
-                          setBatchSelectedIds(prev => [...prev, selectedItem.id]);
-                        }
+                        updateMutation.mutate({ id: selectedItem.id, data: { in_batch: !selectedItem.in_batch } });
+                        setSelectedItem(prev => ({ ...prev, in_batch: !prev.in_batch }));
                       }}
                     >
-                      {batchSelectedIds.includes(selectedItem.id) ? '✓ In Batch' : '+ Add to Batch'}
+                      {selectedItem.in_batch ? '✓ In Batch' : '+ Add to Batch'}
                     </Button>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-center">
