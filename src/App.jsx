@@ -12,6 +12,7 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import PixelBoard from './pages/PixelBoard';
 import MyTasks from './pages/MyTasks';
 import MyLinks from './pages/MyLinks';
+import MySheets from './pages/MySheets';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -65,6 +66,11 @@ const AuthenticatedApp = () => {
       <Route path="/MyLinks" element={
         <LayoutWrapper currentPageName="MyLinks">
           <MyLinks />
+        </LayoutWrapper>
+      } />
+      <Route path="/MySheets" element={
+        <LayoutWrapper currentPageName="MySheets">
+          <MySheets />
         </LayoutWrapper>
       } />
       {Object.entries(Pages).map(([path, Page]) => (
