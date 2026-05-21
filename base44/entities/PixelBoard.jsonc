@@ -40,6 +40,9 @@
     "nikole_attachment_url": {
       "type": "string"
     },
+    "attachment_url": {
+      "type": "string"
+    },
     "status": {
       "type": "string",
       "default": "Unanswered"

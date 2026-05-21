@@ -17,7 +17,7 @@ import moment from 'moment';
 const KANBAN_COLUMNS = [
   { id: 'New', label: '💬 New' },
   { id: 'Thinking', label: '🤔 Thinking' },
-  { id: 'Needs GO', label: '⏳ Needs GO' },
+  { id: 'Needs GO', label: '📥 My Inbox' },
   { id: 'Waiting on Daisy', label: '⏳ Waiting on Daisy' },
   { id: 'In Progress', label: '🔄 In Progress' },
   { id: 'Hold', label: '⏸️ Hold' },
@@ -358,7 +358,7 @@ export default function PixelBoard() {
               className={`border-2 ${needsMeFilter ? 'border-[#24C4D6] bg-[#24C4D6]/10 text-[#0D626C] font-bold' : 'border-slate-200 text-slate-600'}`}
               onClick={() => setNeedsMeFilter(!needsMeFilter)}
             >
-              {needsMeFilter ? '🔔 Needs Me' : '📋 All Cards'}
+              {needsMeFilter ? '📥 My Inbox' : '📋 All Cards'}
             </Button>
             
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
@@ -673,14 +673,59 @@ export default function PixelBoard() {
                   </div>
 
                   {/* Details */}
-                  {selectedItem.details && (
-                    <div className="bg-white p-5 rounded-2xl border-2 border-slate-200 shadow-sm">
-                      <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Original Context / Details</Label>
-                      <div className="text-slate-700 whitespace-pre-wrap text-sm w-full">
-                        {selectedItem.details}
+                  <div className="bg-white p-5 rounded-2xl border-2 border-slate-200 shadow-sm">
+                    <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Original Context / Details</Label>
+                    <Textarea 
+                      defaultValue={selectedItem.details || ''}
+                      className="min-h-[100px] border-transparent bg-slate-50 hover:border-slate-300 focus:bg-white transition-all text-sm text-slate-700 w-full resize-y"
+                      placeholder="Add details or context here..."
+                      onBlur={(e) => {
+                        if (e.target.value !== selectedItem.details) {
+                          updateMutation.mutate({ id: selectedItem.id, data: { details: e.target.value } });
+                        }
+                      }}
+                    />
+                  </div>
+
+                  {/* Attachments */}
+                  <div className="bg-white p-5 rounded-2xl border-2 border-slate-200 shadow-sm">
+                    <div className="flex justify-between items-center mb-4">
+                      <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Attachment</Label>
+                      <div>
+                        <input 
+                          type="file" 
+                          id={`attachment-upload-${selectedItem.id}`}
+                          className="hidden" 
+                          accept="image/png, image/jpeg, image/gif, image/webp"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            const loadingToastId = toast.loading("Uploading attachment...");
+                            try {
+                              const { file_url } = await base44.integrations.Core.UploadFile({ file });
+                              updateMutation.mutate({ id: selectedItem.id, data: { attachment_url: file_url } });
+                              setSelectedItem(prev => ({ ...prev, attachment_url: file_url }));
+                              toast.dismiss(loadingToastId);
+                              toast.success("Attachment saved!");
+                            } catch (error) {
+                              toast.dismiss(loadingToastId);
+                              toast.error("Upload failed");
+                            }
+                          }}
+                        />
+                        <Button variant="outline" size="sm" onClick={() => document.getElementById(`attachment-upload-${selectedItem.id}`).click()}>
+                          <Paperclip className="w-4 h-4 mr-1" /> Upload Image
+                        </Button>
                       </div>
                     </div>
-                  )}
+                    {selectedItem.attachment_url && (
+                      <div className="mt-2">
+                        <a href={selectedItem.attachment_url} target="_blank" rel="noopener noreferrer">
+                          <img src={selectedItem.attachment_url} alt="Attachment" className="max-w-full max-h-64 rounded-md border border-slate-200 object-contain" />
+                        </a>
+                      </div>
+                    )}
+                  </div>
 
                   {/* Thread Area */}
                   <div className="flex flex-col bg-white border-2 border-slate-200 rounded-2xl shadow-sm overflow-hidden h-[400px]">
@@ -800,8 +845,9 @@ export default function PixelBoard() {
                     </Button>
                   </div>
                   <div className="flex gap-2 flex-wrap justify-end">
+                    <Button size="sm" variant="default" className="bg-slate-800 hover:bg-slate-900 text-white font-bold" onClick={() => setSelectedItem(null)}>💾 Save for Later</Button>
                     <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, 'Done')} className="border-slate-200 hover:bg-slate-100 text-slate-600"><CheckCircle2 className="w-4 h-4 mr-1" /> Done</Button>
-                    <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, 'Needs GO')} className="border-slate-200 hover:bg-orange-50 text-orange-600"><Clock className="w-4 h-4 mr-1" /> Needs GO</Button>
+                    <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, 'Needs GO')} className="border-slate-200 hover:bg-orange-50 text-orange-600"><Clock className="w-4 h-4 mr-1" /> My Inbox</Button>
                     <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, 'Hold')} className="border-slate-200 hover:bg-red-50 text-red-600"><PauseCircle className="w-4 h-4 mr-1" /> Hold</Button>
                     <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, 'Thinking')} className="border-slate-200 hover:bg-purple-50 text-purple-600"><Brain className="w-4 h-4 mr-1" /> Thinking</Button>
                   </div>
