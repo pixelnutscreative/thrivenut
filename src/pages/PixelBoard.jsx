@@ -74,6 +74,7 @@ export default function PixelBoard() {
   const [needsMeFilter, setNeedsMeFilter] = useState(true);
   const [isAskModalOpen, setIsAskModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [batchSelectedIds, setBatchSelectedIds] = useState([]);
   const [isDoneCollapsed, setIsDoneCollapsed] = useState(true);
   const [newResponse, setNewResponse] = useState('');
   
@@ -118,6 +119,29 @@ export default function PixelBoard() {
       toast.success("Ticket deleted!");
     }
   });
+
+  const handleSendBatch = async () => {
+    if (batchSelectedIds.length === 0) return;
+    const batchId = new Date().toISOString();
+    
+    const loadingToastId = toast.loading("Sending batch...");
+    try {
+      await Promise.all(batchSelectedIds.map(id => 
+        base44.entities.PixelBoard.update(id, {
+          ready_for_daisy: true,
+          batch_ready: true,
+          batch_id: batchId
+        })
+      ));
+      queryClient.invalidateQueries({ queryKey: ['pixelBoard'] });
+      setBatchSelectedIds([]);
+      toast.dismiss(loadingToastId);
+      toast.success("🚀 Sent! Daisy's on it.");
+    } catch (err) {
+      toast.dismiss(loadingToastId);
+      toast.error("Failed to send batch.");
+    }
+  };
 
   const filteredItems = useMemo(() => {
     return items.filter(item => {
@@ -198,14 +222,18 @@ export default function PixelBoard() {
             {!isDone && (
               <Button 
                 size="sm" 
-                variant={item.ready_for_daisy ? 'default' : 'outline'}
-                className={`h-7 px-2 text-[10px] font-bold z-10 ${item.ready_for_daisy ? 'bg-green-500 hover:bg-green-600 text-white border-0' : 'border-slate-300 text-slate-600 hover:bg-slate-100'}`}
+                variant={batchSelectedIds.includes(item.id) ? 'default' : 'outline'}
+                className={`h-7 px-2 text-[10px] font-bold z-10 ${batchSelectedIds.includes(item.id) ? 'bg-[#24C4D6] hover:bg-[#1db0c0] text-white border-0' : 'border-[#24C4D6] text-[#0D626C] hover:bg-[#24C4D6]/10'}`}
                 onClick={(e) => {
                   e.stopPropagation();
-                  updateMutation.mutate({ id: item.id, data: { ready_for_daisy: !item.ready_for_daisy } });
+                  if (batchSelectedIds.includes(item.id)) {
+                    setBatchSelectedIds(prev => prev.filter(id => id !== item.id));
+                  } else {
+                    setBatchSelectedIds(prev => [...prev, item.id]);
+                  }
                 }}
               >
-                {item.ready_for_daisy ? '✅ Sent!' : '🚀 SEND IT'}
+                {batchSelectedIds.includes(item.id) ? '✓ In Batch' : '+ Add to Batch'}
               </Button>
             )}
           </div>
@@ -231,6 +259,18 @@ export default function PixelBoard() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
+            {batchSelectedIds.length > 0 && (
+              <div className="flex items-center gap-3 bg-[#24C4D6]/10 px-4 py-2 rounded-lg border-2 border-[#24C4D6]/20 mr-2">
+                <span className="font-bold text-[#0D626C]">📦 {batchSelectedIds.length} cards in batch</span>
+                <Button 
+                  onClick={handleSendBatch} 
+                  className="bg-[#24C4D6] hover:bg-[#1db0c0] text-white font-bold shadow-md hover:shadow-lg transition-all"
+                >
+                  🚀 SEND IT
+                </Button>
+              </div>
+            )}
+
             <Button 
               variant="outline"
               className={`border-2 ${needsMeFilter ? 'border-[#24C4D6] bg-[#24C4D6]/10 text-[#0D626C] font-bold' : 'border-slate-200 text-slate-600'}`}
@@ -426,11 +466,17 @@ export default function PixelBoard() {
                       }}
                     />
                     <Button 
-                      variant={selectedItem.ready_for_daisy ? 'default' : 'outline'}
-                      className={`font-bold flex-shrink-0 ${selectedItem.ready_for_daisy ? 'bg-green-500 hover:bg-green-600 text-white' : 'border-slate-300 text-slate-700 hover:bg-slate-100'}`}
-                      onClick={() => updateMutation.mutate({ id: selectedItem.id, data: { ready_for_daisy: !selectedItem.ready_for_daisy } })}
+                      variant={batchSelectedIds.includes(selectedItem.id) ? 'default' : 'outline'}
+                      className={`font-bold flex-shrink-0 ${batchSelectedIds.includes(selectedItem.id) ? 'bg-[#24C4D6] hover:bg-[#1db0c0] text-white border-0' : 'border-[#24C4D6] text-[#0D626C] hover:bg-[#24C4D6]/10'}`}
+                      onClick={() => {
+                        if (batchSelectedIds.includes(selectedItem.id)) {
+                          setBatchSelectedIds(prev => prev.filter(id => id !== selectedItem.id));
+                        } else {
+                          setBatchSelectedIds(prev => [...prev, selectedItem.id]);
+                        }
+                      }}
                     >
-                      {selectedItem.ready_for_daisy ? '✅ Sent!' : '🚀 SEND IT'}
+                      {batchSelectedIds.includes(selectedItem.id) ? '✓ In Batch' : '+ Add to Batch'}
                     </Button>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-center">
