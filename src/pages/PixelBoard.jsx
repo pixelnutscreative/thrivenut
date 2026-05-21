@@ -71,7 +71,7 @@ export default function PixelBoard() {
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [priorityFilter, setPriorityFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
-  const [myTurnFilter, setMyTurnFilter] = useState(false);
+  const [needsMeFilter, setNeedsMeFilter] = useState(true);
   const [isAskModalOpen, setIsAskModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [isDoneCollapsed, setIsDoneCollapsed] = useState(true);
@@ -110,16 +110,25 @@ export default function PixelBoard() {
     }
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: (id) => base44.entities.PixelBoard.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pixelBoard'] });
+      setSelectedItem(null);
+      toast.success("Ticket deleted!");
+    }
+  });
+
   const filteredItems = useMemo(() => {
     return items.filter(item => {
       if (searchQuery && !item.title.toLowerCase().includes(searchQuery.toLowerCase()) && !(item.details || '').toLowerCase().includes(searchQuery.toLowerCase())) return false;
       if (categoryFilter !== 'All' && item.category !== categoryFilter) return false;
       if (priorityFilter !== 'All' && item.priority !== priorityFilter) return false;
       if (statusFilter !== 'All' && mapStatus(item.status) !== statusFilter) return false;
-      if (myTurnFilter && !isNikolesTurn(item)) return false;
+      if (needsMeFilter && !isNikolesTurn(item)) return false;
       return true;
     }).sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
-  }, [items, searchQuery, categoryFilter, priorityFilter, statusFilter, myTurnFilter]);
+  }, [items, searchQuery, categoryFilter, priorityFilter, statusFilter, needsMeFilter]);
 
   const handleAskSubmit = () => {
     if (!newQuestion.title) return;
@@ -165,25 +174,41 @@ export default function PixelBoard() {
             updateMutation.mutate({ id: item.id, data: { nikole_read: true } });
           }
         }}
-        className={`cursor-pointer transition-all duration-200 border-2 ${isDone ? 'bg-slate-50 border-slate-200 opacity-70' : 'bg-white border-slate-200 hover:border-[#24C4D6]/50 hover:shadow-md'} overflow-hidden relative ${isUrgent && !isDone ? 'ring-2 ring-red-500 shadow-[0_0_10px_rgba(239,68,68,0.2)]' : ''}`}
+        className={`cursor-pointer transition-all duration-200 border-2 min-h-[120px] w-full ${isDone ? 'bg-slate-50 border-slate-200 opacity-70' : 'bg-white border-slate-200 hover:border-[#24C4D6]/50 hover:shadow-md'} overflow-hidden relative ${isUrgent && !isDone ? 'ring-2 ring-red-500 shadow-[0_0_10px_rgba(239,68,68,0.2)]' : ''}`}
         style={{ borderLeftColor: !isDone ? (isUrgent ? '#EF4444' : borderColor) : undefined, borderLeftWidth: !isDone ? '8px' : undefined }}
       >
-        <CardContent className="p-4 flex flex-col gap-3">
+        <CardContent className="p-4 flex flex-col gap-3 w-full">
           <div className="flex justify-between items-start gap-2">
-            <h4 className={`font-bold text-sm ${isDone ? 'line-through text-slate-500' : 'text-slate-800'} leading-tight break-words whitespace-normal min-w-0 flex-1`}>{item.title || 'Untitled Ticket'}</h4>
+            <h4 className={`font-bold text-[15px] ${isDone ? 'line-through text-slate-500' : 'text-slate-800'} leading-tight break-words whitespace-normal min-w-0 flex-1 block`}>{item.title || 'Untitled Ticket'}</h4>
           </div>
           
           <div className="flex flex-wrap gap-1.5 items-center">
-            <Badge variant="secondary" className="text-[10px] bg-slate-100 text-slate-600 hover:bg-slate-200">{item.category}</Badge>
-            <Badge variant="outline" className={`text-[10px] ${pConf.color} border-0`}>{pConf.emoji} {item.priority}</Badge>
-            {s !== 'New' && <Badge variant="outline" className="text-[10px] bg-white border-slate-200 text-slate-500">{s}</Badge>}
+            <Badge variant="secondary" className="text-[11px] bg-slate-100 text-slate-600 hover:bg-slate-200">{item.category}</Badge>
+            <Badge variant="outline" className={`text-[11px] ${pConf.color} border-0`}>{pConf.emoji} {item.priority}</Badge>
+            {s !== 'New' && <Badge variant="outline" className="text-[11px] bg-white border-slate-200 text-slate-500">{s}</Badge>}
           </div>
 
-          {turn && !isDone && (
-            <div className={`text-[10px] font-medium px-2 py-1 rounded-md inline-flex items-center w-fit ${turn.includes('Nikole') ? 'bg-[#24C4D6]/10 text-[#0D626C]' : 'bg-[#C8A4F2]/20 text-[#6B3FA0]'}`}>
-              {turn}
-            </div>
-          )}
+          <div className="flex items-center justify-between mt-1">
+            {turn && !isDone ? (
+              <div className={`text-[11px] font-medium px-2 py-1 rounded-md inline-flex items-center w-fit ${turn.includes('Nikole') ? 'bg-[#24C4D6]/10 text-[#0D626C]' : 'bg-[#C8A4F2]/20 text-[#6B3FA0]'}`}>
+                {turn}
+              </div>
+            ) : <div />}
+            
+            {!isDone && (
+              <Button 
+                size="sm" 
+                variant={item.ready_for_daisy ? 'default' : 'outline'}
+                className={`h-7 px-2 text-[10px] font-bold z-10 ${item.ready_for_daisy ? 'bg-green-500 hover:bg-green-600 text-white border-0' : 'border-slate-300 text-slate-600 hover:bg-slate-100'}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  updateMutation.mutate({ id: item.id, data: { ready_for_daisy: !item.ready_for_daisy } });
+                }}
+              >
+                {item.ready_for_daisy ? '✅ Sent!' : '🚀 SEND IT'}
+              </Button>
+            )}
+          </div>
         </CardContent>
       </Card>
     );
@@ -208,10 +233,10 @@ export default function PixelBoard() {
           <div className="flex flex-wrap items-center gap-3">
             <Button 
               variant="outline"
-              className={`border-2 ${myTurnFilter ? 'border-[#24C4D6] bg-[#24C4D6]/10 text-[#0D626C]' : 'border-slate-200 text-slate-600'}`}
-              onClick={() => setMyTurnFilter(!myTurnFilter)}
+              className={`border-2 ${needsMeFilter ? 'border-[#24C4D6] bg-[#24C4D6]/10 text-[#0D626C] font-bold' : 'border-slate-200 text-slate-600'}`}
+              onClick={() => setNeedsMeFilter(!needsMeFilter)}
             >
-              🙋‍♀️ My Turn
+              {needsMeFilter ? '🔔 Needs Me' : '📋 All Cards'}
             </Button>
             
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
@@ -334,7 +359,7 @@ export default function PixelBoard() {
               }
 
               return (
-                <div key={col.id} className="min-w-[280px] max-w-[280px] w-[280px] flex flex-col gap-3 snap-start">
+                <div key={col.id} className="min-w-[300px] max-w-[300px] w-[300px] flex flex-col gap-3 snap-start">
                   <div className="flex items-center justify-between pb-2 border-b-2 border-slate-200">
                     <h3 className="font-bold text-slate-700">{col.label}</h3>
                     <Badge variant="secondary" className="bg-slate-200 text-slate-600 border-0">{colItems.length}</Badge>
@@ -391,7 +416,22 @@ export default function PixelBoard() {
                 {/* Header */}
                 <div className="p-6 bg-white border-b-2 border-slate-200 flex-shrink-0">
                   <div className="flex items-start justify-between gap-4 mb-4">
-                    <h2 className="text-2xl font-bold text-slate-800 leading-tight">{selectedItem.title}</h2>
+                    <Input 
+                      className="text-2xl font-bold text-slate-800 leading-tight border-transparent hover:border-slate-300 focus:border-[#24C4D6] px-2 -ml-2 bg-transparent h-auto py-1 w-full"
+                      defaultValue={selectedItem.title}
+                      onBlur={(e) => {
+                        if (e.target.value !== selectedItem.title && e.target.value.trim()) {
+                          updateMutation.mutate({ id: selectedItem.id, data: { title: e.target.value.trim() } });
+                        }
+                      }}
+                    />
+                    <Button 
+                      variant={selectedItem.ready_for_daisy ? 'default' : 'outline'}
+                      className={`font-bold flex-shrink-0 ${selectedItem.ready_for_daisy ? 'bg-green-500 hover:bg-green-600 text-white' : 'border-slate-300 text-slate-700 hover:bg-slate-100'}`}
+                      onClick={() => updateMutation.mutate({ id: selectedItem.id, data: { ready_for_daisy: !selectedItem.ready_for_daisy } })}
+                    >
+                      {selectedItem.ready_for_daisy ? '✅ Sent!' : '🚀 SEND IT'}
+                    </Button>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-center">
                     <div className="space-y-1">
@@ -545,8 +585,22 @@ export default function PixelBoard() {
 
                 {/* Footer Controls */}
                 <div className="p-4 bg-white border-t-2 border-slate-200 flex-shrink-0 flex items-center justify-between">
-                  <span className="text-sm text-slate-500">Opened {moment(selectedItem.created_date).fromNow()}</span>
-                  <div className="flex gap-2">
+                  <div className="flex items-center gap-4">
+                    <span className="text-sm text-slate-500 hidden sm:inline">Opened {moment(selectedItem.created_date).fromNow()}</span>
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                      onClick={() => {
+                        if (window.confirm("Are you sure you want to delete this ticket? This cannot be undone.")) {
+                          deleteMutation.mutate(selectedItem.id);
+                        }
+                      }}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                  <div className="flex gap-2 flex-wrap justify-end">
                     <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, 'Done')} className="border-slate-200 hover:bg-slate-100 text-slate-600"><CheckCircle2 className="w-4 h-4 mr-1" /> Done</Button>
                     <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, 'Needs GO')} className="border-slate-200 hover:bg-orange-50 text-orange-600"><Clock className="w-4 h-4 mr-1" /> Needs GO</Button>
                     <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, 'Hold')} className="border-slate-200 hover:bg-red-50 text-red-600"><PauseCircle className="w-4 h-4 mr-1" /> Hold</Button>

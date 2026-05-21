@@ -90,6 +90,10 @@
     "custom_fields": {
       "type": "object",
       "additionalProperties": true
+    },
+    "ready_for_daisy": {
+      "type": "boolean",
+      "default": false
     }
   },
   "required": [
