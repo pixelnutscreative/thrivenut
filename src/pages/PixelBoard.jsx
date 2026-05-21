@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogT
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
-import { toast } from 'sonner';
+import { toast, Toaster as SonnerToaster } from 'sonner';
 import { Plus, Search, Loader2, LayoutGrid, List as ListIcon, ChevronRight, ChevronDown, CheckCircle2, PauseCircle, Clock, Brain, Paperclip, X } from 'lucide-react';
 import moment from 'moment';
 
@@ -317,6 +317,7 @@ export default function PixelBoard() {
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-8 font-sans">
+      <SonnerToaster position="top-center" richColors />
       <div className="max-w-[1400px] mx-auto space-y-6">
         
         {/* Header & Controls */}
@@ -334,6 +335,9 @@ export default function PixelBoard() {
                 <span className="font-bold text-[#0D626C]">📦 {items.filter(i => i.in_batch).length} cards in batch</span>
                 <Button 
                   onClick={async () => {
+                    const batchedItems = items.filter(i => i.in_batch);
+                    if (batchedItems.length === 0) return;
+                    
                     const loadingId = toast.loading("Sending to Daisy...");
                     try {
                       const res = await fetch('https://pixel-poster-9e462e4f.base44.app/functions/sendItBatch', {
@@ -342,6 +346,12 @@ export default function PixelBoard() {
                         body: JSON.stringify({})
                       });
                       const data = await res.json();
+                      
+                      // Actually clear the batch and update status!
+                      for (const item of batchedItems) {
+                        updateMutation.mutate({ id: item.id, data: { in_batch: false, status: 'Waiting on Daisy' } });
+                      }
+                      
                       toast.dismiss(loadingId);
                       toast.success(data.message || 'Sent to Daisy!');
                     } catch(e) {
