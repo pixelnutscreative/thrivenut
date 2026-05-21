@@ -13,7 +13,7 @@ import {
   Calendar, Sun, Cross, Smile, FileText, StickyNote, Tablet, HelpCircle,
   MessageCircle, Briefcase, DollarSign, Activity, Wallet, Swords, Lightbulb, Zap,
   Image as ImageIcon, GraduationCap, Printer, AlertCircle, MessageSquare,
-  Link as LinkIcon, FolderOpen, FileSpreadsheet
+  Link as LinkIcon, FolderOpen, FileSpreadsheet, ClipboardList
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import TikTokAccessGate from './components/access/TikTokAccessGate';
@@ -420,6 +420,7 @@ const { data: featureFlags = [] } = useQuery({
     id: 'core',
     items: [
     { name: getDashboardName(), icon: LayoutDashboard, path: 'Dashboard', alwaysShow: true },
+    { name: 'PixelBoard', icon: ClipboardList, path: 'pixel-board', adminOnly: true, alwaysShow: true },
     { name: preferences?.my_resources_label || 'My Stuff', icon: Bookmark, path: 'MyResources', moduleId: 'my_resources', alwaysShow: true },
     { name: 'My Links & Resources', icon: LinkIcon, path: 'MyLinks', moduleId: 'my_resources', alwaysShow: true },
     { name: 'My Sheets', icon: FileSpreadsheet, path: 'MySheets', adminOnly: true },

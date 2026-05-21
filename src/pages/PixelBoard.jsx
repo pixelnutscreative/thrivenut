@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
@@ -56,9 +56,21 @@ const isNikolesTurn = (item) => getTurnIndicator(item) === "👤 Nikole's turn";
 
 export default function PixelBoard() {
   const queryClient = useQueryClient();
+  const [user, setUser] = useState(null);
+  const [loadingUser, setLoadingUser] = useState(true);
+  
+  useEffect(() => {
+    base44.auth.me().then(u => {
+      setUser(u);
+      setLoadingUser(false);
+    }).catch(() => setLoadingUser(false));
+  }, []);
+
   const [viewMode, setViewMode] = useState('kanban'); // 'kanban' | 'list'
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
+  const [priorityFilter, setPriorityFilter] = useState('All');
+  const [statusFilter, setStatusFilter] = useState('All');
   const [myTurnFilter, setMyTurnFilter] = useState(false);
   const [isAskModalOpen, setIsAskModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
@@ -102,10 +114,12 @@ export default function PixelBoard() {
     return items.filter(item => {
       if (searchQuery && !item.title.toLowerCase().includes(searchQuery.toLowerCase()) && !(item.details || '').toLowerCase().includes(searchQuery.toLowerCase())) return false;
       if (categoryFilter !== 'All' && item.category !== categoryFilter) return false;
+      if (priorityFilter !== 'All' && item.priority !== priorityFilter) return false;
+      if (statusFilter !== 'All' && mapStatus(item.status) !== statusFilter) return false;
       if (myTurnFilter && !isNikolesTurn(item)) return false;
       return true;
     }).sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
-  }, [items, searchQuery, categoryFilter, myTurnFilter]);
+  }, [items, searchQuery, categoryFilter, priorityFilter, statusFilter, myTurnFilter]);
 
   const handleAskSubmit = () => {
     if (!newQuestion.title) return;
@@ -172,6 +186,9 @@ export default function PixelBoard() {
     );
   };
 
+  if (loadingUser) return <div className="p-12 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-[#24C4D6]" /></div>;
+  if (user?.role !== 'admin') return <div className="p-12 text-center"><h2 className="text-2xl font-bold text-red-500">Access Denied</h2><p>This is an admin-only page.</p></div>;
+
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-8 font-sans">
       <div className="max-w-[1400px] mx-auto space-y-6">
@@ -201,6 +218,32 @@ export default function PixelBoard() {
               <SelectContent>
                 <SelectItem value="All">All Categories</SelectItem>
                 {CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              </SelectContent>
+            </Select>
+
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[140px] border-2 border-slate-200 font-medium">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="All">All Statuses</SelectItem>
+                {KANBAN_COLUMNS.map(c => <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+
+            <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+              <SelectTrigger className="w-[140px] border-2 border-slate-200 font-medium">
+                <SelectValue placeholder="Priority" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="All">All Priorities</SelectItem>
+                <SelectItem value="Urgent">🔥 Urgent</SelectItem>
+                <SelectItem value="Critical">🔴 Critical</SelectItem>
+                <SelectItem value="High">🟠 High</SelectItem>
+                <SelectItem value="Normal">🔵 Normal</SelectItem>
+                <SelectItem value="Medium">🟡 Medium</SelectItem>
+                <SelectItem value="Low">🟢 Low</SelectItem>
+                <SelectItem value="When You Get To It">⚪ When You Get To It</SelectItem>
               </SelectContent>
             </Select>
 

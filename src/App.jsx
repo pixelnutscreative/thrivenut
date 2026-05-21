@@ -63,8 +63,8 @@ const AuthenticatedApp = () => {
         </LayoutWrapper>
       } />
       <Route path="/register" element={<RegisterRedirect navigateToLogin={navigateToLogin} />} />
-      <Route path="/PixelBoard" element={
-        <LayoutWrapper currentPageName="PixelBoard">
+      <Route path="/pixel-board" element={
+        <LayoutWrapper currentPageName="pixel-board">
           <PixelBoard />
         </LayoutWrapper>
       } />
