@@ -333,7 +333,19 @@ export default function PixelBoard() {
               <div className="flex items-center gap-3 bg-[#24C4D6]/10 px-4 py-2 rounded-lg border-2 border-[#24C4D6]/20 mr-2">
                 <span className="font-bold text-[#0D626C]">📦 {items.filter(i => i.in_batch).length} cards in batch</span>
                 <Button 
-                  onClick={handleSendBatch} 
+                  onClick={async () => {
+                    try {
+                      const res = await fetch('https://pixel-poster-9e462e4f.base44.app/functions/sendItBatch', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({})
+                      });
+                      const data = await res.json();
+                      alert(data.message || 'Sent to Daisy!');
+                    } catch(e) {
+                      alert('Error: ' + e.message);
+                    }
+                  }} 
                   className="bg-[#24C4D6] hover:bg-[#1db0c0] text-white font-bold shadow-md hover:shadow-lg transition-all"
                 >
                   🚀 SEND IT
