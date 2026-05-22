@@ -1,0 +1,374 @@
+{
+  "name": "UserPreferences",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string"
+    },
+    "nickname": {
+      "type": "string"
+    },
+    "profile_image_url": {
+      "type": "string"
+    },
+    "primary_color": {
+      "type": "string"
+    },
+    "accent_color": {
+      "type": "string"
+    },
+    "menu_color": {
+      "type": "string"
+    },
+    "saved_colors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "User saved favorite colors"
+    },
+    "completed_items_color": {
+      "type": "string",
+      "description": "Color for completed items in dashboard"
+    },
+    "user_timezone": {
+      "type": "string"
+    },
+    "time_format": {
+      "type": "string"
+    },
+    "default_landing_page": {
+      "type": "string"
+    },
+    "greeting_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "dashboard_layout": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "enabled_modules": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [
+        "my_resources",
+        "my_groups",
+        "pixels_place",
+        "quick_notes",
+        "tasks",
+        "habits",
+        "goals",
+        "vision_board",
+        "journal",
+        "finance",
+        "people",
+        "parenting",
+        "care_reminders",
+        "pets",
+        "prayer",
+        "holy_hitmakers",
+        "mental_health",
+        "wellness",
+        "supplements",
+        "medications",
+        "activity",
+        "content_creator_center",
+        "motivations",
+        "content_marketplace",
+        "ai_music_suite",
+        "tiktok",
+        "share_earn"
+      ],
+      "description": "Modules the user has access to"
+    },
+    "is_restricted_experience": {
+      "type": "boolean",
+      "default": false,
+      "description": "Flag for members restricted from regular modules"
+    },
+    "tiktok_access_approved": {
+      "type": "boolean",
+      "default": false
+    },
+    "tiktok_username": {
+      "type": "string"
+    },
+    "is_superfan": {
+      "type": "boolean",
+      "default": false
+    },
+    "subscription_package_id": {
+      "type": "string",
+      "description": "ID of the active SubscriptionPackage"
+    },
+    "group_creation_type": {
+      "type": "string",
+      "enum": [
+        "none",
+        "personal",
+        "business",
+        "agency",
+        "mlm"
+      ],
+      "default": "personal",
+      "description": "Type of groups this user can create"
+    },
+    "max_groups": {
+      "type": "number",
+      "default": 1
+    },
+    "subscription_status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "past_due",
+        "canceled",
+        "none"
+      ],
+      "default": "none"
+    },
+    "stripe_subscription_id": {
+      "type": "string"
+    },
+    "onboarding_completed": {
+      "type": "boolean",
+      "default": false
+    },
+    "active_music_service": {
+      "type": "string"
+    },
+    "soundcloud_playlist_url": {
+      "type": "string"
+    },
+    "spotify_playlist_url": {
+      "type": "string"
+    },
+    "soundcloud_player_position": {
+      "type": "string",
+      "enum": [
+        "menu",
+        "floating",
+        "hidden",
+        "bottom_bar"
+      ],
+      "default": "menu",
+      "description": "Position of the music player"
+    },
+    "enable_bible_options": {
+      "type": "boolean"
+    },
+    "bible_version": {
+      "type": "string"
+    },
+    "is_hidden_admin": {
+      "type": "boolean",
+      "default": false,
+      "description": "Hidden from admin lists to reduce clutter"
+    },
+    "soft_deleted_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when this record was soft deleted"
+    },
+    "quick_actions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "custom_quick_actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "action_overrides": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "quick_actions_bar_color": {
+      "type": "string"
+    },
+    "quick_actions_icon_size": {
+      "type": "string",
+      "enum": [
+        "small",
+        "medium",
+        "large",
+        "xl"
+      ]
+    },
+    "quick_actions_bar_height": {
+      "type": "string",
+      "enum": [
+        "compact",
+        "standard",
+        "tall"
+      ]
+    },
+    "hide_quick_action_labels": {
+      "type": "boolean",
+      "default": false
+    },
+    "custom_mood_options": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string"
+          },
+          "emoji": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "ai_personality_tone": {
+      "type": "string",
+      "enum": [
+        "humorous",
+        "professional",
+        "encouraging",
+        "loving",
+        "edgy_sassy",
+        "biblical"
+      ],
+      "default": "humorous"
+    },
+    "custom_ai_tone_details": {
+      "type": "string"
+    },
+    "address_as": {
+      "type": "string"
+    },
+    "custom_bible_translation": {
+      "type": "string"
+    },
+    "enable_morning_reading": {
+      "type": "boolean",
+      "default": false
+    },
+    "enable_night_reading": {
+      "type": "boolean",
+      "default": false
+    },
+    "enable_morning_prayer": {
+      "type": "boolean",
+      "default": false
+    },
+    "enable_night_prayer": {
+      "type": "boolean",
+      "default": false
+    },
+    "intermittent_fasting": {
+      "type": "boolean",
+      "default": false
+    },
+    "fasting_schedule": {
+      "type": "string"
+    },
+    "eating_window_start": {
+      "type": "string"
+    },
+    "eating_window_end": {
+      "type": "string"
+    },
+    "enable_water_reminders": {
+      "type": "boolean",
+      "default": false
+    },
+    "enable_mood_checkins": {
+      "type": "boolean",
+      "default": false
+    },
+    "journal_reminder_time": {
+      "type": "string"
+    },
+    "completed_tasks_display": {
+      "type": "string"
+    },
+    "dashboard_view_mode": {
+      "type": "string"
+    },
+    "google_calendar_connected": {
+      "type": "boolean",
+      "default": false
+    },
+    "show_google_calendar": {
+      "type": "boolean",
+      "default": false
+    },
+    "custom_homepages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "html": {
+            "type": "string"
+          },
+          "is_default": {
+            "type": "boolean"
+          }
+        }
+      },
+      "default": []
+    },
+    "active_homepage_id": {
+      "type": "string"
+    },
+    "custom_homepage_html": {
+      "type": "string",
+      "description": "Legacy field for single homepage HTML"
+    },
+    "mental_health_struggles": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "improvement_goals": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "superpowers": {
+      "type": "string",
+      "description": "User's superpower (from onboarding)"
+    },
+    "current_battles": {
+      "type": "string",
+      "description": "User's current battles (from onboarding)"
+    },
+    "daily_engagement_log": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Stores daily engagement tracking"
+    }
+  },
+  "required": [
+    "user_email"
+  ],
+  "additionalProperties": true
+}

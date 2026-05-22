@@ -129,6 +129,7 @@ Deno.serve(async (req) => {
                      let prefData = {
                          user_email: targetEmail,
                          enabled_modules: ['my_groups'], // Restrict to only groups
+                         is_restricted_experience: true,
                      };
                      
                      if (group.force_landing_page) {

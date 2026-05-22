@@ -1436,6 +1436,19 @@ function GroupExperienceSettings({ group }) {
             onCheckedChange={(checked) => updateGroupMutation.mutate({ force_landing_page: checked })}
           />
         </div>
+
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <Label>Enable Hourly Tracking & Retainers</Label>
+            <p className="text-sm text-gray-500">
+              Show the Retainer Packages and Hourly Tracking sections on the Members tab.
+            </p>
+          </div>
+          <Switch 
+            checked={group.enable_retainer_management || false}
+            onCheckedChange={(checked) => updateGroupMutation.mutate({ enable_retainer_management: checked })}
+          />
+        </div>
       </CardContent>
     </Card>
   );

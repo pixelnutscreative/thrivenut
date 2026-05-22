@@ -150,6 +150,9 @@ export default function PixelBoard() {
       return base44.entities.UserPreferences.update(prefsId, {
         custom_fields: { ...(userPrefs.custom_fields || {}), pixelboard_columns: newCols }
       });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['userPreferences'] });
     }
   });
 
@@ -589,6 +592,14 @@ export default function PixelBoard() {
             {item.in_batch && <Badge variant="secondary" className="text-[11px] bg-slate-800 text-white border-0">📦 In Batch</Badge>}
             {s !== '💬 New' && s !== '📬 My Inbox' && s !== '📦 Batch' && <Badge variant="outline" className="text-[11px] bg-white border-slate-200 text-slate-500">{s}</Badge>}
           </div>
+          
+          {!isDone && (item.attachment_url || item.nikole_attachment_url || (item.thread && item.thread.some(m => m.image_urls?.length > 0 || m.image_url))) && (
+            <div className="flex gap-1 overflow-hidden mt-1 h-12">
+              {[...getAttachments(item.attachment_url), ...getAttachments(item.nikole_attachment_url), ...(item.thread || []).flatMap(m => m.image_urls || (m.image_url ? [m.image_url] : []))].filter(Boolean).slice(0, 4).map((url, i) => (
+                <img key={i} src={url} className="h-full w-auto max-w-[60px] object-cover rounded border border-slate-200" alt="attachment thumbnail" />
+              ))}
+            </div>
+          )}
           
           <div className="flex items-center gap-2 text-[10px] text-slate-400 font-medium">
             <span>Created {moment(item.created_date).format('MMM D')}</span>
@@ -1355,10 +1366,14 @@ export default function PixelBoard() {
                   <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
                     <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Reference Images</Label>
                     <div className="flex items-center gap-2">
-                      {selectedItem.attachment_url && (
+                      {(selectedItem.attachment_url || selectedItem.nikole_attachment_url) && (
                         <div className="flex gap-2 flex-wrap">
-                          {getAttachments(selectedItem.attachment_url).map((url, i) => (
-                            <div key={i} onClick={() => { setLightboxImages(getAttachments(selectedItem.attachment_url)); setLightboxIndex(i); }} className="cursor-pointer">
+                          {[...getAttachments(selectedItem.attachment_url), ...getAttachments(selectedItem.nikole_attachment_url)].filter(Boolean).map((url, i) => (
+                            <div key={i} onClick={() => { 
+                              const allImgs = [...getAttachments(selectedItem.attachment_url), ...getAttachments(selectedItem.nikole_attachment_url)].filter(Boolean);
+                              setLightboxImages(allImgs); 
+                              setLightboxIndex(i); 
+                            }} className="cursor-pointer">
                               <img src={url} alt="Attachment" className="w-8 h-8 rounded-md border border-slate-200 object-cover hover:opacity-80 transition-opacity" />
                             </div>
                           ))}

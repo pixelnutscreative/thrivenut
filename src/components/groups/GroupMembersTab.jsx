@@ -204,8 +204,8 @@ function MemberRowItem({ member, group, isAdmin, currentUser, queryClient, allMe
                 </>
             )}
           </div>
-          {/* Retainers Section Hidden Per User Request */}
-          {false && isAdmin && group.enable_retainer_management && (
+          {/* Retainers Section Toggleable by Group Setting */}
+          {isAdmin && group.enable_retainer_management && (
             <div className="flex gap-3 mt-1">
               <AddRetainerPackageDialog group={group} member={member} currentUser={currentUser} />
               <ViewRetainerHistoryDialog group={group} member={member} />

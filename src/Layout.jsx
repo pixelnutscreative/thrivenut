@@ -1368,7 +1368,7 @@ const { data: featureFlags = [] } = useQuery({
         </Button>
       )}
 
-      {user && effectiveEmail && preferences && !mobileMenuOpen && !(location.pathname === '/CreatorGroups' && location.search.includes('Social House Agency')) &&
+      {user && effectiveEmail && preferences && !mobileMenuOpen && !preferences.is_restricted_experience &&
         <QuickActionsBarV2
           preferences={preferences}
           primaryColor={primaryColor}
