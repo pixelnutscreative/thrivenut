@@ -23,6 +23,7 @@ const KANBAN_COLUMNS = [
   { id: '🧠 Thinking', label: '🧠 Thinking' },
   { id: '⏸️ On Hold', label: '⏸️ On Hold' },
   { id: '⏳ Needs GO', label: '⏳ Needs GO' },
+  { id: '🧪 Needs Testing', label: '🧪 Needs Testing' },
   { id: '📬 My Inbox', label: '📬 My Inbox' },
   { id: '✅ Done', label: '🎉 ✅ Done' },
   { id: '➡️ Moved to Task', label: '➡️ Moved to Task' },
@@ -77,7 +78,7 @@ const mapStatus = (item) => {
   
   const s = item.status;
   if (!s || typeof s !== 'string') return '💬 New';
-  if (['💬 New', '📦 Batch', '⚙️ Processing', '🧠 Thinking', '⏸️ On Hold', '⏳ Needs GO', '📬 My Inbox', '✅ Done', '➡️ Moved to Task', '🔁 Duplicate'].includes(s)) return s;
+  if (['💬 New', '📦 Batch', '⚙️ Processing', '🧠 Thinking', '⏸️ On Hold', '⏳ Needs GO', '🧪 Needs Testing', '📬 My Inbox', '✅ Done', '➡️ Moved to Task', '🔁 Duplicate'].includes(s)) return s;
   
   if (s.includes('Done') || s === 'Reviewed') return '✅ Done';
   if (s.includes('Task')) return '➡️ Moved to Task';
@@ -88,6 +89,7 @@ const mapStatus = (item) => {
   if (s.includes('Wait') || s.includes('Hold') || s === '⏸️ On Hold') return '⏸️ On Hold';
   if (s.includes('Think')) return '🧠 Thinking';
   if (s.includes('Duplicate')) return '🔁 Duplicate';
+  if (s.includes('Testing') || s.includes('Test')) return '🧪 Needs Testing';
   
   return '💬 New';
 };
@@ -1069,7 +1071,7 @@ export default function PixelBoard() {
                           <div 
                             ref={provided.innerRef}
                             {...provided.draggableProps}
-                            className="min-w-[220px] max-w-[220px] w-[220px] flex flex-col gap-3 snap-start"
+                            className={`min-w-[220px] max-w-[220px] w-[220px] flex flex-col gap-3 snap-start ${col.id === '🧪 Needs Testing' ? 'bg-amber-50/50 p-2 rounded-xl border border-amber-100' : ''} ${col.id === '📬 My Inbox' ? 'bg-teal-50/30 p-2 rounded-xl border border-teal-100' : ''}`}
                           >
                             <div className="flex items-center justify-between pb-2 border-b-2 border-slate-200 group">
                               <div className="flex items-center gap-2">

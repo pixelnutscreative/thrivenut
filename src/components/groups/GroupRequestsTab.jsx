@@ -22,9 +22,11 @@ export default function GroupRequestsTab({ group, currentUser, myMembership, isA
     title: '', description: '', type: 'support', target_levels: [], target_users: [] 
   });
   const [messageInput, setMessageInput] = useState('');
+  const [attachments, setAttachments] = useState([]);
+  const [isUploading, setIsUploading] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [requestSettings, setRequestSettings] = useState(group.settings?.request_permissions || { 
-    enabled: true, allowed_levels: [], allowed_users: [] 
+    enabled: true, allowed_levels: [], allowed_users: [], custom_types: ['Support', 'Feature Request', 'Access Request', 'Other'] 
   });
 
   // 1. Fetch Requests
@@ -105,14 +107,35 @@ export default function GroupRequestsTab({ group, currentUser, myMembership, isA
     }
   });
 
+  const handleFileUpload = async (e) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setIsUploading(true);
+    try {
+      const newUrls = [];
+      for (const file of Array.from(files)) {
+        const res = await base44.integrations.Core.UploadFile({ file });
+        if (res.file_url) newUrls.push(res.file_url);
+      }
+      if (newUrls.length > 0) {
+        setAttachments(prev => [...prev, ...newUrls]);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const sendMessageMutation = useMutation({
     mutationFn: async () => {
-      if (!messageInput.trim()) return;
+      if (!messageInput.trim() && attachments.length === 0) return;
       await base44.entities.GroupRequestMessage.create({
         request_id: activeRequest.id,
         user_email: currentUser?.email,
         content: messageInput,
-        is_admin_reply: isAdmin
+        is_admin_reply: isAdmin,
+        attachments
       });
       
       // Update request updated_date implicitly or explicitly to bump it?
@@ -135,6 +158,7 @@ export default function GroupRequestsTab({ group, currentUser, myMembership, isA
     },
     onSuccess: () => {
       setMessageInput('');
+      setAttachments([]);
       queryClient.invalidateQueries(['requestMessages', activeRequest.id]);
     }
   });
@@ -157,11 +181,7 @@ export default function GroupRequestsTab({ group, currentUser, myMembership, isA
   const visibleRequests = requests.filter(req => {
     if (isAdmin) return true; 
     if (req.user_email === currentUser?.email) return true;
-    
-    const levelMatch = req.target_levels?.includes(myMembership?.level);
-    const userMatch = req.target_users?.includes(currentUser?.email);
-    
-    return levelMatch || userMatch;
+    return false; // Tickets are private to submitting user only
   });
 
   return (
@@ -189,6 +209,14 @@ export default function GroupRequestsTab({ group, currentUser, myMembership, isA
                             
                             {requestSettings.enabled && (
                                 <>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Custom Request Types (comma separated)</label>
+                                        <Input 
+                                            value={(requestSettings.custom_types || ['Support', 'Feature Request', 'Access Request', 'Other']).join(', ')} 
+                                            onChange={e => setRequestSettings({...requestSettings, custom_types: e.target.value.split(',').map(s => s.trim()).filter(Boolean)})} 
+                                            placeholder="Support, Feature Request, Other"
+                                        />
+                                    </div>
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium">Allowed Levels (Empty = All)</label>
                                         <LevelSelector 
@@ -239,12 +267,10 @@ export default function GroupRequestsTab({ group, currentUser, myMembership, isA
                 <SelectTrigger>
                   <SelectValue placeholder="Type" />
                 </SelectTrigger>
-                <SelectContent className="z-[60]">
-                  <SelectItem value="support">Support</SelectItem>
-                  <SelectItem value="feature">Feature Request</SelectItem>
-                  <SelectItem value="access">Access Request</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                  <SelectItem value="youtube">YouTube Request</SelectItem>
+                <SelectContent className="z-[60] bg-white">
+                  {(requestSettings.custom_types || ['Support', 'Feature Request', 'Access Request', 'Other']).map(type => (
+                    <SelectItem key={type} value={type}>{type}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <Textarea 
@@ -252,24 +278,8 @@ export default function GroupRequestsTab({ group, currentUser, myMembership, isA
                 value={formData.description} 
                 onChange={e => setFormData({...formData, description: e.target.value})} 
               />
-              
-              {isAdmin && (
-                <div className="space-y-4 border-t pt-4">
-                  <h4 className="text-sm font-semibold">Visibility (Who else can see this?)</h4>
-                  <LevelSelector 
-                    group={group} 
-                    selectedLevels={formData.target_levels} 
-                    onChange={(levels) => setFormData({...formData, target_levels: levels})} 
-                  />
-                  <MemberSelector
-                    group={group}
-                    selectedUsers={formData.target_users}
-                    onChange={(users) => setFormData({...formData, target_users: users})}
-                  />
-                </div>
-              )}
 
-              <Button onClick={() => saveRequestMutation.mutate(formData)} disabled={!formData.title} className="w-full">
+              <Button onClick={() => saveRequestMutation.mutate(formData)} disabled={!formData.title} className="w-full mt-4">
                 {editingId ? 'Save Changes' : 'Submit'}
               </Button>
             </div>
@@ -373,23 +383,76 @@ export default function GroupRequestsTab({ group, currentUser, myMembership, isA
                             <span className="text-[10px] opacity-50">{new Date(msg.created_date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                         </div>
                         <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                        {msg.attachments && msg.attachments.length > 0 && (
+                          <div className="flex gap-2 mt-2 flex-wrap">
+                            {msg.attachments.map((url, idx) => (
+                              url.match(/\.(jpeg|jpg|gif|png|webp)$/i) ? (
+                                <a key={idx} href={url} target="_blank" rel="noopener noreferrer">
+                                  <img src={url} alt="Attachment" className="max-h-32 rounded border border-black/10 object-cover" />
+                                </a>
+                              ) : url.match(/\.(mp4|webm|mov)$/i) ? (
+                                <video key={idx} src={url} controls className="max-h-48 rounded border border-black/10 object-cover" />
+                              ) : (
+                                <a key={idx} href={url} target="_blank" rel="noopener noreferrer" className="text-xs underline flex items-center gap-1">
+                                  📎 Attachment
+                                </a>
+                              )
+                            ))}
+                          </div>
+                        )}
                     </div>
                 </div>
             ))}
           </div>
 
           <div className="border-t pt-4 mt-auto space-y-4">
-             <div className="flex gap-2">
+             {attachments.length > 0 && (
+               <div className="flex gap-2 flex-wrap">
+                 {attachments.map((url, idx) => (
+                   <div key={idx} className="relative inline-block">
+                     {url.match(/\.(mp4|webm|mov)$/i) ? (
+                        <video src={url} className="h-16 w-16 rounded-md border border-slate-200 object-cover" />
+                     ) : (
+                        <img src={url} alt="Upload preview" className="h-16 w-16 rounded-md border border-slate-200 object-cover" />
+                     )}
+                     <button 
+                       onClick={() => setAttachments(prev => prev.filter((_, i) => i !== idx))}
+                       className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 hover:bg-red-600 shadow-sm"
+                     >
+                       <XCircle className="w-3 h-3" />
+                     </button>
+                   </div>
+                 ))}
+               </div>
+             )}
+             <div className="flex gap-2 items-end">
+                <input 
+                  type="file" 
+                  id={`request-upload-${activeRequest?.id}`}
+                  className="hidden" 
+                  accept="image/*,video/*"
+                  onChange={handleFileUpload}
+                  multiple
+                />
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  className="shrink-0 h-[40px] w-[40px] mb-0"
+                  disabled={isUploading}
+                  onClick={() => document.getElementById(`request-upload-${activeRequest?.id}`).click()}
+                >
+                  <Plus className={`w-4 h-4 ${isUploading ? 'animate-spin' : ''}`} />
+                </Button>
                 <Textarea 
                     placeholder="Type a reply..." 
                     value={messageInput}
                     onChange={e => setMessageInput(e.target.value)}
-                    className="min-h-[60px]"
+                    className="min-h-[40px]"
                 />
                 <Button 
-                    className="h-auto self-end" 
+                    className="h-[40px] shrink-0 self-end" 
                     onClick={() => sendMessageMutation.mutate()}
-                    disabled={sendMessageMutation.isPending || !messageInput.trim()}
+                    disabled={sendMessageMutation.isPending || (!messageInput.trim() && attachments.length === 0)}
                 >
                     <Send className="w-4 h-4" />
                 </Button>
@@ -417,37 +480,7 @@ export default function GroupRequestsTab({ group, currentUser, myMembership, isA
                             </SelectContent>
                         </Select>
                         
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                    <Bell className="w-4 h-4 text-gray-500" />
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-80">
-                                <div className="space-y-2">
-                                    <h4 className="font-medium text-sm">Access Control</h4>
-                                    <LevelSelector 
-                                        group={group} 
-                                        selectedLevels={activeRequest?.target_levels || []} 
-                                        onChange={(levels) => {
-                                            // Need update mutation for this, assuming generic update works
-                                            base44.entities.GroupRequest.update(activeRequest.id, { target_levels: levels });
-                                            setActiveRequest({...activeRequest, target_levels: levels});
-                                            queryClient.invalidateQueries(['groupRequests']);
-                                        }} 
-                                    />
-                                    <MemberSelector
-                                        group={group}
-                                        selectedUsers={activeRequest?.target_users || []}
-                                        onChange={(users) => {
-                                            base44.entities.GroupRequest.update(activeRequest.id, { target_users: users });
-                                            setActiveRequest({...activeRequest, target_users: users});
-                                            queryClient.invalidateQueries(['groupRequests']);
-                                        }}
-                                    />
-                                </div>
-                            </PopoverContent>
-                        </Popover>
+                        {/* Access Control removed as per #13c */}
                     </div>
                  </div>
              )}

@@ -1,0 +1,35 @@
+{
+  "name": "GroupRequestMessage",
+  "type": "object",
+  "properties": {
+    "request_id": {
+      "type": "string",
+      "description": "ID of the parent request"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Email of the sender"
+    },
+    "content": {
+      "type": "string",
+      "description": "Message content"
+    },
+    "is_admin_reply": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this message is from an admin"
+    },
+    "attachments": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    }
+  },
+  "required": [
+    "request_id",
+    "content",
+    "user_email"
+  ]
+}
