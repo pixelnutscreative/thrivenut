@@ -471,7 +471,7 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                     updateMutation.mutate({ id: item.id, data: { in_batch: true, status: '📦 Batched' } });
                     toast.success('Added to batch!');
                   } else {
-                    updateMutation.mutate({ id: item.id, data: { in_batch: false } });
+                    updateMutation.mutate({ id: item.id, data: { in_batch: false, status: '💬 New' } });
                     toast.success('Removed from batch!');
                   }
                 }}
@@ -854,9 +854,14 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                         variant={selectedItem.in_batch ? 'default' : 'outline'}
                         className={`h-8 font-bold flex-shrink-0 ${selectedItem.in_batch ? 'bg-[#24C4D6] hover:bg-[#1db0c0] text-white border-0' : 'border-[#24C4D6] text-[#0D626C] hover:bg-[#24C4D6]/10'}`}
                         onClick={() => {
-                          updateMutation.mutate({ id: selectedItem.id, data: { in_batch: !selectedItem.in_batch } });
+                          if (!selectedItem.in_batch) {
+                            updateMutation.mutate({ id: selectedItem.id, data: { in_batch: true, status: '📦 Batched' } });
+                            toast.success('Added to batch!');
+                          } else {
+                            updateMutation.mutate({ id: selectedItem.id, data: { in_batch: false, status: '💬 New' } });
+                            toast.success('Removed from batch!');
+                          }
                           setSelectedItem(null);
-                          toast.success(selectedItem.in_batch ? 'Removed from batch' : 'Added to batch!');
                         }}
                       >
                         {selectedItem.in_batch ? '✓ In Batch' : '+ Add to Batch'}
