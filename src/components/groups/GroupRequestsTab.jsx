@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MessageSquare, Plus, CheckCircle, Clock, XCircle, Send, Bell, Settings, Pencil } from 'lucide-react';
 import LevelSelector from './LevelSelector';
@@ -41,6 +42,11 @@ export default function GroupRequestsTab({ group, currentUser, myMembership, isA
     queryFn: () => activeRequest ? base44.entities.GroupRequestMessage.filter({ request_id: activeRequest.id }, 'created_date') : [],
     enabled: !!activeRequest,
     refetchInterval: 5000 // Poll for new messages
+  });
+
+  const { data: members = [] } = useQuery({
+    queryKey: ['groupMembers', group.id],
+    queryFn: () => base44.entities.CreatorGroupMember.filter({ group_id: group.id }),
   });
 
   // Mutations
@@ -181,8 +187,20 @@ export default function GroupRequestsTab({ group, currentUser, myMembership, isA
   const visibleRequests = requests.filter(req => {
     if (isAdmin) return true; 
     if (req.user_email === currentUser?.email) return true;
+    
+    // Manager view
+    const submitter = members.find(m => m.user_email === req.user_email);
+    if (submitter && submitter.assigned_manager_email === currentUser?.email) return true;
+    const managersManager = members.find(m => m.user_email === submitter?.assigned_manager_email);
+    if (managersManager && managersManager.assigned_manager_email === currentUser?.email) return true;
+
     return false; // Tickets are private to submitting user only
   });
+
+  // Separate requests for Admin Panel
+  const myRequests = visibleRequests.filter(req => req.user_email === currentUser?.email);
+  const adminRequests = visibleRequests.filter(req => req.user_email !== currentUser?.email);
+  const showAdminPanel = isAdmin || members.some(m => m.assigned_manager_email === currentUser?.email);
 
   return (
     <div className="space-y-6">
@@ -288,58 +306,50 @@ export default function GroupRequestsTab({ group, currentUser, myMembership, isA
       )}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {visibleRequests.map(req => (
-          <Card key={req.id} className="flex flex-col">
-            <CardHeader className="pb-2">
-              <div className="flex justify-between items-start">
-                <Badge variant={req.status === 'resolved' ? 'default' : req.status === 'closed' ? 'secondary' : 'outline'}>
-                  {req.status}
-                </Badge>
-                <span className="text-xs text-gray-500">{new Date(req.created_date).toLocaleDateString()}</span>
-              </div>
-              <CardTitle className="text-lg mt-2">{req.title}</CardTitle>
-            </CardHeader>
-            <CardContent className="flex-1">
-              <p className="text-sm text-gray-600 line-clamp-3">{req.description}</p>
-              <div className="mt-2 flex flex-col gap-1">
-                 <div className="flex gap-2">
-                    <Badge variant="outline" className="text-[10px]">{req.type}</Badge>
-                    {req.user_email === currentUser?.email && <Badge variant="outline" className="text-[10px] bg-blue-50 text-blue-600">My Request</Badge>}
-                 </div>
-                 {req.edited_by && (
-                    <span className="text-[10px] text-purple-400 italic">
-                        Edited by {req.edited_by === currentUser?.email ? 'you' : req.edited_by} on {new Date(req.edited_at).toLocaleDateString()}
-                    </span>
-                 )}
-              </div>
-            </CardContent>
-            <CardFooter className="border-t pt-4 flex flex-wrap gap-2 justify-between">
-              <div className="flex gap-2">
-                  <Button variant="ghost" size="sm" onClick={() => setActiveRequest(req)}>
-                    <MessageSquare className="w-4 h-4 mr-2" /> 
-                    {isAdmin ? 'Manage' : 'View'}
-                  </Button>
-                  {isAdmin && (
-                      <Button variant="ghost" size="sm" onClick={() => handleEdit(req)}>
-                          <Pencil className="w-4 h-4" />
-                      </Button>
-                  )}
-              </div>
-              {isAdmin && req.status !== 'resolved' && (
-                <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => updateStatusMutation.mutate({ id: req.id, status: 'resolved' })}
-                    className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                >
-                  <CheckCircle className="w-4 h-4 mr-2" /> Resolve
-                </Button>
-              )}
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
+      <Tabs defaultValue={myRequests.length > 0 ? "my_requests" : (showAdminPanel ? "all_requests" : "my_requests")} className="w-full">
+        {showAdminPanel && (
+          <TabsList className="mb-4">
+            <TabsTrigger value="my_requests">My Requests ({myRequests.length})</TabsTrigger>
+            <TabsTrigger value="all_requests">Admin Panel ({adminRequests.length})</TabsTrigger>
+          </TabsList>
+        )}
+        
+        <TabsContent value="my_requests">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {myRequests.map(req => (
+              <RequestCard 
+                key={req.id} 
+                req={req} 
+                currentUser={currentUser} 
+                isAdmin={isAdmin} 
+                setActiveRequest={setActiveRequest} 
+                handleEdit={handleEdit} 
+                updateStatusMutation={updateStatusMutation} 
+              />
+            ))}
+            {myRequests.length === 0 && <div className="text-gray-500 text-center py-8 col-span-full">You haven't submitted any requests yet.</div>}
+          </div>
+        </TabsContent>
+
+        {showAdminPanel && (
+          <TabsContent value="all_requests">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {adminRequests.map(req => (
+                <RequestCard 
+                  key={req.id} 
+                  req={req} 
+                  currentUser={currentUser} 
+                  isAdmin={isAdmin} 
+                  setActiveRequest={setActiveRequest} 
+                  handleEdit={handleEdit} 
+                  updateStatusMutation={updateStatusMutation} 
+                />
+              ))}
+              {adminRequests.length === 0 && <div className="text-gray-500 text-center py-8 col-span-full">No team requests found.</div>}
+            </div>
+          </TabsContent>
+        )}
+      </Tabs>
 
       {/* Detail/Chat Modal */}
       <Dialog open={!!activeRequest} onOpenChange={(open) => !open && setActiveRequest(null)}>
@@ -473,6 +483,7 @@ export default function GroupRequestsTab({ group, currentUser, myMembership, isA
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent className="z-[60]">
+                                <SelectItem value="new">New</SelectItem>
                                 <SelectItem value="pending">Pending</SelectItem>
                                 <SelectItem value="in_progress">In Progress</SelectItem>
                                 <SelectItem value="resolved">Resolved</SelectItem>
@@ -488,5 +499,58 @@ export default function GroupRequestsTab({ group, currentUser, myMembership, isA
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+function RequestCard({ req, currentUser, isAdmin, setActiveRequest, handleEdit, updateStatusMutation }) {
+  return (
+    <Card className="flex flex-col">
+      <CardHeader className="pb-2">
+        <div className="flex justify-between items-start">
+          <Badge variant={req.status === 'resolved' ? 'default' : req.status === 'closed' ? 'secondary' : 'outline'}>
+            {req.status}
+          </Badge>
+          <span className="text-xs text-gray-500">{new Date(req.created_date).toLocaleDateString()}</span>
+        </div>
+        <CardTitle className="text-lg mt-2">{req.title}</CardTitle>
+      </CardHeader>
+      <CardContent className="flex-1">
+        <p className="text-sm text-gray-600 line-clamp-3">{req.description}</p>
+        <div className="mt-2 flex flex-col gap-1">
+            <div className="flex gap-2">
+              <Badge variant="outline" className="text-[10px]">{req.type}</Badge>
+              {req.user_email === currentUser?.email && <Badge variant="outline" className="text-[10px] bg-blue-50 text-blue-600">My Request</Badge>}
+            </div>
+            {req.edited_by && (
+              <span className="text-[10px] text-purple-400 italic">
+                  Edited by {req.edited_by === currentUser?.email ? 'you' : req.edited_by} on {new Date(req.edited_at).toLocaleDateString()}
+              </span>
+            )}
+        </div>
+      </CardContent>
+      <CardFooter className="border-t pt-4 flex flex-wrap gap-2 justify-between">
+        <div className="flex gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setActiveRequest(req)}>
+              <MessageSquare className="w-4 h-4 mr-2" /> 
+              {isAdmin ? 'Manage' : 'View'}
+            </Button>
+            {isAdmin && (
+                <Button variant="ghost" size="sm" onClick={() => handleEdit(req)}>
+                    <Pencil className="w-4 h-4" />
+                </Button>
+            )}
+        </div>
+        {isAdmin && req.status !== 'resolved' && (
+          <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => updateStatusMutation.mutate({ id: req.id, status: 'resolved' })}
+              className="text-green-600 hover:text-green-700 hover:bg-green-50"
+          >
+            <CheckCircle className="w-4 h-4 mr-2" /> Resolve
+          </Button>
+        )}
+      </CardFooter>
+    </Card>
   );
 }

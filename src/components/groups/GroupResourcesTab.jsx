@@ -279,6 +279,15 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
                   onChange={v => setFormData({...formData, description: v})} 
                   className="h-36"
                   placeholder="Why is this helpful?"
+                  modules={{
+                    toolbar: [
+                      [{ 'header': [1, 2, false] }],
+                      ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+                      [{'list': 'ordered'}, {'list': 'bullet'}],
+                      ['link', 'image'],
+                      ['clean']
+                    ]
+                  }}
                 />
               </div>
 
@@ -379,7 +388,10 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
                       )}
                     </div>
                   </div>
-                  <div className={`prose prose-sm text-gray-600 max-w-none ${expandedResource === resource.id ? '' : 'line-clamp-2'}`} dangerouslySetInnerHTML={{ __html: resource.description }} />
+                  <div className={`prose prose-sm text-gray-600 max-w-none ${expandedResource === resource.id ? '' : 'line-clamp-3'}`} dangerouslySetInnerHTML={{ __html: resource.description }} />
+                  {expandedResource !== resource.id && resource.description?.length > 100 && (
+                    <div className="text-purple-600 text-sm mt-1 cursor-pointer hover:underline">Read more</div>
+                  )}
                   {expandedResource === resource.id && (
                     <>
                       {resource.url && (

@@ -25,6 +25,11 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
     queryFn: () => base44.entities.GroupQnA.filter({ group_id: group.id }, '-created_date'),
   });
 
+  const { data: members = [] } = useQuery({
+    queryKey: ['groupMembers', group.id],
+    queryFn: () => base44.entities.CreatorGroupMember.filter({ group_id: group.id }),
+  });
+
   const askMutation = useMutation({
     mutationFn: (data) => base44.entities.GroupQnA.create({ 
       ...data, 
@@ -116,7 +121,12 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
 
   // Filter visibility
   const visibleQnA = qnas.filter(q => {
-    if (isAdmin) return true;
+    const askerMember = members.find(m => m.user_email === q.asked_by_email);
+    const isAssignedManager = askerMember && askerMember.assigned_manager_email === currentUser?.email;
+    const assignedManagerMember = askerMember && members.find(m => m.user_email === askerMember.assigned_manager_email);
+    const isManagersManager = assignedManagerMember && assignedManagerMember.assigned_manager_email === currentUser?.email;
+    
+    if (isAdmin || isAssignedManager || isManagersManager) return true;
     if (q.asked_by_email === currentUser?.email) return true;
     
     if (q.status !== 'published') return false;
@@ -124,7 +134,16 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
     const levelMatch = !q.target_levels || q.target_levels.length === 0 || q.target_levels.includes(myMembership?.level);
     const userMatch = !q.target_users || q.target_users.length === 0 || q.target_users.includes(myMembership?.user_email);
     
-    return levelMatch && userMatch;
+    let roleMatch = true;
+    if (q.target_roles && q.target_roles.length > 0) {
+      if (q.target_roles.includes('managers')) {
+        roleMatch = ['manager', 'admin', 'owner'].includes(myMembership?.role);
+      } else if (q.target_roles.includes('creators')) {
+        roleMatch = ['member', 'client', 'virtual-assistant'].includes(myMembership?.role);
+      }
+    }
+    
+    return levelMatch && userMatch && roleMatch;
   });
 
   const publishedQnA = visibleQnA.filter(q => q.status === 'published');
@@ -157,6 +176,15 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
                   onChange={v => setFormData({...formData, details: v})} 
                   className="h-24"
                   placeholder="Add more details (optional)..."
+                  modules={{
+                    toolbar: [
+                      [{ 'header': [1, 2, false] }],
+                      ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+                      [{'list': 'ordered'}, {'list': 'bullet'}],
+                      ['link', 'image'],
+                      ['clean']
+                    ]
+                  }}
                 />
               </div>
 
@@ -168,6 +196,15 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
                     onChange={v => setFormData({...formData, answer: v})} 
                     className="h-24"
                     placeholder="Write or edit answer..."
+                    modules={{
+                      toolbar: [
+                        [{ 'header': [1, 2, false] }],
+                        ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+                        [{'list': 'ordered'}, {'list': 'bullet'}],
+                        ['link', 'image'],
+                        ['clean']
+                      ]
+                    }}
                   />
                 </div>
               )}
@@ -276,6 +313,7 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
 
 function AdminAnswerCard({ qna, onAnswer, group }) {
   const [answer, setAnswer] = useState('');
+  const [visibility, setVisibility] = useState('everyone');
   const [targetLevels, setTargetLevels] = useState([]);
   
   return (
@@ -293,19 +331,33 @@ function AdminAnswerCard({ qna, onAnswer, group }) {
             onChange={setAnswer} 
             className="h-36"
             placeholder="Write your answer..."
+            modules={{
+              toolbar: [
+                [{ 'header': [1, 2, false] }],
+                ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+                [{'list': 'ordered'}, {'list': 'bullet'}],
+                ['link', 'image'],
+                ['clean']
+              ]
+            }}
           />
         </div>
         <div className="space-y-2 border-t pt-2 mt-2">
             <h4 className="text-sm font-semibold">Visibility (Who can see this answer?)</h4>
-            <LevelSelector group={group} selectedLevels={targetLevels} onChange={setTargetLevels} />
+            <div className="flex gap-4">
+               <label className="flex items-center gap-2 text-sm"><input type="radio" checked={visibility === 'everyone'} onChange={() => setVisibility('everyone')} /> Everyone</label>
+               <label className="flex items-center gap-2 text-sm"><input type="radio" checked={visibility === 'creators'} onChange={() => setVisibility('creators')} /> Creators Only</label>
+               <label className="flex items-center gap-2 text-sm"><input type="radio" checked={visibility === 'managers'} onChange={() => setVisibility('managers')} /> Managers Only</label>
+            </div>
         </div>
         <div className="flex gap-2 justify-end mt-4">
           <Button variant="outline" size="sm" onClick={() => onAnswer({ id: qna.id, status: 'rejected' })} className="text-red-500">
             Reject
           </Button>
           <Button size="sm" onClick={() => {
-              onAnswer({ id: qna.id, answer, status: 'published', target_levels: targetLevels });
-              base44.entities.GroupQnA.update(qna.id, { target_levels: targetLevels });
+              const target_roles = visibility === 'everyone' ? [] : [visibility];
+              onAnswer({ id: qna.id, answer, status: 'published', target_roles });
+              base44.entities.GroupQnA.update(qna.id, { target_roles });
               setAnswer('');
           }} disabled={!answer}>
             Publish Answer
