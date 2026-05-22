@@ -108,7 +108,7 @@ function App() {
           <NavigationTracker />
           <AuthenticatedApp />
         </Router>
-        <Toaster />
+        <Toaster toastOptions={{ style: { background: '#24C4D6', color: '#fff', border: 'none' }, duration: 3000 }} />
         <VisualEditAgent />
       </QueryClientProvider>
     </AuthProvider>

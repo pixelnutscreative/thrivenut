@@ -13,7 +13,7 @@ import {
   Calendar, Sun, Cross, Smile, FileText, StickyNote, Tablet, HelpCircle,
   MessageCircle, Briefcase, DollarSign, Activity, Wallet, Swords, Lightbulb, Zap,
   Image as ImageIcon, GraduationCap, Printer, AlertCircle, MessageSquare,
-  Link as LinkIcon, FolderOpen, FileSpreadsheet, ClipboardList
+  Link as LinkIcon, FolderOpen, FileSpreadsheet, ClipboardList, Plus
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import TikTokAccessGate from './components/access/TikTokAccessGate';
@@ -24,6 +24,10 @@ import QuickActionsBarV2 from './components/widgets/QuickActionsBarV2';
 import SoundCloudPlayer, { FloatingSoundCloudPlayer, MobileSoundCloudPopup } from './components/widgets/SoundCloudPlayer.jsx';
 import AnnouncementBar from './components/announcements/AnnouncementBar';
 import AnnouncementBarPositioner from './components/announcements/AnnouncementBarPositioner';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { toast } from 'sonner';
 
 // Icon mapping
 const iconMap = {
@@ -43,6 +47,8 @@ export default function Layout({ children, currentPageName }) {
   const [expandedSections, setExpandedSections] = useState(['Content Creator Center']); // Default expand creator center
   const [showAccessGate, setShowAccessGate] = useState(false);
   const [userLoading, setUserLoading] = useState(true);
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
+  const [quickAddData, setQuickAddData] = useState({ title: '', details: '', page_location: '' });
 
   // Authentication
   useEffect(() => {
@@ -52,6 +58,34 @@ export default function Layout({ children, currentPageName }) {
     catch(() => setUser(null)).
     finally(() => setUserLoading(false));
   }, []);
+
+  useEffect(() => {
+    const handleQuickAdd = (e) => {
+      setQuickAddData({ title: '', details: '', page_location: e.detail.location });
+      setQuickAddOpen(true);
+    };
+    window.addEventListener('open-quick-add', handleQuickAdd);
+    return () => window.removeEventListener('open-quick-add', handleQuickAdd);
+  }, []);
+
+  const submitQuickAdd = async () => {
+    if (!quickAddData.title) return;
+    try {
+      await base44.functions.invoke('createPixelBoardCard', {
+        title: quickAddData.title,
+        details: quickAddData.details,
+        page_location: quickAddData.page_location,
+        status: '💬 New',
+        category: 'Other',
+        priority: 'Normal',
+        card_color: '#24C4D6'
+      });
+      toast.success('Ticket created!', { style: { background: '#24C4D6', color: '#fff', border: 'none' } });
+      setQuickAddOpen(false);
+    } catch (e) {
+      toast.error('Failed to create ticket');
+    }
+  };
 
   // Active Time Tracking with DELTA ticks
   const [sessionId] = useState(() => `sess-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
@@ -897,7 +931,7 @@ const { data: featureFlags = [] } = useQuery({
                       </div>
                     </div>
                     <img
-                    src={preferences?.profile_image_url || `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'%3E%3C/path%3E%3Ccircle cx='12' cy='7' r='4'%3E%3C/circle%3E%3C/svg%3E`}
+                    src={preferences?.profile_image_url || myMenuGroups.find(g => g.type === 'agency' && g.logo_url)?.logo_url || `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'%3E%3C/path%3E%3Ccircle cx='12' cy='7' r='4'%3E%3C/circle%3E%3C/svg%3E`}
                     alt="Profile"
                     className="w-10 h-10 rounded-full object-cover border-2 border-gray-300 flex-shrink-0" />
 
@@ -1191,7 +1225,7 @@ const { data: featureFlags = [] } = useQuery({
                 </div>
               )}
               <img
-                  src={preferences?.profile_image_url || `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'%3E%3C/path%3E%3Ccircle cx='12' cy='7' r='4'%3E%3C/circle%3E%3C/svg%3E`}
+                  src={preferences?.profile_image_url || myMenuGroups.find(g => g.type === 'agency' && g.logo_url)?.logo_url || `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'%3E%3C/path%3E%3Ccircle cx='12' cy='7' r='4'%3E%3C/circle%3E%3C/svg%3E`}
                   alt="Profile"
                   className="w-10 h-10 rounded-full object-cover border-2 border-gray-300 flex-shrink-0" />
 
@@ -1287,21 +1321,63 @@ const { data: featureFlags = [] } = useQuery({
 
       <FloatingHelpButton pageName={currentPageName} userEmail={user?.email} />
 
-      {user && effectiveEmail && preferences && !mobileMenuOpen &&
+      {/* Global Quick Add (PixelBoard) */}
+      <Button
+        className="fixed bottom-6 right-20 z-[9999] w-14 h-14 rounded-full shadow-2xl flex items-center justify-center hover:scale-105 transition-transform"
+        style={{ backgroundColor: '#24C4D6', color: '#fff' }}
+        onClick={() => {
+          // Dispatch a custom event that PixelBoardWidget or a global handler can listen to,
+          // or just redirect to PixelBoard with new item open. 
+          // Since we want a "mini card creator", let's handle it with a global state or trigger.
+          window.dispatchEvent(new CustomEvent('open-quick-add', { detail: { location: location.pathname + location.search } }));
+        }}
+        title="Quick Add Ticket"
+      >
+        <Plus className="w-8 h-8" />
+      </Button>
+
+      {user && effectiveEmail && preferences && !mobileMenuOpen && !(location.pathname === '/CreatorGroups' && location.search.includes('Social House Agency')) &&
         <QuickActionsBarV2
           preferences={preferences}
           primaryColor={primaryColor}
           accentColor={accentColor} />
-
-        }
+      }
 
       {soundcloudPosition === 'floating' && soundcloudUrl &&
         <FloatingSoundCloudPlayer
           playlistUrl={soundcloudUrl}
           primaryColor={primaryColor}
           accentColor={accentColor} />
+      }
 
-        }
+      {/* Global Quick Add Modal */}
+      <Dialog open={quickAddOpen} onOpenChange={setQuickAddOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-slate-800" style={{ color: '#24C4D6' }}>Quick Add Ticket</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-700">Title</label>
+              <Input placeholder="What needs doing?" value={quickAddData.title} onChange={e => setQuickAddData({...quickAddData, title: e.target.value})} className="border-2 border-slate-200 focus-visible:ring-[#24C4D6]" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-700">Details</label>
+              <Textarea placeholder="Provide context..." value={quickAddData.details} onChange={e => setQuickAddData({...quickAddData, details: e.target.value})} className="min-h-[100px] border-2 border-slate-200 focus-visible:ring-[#24C4D6]" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-700">Page / Location</label>
+              <Input value={quickAddData.page_location} readOnly className="bg-slate-50 text-slate-500" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setQuickAddOpen(false)}>Cancel</Button>
+            <Button onClick={submitQuickAdd} disabled={!quickAddData.title} className="text-white" style={{ backgroundColor: '#24C4D6' }}>
+              Create Ticket
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
     </>);
 

@@ -47,7 +47,6 @@ export default function GroupSettingsTab({ group }) {
           <GroupExperienceSettings group={group} />
           <GroupTypeSettings group={group} />
           <GroupLogoUploader group={group} />
-          <RetainerSettings group={group} />
           <ProspectManagementSettings group={group} />
           <GroupShortcutsSettings group={group} />
           <CryptoTickerSettings group={group} />
@@ -179,53 +178,7 @@ function CryptoTickerSettings({ group }) {
   );
 }
 
-function RetainerSettings({ group }) {
-  const queryClient = useQueryClient();
-  const updateMutation = useMutation({
-    mutationFn: async (data) => {
-      if (data.settings) {
-        const current = await base44.entities.CreatorGroup.get(group.id);
-        return base44.entities.CreatorGroup.update(group.id, { 
-            enable_retainer_management: data.enable_retainer_management !== undefined ? data.enable_retainer_management : current.enable_retainer_management,
-            settings: { ...current.settings, ...data.settings } 
-        });
-      }
-      return base44.entities.CreatorGroup.update(group.id, data);
-    },
-    onSuccess: () => queryClient.invalidateQueries(['myGroupsDetails'])
-  });
 
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Hourly Tracking & Retainers</CardTitle>
-        <CardDescription>Configure time tracking and retainer packages for this group.</CardDescription>
-      </CardHeader>
-      <CardContent className="flex items-center justify-between">
-        <div className="space-y-1">
-          <div className="font-medium">Enable Hourly Tracking</div>
-          <div className="text-sm text-gray-500">Turn this off for flat-rate clients (hides hours balance).</div>
-        </div>
-        <Switch
-          checked={group.enable_retainer_management === true}
-          onCheckedChange={(checked) => updateMutation.mutate({ enable_retainer_management: checked })}
-        />
-      </CardContent>
-      {group.enable_retainer_management && (
-        <CardContent className="flex items-center justify-between border-t pt-4">
-          <div className="space-y-1">
-            <div className="font-medium">Show Balance to Client</div>
-            <div className="text-sm text-gray-500">If disabled, only admins can see the hours balance.</div>
-          </div>
-          <Switch
-            checked={!(group.settings?.hide_retainer_balance === true)}
-            onCheckedChange={(checked) => updateMutation.mutate({ settings: { hide_retainer_balance: !checked } })}
-          />
-        </CardContent>
-      )}
-    </Card>
-  );
-}
 
 function MemberInviteSettings({ group }) {
   const queryClient = useQueryClient();

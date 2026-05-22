@@ -1120,13 +1120,7 @@ export default function CreatorGroups() {
                                 <Trash2 className="w-4 h-4" />
                              </Button>
                            )}
-                           <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={() => setSearchParams({ id: group.id })}
-                           >
-                              {isMember ? 'Open' : 'View'}
-                           </Button>
+                           {/* Removed Enter Dashboard / View button per request, click on row opens group */}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -1244,11 +1238,11 @@ export default function CreatorGroups() {
                 </div>
              )}
             <Dialog>
-              <DialogTrigger asChild>
+              {/* <DialogTrigger asChild>
                 <Button variant="outline" size="sm" className="hidden">
                   <Eye className="w-4 h-4 mr-2" /> Customize View
                 </Button>
-              </DialogTrigger>
+              </DialogTrigger> */}
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Customize Dashboard</DialogTitle>
@@ -1604,7 +1598,11 @@ export default function CreatorGroups() {
                           `}
                         >
                           <Icon className={`w-4 h-4 ${isActive ? 'mr-2' : ''}`} />
-                          {isActive && <span className="font-medium text-sm">{tab.label}</span>}
+                          {isActive && (
+                            <span className="font-medium text-sm">
+                              {activeGroup.settings?.display_names?.[tab.id] || tab.label}
+                            </span>
+                          )}
                           
                           {/* Admin indicator dot if minimized */}
                           {isAdminOnly && !isActive && (

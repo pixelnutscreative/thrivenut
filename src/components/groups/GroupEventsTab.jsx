@@ -259,6 +259,14 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
       }
     });
 
+    // Validation: End time must be after start time
+    for (const occ of finalOccurrences) {
+      if (occ.end_time && new Date(occ.start_time) >= new Date(occ.end_time)) {
+        alert("End time must be after the start time for all sessions.");
+        return;
+      }
+    }
+
     // Deduplicate and Sort
     const uniqueMap = new Map();
     finalOccurrences.forEach(o => uniqueMap.set(o.start_time, o));
@@ -282,13 +290,23 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
 
   const visibleEvents = events.filter(event => {
     const eventTime = new Date(event.start_time).getTime();
-    if (Date.now() - eventTime > 24 * 60 * 60 * 1000) return false;
+    const isPast = Date.now() - eventTime > 24 * 60 * 60 * 1000;
+    if (isPast) return false; // Hide past events after 24hrs automatically
     
     if (isAdmin) return true;
     const levelMatch = !event.target_levels || event.target_levels.length === 0 || event.target_levels.includes(myMembership?.level);
     const userMatch = !event.target_users || event.target_users.length === 0 || event.target_users.includes(myMembership?.user_email);
     return levelMatch && userMatch;
   }).sort((a, b) => {
+    // Agency events on top, creator battles/streams below
+    // Assume events with 'agency' or related tags/titles or if group is agency?
+    // Since we don't have event type field, we'll sort battles/streams down based on title/description keywords
+    const isABattle = a.title?.toLowerCase().includes('battle') || a.title?.toLowerCase().includes('stream');
+    const isBBattle = b.title?.toLowerCase().includes('battle') || b.title?.toLowerCase().includes('stream');
+    
+    if (!isABattle && isBBattle) return -1;
+    if (isABattle && !isBBattle) return 1;
+    
     return new Date(a.start_time) - new Date(b.start_time);
   });
 

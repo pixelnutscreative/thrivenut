@@ -678,7 +678,35 @@ export default function PixelsParadise() {
                     <h3 className={`font-bold text-lg ${textClass} group-hover:opacity-80 transition-colors`}>
                       {resource.name}
                     </h3>
-                    <ExternalLink className="w-4 h-4 text-gray-400 flex-shrink-0 mt-1" style={{ color: primaryColor }} />
+                    <div className="flex items-center gap-1 mt-1 flex-shrink-0">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-6 w-6 rounded hover:bg-gray-100"
+                        title="Copy Link"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigator.clipboard.writeText(resource.link);
+                          alert('Link copied to clipboard!');
+                        }}
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-6 w-6 rounded hover:bg-gray-100"
+                        title="Preview & Open"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (window.confirm(`You are navigating to: ${resource.link}\n\nProceed?`)) {
+                            window.open(resource.link, '_blank');
+                          }
+                        }}
+                      >
+                        <ExternalLink className="w-4 h-4 text-gray-400" style={{ color: primaryColor }} />
+                      </Button>
+                    </div>
                   </div>
                   <p className={`text-sm ${subtextClass}`}>{resource.description}</p>
                   <div className="flex items-center justify-between pt-1 flex-wrap gap-1">

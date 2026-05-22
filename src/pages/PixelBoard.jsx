@@ -155,7 +155,56 @@ export default function PixelBoard() {
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [imageToDelete, setImageToDelete] = useState(null);
   const [isDraggingOverFile, setIsDraggingOverFile] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState(null);
+  const [promptDialog, setPromptDialog] = useState(null);
+  const [duplicateFinderOpen, setDuplicateFinderOpen] = useState(false);
+  const [duplicateGroups, setDuplicateGroups] = useState([]);
+  
   const fileInputRef = useRef(null);
+
+  const customConfirm = (message, onConfirm) => {
+    setConfirmDialog({ message, onConfirm });
+  };
+
+  const customPrompt = (message, onConfirm) => {
+    setPromptDialog({ message, onConfirm, value: '' });
+  };
+
+  const findDuplicates = () => {
+    const groups = [];
+    const processed = new Set();
+    
+    // Simple fuzzy match by splitting words and checking overlap
+    const getSimilarity = (s1, s2) => {
+      if (!s1 || !s2) return 0;
+      const w1 = s1.toLowerCase().split(/\s+/);
+      const w2 = s2.toLowerCase().split(/\s+/);
+      const intersection = w1.filter(w => w2.includes(w));
+      return intersection.length / Math.min(w1.length, w2.length);
+    };
+
+    items.forEach(item1 => {
+      if (processed.has(item1.id)) return;
+      const similar = [item1];
+      processed.add(item1.id);
+
+      items.forEach(item2 => {
+        if (!processed.has(item2.id)) {
+          if (getSimilarity(item1.title, item2.title) > 0.7) {
+            similar.push(item2);
+            processed.add(item2.id);
+          }
+        }
+      });
+
+      if (similar.length > 1) {
+        groups.push(similar);
+      }
+    });
+
+    setDuplicateGroups(groups);
+    setDuplicateFinderOpen(true);
+  };
   
   const [newQuestion, setNewQuestion] = useState({
     title: '',
@@ -163,7 +212,9 @@ export default function PixelBoard() {
     category: 'Other',
     priority: 'Normal',
     card_color: '#24C4D6',
-    urls: []
+    urls: [],
+    page_location: '',
+    group_tag: ''
   });
 
   const { data: userPrefsList } = useQuery({
@@ -236,12 +287,21 @@ export default function PixelBoard() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.PixelBoard.create({ ...data, status: '💬 New', asked_by: 'Nikole' }),
+    mutationFn: (data) => {
+      const { in_batch, page_location, group_tag, ...rest } = data;
+      return base44.entities.PixelBoard.create({
+        ...rest,
+        status: in_batch ? '📦 Batch' : '💬 New',
+        in_batch: !!in_batch,
+        asked_by: 'Nikole',
+        custom_fields: { page_location, group_tag }
+      });
+    },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['pixelBoard'] });
       setIsAskModalOpen(false);
-      setNewQuestion({ title: '', details: '', category: 'Other', priority: 'Normal', card_color: '#24C4D6', urls: [] });
-      toast.success("Ticket created!");
+      setNewQuestion({ title: '', details: '', category: 'Other', priority: 'Normal', card_color: '#24C4D6', urls: [], page_location: '', group_tag: '' });
+      toast.success("Ticket created!", { style: { background: '#24C4D6', color: '#fff', border: 'none' } });
       return data;
     }
   });
@@ -332,9 +392,9 @@ export default function PixelBoard() {
     }).length;
   };
 
-  const handleAskSubmit = () => {
+  const handleAskSubmit = (inBatch = false) => {
     if (!newQuestion.title) return;
-    createMutation.mutate(newQuestion);
+    createMutation.mutate({ ...newQuestion, in_batch: inBatch });
   };
 
   const uploadFilesFromEvent = async (files) => {
@@ -463,6 +523,16 @@ export default function PixelBoard() {
               {isDaisyInit ? '🤖' : '📝'}
             </Badge>
             <Badge variant="secondary" className="text-[11px] bg-slate-100 text-slate-600 hover:bg-slate-200">{item.category}</Badge>
+            {item.custom_fields?.page_location && (
+              <Badge variant="secondary" className="text-[11px] bg-indigo-50 text-indigo-600 hover:bg-indigo-100" title="Page / Location">
+                📍 {item.custom_fields.page_location}
+              </Badge>
+            )}
+            {item.custom_fields?.group_tag && (
+              <Badge variant="secondary" className="text-[11px] bg-pink-50 text-pink-600 hover:bg-pink-100" title="Group Tag">
+                👥 {item.custom_fields.group_tag}
+              </Badge>
+            )}
             <Badge variant="outline" className={`text-[11px] ${pConf.color} border-0`}>{pConf.emoji} {item.priority}</Badge>
             {item.in_batch && <Badge variant="secondary" className="text-[11px] bg-slate-800 text-white border-0">📦 In Batch</Badge>}
             {s !== '💬 New' && s !== '📬 My Inbox' && s !== '📦 Batch' && <Badge variant="outline" className="text-[11px] bg-white border-slate-200 text-slate-500">{s}</Badge>}
@@ -485,17 +555,32 @@ export default function PixelBoard() {
             </div>
           )}
 
-          <div className="flex items-center justify-between mt-1">
-            {turn && !isDone ? (
-              <div className={`text-[11px] font-medium px-2 py-1 rounded-md inline-flex items-center w-fit ${turn.includes('Nikole') ? 'bg-[#24C4D6] text-white' : 'bg-[#A8E6E6] text-[#0D626C]'}`}>
-                {turn}
-              </div>
-            ) : <div />}
-            
-            {!isDone && (
+          <div className="flex flex-col gap-2 mt-2">
+            {s === '📬 My Inbox' && (
               <Button 
-                size="sm" 
-                variant={item.in_batch ? 'default' : 'outline'}
+                size="lg"
+                className="w-full bg-green-500 hover:bg-green-600 text-white font-bold text-sm shadow-md"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  updateStatus(item.id, '✅ Done');
+                  toast.success('Marked as Done!', { style: { background: '#24C4D6', color: '#fff', border: 'none' } });
+                }}
+              >
+                ✅ Mark Done
+              </Button>
+            )}
+
+            <div className="flex items-center justify-between mt-1">
+              {turn && !isDone ? (
+                <div className={`text-[11px] font-medium px-2 py-1 rounded-md inline-flex items-center w-fit ${turn.includes('Nikole') ? 'bg-[#24C4D6] text-white' : 'bg-[#A8E6E6] text-[#0D626C]'}`}>
+                  {turn}
+                </div>
+              ) : <div />}
+              
+              {!isDone && (
+                <Button 
+                  size="sm" 
+                  variant={item.in_batch ? 'default' : 'outline'}
                 className={`h-7 px-2 text-[10px] font-bold z-10 ${item.in_batch ? 'bg-[#24C4D6] hover:bg-[#1db0c0] text-white border-0' : 'border-[#24C4D6] text-[#0D626C] hover:bg-[#24C4D6]/10'}`}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -511,6 +596,7 @@ export default function PixelBoard() {
                 {item.in_batch ? '✓ In Batch' : '+ Add to Batch'}
               </Button>
             )}
+          </div>
           </div>
         </CardContent>
       </Card>
@@ -601,6 +687,14 @@ export default function PixelBoard() {
                 </Button>
               </div>
             )}
+            
+            <Button 
+              variant="outline" 
+              className="border-2 border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-bold"
+              onClick={findDuplicates}
+            >
+              🔍 Find Duplicates
+            </Button>
 
             <div className="relative w-[200px]">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -807,6 +901,14 @@ export default function PixelBoard() {
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
+                    <div className="col-span-2 space-y-2">
+                      <Label className="font-bold text-slate-700">Page / Location</Label>
+                      <Input placeholder="e.g. Groups > Invite Modal" value={newQuestion.page_location || ''} onChange={e => setNewQuestion({...newQuestion, page_location: e.target.value})} className="border-2 border-slate-200 focus-visible:ring-[#24C4D6]" />
+                    </div>
+                    <div className="col-span-2 space-y-2">
+                      <Label className="font-bold text-slate-700">Group Tag</Label>
+                      <Input placeholder="e.g. Social House Agency" value={newQuestion.group_tag || ''} onChange={e => setNewQuestion({...newQuestion, group_tag: e.target.value})} className="border-2 border-slate-200 focus-visible:ring-[#24C4D6]" />
+                    </div>
                     <div className="space-y-2">
                       <Label className="font-bold text-slate-700">Category</Label>
                       <Select value={newQuestion.category} onValueChange={v => setNewQuestion({...newQuestion, category: v})}>
@@ -840,10 +942,13 @@ export default function PixelBoard() {
                     </div>
                   </div>
                 </div>
-                <DialogFooter className="gap-2 sm:gap-0">
+                <DialogFooter className="gap-2 sm:gap-0 sm:justify-end">
                   <Button variant="outline" className="border-2 border-slate-200" onClick={() => setIsAskModalOpen(false)}>Cancel</Button>
-                  <Button onClick={handleAskSubmit} disabled={!newQuestion.title || createMutation.isPending} className="bg-[#24C4D6] hover:bg-[#1db0c0] text-white font-bold">
-                    {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Plus className="w-4 h-4 mr-2" />} Create Ticket
+                  <Button onClick={() => handleAskSubmit(false)} disabled={!newQuestion.title || createMutation.isPending} className="bg-slate-800 hover:bg-slate-900 text-white font-bold">
+                    {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Plus className="w-4 h-4 mr-2" />} Create
+                  </Button>
+                  <Button onClick={() => handleAskSubmit(true)} disabled={!newQuestion.title || createMutation.isPending} className="bg-[#24C4D6] hover:bg-[#1db0c0] text-white font-bold">
+                    {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Plus className="w-4 h-4 mr-2" />} Save & Add to Batch
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -1010,7 +1115,7 @@ export default function PixelBoard() {
                       </Button>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 items-center">
+                  <div className="grid grid-cols-2 md:grid-cols-6 gap-2 items-center">
                     <div className="space-y-1">
                       <Label className="text-xs font-bold text-slate-500">Status</Label>
                       <Select value={mapStatus(selectedItem)} onValueChange={(v) => updateStatus(selectedItem.id, v)}>
@@ -1065,16 +1170,60 @@ export default function PixelBoard() {
                         ))}
                       </div>
                     </div>
+
+                    <div className="space-y-1">
+                      <Label className="text-xs font-bold text-slate-500">Page / Location</Label>
+                      <Input 
+                        value={selectedItem.custom_fields?.page_location || ''} 
+                        onChange={(e) => updateMutation.mutate({ id: selectedItem.id, data: { custom_fields: { ...selectedItem.custom_fields, page_location: e.target.value } } })}
+                        className="w-full border-2 border-slate-200 bg-white h-9 text-xs" 
+                        placeholder="Location"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label className="text-xs font-bold text-slate-500">Group Tag</Label>
+                      <Input 
+                        value={selectedItem.custom_fields?.group_tag || ''} 
+                        onChange={(e) => updateMutation.mutate({ id: selectedItem.id, data: { custom_fields: { ...selectedItem.custom_fields, group_tag: e.target.value } } })}
+                        className="w-full border-2 border-slate-200 bg-white h-9 text-xs" 
+                        placeholder="Tag"
+                      />
+                    </div>
                   </div>
+                  
+                  {mapStatus(selectedItem) === '📬 My Inbox' && (
+                    <Button 
+                      size="lg"
+                      className="w-full mt-3 bg-green-500 hover:bg-green-600 text-white font-bold shadow-md"
+                      onClick={() => {
+                        updateStatus(selectedItem.id, '✅ Done');
+                        toast.success('Marked as Done!', { style: { background: '#24C4D6', color: '#fff', border: 'none' } });
+                        setSelectedItem(null);
+                      }}
+                    >
+                      ✅ Mark Done
+                    </Button>
+                  )}
                   
                   {/* Inline URLs editor */}
                   <div className="mt-3 space-y-2 max-h-[80px] overflow-y-auto custom-scrollbar">
                      <div className="flex flex-wrap gap-2 items-center">
                         {(selectedItem.urls || []).map((url, idx) => (
-                           <div key={idx} className="flex items-center gap-1 bg-slate-100 border border-slate-200 rounded-md pr-1 overflow-hidden max-w-full">
-                              <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline truncate max-w-[200px] px-2 py-1 flex items-center gap-1">
-                                <LinkIcon className="w-3 h-3" /> {url}
-                              </a>
+                           <div key={idx} className="flex items-center gap-1 bg-slate-100 border border-slate-200 rounded-md p-1 overflow-hidden max-w-full">
+                              <Input 
+                                value={url} 
+                                onChange={e => {
+                                  const newUrls = [...(selectedItem.urls || [])];
+                                  newUrls[idx] = e.target.value;
+                                  updateMutation.mutate({ id: selectedItem.id, data: { urls: newUrls } });
+                                  setSelectedItem(prev => ({...prev, urls: newUrls}));
+                                }}
+                                className="h-6 text-xs w-[200px] border-none bg-transparent"
+                              />
+                              <Button size="sm" variant="default" className="h-6 text-[10px] px-2 font-bold text-white bg-[#24C4D6] hover:bg-[#1db0c0]" onClick={() => window.open(url, '_blank')}>
+                                Open ↗
+                              </Button>
                               <button onClick={() => {
                                  const newUrls = [...(selectedItem.urls || [])];
                                  newUrls.splice(idx, 1);
@@ -1090,12 +1239,13 @@ export default function PixelBoard() {
                            size="sm" 
                            className="h-7 text-[10px] border-dashed text-slate-500"
                            onClick={() => {
-                              const newUrl = window.prompt("Enter URL:");
-                              if (newUrl && newUrl.trim()) {
-                                const newUrls = [...(selectedItem.urls || []), newUrl.trim()];
-                                updateMutation.mutate({ id: selectedItem.id, data: { urls: newUrls } });
-                                setSelectedItem(prev => ({...prev, urls: newUrls}));
-                              }
+                              customPrompt("Enter URL:", (newUrl) => {
+                                if (newUrl && newUrl.trim()) {
+                                  const newUrls = [...(selectedItem.urls || []), newUrl.trim()];
+                                  updateMutation.mutate({ id: selectedItem.id, data: { urls: newUrls } });
+                                  setSelectedItem(prev => ({...prev, urls: newUrls}));
+                                }
+                              });
                            }}
                         >
                            <Plus className="w-3 h-3 mr-1" /> Add URL
@@ -1291,9 +1441,9 @@ export default function PixelBoard() {
                       variant="ghost" 
                       className="h-7 text-xs text-red-500 hover:text-red-600 hover:bg-red-50 px-2 font-bold"
                       onClick={() => {
-                        if (window.confirm("Are you sure you want to completely delete this ticket? This cannot be undone.")) {
+                        customConfirm("Are you sure you want to completely delete this ticket? This cannot be undone.", () => {
                           handleBulkDelete([selectedItem.id]);
-                        }
+                        });
                       }}
                     >
                       Delete
@@ -1448,7 +1598,111 @@ export default function PixelBoard() {
           </DialogContent>
         </Dialog>
 
-        {/* Squirrel Modal */}
+        {/* Custom Confirm Dialog */}
+      <Dialog open={!!confirmDialog} onOpenChange={(open) => !open && setConfirmDialog(null)}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold" style={{ color: '#24C4D6' }}>Are you sure?</DialogTitle>
+          </DialogHeader>
+          <div className="py-4 text-slate-700 font-medium">
+            {confirmDialog?.message}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmDialog(null)}>Cancel</Button>
+            <Button className="text-white font-bold" style={{ backgroundColor: '#24C4D6' }} onClick={() => {
+              if (confirmDialog?.onConfirm) confirmDialog.onConfirm();
+              setConfirmDialog(null);
+            }}>Confirm</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Custom Prompt Dialog */}
+      <Dialog open={!!promptDialog} onOpenChange={(open) => !open && setPromptDialog(null)}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold" style={{ color: '#24C4D6' }}>Input Required</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <Label className="text-slate-700 font-bold">{promptDialog?.message}</Label>
+            <Input 
+              autoFocus
+              className="border-2 focus-visible:ring-[#24C4D6]"
+              value={promptDialog?.value || ''} 
+              onChange={e => setPromptDialog(prev => ({...prev, value: e.target.value}))}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  if (promptDialog?.onConfirm) promptDialog.onConfirm(promptDialog.value);
+                  setPromptDialog(null);
+                }
+              }}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPromptDialog(null)}>Cancel</Button>
+            <Button className="text-white font-bold" style={{ backgroundColor: '#24C4D6' }} onClick={() => {
+              if (promptDialog?.onConfirm) promptDialog.onConfirm(promptDialog.value);
+              setPromptDialog(null);
+            }}>Submit</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Duplicate Finder Modal */}
+      <Dialog open={duplicateFinderOpen} onOpenChange={setDuplicateFinderOpen}>
+        <DialogContent className="sm:max-w-[800px] max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-indigo-700 flex items-center gap-2">
+              <Search className="w-5 h-5" /> Possible Duplicates
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6 py-4">
+            {duplicateGroups.length === 0 ? (
+              <div className="text-center py-8 text-slate-500 font-medium">No obvious duplicates found!</div>
+            ) : (
+              duplicateGroups.map((group, idx) => (
+                <div key={idx} className="border-2 border-indigo-100 bg-indigo-50/30 rounded-xl p-4 space-y-4">
+                  <h4 className="font-bold text-indigo-800 text-sm">Duplicate Group {idx + 1}</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {group.map(item => (
+                      <Card key={item.id} className="border-2 border-slate-200">
+                        <CardContent className="p-3 space-y-2">
+                          <h5 className="font-bold text-sm line-clamp-2">{item.title}</h5>
+                          <p className="text-xs text-slate-500 line-clamp-3">{item.details}</p>
+                          <div className="flex justify-between items-center mt-2 pt-2 border-t border-slate-100">
+                            <Badge variant="outline" className="text-[10px]">{mapStatus(item)}</Badge>
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              className="h-6 text-xs text-red-500 hover:text-red-600 hover:bg-red-50 px-2"
+                              onClick={() => {
+                                handleBulkDelete([item.id]);
+                                setDuplicateGroups(prev => {
+                                  const newGroups = [...prev];
+                                  newGroups[idx] = newGroups[idx].filter(i => i.id !== item.id);
+                                  return newGroups.filter(g => g.length > 1);
+                                });
+                              }}
+                            >
+                              Delete
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDuplicateFinderOpen(false)}>Done</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Squirrel Modal */}
         <Dialog open={squirrelModalOpen} onOpenChange={(open) => {
           if (!open) {
             setSquirrelModalOpen(false);

@@ -243,8 +243,8 @@ function OnboardingModal({ isOpen, user, onComplete }) {
   const handleNext = () => {
     if (step === 1 && data.nickname) {
       setStep(2);
-    } else if (step === 2 && data.user_timezone && data.greeting_types.length > 0) {
-      setStep(3);
+    } else if (step === 2 && data.user_timezone) {
+      setStep(4); // Skip step 3 (Mental health goals) as requested
     } else if (step === 3) {
       setStep(4);
     } else if (step === 4) {
@@ -254,14 +254,14 @@ function OnboardingModal({ isOpen, user, onComplete }) {
 
   const canProceed = () => {
     if (step === 1) return !!data.nickname;
-    if (step === 2) return data.user_timezone && data.greeting_types.length > 0;
+    if (step === 2) return data.user_timezone;
     if (step === 3) return true; // Mental health is optional
     if (step === 4) return data.skip_location || (data.city && data.state);
     return false;
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={() => {}}>
+    <Dialog open={isOpen} onOpenChange={onComplete}>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -294,19 +294,6 @@ function OnboardingModal({ isOpen, user, onComplete }) {
                     onChange={(e) => setData({ ...data, nickname: e.target.value })}
                     placeholder="Nickname or First Name"
                   />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>TikTok Username (Optional)</Label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-2.5 text-gray-400">@</span>
-                    <Input 
-                      value={data.tiktok_username}
-                      onChange={(e) => setData({ ...data, tiktok_username: e.target.value.replace('@', '') })}
-                      placeholder="username"
-                      className="pl-7"
-                    />
-                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -345,39 +332,9 @@ function OnboardingModal({ isOpen, user, onComplete }) {
                     </div>
                 </div>
 
-                <div>
+                <div className="hidden">
                     <Label className="mb-2 block">Daily Inspiration</Label>
                     <p className="text-xs text-gray-500 mb-3">Choose what you want to see daily (select all that apply):</p>
-                    <div className="grid grid-cols-1 gap-2">
-                        {greetingTypeOptions.map(greeting => {
-                            const isSelected = data.greeting_types.includes(greeting.id);
-                            return (
-                            <div
-                                key={greeting.id}
-                                onClick={() => {
-                                const current = data.greeting_types;
-                                const newTypes = isSelected
-                                    ? current.filter(t => t !== greeting.id)
-                                    : [...current, greeting.id];
-                                if (newTypes.length > 0) {
-                                    setData({ ...data, greeting_types: newTypes });
-                                }
-                                }}
-                                className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                                isSelected ? 'border-purple-500 bg-purple-50' : 'border-gray-200 hover:border-purple-300'
-                                }`}
-                            >
-                                <div className="flex items-center gap-3">
-                                <Checkbox checked={isSelected} />
-                                <span>{greeting.icon}</span>
-                                <div>
-                                    <span className="font-medium text-sm">{greeting.name}</span>
-                                </div>
-                                </div>
-                            </div>
-                            );
-                        })}
-                    </div>
                 </div>
               </div>
             </div>
@@ -599,7 +556,7 @@ function OnboardingModal({ isOpen, user, onComplete }) {
 
         {/* Progress indicator */}
         <div className="flex gap-1 justify-center mb-2">
-          {[1, 2, 3, 4].map(s => (
+          {[1, 2, 4].map(s => (
             <div
               key={s}
               className={`h-1.5 rounded-full transition-all ${
