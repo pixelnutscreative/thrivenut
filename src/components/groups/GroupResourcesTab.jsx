@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Video, FileText, Link as LinkIcon, Plus, Check, X, ExternalLink, Pencil, Trash2 } from 'lucide-react';
+import { Video, FileText, Link as LinkIcon, Plus, Check, X, ExternalLink, Pencil, Trash2, Loader2 } from 'lucide-react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import LevelSelector from './LevelSelector';
@@ -33,6 +33,7 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
   });
 
   const [expandedResource, setExpandedResource] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const mapUserResourceCategory = (cat) => {
     if (!cat) return 'link';
@@ -214,6 +215,7 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
     switch (type) {
       case 'video': return <Video className="w-5 h-5 text-red-500" />;
       case 'article': return <FileText className="w-5 h-5 text-blue-500" />;
+      case 'file': return <FileText className="w-5 h-5 text-orange-500" />;
       default: return <LinkIcon className="w-5 h-5 text-gray-500" />;
     }
   };
@@ -250,6 +252,7 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
                       <SelectItem value="video">YouTube Video</SelectItem>
                       <SelectItem value="article">Article / Blog</SelectItem>
                       <SelectItem value="link">Website Link</SelectItem>
+                      <SelectItem value="file">PDF / File Upload</SelectItem>
                       <SelectItem value="text">Message / Contact Info</SelectItem>
                     </SelectContent>
                   </Select>
@@ -268,7 +271,33 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
               </div>
               <Input placeholder="Title" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
               
-              {formData.type !== 'text' && (
+              {formData.type === 'file' ? (
+                <div className="space-y-2">
+                  <Label>Upload File</Label>
+                  <div className="flex items-center gap-2">
+                    <Input 
+                      type="file" 
+                      onChange={async (e) => {
+                        const file = e.target.files[0];
+                        if (!file) return;
+                        setIsUploading(true);
+                        try {
+                           const res = await base44.integrations.Core.UploadFile({ file });
+                           if (res.file_url) {
+                              setFormData({...formData, url: res.file_url});
+                           }
+                        } catch (err) {
+                           alert('Upload failed: ' + err.message);
+                        } finally {
+                           setIsUploading(false);
+                        }
+                      }}
+                    />
+                    {isUploading && <Loader2 className="w-4 h-4 animate-spin text-purple-600" />}
+                  </div>
+                  {formData.url && <p className="text-xs text-green-600 break-all">{formData.url}</p>}
+                </div>
+              ) : formData.type !== 'text' && (
                 <Input placeholder="URL (https://...)" value={formData.url} onChange={e => setFormData({...formData, url: e.target.value})} />
               )}
               
@@ -313,7 +342,7 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
               
               <DialogFooter>
                 <Button variant="outline" onClick={handleCloseDialog}>Cancel</Button>
-                <Button onClick={handleSubmit} disabled={!formData.title || (formData.type !== 'text' && !formData.url) || submitMutation.isPending || updateMutation.isPending}>
+                <Button onClick={handleSubmit} disabled={!formData.title || (formData.type !== 'text' && !formData.url) || submitMutation.isPending || updateMutation.isPending || isUploading}>
                   {submitMutation.isPending || updateMutation.isPending ? 'Saving...' : (editingId ? 'Update Resource' : (isAdmin ? 'Add Resource' : 'Submit for Review'))}
                 </Button>
               </DialogFooter>

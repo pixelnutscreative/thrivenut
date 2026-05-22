@@ -297,9 +297,9 @@ export default function ColorPicker({ color, onChange, label, className, trigger
         )}
       </DialogTrigger>
       <DialogContent className="w-80 sm:max-w-[360px] p-4" hideCloseButton={false}>
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center justify-between mb-2 pr-6">
           <DialogTitle className="text-base font-semibold">Pick a Color</DialogTitle>
-          <Button variant="ghost" size="sm" onClick={handleEyeDropper} className="h-7 px-2 text-xs gap-1">
+          <Button variant="ghost" size="sm" onClick={handleEyeDropper} className="h-7 px-2 text-xs gap-1 bg-gray-100 hover:bg-gray-200">
             <Pipette className="w-3 h-3" /> Pick
           </Button>
         </div>
@@ -511,6 +511,10 @@ export default function ColorPicker({ color, onChange, label, className, trigger
               <span className="text-xs text-gray-400 italic py-1">Save up to 7 colors</span>
             )}
           </div>
+        </div>
+        
+        <div className="pt-4 border-t border-gray-100 mt-4 flex justify-end">
+          <Button onClick={() => setIsOpen(false)} className="w-full font-semibold">Confirm Color</Button>
         </div>
       </DialogContent>
     </Dialog>

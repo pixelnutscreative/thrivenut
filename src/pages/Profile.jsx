@@ -43,8 +43,16 @@ export default function Profile() {
       if (!effectiveEmail) return null;
       const prefs = await base44.entities.UserPreferences.filter({ user_email: effectiveEmail }, '-updated_date');
       if (prefs.length > 1) {
-        const withData = prefs.find(p => p.nickname || p.profile_image_url || (p.enabled_modules && p.enabled_modules.length > 0));
-        if (withData) return withData;
+        // Find the most populated one to keep
+        const withImage = prefs.find(p => p.profile_image_url);
+        const toKeep = withImage || prefs.find(p => p.nickname) || prefs.find(p => p.enabled_modules && p.enabled_modules.length > 0) || prefs[0];
+        
+        // Delete all others to prevent UI flipping
+        const toDelete = prefs.filter(p => p.id !== toKeep.id);
+        for (const p of toDelete) {
+          await base44.entities.UserPreferences.delete(p.id).catch(() => {});
+        }
+        return toKeep;
       }
       return prefs[0] || null;
     },
@@ -58,8 +66,12 @@ export default function Profile() {
     queryFn: async () => {
       const profiles = await base44.entities.UserProfile.filter({ user_email: effectiveEmail });
       if (profiles.length > 1) {
-        const withData = profiles.find(p => p.phone || p.nickname || (p.social_links && Object.values(p.social_links).some(v => v)));
-        if (withData) return withData;
+        const toKeep = profiles.find(p => p.phone || p.nickname || (p.social_links && Object.values(p.social_links).some(v => v))) || profiles[0];
+        const toDelete = profiles.filter(p => p.id !== toKeep.id);
+        for (const p of toDelete) {
+          await base44.entities.UserProfile.delete(p.id).catch(() => {});
+        }
+        return toKeep;
       }
       return profiles[0] || null;
     },
@@ -163,10 +175,6 @@ export default function Profile() {
       if (targetId) {
         return await base44.entities.UserPreferences.update(targetId, cleanData);
       } else {
-        const existing = await base44.entities.UserPreferences.filter({ user_email: effectiveEmail });
-        if (existing.length > 0) {
-           return await base44.entities.UserPreferences.update(existing[0].id, cleanData);
-        }
         return await base44.entities.UserPreferences.create({
           user_email: effectiveEmail,
           ...cleanData,
@@ -182,14 +190,7 @@ export default function Profile() {
 
   const updateUserProfileMutation = useMutation({
     mutationFn: async (data) => {
-      const existing = await base44.entities.UserProfile.filter({ user_email: effectiveEmail });
-      let targetId = null;
-      if (existing.length > 0) {
-        const bestMatch = existing.find(p => p.phone || p.nickname) || existing[0];
-        targetId = bestMatch.id;
-      }
-
-      const idToUpdate = userProfile?.id || targetId;
+      const idToUpdate = userProfile?.id;
       if (idToUpdate) {
         return await base44.entities.UserProfile.update(idToUpdate, data);
       } else {

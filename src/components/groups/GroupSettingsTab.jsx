@@ -88,6 +88,14 @@ export default function GroupSettingsTab({ group }) {
 
 function GroupAppearanceSettings({ group }) {
   const queryClient = useQueryClient();
+  const [menuPinned, setMenuPinned] = React.useState(group.menu_pinned || false);
+  const [menuColor, setMenuColor] = React.useState(group.menu_color || '#8B5CF6');
+
+  React.useEffect(() => {
+    setMenuPinned(group.menu_pinned || false);
+    setMenuColor(group.menu_color || '#8B5CF6');
+  }, [group.menu_pinned, group.menu_color]);
+
   const updateMutation = useMutation({
     mutationFn: async (data) => {
       const current = await base44.entities.CreatorGroup.get(group.id);
@@ -128,19 +136,23 @@ function GroupAppearanceSettings({ group }) {
             <p className="text-sm text-gray-500">Show this group in the main sidebar above the categorized sections.</p>
           </div>
           <Switch
-            checked={group.menu_pinned || false}
-            onCheckedChange={(checked) => updateMutation.mutate({ menu_pinned: checked })}
+            checked={menuPinned}
+            onCheckedChange={(checked) => {
+              setMenuPinned(checked);
+              updateMutation.mutate({ menu_pinned: checked });
+            }}
           />
         </div>
 
-        {group.menu_pinned && (
+        {menuPinned && (
           <div className="space-y-2">
             <Label>Sidebar Menu Color</Label>
             <div className="flex gap-2 items-center">
               <Input
                 type="color"
-                value={group.menu_color || '#8B5CF6'}
-                onChange={(e) => updateMutation.mutate({ menu_color: e.target.value })}
+                value={menuColor}
+                onChange={(e) => setMenuColor(e.target.value)}
+                onBlur={() => updateMutation.mutate({ menu_color: menuColor })}
                 className="w-12 h-10 p-1 cursor-pointer"
               />
             </div>
@@ -153,6 +165,12 @@ function GroupAppearanceSettings({ group }) {
 
 function CryptoTickerSettings({ group }) {
   const queryClient = useQueryClient();
+  const [showTicker, setShowTicker] = React.useState(!(group.settings?.hide_ticker === true));
+  
+  React.useEffect(() => {
+    setShowTicker(!(group.settings?.hide_ticker === true));
+  }, [group.settings?.hide_ticker]);
+
   const updateMutation = useMutation({
     mutationFn: async (hide_ticker) => {
       const current = await base44.entities.CreatorGroup.get(group.id);
@@ -170,8 +188,11 @@ function CryptoTickerSettings({ group }) {
       <CardContent className="flex items-center justify-between">
         <span className="text-sm text-gray-600">Show ticker on dashboard</span>
         <Switch
-          checked={!(group.settings?.hide_ticker === true)}
-          onCheckedChange={(checked) => updateMutation.mutate(!checked)}
+          checked={showTicker}
+          onCheckedChange={(checked) => {
+            setShowTicker(checked);
+            updateMutation.mutate(!checked);
+          }}
         />
       </CardContent>
     </Card>
@@ -1395,6 +1416,25 @@ function GroupShortcutsSettings({ group }) {
 
 function GroupExperienceSettings({ group }) {
   const queryClient = useQueryClient();
+  const [toggles, setToggles] = React.useState({
+    restrict_new_members: group.restrict_new_members || false,
+    force_landing_page: group.force_landing_page || false,
+    enable_retainer_management: group.enable_retainer_management || false
+  });
+
+  React.useEffect(() => {
+    setToggles({
+      restrict_new_members: group.restrict_new_members || false,
+      force_landing_page: group.force_landing_page || false,
+      enable_retainer_management: group.enable_retainer_management || false
+    });
+  }, [group.restrict_new_members, group.force_landing_page, group.enable_retainer_management]);
+
+  const handleToggle = (field, checked) => {
+    setToggles(prev => ({ ...prev, [field]: checked }));
+    updateGroupMutation.mutate({ [field]: checked });
+  };
+
   const updateGroupMutation = useMutation({
     mutationFn: (data) => base44.entities.CreatorGroup.update(group.id, data),
     onSuccess: () => {
@@ -1419,8 +1459,8 @@ function GroupExperienceSettings({ group }) {
             </p>
           </div>
           <Switch
-            checked={group.restrict_new_members || false}
-            onCheckedChange={(checked) => updateGroupMutation.mutate({ restrict_new_members: checked })}
+            checked={toggles.restrict_new_members}
+            onCheckedChange={(checked) => handleToggle('restrict_new_members', checked)}
           />
         </div>
 
@@ -1432,8 +1472,8 @@ function GroupExperienceSettings({ group }) {
             </p>
           </div>
           <Switch
-            checked={group.force_landing_page || false}
-            onCheckedChange={(checked) => updateGroupMutation.mutate({ force_landing_page: checked })}
+            checked={toggles.force_landing_page}
+            onCheckedChange={(checked) => handleToggle('force_landing_page', checked)}
           />
         </div>
 
@@ -1445,8 +1485,8 @@ function GroupExperienceSettings({ group }) {
             </p>
           </div>
           <Switch 
-            checked={group.enable_retainer_management || false}
-            onCheckedChange={(checked) => updateGroupMutation.mutate({ enable_retainer_management: checked })}
+            checked={toggles.enable_retainer_management}
+            onCheckedChange={(checked) => handleToggle('enable_retainer_management', checked)}
           />
         </div>
       </CardContent>
