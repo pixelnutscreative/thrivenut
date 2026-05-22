@@ -73,17 +73,6 @@ export default function PixelBoard() {
     }).catch(() => setLoadingUser(false));
   }, []);
 
-  // Auto-delete duplicates
-  useEffect(() => {
-    if (items.length > 0) {
-      items.forEach(item => {
-        if (item.details && item.details.includes('DUPLICATE')) {
-          deleteMutation.mutate(item.id);
-        }
-      });
-    }
-  }, [items]);
-
   const [viewMode, setViewMode] = useState('kanban'); // 'kanban' | 'list'
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
@@ -141,6 +130,17 @@ export default function PixelBoard() {
       toast.success("Ticket deleted!");
     }
   });
+
+  // Auto-delete duplicates
+  useEffect(() => {
+    if (items.length > 0) {
+      items.forEach(item => {
+        if (item.details && item.details.includes('DUPLICATE')) {
+          deleteMutation.mutate(item.id);
+        }
+      });
+    }
+  }, [items]);
 
   const handleSendBatch = async () => {
     const batchedItems = items.filter(i => i.in_batch);
