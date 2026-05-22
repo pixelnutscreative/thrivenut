@@ -246,26 +246,11 @@ export default function PixelBoard() {
     
     const loadingToastId = toast.loading("Sending batch...");
     try {
-      const res = await fetch('https://pixel-poster-9e462e4f.base44.app/functions/sendItBatch', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({})
-      });
-
-      if (!res.ok) {
-        throw new Error('Network response was not ok');
-      }
-
-      const result = await res.json();
-      
-      // Update batch status locally and set batch_ready!
-      for (const item of batchedItems) {
-        updateMutation.mutate({ id: item.id, data: { in_batch: false, batch_ready: true, status: '🧠 Thinking' } });
-      }
+      await base44.functions.invoke('sendBatch', {});
 
       queryClient.invalidateQueries({ queryKey: ['pixelBoard'] });
       toast.dismiss(loadingToastId);
-      toast.success(result.message || `✅ ${batchedItems.length} cards sent to Daisy!`);
+      toast.success("Batch sent to Daisy! ✅");
     } catch (err) {
       console.error(err);
       toast.dismiss(loadingToastId);
