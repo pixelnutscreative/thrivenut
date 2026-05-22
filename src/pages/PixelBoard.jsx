@@ -17,6 +17,7 @@ import { Plus, Search, Loader2, LayoutGrid, List as ListIcon, ChevronRight, Chev
 import moment from 'moment';
 
 const KANBAN_COLUMNS = [
+  { id: '📬 My Inbox', label: '📬 My Inbox' },
   { id: '💬 New', label: '💬 New' },
   { id: '🧠 Thinking', label: '🧠 Thinking' },
   { id: '🔄 In Progress', label: '🔄 In Progress' },
@@ -39,9 +40,15 @@ const CATEGORIES = ["ThriveNut", "Personal", "Projects", "Pixel Tours", "Website
 
 const mapStatus = (item) => {
   if (!item) return '💬 New';
+  
+  const isNikoleRead = item.nikole_read === true || item.nikole_read === 'true';
+  if (!isNikoleRead && item.pixel_response && item.pixel_response.trim() !== '') {
+    return '📬 My Inbox';
+  }
+  
   const s = item.status;
   if (!s || typeof s !== 'string') return '💬 New';
-  if (['💬 New', '🧠 Thinking', '🔄 In Progress', '⏳ Needs GO', '🚨 Urgent', '✅ Done'].includes(s)) return s;
+  if (['📬 My Inbox', '💬 New', '🧠 Thinking', '🔄 In Progress', '⏳ Needs GO', '🚨 Urgent', '✅ Done'].includes(s)) return s;
   
   if (s.includes('Done') || s === 'Reviewed') return '✅ Done';
   if (s.includes('Needs GO') || s === 'Answered') return '⏳ Needs GO';
@@ -55,10 +62,11 @@ const mapStatus = (item) => {
 const getTurnIndicator = (item) => {
   const s = mapStatus(item);
   if (s === '✅ Done') return null;
-  if (s === '⏳ Needs GO') return "👤 Nikole's turn";
-  const isNikoleRead = item.nikole_read === true || item.nikole_read === 'true';
-  if (!isNikoleRead) return "👤 Nikole's turn";
-  return "🤖 Daisy's turn";
+  
+  if (!item.pixel_response || item.pixel_response.trim() === '') return "🤖 Daisy's turn";
+  if (item.pixel_read === false) return "🤖 Daisy's turn"; // Nikole just replied
+  
+  return "👤 Nikole's turn"; // Default if pixel_response exists and Nikole hasn't replied yet
 };
 
 const isNikolesTurn = (item) => getTurnIndicator(item) === "👤 Nikole's turn";
@@ -80,12 +88,11 @@ export default function PixelBoard() {
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [priorityFilter, setPriorityFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState(KANBAN_COLUMNS.map(c => c.id));
-  const [activeFilter, setActiveFilter] = useState('daisy_replied'); // 'all', 'daisy_replied'
   const [isAskModalOpen, setIsAskModalOpen] = useState(false);
   const [squirrelModalOpen, setSquirrelModalOpen] = useState(false);
   const [squirrelText, setSquirrelText] = useState('');
   const [selectedItem, setSelectedItem] = useState(null);
-  const [isDoneCollapsed, setIsDoneCollapsed] = useState(true);
+  const [isDoneCollapsed, setIsDoneCollapsed] = useState(false);
   const [newResponse, setNewResponse] = useState('');
   const [newImages, setNewImages] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -186,15 +193,10 @@ export default function PixelBoard() {
       if (categoryFilter !== 'All' && item.category !== categoryFilter) return false;
       if (priorityFilter !== 'All' && item.priority !== priorityFilter) return false;
       
-      if (activeFilter === 'daisy_replied') {
-        const isNikoleRead = item.nikole_read === true || item.nikole_read === 'true';
-        if (!item.pixel_response || item.pixel_response.trim() === '' || isNikoleRead) return false;
-      }
-      
       if (!statusFilter.includes(mapStatus(item))) return false;
       return true;
     }).sort((a, b) => new Date(b.updated_date || b.created_date) - new Date(a.updated_date || a.created_date));
-  }, [items, searchQuery, categoryFilter, priorityFilter, statusFilter, activeFilter]);
+  }, [items, searchQuery, categoryFilter, priorityFilter, statusFilter]);
 
   const getRealColCount = (colId) => {
     return items.filter(item => {
@@ -317,7 +319,8 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
     const turn = getTurnIndicator(item);
     const pConf = priorityConfig[item.priority] || priorityConfig['Normal'];
     const isUrgent = item.priority === 'Urgent';
-    const borderColor = item.card_color || '#e2e8f0'; // fallback to light grey if no color
+    const isDaisyInit = item.asked_by === 'Daisy' || item.asked_by === 'Pixel Poster';
+    const borderColor = isDaisyInit ? '#A8E6E6' : '#ffffff';
     
     const hasMention = useMemo(() => {
       const th = item.thread || [];
@@ -343,9 +346,12 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
           </div>
           
           <div className="flex flex-wrap gap-1.5 items-center">
+            <Badge variant="secondary" className="text-[11px] bg-slate-100 text-slate-600 hover:bg-slate-200">
+              {isDaisyInit ? '🤖 Daisy' : '📝 Nikole'}
+            </Badge>
             <Badge variant="secondary" className="text-[11px] bg-slate-100 text-slate-600 hover:bg-slate-200">{item.category}</Badge>
             <Badge variant="outline" className={`text-[11px] ${pConf.color} border-0`}>{pConf.emoji} {item.priority}</Badge>
-            {s !== 'New' && <Badge variant="outline" className="text-[11px] bg-white border-slate-200 text-slate-500">{s}</Badge>}
+            {s !== '💬 New' && s !== '📬 My Inbox' && <Badge variant="outline" className="text-[11px] bg-white border-slate-200 text-slate-500">{s}</Badge>}
           </div>
 
           {item.pixel_response && (
@@ -362,7 +368,7 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
 
           <div className="flex items-center justify-between mt-1">
             {turn && !isDone ? (
-              <div className={`text-[11px] font-medium px-2 py-1 rounded-md inline-flex items-center w-fit ${turn.includes('Nikole') ? 'bg-[#24C4D6]/10 text-[#0D626C]' : 'bg-[#C8A4F2]/20 text-[#6B3FA0]'}`}>
+              <div className={`text-[11px] font-medium px-2 py-1 rounded-md inline-flex items-center w-fit ${turn.includes('Nikole') ? 'bg-[#24C4D6] text-white' : 'bg-[#A8E6E6] text-[#0D626C]'}`}>
                 {turn}
               </div>
             ) : <div />}
@@ -426,25 +432,6 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
             >
               <RefreshCw className="w-4 h-4 mr-2" /> Refresh
             </Button>
-
-            <div className="flex bg-slate-100 rounded-lg p-1 border-2 border-slate-200 gap-1 flex-wrap">
-              <Button 
-                size="sm"
-                variant="ghost"
-                className={`${activeFilter === 'all' ? 'bg-white text-slate-800 shadow-sm font-bold border-2 border-[#24C4D6]' : 'text-slate-600 hover:bg-slate-200 border-2 border-transparent'}`}
-                onClick={() => setActiveFilter('all')}
-              >
-                📋 All Cards
-              </Button>
-              <Button 
-                size="sm"
-                variant="ghost"
-                className={`${activeFilter === 'daisy_replied' ? 'bg-white text-teal-600 shadow-sm font-bold border-2 border-teal-400' : 'text-slate-600 hover:bg-slate-200 border-2 border-transparent'}`}
-                onClick={() => setActiveFilter('daisy_replied')}
-              >
-                📬 Daisy Replied
-              </Button>
-            </div>
             
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
               <SelectTrigger className="w-[140px] border-2 border-slate-200 font-medium">
