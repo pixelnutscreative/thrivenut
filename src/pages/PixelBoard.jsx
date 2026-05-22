@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { toast, Toaster as SonnerToaster } from 'sonner';
-import { Plus, Search, Loader2, LayoutGrid, List as ListIcon, ChevronRight, ChevronDown, CheckCircle2, PauseCircle, Clock, Brain, Paperclip, X } from 'lucide-react';
+import { Plus, Search, Loader2, LayoutGrid, List as ListIcon, ChevronRight, ChevronDown, CheckCircle2, PauseCircle, Clock, Brain, Paperclip, X, RefreshCw } from 'lucide-react';
 import moment from 'moment';
 
 const KANBAN_COLUMNS = [
@@ -19,6 +19,7 @@ const KANBAN_COLUMNS = [
   { id: 'Thinking', label: '🤔 Thinking' },
   { id: 'Needs GO', label: '📥 My Inbox' },
   { id: 'Waiting on Daisy', label: '⏳ Waiting on Daisy' },
+  { id: "See Daisy's Reply", label: "👀 See Daisy's Reply" },
   { id: 'In Progress', label: '🔄 In Progress' },
   { id: 'Hold', label: '⏸️ Hold' },
   { id: 'Done', label: '✅ Done' }
@@ -37,17 +38,18 @@ const priorityConfig = {
 const CATEGORIES = ["ThriveNut", "Personal", "Projects", "Pixel Tours", "Websites", "Offers", "AI Tools", "Social Media", "Other"];
 
 const mapStatus = (s) => {
-  if (['New', 'Thinking', 'Needs GO', 'Waiting on Daisy', 'In Progress', 'Hold', 'Done'].includes(s)) return s;
+  if (typeof s !== 'string') return 'New';
+  if (['New', 'Thinking', 'Needs GO', 'Waiting on Daisy', "See Daisy's Reply", 'In Progress', 'Hold', 'Done'].includes(s)) return s;
   if (s === 'Unanswered') return 'New';
-  if (s === 'Answered') return 'Needs GO';
-  if (s === 'Reviewed') return 'Done';
+  if (s === 'Answered') return "See Daisy's Reply";
+  if (s === 'Reviewed' || s.includes('Done')) return 'Done';
   return 'New';
 };
 
 const getTurnIndicator = (item) => {
   const s = mapStatus(item.status);
   if (s === 'Done') return null;
-  if (s === 'Needs GO') return "👤 Nikole's turn";
+  if (s === 'Needs GO' || s === "See Daisy's Reply") return "👤 Nikole's turn";
   if (!item.pixel_response) return "🤖 Daisy's turn";
   if (item.nikole_read === false) return "👤 Nikole's turn";
   return "🤖 Daisy's turn";
@@ -140,6 +142,12 @@ export default function PixelBoard() {
       }
 
       const result = await res.json();
+      
+      // Update batch status locally and set batch_ready!
+      for (const item of batchedItems) {
+        updateMutation.mutate({ id: item.id, data: { in_batch: false, batch_ready: true, status: 'Waiting on Daisy' } });
+      }
+
       queryClient.invalidateQueries({ queryKey: ['pixelBoard'] });
       toast.dismiss(loadingToastId);
       toast.success(result.message || `✅ ${batchedItems.length} cards sent to Daisy!`);
@@ -208,7 +216,7 @@ export default function PixelBoard() {
     let updates = { nikole_read: true, pixel_read: false };
     
     // Auto-update status
-    if (mapStatus(selectedItem.status) === 'Needs GO') {
+    if (['Needs GO', "See Daisy's Reply"].includes(mapStatus(selectedItem.status))) {
       updates.status = 'In Progress';
     }
     
@@ -286,6 +294,18 @@ export default function PixelBoard() {
             {s !== 'New' && <Badge variant="outline" className="text-[11px] bg-white border-slate-200 text-slate-500">{s}</Badge>}
           </div>
 
+          {item.pixel_response && (
+            <div className="mt-2 bg-[#24C4D6]/10 border border-[#24C4D6]/30 p-2.5 rounded-lg relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-1 h-full bg-[#24C4D6]"></div>
+              <span className="text-[10px] font-bold text-[#0D626C] uppercase tracking-wider mb-1 flex items-center gap-1">
+                <Brain className="w-3 h-3" /> Daisy's Response
+              </span>
+              <p className="text-xs text-[#0D626C] line-clamp-3 leading-snug break-words">
+                {item.pixel_response}
+              </p>
+            </div>
+          )}
+
           <div className="flex items-center justify-between mt-1">
             {turn && !isDone ? (
               <div className={`text-[11px] font-medium px-2 py-1 rounded-md inline-flex items-center w-fit ${turn.includes('Nikole') ? 'bg-[#24C4D6]/10 text-[#0D626C]' : 'bg-[#C8A4F2]/20 text-[#6B3FA0]'}`}>
@@ -334,37 +354,24 @@ export default function PixelBoard() {
               <div className="flex items-center gap-3 bg-[#24C4D6]/10 px-4 py-2 rounded-lg border-2 border-[#24C4D6]/20 mr-2">
                 <span className="font-bold text-[#0D626C]">📦 {items.filter(i => i.in_batch).length} cards in batch</span>
                 <Button 
-                  onClick={async () => {
-                    const batchedItems = items.filter(i => i.in_batch);
-                    if (batchedItems.length === 0) return;
-                    
-                    const loadingId = toast.loading("Sending to Daisy...");
-                    try {
-                      const res = await fetch('https://pixel-poster-9e462e4f.base44.app/functions/sendItBatch', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({})
-                      });
-                      const data = await res.json();
-                      
-                      // Actually clear the batch and update status!
-                      for (const item of batchedItems) {
-                        updateMutation.mutate({ id: item.id, data: { in_batch: false, status: 'Waiting on Daisy' } });
-                      }
-                      
-                      toast.dismiss(loadingId);
-                      toast.success(data.message || 'Sent to Daisy!');
-                    } catch(e) {
-                      toast.dismiss(loadingId);
-                      toast.error('Error: ' + e.message);
-                    }
-                  }} 
+                  onClick={handleSendBatch}
                   className="bg-[#24C4D6] hover:bg-[#1db0c0] text-white font-bold shadow-md hover:shadow-lg transition-all"
                 >
                   🚀 SEND IT
                 </Button>
               </div>
             )}
+
+            <Button 
+              variant="outline"
+              className="border-2 border-slate-200 text-slate-600 hover:bg-slate-100 font-bold"
+              onClick={() => {
+                queryClient.invalidateQueries({ queryKey: ['pixelBoard'] });
+                toast.success("Board Refreshed!");
+              }}
+            >
+              <RefreshCw className="w-4 h-4 mr-2" /> Refresh
+            </Button>
 
             <Button 
               variant="outline"
@@ -861,6 +868,7 @@ export default function PixelBoard() {
                     <Button size="sm" variant="default" className="bg-slate-800 hover:bg-slate-900 text-white font-bold" onClick={() => setSelectedItem(null)}>💾 Save for Later</Button>
                     <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, 'Done')} className="border-slate-200 hover:bg-slate-100 text-slate-600"><CheckCircle2 className="w-4 h-4 mr-1" /> Done</Button>
                     <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, 'Needs GO')} className="border-slate-200 hover:bg-orange-50 text-orange-600"><Clock className="w-4 h-4 mr-1" /> My Inbox</Button>
+                    <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, "See Daisy's Reply")} className="border-slate-200 hover:bg-teal-50 text-teal-600"><Brain className="w-4 h-4 mr-1" /> Daisy Reply</Button>
                     <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, 'Hold')} className="border-slate-200 hover:bg-red-50 text-red-600"><PauseCircle className="w-4 h-4 mr-1" /> Hold</Button>
                     <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, 'Thinking')} className="border-slate-200 hover:bg-purple-50 text-purple-600"><Brain className="w-4 h-4 mr-1" /> Thinking</Button>
                   </div>
