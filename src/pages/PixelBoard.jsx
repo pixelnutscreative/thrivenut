@@ -13,17 +13,18 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Checkbox } from '@/components/ui/checkbox';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { toast, Toaster as SonnerToaster } from 'sonner';
-import { Plus, Search, Loader2, LayoutGrid, List as ListIcon, ChevronRight, ChevronDown, CheckCircle2, PauseCircle, Clock, Brain, Paperclip, X, RefreshCw, ChevronLeft, Trash2 } from 'lucide-react';
+import { Plus, Search, Loader2, LayoutGrid, List as ListIcon, ChevronRight, ChevronDown, CheckCircle2, PauseCircle, Clock, Brain, Paperclip, X, RefreshCw, ChevronLeft, Trash2, Eye, Settings, EyeOff } from 'lucide-react';
 import moment from 'moment';
 
 const KANBAN_COLUMNS = [
-  { id: '📬 My Inbox', label: '📬 My Inbox' },
   { id: '💬 New', label: '💬 New' },
-  { id: '🧠 Thinking', label: '🧠 Thinking' },
+  { id: '📦 Batched', label: '📦 Batched' },
   { id: '🔄 In Progress', label: '🔄 In Progress' },
+  { id: '🧠 Thinking', label: '🧠 Thinking' },
   { id: '⏳ Needs GO', label: '⏳ Needs GO' },
-  { id: '🚨 Urgent', label: '🚨 Urgent' },
-  { id: '✅ Done', label: '🎉 ✅ Done' }
+  { id: '📬 My Inbox', label: '📬 My Inbox' },
+  { id: '✅ Done', label: '🎉 ✅ Done' },
+  { id: '➡️ Moved to Task', label: '➡️ Moved to Task' }
 ];
 
 const priorityConfig = {
@@ -48,11 +49,12 @@ const mapStatus = (item) => {
   
   const s = item.status;
   if (!s || typeof s !== 'string') return '💬 New';
-  if (['📬 My Inbox', '💬 New', '🧠 Thinking', '🔄 In Progress', '⏳ Needs GO', '🚨 Urgent', '✅ Done'].includes(s)) return s;
+  if (['💬 New', '📦 Batched', '🔄 In Progress', '🧠 Thinking', '⏳ Needs GO', '📬 My Inbox', '✅ Done', '➡️ Moved to Task'].includes(s)) return s;
   
   if (s.includes('Done') || s === 'Reviewed') return '✅ Done';
+  if (s.includes('Task')) return '➡️ Moved to Task';
   if (s.includes('Needs GO') || s === 'Answered') return '⏳ Needs GO';
-  if (s.includes('Urgent')) return '🚨 Urgent';
+  if (s.includes('Batched')) return '📦 Batched';
   if (s.includes('Progress') || s.includes('Inbox')) return '🔄 In Progress';
   if (s.includes('Wait') || s.includes('Hold') || s.includes('Think')) return '🧠 Thinking';
   
@@ -61,8 +63,14 @@ const mapStatus = (item) => {
 
 const getTurnIndicator = (item) => {
   const s = mapStatus(item);
-  if (s === '✅ Done') return null;
+  if (s === '✅ Done' || s === '➡️ Moved to Task') return null;
   
+  if (item.thread && item.thread.length > 0) {
+      const lastMsg = item.thread[item.thread.length - 1];
+      if (lastMsg.sender === 'nikole') return "Daisy's turn 🤖";
+      return "Nikole's turn 🎯";
+  }
+
   if (!item.pixel_response || item.pixel_response.trim() === '') return "Daisy's turn 🤖";
   if (item.pixel_read === false) return "Daisy's turn 🤖"; // Nikole just replied
   
@@ -88,7 +96,21 @@ export default function PixelBoard() {
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [priorityFilter, setPriorityFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState(KANBAN_COLUMNS.map(c => c.id));
+  const [visibleColumns, setVisibleColumns] = useState(() => {
+    const saved = localStorage.getItem('pixelboard_visible_columns');
+    if (saved) {
+      try { return JSON.parse(saved); } catch(e) {}
+    }
+    return KANBAN_COLUMNS.map(c => c.id);
+  });
+  
+  useEffect(() => {
+    localStorage.setItem('pixelboard_visible_columns', JSON.stringify(visibleColumns));
+  }, [visibleColumns]);
+
   const [isAskModalOpen, setIsAskModalOpen] = useState(false);
+  const [settingsModalOpen, setSettingsModalOpen] = useState(false);
+  const [tempCategories, setTempCategories] = useState([]);
   const [squirrelModalOpen, setSquirrelModalOpen] = useState(false);
   const [squirrelText, setSquirrelText] = useState('');
   const [selectedItem, setSelectedItem] = useState(null);
@@ -109,9 +131,73 @@ export default function PixelBoard() {
     card_color: '#24C4D6'
   });
 
+  const { data: userPrefsList } = useQuery({
+    queryKey: ['userPreferences', user?.email],
+    queryFn: () => base44.entities.UserPreferences.filter({ user_email: user.email }),
+    enabled: !!user?.email
+  });
+  const userPrefs = userPrefsList?.[0];
+  const currentCategories = userPrefs?.custom_fields?.pixelboard_categories || CATEGORIES;
+
   const { data: items = [], isLoading } = useQuery({
     queryKey: ['pixelBoard'],
     queryFn: () => base44.entities.PixelBoard.list('-created_date')
+  });
+
+  const saveCategoriesMutation = useMutation({
+    mutationFn: async (newCategories) => {
+      const prefsId = userPrefs?.id;
+      if (!prefsId) {
+        // Create prefs if they don't exist
+        return base44.entities.UserPreferences.create({
+          user_email: user.email,
+          custom_fields: { pixelboard_categories: newCategories }
+        });
+      }
+      return base44.entities.UserPreferences.update(prefsId, {
+        custom_fields: { ...(userPrefs.custom_fields || {}), pixelboard_categories: newCategories }
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['userPreferences'] });
+      setSettingsModalOpen(false);
+      toast.success("Categories updated!");
+    }
+  });
+
+  const sendToTaskMutation = useMutation({
+    mutationFn: async (item) => {
+      await base44.entities.Task.create({
+        title: item.title,
+        details: item.details,
+        source: 'PixelBoard',
+        status: 'To Do',
+        category: item.category
+      });
+      return base44.entities.PixelBoard.update(item.id, { status: '➡️ Moved to Task' });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pixelBoard'] });
+      setSelectedItem(null);
+      toast.success("Sent to Tasks!");
+    }
+  });
+
+  const sendToCreatorTaskMutation = useMutation({
+    mutationFn: async (item) => {
+      await base44.entities.CreatorTask.create({
+        title: item.title,
+        details: item.details,
+        source: 'PixelBoard',
+        status_id: 'pending'
+      });
+      return base44.entities.PixelBoard.update(item.id, { status: '➡️ Moved to Task' });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pixelBoard'] });
+      setSelectedItem(null);
+      toast.success("Sent to CreatorTasks!");
+    }
   });
 
   const createMutation = useMutation({
@@ -318,12 +404,19 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
 
   const TicketCard = ({ item }) => {
     const s = mapStatus(item);
-    const isDone = s === '✅ Done';
+    const isDone = s === '✅ Done' || s === '➡️ Moved to Task';
     const turn = getTurnIndicator(item);
     const pConf = priorityConfig[item.priority] || priorityConfig['Normal'];
     const isUrgent = item.priority === 'Urgent';
     const isDaisyInit = item.asked_by === 'Daisy' || item.asked_by === 'Pixel Poster';
     const borderColor = isDaisyInit ? '#A8E6E6' : '#ffffff';
+
+    let lastResponseText = null;
+    if (item.thread && item.thread.length > 0) {
+      lastResponseText = `Last reply ${moment(item.thread[item.thread.length - 1].timestamp).fromNow()}`;
+    } else if (item.pixel_response || item.nikole_response) {
+      lastResponseText = `Last reply ${moment(item.updated_date).fromNow()}`;
+    }
     
     const hasMention = useMemo(() => {
       const th = item.thread || [];
@@ -349,12 +442,18 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
           </div>
           
           <div className="flex flex-wrap gap-1.5 items-center">
-            <Badge variant="secondary" className="text-[11px] bg-slate-100 text-slate-600 hover:bg-slate-200">
-              {isDaisyInit ? '🤖 Daisy' : '📝 Nikole'}
+            <Badge variant="secondary" className="text-[11px] bg-slate-100 text-slate-600 hover:bg-slate-200" title={`Asked by ${isDaisyInit ? 'Daisy' : 'Nikole'}`}>
+              {isDaisyInit ? '🤖' : '📝'}
             </Badge>
             <Badge variant="secondary" className="text-[11px] bg-slate-100 text-slate-600 hover:bg-slate-200">{item.category}</Badge>
             <Badge variant="outline" className={`text-[11px] ${pConf.color} border-0`}>{pConf.emoji} {item.priority}</Badge>
-            {s !== '💬 New' && s !== '📬 My Inbox' && <Badge variant="outline" className="text-[11px] bg-white border-slate-200 text-slate-500">{s}</Badge>}
+            {item.in_batch && <Badge variant="secondary" className="text-[11px] bg-slate-800 text-white border-0">📦 In Batch</Badge>}
+            {s !== '💬 New' && s !== '📬 My Inbox' && s !== '📦 Batched' && <Badge variant="outline" className="text-[11px] bg-white border-slate-200 text-slate-500">{s}</Badge>}
+          </div>
+          
+          <div className="flex items-center gap-2 text-[10px] text-slate-400 font-medium">
+            <span>Created {moment(item.created_date).format('MMM D')}</span>
+            {lastResponseText && <span>• {lastResponseText}</span>}
           </div>
 
           {item.pixel_response && (
@@ -383,7 +482,13 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                 className={`h-7 px-2 text-[10px] font-bold z-10 ${item.in_batch ? 'bg-[#24C4D6] hover:bg-[#1db0c0] text-white border-0' : 'border-[#24C4D6] text-[#0D626C] hover:bg-[#24C4D6]/10'}`}
                 onClick={(e) => {
                   e.stopPropagation();
-                  updateMutation.mutate({ id: item.id, data: { in_batch: !item.in_batch } });
+                  if (!item.in_batch) {
+                    updateMutation.mutate({ id: item.id, data: { in_batch: true, status: '📦 Batched' } });
+                    toast.success('Added to batch!');
+                  } else {
+                    updateMutation.mutate({ id: item.id, data: { in_batch: false } });
+                    toast.success('Removed from batch!');
+                  }
                 }}
               >
                 {item.in_batch ? '✓ In Batch' : '+ Add to Batch'}
@@ -403,6 +508,60 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
       <style>{`.sm\\:max-w-\\[900px\\] > button.absolute.right-4.top-4 { display: none !important; }`}</style>
       <SonnerToaster position="top-center" richColors />
       <div className="w-full mx-auto space-y-6">
+        <Dialog open={settingsModalOpen} onOpenChange={setSettingsModalOpen}>
+          <DialogContent className="sm:max-w-[400px]">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold text-slate-800">Categories Settings</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Current Categories</Label>
+                <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                  {tempCategories.map((c, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <Input 
+                        value={c} 
+                        onChange={(e) => {
+                          const newCats = [...tempCategories];
+                          newCats[idx] = e.target.value;
+                          setTempCategories(newCats);
+                        }}
+                        className="h-8 border-slate-200 focus-visible:ring-[#24C4D6]"
+                      />
+                      <Button 
+                        size="icon" 
+                        variant="ghost" 
+                        className="h-8 w-8 text-red-500 hover:bg-red-50 hover:text-red-600 shrink-0"
+                        onClick={() => {
+                          setTempCategories(tempCategories.filter((_, i) => i !== idx));
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button 
+                    variant="outline" 
+                    className="w-full h-8 border-dashed border-slate-300 text-slate-500"
+                    onClick={() => setTempCategories([...tempCategories, 'New Category'])}
+                  >
+                    <Plus className="w-4 h-4 mr-2" /> Add Category
+                  </Button>
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setSettingsModalOpen(false)}>Cancel</Button>
+              <Button 
+                onClick={() => saveCategoriesMutation.mutate(tempCategories)} 
+                disabled={saveCategoriesMutation.isPending}
+                className="bg-slate-800 hover:bg-slate-900 text-white"
+              >
+                Save Changes
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
         
         {/* Header & Controls */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border-2 border-slate-200 shadow-sm">
@@ -495,6 +654,48 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
               </PopoverContent>
             </Popover>
 
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="icon" className="border-2 border-slate-200 text-slate-600 hover:bg-slate-100">
+                  {visibleColumns.length === KANBAN_COLUMNS.length ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4 text-amber-500" />}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[240px] p-2" align="end">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between px-2">
+                    <span className="text-xs font-bold text-slate-500 uppercase">Columns</span>
+                    <Button variant="ghost" size="sm" className="h-6 text-[10px] px-2 text-[#24C4D6]" onClick={() => setVisibleColumns(KANBAN_COLUMNS.map(c => c.id))}>Restore All</Button>
+                  </div>
+                  <div className="h-px bg-slate-200"></div>
+                  {KANBAN_COLUMNS.map(c => (
+                    <div key={c.id} className="flex items-center space-x-2 px-2 py-1 hover:bg-slate-50 rounded-md">
+                      <Checkbox 
+                        id={`col-${c.id}`}
+                        checked={visibleColumns.includes(c.id)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setVisibleColumns([...visibleColumns, c.id]);
+                          } else {
+                            setVisibleColumns(visibleColumns.filter(id => id !== c.id));
+                          }
+                        }}
+                      />
+                      <label htmlFor={`col-${c.id}`} className="text-sm font-medium cursor-pointer flex-1 select-none">
+                        {c.label}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
+            
+            <Button variant="outline" size="icon" className="border-2 border-slate-200 text-slate-600 hover:bg-slate-100" onClick={() => {
+              setTempCategories([...currentCategories]);
+              setSettingsModalOpen(true);
+            }}>
+              <Settings className="w-4 h-4" />
+            </Button>
+
             <Select value={priorityFilter} onValueChange={setPriorityFilter}>
               <SelectTrigger className="w-[140px] border-2 border-slate-200 font-medium">
                 <SelectValue placeholder="Priority" />
@@ -523,12 +724,12 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
             <Dialog open={isAskModalOpen} onOpenChange={setIsAskModalOpen}>
               <DialogTrigger asChild>
                 <Button className="bg-[#24C4D6] hover:bg-[#1db0c0] text-white font-bold shadow-md hover:shadow-lg transition-all border-2 border-[#24C4D6]">
-                  <Plus className="w-4 h-4 mr-2" /> New Ticket
+                  <Plus className="w-4 h-4 mr-2" /> New Item
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
-                  <DialogTitle className="text-xl font-bold text-slate-800">Create Ticket</DialogTitle>
+                  <DialogTitle className="text-xl font-bold text-slate-800">Create Item</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
@@ -545,7 +746,7 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                       <Select value={newQuestion.category} onValueChange={v => setNewQuestion({...newQuestion, category: v})}>
                         <SelectTrigger className="border-2 border-slate-200"><SelectValue /></SelectTrigger>
                         <SelectContent>
-                          {CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                          {currentCategories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                         </SelectContent>
                       </Select>
                     </div>
@@ -584,7 +785,7 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
           <div className="flex justify-center p-12"><Loader2 className="w-8 h-8 animate-spin text-[#24C4D6]" /></div>
         ) : viewMode === 'kanban' ? (
           <div className="flex gap-6 overflow-x-auto pb-4 snap-x">
-            {KANBAN_COLUMNS.map(col => {
+            {KANBAN_COLUMNS.filter(col => visibleColumns.includes(col.id)).map(col => {
               const colItems = filteredItems.filter(item => mapStatus(item) === col.id);
               const realCount = getRealColCount(col.id);
               if (col.id === '✅ Done' && isDoneCollapsed) {
@@ -730,7 +931,7 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                          {currentCategories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                         </SelectContent>
                       </Select>
                     </div>
@@ -917,7 +1118,7 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                 {/* Footer Controls */}
                 <div className="p-3 bg-white border-t border-slate-200 flex-shrink-0 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-slate-500 hidden sm:inline">Opened {moment(selectedItem.created_date).fromNow()}</span>
+                    <span className="text-xs text-slate-500 hidden sm:inline">Created: {moment(selectedItem.created_date).format('MMM D [at] h:mm A')}</span>
                     <Button 
                       size="sm" 
                       variant="ghost" 
@@ -935,6 +1136,24 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                     <Button 
                       size="sm" 
                       variant="outline" 
+                      className="h-7 text-[10px] px-2 border-blue-200 hover:bg-blue-50 text-blue-700 bg-blue-50/50" 
+                      disabled={sendToTaskMutation.isPending}
+                      onClick={() => sendToTaskMutation.mutate(selectedItem)}
+                    >
+                      📋 Send to Task
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="h-7 text-[10px] px-2 border-indigo-200 hover:bg-indigo-50 text-indigo-700 bg-indigo-50/50" 
+                      disabled={sendToCreatorTaskMutation.isPending}
+                      onClick={() => sendToCreatorTaskMutation.mutate(selectedItem)}
+                    >
+                      📋 Send to CreatorTask
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
                       className="h-7 text-[10px] px-2 border-amber-200 hover:bg-amber-50 text-amber-700 bg-amber-50/50" 
                       onClick={() => {
                         const selection = window.getSelection().toString();
@@ -944,11 +1163,6 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                     >
                       🐿️ Squirrel
                     </Button>
-
-                    <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, '✅ Done')} className="h-7 text-[10px] px-2 border-slate-200 hover:bg-slate-100 text-slate-600"><CheckCircle2 className="w-3 h-3 mr-1" /> Done</Button>
-                    <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, '💬 New')} className="h-7 text-[10px] px-2 border-slate-200 hover:bg-orange-50 text-orange-600"><Clock className="w-3 h-3 mr-1" /> New</Button>
-                    <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, '⏳ Needs GO')} className="h-7 text-[10px] px-2 border-slate-200 hover:bg-teal-50 text-teal-600"><Brain className="w-3 h-3 mr-1" /> Needs GO</Button>
-                    <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, '🔄 In Progress')} className="h-7 text-[10px] px-2 border-slate-200 hover:bg-purple-50 text-purple-600"><Brain className="w-3 h-3 mr-1" /> In Progress</Button>
                   </div>
                 </div>
               </div>
