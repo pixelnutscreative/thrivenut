@@ -1015,7 +1015,7 @@ const { data: featureFlags = [] } = useQuery({
                       title={isNavCollapsed ? group.title : undefined}
                     >
                       {!isNavCollapsed && <span>{group.title}</span>}
-                      {isNavCollapsed ? <group.icon className="w-4 h-4 mx-auto" /> : (isCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />)}
+                      {isNavCollapsed ? (group.icon ? <group.icon className="w-4 h-4 mx-auto" /> : <span className="mx-auto text-[14px]">{group.title.charAt(0)}</span>) : (isCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />)}
                     </button>
                     }
 
