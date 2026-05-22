@@ -167,8 +167,8 @@ export default function PixelBoard() {
       if (categoryFilter !== 'All' && item.category !== categoryFilter) return false;
       if (priorityFilter !== 'All' && item.priority !== priorityFilter) return false;
       if (statusFilter !== 'All' && mapStatus(item.status) !== statusFilter) return false;
-      if (activeFilter === 'inbox' && !isNikolesTurn(item)) return false;
-      if (activeFilter === 'daisy_replied' && (!item.pixel_response || mapStatus(item.status) !== '✅ Done')) return false;
+      if (activeFilter === 'inbox' && (item.nikole_read !== false || !item.pixel_response)) return false;
+      if (activeFilter === 'daisy_replied' && (item.nikole_read !== false || !item.pixel_response)) return false;
       return true;
     }).sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
   }, [items, searchQuery, categoryFilter, priorityFilter, statusFilter, activeFilter]);
@@ -224,28 +224,37 @@ export default function PixelBoard() {
       updates.status = 'Unanswered';
     }
     
-    // Squirrel Catcher
-    const squirrelRegex = /\b(oh also|and another thing|speaking of|by the way|btw|oh wait|squirrel)\b/i;
-    const squirrelMatch = messageText.match(squirrelRegex);
-    
-    if (squirrelMatch) {
-      const tangentText = messageText.substring(squirrelMatch.index);
-      const title = tangentText.substring(0, 60) + (tangentText.length > 60 ? '...' : '');
-      
-      createMutation.mutate({
-        title,
-        details: tangentText,
-        category: selectedItem.category,
-        priority: 'Normal',
-        card_color: '#24C4D6'
-      });
-      
-      newThread.push({
-        sender: 'system',
-        message: `→ New card created: ${title}`,
-        timestamp: new Date().toISOString()
-      });
-    }
+    // Squirrel Catcher (LLM based)
+    base44.integrations.Core.InvokeLLM({
+      prompt: `Original Task Title: "${selectedItem.title}"
+New Message from User: "${messageText}"
+
+Does the user's message contain an unrelated new topic, task, or question that should be split into a NEW separate ticket? 
+If YES, return is_new_topic as true and extract the text. If NO, return false.`,
+      response_json_schema: {
+        type: "object",
+        properties: {
+          is_new_topic: {type: "boolean"},
+          extracted_text: {type: "string"},
+          suggested_title: {type: "string"}
+        }
+      }
+    }).then(res => {
+      if (res && res.is_new_topic && res.extracted_text) {
+        base44.entities.PixelBoard.create({
+          title: res.suggested_title || res.extracted_text.substring(0, 60),
+          details: res.extracted_text,
+          category: selectedItem.category || 'Other',
+          priority: 'Normal',
+          card_color: '#24C4D6',
+          status: 'Unanswered',
+          asked_by: 'Nikole'
+        });
+        toast.success(`🐿️ Squirrel caught! New card created: "${res.suggested_title}"`);
+        // We could theoretically add a system message to the thread here, 
+        // but since it's background, we don't want to conflict with mutations.
+      }
+    }).catch(e => console.error("Squirrel Catcher Error:", e));
     
     updates.thread = newThread;
     
@@ -524,7 +533,7 @@ export default function PixelBoard() {
               }
 
               return (
-                <div key={col.id} className="min-w-[300px] max-w-[300px] w-[300px] flex flex-col gap-3 snap-start">
+                <div key={col.id} className="min-w-[220px] max-w-[220px] w-[220px] flex flex-col gap-3 snap-start">
                   <div className="flex items-center justify-between pb-2 border-b-2 border-slate-200">
                     <h3 className="font-bold text-slate-700">{col.label}</h3>
                     <Badge variant="secondary" className="bg-slate-200 text-slate-600 border-0">{colItems.length}</Badge>

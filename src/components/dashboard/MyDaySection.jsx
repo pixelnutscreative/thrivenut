@@ -23,6 +23,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
 import { format } from 'date-fns';
+import { Briefcase } from 'lucide-react';
 import DailyMotivationSidebar from './DailyMotivationSidebar';
 import CarryoverTasksModal from './CarryoverTasksModal';
 import TaskHistoryModal from './TaskHistoryModal';
@@ -215,6 +216,17 @@ export default function MyDaySection({
   const { data: supplementLogs = [] } = useQuery({
     queryKey: ['supplementLogs', today, userEmail],
     queryFn: () => base44.entities.SupplementLog.filter({ date: today, created_by: userEmail }),
+    enabled: !!userEmail,
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 2,
+  });
+
+  // Fetch work schedules
+  const { data: workSchedules = [] } = useQuery({
+    queryKey: ['workSchedules', userEmail],
+    queryFn: () => base44.entities.WorkSchedule.filter({ is_active: true, created_by: userEmail }),
     enabled: !!userEmail,
     staleTime: 60000,
     refetchOnWindowFocus: false,
@@ -831,6 +843,50 @@ export default function MyDaySection({
           hasTime: true,
           displayTime: task.due_time
         });
+      }
+    });
+
+    // Work Schedule
+    workSchedules.forEach(job => {
+      if (job.show_on_dashboard !== false) {
+        const todayHours = (job.regular_hours || []).find(h => h.day === todayDayName);
+        if (todayHours && todayHours.start_time) {
+          const timeOfDay = getTimeOfDayFromTimeString(todayHours.start_time);
+          tasks.push({
+            id: `work_${job.id}`,
+            type: 'work',
+            label: `Work: ${job.job_title}`,
+            sublabel: `${job.employer || 'Office'} • ${todayHours.start_time} - ${todayHours.end_time || '?'}`,
+            icon: Briefcase,
+            color: 'text-indigo-600',
+            timeOfDay,
+            order: getOrderFromTimeString(todayHours.start_time),
+            hasTime: true,
+            displayTime: todayHours.start_time
+          });
+        }
+      }
+    });
+
+    // Work Schedule
+    workSchedules.forEach(job => {
+      if (job.show_on_dashboard !== false) {
+        const todayHours = (job.regular_hours || []).find(h => h.day === todayDayName);
+        if (todayHours && todayHours.start_time) {
+          const timeOfDay = getTimeOfDayFromTimeString(todayHours.start_time);
+          tasks.push({
+            id: `work_${job.id}`,
+            type: 'work',
+            label: `Work: ${job.job_title}`,
+            sublabel: `${job.employer || 'Office'} • ${todayHours.start_time} - ${todayHours.end_time || '?'}`,
+            icon: Briefcase,
+            color: 'text-indigo-600',
+            timeOfDay,
+            order: getOrderFromTimeString(todayHours.start_time),
+            hasTime: true,
+            displayTime: todayHours.start_time
+          });
+        }
       }
     });
 
