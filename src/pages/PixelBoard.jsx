@@ -644,10 +644,10 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
             {selectedItem && (
               <div className="flex flex-col h-full overflow-hidden">
                 {/* Header */}
-                <div className="p-6 bg-white border-b-2 border-slate-200 flex-shrink-0">
-                  <div className="flex items-start justify-between gap-4 mb-4">
+                <div className="p-4 bg-white border-b border-slate-200 flex-shrink-0">
+                  <div className="flex items-start justify-between gap-2 mb-2">
                     <Input 
-                      className="text-2xl font-bold text-slate-800 leading-tight border-transparent hover:border-slate-300 focus:border-[#24C4D6] px-2 -ml-2 bg-transparent h-auto py-1 w-full"
+                      className="text-xl font-bold text-slate-800 leading-tight border-transparent hover:border-slate-300 focus:border-[#24C4D6] px-2 -ml-2 bg-transparent h-auto py-1 w-full"
                       defaultValue={selectedItem.title}
                       onBlur={(e) => {
                         if (e.target.value !== selectedItem.title && e.target.value.trim()) {
@@ -656,8 +656,9 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                       }}
                     />
                     <Button 
+                      size="sm"
                       variant={selectedItem.in_batch ? 'default' : 'outline'}
-                      className={`font-bold flex-shrink-0 ${selectedItem.in_batch ? 'bg-[#24C4D6] hover:bg-[#1db0c0] text-white border-0' : 'border-[#24C4D6] text-[#0D626C] hover:bg-[#24C4D6]/10'}`}
+                      className={`h-8 font-bold flex-shrink-0 ${selectedItem.in_batch ? 'bg-[#24C4D6] hover:bg-[#1db0c0] text-white border-0' : 'border-[#24C4D6] text-[#0D626C] hover:bg-[#24C4D6]/10'}`}
                       onClick={() => {
                         updateMutation.mutate({ id: selectedItem.id, data: { in_batch: !selectedItem.in_batch } });
                         setSelectedItem(prev => ({ ...prev, in_batch: !prev.in_batch }));
@@ -666,7 +667,7 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                       {selectedItem.in_batch ? '✓ In Batch' : '+ Add to Batch'}
                     </Button>
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-center">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 items-center">
                     <div className="space-y-1">
                       <Label className="text-xs font-bold text-slate-500">Status</Label>
                       <Select value={mapStatus(selectedItem)} onValueChange={(v) => updateStatus(selectedItem.id, v)}>
@@ -725,67 +726,14 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                 </div>
 
                 {/* Body (Scrollable) */}
-                <div className="flex-1 p-6 space-y-6 overflow-y-auto">
-                  {/* Custom Fields Section */}
-                  <div className="bg-white p-5 rounded-2xl border-2 border-slate-200 shadow-sm">
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wider">Custom Fields</h3>
-                      <Button variant="outline" size="sm" onClick={() => {
-                        const key = window.prompt("Enter new field name (e.g., Email Draft, GHL Tag):");
-                        if (key && key.trim()) {
-                          const val = window.prompt(`Enter value for ${key}:`);
-                          if (val !== null) {
-                            const newFields = { ...(selectedItem.custom_fields || {}), [key.trim()]: val };
-                            updateMutation.mutate({ id: selectedItem.id, data: { custom_fields: newFields } });
-                          }
-                        }
-                      }}>
-                        <Plus className="w-4 h-4 mr-1" /> Add Field
-                      </Button>
-                    </div>
-                    {selectedItem.custom_fields && Object.keys(selectedItem.custom_fields).length > 0 ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {Object.entries(selectedItem.custom_fields).map(([k, v]) => (
-                          <div key={k} className="flex flex-col gap-1 p-3 bg-slate-50 rounded-xl border border-slate-200 relative group">
-                            <span className="text-xs font-bold text-slate-500 uppercase">{k}</span>
-                            <div className="flex items-center gap-2">
-                              <Input 
-                                defaultValue={v}
-                                className="h-8 text-sm border-transparent bg-transparent hover:border-slate-300 focus:bg-white transition-all px-1"
-                                onBlur={(e) => {
-                                  if (e.target.value !== v) {
-                                    const newFields = { ...selectedItem.custom_fields, [k]: e.target.value };
-                                    updateMutation.mutate({ id: selectedItem.id, data: { custom_fields: newFields } });
-                                  }
-                                }}
-                              />
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="h-8 px-2 text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                                onClick={() => {
-                                  const newFields = { ...selectedItem.custom_fields };
-                                  delete newFields[k];
-                                  updateMutation.mutate({ id: selectedItem.id, data: { custom_fields: newFields } });
-                                }}
-                              >
-                                Delete
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-sm text-slate-400 text-center py-4 border-2 border-dashed border-slate-100 rounded-xl">No custom fields added yet.</div>
-                    )}
-                  </div>
-
+                <div className="flex-1 p-4 space-y-3 overflow-y-auto">
+                  
                   {/* Details */}
-                  <div className="bg-white p-5 rounded-2xl border-2 border-slate-200 shadow-sm">
-                    <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Original Context / Details</Label>
+                  <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                    <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">Original Context / Details</Label>
                     <Textarea 
                       defaultValue={selectedItem.details || ''}
-                      className="min-h-[100px] border-transparent bg-slate-50 hover:border-slate-300 focus:bg-white transition-all text-sm text-slate-700 w-full resize-y"
+                      className="min-h-[60px] border-transparent bg-slate-50 hover:border-slate-300 focus:bg-white transition-all text-sm text-slate-700 w-full resize-y"
                       placeholder="Add details or context here..."
                       onBlur={(e) => {
                         if (e.target.value !== selectedItem.details) {
@@ -797,20 +745,20 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
 
                   {/* Daisy's Response */}
                   {selectedItem.pixel_response && (
-                    <div className="bg-[#24C4D6]/10 p-5 rounded-2xl border-2 border-[#24C4D6]/30 shadow-sm">
-                      <Label className="text-xs font-bold text-[#0D626C] uppercase tracking-wider mb-2 flex items-center gap-2">
-                        <Brain className="w-4 h-4" /> Daisy's Response
+                    <div className="bg-[#24C4D6]/10 p-3 rounded-xl border border-[#24C4D6]/30 shadow-sm">
+                      <Label className="text-[10px] font-bold text-[#0D626C] uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                        <Brain className="w-3 h-3" /> Daisy's Response
                       </Label>
-                      <p className="text-sm text-[#0D626C] whitespace-pre-wrap leading-relaxed">{selectedItem.pixel_response}</p>
+                      <p className="text-sm text-[#0D626C] whitespace-pre-wrap leading-snug">{selectedItem.pixel_response}</p>
                     </div>
                   )}
 
                   {/* Nikole's Response */}
-                  <div className="bg-white p-5 rounded-2xl border-2 border-slate-200 shadow-sm">
-                    <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Your Response to Daisy</Label>
+                  <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                    <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">Your Response to Daisy</Label>
                     <Textarea 
                       defaultValue={selectedItem.nikole_response || ''}
-                      className="min-h-[100px] border-slate-200 focus-visible:ring-[#24C4D6] transition-all text-sm text-slate-700 w-full resize-y"
+                      className="min-h-[60px] border-slate-200 focus-visible:ring-[#24C4D6] transition-all text-sm text-slate-700 w-full resize-y"
                       placeholder="Type your response to Daisy here... (e.g. 'This looks great, go ahead!')"
                       onBlur={(e) => {
                         if (e.target.value !== selectedItem.nikole_response) {
@@ -822,9 +770,9 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                   </div>
 
                   {/* Attachments */}
-                  <div className="bg-white p-5 rounded-2xl border-2 border-slate-200 shadow-sm">
-                    <div className="flex justify-between items-center mb-4">
-                      <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Attachment</Label>
+                  <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                    <div className="flex justify-between items-center mb-2">
+                      <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Attachment</Label>
                       <div>
                         <input 
                           type="file" 
@@ -862,7 +810,7 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                   </div>
 
                   {/* Thread Area */}
-                  <div className="flex flex-col bg-white border-2 border-slate-200 rounded-2xl shadow-sm overflow-hidden h-[400px]">
+                  <div className="flex flex-col bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden h-[300px]">
                     <div className="flex-1 p-4 overflow-y-auto space-y-4 custom-scrollbar bg-slate-50">
                       {(() => {
                         let th = selectedItem.thread || [];
@@ -962,13 +910,13 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                 </div>
 
                 {/* Footer Controls */}
-                <div className="p-4 bg-white border-t-2 border-slate-200 flex-shrink-0 flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <span className="text-sm text-slate-500 hidden sm:inline">Opened {moment(selectedItem.created_date).fromNow()}</span>
+                <div className="p-3 bg-white border-t border-slate-200 flex-shrink-0 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-slate-500 hidden sm:inline">Opened {moment(selectedItem.created_date).fromNow()}</span>
                     <Button 
                       size="sm" 
                       variant="ghost" 
-                      className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                      className="h-7 text-xs text-red-500 hover:text-red-600 hover:bg-red-50 px-2"
                       onClick={() => {
                         if (window.confirm("Are you sure you want to delete this ticket? This cannot be undone.")) {
                           deleteMutation.mutate(selectedItem.id);
@@ -978,12 +926,12 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                       Delete
                     </Button>
                   </div>
-                  <div className="flex gap-2 flex-wrap justify-end">
-                    <Button size="sm" variant="default" className="bg-slate-800 hover:bg-slate-900 text-white font-bold" onClick={() => setSelectedItem(null)}>💾 Save for Later</Button>
-                    <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, '✅ Done')} className="border-slate-200 hover:bg-slate-100 text-slate-600"><CheckCircle2 className="w-4 h-4 mr-1" /> Done</Button>
-                    <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, '💬 New')} className="border-slate-200 hover:bg-orange-50 text-orange-600"><Clock className="w-4 h-4 mr-1" /> New</Button>
-                    <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, '⏳ Needs GO')} className="border-slate-200 hover:bg-teal-50 text-teal-600"><Brain className="w-4 h-4 mr-1" /> Needs GO</Button>
-                    <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, '🔄 In Progress')} className="border-slate-200 hover:bg-purple-50 text-purple-600"><Brain className="w-4 h-4 mr-1" /> In Progress</Button>
+                  <div className="flex gap-1.5 flex-wrap justify-end">
+                    <Button size="sm" variant="default" className="h-7 text-[10px] px-2 bg-slate-800 hover:bg-slate-900 text-white font-bold" onClick={() => setSelectedItem(null)}>💾 Save for Later</Button>
+                    <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, '✅ Done')} className="h-7 text-[10px] px-2 border-slate-200 hover:bg-slate-100 text-slate-600"><CheckCircle2 className="w-3 h-3 mr-1" /> Done</Button>
+                    <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, '💬 New')} className="h-7 text-[10px] px-2 border-slate-200 hover:bg-orange-50 text-orange-600"><Clock className="w-3 h-3 mr-1" /> New</Button>
+                    <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, '⏳ Needs GO')} className="h-7 text-[10px] px-2 border-slate-200 hover:bg-teal-50 text-teal-600"><Brain className="w-3 h-3 mr-1" /> Needs GO</Button>
+                    <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, '🔄 In Progress')} className="h-7 text-[10px] px-2 border-slate-200 hover:bg-purple-50 text-purple-600"><Brain className="w-3 h-3 mr-1" /> In Progress</Button>
                   </div>
                 </div>
               </div>
