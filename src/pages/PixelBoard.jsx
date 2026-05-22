@@ -15,11 +15,11 @@ import { Plus, Search, Loader2, LayoutGrid, List as ListIcon, ChevronRight, Chev
 import moment from 'moment';
 
 const KANBAN_COLUMNS = [
-  { id: 'Unanswered', label: '💬 Unanswered' },
-  { id: '⏳ Waiting on Daisy', label: '⏳ Waiting on Daisy' },
+  { id: '💬 New', label: '💬 New' },
+  { id: '🧠 Thinking', label: '🧠 Thinking' },
+  { id: '🔄 In Progress', label: '🔄 In Progress' },
   { id: '⏳ Needs GO', label: '⏳ Needs GO' },
-  { id: '📥 My Inbox', label: '📥 My Inbox' },
-  { id: '⏸️ Hold', label: '⏸️ Hold' },
+  { id: '🚨 Urgent', label: '🚨 Urgent' },
   { id: '✅ Done', label: '🎉 ✅ Done' }
 ];
 
@@ -36,32 +36,24 @@ const priorityConfig = {
 const CATEGORIES = ["ThriveNut", "Personal", "Projects", "Pixel Tours", "Websites", "Offers", "AI Tools", "Social Media", "Other"];
 
 const mapStatus = (item) => {
-  if (!item) return 'Unanswered';
-  
-  const isNikoleRead = item.nikole_read === true || item.nikole_read === 'true';
-  if (item.pixel_response && item.pixel_response.trim() !== '' && !isNikoleRead) {
-    return '📥 My Inbox';
-  }
-
+  if (!item) return '💬 New';
   const s = item.status;
-  if (!s || typeof s !== 'string') return 'Unanswered';
-  if (['Unanswered', '📥 My Inbox', '⏳ Needs GO', '⏳ Waiting on Daisy', '⏸️ Hold', '✅ Done'].includes(s)) return s;
+  if (!s || typeof s !== 'string') return '💬 New';
+  if (['💬 New', '🧠 Thinking', '🔄 In Progress', '⏳ Needs GO', '🚨 Urgent', '✅ Done'].includes(s)) return s;
   
   if (s.includes('Done') || s === 'Reviewed') return '✅ Done';
-  if (s.includes('Hold')) return '⏸️ Hold';
-  if (s.includes('Waiting')) return '⏳ Waiting on Daisy';
   if (s.includes('Needs GO') || s === 'Answered') return '⏳ Needs GO';
-  if (s === 'New' || s === 'Thinking') return 'Unanswered';
-  if (s === 'In Progress') return '📥 My Inbox';
+  if (s.includes('Urgent')) return '🚨 Urgent';
+  if (s.includes('Progress') || s.includes('Inbox')) return '🔄 In Progress';
+  if (s.includes('Wait') || s.includes('Hold') || s.includes('Think')) return '🧠 Thinking';
   
-  return 'Unanswered';
+  return '💬 New';
 };
 
 const getTurnIndicator = (item) => {
   const s = mapStatus(item);
   if (s === '✅ Done') return null;
-  if (s === '⏳ Needs GO' || s === '📥 My Inbox') return "👤 Nikole's turn";
-  if (!item.pixel_response) return "🤖 Daisy's turn";
+  if (s === '⏳ Needs GO') return "👤 Nikole's turn";
   const isNikoleRead = item.nikole_read === true || item.nikole_read === 'true';
   if (!isNikoleRead) return "👤 Nikole's turn";
   return "🤖 Daisy's turn";
@@ -109,7 +101,7 @@ export default function PixelBoard() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.PixelBoard.create({ ...data, status: 'Unanswered', asked_by: 'Nikole' }),
+    mutationFn: (data) => base44.entities.PixelBoard.create({ ...data, status: '💬 New', asked_by: 'Nikole' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pixelBoard'] });
       setIsAskModalOpen(false);
@@ -157,7 +149,7 @@ export default function PixelBoard() {
       
       // Update batch status locally and set batch_ready!
       for (const item of batchedItems) {
-        updateMutation.mutate({ id: item.id, data: { in_batch: false, batch_ready: true, status: '⏳ Waiting on Daisy' } });
+        updateMutation.mutate({ id: item.id, data: { in_batch: false, batch_ready: true, status: '🧠 Thinking' } });
       }
 
       queryClient.invalidateQueries({ queryKey: ['pixelBoard'] });
@@ -176,12 +168,19 @@ export default function PixelBoard() {
       if (categoryFilter !== 'All' && item.category !== categoryFilter) return false;
       if (priorityFilter !== 'All' && item.priority !== priorityFilter) return false;
       if (statusFilter !== 'All' && mapStatus(item) !== statusFilter) return false;
-      if (activeFilter === 'inbox' || activeFilter === 'daisy_replied') {
+      if (activeFilter === 'inbox') {
+        const isNikoleRead = item.nikole_read === true || item.nikole_read === 'true';
+        if (isNikoleRead) return false;
+        const validStatuses = ['✅ Done', '💬 New', '⏳ Needs GO', '🚨 Urgent', '🔄 In Progress', '🧠 Thinking'];
+        if (!validStatuses.includes(mapStatus(item))) return false;
+      } else if (activeFilter === 'daisy_replied') {
         const isNikoleRead = item.nikole_read === true || item.nikole_read === 'true';
         if (!item.pixel_response || item.pixel_response.trim() === '' || isNikoleRead) return false;
+      } else {
+        if (statusFilter !== 'All' && mapStatus(item) !== statusFilter) return false;
       }
       return true;
-    }).sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+    }).sort((a, b) => new Date(b.updated_date || b.created_date) - new Date(a.updated_date || a.created_date));
   }, [items, searchQuery, categoryFilter, priorityFilter, statusFilter, activeFilter]);
 
   const getRealColCount = (colId) => {
@@ -243,8 +242,8 @@ export default function PixelBoard() {
     let updates = { nikole_read: true, pixel_read: false };
     
     // Auto-update status
-    if (['⏳ Needs GO', '📥 My Inbox'].includes(mapStatus(selectedItem))) {
-      updates.status = 'Unanswered';
+    if (['⏳ Needs GO'].includes(mapStatus(selectedItem))) {
+      updates.status = '🔄 In Progress';
     }
     
     // Squirrel Catcher (LLM based)
@@ -270,7 +269,7 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
           category: selectedItem.category || 'Other',
           priority: 'Normal',
           card_color: '#24C4D6',
-          status: 'Unanswered',
+          status: '💬 New',
           asked_by: 'Nikole'
         });
         toast.success(`🐿️ Squirrel caught! New card created: "${res.suggested_title}"`);
@@ -295,7 +294,7 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
 
   const TicketCard = ({ item }) => {
     const s = mapStatus(item);
-    const isDone = s === 'Done';
+    const isDone = s === '✅ Done';
     const turn = getTurnIndicator(item);
     const pConf = priorityConfig[item.priority] || priorityConfig['Normal'];
     const isUrgent = item.priority === 'Urgent';
@@ -543,6 +542,41 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
         {/* Board / List View */}
         {isLoading ? (
           <div className="flex justify-center p-12"><Loader2 className="w-8 h-8 animate-spin text-[#24C4D6]" /></div>
+        ) : activeFilter === 'inbox' ? (
+          <div className="flex flex-col gap-4">
+            {filteredItems.length === 0 && <div className="p-8 text-center text-slate-500 bg-white rounded-2xl border-2 border-slate-200">Inbox is empty!</div>}
+            {filteredItems.map(item => {
+              const s = mapStatus(item);
+              return (
+                <Card key={item.id} className="bg-white border-2 border-orange-200 shadow-sm hover:shadow-md transition-shadow">
+                  <CardContent className="p-5 flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+                    <div className="flex flex-col gap-2 flex-1 w-full cursor-pointer group" onClick={() => setSelectedItem(item)}>
+                      <div className="flex items-center gap-3">
+                        <h4 className="font-bold text-lg text-slate-800 group-hover:text-[#24C4D6] transition-colors">{item.title}</h4>
+                        <Badge variant="outline" className="border-slate-200 bg-slate-50 text-slate-600">{s}</Badge>
+                      </div>
+                      {item.pixel_response && (
+                        <div className="bg-[#24C4D6]/10 p-3 rounded-lg border border-[#24C4D6]/20">
+                          <span className="text-[10px] font-bold text-[#0D626C] uppercase tracking-wider mb-1 flex items-center gap-1">
+                            <Brain className="w-3 h-3" /> Daisy's Response
+                          </span>
+                          <p className="text-sm text-[#0D626C] line-clamp-3">{item.pixel_response}</p>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-shrink-0 mt-2 sm:mt-0 w-full sm:w-auto">
+                      <Button 
+                        onClick={(e) => { e.stopPropagation(); updateMutation.mutate({ id: item.id, data: { nikole_read: true } }); }}
+                        className="bg-orange-500 hover:bg-orange-600 text-white font-bold shadow-sm w-full sm:w-auto"
+                      >
+                        <CheckCircle2 className="w-4 h-4 mr-2" /> Mark as Read
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
         ) : viewMode === 'kanban' ? (
           <div className="flex gap-6 overflow-x-auto pb-4 snap-x">
             {KANBAN_COLUMNS.map(col => {
@@ -763,6 +797,32 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                     />
                   </div>
 
+                  {/* Daisy's Response */}
+                  {selectedItem.pixel_response && (
+                    <div className="bg-[#24C4D6]/10 p-5 rounded-2xl border-2 border-[#24C4D6]/30 shadow-sm">
+                      <Label className="text-xs font-bold text-[#0D626C] uppercase tracking-wider mb-2 flex items-center gap-2">
+                        <Brain className="w-4 h-4" /> Daisy's Response
+                      </Label>
+                      <p className="text-sm text-[#0D626C] whitespace-pre-wrap leading-relaxed">{selectedItem.pixel_response}</p>
+                    </div>
+                  )}
+
+                  {/* Nikole's Response */}
+                  <div className="bg-white p-5 rounded-2xl border-2 border-slate-200 shadow-sm">
+                    <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Your Response to Daisy</Label>
+                    <Textarea 
+                      defaultValue={selectedItem.nikole_response || ''}
+                      className="min-h-[100px] border-slate-200 focus-visible:ring-[#24C4D6] transition-all text-sm text-slate-700 w-full resize-y"
+                      placeholder="Type your response to Daisy here... (e.g. 'This looks great, go ahead!')"
+                      onBlur={(e) => {
+                        if (e.target.value !== selectedItem.nikole_response) {
+                          updateMutation.mutate({ id: selectedItem.id, data: { nikole_response: e.target.value, pixel_read: false, nikole_read: true, status: '🔄 In Progress' } });
+                          toast.success('Response saved and sent to Daisy!');
+                        }
+                      }}
+                    />
+                  </div>
+
                   {/* Attachments */}
                   <div className="bg-white p-5 rounded-2xl border-2 border-slate-200 shadow-sm">
                     <div className="flex justify-between items-center mb-4">
@@ -923,10 +983,9 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                   <div className="flex gap-2 flex-wrap justify-end">
                     <Button size="sm" variant="default" className="bg-slate-800 hover:bg-slate-900 text-white font-bold" onClick={() => setSelectedItem(null)}>💾 Save for Later</Button>
                     <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, '✅ Done')} className="border-slate-200 hover:bg-slate-100 text-slate-600"><CheckCircle2 className="w-4 h-4 mr-1" /> Done</Button>
-                    <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, '📥 My Inbox')} className="border-slate-200 hover:bg-orange-50 text-orange-600"><Clock className="w-4 h-4 mr-1" /> My Inbox</Button>
+                    <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, '💬 New')} className="border-slate-200 hover:bg-orange-50 text-orange-600"><Clock className="w-4 h-4 mr-1" /> New</Button>
                     <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, '⏳ Needs GO')} className="border-slate-200 hover:bg-teal-50 text-teal-600"><Brain className="w-4 h-4 mr-1" /> Needs GO</Button>
-                    <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, '⏸️ Hold')} className="border-slate-200 hover:bg-red-50 text-red-600"><PauseCircle className="w-4 h-4 mr-1" /> Hold</Button>
-                    <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, 'Unanswered')} className="border-slate-200 hover:bg-purple-50 text-purple-600"><Brain className="w-4 h-4 mr-1" /> Unanswered</Button>
+                    <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, '🔄 In Progress')} className="border-slate-200 hover:bg-purple-50 text-purple-600"><Brain className="w-4 h-4 mr-1" /> In Progress</Button>
                   </div>
                 </div>
               </div>

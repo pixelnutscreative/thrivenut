@@ -13,7 +13,6 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import PixelBoard from './pages/PixelBoard';
 import MyTasks from './pages/MyTasks';
 import MyLinks from './pages/MyLinks';
-import MySheets from './pages/MySheets';
 import PromptLibrary from './pages/PromptLibrary';
 
 const { Pages, Layout, mainPage } = pagesConfig;
@@ -76,11 +75,6 @@ const AuthenticatedApp = () => {
       <Route path="/MyLinks" element={
         <LayoutWrapper currentPageName="MyLinks">
           <MyLinks />
-        </LayoutWrapper>
-      } />
-      <Route path="/MySheets" element={
-        <LayoutWrapper currentPageName="MySheets">
-          <MySheets />
         </LayoutWrapper>
       } />
       <Route path="/PromptLibrary" element={
