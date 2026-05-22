@@ -16,9 +16,9 @@ import moment from 'moment';
 
 const KANBAN_COLUMNS = [
   { id: 'Unanswered', label: '💬 Unanswered' },
-  { id: '📥 My Inbox', label: '📥 My Inbox' },
-  { id: '⏳ Needs GO', label: '⏳ Needs GO' },
   { id: '⏳ Waiting on Daisy', label: '⏳ Waiting on Daisy' },
+  { id: '⏳ Needs GO', label: '⏳ Needs GO' },
+  { id: '📥 My Inbox', label: '📥 My Inbox' },
   { id: '⏸️ Hold', label: '⏸️ Hold' },
   { id: '✅ Done', label: '🎉 ✅ Done' }
 ];
@@ -77,7 +77,7 @@ export default function PixelBoard() {
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [priorityFilter, setPriorityFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
-  const [needsMeFilter, setNeedsMeFilter] = useState(false);
+  const [activeFilter, setActiveFilter] = useState('all'); // 'all', 'inbox', 'daisy_replied'
   const [isAskModalOpen, setIsAskModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [isDoneCollapsed, setIsDoneCollapsed] = useState(true);
@@ -167,10 +167,11 @@ export default function PixelBoard() {
       if (categoryFilter !== 'All' && item.category !== categoryFilter) return false;
       if (priorityFilter !== 'All' && item.priority !== priorityFilter) return false;
       if (statusFilter !== 'All' && mapStatus(item.status) !== statusFilter) return false;
-      if (needsMeFilter && !isNikolesTurn(item)) return false;
+      if (activeFilter === 'inbox' && !isNikolesTurn(item)) return false;
+      if (activeFilter === 'daisy_replied' && (!item.pixel_response || mapStatus(item.status) !== '✅ Done')) return false;
       return true;
     }).sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
-  }, [items, searchQuery, categoryFilter, priorityFilter, statusFilter, needsMeFilter]);
+  }, [items, searchQuery, categoryFilter, priorityFilter, statusFilter, activeFilter]);
 
   const handleAskSubmit = () => {
     if (!newQuestion.title) return;
@@ -341,7 +342,7 @@ export default function PixelBoard() {
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-8 font-sans">
       <SonnerToaster position="top-center" richColors />
-      <div className="max-w-[1400px] mx-auto space-y-6">
+      <div className="w-full mx-auto space-y-6">
         
         {/* Header & Controls */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border-2 border-slate-200 shadow-sm">
@@ -376,13 +377,32 @@ export default function PixelBoard() {
               <RefreshCw className="w-4 h-4 mr-2" /> Refresh
             </Button>
 
-            <Button 
-              variant="outline"
-              className={`border-2 ${needsMeFilter ? 'border-[#24C4D6] bg-[#24C4D6]/10 text-[#0D626C] font-bold' : 'border-slate-200 text-slate-600'}`}
-              onClick={() => setNeedsMeFilter(!needsMeFilter)}
-            >
-              {needsMeFilter ? '📥 My Inbox' : '📋 All Cards'}
-            </Button>
+            <div className="flex bg-slate-100 rounded-lg p-1 border-2 border-slate-200 gap-1 flex-wrap">
+              <Button 
+                size="sm"
+                variant="ghost"
+                className={`${activeFilter === 'all' ? 'bg-white text-slate-800 shadow-sm font-bold border-2 border-[#24C4D6]' : 'text-slate-600 hover:bg-slate-200 border-2 border-transparent'}`}
+                onClick={() => setActiveFilter('all')}
+              >
+                📋 All Cards
+              </Button>
+              <Button 
+                size="sm"
+                variant="ghost"
+                className={`${activeFilter === 'inbox' ? 'bg-white text-orange-600 shadow-sm font-bold border-2 border-orange-400' : 'text-slate-600 hover:bg-slate-200 border-2 border-transparent'}`}
+                onClick={() => setActiveFilter('inbox')}
+              >
+                📥 My Inbox
+              </Button>
+              <Button 
+                size="sm"
+                variant="ghost"
+                className={`${activeFilter === 'daisy_replied' ? 'bg-white text-teal-600 shadow-sm font-bold border-2 border-teal-400' : 'text-slate-600 hover:bg-slate-200 border-2 border-transparent'}`}
+                onClick={() => setActiveFilter('daisy_replied')}
+              >
+                📬 Daisy Replied
+              </Button>
+            </div>
             
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
               <SelectTrigger className="w-[140px] border-2 border-slate-200 font-medium">
