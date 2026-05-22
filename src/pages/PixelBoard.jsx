@@ -35,7 +35,14 @@ const priorityConfig = {
 
 const CATEGORIES = ["ThriveNut", "Personal", "Projects", "Pixel Tours", "Websites", "Offers", "AI Tools", "Social Media", "Other"];
 
-const mapStatus = (s) => {
+const mapStatus = (item) => {
+  if (!item) return 'Unanswered';
+  
+  if (item.pixel_response && item.pixel_response.trim() !== '' && !item.nikole_read) {
+    return '📥 My Inbox';
+  }
+
+  const s = item.status;
   if (!s || typeof s !== 'string') return 'Unanswered';
   if (['Unanswered', '📥 My Inbox', '⏳ Needs GO', '⏳ Waiting on Daisy', '⏸️ Hold', '✅ Done'].includes(s)) return s;
   
@@ -50,7 +57,7 @@ const mapStatus = (s) => {
 };
 
 const getTurnIndicator = (item) => {
-  const s = mapStatus(item.status);
+  const s = mapStatus(item);
   if (s === '✅ Done') return null;
   if (s === '⏳ Needs GO' || s === '📥 My Inbox') return "👤 Nikole's turn";
   if (!item.pixel_response) return "🤖 Daisy's turn";
@@ -166,7 +173,7 @@ export default function PixelBoard() {
       if (searchQuery && !item.title.toLowerCase().includes(searchQuery.toLowerCase()) && !(item.details || '').toLowerCase().includes(searchQuery.toLowerCase())) return false;
       if (categoryFilter !== 'All' && item.category !== categoryFilter) return false;
       if (priorityFilter !== 'All' && item.priority !== priorityFilter) return false;
-      if (statusFilter !== 'All' && mapStatus(item.status) !== statusFilter) return false;
+      if (statusFilter !== 'All' && mapStatus(item) !== statusFilter) return false;
       if (activeFilter === 'inbox' || activeFilter === 'daisy_replied') {
         if (!item.pixel_response || item.pixel_response.trim() === '' || item.nikole_read === true) return false;
       }
@@ -182,7 +189,7 @@ export default function PixelBoard() {
       if (categoryFilter !== 'All' && item.category !== categoryFilter) return false;
       if (priorityFilter !== 'All' && item.priority !== priorityFilter) return false;
       // We do NOT check activeFilter here so the counts always represent the column size
-      return mapStatus(item.status) === colId;
+      return mapStatus(item) === colId;
     }).length;
   };
 
@@ -233,7 +240,7 @@ export default function PixelBoard() {
     let updates = { nikole_read: true, pixel_read: false };
     
     // Auto-update status
-    if (['⏳ Needs GO', '📥 My Inbox'].includes(mapStatus(selectedItem.status))) {
+    if (['⏳ Needs GO', '📥 My Inbox'].includes(mapStatus(selectedItem))) {
       updates.status = 'Unanswered';
     }
     
@@ -284,7 +291,7 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
   };
 
   const TicketCard = ({ item }) => {
-    const s = mapStatus(item.status);
+    const s = mapStatus(item);
     const isDone = s === 'Done';
     const turn = getTurnIndicator(item);
     const pConf = priorityConfig[item.priority] || priorityConfig['Normal'];
@@ -536,7 +543,7 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
         ) : viewMode === 'kanban' ? (
           <div className="flex gap-6 overflow-x-auto pb-4 snap-x">
             {KANBAN_COLUMNS.map(col => {
-              const colItems = filteredItems.filter(item => mapStatus(item.status) === col.id);
+              const colItems = filteredItems.filter(item => mapStatus(item) === col.id);
               const realCount = getRealColCount(col.id);
               if (col.id === '✅ Done' && isDoneCollapsed) {
                 return (
@@ -574,7 +581,7 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
             </div>
             <div className="flex flex-col">
               {filteredItems.map(item => {
-                const s = mapStatus(item.status);
+                const s = mapStatus(item);
                 const turn = getTurnIndicator(item);
                 const pConf = priorityConfig[item.priority] || priorityConfig['Normal'];
                 return (
@@ -627,7 +634,7 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-center">
                     <div className="space-y-1">
                       <Label className="text-xs font-bold text-slate-500">Status</Label>
-                      <Select value={mapStatus(selectedItem.status)} onValueChange={(v) => updateStatus(selectedItem.id, v)}>
+                      <Select value={mapStatus(selectedItem)} onValueChange={(v) => updateStatus(selectedItem.id, v)}>
                         <SelectTrigger className="w-full border-2 border-slate-200 bg-white font-bold h-9">
                           <SelectValue />
                         </SelectTrigger>
