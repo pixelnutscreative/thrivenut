@@ -78,7 +78,7 @@ export default function PixelBoard() {
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [priorityFilter, setPriorityFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
-  const [activeFilter, setActiveFilter] = useState('all'); // 'all', 'inbox', 'daisy_replied'
+  const [activeFilter, setActiveFilter] = useState('inbox'); // 'all', 'inbox', 'daisy_replied'
   const [isAskModalOpen, setIsAskModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [isDoneCollapsed, setIsDoneCollapsed] = useState(true);
@@ -171,8 +171,6 @@ export default function PixelBoard() {
       if (activeFilter === 'inbox') {
         const isNikoleRead = item.nikole_read === true || item.nikole_read === 'true';
         if (isNikoleRead) return false;
-        const validStatuses = ['✅ Done', '💬 New', '⏳ Needs GO', '🚨 Urgent', '🔄 In Progress', '🧠 Thinking'];
-        if (!validStatuses.includes(mapStatus(item))) return false;
       } else if (activeFilter === 'daisy_replied') {
         const isNikoleRead = item.nikole_read === true || item.nikole_read === 'true';
         if (!item.pixel_response || item.pixel_response.trim() === '' || isNikoleRead) return false;
