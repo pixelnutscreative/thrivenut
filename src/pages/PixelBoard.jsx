@@ -38,7 +38,8 @@ const CATEGORIES = ["ThriveNut", "Personal", "Projects", "Pixel Tours", "Website
 const mapStatus = (item) => {
   if (!item) return 'Unanswered';
   
-  if (item.pixel_response && item.pixel_response.trim() !== '' && !item.nikole_read) {
+  const isNikoleRead = item.nikole_read === true || item.nikole_read === 'true';
+  if (item.pixel_response && item.pixel_response.trim() !== '' && !isNikoleRead) {
     return '📥 My Inbox';
   }
 
@@ -61,7 +62,8 @@ const getTurnIndicator = (item) => {
   if (s === '✅ Done') return null;
   if (s === '⏳ Needs GO' || s === '📥 My Inbox') return "👤 Nikole's turn";
   if (!item.pixel_response) return "🤖 Daisy's turn";
-  if (item.nikole_read === false) return "👤 Nikole's turn";
+  const isNikoleRead = item.nikole_read === true || item.nikole_read === 'true';
+  if (!isNikoleRead) return "👤 Nikole's turn";
   return "🤖 Daisy's turn";
 };
 
@@ -175,7 +177,8 @@ export default function PixelBoard() {
       if (priorityFilter !== 'All' && item.priority !== priorityFilter) return false;
       if (statusFilter !== 'All' && mapStatus(item) !== statusFilter) return false;
       if (activeFilter === 'inbox' || activeFilter === 'daisy_replied') {
-        if (!item.pixel_response || item.pixel_response.trim() === '' || item.nikole_read === true) return false;
+        const isNikoleRead = item.nikole_read === true || item.nikole_read === 'true';
+        if (!item.pixel_response || item.pixel_response.trim() === '' || isNikoleRead) return false;
       }
       return true;
     }).sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
