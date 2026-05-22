@@ -8,7 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import {
   LayoutDashboard, Target, Heart, BookOpen, Settings, Menu, X, LogOut,
   TrendingUp, Users, Video, Pill, Gift, Brain, Home, ChevronDown,
-  ChevronRight, Bell, Share2, Music, Star, Lock, UserCog, Sparkles,
+  ChevronRight, ChevronLeft, Bell, Share2, Music, Star, Lock, UserCog, Sparkles,
   Palette, Eye, Bookmark, HandMetal, PawPrint, Search, MousePointerClick,
   Calendar, Sun, Cross, Smile, FileText, StickyNote, Tablet, HelpCircle,
   MessageCircle, Briefcase, DollarSign, Activity, Wallet, Swords, Lightbulb, Zap,
@@ -38,6 +38,7 @@ export default function Layout({ children, currentPageName }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isNavCollapsed, setIsNavCollapsed] = useState(false);
   const [user, setUser] = useState(null);
   const [expandedSections, setExpandedSections] = useState(['Content Creator Center']); // Default expand creator center
   const [showAccessGate, setShowAccessGate] = useState(false);
@@ -954,25 +955,24 @@ const { data: featureFlags = [] } = useQuery({
       </AnimatePresence>
 
       {/* Desktop Sidebar */}
-      <div className="hidden lg:flex fixed left-0 top-0 bottom-0 w-72 backdrop-blur-sm border-r p-6 flex-col overflow-y-auto z-20" style={sidebarStyle}>
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-2">
+      <div className={`hidden lg:flex fixed left-0 top-0 bottom-0 ${isNavCollapsed ? 'w-24 px-3' : 'w-72 px-6'} py-6 backdrop-blur-sm border-r flex-col overflow-y-auto z-20 transition-all duration-300`} style={sidebarStyle}>
+          <div className="mb-8 relative">
+            <div className={`flex items-center ${isNavCollapsed ? 'justify-center' : 'justify-between'} mb-2`}>
               <div className="flex items-center gap-3">
                 <img
                     src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6924840d3628eabd1d7f8247/e225113d4_Untitleddesign.png"
                     alt="Let's Thrive!"
-                    className="w-10 h-10" />
+                    className="w-10 h-10 flex-shrink-0" />
 
-                <h1
+                {!isNavCollapsed && <h1
                     className="text-2xl font-bold bg-clip-text text-transparent whitespace-nowrap"
                     style={{ backgroundImage: `linear-gradient(to right, ${primaryColor}, ${accentColor})` }}>
-
                   Let's Thrive!
-                </h1>
+                </h1>}
               </div>
-              {user && <NotificationBell userEmail={effectiveEmail} isDark={isMenuDark} />}
+              {!isNavCollapsed && user && <NotificationBell userEmail={effectiveEmail} isDark={isMenuDark} />}
             </div>
-            <p className={`text-sm ${menuSubtextClass}`}>Crush your goals, thrive daily</p>
+            {!isNavCollapsed && <p className={`text-sm ${menuSubtextClass}`}>Crush your goals, thrive daily</p>}
           </div>
 
           <nav className="flex-1 space-y-1 overflow-y-auto custom-scrollbar">
@@ -1010,11 +1010,12 @@ const { data: featureFlags = [] } = useQuery({
                   <div key={group.id} className="mb-2">
                   {group.title &&
                     <button
-                      onClick={() => toggleGroup(group.id)}
-                      className={`w-full px-2 py-2 mt-4 mb-1 text-xs font-bold uppercase tracking-wider ${group.color} ${group.bgColor} rounded-lg flex items-center justify-between hover:opacity-80 transition-opacity`}>
-
-                      <span>{group.title}</span>
-                      {isCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                      onClick={() => !isNavCollapsed && toggleGroup(group.id)}
+                      className={`w-full px-2 py-2 mt-4 mb-1 text-xs font-bold uppercase tracking-wider ${group.color} ${group.bgColor} rounded-lg flex items-center ${isNavCollapsed ? 'justify-center' : 'justify-between'} hover:opacity-80 transition-opacity`}
+                      title={isNavCollapsed ? group.title : undefined}
+                    >
+                      {!isNavCollapsed && <span>{group.title}</span>}
+                      {isNavCollapsed ? <group.icon className="w-4 h-4 mx-auto" /> : (isCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />)}
                     </button>
                     }
 
@@ -1079,15 +1080,15 @@ const { data: featureFlags = [] } = useQuery({
                                   style={sectionStyle}>
 
                                   <div className="flex items-center gap-3">
-                                    <Icon className="w-5 h-5" />
-                                    <span className="font-medium">{item.name}</span>
-                                    {isLocked && <Lock className="w-3 h-3 text-amber-500" />}
-                                    {(isDevMode || item.badge === 'DEV') && <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-bold border border-amber-200">DEV</span>}
+                                    <Icon className="w-5 h-5 flex-shrink-0" />
+                                    {!isNavCollapsed && <span className="font-medium">{item.name}</span>}
+                                    {!isNavCollapsed && isLocked && <Lock className="w-3 h-3 text-amber-500" />}
+                                    {!isNavCollapsed && (isDevMode || item.badge === 'DEV') && <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-bold border border-amber-200">DEV</span>}
                                   </div>
-                                  {!isLocked && (isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />)}
+                                  {!isNavCollapsed && !isLocked && (isExpanded ? <ChevronDown className="w-4 h-4 flex-shrink-0" /> : <ChevronRight className="w-4 h-4 flex-shrink-0" />)}
                                 </button>
                                 
-                                {isExpanded && !isLocked &&
+                                {!isNavCollapsed && isExpanded && !isLocked &&
                                 <div className="ml-4 mt-1 space-y-1">
                                     {item.subItems?.map((sub) =>
                                   sub.externalUrl ?
@@ -1131,11 +1132,13 @@ const { data: featureFlags = [] } = useQuery({
                                 href={item.externalUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-all ${menuTextClass} ${menuHoverClass}`}>
+                                className={`flex items-center gap-3 ${isNavCollapsed ? 'justify-center px-2' : 'px-4'} py-2 rounded-xl transition-all ${menuTextClass} ${menuHoverClass}`}
+                                title={isNavCollapsed ? item.name : undefined}
+                              >
 
-                                <Icon className="w-5 h-5" />
-                                <span className="font-medium">{item.name}</span>
-                                <span className="text-xs opacity-50">↗</span>
+                                <Icon className="w-5 h-5 flex-shrink-0" />
+                                {!isNavCollapsed && <span className="font-medium truncate">{item.name}</span>}
+                                {!isNavCollapsed && <span className="text-xs opacity-50 flex-shrink-0">↗</span>}
                               </a>);
 
                           }
@@ -1144,19 +1147,21 @@ const { data: featureFlags = [] } = useQuery({
                             <Link
                               key={item.path}
                               to={createPageUrl(item.path)}
-                              className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-all ${
+                              className={`flex items-center gap-3 ${isNavCollapsed ? 'justify-center px-2' : 'px-4'} py-2 rounded-xl transition-all ${
                               isActive ?
                               'text-white shadow-lg' :
                               `${menuTextClass} ${menuHoverClass}`}`
                               }
-                              style={isActive ? { background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` } : {}}>
+                              style={isActive ? { background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` } : {}}
+                              title={isNavCollapsed ? item.name : undefined}
+                            >
 
-                              <div className="relative">
+                              <div className="relative flex-shrink-0">
                                 <Icon className="w-5 h-5" />
-                                {(isDevMode || item.badge === 'DEV') && <span className="absolute -top-1 -right-1 w-2 h-2 bg-amber-500 rounded-full border border-white"></span>}
+                                {!isNavCollapsed && (isDevMode || item.badge === 'DEV') && <span className="absolute -top-1 -right-1 w-2 h-2 bg-amber-500 rounded-full border border-white"></span>}
                               </div>
-                              <span className="text-sm font-medium">{item.name}</span>
-                              {(isDevMode || item.badge === 'DEV') && <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-bold border border-amber-200 opacity-80">DEV</span>}
+                              {!isNavCollapsed && <span className="text-sm font-medium truncate">{item.name}</span>}
+                              {!isNavCollapsed && (isDevMode || item.badge === 'DEV') && <span className="ml-auto flex-shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-bold border border-amber-200 opacity-80">DEV</span>}
                             </Link>);
 
                         })}
@@ -1173,14 +1178,18 @@ const { data: featureFlags = [] } = useQuery({
             <div className={`pt-6 mt-6 border-t ${menuBorderClass}`}>
             <Link
                 to={createPageUrl('Profile')}
-                className={`w-full flex items-center justify-between gap-2 mb-4 px-2 py-2 rounded-lg ${menuHoverClass}`}>
+                className={`w-full flex items-center ${isNavCollapsed ? 'justify-center' : 'justify-between gap-2'} mb-4 px-2 py-2 rounded-lg ${menuHoverClass}`}
+                title={isNavCollapsed ? 'Profile' : undefined}
+            >
 
-              <div className="flex items-center gap-2 flex-1 min-w-0">
-                <div className="flex-1 min-w-0">
-                  <p className={`text-sm font-medium truncate ${menuTextClass}`}>{preferences?.nickname || user.full_name || user.email}</p>
-                  <p className={`text-xs truncate ${menuSubtextClass}`}>{user.email}</p>
+              {!isNavCollapsed && (
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-sm font-medium truncate ${menuTextClass}`}>{preferences?.nickname || user.full_name || user.email}</p>
+                    <p className={`text-xs truncate ${menuSubtextClass}`}>{user.email}</p>
+                  </div>
                 </div>
-              </div>
+              )}
               <img
                   src={preferences?.profile_image_url || `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'%3E%3C/path%3E%3Ccircle cx='12' cy='7' r='4'%3E%3C/circle%3E%3C/svg%3E`}
                   alt="Profile"
@@ -1188,7 +1197,7 @@ const { data: featureFlags = [] } = useQuery({
 
             </Link>
 
-            <div className="flex items-center gap-1 mt-2">
+            <div className={`flex items-center ${isNavCollapsed ? 'flex-col gap-2' : 'gap-1'} mt-2`}>
               <Button
                 variant="ghost"
                 size="icon"
@@ -1220,24 +1229,39 @@ const { data: featureFlags = [] } = useQuery({
               )}
               <Button
                 onClick={handleLogout}
-                size="sm"
-                className={`flex-1 justify-center ${isMenuDark ? 'bg-gray-700 text-gray-100 hover:bg-gray-600' : 'bg-gray-800 text-white hover:bg-gray-700'}`}
+                size={isNavCollapsed ? "icon" : "sm"}
+                className={`${!isNavCollapsed ? 'flex-1' : ''} justify-center ${isMenuDark ? 'bg-gray-700 text-gray-100 hover:bg-gray-600' : 'bg-gray-800 text-white hover:bg-gray-700'}`}
+                title={isNavCollapsed ? 'Log Out' : undefined}
               >
-                <LogOut className="w-4 h-4 mr-2" /> Log Out
+                <LogOut className={isNavCollapsed ? "w-4 h-4" : "w-4 h-4 mr-2"} /> {!isNavCollapsed && 'Log Out'}
               </Button>
             </div>
 
-              {soundcloudPosition === 'menu' && soundcloudUrl &&
+              {!isNavCollapsed && soundcloudPosition === 'menu' && soundcloudUrl &&
               <div className="mt-4 pt-4 border-t" style={{ borderColor: menuBorderClass }}>
                   <SoundCloudPlayer playlistUrl={soundcloudUrl} isMenuDark={isMenuDark} />
                 </div>
               }
+
+              {/* Collapse Toggle */}
+              <div className="mt-4 flex justify-center">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsNavCollapsed(!isNavCollapsed)}
+                  className={`w-full ${isMenuDark ? 'text-gray-400 hover:text-white hover:bg-white/10' : 'text-gray-500 hover:bg-gray-100'}`}
+                  style={{ color: primaryColor }}
+                >
+                  {isNavCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+                </Button>
+              </div>
+
             </div>
             }
         </div>
 
         {/* Main Content Area */}
-        <div className="hidden lg:block ml-72" style={{ paddingTop: '80px' }}>
+        <div className={`hidden lg:block ${isNavCollapsed ? 'ml-24' : 'ml-72'} transition-all duration-300`} style={{ paddingTop: '80px' }}>
           {children}
         </div>
 

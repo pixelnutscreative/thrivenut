@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
@@ -11,20 +11,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { toast, Toaster as SonnerToaster } from 'sonner';
-import { Plus, Search, Loader2, LayoutGrid, List as ListIcon, ChevronRight, ChevronDown, CheckCircle2, PauseCircle, Clock, Brain, Paperclip, X, RefreshCw, ChevronLeft, Trash2, Eye, Settings, EyeOff } from 'lucide-react';
+import { Plus, Search, Loader2, LayoutGrid, List as ListIcon, ChevronRight, ChevronDown, Paperclip, X, RefreshCw, ChevronLeft, Trash2, Eye, Settings, EyeOff, Brain, Link as LinkIcon, UploadCloud } from 'lucide-react';
 import moment from 'moment';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
 const KANBAN_COLUMNS = [
   { id: '💬 New', label: '💬 New' },
   { id: '📦 Batch', label: '📦 Batch' },
   { id: '⚙️ Processing', label: '⚙️ Processing' },
   { id: '🧠 Thinking', label: '🧠 Thinking' },
+  { id: '⏸️ On Hold', label: '⏸️ On Hold' },
   { id: '⏳ Needs GO', label: '⏳ Needs GO' },
   { id: '📬 My Inbox', label: '📬 My Inbox' },
   { id: '✅ Done', label: '🎉 ✅ Done' },
-  { id: '➡️ Moved to Task', label: '➡️ Moved to Task' }
+  { id: '➡️ Moved to Task', label: '➡️ Moved to Task' },
+  { id: '🔁 Duplicate', label: '🔁 Duplicate' }
 ];
 
 const priorityConfig = {
@@ -49,21 +51,23 @@ const mapStatus = (item) => {
   
   const s = item.status;
   if (!s || typeof s !== 'string') return '💬 New';
-  if (['💬 New', '📦 Batch', '⚙️ Processing', '🧠 Thinking', '⏳ Needs GO', '📬 My Inbox', '✅ Done', '➡️ Moved to Task'].includes(s)) return s;
+  if (['💬 New', '📦 Batch', '⚙️ Processing', '🧠 Thinking', '⏸️ On Hold', '⏳ Needs GO', '📬 My Inbox', '✅ Done', '➡️ Moved to Task', '🔁 Duplicate'].includes(s)) return s;
   
   if (s.includes('Done') || s === 'Reviewed') return '✅ Done';
   if (s.includes('Task')) return '➡️ Moved to Task';
   if (s.includes('Needs GO') || s === 'Answered') return '⏳ Needs GO';
   if (s.includes('Batch') || s.includes('Batched')) return '📦 Batch';
   if (s.includes('Progress') || s.includes('Process') || s.includes('Inbox')) return '⚙️ Processing';
-  if (s.includes('Wait') || s.includes('Hold') || s.includes('Think')) return '🧠 Thinking';
+  if (s.includes('Wait') || s.includes('Hold') || s === '⏸️ On Hold') return '⏸️ On Hold';
+  if (s.includes('Think')) return '🧠 Thinking';
+  if (s.includes('Duplicate')) return '🔁 Duplicate';
   
   return '💬 New';
 };
 
 const getTurnIndicator = (item) => {
   const s = mapStatus(item);
-  if (s === '✅ Done' || s === '➡️ Moved to Task') return null;
+  if (s === '✅ Done' || s === '➡️ Moved to Task' || s === '⏸️ On Hold' || s === '🔁 Duplicate') return null;
   
   if (item.thread && item.thread.length > 0) {
       const lastMsg = item.thread[item.thread.length - 1];
@@ -76,8 +80,6 @@ const getTurnIndicator = (item) => {
   
   return "Nikole's turn 🎯"; // Default if pixel_response exists and Nikole hasn't replied yet
 };
-
-const isNikolesTurn = (item) => getTurnIndicator(item) === "Nikole's turn 🎯";
 
 export default function PixelBoard() {
   const queryClient = useQueryClient();
@@ -95,13 +97,13 @@ export default function PixelBoard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [priorityFilter, setPriorityFilter] = useState('All');
-  const [statusFilter, setStatusFilter] = useState(KANBAN_COLUMNS.map(c => c.id));
+  const [statusFilter, setStatusFilter] = useState(KANBAN_COLUMNS.filter(c => c.id !== '🔁 Duplicate').map(c => c.id));
   const [visibleColumns, setVisibleColumns] = useState(() => {
     const saved = localStorage.getItem('pixelboard_visible_columns');
     if (saved) {
       try { return JSON.parse(saved); } catch(e) {}
     }
-    return KANBAN_COLUMNS.map(c => c.id);
+    return KANBAN_COLUMNS.filter(c => c.id !== '🔁 Duplicate').map(c => c.id);
   });
   
   useEffect(() => {
@@ -121,14 +123,16 @@ export default function PixelBoard() {
   const [lightboxImages, setLightboxImages] = useState([]);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [imageToDelete, setImageToDelete] = useState(null);
-  const fileInputRef = React.useRef(null);
+  const [isDraggingOverFile, setIsDraggingOverFile] = useState(false);
+  const fileInputRef = useRef(null);
   
   const [newQuestion, setNewQuestion] = useState({
     title: '',
     details: '',
     category: 'Other',
     priority: 'Normal',
-    card_color: '#24C4D6'
+    card_color: '#24C4D6',
+    urls: []
   });
 
   const { data: userPrefsList } = useQuery({
@@ -202,11 +206,12 @@ export default function PixelBoard() {
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.PixelBoard.create({ ...data, status: '💬 New', asked_by: 'Nikole' }),
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['pixelBoard'] });
       setIsAskModalOpen(false);
-      setNewQuestion({ title: '', details: '', category: 'Other', priority: 'Normal', card_color: '#24C4D6' });
+      setNewQuestion({ title: '', details: '', category: 'Other', priority: 'Normal', card_color: '#24C4D6', urls: [] });
       toast.success("Ticket created!");
+      return data;
     }
   });
 
@@ -220,25 +225,24 @@ export default function PixelBoard() {
     }
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.PixelBoard.delete(id),
-    onSuccess: () => {
+  // Call the new backend function directly!
+  const handleBulkDelete = async (ids) => {
+    if (ids.length === 0) return;
+    try {
+      if (ids.length === 1) {
+         await base44.functions.invoke('deletePixelBoardCard', { id: ids[0] });
+      } else {
+         await base44.functions.invoke('deletePixelBoardCards', { ids });
+      }
       queryClient.invalidateQueries({ queryKey: ['pixelBoard'] });
-      setSelectedItem(null);
-      toast.success("Ticket deleted!");
+      if (selectedItem && ids.includes(selectedItem.id)) {
+        setSelectedItem(null);
+      }
+      toast.success(`Deleted ${ids.length} ticket(s)!`);
+    } catch(err) {
+      toast.error('Failed to delete tickets');
     }
-  });
-
-  // Auto-delete duplicates
-  useEffect(() => {
-    if (items.length > 0) {
-      items.forEach(item => {
-        if (item.details && item.details.includes('DUPLICATE')) {
-          deleteMutation.mutate(item.id);
-        }
-      });
-    }
-  }, [items]);
+  };
 
   const handleSendBatch = async () => {
     const batchedItems = items.filter(i => i.in_batch);
@@ -247,6 +251,11 @@ export default function PixelBoard() {
     const loadingToastId = toast.loading("Sending batch...");
     try {
       await base44.functions.invoke('sendBatch', {});
+      
+      // Auto-update locally to prevent visual lag
+      batchedItems.forEach(item => {
+        updateMutation.mutate({ id: item.id, data: { in_batch: false, batch_ready: true, status: '⚙️ Processing' } });
+      });
 
       queryClient.invalidateQueries({ queryKey: ['pixelBoard'] });
       toast.dismiss(loadingToastId);
@@ -260,10 +269,16 @@ export default function PixelBoard() {
 
   const filteredItems = useMemo(() => {
     return items.filter(item => {
-      // Hide duplicates from view immediately
-      if (item.details?.includes('DUPLICATE')) return false;
+      // Hide duplicates from view if the column/status is not selected
+      if (mapStatus(item) === '🔁 Duplicate' && !statusFilter.includes('🔁 Duplicate')) return false;
 
-      if (searchQuery && !item.title.toLowerCase().includes(searchQuery.toLowerCase()) && !(item.details || '').toLowerCase().includes(searchQuery.toLowerCase())) return false;
+      if (searchQuery) {
+         const q = searchQuery.toLowerCase();
+         const matchTitle = item.title?.toLowerCase().includes(q);
+         const matchDetails = item.details?.toLowerCase().includes(q);
+         if (!matchTitle && !matchDetails) return false;
+      }
+      
       if (categoryFilter !== 'All' && item.category !== categoryFilter) return false;
       if (priorityFilter !== 'All' && item.priority !== priorityFilter) return false;
       
@@ -274,12 +289,14 @@ export default function PixelBoard() {
 
   const getRealColCount = (colId) => {
     return items.filter(item => {
-      // For real count, we ignore activeFilter (Inbox/Daisy Replied), but still apply Search/Category/Priority if wanted.
-      // But usually, a real column count means "how many items match this status *plus* the current category/priority/search".
-      if (searchQuery && !item.title.toLowerCase().includes(searchQuery.toLowerCase()) && !(item.details || '').toLowerCase().includes(searchQuery.toLowerCase())) return false;
+      if (searchQuery) {
+         const q = searchQuery.toLowerCase();
+         const matchTitle = item.title?.toLowerCase().includes(q);
+         const matchDetails = item.details?.toLowerCase().includes(q);
+         if (!matchTitle && !matchDetails) return false;
+      }
       if (categoryFilter !== 'All' && item.category !== categoryFilter) return false;
       if (priorityFilter !== 'All' && item.priority !== priorityFilter) return false;
-      // We do NOT check activeFilter here so the counts always represent the column size
       return mapStatus(item) === colId;
     }).length;
   };
@@ -289,13 +306,19 @@ export default function PixelBoard() {
     createMutation.mutate(newQuestion);
   };
 
-  const handleImageUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const uploadFilesFromEvent = async (files) => {
+    if (!files || files.length === 0) return;
     setIsUploading(true);
+    let uploadedUrls = [];
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      setNewImages(prev => [...prev, file_url]);
+      for (const file of files) {
+        if (!file.type.startsWith('image/')) continue;
+        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+        uploadedUrls.push(file_url);
+      }
+      if (uploadedUrls.length > 0) {
+        setNewImages(prev => [...prev, ...uploadedUrls]);
+      }
     } catch (error) {
       toast.error('Upload failed');
     } finally {
@@ -368,8 +391,6 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
           asked_by: 'Nikole'
         });
         toast.success(`🐿️ Squirrel caught! New card created: "${res.suggested_title}"`);
-        // We could theoretically add a system message to the thread here, 
-        // but since it's background, we don't want to conflict with mutations.
       }
     }).catch(e => console.error("Squirrel Catcher Error:", e));
     
@@ -387,9 +408,17 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
     updateMutation.mutate({ id, data: { status: newStatus } });
   };
 
+  const handleDragEnd = (result) => {
+    if (!result.destination) return;
+    const newOrder = Array.from(visibleColumns);
+    const [moved] = newOrder.splice(result.source.index, 1);
+    newOrder.splice(result.destination.index, 0, moved);
+    setVisibleColumns(newOrder);
+  };
+
   const TicketCard = ({ item }) => {
     const s = mapStatus(item);
-    const isDone = s === '✅ Done' || s === '➡️ Moved to Task';
+    const isDone = s === '✅ Done' || s === '➡️ Moved to Task' || s === '🔁 Duplicate';
     const turn = getTurnIndicator(item);
     const pConf = priorityConfig[item.priority] || priorityConfig['Normal'];
     const isUrgent = item.priority === 'Urgent';
@@ -570,6 +599,16 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
               </div>
             )}
 
+            <div className="relative w-[200px]">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Input 
+                placeholder="Search board..." 
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="pl-9 border-2 border-slate-200 h-10 font-medium placeholder:font-normal focus-visible:ring-[#24C4D6]"
+              />
+            </div>
+
             <Button 
               variant="outline"
               className="border-2 border-slate-200 text-slate-600 hover:bg-slate-100 font-bold"
@@ -712,7 +751,7 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                   <Plus className="w-4 h-4 mr-2" /> New Item
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[500px]">
+              <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle className="text-xl font-bold text-slate-800">Create Item</DialogTitle>
                 </DialogHeader>
@@ -724,6 +763,45 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                   <div className="space-y-2">
                     <Label className="font-bold text-slate-700">Details</Label>
                     <Textarea placeholder="Provide context..." value={newQuestion.details} onChange={e => setNewQuestion({...newQuestion, details: e.target.value})} className="min-h-[100px] border-2 border-slate-200 focus-visible:ring-[#24C4D6]" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="font-bold text-slate-700">URLs</Label>
+                    <div className="space-y-2">
+                      {newQuestion.urls.map((url, idx) => (
+                        <div key={idx} className="flex items-center gap-2">
+                          <Input 
+                            value={url} 
+                            onChange={e => {
+                              const newUrls = [...newQuestion.urls];
+                              newUrls[idx] = e.target.value;
+                              setNewQuestion({...newQuestion, urls: newUrls});
+                            }} 
+                            placeholder="https://..." 
+                            className="border-2 border-slate-200 focus-visible:ring-[#24C4D6]" 
+                          />
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="shrink-0 text-slate-400 hover:text-red-500 hover:bg-red-50"
+                            onClick={() => {
+                              const newUrls = [...newQuestion.urls];
+                              newUrls.splice(idx, 1);
+                              setNewQuestion({...newQuestion, urls: newUrls});
+                            }}
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ))}
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="w-full border-dashed border-2 border-slate-200 text-slate-500"
+                        onClick={() => setNewQuestion({...newQuestion, urls: [...newQuestion.urls, '']})}
+                      >
+                        <Plus className="w-4 h-4 mr-2" /> Add URL
+                      </Button>
+                    </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -742,6 +820,9 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                         <SelectContent>
                           <SelectItem value="When You Get To It">⚪ When You Get To It</SelectItem>
                           <SelectItem value="Normal">🔵 Normal</SelectItem>
+                          <SelectItem value="Medium">🟡 Medium</SelectItem>
+                          <SelectItem value="High">🟠 High</SelectItem>
+                          <SelectItem value="Critical">🔴 Critical</SelectItem>
                           <SelectItem value="Urgent">🔥 Urgent</SelectItem>
                         </SelectContent>
                       </Select>
@@ -756,9 +837,11 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                     </div>
                   </div>
                 </div>
-                <DialogFooter>
-                  <Button variant="ghost" onClick={() => setIsAskModalOpen(false)}>Cancel</Button>
-                  <Button onClick={handleAskSubmit} disabled={!newQuestion.title || createMutation.isPending} className="bg-[#24C4D6] hover:bg-[#1db0c0] text-white">Create Ticket</Button>
+                <DialogFooter className="gap-2 sm:gap-0">
+                  <Button variant="outline" className="border-2 border-slate-200" onClick={() => setIsAskModalOpen(false)}>Cancel</Button>
+                  <Button onClick={handleAskSubmit} disabled={!newQuestion.title || createMutation.isPending} className="bg-[#24C4D6] hover:bg-[#1db0c0] text-white font-bold">
+                    {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Plus className="w-4 h-4 mr-2" />} Create Ticket
+                  </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
@@ -769,35 +852,75 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
         {isLoading ? (
           <div className="flex justify-center p-12"><Loader2 className="w-8 h-8 animate-spin text-[#24C4D6]" /></div>
         ) : viewMode === 'kanban' ? (
-          <div className="flex gap-6 overflow-x-auto pb-4 snap-x">
-            {KANBAN_COLUMNS.filter(col => visibleColumns.includes(col.id)).map(col => {
-              const colItems = filteredItems.filter(item => mapStatus(item) === col.id);
-              const realCount = getRealColCount(col.id);
-              if (col.id === '✅ Done' && isDoneCollapsed) {
-                return (
-                  <div key={col.id} className="min-w-[60px] max-w-[60px] bg-slate-100/50 rounded-2xl border-2 border-slate-200 border-dashed flex flex-col items-center py-4 cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => setIsDoneCollapsed(false)}>
-                    <div className="rotate-90 whitespace-nowrap font-bold text-slate-500 mt-10 tracking-widest uppercase">{col.label} ({realCount})</div>
-                  </div>
-                );
-              }
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <Droppable droppableId="board" direction="horizontal" type="COLUMN">
+              {(provided) => (
+                <div 
+                  className="flex gap-6 overflow-x-auto pb-4 snap-x"
+                  ref={provided.innerRef}
+                  {...provided.droppableProps}
+                >
+                  {visibleColumns.map((colId, index) => {
+                    const col = KANBAN_COLUMNS.find(c => c.id === colId);
+                    if (!col) return null;
+                    
+                    const colItems = filteredItems.filter(item => mapStatus(item) === col.id);
+                    const realCount = getRealColCount(col.id);
+                    
+                    if (col.id === '✅ Done' && isDoneCollapsed) {
+                      return (
+                        <Draggable key={col.id} draggableId={col.id} index={index}>
+                          {(provided) => (
+                            <div 
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              className="min-w-[60px] max-w-[60px] bg-slate-100/50 rounded-2xl border-2 border-slate-200 border-dashed flex flex-col items-center py-4 cursor-pointer hover:bg-slate-100 transition-colors" 
+                              onClick={() => setIsDoneCollapsed(false)}
+                            >
+                              <div {...provided.dragHandleProps} className="w-full flex justify-center py-2 -mt-4 cursor-grab text-slate-300 hover:text-slate-500">
+                                <LayoutGrid className="w-4 h-4" />
+                              </div>
+                              <div className="rotate-90 whitespace-nowrap font-bold text-slate-500 mt-10 tracking-widest uppercase">{col.label} ({realCount})</div>
+                            </div>
+                          )}
+                        </Draggable>
+                      );
+                    }
 
-              return (
-                <div key={col.id} className="min-w-[220px] max-w-[220px] w-[220px] flex flex-col gap-3 snap-start">
-                  <div className="flex items-center justify-between pb-2 border-b-2 border-slate-200">
-                    <h3 className="font-bold text-slate-700">{col.label}</h3>
-                    <Badge variant="secondary" className="bg-slate-200 text-slate-600 border-0">{realCount}</Badge>
-                  </div>
-                  {col.id === '✅ Done' && (
-                    <Button variant="ghost" size="sm" className="w-full text-xs text-slate-500 -mt-2" onClick={() => setIsDoneCollapsed(true)}>Minimize</Button>
-                  )}
-                  <div className="flex flex-col gap-3 overflow-y-auto max-h-[70vh] custom-scrollbar pr-1 pb-4">
-                    {colItems.map(item => <TicketCard key={item.id} item={item} />)}
-                    {colItems.length === 0 && <div className="text-sm text-slate-400 text-center py-6 border-2 border-dashed border-slate-200 rounded-xl">Empty</div>}
-                  </div>
+                    return (
+                      <Draggable key={col.id} draggableId={col.id} index={index}>
+                        {(provided) => (
+                          <div 
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            className="min-w-[220px] max-w-[220px] w-[220px] flex flex-col gap-3 snap-start"
+                          >
+                            <div className="flex items-center justify-between pb-2 border-b-2 border-slate-200 group">
+                              <div className="flex items-center gap-2">
+                                <div {...provided.dragHandleProps} className="cursor-grab opacity-50 hover:opacity-100 text-slate-400">
+                                  <LayoutGrid className="w-4 h-4" />
+                                </div>
+                                <h3 className="font-bold text-slate-700">{col.label}</h3>
+                              </div>
+                              <Badge variant="secondary" className="bg-slate-200 text-slate-600 border-0">{realCount}</Badge>
+                            </div>
+                            {col.id === '✅ Done' && (
+                              <Button variant="ghost" size="sm" className="w-full text-xs text-slate-500 -mt-2" onClick={() => setIsDoneCollapsed(true)}>Minimize</Button>
+                            )}
+                            <div className="flex flex-col gap-3 overflow-y-auto max-h-[70vh] custom-scrollbar pr-1 pb-4">
+                              {colItems.map(item => <TicketCard key={item.id} item={item} />)}
+                              {colItems.length === 0 && <div className="text-sm text-slate-400 text-center py-6 border-2 border-dashed border-slate-200 rounded-xl">Empty</div>}
+                            </div>
+                          </div>
+                        )}
+                      </Draggable>
+                    );
+                  })}
+                  {provided.placeholder}
                 </div>
-              );
-            })}
-          </div>
+              )}
+            </Droppable>
+          </DragDropContext>
         ) : (
           <div className="bg-white rounded-2xl border-2 border-slate-200 shadow-sm overflow-hidden">
             <div className="grid grid-cols-12 gap-4 p-4 font-bold text-slate-500 border-b-2 border-slate-100 text-sm">
@@ -868,8 +991,8 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                       </Button>
                       <Button 
                         size="sm" 
-                        variant="ghost" 
-                        className="h-8 text-slate-500 hover:text-slate-800 hover:bg-slate-100" 
+                        variant="outline" 
+                        className="h-8 border-slate-200 text-slate-600 hover:bg-slate-100" 
                         onClick={() => setSelectedItem(null)}
                       >
                         Cancel
@@ -940,11 +1063,67 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                       </div>
                     </div>
                   </div>
+                  
+                  {/* Inline URLs editor */}
+                  <div className="mt-3 space-y-2 max-h-[80px] overflow-y-auto custom-scrollbar">
+                     <div className="flex flex-wrap gap-2 items-center">
+                        {(selectedItem.urls || []).map((url, idx) => (
+                           <div key={idx} className="flex items-center gap-1 bg-slate-100 border border-slate-200 rounded-md pr-1 overflow-hidden max-w-full">
+                              <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline truncate max-w-[200px] px-2 py-1 flex items-center gap-1">
+                                <LinkIcon className="w-3 h-3" /> {url}
+                              </a>
+                              <button onClick={() => {
+                                 const newUrls = [...(selectedItem.urls || [])];
+                                 newUrls.splice(idx, 1);
+                                 updateMutation.mutate({ id: selectedItem.id, data: { urls: newUrls } });
+                                 setSelectedItem(prev => ({...prev, urls: newUrls}));
+                              }} className="text-slate-400 hover:text-red-500 p-1">
+                                 <X className="w-3 h-3" />
+                              </button>
+                           </div>
+                        ))}
+                        <Button 
+                           variant="outline" 
+                           size="sm" 
+                           className="h-7 text-[10px] border-dashed text-slate-500"
+                           onClick={() => {
+                              const newUrl = window.prompt("Enter URL:");
+                              if (newUrl && newUrl.trim()) {
+                                const newUrls = [...(selectedItem.urls || []), newUrl.trim()];
+                                updateMutation.mutate({ id: selectedItem.id, data: { urls: newUrls } });
+                                setSelectedItem(prev => ({...prev, urls: newUrls}));
+                              }
+                           }}
+                        >
+                           <Plus className="w-3 h-3 mr-1" /> Add URL
+                        </Button>
+                     </div>
+                  </div>
                 </div>
 
                 {/* Body (Scrollable) */}
-                <div className="flex-1 px-4 py-2 space-y-2 overflow-y-auto">
-                  
+                <div 
+                  className={`flex-1 px-4 py-2 space-y-2 overflow-y-auto relative ${isDraggingOverFile ? 'bg-blue-50/50' : ''}`}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setIsDraggingOverFile(true);
+                  }}
+                  onDragLeave={() => setIsDraggingOverFile(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setIsDraggingOverFile(false);
+                    uploadFilesFromEvent(e.dataTransfer.files);
+                  }}
+                >
+                  {isDraggingOverFile && (
+                    <div className="absolute inset-0 z-50 bg-blue-500/10 border-4 border-blue-500 border-dashed rounded-xl flex items-center justify-center pointer-events-none">
+                      <div className="bg-white px-6 py-4 rounded-xl shadow-lg flex items-center gap-3 font-bold text-blue-600">
+                        <UploadCloud className="w-6 h-6 animate-bounce" />
+                        Drop images to upload!
+                      </div>
+                    </div>
+                  )}
+
                   {/* Attachments */}
                   <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
                     <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Reference Images</Label>
@@ -964,23 +1143,8 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                           id={`attachment-upload-${selectedItem.id}`}
                           className="hidden" 
                           accept="image/png, image/jpeg, image/gif, image/webp"
-                          onChange={async (e) => {
-                            const file = e.target.files?.[0];
-                            if (!file) return;
-                            const loadingToastId = toast.loading("Uploading attachment...");
-                            try {
-                              const { file_url } = await base44.integrations.Core.UploadFile({ file });
-                              const currentAttachments = getAttachments(selectedItem.attachment_url);
-                              const newUrls = [...currentAttachments, file_url].join(',');
-                              updateMutation.mutate({ id: selectedItem.id, data: { attachment_url: newUrls } });
-                              setSelectedItem(prev => ({ ...prev, attachment_url: newUrls }));
-                              toast.dismiss(loadingToastId);
-                              toast.success("Attachment saved!");
-                            } catch (error) {
-                              toast.dismiss(loadingToastId);
-                              toast.error("Upload failed");
-                            }
-                          }}
+                          onChange={(e) => uploadFilesFromEvent(e.target.files)}
+                          multiple
                         />
                         <Button variant="outline" size="sm" className="h-8 text-[10px]" onClick={() => document.getElementById(`attachment-upload-${selectedItem.id}`).click()}>
                           <Paperclip className="w-3 h-3 mr-1" /> Add
@@ -1075,7 +1239,8 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                         ref={fileInputRef} 
                         className="hidden" 
                         accept="image/png, image/jpeg, image/gif, image/webp"
-                        onChange={handleImageUpload}
+                        onChange={(e) => uploadFilesFromEvent(e.target.files)}
+                        multiple
                       />
                       <Button 
                         variant="outline" 
@@ -1089,7 +1254,7 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                       <Textarea 
                         value={newResponse}
                         onChange={e => setNewResponse(e.target.value)}
-                        placeholder="Message Daisy... (e.g. 'oh wait, also check...')"
+                        placeholder="Message Daisy... (or drag & drop images anywhere here)"
                         className="min-h-[44px] max-h-[120px] border-slate-200 focus-visible:ring-[#24C4D6] resize-none"
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' && !e.shiftKey) {
@@ -1112,10 +1277,10 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                     <Button 
                       size="sm" 
                       variant="ghost" 
-                      className="h-7 text-xs text-red-500 hover:text-red-600 hover:bg-red-50 px-2"
+                      className="h-7 text-xs text-red-500 hover:text-red-600 hover:bg-red-50 px-2 font-bold"
                       onClick={() => {
-                        if (window.confirm("Are you sure you want to delete this ticket? This cannot be undone.")) {
-                          deleteMutation.mutate(selectedItem.id);
+                        if (window.confirm("Are you sure you want to completely delete this ticket? This cannot be undone.")) {
+                          handleBulkDelete([selectedItem.id]);
                         }
                       }}
                     >
@@ -1288,14 +1453,14 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                 placeholder="What's the distraction?"
               />
             </div>
-            <DialogFooter>
+            <DialogFooter className="gap-2 sm:gap-0">
               <Button variant="ghost" onClick={() => setSquirrelModalOpen(false)}>Cancel</Button>
               <Button 
                 disabled={!squirrelText.trim() || createMutation.isPending}
                 className="bg-amber-500 hover:bg-amber-600 text-white font-bold"
-                onClick={() => {
+                onClick={async () => {
                   if (!squirrelText.trim()) return;
-                  createMutation.mutate({
+                  const newTicket = await createMutation.mutateAsync({
                     title: squirrelText.substring(0, 60) + (squirrelText.length > 60 ? '...' : ''),
                     details: `${squirrelText}\n\nParent Ticket: ${selectedItem?.id}`,
                     category: selectedItem?.category || 'Other',
@@ -1306,9 +1471,12 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                   });
                   setSquirrelModalOpen(false);
                   setSquirrelText('');
+                  if (newTicket) {
+                    setSelectedItem(newTicket);
+                  }
                 }}
               >
-                Create Ticket
+                {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null} Create & Open
               </Button>
             </DialogFooter>
           </DialogContent>

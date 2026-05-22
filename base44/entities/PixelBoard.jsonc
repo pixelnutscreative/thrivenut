@@ -112,6 +112,13 @@
         "additionalProperties": true
       },
       "default": []
+    },
+    "urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
     }
   },
   "required": [
