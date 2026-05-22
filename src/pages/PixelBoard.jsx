@@ -669,10 +669,19 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                         className={`h-8 font-bold flex-shrink-0 ${selectedItem.in_batch ? 'bg-[#24C4D6] hover:bg-[#1db0c0] text-white border-0' : 'border-[#24C4D6] text-[#0D626C] hover:bg-[#24C4D6]/10'}`}
                         onClick={() => {
                           updateMutation.mutate({ id: selectedItem.id, data: { in_batch: !selectedItem.in_batch } });
-                          setSelectedItem(prev => ({ ...prev, in_batch: !prev.in_batch }));
+                          setSelectedItem(null);
+                          toast.success(selectedItem.in_batch ? 'Removed from batch' : 'Added to batch!');
                         }}
                       >
                         {selectedItem.in_batch ? '✓ In Batch' : '+ Add to Batch'}
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        className="h-8 text-slate-500 hover:text-slate-800 hover:bg-slate-100" 
+                        onClick={() => setSelectedItem(null)}
+                      >
+                        Cancel
                       </Button>
                       <Button 
                         size="sm" 
@@ -935,7 +944,7 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                     >
                       🐿️ Squirrel
                     </Button>
-                    <Button size="sm" variant="default" className="h-7 text-[10px] px-2 bg-slate-800 hover:bg-slate-900 text-white font-bold" onClick={() => setSelectedItem(null)}>💾 Save for Later</Button>
+
                     <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, '✅ Done')} className="h-7 text-[10px] px-2 border-slate-200 hover:bg-slate-100 text-slate-600"><CheckCircle2 className="w-3 h-3 mr-1" /> Done</Button>
                     <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, '💬 New')} className="h-7 text-[10px] px-2 border-slate-200 hover:bg-orange-50 text-orange-600"><Clock className="w-3 h-3 mr-1" /> New</Button>
                     <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, '⏳ Needs GO')} className="h-7 text-[10px] px-2 border-slate-200 hover:bg-teal-50 text-teal-600"><Brain className="w-3 h-3 mr-1" /> Needs GO</Button>
