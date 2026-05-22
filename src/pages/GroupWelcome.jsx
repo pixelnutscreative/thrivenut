@@ -37,6 +37,21 @@ export default function GroupWelcome() {
                         } else if (member.status === 'interested' || member.pending_approval) {
                              navigate(createPageUrl('GroupInterested') + `?groupId=${groupId}`);
                         }
+                    } else {
+                        // User is logged in but not a member yet! Auto-add them as Creator
+                        try {
+                            await base44.entities.CreatorGroupMember.create({
+                                group_id: groupId,
+                                user_email: user.email,
+                                role: 'member',
+                                level: 'Creator',
+                                status: 'active',
+                                joined_date: new Date().toISOString()
+                            });
+                            navigate(createPageUrl('CreatorGroups') + `?id=${groupId}`);
+                        } catch (error) {
+                            console.error("Auto-add failed:", error);
+                        }
                     }
                 }
             } catch (error) {

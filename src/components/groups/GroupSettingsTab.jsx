@@ -62,7 +62,7 @@ export default function GroupSettingsTab({ group }) {
 
         <TabsContent value="membership" className="space-y-6 mt-6">
           <MemberInviteSettings group={group} />
-          <MemberLevelsSettings group={group} />
+          {group.type !== 'agency' && <MemberLevelsSettings group={group} />}
           <GroupAccessSettings group={group} />
         </TabsContent>
 
@@ -286,18 +286,20 @@ function MemberInviteSettings({ group }) {
               </Select>
             </div>
             
-            <div className="space-y-2">
-              <Label>Level</Label>
-              <Select value={defaultLevel} onValueChange={setDefaultLevel}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Member">Member (Default)</SelectItem>
-                  {group.member_levels?.map(l => <SelectItem key={l} value={l}>{l}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
+            {group.type !== 'agency' && (
+              <div className="space-y-2">
+                <Label>Level</Label>
+                <Select value={defaultLevel} onValueChange={setDefaultLevel}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Member">Member (Default)</SelectItem>
+                    {group.member_levels?.map(l => <SelectItem key={l} value={l}>{l}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
         </div>
 

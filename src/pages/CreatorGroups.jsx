@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
@@ -732,6 +732,9 @@ export default function CreatorGroups() {
     const userRole = activeMembership?.role || (isAdmin ? 'owner' : 'member');
     const userLevel = activeMembership?.level || 'Member';
     const userStatus = activeMembership?.status || (isMember ? 'active' : undefined);
+
+    // Global Members tab restriction: Creators can NEVER see the members list
+    if (id === 'members' && !isAdmin && userRole !== 'manager') return false;
     
     // Check disabled features first (Global Admin Toggle) - If it's disabled here, it's disabled for everyone
     if (disabledFeatures.includes(id)) {
@@ -1120,13 +1123,12 @@ export default function CreatorGroups() {
                                 <Trash2 className="w-4 h-4" />
                              </Button>
                            )}
-                           {/* Removed Enter Dashboard / View button per request, click on row opens group */}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
+                           </div>
+                           </TableCell>
+                           </TableRow>
+                           );
+                           })}
+                           </TableBody>
             </Table>
           </Card>
         )}
@@ -1238,11 +1240,7 @@ export default function CreatorGroups() {
                 </div>
              )}
             <Dialog>
-              {/* <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="hidden">
-                  <Eye className="w-4 h-4 mr-2" /> Customize View
-                </Button>
-              </DialogTrigger> */}
+              {/* Customize View button temporarily hidden */}
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Customize Dashboard</DialogTitle>
@@ -1530,8 +1528,8 @@ export default function CreatorGroups() {
              <GroupAnnouncementBanner groupId={activeGroupId} />
           </div>
 
-          {/* Retainer Balance Header */}
-          {retainerBalance && activeGroup.enable_retainer_management && (retainerBalance.purchased > 0 || isAdmin) && activeGroup.settings?.hide_retainer_balance !== true && (
+          {/* Retainer Balance Header (Hourly Tracking Hidden) */}
+          {false && retainerBalance && activeGroup.enable_retainer_management && (retainerBalance.purchased > 0 || isAdmin) && activeGroup.settings?.hide_retainer_balance !== true && (
             <div className="bg-white rounded-xl p-4 border shadow-sm mb-6 flex flex-col sm:flex-row justify-between items-center gap-4 bg-gradient-to-r from-white to-purple-50/50">
                <div className="flex items-center gap-3">
                   <div className="p-3 bg-purple-100 text-purple-600 rounded-lg">

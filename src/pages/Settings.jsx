@@ -564,6 +564,9 @@ export default function Settings() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Remove Hourly Tracking completely as requested */}
+
             <Card className="mb-4">
               <CardContent className="pt-6">
                 <Label className="mb-2 block">Landing Page</Label>

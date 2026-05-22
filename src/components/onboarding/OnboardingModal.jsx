@@ -241,35 +241,32 @@ function OnboardingModal({ isOpen, user, onComplete }) {
   });
 
   const handleNext = () => {
-    if (step === 1 && data.nickname) {
+    if (step === 1 && data.nickname && data.user_timezone) {
       setStep(2);
-    } else if (step === 2 && data.user_timezone) {
-      setStep(4); // Skip step 3 (Mental health goals) as requested
-    } else if (step === 3) {
-      setStep(4);
-    } else if (step === 4) {
+    } else if (step === 2) {
       completeMutation.mutate();
     }
   };
 
   const canProceed = () => {
-    if (step === 1) return !!data.nickname;
-    if (step === 2) return data.user_timezone;
-    if (step === 3) return true; // Mental health is optional
-    if (step === 4) return data.skip_location || (data.city && data.state);
+    if (step === 1) return !!data.nickname && !!data.user_timezone;
+    if (step === 2) return data.skip_location || (data.city && data.state);
     return false;
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onComplete}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (!open) {
+        localStorage.setItem(`onboarding_completed_${user?.email}`, 'true');
+        onComplete();
+      }
+    }}>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-purple-500" />
             {step === 1 && 'Let\'s Get to Know You'}
-            {step === 2 && 'Your Preferences'}
-            {step === 3 && 'What Are You Working On?'}
-            {step === 4 && 'Join Our Community Map'}
+            {step === 2 && 'Join Our Community Map'}
           </DialogTitle>
         </DialogHeader>
         
@@ -305,16 +302,9 @@ function OnboardingModal({ isOpen, user, onComplete }) {
                   />
                   <p className="text-xs text-gray-500">We'll use this for your dashboard theme.</p>
                 </div>
-              </div>
-            </div>
-          )}
 
-          {/* Step 2: Preferences */}
-          {step === 2 && (
-            <div className="space-y-6">
-              <div className="space-y-4">
                 <div>
-                    <Label className="mb-2 block">Timezone & Format</Label>
+                    <Label className="mb-2 block mt-4">Timezone & Format</Label>
                     <TimezoneSelector 
                         value={data.user_timezone} 
                         onChange={(v) => setData({ ...data, user_timezone: v })} 
@@ -332,162 +322,12 @@ function OnboardingModal({ isOpen, user, onComplete }) {
                     </div>
                 </div>
 
-                <div className="hidden">
-                    <Label className="mb-2 block">Daily Inspiration</Label>
-                    <p className="text-xs text-gray-500 mb-3">Choose what you want to see daily (select all that apply):</p>
-                </div>
               </div>
             </div>
           )}
 
-          {/* Step 3: Mental Health / Goals */}
-          {step === 3 && (
-            <div className="space-y-6 overflow-y-auto max-h-[60vh] pr-2">
-              <div className="flex items-center gap-2 mb-2">
-                <Heart className="w-5 h-5 text-purple-500" />
-                <h3 className="font-semibold text-gray-800">What You're Working On</h3>
-              </div>
-              <p className="text-xs text-gray-500 -mt-4 mb-4">
-                This helps personalize your affirmations and AI support. 100% private. 💜
-              </p>
-
-              {/* Struggles */}
-              <div>
-                <Label className="mb-2 block text-sm font-medium">Things I'm working through...</Label>
-                <div className="flex flex-wrap gap-2">
-                  {commonStruggles.map(struggle => {
-                    const isSelected = data.mental_health_struggles.includes(struggle);
-                    return (
-                      <button
-                        key={struggle}
-                        onClick={() => {
-                          const current = data.mental_health_struggles;
-                          setData({
-                            ...data,
-                            mental_health_struggles: isSelected
-                              ? current.filter(s => s !== struggle)
-                              : [...current, struggle]
-                          });
-                        }}
-                        className={`px-3 py-1.5 rounded-full border text-xs transition-all ${
-                          isSelected 
-                            ? 'border-orange-200 bg-orange-50 text-orange-700' 
-                            : 'border-gray-200 hover:border-orange-200'
-                        }`}
-                      >
-                        {isSelected && <span className="mr-1">😓</span>}
-                        {struggle}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Improvements */}
-              <div>
-                <Label className="mb-2 block text-sm font-medium">Things I want to improve...</Label>
-                <div className="flex flex-wrap gap-2">
-                  {improvementGoals.map(goal => {
-                    const isSelected = data.improvement_goals.includes(goal);
-                    return (
-                      <button
-                        key={goal}
-                        onClick={() => {
-                          const current = data.improvement_goals;
-                          setData({
-                            ...data,
-                            improvement_goals: isSelected
-                              ? current.filter(g => g !== goal)
-                              : [...current, goal]
-                          });
-                        }}
-                        className={`px-3 py-1.5 rounded-full border text-xs transition-all ${
-                          isSelected 
-                            ? 'border-blue-200 bg-blue-50 text-blue-700' 
-                            : 'border-gray-200 hover:border-blue-200'
-                        }`}
-                      >
-                        {isSelected && <span className="mr-1">✨</span>}
-                        {goal}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Custom */}
-              <div>
-                <Label className="mb-2 block text-sm">Custom Items I'm Working On</Label>
-                <div className="flex gap-2 mb-2">
-                  <Input
-                    value={customInput}
-                    onChange={(e) => setCustomInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && customInput.trim()) {
-                        e.preventDefault();
-                        const newItem = customInput.trim();
-                        if (!data.mental_health_struggles.includes(newItem)) {
-                          setData({
-                            ...data,
-                            mental_health_struggles: [...data.mental_health_struggles, newItem]
-                          });
-                        }
-                        setCustomInput('');
-                      }
-                    }}
-                    placeholder="Add custom item (e.g. 'Burnout')"
-                    className="text-sm"
-                  />
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="shrink-0"
-                    onClick={() => {
-                      if (customInput.trim()) {
-                        const newItem = customInput.trim();
-                        if (!data.mental_health_struggles.includes(newItem)) {
-                          setData({
-                            ...data,
-                            mental_health_struggles: [...data.mental_health_struggles, newItem]
-                          });
-                        }
-                        setCustomInput('');
-                      }
-                    }}
-                  >
-                    Add
-                  </Button>
-                </div>
-                
-                {/* Display custom added items */}
-                {data.mental_health_struggles.filter(s => !commonStruggles.includes(s)).length > 0 && (
-                  <div className="flex flex-wrap gap-2 mb-2">
-                    {data.mental_health_struggles.filter(s => !commonStruggles.includes(s)).map(custom => (
-                      <button
-                        key={custom}
-                        onClick={() => {
-                          setData({
-                            ...data,
-                            mental_health_struggles: data.mental_health_struggles.filter(s => s !== custom)
-                          });
-                        }}
-                        className="px-3 py-1.5 rounded-full border text-xs bg-purple-50 border-purple-200 text-purple-700 flex items-center gap-1 hover:bg-purple-100"
-                      >
-                        {custom} <span className="text-[10px] ml-1">×</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                <p className="text-[10px] text-gray-400 mt-1">
-                  Add your own custom items. Once submitted, admin can add them to the global list for others.
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Step 4: Location */}
-          {step === 4 && (
+          {/* Step 2: Location (Formerly Step 4) */}
+          {step === 2 && (
             <>
               <p className="text-sm text-gray-600">
                 We'd love to show where our Pixel Nuts community is from on a map! Your name won't show - you'll just be a dot at your city center.
@@ -546,7 +386,7 @@ function OnboardingModal({ isOpen, user, onComplete }) {
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 Saving...
               </>
-            ) : step === 4 ? (
+            ) : step === 2 ? (
               "Let's Go!"
             ) : (
               'Next'
@@ -556,7 +396,7 @@ function OnboardingModal({ isOpen, user, onComplete }) {
 
         {/* Progress indicator */}
         <div className="flex gap-1 justify-center mb-2">
-          {[1, 2, 4].map(s => (
+          {[1, 2].map(s => (
             <div
               key={s}
               className={`h-1.5 rounded-full transition-all ${

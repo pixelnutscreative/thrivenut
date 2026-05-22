@@ -82,8 +82,9 @@ const mapStatus = (item) => {
   if (s.includes('Done') || s === 'Reviewed') return '✅ Done';
   if (s.includes('Task')) return '➡️ Moved to Task';
   if (s.includes('Needs GO') || s === 'Answered') return '⏳ Needs GO';
-  if (s === 'Batch' || s === 'Batched') return '📦 Batch'; // Strict check to prevent miscategorizing 'Batch Processing'
-  if (s.includes('Progress') || s.includes('Process') || s.includes('Inbox')) return '⚙️ Processing';
+  if (s === 'Batch' || s === 'Batched') return '📦 Batch';
+  if (s.includes('Inbox')) return '📬 My Inbox';
+  if (s.includes('Progress') || s.includes('Process')) return '⚙️ Processing';
   if (s.includes('Wait') || s.includes('Hold') || s === '⏸️ On Hold') return '⏸️ On Hold';
   if (s.includes('Think')) return '🧠 Thinking';
   if (s.includes('Duplicate')) return '🔁 Duplicate';
@@ -124,17 +125,40 @@ export default function PixelBoard() {
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [priorityFilter, setPriorityFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState(KANBAN_COLUMNS.filter(c => c.id !== '🔁 Duplicate').map(c => c.id));
-  const [visibleColumns, setVisibleColumns] = useState(() => {
-    const saved = localStorage.getItem('pixelboard_visible_columns');
-    if (saved) {
-      try { return JSON.parse(saved); } catch(e) {}
-    }
-    return KANBAN_COLUMNS.filter(c => c.id !== '🔁 Duplicate').map(c => c.id);
+  const { data: userPrefsList } = useQuery({
+    queryKey: ['userPreferences', user?.email],
+    queryFn: () => base44.entities.UserPreferences.filter({ user_email: user.email }),
+    enabled: !!user?.email
   });
+  const userPrefs = userPrefsList?.[0];
+  const currentCategories = userPrefs?.custom_fields?.pixelboard_categories || CATEGORIES;
+
+  const [visibleColumns, setVisibleColumns] = useState(KANBAN_COLUMNS.filter(c => c.id !== '🔁 Duplicate').map(c => c.id));
   
   useEffect(() => {
-    localStorage.setItem('pixelboard_visible_columns', JSON.stringify(visibleColumns));
-  }, [visibleColumns]);
+    if (userPrefs?.custom_fields?.pixelboard_columns) {
+      setVisibleColumns(userPrefs.custom_fields.pixelboard_columns);
+    }
+  }, [userPrefs]);
+  
+  const updateColumnsMutation = useMutation({
+    mutationFn: (newCols) => {
+      const prefsId = userPrefs?.id;
+      if (!prefsId) return Promise.resolve();
+      return base44.entities.UserPreferences.update(prefsId, {
+        custom_fields: { ...(userPrefs.custom_fields || {}), pixelboard_columns: newCols }
+      });
+    }
+  });
+
+  const handleDragEnd = (result) => {
+    if (!result.destination) return;
+    const newOrder = Array.from(visibleColumns);
+    const [moved] = newOrder.splice(result.source.index, 1);
+    newOrder.splice(result.destination.index, 0, moved);
+    setVisibleColumns(newOrder);
+    updateColumnsMutation.mutate(newOrder);
+  };
 
   const [isAskModalOpen, setIsAskModalOpen] = useState(false);
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
@@ -143,34 +167,13 @@ export default function PixelBoard() {
   const [isSquirrelLoading, setIsSquirrelLoading] = useState(false);
   const [squirrelProposal, setSquirrelProposal] = useState(null);
 
-  const handleSquirrelAction = async (textToAnalyze, contextTitle) => {
+  const handleSquirrelAction = (textToAnalyze, contextTitle) => {
     setSquirrelModalOpen(true);
-    setIsSquirrelLoading(true);
-    setSquirrelProposal(null);
-    try {
-        const res = await base44.integrations.Core.InvokeLLM({
-            prompt: `Analyze the following text and propose a new ticket/card based on it.
-            Context of original ticket: "${contextTitle}"
-            Text to squirrel: "${textToAnalyze}"
-            Extract the main new topic/task. Propose a short, clear title and a detailed description.`,
-            response_json_schema: {
-                type: "object",
-                properties: {
-                    suggested_title: {type: "string"},
-                    extracted_details: {type: "string"}
-                }
-            }
-        });
-        setSquirrelProposal({
-            title: res?.suggested_title || "New Ticket",
-            details: res?.extracted_details || textToAnalyze
-        });
-    } catch (err) {
-        toast.error("Squirrel got confused. Try again.");
-        setSquirrelModalOpen(false);
-    } finally {
-        setIsSquirrelLoading(false);
-    }
+    setIsSquirrelLoading(false);
+    setSquirrelProposal({
+        title: "",
+        details: textToAnalyze || ""
+    });
   };
   const [selectedItem, setSelectedItem] = useState(null);
   const [isDoneCollapsed, setIsDoneCollapsed] = useState(false);
@@ -240,16 +243,32 @@ export default function PixelBoard() {
     card_color: '#24C4D6',
     urls: [],
     page_location: '',
-    group_tag: ''
+    group_tag: '',
+    card_type: '❓ Question',
+    images: []
   });
+  const [isNewQuestionUploading, setIsNewQuestionUploading] = useState(false);
+  const newQuestionFileInputRef = useRef(null);
 
-  const { data: userPrefsList } = useQuery({
-    queryKey: ['userPreferences', user?.email],
-    queryFn: () => base44.entities.UserPreferences.filter({ user_email: user.email }),
-    enabled: !!user?.email
-  });
-  const userPrefs = userPrefsList?.[0];
-  const currentCategories = userPrefs?.custom_fields?.pixelboard_categories || CATEGORIES;
+  const uploadImagesToNewQuestion = async (files) => {
+    if (!files || files.length === 0) return;
+    setIsNewQuestionUploading(true);
+    try {
+      let uploadedUrls = [];
+      for (const file of files) {
+        if (!file.type.startsWith('image/')) continue;
+        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+        uploadedUrls.push(file_url);
+      }
+      if (uploadedUrls.length > 0) {
+        setNewQuestion(prev => ({ ...prev, images: [...(prev.images || []), ...uploadedUrls] }));
+      }
+    } catch (error) {
+      toast.error('Upload failed');
+    } finally {
+      setIsNewQuestionUploading(false);
+    }
+  };
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: ['pixelBoard'],
@@ -299,11 +318,19 @@ export default function PixelBoard() {
     mutationFn: async (item) => {
       await base44.entities.CreatorTask.create({
         title: item.title,
-        details: item.details,
+        details: item.details + `\n\nOriginal Ticket: /pixel-board?id=${item.id}`,
         source: 'PixelBoard',
         status_id: 'pending'
       });
-      return base44.entities.PixelBoard.update(item.id, { status: '➡️ Moved to Task' });
+      const newThreadMsg = {
+        sender: 'system',
+        message: 'Ticket sent to Creator Tasks successfully.',
+        timestamp: new Date().toISOString()
+      };
+      return base44.entities.PixelBoard.update(item.id, { 
+        status: '➡️ Moved to Task',
+        thread: [...(item.thread || []), newThreadMsg]
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pixelBoard'] });
@@ -497,14 +524,6 @@ export default function PixelBoard() {
     updateMutation.mutate({ id, data: { status: newStatus } });
   };
 
-  const handleDragEnd = (result) => {
-    if (!result.destination) return;
-    const newOrder = Array.from(visibleColumns);
-    const [moved] = newOrder.splice(result.source.index, 1);
-    newOrder.splice(result.destination.index, 0, moved);
-    setVisibleColumns(newOrder);
-  };
-
   const TicketCard = ({ item }) => {
     const s = mapStatus(item);
     const isDone = s === '✅ Done' || s === '➡️ Moved to Task' || s === '🔁 Duplicate';
@@ -541,13 +560,15 @@ export default function PixelBoard() {
         <CardContent className="p-4 flex flex-col gap-3 w-full">
           <div className="flex justify-between items-start gap-2">
             <h4 className={`font-bold text-[15px] ${isDone ? 'line-through text-slate-500' : 'text-slate-800'} leading-tight break-words whitespace-normal min-w-0 flex-1 block`}>{item.title || 'Untitled Ticket'}</h4>
-            {hasMention && <div className="text-lg" title="Involves external person">👤</div>}
+            {hasMention && !isDone && <div className="text-lg" title="Involves external person">👤</div>}
           </div>
           
-          <div className="flex flex-wrap gap-1.5 items-center">
-            <Badge variant="secondary" className="text-[11px] bg-slate-100 text-slate-600 hover:bg-slate-200" title={`Asked by ${isDaisyInit ? 'Daisy' : 'Nikole'}`}>
-              {isDaisyInit ? '🤖' : '📝'}
-            </Badge>
+          {!isDone && (
+            <>
+              <div className="flex flex-wrap gap-1.5 items-center">
+                <Badge variant="secondary" className="text-[11px] bg-slate-100 text-slate-600 hover:bg-slate-200" title={`Asked by ${isDaisyInit ? 'Daisy' : 'Nikole'}`}>
+                  {isDaisyInit ? '🤖' : '📝'}
+                </Badge>
             <Badge variant="secondary" className="text-[11px] bg-slate-100 text-slate-600 hover:bg-slate-200">{item.category}</Badge>
             {item.custom_fields?.page_location && (
               <Badge variant="secondary" className="text-[11px] bg-indigo-50 text-indigo-600 hover:bg-indigo-100" title="Page / Location">
@@ -560,6 +581,9 @@ export default function PixelBoard() {
               </Badge>
             )}
             <Badge variant="outline" className={`text-[11px] ${pConf.color} border-0`}>{pConf.emoji} {item.priority}</Badge>
+            {item.card_type && (
+              <Badge variant="secondary" className="text-[11px] bg-blue-50 text-blue-600 border-0">{item.card_type}</Badge>
+            )}
             {item.in_batch && <Badge variant="secondary" className="text-[11px] bg-slate-800 text-white border-0">📦 In Batch</Badge>}
             {s !== '💬 New' && s !== '📬 My Inbox' && s !== '📦 Batch' && <Badge variant="outline" className="text-[11px] bg-white border-slate-200 text-slate-500">{s}</Badge>}
           </div>
@@ -607,7 +631,7 @@ export default function PixelBoard() {
                 <Button 
                   size="sm" 
                   variant={item.in_batch ? 'default' : 'outline'}
-                className={`h-7 px-2 text-[10px] font-bold z-10 ${item.in_batch ? 'bg-[#24C4D6] hover:bg-[#1db0c0] text-white border-0' : 'border-[#24C4D6] text-[#0D626C] hover:bg-[#24C4D6]/10'}`}
+                className={`h-7 px-2 text-[10px] font-bold z-10 ${item.in_batch ? 'bg-slate-700 hover:bg-slate-800 text-white border-0' : 'border-slate-300 text-slate-600 hover:bg-slate-100'}`}
                 onClick={(e) => {
                   e.stopPropagation();
                   if (!item.in_batch) {
@@ -623,7 +647,8 @@ export default function PixelBoard() {
               </Button>
             )}
           </div>
-          </div>
+          </>
+          )}
         </CardContent>
       </Card>
     );
@@ -961,6 +986,19 @@ export default function PixelBoard() {
                         </SelectContent>
                       </Select>
                     </div>
+                    <div className="space-y-2 col-span-2">
+                      <Label className="font-bold text-slate-700">Card Type</Label>
+                      <Select value={newQuestion.card_type} onValueChange={v => setNewQuestion({...newQuestion, card_type: v})}>
+                        <SelectTrigger className="border-2 border-slate-200"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="🐛 Bug">🐛 Bug</SelectItem>
+                          <SelectItem value="❓ Question">❓ Question</SelectItem>
+                          <SelectItem value="💡 Feature Request">💡 Feature Request</SelectItem>
+                          <SelectItem value="💬 Idea to Discuss">💬 Idea to Discuss</SelectItem>
+                          <SelectItem value="✅ Task">✅ Task</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label className="font-bold text-slate-700">Card Color Accent</Label>
@@ -1112,7 +1150,7 @@ export default function PixelBoard() {
                       <Button 
                         size="sm"
                         variant={selectedItem.in_batch ? 'default' : 'outline'}
-                        className={`h-8 font-bold flex-shrink-0 ${selectedItem.in_batch ? 'bg-[#24C4D6] hover:bg-[#1db0c0] text-white border-0' : 'border-[#24C4D6] text-[#0D626C] hover:bg-[#24C4D6]/10'}`}
+                        className={`h-8 font-bold flex-shrink-0 ${selectedItem.in_batch ? 'bg-slate-700 hover:bg-slate-800 text-white border-0' : 'border-slate-300 text-slate-600 hover:bg-slate-100'}`}
                         onClick={() => {
                           if (!selectedItem.in_batch) {
                             updateMutation.mutate({ id: selectedItem.id, data: { in_batch: true, status: '📦 Batch' } });

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
@@ -204,7 +204,8 @@ function MemberRowItem({ member, group, isAdmin, currentUser, queryClient, allMe
                 </>
             )}
           </div>
-          {isAdmin && group.enable_retainer_management && (
+          {/* Retainers Section Hidden Per User Request */}
+          {false && isAdmin && group.enable_retainer_management && (
             <div className="flex gap-3 mt-1">
               <AddRetainerPackageDialog group={group} member={member} currentUser={currentUser} />
               <ViewRetainerHistoryDialog group={group} member={member} />
