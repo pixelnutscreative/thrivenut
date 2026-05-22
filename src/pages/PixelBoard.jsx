@@ -114,7 +114,38 @@ export default function PixelBoard() {
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [tempCategories, setTempCategories] = useState([]);
   const [squirrelModalOpen, setSquirrelModalOpen] = useState(false);
-  const [squirrelText, setSquirrelText] = useState('');
+  const [isSquirrelLoading, setIsSquirrelLoading] = useState(false);
+  const [squirrelProposal, setSquirrelProposal] = useState(null);
+
+  const handleSquirrelAction = async (textToAnalyze, contextTitle) => {
+    setSquirrelModalOpen(true);
+    setIsSquirrelLoading(true);
+    setSquirrelProposal(null);
+    try {
+        const res = await base44.integrations.Core.InvokeLLM({
+            prompt: `Analyze the following text and propose a new ticket/card based on it.
+            Context of original ticket: "${contextTitle}"
+            Text to squirrel: "${textToAnalyze}"
+            Extract the main new topic/task. Propose a short, clear title and a detailed description.`,
+            response_json_schema: {
+                type: "object",
+                properties: {
+                    suggested_title: {type: "string"},
+                    extracted_details: {type: "string"}
+                }
+            }
+        });
+        setSquirrelProposal({
+            title: res?.suggested_title || "New Ticket",
+            details: res?.extracted_details || textToAnalyze
+        });
+    } catch (err) {
+        toast.error("Squirrel got confused. Try again.");
+        setSquirrelModalOpen(false);
+    } finally {
+        setIsSquirrelLoading(false);
+    }
+  };
   const [selectedItem, setSelectedItem] = useState(null);
   const [isDoneCollapsed, setIsDoneCollapsed] = useState(false);
   const [newResponse, setNewResponse] = useState('');
@@ -364,35 +395,7 @@ export default function PixelBoard() {
       updates.status = '⚙️ Processing';
     }
     
-    // Squirrel Catcher (LLM based)
-    base44.integrations.Core.InvokeLLM({
-      prompt: `Original Task Title: "${selectedItem.title}"
-New Message from User: "${messageText}"
-
-Does the user's message contain an unrelated new topic, task, or question that should be split into a NEW separate ticket? 
-If YES, return is_new_topic as true and extract the text. If NO, return false.`,
-      response_json_schema: {
-        type: "object",
-        properties: {
-          is_new_topic: {type: "boolean"},
-          extracted_text: {type: "string"},
-          suggested_title: {type: "string"}
-        }
-      }
-    }).then(res => {
-      if (res && res.is_new_topic && res.extracted_text) {
-        base44.entities.PixelBoard.create({
-          title: res.suggested_title || res.extracted_text.substring(0, 60),
-          details: res.extracted_text,
-          category: selectedItem.category || 'Other',
-          priority: 'Normal',
-          card_color: '#24C4D6',
-          status: '💬 New',
-          asked_by: 'Nikole'
-        });
-        toast.success(`🐿️ Squirrel caught! New card created: "${res.suggested_title}"`);
-      }
-    }).catch(e => console.error("Squirrel Catcher Error:", e));
+    // Auto-Squirrel disabled. Now triggered manually via "Squirrel This" button.
     
     updates.thread = newThread;
     
@@ -1194,10 +1197,19 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                           const isNikole = msg.sender === 'nikole';
                           return (
                             <div key={i} className={`flex flex-col ${isNikole ? 'items-end' : 'items-start'}`}>
-                              <span className="text-[10px] font-bold text-slate-400 mb-1 px-1">
-                                {msg.isOriginal && <span className="text-[#24C4D6] mr-1">(Original Details)</span>}
-                                {isNikole ? '👤 NIKOLE' : '🤖 DAISY'} • {moment(msg.timestamp).format('MMM D, h:mm A')}
-                              </span>
+                              <div className="flex items-center justify-between w-full max-w-[85%] mb-1 px-1">
+                                <span className="text-[10px] font-bold text-slate-400">
+                                  {msg.isOriginal && <span className="text-[#24C4D6] mr-1">(Original Details)</span>}
+                                  {isNikole ? '👤 NIKOLE' : '🤖 DAISY'} • {moment(msg.timestamp).format('MMM D, h:mm A')}
+                                </span>
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); handleSquirrelAction(msg.message, selectedItem.title); }} 
+                                  className="text-[10px] flex items-center gap-1 text-amber-500 hover:text-amber-600 bg-amber-50 hover:bg-amber-100 px-1.5 py-0.5 rounded transition-colors border border-amber-200" 
+                                  title="Squirrel This Message"
+                                >
+                                  🐿️ Squirrel This
+                                </button>
+                              </div>
                               <div className={`p-3 rounded-2xl max-w-[85%] whitespace-pre-wrap text-sm shadow-sm ${
                                 isNikole 
                                   ? 'bg-[#24C4D6] text-white rounded-tl-2xl rounded-tr-sm border border-[#24C4D6]/20' 
@@ -1312,11 +1324,11 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                       className="h-7 text-[10px] px-2 border-amber-200 hover:bg-amber-50 text-amber-700 bg-amber-50/50" 
                       onClick={() => {
                         const selection = window.getSelection().toString();
-                        setSquirrelText(selection || '');
-                        setSquirrelModalOpen(true);
+                        const textToAnalyze = selection || selectedItem?.details || "New Idea";
+                        handleSquirrelAction(textToAnalyze, selectedItem?.title);
                       }}
                     >
-                      🐿️ Squirrel
+                      🐿️ Squirrel This
                     </Button>
                   </div>
                 </div>
@@ -1437,32 +1449,59 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
         </Dialog>
 
         {/* Squirrel Modal */}
-        <Dialog open={squirrelModalOpen} onOpenChange={setSquirrelModalOpen}>
-          <DialogContent className="sm:max-w-[400px]">
+        <Dialog open={squirrelModalOpen} onOpenChange={(open) => {
+          if (!open) {
+            setSquirrelModalOpen(false);
+            setSquirrelProposal(null);
+            setIsSquirrelLoading(false);
+          }
+        }}>
+          <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle className="text-lg font-bold text-amber-700 flex items-center gap-2">
                 🐿️ Catch a Squirrel
               </DialogTitle>
             </DialogHeader>
-            <div className="space-y-3 py-2">
-              <Label className="text-sm font-medium text-slate-700">Capture this side idea as a new ticket?</Label>
-              <Textarea 
-                value={squirrelText} 
-                onChange={e => setSquirrelText(e.target.value)} 
-                className="min-h-[100px] border-amber-200 focus-visible:ring-amber-400"
-                placeholder="What's the distraction?"
-              />
+            <div className="space-y-4 py-2">
+              {isSquirrelLoading ? (
+                <div className="flex flex-col items-center justify-center py-6 text-amber-600">
+                  <Loader2 className="w-8 h-8 animate-spin mb-4" />
+                  <p className="text-sm font-bold text-center">Squirrel is analyzing the text...</p>
+                  <p className="text-xs text-amber-600/70 text-center mt-1">Extracting the new topic for you.</p>
+                </div>
+              ) : squirrelProposal ? (
+                <>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-bold text-slate-700">Proposed Title</Label>
+                    <Input 
+                      value={squirrelProposal.title} 
+                      onChange={e => setSquirrelProposal({...squirrelProposal, title: e.target.value})}
+                      className="border-amber-200 focus-visible:ring-amber-400 font-bold"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-bold text-slate-700">Proposed Details</Label>
+                    <Textarea 
+                      value={squirrelProposal.details} 
+                      onChange={e => setSquirrelProposal({...squirrelProposal, details: e.target.value})} 
+                      className="min-h-[120px] border-amber-200 focus-visible:ring-amber-400"
+                    />
+                  </div>
+                </>
+              ) : (
+                <p className="text-sm text-slate-500 text-center py-4">No proposal generated.</p>
+              )}
             </div>
             <DialogFooter className="gap-2 sm:gap-0">
               <Button variant="ghost" onClick={() => setSquirrelModalOpen(false)}>Cancel</Button>
               <Button 
-                disabled={!squirrelText.trim() || createMutation.isPending}
+                disabled={isSquirrelLoading || !squirrelProposal?.title?.trim() || createMutation.isPending}
                 className="bg-amber-500 hover:bg-amber-600 text-white font-bold"
                 onClick={async () => {
-                  if (!squirrelText.trim()) return;
+                  if (!squirrelProposal?.title?.trim()) return;
                   const newTicket = await createMutation.mutateAsync({
-                    title: squirrelText.substring(0, 60) + (squirrelText.length > 60 ? '...' : ''),
-                    details: `${squirrelText}\n\nParent Ticket: ${selectedItem?.id}`,
+                    title: squirrelProposal.title.substring(0, 80),
+                    details: `${squirrelProposal.details}\n\nParent Ticket: ${selectedItem?.id}`,
                     category: selectedItem?.category || 'Other',
                     priority: 'Normal',
                     card_color: '#FBBF24',
@@ -1470,13 +1509,13 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                     asked_by: 'Nikole'
                   });
                   setSquirrelModalOpen(false);
-                  setSquirrelText('');
+                  setSquirrelProposal(null);
                   if (newTicket) {
                     setSelectedItem(newTicket);
                   }
                 }}
               >
-                {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null} Create & Open
+                {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null} Confirm & Create
               </Button>
             </DialogFooter>
           </DialogContent>
