@@ -9,6 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { toast, Toaster as SonnerToaster } from 'sonner';
 import { Plus, Search, Loader2, LayoutGrid, List as ListIcon, ChevronRight, ChevronDown, CheckCircle2, PauseCircle, Clock, Brain, Paperclip, X, RefreshCw } from 'lucide-react';
@@ -77,7 +79,7 @@ export default function PixelBoard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [priorityFilter, setPriorityFilter] = useState('All');
-  const [statusFilter, setStatusFilter] = useState('All');
+  const [statusFilter, setStatusFilter] = useState(KANBAN_COLUMNS.map(c => c.id));
   const [activeFilter, setActiveFilter] = useState('daisy_replied'); // 'all', 'daisy_replied'
   const [isAskModalOpen, setIsAskModalOpen] = useState(false);
   const [squirrelModalOpen, setSquirrelModalOpen] = useState(false);
@@ -189,7 +191,7 @@ export default function PixelBoard() {
         if (!item.pixel_response || item.pixel_response.trim() === '' || isNikoleRead) return false;
       }
       
-      if (statusFilter !== 'All' && mapStatus(item) !== statusFilter) return false;
+      if (!statusFilter.includes(mapStatus(item))) return false;
       return true;
     }).sort((a, b) => new Date(b.updated_date || b.created_date) - new Date(a.updated_date || a.created_date));
   }, [items, searchQuery, categoryFilter, priorityFilter, statusFilter, activeFilter]);
@@ -454,15 +456,53 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
               </SelectContent>
             </Select>
 
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[140px] border-2 border-slate-200 font-medium">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="All">All Statuses</SelectItem>
-                {KANBAN_COLUMNS.map(c => <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="w-[160px] border-2 border-slate-200 font-medium justify-between px-3 text-slate-700 bg-white hover:bg-slate-50">
+                  {statusFilter.length === KANBAN_COLUMNS.length ? 'All Statuses' : `${statusFilter.length} Selected`}
+                  <ChevronDown className="w-4 h-4 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[220px] p-2" align="start">
+                <div className="space-y-1">
+                  <div className="flex items-center space-x-2 px-2 py-1.5 hover:bg-slate-100 rounded-md">
+                    <Checkbox 
+                      id="status-all"
+                      checked={statusFilter.length === KANBAN_COLUMNS.length}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setStatusFilter(KANBAN_COLUMNS.map(c => c.id));
+                        } else {
+                          setStatusFilter([]);
+                        }
+                      }}
+                    />
+                    <label htmlFor="status-all" className="text-sm font-bold leading-none cursor-pointer flex-1">
+                      All Statuses
+                    </label>
+                  </div>
+                  <div className="h-px bg-slate-200 my-1"></div>
+                  {KANBAN_COLUMNS.map(c => (
+                    <div key={c.id} className="flex items-center space-x-2 px-2 py-1.5 hover:bg-slate-100 rounded-md">
+                      <Checkbox 
+                        id={`status-${c.id}`}
+                        checked={statusFilter.includes(c.id)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setStatusFilter([...statusFilter, c.id]);
+                          } else {
+                            setStatusFilter(statusFilter.filter(id => id !== c.id));
+                          }
+                        }}
+                      />
+                      <label htmlFor={`status-${c.id}`} className="text-sm font-medium leading-none cursor-pointer flex-1">
+                        {c.label}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
 
             <Select value={priorityFilter} onValueChange={setPriorityFilter}>
               <SelectTrigger className="w-[140px] border-2 border-slate-200 font-medium">
