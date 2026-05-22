@@ -13,7 +13,8 @@ import {
   Calendar, Sun, Cross, Smile, FileText, StickyNote, Tablet, HelpCircle,
   MessageCircle, Briefcase, DollarSign, Activity, Wallet, Swords, Lightbulb, Zap,
   Image as ImageIcon, GraduationCap, Printer, AlertCircle, MessageSquare,
-  Link as LinkIcon, FolderOpen, FileSpreadsheet, ClipboardList, Plus
+  Link as LinkIcon, FolderOpen, FileSpreadsheet, ClipboardList, Plus,
+  Loader2, UploadCloud, Paperclip
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import TikTokAccessGate from './components/access/TikTokAccessGate';
@@ -49,6 +50,9 @@ export default function Layout({ children, currentPageName }) {
   const [userLoading, setUserLoading] = useState(true);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [quickAddData, setQuickAddData] = useState({ title: '', details: '', page_location: '' });
+  const [quickAddImages, setQuickAddImages] = useState([]);
+  const [isQuickAddUploading, setIsQuickAddUploading] = useState(false);
+  const [isDraggingOverQuickAdd, setIsDraggingOverQuickAdd] = useState(false);
 
   // Authentication
   useEffect(() => {
@@ -62,11 +66,34 @@ export default function Layout({ children, currentPageName }) {
   useEffect(() => {
     const handleQuickAdd = (e) => {
       setQuickAddData({ title: '', details: '', page_location: e.detail.location });
+      setQuickAddImages([]);
       setQuickAddOpen(true);
     };
     window.addEventListener('open-quick-add', handleQuickAdd);
     return () => window.removeEventListener('open-quick-add', handleQuickAdd);
   }, []);
+
+  const handleQuickAddUpload = async (files) => {
+    if (!files || files.length === 0) return;
+    setIsQuickAddUploading(true);
+    const newUrls = [];
+    try {
+      for (const file of Array.from(files)) {
+        if (!file.type.startsWith('image/')) continue;
+        const res = await base44.integrations.Core.UploadFile({ file });
+        if (res.file_url) newUrls.push(res.file_url);
+      }
+      if (newUrls.length > 0) {
+        setQuickAddImages(prev => [...prev, ...newUrls]);
+        toast.success(`${newUrls.length} image(s) attached`);
+      }
+    } catch (e) {
+      console.error('Upload failed', e);
+      toast.error('Failed to upload image');
+    } finally {
+      setIsQuickAddUploading(false);
+    }
+  };
 
   const submitQuickAdd = async () => {
     if (!quickAddData.title) return;
@@ -78,10 +105,12 @@ export default function Layout({ children, currentPageName }) {
         status: '💬 New',
         category: 'Other',
         priority: 'Normal',
-        card_color: '#24C4D6'
+        card_color: '#24C4D6',
+        attachment_url: quickAddImages.join(',')
       });
       toast.success('Ticket created!', { style: { background: '#24C4D6', color: '#fff', border: 'none' } });
       setQuickAddOpen(false);
+      setQuickAddImages([]);
     } catch (e) {
       toast.error('Failed to create ticket');
     }
@@ -261,6 +290,7 @@ const { data: preferences } = useQuery({
   const realUserEmail = user?.email ? user.email.toLowerCase() : '';
   const adminEmails = ['pixelnutscreative@gmail.com', 'pixel@thrivenut.app'];
   const isAdmin = realUserEmail && adminEmails.includes(realUserEmail);
+  const canSeeQuickAdd = isAdmin || realUserEmail === 'daisy.electra@nikolewithak.com';
 
   /// Fetch My Groups for Menu (Consolidated with Preferences)
 const { data: myMenuGroupsData = { groups: [], preferences: [] } } = useQuery({
@@ -1322,19 +1352,21 @@ const { data: featureFlags = [] } = useQuery({
       <FloatingHelpButton pageName={currentPageName} userEmail={user?.email} />
 
       {/* Global Quick Add (PixelBoard) */}
-      <Button
-        className="fixed bottom-6 right-20 z-[9999] w-14 h-14 rounded-full shadow-2xl flex items-center justify-center hover:scale-105 transition-transform"
-        style={{ backgroundColor: '#24C4D6', color: '#fff' }}
-        onClick={() => {
-          // Dispatch a custom event that PixelBoardWidget or a global handler can listen to,
-          // or just redirect to PixelBoard with new item open. 
-          // Since we want a "mini card creator", let's handle it with a global state or trigger.
-          window.dispatchEvent(new CustomEvent('open-quick-add', { detail: { location: location.pathname + location.search } }));
-        }}
-        title="Quick Add Ticket"
-      >
-        <Plus className="w-8 h-8" />
-      </Button>
+      {canSeeQuickAdd && (
+        <Button
+          className="fixed bottom-6 right-20 z-[9999] w-14 h-14 rounded-full shadow-2xl flex items-center justify-center hover:scale-105 transition-transform"
+          style={{ backgroundColor: '#24C4D6', color: '#fff' }}
+          onClick={() => {
+            // Dispatch a custom event that PixelBoardWidget or a global handler can listen to,
+            // or just redirect to PixelBoard with new item open. 
+            // Since we want a "mini card creator", let's handle it with a global state or trigger.
+            window.dispatchEvent(new CustomEvent('open-quick-add', { detail: { location: location.pathname + location.search } }));
+          }}
+          title="Quick Add Ticket"
+        >
+          <Plus className="w-8 h-8" />
+        </Button>
+      )}
 
       {user && effectiveEmail && preferences && !mobileMenuOpen && !(location.pathname === '/CreatorGroups' && location.search.includes('Social House Agency')) &&
         <QuickActionsBarV2
@@ -1356,7 +1388,27 @@ const { data: featureFlags = [] } = useQuery({
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-slate-800" style={{ color: '#24C4D6' }}>Quick Add Ticket</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div 
+            className={`space-y-4 py-4 relative ${isDraggingOverQuickAdd ? 'bg-blue-50/50' : ''}`}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setIsDraggingOverQuickAdd(true);
+            }}
+            onDragLeave={() => setIsDraggingOverQuickAdd(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setIsDraggingOverQuickAdd(false);
+              handleQuickAddUpload(e.dataTransfer.files);
+            }}
+          >
+            {isDraggingOverQuickAdd && (
+              <div className="absolute inset-0 z-50 bg-blue-500/10 border-4 border-blue-500 border-dashed rounded-xl flex items-center justify-center pointer-events-none">
+                <div className="bg-white px-6 py-4 rounded-xl shadow-lg flex items-center gap-3 font-bold text-blue-600">
+                  <UploadCloud className="w-6 h-6 animate-bounce" />
+                  Drop images to upload!
+                </div>
+              </div>
+            )}
             <div className="space-y-2">
               <label className="text-sm font-bold text-slate-700">Title</label>
               <Input placeholder="What needs doing?" value={quickAddData.title} onChange={e => setQuickAddData({...quickAddData, title: e.target.value})} className="border-2 border-slate-200 focus-visible:ring-[#24C4D6]" />
@@ -1364,6 +1416,35 @@ const { data: featureFlags = [] } = useQuery({
             <div className="space-y-2">
               <label className="text-sm font-bold text-slate-700">Details</label>
               <Textarea placeholder="Provide context..." value={quickAddData.details} onChange={e => setQuickAddData({...quickAddData, details: e.target.value})} className="min-h-[100px] border-2 border-slate-200 focus-visible:ring-[#24C4D6]" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-700">Images</label>
+              <div className="flex items-center gap-2 flex-wrap">
+                {quickAddImages.map((url, i) => (
+                  <div key={i} className="relative inline-block">
+                    <img src={url} alt="Upload preview" className="h-12 w-12 rounded-md border border-slate-200 object-cover" />
+                    <button 
+                      onClick={() => setQuickAddImages(prev => prev.filter((_, index) => index !== i))}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 hover:bg-red-600 shadow-sm"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+                <div>
+                  <input 
+                    type="file" 
+                    id="quick-add-attachment"
+                    className="hidden" 
+                    accept="image/png, image/jpeg, image/gif, image/webp"
+                    onChange={(e) => handleQuickAddUpload(e.target.files)}
+                    multiple
+                  />
+                  <Button variant="outline" size="sm" className="h-12 text-[10px]" disabled={isQuickAddUploading} onClick={() => document.getElementById('quick-add-attachment').click()}>
+                    {isQuickAddUploading ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Paperclip className="w-4 h-4 mr-1" />} Add
+                  </Button>
+                </div>
+              </div>
             </div>
             <div className="space-y-2">
               <label className="text-sm font-bold text-slate-700">Page / Location</label>
