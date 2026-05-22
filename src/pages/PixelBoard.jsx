@@ -647,6 +647,7 @@ export default function PixelBoard() {
               </Button>
             )}
           </div>
+          </div>
           </>
           )}
         </CardContent>
