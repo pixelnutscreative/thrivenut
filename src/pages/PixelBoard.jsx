@@ -73,17 +73,30 @@ export default function PixelBoard() {
     }).catch(() => setLoadingUser(false));
   }, []);
 
+  // Auto-delete duplicates
+  useEffect(() => {
+    if (items.length > 0) {
+      items.forEach(item => {
+        if (item.details && item.details.includes('DUPLICATE')) {
+          deleteMutation.mutate(item.id);
+        }
+      });
+    }
+  }, [items]);
+
   const [viewMode, setViewMode] = useState('kanban'); // 'kanban' | 'list'
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [priorityFilter, setPriorityFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
-  const [activeFilter, setActiveFilter] = useState('inbox'); // 'all', 'inbox', 'daisy_replied'
+  const [activeFilter, setActiveFilter] = useState('daisy_replied'); // 'all', 'daisy_replied'
   const [isAskModalOpen, setIsAskModalOpen] = useState(false);
+  const [squirrelModalOpen, setSquirrelModalOpen] = useState(false);
+  const [squirrelText, setSquirrelText] = useState('');
   const [selectedItem, setSelectedItem] = useState(null);
   const [isDoneCollapsed, setIsDoneCollapsed] = useState(true);
   const [newResponse, setNewResponse] = useState('');
-  const [newImage, setNewImage] = useState(null);
+  const [newImages, setNewImages] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = React.useRef(null);
   
@@ -164,19 +177,19 @@ export default function PixelBoard() {
 
   const filteredItems = useMemo(() => {
     return items.filter(item => {
+      // Hide duplicates from view immediately
+      if (item.details?.includes('DUPLICATE')) return false;
+
       if (searchQuery && !item.title.toLowerCase().includes(searchQuery.toLowerCase()) && !(item.details || '').toLowerCase().includes(searchQuery.toLowerCase())) return false;
       if (categoryFilter !== 'All' && item.category !== categoryFilter) return false;
       if (priorityFilter !== 'All' && item.priority !== priorityFilter) return false;
-      if (statusFilter !== 'All' && mapStatus(item) !== statusFilter) return false;
-      if (activeFilter === 'inbox') {
-        const isNikoleRead = item.nikole_read === true || item.nikole_read === 'true';
-        if (isNikoleRead) return false;
-      } else if (activeFilter === 'daisy_replied') {
+      
+      if (activeFilter === 'daisy_replied') {
         const isNikoleRead = item.nikole_read === true || item.nikole_read === 'true';
         if (!item.pixel_response || item.pixel_response.trim() === '' || isNikoleRead) return false;
-      } else {
-        if (statusFilter !== 'All' && mapStatus(item) !== statusFilter) return false;
       }
+      
+      if (statusFilter !== 'All' && mapStatus(item) !== statusFilter) return false;
       return true;
     }).sort((a, b) => new Date(b.updated_date || b.created_date) - new Date(a.updated_date || a.created_date));
   }, [items, searchQuery, categoryFilter, priorityFilter, statusFilter, activeFilter]);
@@ -204,7 +217,7 @@ export default function PixelBoard() {
     setIsUploading(true);
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      setNewImage(file_url);
+      setNewImages(prev => [...prev, file_url]);
     } catch (error) {
       toast.error('Upload failed');
     } finally {
@@ -212,8 +225,14 @@ export default function PixelBoard() {
     }
   };
 
+  const getAttachments = (url) => {
+    if (!url) return [];
+    if (url.includes(',')) return url.split(',').map(u => u.trim()).filter(Boolean);
+    return [url];
+  };
+
   const handleSendResponse = () => {
-    if ((!newResponse.trim() && !newImage) || !selectedItem) return;
+    if ((!newResponse.trim() && newImages.length === 0) || !selectedItem) return;
     
     const messageText = newResponse.trim();
     let currentThread = selectedItem.thread || [];
@@ -232,7 +251,7 @@ export default function PixelBoard() {
     const newMessage = {
       sender: 'nikole',
       message: messageText,
-      image_url: newImage,
+      image_urls: newImages,
       timestamp: new Date().toISOString()
     };
     
@@ -283,7 +302,7 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
       data: updates 
     });
     setNewResponse('');
-    setNewImage(null);
+    setNewImages([]);
   };
 
   const updateStatus = (id, newStatus) => {
@@ -418,14 +437,6 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
               <Button 
                 size="sm"
                 variant="ghost"
-                className={`${activeFilter === 'inbox' ? 'bg-white text-orange-600 shadow-sm font-bold border-2 border-orange-400' : 'text-slate-600 hover:bg-slate-200 border-2 border-transparent'}`}
-                onClick={() => setActiveFilter('inbox')}
-              >
-                📥 My Inbox
-              </Button>
-              <Button 
-                size="sm"
-                variant="ghost"
                 className={`${activeFilter === 'daisy_replied' ? 'bg-white text-teal-600 shadow-sm font-bold border-2 border-teal-400' : 'text-slate-600 hover:bg-slate-200 border-2 border-transparent'}`}
                 onClick={() => setActiveFilter('daisy_replied')}
               >
@@ -540,41 +551,6 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
         {/* Board / List View */}
         {isLoading ? (
           <div className="flex justify-center p-12"><Loader2 className="w-8 h-8 animate-spin text-[#24C4D6]" /></div>
-        ) : activeFilter === 'inbox' ? (
-          <div className="flex flex-col gap-4">
-            {filteredItems.length === 0 && <div className="p-8 text-center text-slate-500 bg-white rounded-2xl border-2 border-slate-200">Inbox is empty!</div>}
-            {filteredItems.map(item => {
-              const s = mapStatus(item);
-              return (
-                <Card key={item.id} className="bg-white border-2 border-orange-200 shadow-sm hover:shadow-md transition-shadow">
-                  <CardContent className="p-5 flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
-                    <div className="flex flex-col gap-2 flex-1 w-full cursor-pointer group" onClick={() => setSelectedItem(item)}>
-                      <div className="flex items-center gap-3">
-                        <h4 className="font-bold text-lg text-slate-800 group-hover:text-[#24C4D6] transition-colors">{item.title}</h4>
-                        <Badge variant="outline" className="border-slate-200 bg-slate-50 text-slate-600">{s}</Badge>
-                      </div>
-                      {item.pixel_response && (
-                        <div className="bg-[#24C4D6]/10 p-3 rounded-lg border border-[#24C4D6]/20">
-                          <span className="text-[10px] font-bold text-[#0D626C] uppercase tracking-wider mb-1 flex items-center gap-1">
-                            <Brain className="w-3 h-3" /> Daisy's Response
-                          </span>
-                          <p className="text-sm text-[#0D626C] line-clamp-3">{item.pixel_response}</p>
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-shrink-0 mt-2 sm:mt-0 w-full sm:w-auto">
-                      <Button 
-                        onClick={(e) => { e.stopPropagation(); updateMutation.mutate({ id: item.id, data: { nikole_read: true } }); }}
-                        className="bg-orange-500 hover:bg-orange-600 text-white font-bold shadow-sm w-full sm:w-auto"
-                      >
-                        <CheckCircle2 className="w-4 h-4 mr-2" /> Mark as Read
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
         ) : viewMode === 'kanban' ? (
           <div className="flex gap-6 overflow-x-auto pb-4 snap-x">
             {KANBAN_COLUMNS.map(col => {
@@ -726,14 +702,16 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                 </div>
 
                 {/* Body (Scrollable) */}
-                <div className="flex-1 p-4 space-y-3 overflow-y-auto">
+                <div className="flex-1 px-4 py-2 space-y-2 overflow-y-auto">
                   
-                  {/* Details */}
-                  <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
-                    <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">Original Context / Details</Label>
+                  {/* Details (Original Context) */}
+                  <div className="flex flex-col items-start w-full">
+                    <span className="text-[10px] font-bold text-slate-400 mb-1 px-1">
+                      👤 NIKOLE (Original) • {moment(selectedItem.created_date).format('MMM D, h:mm A')}
+                    </span>
                     <Textarea 
                       defaultValue={selectedItem.details || ''}
-                      className="min-h-[60px] border-transparent bg-slate-50 hover:border-slate-300 focus:bg-white transition-all text-sm text-slate-700 w-full resize-y"
+                      className="min-h-[44px] h-[44px] max-h-[200px] border-transparent bg-slate-100 focus:bg-white focus:border-slate-300 transition-all text-sm text-slate-700 w-[85%] resize-y rounded-2xl rounded-tl-sm shadow-sm p-3"
                       placeholder="Add details or context here..."
                       onBlur={(e) => {
                         if (e.target.value !== selectedItem.details) {
@@ -745,7 +723,7 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
 
                   {/* Daisy's Response */}
                   {selectedItem.pixel_response && (
-                    <div className="bg-[#24C4D6]/10 p-3 rounded-xl border border-[#24C4D6]/30 shadow-sm">
+                    <div className="bg-[#A8E6E6] p-3 rounded-2xl rounded-tl-sm border border-[#A8E6E6]/50 shadow-sm w-[85%]">
                       <Label className="text-[10px] font-bold text-[#0D626C] uppercase tracking-wider mb-1 flex items-center gap-1.5">
                         <Brain className="w-3 h-3" /> Daisy's Response
                       </Label>
@@ -754,11 +732,11 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                   )}
 
                   {/* Nikole's Response */}
-                  <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
-                    <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">Your Response to Daisy</Label>
+                  <div className="flex flex-col items-end w-full">
+                    <span className="text-[10px] font-bold text-slate-400 mb-1 px-1">Your Response to Daisy</span>
                     <Textarea 
                       defaultValue={selectedItem.nikole_response || ''}
-                      className="min-h-[60px] border-slate-200 focus-visible:ring-[#24C4D6] transition-all text-sm text-slate-700 w-full resize-y"
+                      className="min-h-[44px] h-[44px] border-slate-200 bg-[#24C4D6] text-white placeholder:text-white/70 focus-visible:ring-[#1db0c0] transition-all text-sm w-[85%] resize-y rounded-2xl rounded-tr-sm shadow-sm p-3"
                       placeholder="Type your response to Daisy here... (e.g. 'This looks great, go ahead!')"
                       onBlur={(e) => {
                         if (e.target.value !== selectedItem.nikole_response) {
@@ -770,9 +748,9 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                   </div>
 
                   {/* Attachments */}
-                  <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
-                    <div className="flex justify-between items-center mb-2">
-                      <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Attachment</Label>
+                  <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm">
+                    <div className="flex justify-between items-center mb-1">
+                      <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Attachments</Label>
                       <div>
                         <input 
                           type="file" 
@@ -785,8 +763,10 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                             const loadingToastId = toast.loading("Uploading attachment...");
                             try {
                               const { file_url } = await base44.integrations.Core.UploadFile({ file });
-                              updateMutation.mutate({ id: selectedItem.id, data: { attachment_url: file_url } });
-                              setSelectedItem(prev => ({ ...prev, attachment_url: file_url }));
+                              const currentAttachments = getAttachments(selectedItem.attachment_url);
+                              const newUrls = [...currentAttachments, file_url].join(',');
+                              updateMutation.mutate({ id: selectedItem.id, data: { attachment_url: newUrls } });
+                              setSelectedItem(prev => ({ ...prev, attachment_url: newUrls }));
                               toast.dismiss(loadingToastId);
                               toast.success("Attachment saved!");
                             } catch (error) {
@@ -795,16 +775,18 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                             }
                           }}
                         />
-                        <Button variant="outline" size="sm" onClick={() => document.getElementById(`attachment-upload-${selectedItem.id}`).click()}>
-                          <Paperclip className="w-4 h-4 mr-1" /> Upload Image
+                        <Button variant="outline" size="sm" className="h-7 text-[10px]" onClick={() => document.getElementById(`attachment-upload-${selectedItem.id}`).click()}>
+                          <Paperclip className="w-3 h-3 mr-1" /> Add Image
                         </Button>
                       </div>
                     </div>
                     {selectedItem.attachment_url && (
-                      <div className="mt-2">
-                        <a href={selectedItem.attachment_url} target="_blank" rel="noopener noreferrer">
-                          <img src={selectedItem.attachment_url} alt="Attachment" className="max-w-full max-h-64 rounded-md border border-slate-200 object-contain" />
-                        </a>
+                      <div className="flex gap-2 flex-wrap mt-1">
+                        {getAttachments(selectedItem.attachment_url).map((url, i) => (
+                          <a key={i} href={url} target="_blank" rel="noopener noreferrer">
+                            <img src={url} alt="Attachment" className="w-12 h-12 rounded-md border border-slate-200 object-cover hover:opacity-80" />
+                          </a>
+                        ))}
                       </div>
                     )}
                   </div>
@@ -838,21 +820,23 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
 
                           const isNikole = msg.sender === 'nikole';
                           return (
-                            <div key={i} className={`flex flex-col ${isNikole ? 'items-start' : 'items-end'}`}>
+                            <div key={i} className={`flex flex-col ${isNikole ? 'items-end' : 'items-start'}`}>
                               <span className="text-[10px] font-bold text-slate-400 mb-1 px-1">
                                 {isNikole ? '👤 NIKOLE' : '🤖 DAISY'} • {moment(msg.timestamp).format('MMM D, h:mm A')}
                               </span>
                               <div className={`p-3 rounded-2xl max-w-[85%] whitespace-pre-wrap text-sm shadow-sm ${
                                 isNikole 
-                                  ? 'bg-[#e8fffe] text-[#0D626C] rounded-tl-sm border border-[#24C4D6]/20' 
-                                  : 'bg-[#f0f0f0] text-slate-800 rounded-tr-sm border border-slate-200'
+                                  ? 'bg-[#24C4D6] text-white rounded-tr-sm border border-[#24C4D6]/20' 
+                                  : 'bg-[#A8E6E6] text-[#0D626C] rounded-tl-sm border border-[#A8E6E6]/50'
                               }`}>
                                 {msg.message}
-                                {msg.image_url && (
-                                  <div className={msg.message ? 'mt-2' : ''}>
-                                    <img src={msg.image_url} alt="Attached" className="max-w-full rounded-md border border-black/10 max-h-64 object-contain" />
+                                {(msg.image_urls || (msg.image_url ? [msg.image_url] : [])).map((url, imgI) => (
+                                  <div key={imgI} className={msg.message || imgI > 0 ? 'mt-2' : ''}>
+                                    <a href={url} target="_blank" rel="noopener noreferrer">
+                                      <img src={url} alt="Attached" className="max-w-full rounded-md border border-black/10 max-h-64 object-contain" />
+                                    </a>
                                   </div>
-                                )}
+                                ))}
                               </div>
                             </div>
                           );
@@ -860,17 +844,19 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                       })()}
                     </div>
                     
-                    {newImage && (
-                      <div className="px-4 py-2 bg-white border-t border-slate-200">
-                        <div className="relative inline-block">
-                          <img src={newImage} alt="Upload preview" className="h-20 rounded-md border border-slate-200 object-cover" />
-                          <button 
-                            onClick={() => setNewImage(null)}
-                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 shadow-sm"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </div>
+                    {newImages.length > 0 && (
+                      <div className="px-4 py-2 bg-white border-t border-slate-200 flex gap-2 flex-wrap">
+                        {newImages.map((url, i) => (
+                          <div key={i} className="relative inline-block">
+                            <img src={url} alt="Upload preview" className="h-16 w-16 rounded-md border border-slate-200 object-cover" />
+                            <button 
+                              onClick={() => setNewImages(prev => prev.filter((_, index) => index !== i))}
+                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 hover:bg-red-600 shadow-sm"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
                       </div>
                     )}
                     <div className="p-3 bg-white border-t border-slate-200 flex gap-2 items-end">
@@ -927,6 +913,18 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                     </Button>
                   </div>
                   <div className="flex gap-1.5 flex-wrap justify-end">
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="h-7 text-[10px] px-2 border-amber-200 hover:bg-amber-50 text-amber-700 bg-amber-50/50" 
+                      onClick={() => {
+                        const selection = window.getSelection().toString();
+                        setSquirrelText(selection || '');
+                        setSquirrelModalOpen(true);
+                      }}
+                    >
+                      🐿️ Squirrel
+                    </Button>
                     <Button size="sm" variant="default" className="h-7 text-[10px] px-2 bg-slate-800 hover:bg-slate-900 text-white font-bold" onClick={() => setSelectedItem(null)}>💾 Save for Later</Button>
                     <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, '✅ Done')} className="h-7 text-[10px] px-2 border-slate-200 hover:bg-slate-100 text-slate-600"><CheckCircle2 className="w-3 h-3 mr-1" /> Done</Button>
                     <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, '💬 New')} className="h-7 text-[10px] px-2 border-slate-200 hover:bg-orange-50 text-orange-600"><Clock className="w-3 h-3 mr-1" /> New</Button>
@@ -936,6 +934,49 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                 </div>
               </div>
             )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Squirrel Modal */}
+        <Dialog open={squirrelModalOpen} onOpenChange={setSquirrelModalOpen}>
+          <DialogContent className="sm:max-w-[400px]">
+            <DialogHeader>
+              <DialogTitle className="text-lg font-bold text-amber-700 flex items-center gap-2">
+                🐿️ Catch a Squirrel
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 py-2">
+              <Label className="text-sm font-medium text-slate-700">Capture this side idea as a new ticket?</Label>
+              <Textarea 
+                value={squirrelText} 
+                onChange={e => setSquirrelText(e.target.value)} 
+                className="min-h-[100px] border-amber-200 focus-visible:ring-amber-400"
+                placeholder="What's the distraction?"
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setSquirrelModalOpen(false)}>Cancel</Button>
+              <Button 
+                disabled={!squirrelText.trim() || createMutation.isPending}
+                className="bg-amber-500 hover:bg-amber-600 text-white font-bold"
+                onClick={() => {
+                  if (!squirrelText.trim()) return;
+                  createMutation.mutate({
+                    title: squirrelText.substring(0, 60) + (squirrelText.length > 60 ? '...' : ''),
+                    details: `${squirrelText}\n\nParent Ticket: ${selectedItem?.id}`,
+                    category: selectedItem?.category || 'Other',
+                    priority: 'Normal',
+                    card_color: '#FBBF24',
+                    status: '💬 New',
+                    asked_by: 'Nikole'
+                  });
+                  setSquirrelModalOpen(false);
+                  setSquirrelText('');
+                }}
+              >
+                Create Ticket
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
