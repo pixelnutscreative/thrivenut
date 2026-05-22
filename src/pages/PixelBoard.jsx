@@ -167,8 +167,11 @@ export default function PixelBoard() {
       if (categoryFilter !== 'All' && item.category !== categoryFilter) return false;
       if (priorityFilter !== 'All' && item.priority !== priorityFilter) return false;
       if (statusFilter !== 'All' && mapStatus(item.status) !== statusFilter) return false;
-      if (activeFilter === 'inbox' && (!item.pixel_response || item.nikole_read === true)) return false;
-      if (activeFilter === 'daisy_replied' && (!item.pixel_response || item.nikole_read === true)) return false;
+      if (activeFilter === 'inbox' || activeFilter === 'daisy_replied') {
+        const isUnread = item.nikole_read === false || item.nikole_read === null || item.nikole_read === undefined;
+        const hasResponse = item.pixel_response && item.pixel_response.trim() !== '';
+        if (!(isUnread && hasResponse)) return false;
+      }
       return true;
     }).sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
   }, [items, searchQuery, categoryFilter, priorityFilter, statusFilter, activeFilter]);
