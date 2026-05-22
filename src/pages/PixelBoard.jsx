@@ -15,14 +15,12 @@ import { Plus, Search, Loader2, LayoutGrid, List as ListIcon, ChevronRight, Chev
 import moment from 'moment';
 
 const KANBAN_COLUMNS = [
-  { id: 'New', label: '💬 New' },
-  { id: 'Thinking', label: '🤔 Thinking' },
-  { id: 'Needs GO', label: '📥 My Inbox' },
-  { id: 'Waiting on Daisy', label: '⏳ Waiting on Daisy' },
-  { id: "See Daisy's Reply", label: "👀 See Daisy's Reply" },
-  { id: 'In Progress', label: '🔄 In Progress' },
-  { id: 'Hold', label: '⏸️ Hold' },
-  { id: 'Done', label: '✅ Done' }
+  { id: 'Unanswered', label: '💬 Unanswered' },
+  { id: '📥 My Inbox', label: '📥 My Inbox' },
+  { id: '⏳ Needs GO', label: '⏳ Needs GO' },
+  { id: '⏳ Waiting on Daisy', label: '⏳ Waiting on Daisy' },
+  { id: '⏸️ Hold', label: '⏸️ Hold' },
+  { id: '✅ Done', label: '🎉 ✅ Done' }
 ];
 
 const priorityConfig = {
@@ -38,18 +36,23 @@ const priorityConfig = {
 const CATEGORIES = ["ThriveNut", "Personal", "Projects", "Pixel Tours", "Websites", "Offers", "AI Tools", "Social Media", "Other"];
 
 const mapStatus = (s) => {
-  if (typeof s !== 'string') return 'New';
-  if (['New', 'Thinking', 'Needs GO', 'Waiting on Daisy', "See Daisy's Reply", 'In Progress', 'Hold', 'Done'].includes(s)) return s;
-  if (s === 'Unanswered') return 'New';
-  if (s === 'Answered') return "See Daisy's Reply";
-  if (s === 'Reviewed' || s.includes('Done')) return 'Done';
-  return 'New';
+  if (!s || typeof s !== 'string') return 'Unanswered';
+  if (['Unanswered', '📥 My Inbox', '⏳ Needs GO', '⏳ Waiting on Daisy', '⏸️ Hold', '✅ Done'].includes(s)) return s;
+  
+  if (s.includes('Done') || s === 'Reviewed') return '✅ Done';
+  if (s.includes('Hold')) return '⏸️ Hold';
+  if (s.includes('Waiting')) return '⏳ Waiting on Daisy';
+  if (s.includes('Needs GO') || s === 'Answered') return '⏳ Needs GO';
+  if (s === 'New' || s === 'Thinking') return 'Unanswered';
+  if (s === 'In Progress') return '📥 My Inbox';
+  
+  return 'Unanswered';
 };
 
 const getTurnIndicator = (item) => {
   const s = mapStatus(item.status);
-  if (s === 'Done') return null;
-  if (s === 'Needs GO' || s === "See Daisy's Reply") return "👤 Nikole's turn";
+  if (s === '✅ Done') return null;
+  if (s === '⏳ Needs GO' || s === '📥 My Inbox') return "👤 Nikole's turn";
   if (!item.pixel_response) return "🤖 Daisy's turn";
   if (item.nikole_read === false) return "👤 Nikole's turn";
   return "🤖 Daisy's turn";
@@ -74,7 +77,7 @@ export default function PixelBoard() {
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [priorityFilter, setPriorityFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
-  const [needsMeFilter, setNeedsMeFilter] = useState(true);
+  const [needsMeFilter, setNeedsMeFilter] = useState(false);
   const [isAskModalOpen, setIsAskModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [isDoneCollapsed, setIsDoneCollapsed] = useState(true);
@@ -97,7 +100,7 @@ export default function PixelBoard() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.PixelBoard.create({ ...data, status: 'New', asked_by: 'Nikole' }),
+    mutationFn: (data) => base44.entities.PixelBoard.create({ ...data, status: 'Unanswered', asked_by: 'Nikole' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pixelBoard'] });
       setIsAskModalOpen(false);
@@ -145,7 +148,7 @@ export default function PixelBoard() {
       
       // Update batch status locally and set batch_ready!
       for (const item of batchedItems) {
-        updateMutation.mutate({ id: item.id, data: { in_batch: false, batch_ready: true, status: 'Waiting on Daisy' } });
+        updateMutation.mutate({ id: item.id, data: { in_batch: false, batch_ready: true, status: '⏳ Waiting on Daisy' } });
       }
 
       queryClient.invalidateQueries({ queryKey: ['pixelBoard'] });
@@ -216,8 +219,8 @@ export default function PixelBoard() {
     let updates = { nikole_read: true, pixel_read: false };
     
     // Auto-update status
-    if (['Needs GO', "See Daisy's Reply"].includes(mapStatus(selectedItem.status))) {
-      updates.status = 'In Progress';
+    if (['⏳ Needs GO', '📥 My Inbox'].includes(mapStatus(selectedItem.status))) {
+      updates.status = 'Unanswered';
     }
     
     // Squirrel Catcher
@@ -298,7 +301,7 @@ export default function PixelBoard() {
             <div className="mt-2 bg-[#24C4D6]/10 border border-[#24C4D6]/30 p-2.5 rounded-lg relative overflow-hidden">
               <div className="absolute top-0 left-0 w-1 h-full bg-[#24C4D6]"></div>
               <span className="text-[10px] font-bold text-[#0D626C] uppercase tracking-wider mb-1 flex items-center gap-1">
-                <Brain className="w-3 h-3" /> Daisy's Response
+                <Brain className="w-3 h-3" /> 💬 Daisy's Response
               </span>
               <p className="text-xs text-[#0D626C] line-clamp-3 leading-snug break-words">
                 {item.pixel_response}
@@ -492,7 +495,7 @@ export default function PixelBoard() {
           <div className="flex gap-6 overflow-x-auto pb-4 snap-x">
             {KANBAN_COLUMNS.map(col => {
               const colItems = filteredItems.filter(item => mapStatus(item.status) === col.id);
-              if (col.id === 'Done' && isDoneCollapsed) {
+              if (col.id === '✅ Done' && isDoneCollapsed) {
                 return (
                   <div key={col.id} className="min-w-[60px] max-w-[60px] bg-slate-100/50 rounded-2xl border-2 border-slate-200 border-dashed flex flex-col items-center py-4 cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => setIsDoneCollapsed(false)}>
                     <div className="rotate-90 whitespace-nowrap font-bold text-slate-500 mt-10 tracking-widest uppercase">{col.label} ({colItems.length})</div>
@@ -506,7 +509,7 @@ export default function PixelBoard() {
                     <h3 className="font-bold text-slate-700">{col.label}</h3>
                     <Badge variant="secondary" className="bg-slate-200 text-slate-600 border-0">{colItems.length}</Badge>
                   </div>
-                  {col.id === 'Done' && (
+                  {col.id === '✅ Done' && (
                     <Button variant="ghost" size="sm" className="w-full text-xs text-slate-500 -mt-2" onClick={() => setIsDoneCollapsed(true)}>Minimize</Button>
                   )}
                   <div className="flex flex-col gap-3 overflow-y-auto max-h-[70vh] custom-scrollbar pr-1 pb-4">
@@ -866,11 +869,11 @@ export default function PixelBoard() {
                   </div>
                   <div className="flex gap-2 flex-wrap justify-end">
                     <Button size="sm" variant="default" className="bg-slate-800 hover:bg-slate-900 text-white font-bold" onClick={() => setSelectedItem(null)}>💾 Save for Later</Button>
-                    <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, 'Done')} className="border-slate-200 hover:bg-slate-100 text-slate-600"><CheckCircle2 className="w-4 h-4 mr-1" /> Done</Button>
-                    <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, 'Needs GO')} className="border-slate-200 hover:bg-orange-50 text-orange-600"><Clock className="w-4 h-4 mr-1" /> My Inbox</Button>
-                    <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, "See Daisy's Reply")} className="border-slate-200 hover:bg-teal-50 text-teal-600"><Brain className="w-4 h-4 mr-1" /> Daisy Reply</Button>
-                    <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, 'Hold')} className="border-slate-200 hover:bg-red-50 text-red-600"><PauseCircle className="w-4 h-4 mr-1" /> Hold</Button>
-                    <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, 'Thinking')} className="border-slate-200 hover:bg-purple-50 text-purple-600"><Brain className="w-4 h-4 mr-1" /> Thinking</Button>
+                    <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, '✅ Done')} className="border-slate-200 hover:bg-slate-100 text-slate-600"><CheckCircle2 className="w-4 h-4 mr-1" /> Done</Button>
+                    <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, '📥 My Inbox')} className="border-slate-200 hover:bg-orange-50 text-orange-600"><Clock className="w-4 h-4 mr-1" /> My Inbox</Button>
+                    <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, '⏳ Needs GO')} className="border-slate-200 hover:bg-teal-50 text-teal-600"><Brain className="w-4 h-4 mr-1" /> Needs GO</Button>
+                    <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, '⏸️ Hold')} className="border-slate-200 hover:bg-red-50 text-red-600"><PauseCircle className="w-4 h-4 mr-1" /> Hold</Button>
+                    <Button size="sm" variant="outline" onClick={() => updateStatus(selectedItem.id, 'Unanswered')} className="border-slate-200 hover:bg-purple-50 text-purple-600"><Brain className="w-4 h-4 mr-1" /> Unanswered</Button>
                   </div>
                 </div>
               </div>
