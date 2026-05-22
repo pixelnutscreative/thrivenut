@@ -231,12 +231,26 @@ export default function MyTasks() {
     });
   };
 
-  const sendToPixelBoard = (task) => {
-    updateMutation.mutate({
-      id: task.id,
-      data: { send_to_pixelboard: true }
-    });
-    toast.success("Sent to PixelBoard!");
+  const sendToPixelBoard = async (task) => {
+    try {
+      await base44.entities.PixelBoard.create({
+        title: task.title,
+        details: task.details || '',
+        question_type: 'Task',
+        status: '💬 New',
+        asked_by: 'Nikole',
+        nikole_read: false,
+        pixel_read: false
+      });
+      updateMutation.mutate({
+        id: task.id,
+        data: { send_to_pixelboard: true }
+      });
+      toast.success("Sent to Daisy's inbox!");
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to send to PixelBoard");
+    }
   };
 
   const openTask = (task) => {
@@ -671,16 +685,14 @@ export default function MyTasks() {
                                       <div className="flex justify-between items-center mt-1 border-t border-slate-50 pt-2">
                                         {task.send_to_pixelboard ? (
                                           <span className="flex items-center text-[10px] font-bold text-[#24C4D6] bg-[#24C4D6]/10 px-1.5 py-0.5 rounded">
-                                            <Sparkles className="w-3 h-3 mr-1" />
-                                            PixelBoard
+                                            ✅ Sent to PixelBoard
                                           </span>
                                         ) : (
                                           <button 
                                             className="flex items-center text-[10px] font-semibold text-slate-400 hover:text-[#24C4D6] transition-colors opacity-0 group-hover:opacity-100"
                                             onClick={(e) => { e.stopPropagation(); sendToPixelBoard(task); }}
                                           >
-                                            <Send className="w-3 h-3 mr-1" />
-                                            Send to PixelBoard
+                                            📬 Send to PixelBoard
                                           </button>
                                         )}
                                       </div>
@@ -816,9 +828,13 @@ export default function MyTasks() {
                           {task.details || '-'}
                         </td>
                         <td className="px-4 py-4 text-right">
-                          {!task.send_to_pixelboard && (
-                            <Button size="sm" variant="ghost" className="text-[#24C4D6] h-8 opacity-0 group-hover:opacity-100" onClick={() => sendToPixelBoard(task)}>
-                              <Send className="w-4 h-4" />
+                          {task.send_to_pixelboard ? (
+                            <span className="inline-flex items-center text-[10px] font-bold text-[#24C4D6] bg-[#24C4D6]/10 px-1.5 py-0.5 rounded whitespace-nowrap">
+                              ✅ Sent to PixelBoard
+                            </span>
+                          ) : (
+                            <Button size="sm" variant="ghost" className="text-[#24C4D6] h-8 opacity-0 group-hover:opacity-100 whitespace-nowrap" onClick={() => sendToPixelBoard(task)}>
+                              📬 Send to PixelBoard
                             </Button>
                           )}
                         </td>
