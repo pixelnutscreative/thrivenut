@@ -41,6 +41,32 @@ const priorityConfig = {
 
 const CATEGORIES = ["ThriveNut", "Personal", "Projects", "Pixel Tours", "Websites", "Offers", "AI Tools", "Social Media", "Other"];
 
+const LOCATIONS = [
+  "PixelBoard",
+  "Groups > Feed",
+  "Groups > Members",
+  "Groups > Calendar",
+  "Groups > Q&A",
+  "Groups > Resources",
+  "Groups > Requests (Support Tickets)",
+  "Groups > Ask AI",
+  "Groups > Navigation",
+  "Groups > Settings",
+  "Groups > Danger Zone",
+  "Groups > Agency Group view",
+  "Groups > Invite flow",
+  "Creator Groups list page",
+  "Social House Agency group view",
+  "Onboarding modal (first login)",
+  "User Profile",
+  "Settings > Permissions",
+  "Settings > Hourly Tracking",
+  "Settings > Recruiters",
+  "Admin Panel",
+  "Home / Dashboard",
+  "Other"
+];
+
 const mapStatus = (item) => {
   if (!item) return '💬 New';
   
@@ -56,7 +82,7 @@ const mapStatus = (item) => {
   if (s.includes('Done') || s === 'Reviewed') return '✅ Done';
   if (s.includes('Task')) return '➡️ Moved to Task';
   if (s.includes('Needs GO') || s === 'Answered') return '⏳ Needs GO';
-  if (s.includes('Batch') || s.includes('Batched')) return '📦 Batch';
+  if (s === 'Batch' || s === 'Batched') return '📦 Batch'; // Strict check to prevent miscategorizing 'Batch Processing'
   if (s.includes('Progress') || s.includes('Process') || s.includes('Inbox')) return '⚙️ Processing';
   if (s.includes('Wait') || s.includes('Hold') || s === '⏸️ On Hold') return '⏸️ On Hold';
   if (s.includes('Think')) return '🧠 Thinking';
@@ -529,7 +555,7 @@ export default function PixelBoard() {
               </Badge>
             )}
             {item.custom_fields?.group_tag && (
-              <Badge variant="secondary" className="text-[11px] bg-pink-50 text-pink-600 hover:bg-pink-100" title="Group Tag">
+              <Badge variant="secondary" className="text-[11px] bg-pink-50 text-pink-600 hover:bg-pink-100" title="Group Name">
                 👥 {item.custom_fields.group_tag}
               </Badge>
             )}
@@ -903,11 +929,14 @@ export default function PixelBoard() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="col-span-2 space-y-2">
                       <Label className="font-bold text-slate-700">Page / Location</Label>
-                      <Input placeholder="e.g. Groups > Invite Modal" value={newQuestion.page_location || ''} onChange={e => setNewQuestion({...newQuestion, page_location: e.target.value})} className="border-2 border-slate-200 focus-visible:ring-[#24C4D6]" />
+                      <Input list="locations-list" placeholder="Search or type custom location..." value={newQuestion.page_location || ''} onChange={e => setNewQuestion({...newQuestion, page_location: e.target.value})} className="border-2 border-slate-200 focus-visible:ring-[#24C4D6]" />
+                      <datalist id="locations-list">
+                        {LOCATIONS.map(loc => <option key={loc} value={loc} />)}
+                      </datalist>
                     </div>
                     <div className="col-span-2 space-y-2">
-                      <Label className="font-bold text-slate-700">Group Tag</Label>
-                      <Input placeholder="e.g. Social House Agency" value={newQuestion.group_tag || ''} onChange={e => setNewQuestion({...newQuestion, group_tag: e.target.value})} className="border-2 border-slate-200 focus-visible:ring-[#24C4D6]" />
+                      <Label className="font-bold text-slate-700">Group Name</Label>
+                      <Input placeholder="Which ThriveNut group does this apply to?" value={newQuestion.group_tag || ''} onChange={e => setNewQuestion({...newQuestion, group_tag: e.target.value})} className="border-2 border-slate-200 focus-visible:ring-[#24C4D6]" />
                     </div>
                     <div className="space-y-2">
                       <Label className="font-bold text-slate-700">Category</Label>
@@ -1174,20 +1203,24 @@ export default function PixelBoard() {
                     <div className="space-y-1">
                       <Label className="text-xs font-bold text-slate-500">Page / Location</Label>
                       <Input 
+                        list="edit-locations-list"
                         value={selectedItem.custom_fields?.page_location || ''} 
                         onChange={(e) => updateMutation.mutate({ id: selectedItem.id, data: { custom_fields: { ...selectedItem.custom_fields, page_location: e.target.value } } })}
                         className="w-full border-2 border-slate-200 bg-white h-9 text-xs" 
-                        placeholder="Location"
+                        placeholder="Search or type..."
                       />
+                      <datalist id="edit-locations-list">
+                        {LOCATIONS.map(loc => <option key={loc} value={loc} />)}
+                      </datalist>
                     </div>
 
                     <div className="space-y-1">
-                      <Label className="text-xs font-bold text-slate-500">Group Tag</Label>
+                      <Label className="text-xs font-bold text-slate-500">Group Name</Label>
                       <Input 
                         value={selectedItem.custom_fields?.group_tag || ''} 
                         onChange={(e) => updateMutation.mutate({ id: selectedItem.id, data: { custom_fields: { ...selectedItem.custom_fields, group_tag: e.target.value } } })}
                         className="w-full border-2 border-slate-200 bg-white h-9 text-xs" 
-                        placeholder="Tag"
+                        placeholder="Which group?"
                       />
                     </div>
                   </div>
