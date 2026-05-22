@@ -13,7 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Checkbox } from '@/components/ui/checkbox';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { toast, Toaster as SonnerToaster } from 'sonner';
-import { Plus, Search, Loader2, LayoutGrid, List as ListIcon, ChevronRight, ChevronDown, CheckCircle2, PauseCircle, Clock, Brain, Paperclip, X, RefreshCw } from 'lucide-react';
+import { Plus, Search, Loader2, LayoutGrid, List as ListIcon, ChevronRight, ChevronDown, CheckCircle2, PauseCircle, Clock, Brain, Paperclip, X, RefreshCw, ChevronLeft, Trash2 } from 'lucide-react';
 import moment from 'moment';
 
 const KANBAN_COLUMNS = [
@@ -63,13 +63,13 @@ const getTurnIndicator = (item) => {
   const s = mapStatus(item);
   if (s === '✅ Done') return null;
   
-  if (!item.pixel_response || item.pixel_response.trim() === '') return "🤖 Daisy's turn";
-  if (item.pixel_read === false) return "🤖 Daisy's turn"; // Nikole just replied
+  if (!item.pixel_response || item.pixel_response.trim() === '') return "Daisy's turn 🤖";
+  if (item.pixel_read === false) return "Daisy's turn 🤖"; // Nikole just replied
   
-  return "👤 Nikole's turn"; // Default if pixel_response exists and Nikole hasn't replied yet
+  return "Nikole's turn 🎯"; // Default if pixel_response exists and Nikole hasn't replied yet
 };
 
-const isNikolesTurn = (item) => getTurnIndicator(item) === "👤 Nikole's turn";
+const isNikolesTurn = (item) => getTurnIndicator(item) === "Nikole's turn 🎯";
 
 export default function PixelBoard() {
   const queryClient = useQueryClient();
@@ -96,6 +96,9 @@ export default function PixelBoard() {
   const [newResponse, setNewResponse] = useState('');
   const [newImages, setNewImages] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [lightboxImages, setLightboxImages] = useState([]);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [imageToDelete, setImageToDelete] = useState(null);
   const fileInputRef = React.useRef(null);
   
   const [newQuestion, setNewQuestion] = useState({
@@ -397,6 +400,7 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-8 font-sans">
+      <style>{`.sm\\:max-w-\\[900px\\] > button.absolute.right-4.top-4 { display: none !important; }`}</style>
       <SonnerToaster position="top-center" richColors />
       <div className="w-full mx-auto space-y-6">
         
@@ -648,7 +652,7 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
               <div className="flex flex-col h-full overflow-hidden">
                 {/* Header */}
                 <div className="p-4 bg-white border-b border-slate-200 flex-shrink-0">
-                  <div className="flex items-start justify-between gap-2 mb-2">
+                  <div className="flex items-start justify-between gap-4 mb-2">
                     <Input 
                       className="text-xl font-bold text-slate-800 leading-tight border-transparent hover:border-slate-300 focus:border-[#24C4D6] px-2 -ml-2 bg-transparent h-auto py-1 w-full"
                       defaultValue={selectedItem.title}
@@ -658,17 +662,27 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                         }
                       }}
                     />
-                    <Button 
-                      size="sm"
-                      variant={selectedItem.in_batch ? 'default' : 'outline'}
-                      className={`h-8 font-bold flex-shrink-0 ${selectedItem.in_batch ? 'bg-[#24C4D6] hover:bg-[#1db0c0] text-white border-0' : 'border-[#24C4D6] text-[#0D626C] hover:bg-[#24C4D6]/10'}`}
-                      onClick={() => {
-                        updateMutation.mutate({ id: selectedItem.id, data: { in_batch: !selectedItem.in_batch } });
-                        setSelectedItem(prev => ({ ...prev, in_batch: !prev.in_batch }));
-                      }}
-                    >
-                      {selectedItem.in_batch ? '✓ In Batch' : '+ Add to Batch'}
-                    </Button>
+                    <div className="flex items-center gap-2 flex-shrink-0 pr-6">
+                      <Button 
+                        size="sm"
+                        variant={selectedItem.in_batch ? 'default' : 'outline'}
+                        className={`h-8 font-bold flex-shrink-0 ${selectedItem.in_batch ? 'bg-[#24C4D6] hover:bg-[#1db0c0] text-white border-0' : 'border-[#24C4D6] text-[#0D626C] hover:bg-[#24C4D6]/10'}`}
+                        onClick={() => {
+                          updateMutation.mutate({ id: selectedItem.id, data: { in_batch: !selectedItem.in_batch } });
+                          setSelectedItem(prev => ({ ...prev, in_batch: !prev.in_batch }));
+                        }}
+                      >
+                        {selectedItem.in_batch ? '✓ In Batch' : '+ Add to Batch'}
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="default" 
+                        className="h-8 bg-slate-800 hover:bg-slate-900 text-white font-bold" 
+                        onClick={() => setSelectedItem(null)}
+                      >
+                        Save & Close
+                      </Button>
+                    </div>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-2 items-center">
                     <div className="space-y-1">
@@ -731,53 +745,19 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                 {/* Body (Scrollable) */}
                 <div className="flex-1 px-4 py-2 space-y-2 overflow-y-auto">
                   
-                  {/* Details (Original Context) */}
-                  <div className="flex flex-col items-start w-full">
-                    <span className="text-[10px] font-bold text-slate-400 mb-1 px-1">
-                      👤 NIKOLE (Original) • {moment(selectedItem.created_date).format('MMM D, h:mm A')}
-                    </span>
-                    <Textarea 
-                      defaultValue={selectedItem.details || ''}
-                      className="min-h-[44px] h-[44px] max-h-[200px] border-transparent bg-slate-100 focus:bg-white focus:border-slate-300 transition-all text-sm text-slate-700 w-[85%] resize-y rounded-2xl rounded-tl-sm shadow-sm p-3"
-                      placeholder="Add details or context here..."
-                      onBlur={(e) => {
-                        if (e.target.value !== selectedItem.details) {
-                          updateMutation.mutate({ id: selectedItem.id, data: { details: e.target.value } });
-                        }
-                      }}
-                    />
-                  </div>
-
-                  {/* Daisy's Response */}
-                  {selectedItem.pixel_response && (
-                    <div className="bg-[#A8E6E6] p-3 rounded-2xl rounded-tl-sm border border-[#A8E6E6]/50 shadow-sm w-[85%]">
-                      <Label className="text-[10px] font-bold text-[#0D626C] uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                        <Brain className="w-3 h-3" /> Daisy's Response
-                      </Label>
-                      <p className="text-sm text-[#0D626C] whitespace-pre-wrap leading-snug">{selectedItem.pixel_response}</p>
-                    </div>
-                  )}
-
-                  {/* Nikole's Response */}
-                  <div className="flex flex-col items-end w-full">
-                    <span className="text-[10px] font-bold text-slate-400 mb-1 px-1">Your Response to Daisy</span>
-                    <Textarea 
-                      defaultValue={selectedItem.nikole_response || ''}
-                      className="min-h-[44px] h-[44px] border-slate-200 bg-[#24C4D6] text-white placeholder:text-white/70 focus-visible:ring-[#1db0c0] transition-all text-sm w-[85%] resize-y rounded-2xl rounded-tr-sm shadow-sm p-3"
-                      placeholder="Type your response to Daisy here... (e.g. 'This looks great, go ahead!')"
-                      onBlur={(e) => {
-                        if (e.target.value !== selectedItem.nikole_response) {
-                          updateMutation.mutate({ id: selectedItem.id, data: { nikole_response: e.target.value, pixel_read: false, nikole_read: true, status: '🔄 In Progress' } });
-                          toast.success('Response saved and sent to Daisy!');
-                        }
-                      }}
-                    />
-                  </div>
-
                   {/* Attachments */}
-                  <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm">
-                    <div className="flex justify-between items-center mb-1">
-                      <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Attachments</Label>
+                  <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Reference Images</Label>
+                    <div className="flex items-center gap-2">
+                      {selectedItem.attachment_url && (
+                        <div className="flex gap-2 flex-wrap">
+                          {getAttachments(selectedItem.attachment_url).map((url, i) => (
+                            <div key={i} onClick={() => { setLightboxImages(getAttachments(selectedItem.attachment_url)); setLightboxIndex(i); }} className="cursor-pointer">
+                              <img src={url} alt="Attachment" className="w-8 h-8 rounded-md border border-slate-200 object-cover hover:opacity-80 transition-opacity" />
+                            </div>
+                          ))}
+                        </div>
+                      )}
                       <div>
                         <input 
                           type="file" 
@@ -802,24 +782,15 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                             }
                           }}
                         />
-                        <Button variant="outline" size="sm" className="h-7 text-[10px]" onClick={() => document.getElementById(`attachment-upload-${selectedItem.id}`).click()}>
-                          <Paperclip className="w-3 h-3 mr-1" /> Add Image
+                        <Button variant="outline" size="sm" className="h-8 text-[10px]" onClick={() => document.getElementById(`attachment-upload-${selectedItem.id}`).click()}>
+                          <Paperclip className="w-3 h-3 mr-1" /> Add
                         </Button>
                       </div>
                     </div>
-                    {selectedItem.attachment_url && (
-                      <div className="flex gap-2 flex-wrap mt-1">
-                        {getAttachments(selectedItem.attachment_url).map((url, i) => (
-                          <a key={i} href={url} target="_blank" rel="noopener noreferrer">
-                            <img src={url} alt="Attachment" className="w-12 h-12 rounded-md border border-slate-200 object-cover hover:opacity-80" />
-                          </a>
-                        ))}
-                      </div>
-                    )}
                   </div>
 
                   {/* Thread Area */}
-                  <div className="flex flex-col bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden h-[300px]">
+                  <div className="flex flex-col bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden h-[450px]">
                     <div className="flex-1 p-4 overflow-y-auto space-y-4 custom-scrollbar bg-slate-50">
                       {(() => {
                         let th = selectedItem.thread || [];
@@ -828,6 +799,17 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                           if (selectedItem.nikole_response) th.push({ sender: 'nikole', message: selectedItem.nikole_response, timestamp: selectedItem.created_date });
                           if (selectedItem.pixel_response) th.push({ sender: 'daisy', message: selectedItem.pixel_response, timestamp: selectedItem.updated_date || selectedItem.created_date });
                           th.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+                        }
+
+                        // Add original context as the first message
+                        if (selectedItem.details) {
+                          const isDaisyInit = selectedItem.asked_by === 'Daisy' || selectedItem.asked_by === 'Pixel Poster';
+                          th = [{ 
+                            sender: isDaisyInit ? 'daisy' : 'nikole', 
+                            message: selectedItem.details, 
+                            timestamp: selectedItem.created_date,
+                            isOriginal: true
+                          }, ...th];
                         }
                         
                         if (th.length === 0) {
@@ -849,19 +831,20 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                           return (
                             <div key={i} className={`flex flex-col ${isNikole ? 'items-end' : 'items-start'}`}>
                               <span className="text-[10px] font-bold text-slate-400 mb-1 px-1">
+                                {msg.isOriginal && <span className="text-[#24C4D6] mr-1">(Original Details)</span>}
                                 {isNikole ? '👤 NIKOLE' : '🤖 DAISY'} • {moment(msg.timestamp).format('MMM D, h:mm A')}
                               </span>
                               <div className={`p-3 rounded-2xl max-w-[85%] whitespace-pre-wrap text-sm shadow-sm ${
                                 isNikole 
-                                  ? 'bg-[#24C4D6] text-white rounded-tr-sm border border-[#24C4D6]/20' 
-                                  : 'bg-[#A8E6E6] text-[#0D626C] rounded-tl-sm border border-[#A8E6E6]/50'
+                                  ? 'bg-[#24C4D6] text-white rounded-tl-2xl rounded-tr-sm border border-[#24C4D6]/20' 
+                                  : 'bg-[#A8E6E6] text-[#0D626C] rounded-tr-2xl rounded-tl-sm border border-[#A8E6E6]/50'
                               }`}>
                                 {msg.message}
                                 {(msg.image_urls || (msg.image_url ? [msg.image_url] : [])).map((url, imgI) => (
                                   <div key={imgI} className={msg.message || imgI > 0 ? 'mt-2' : ''}>
-                                    <a href={url} target="_blank" rel="noopener noreferrer">
+                                    <div onClick={() => { setLightboxImages([url]); setLightboxIndex(0); }} className="cursor-pointer">
                                       <img src={url} alt="Attached" className="max-w-full rounded-md border border-black/10 max-h-64 object-contain" />
-                                    </a>
+                                    </div>
                                   </div>
                                 ))}
                               </div>
@@ -961,6 +944,117 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                 </div>
               </div>
             )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Image Lightbox */}
+        <Dialog open={lightboxImages.length > 0} onOpenChange={(open) => { if (!open) setLightboxImages([]); }}>
+          <DialogContent className="max-w-[95vw] w-full max-h-[95vh] h-full p-0 bg-black/95 border-none flex flex-col items-center justify-center">
+            {lightboxImages.length > 0 && (
+              <>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="absolute top-4 right-4 text-white hover:bg-white/20 z-50 rounded-full"
+                  onClick={() => setLightboxImages([])}
+                >
+                  <X className="w-6 h-6" />
+                </Button>
+
+                {/* Delete Button */}
+                {selectedItem && getAttachments(selectedItem.attachment_url).includes(lightboxImages[lightboxIndex]) && (
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="absolute top-4 left-4 text-red-400 hover:bg-red-500/20 hover:text-red-500 z-50 rounded-full"
+                    onClick={() => setImageToDelete(lightboxImages[lightboxIndex])}
+                  >
+                    <Trash2 className="w-6 h-6" />
+                  </Button>
+                )}
+
+                {lightboxImages.length > 1 && (
+                  <>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:bg-white/20 z-50 rounded-full"
+                      onClick={() => setLightboxIndex(prev => (prev === 0 ? lightboxImages.length - 1 : prev - 1))}
+                    >
+                      <ChevronLeft className="w-8 h-8" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:bg-white/20 z-50 rounded-full"
+                      onClick={() => setLightboxIndex(prev => (prev === lightboxImages.length - 1 ? 0 : prev + 1))}
+                    >
+                      <ChevronRight className="w-8 h-8" />
+                    </Button>
+                  </>
+                )}
+                
+                <div className="relative w-full h-full flex items-center justify-center p-8">
+                  <img 
+                    src={lightboxImages[lightboxIndex]} 
+                    alt="Lightbox" 
+                    className="max-w-full max-h-full object-contain"
+                  />
+                </div>
+                
+                {lightboxImages.length > 1 && (
+                  <div className="absolute bottom-4 left-1/2 -translate-y-1/2 bg-black/50 text-white px-3 py-1 rounded-full text-xs z-50">
+                    {lightboxIndex + 1} / {lightboxImages.length}
+                  </div>
+                )}
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Image Confirmation */}
+        <Dialog open={!!imageToDelete} onOpenChange={(open) => { if (!open) setImageToDelete(null); }}>
+          <DialogContent className="sm:max-w-[400px]">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold text-slate-800">Delete Image?</DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <p className="text-slate-600">Are you sure you want to delete this image? This can't be undone.</p>
+              {imageToDelete && (
+                <div className="mt-4 flex justify-center">
+                  <img src={imageToDelete} alt="To delete" className="h-32 rounded-lg object-contain border border-slate-200" />
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setImageToDelete(null)}>Cancel</Button>
+              <Button 
+                className="bg-red-500 hover:bg-red-600 text-white font-bold"
+                onClick={() => {
+                  if (selectedItem && imageToDelete) {
+                    const currentAttachments = getAttachments(selectedItem.attachment_url);
+                    const newUrls = currentAttachments.filter(url => url !== imageToDelete).join(',');
+                    updateMutation.mutate({ id: selectedItem.id, data: { attachment_url: newUrls } });
+                    setSelectedItem(prev => ({ ...prev, attachment_url: newUrls }));
+                    
+                    // Update lightbox state if needed
+                    const newLightboxImages = lightboxImages.filter(url => url !== imageToDelete);
+                    if (newLightboxImages.length === 0) {
+                      setLightboxImages([]);
+                    } else {
+                      setLightboxImages(newLightboxImages);
+                      if (lightboxIndex >= newLightboxImages.length) {
+                        setLightboxIndex(newLightboxImages.length - 1);
+                      }
+                    }
+                    setImageToDelete(null);
+                    toast.success("Image deleted!");
+                  }
+                }}
+              >
+                Yes, Delete It
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
 
