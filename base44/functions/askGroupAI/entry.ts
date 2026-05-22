@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
 
         if (resources.length > 0) {
             context += "--- RESOURCES ---\n";
-            resources.forEach(r => context += `- ${r.title} (${r.type}): ${r.description || ''}\n`);
+            resources.forEach(r => context += `- ${r.title} (${r.category || r.type}): ${r.description || ''} (URL: ${r.url || 'None'}) ${r.transcript ? 'Transcript: ' + r.transcript.substring(0, 1000) : ''}\n`);
         }
 
         if (meetings.length > 0) {
@@ -98,7 +98,7 @@ Deno.serve(async (req) => {
 
         if (events.length > 0) {
             context += "\n--- UPCOMING EVENTS ---\n";
-            events.forEach(e => context += `- ${e.title} at ${e.start_time}\n`);
+            events.forEach(e => context += `- ${e.title} at ${e.start_time} (Location: ${e.location || 'N/A'}, Link: ${e.link || 'N/A'}): ${e.description || ''}\n`);
         }
 
         if (qnas.length > 0) {
@@ -108,7 +108,7 @@ Deno.serve(async (req) => {
 
         if (trainings.length > 0) {
             context += "\n--- TRAINING ---\n";
-            trainings.forEach(t => context += `- ${t.title}: ${t.description || ''}\n`);
+            trainings.forEach(t => context += `- ${t.title}: ${t.description || ''} (Video: ${t.video_url || 'None'}, Resource: ${t.resource_url || 'None'}) ${t.transcript ? 'Transcript: ' + t.transcript.substring(0, 1000) : ''}\n`);
         }
 
         if (orders.length > 0) {

@@ -24,8 +24,12 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
   const [searchParams, setSearchParams] = useSearchParams();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  
+  const customCategories = group.settings?.resource_categories || ['General', 'Important Links', 'Downloads'];
+  const [categoryFilter, setCategoryFilter] = useState('All');
+
   const [formData, setFormData] = useState({ 
-    title: '', description: '', type: 'link', url: '', target_levels: [] 
+    title: '', description: '', type: 'link', url: '', category: customCategories[0] || 'General', target_levels: [] 
   });
 
   const [expandedResource, setExpandedResource] = useState(null);
@@ -150,6 +154,7 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
       description: resource.description || '',
       type: resource.type,
       url: resource.url,
+      category: resource.category || customCategories[0] || 'General',
       target_levels: resource.target_levels || []
     });
     setIsDialogOpen(true);
@@ -158,7 +163,7 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
     setEditingId(null);
-    setFormData({ title: '', description: '', type: 'link', url: '', target_levels: [] });
+    setFormData({ title: '', description: '', type: 'link', url: '', category: customCategories[0] || 'General', target_levels: [] });
   };
 
   const handleSubmit = () => {
@@ -188,9 +193,21 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
   const pendingResources = resources.filter(r => r.status === 'pending');
 
   const visibleResources = approvedResources.filter(r => {
-    if (isAdmin) return true;
-    if (!r.target_levels || r.target_levels.length === 0) return true;
-    return r.target_levels.includes(myMembership?.level);
+    // 1. Role Check
+    let hasRoleAccess = false;
+    if (isAdmin) hasRoleAccess = true;
+    else if (!r.target_levels || r.target_levels.length === 0) hasRoleAccess = true;
+    else if (r.target_levels.includes(myMembership?.level)) hasRoleAccess = true;
+
+    if (!hasRoleAccess) return false;
+
+    // 2. Category Check
+    if (categoryFilter !== 'All') {
+      const rCat = r.category || customCategories[0] || 'General';
+      if (rCat !== categoryFilter) return false;
+    }
+
+    return true;
   });
 
   const getIcon = (type) => {
@@ -224,15 +241,31 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
               <DialogTitle>{editingId ? 'Edit Resource' : 'Share with Group'}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-4">
-              <Select value={formData.type} onValueChange={v => setFormData({...formData, type: v})}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent className="z-[60]">
-                  <SelectItem value="video">YouTube Video</SelectItem>
-                  <SelectItem value="article">Article / Blog</SelectItem>
-                  <SelectItem value="link">Website Link</SelectItem>
-                  <SelectItem value="text">Message / Contact Info</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Resource Type</Label>
+                  <Select value={formData.type} onValueChange={v => setFormData({...formData, type: v})}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent className="z-[60]">
+                      <SelectItem value="video">YouTube Video</SelectItem>
+                      <SelectItem value="article">Article / Blog</SelectItem>
+                      <SelectItem value="link">Website Link</SelectItem>
+                      <SelectItem value="text">Message / Contact Info</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Category</Label>
+                  <Select value={formData.category} onValueChange={v => setFormData({...formData, category: v})}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent className="z-[60]">
+                      {customCategories.map(c => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
               <Input placeholder="Title" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
               
               {formData.type !== 'text' && (
@@ -288,6 +321,31 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
             <TabsTrigger value="pending" className="text-amber-600">Pending Review ({pendingResources.length})</TabsTrigger>
           )}
         </TabsList>
+
+        {/* Category Filters */}
+        <div className="flex overflow-x-auto gap-2 py-4 custom-scrollbar">
+          <Button 
+            variant={categoryFilter === 'All' ? 'default' : 'outline'} 
+            size="sm" 
+            className="rounded-full shrink-0"
+            onClick={() => setCategoryFilter('All')}
+            style={categoryFilter === 'All' ? { backgroundColor: preferences?.primary_color } : {}}
+          >
+            All Resources
+          </Button>
+          {customCategories.map(cat => (
+            <Button 
+              key={cat}
+              variant={categoryFilter === cat ? 'default' : 'outline'} 
+              size="sm" 
+              className="rounded-full shrink-0"
+              onClick={() => setCategoryFilter(cat)}
+              style={categoryFilter === cat ? { backgroundColor: preferences?.primary_color } : {}}
+            >
+              {cat}
+            </Button>
+          ))}
+        </div>
 
         <TabsContent value="library" className="grid gap-4 mt-4">
           {visibleResources.map(resource => (

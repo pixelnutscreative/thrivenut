@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
 
-export default function NotificationBell({ userEmail, isDark = false }) {
+export default function NotificationBell({ userEmail, isDark = false, groupId = null }) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
@@ -37,15 +37,22 @@ export default function NotificationBell({ userEmail, isDark = false }) {
 
   // Filter notifications based on user access
   const notifications = allNotifications.filter(n => {
+    let notifGroupId = n.group_id;
+
     // Group Membership Check
     if (n.link && n.link.includes('/CreatorGroups?id=')) {
        try {
          const url = new URL(n.link, 'http://dummy.com');
-         const groupId = url.searchParams.get('id');
-         if (groupId && !myGroupIds.has(groupId)) {
-           return false;
+         const parsedGroupId = url.searchParams.get('id');
+         if (parsedGroupId) {
+           notifGroupId = parsedGroupId;
+           if (!myGroupIds.has(parsedGroupId)) return false;
          }
        } catch (e) {}
+    }
+
+    if (groupId && notifGroupId !== groupId) {
+      return false;
     }
 
     // Targeted notification

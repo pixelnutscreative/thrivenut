@@ -36,6 +36,7 @@ import GroupDiscussionTab from '../components/groups/GroupDiscussionTab';
 import GroupAssetsTab from '../components/groups/GroupAssetsTab';
 import GroupAnnouncementBanner from '../components/groups/GroupAnnouncementBanner';
 import GroupSalesTab from '../components/groups/GroupSalesTab';
+import NotificationBell from '../components/notifications/NotificationBell';
 
 export default function CreatorGroups() {
   const { user, preferences } = useTheme();
@@ -1219,11 +1220,14 @@ export default function CreatorGroups() {
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div>
-              <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                {activeGroup.name}
-                <GroupHeaderIcon className={`w-5 h-5 ${groupColorClass.split(' ')[1]}`} />
-              </h1>
-              <p className="text-xs text-gray-500">
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl font-bold flex items-center gap-2" style={{ color: (activeGroup.settings?.menu_color || activeGroup.settings?.group_color) ? '#ffffff' : '#111827' }}>
+                  {activeGroup.name}
+                  <GroupHeaderIcon className="w-5 h-5 opacity-80" />
+                </h1>
+                {isMember && <NotificationBell userEmail={user?.email} isDark={!!(activeGroup.settings?.menu_color || activeGroup.settings?.group_color)} groupId={activeGroup.id} />}
+              </div>
+              <p className="text-xs opacity-70">
                  {isMember ? 'Dashboard' : 'Preview'} • {getGroupLabel(activeGroup.type)}
               </p>
             </div>

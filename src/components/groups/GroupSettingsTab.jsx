@@ -409,6 +409,8 @@ function MemberLevelsSettings({ group }) {
 function ResourceAccessSettings({ group }) {
   const queryClient = useQueryClient();
   const [allowedLevels, setAllowedLevels] = useState(group.settings?.allowed_resource_levels || []);
+  const [categories, setCategories] = useState(group.settings?.resource_categories || ['General', 'Important Links', 'Downloads']);
+  const [newCategory, setNewCategory] = useState('');
 
   const updateMutation = useMutation({
     mutationFn: async (data) => {
@@ -425,13 +427,56 @@ function ResourceAccessSettings({ group }) {
         <CardDescription>Control which levels can upload resources (Admins always can).</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <LevelSelector 
-          group={group} 
-          selectedLevels={allowedLevels} 
-          onChange={setAllowedLevels} 
-        />
-        <div className="flex justify-end pt-4">
-          <Button onClick={() => updateMutation.mutate({ allowed_resource_levels: allowedLevels })}>Save Settings</Button>
+        <div className="space-y-2">
+          <Label className="text-base font-semibold">Upload Permissions</Label>
+          <LevelSelector 
+            group={group} 
+            selectedLevels={allowedLevels} 
+            onChange={setAllowedLevels} 
+          />
+        </div>
+
+        <div className="space-y-4 pt-4 border-t">
+          <Label className="text-base font-semibold">Custom Resource Categories</Label>
+          <p className="text-sm text-gray-500">Organize your resources with custom categories.</p>
+          
+          <div className="space-y-2">
+            <div className="flex gap-2">
+              <Input 
+                value={newCategory} 
+                onChange={e => setNewCategory(e.target.value)} 
+                placeholder="e.g. Important Links"
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && newCategory.trim() && !categories.includes(newCategory.trim())) {
+                    setCategories([...categories, newCategory.trim()]);
+                    setNewCategory('');
+                  }
+                }}
+              />
+              <Button onClick={() => {
+                if (newCategory.trim() && !categories.includes(newCategory.trim())) {
+                  setCategories([...categories, newCategory.trim()]);
+                  setNewCategory('');
+                }
+              }} variant="outline" type="button">Add</Button>
+            </div>
+            
+            <div className="space-y-2 mt-2">
+              {categories.map((c, idx) => (
+                <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+                  <span className="text-sm">{c}</span>
+                  <Button variant="ghost" size="sm" onClick={() => setCategories(categories.filter((_, i) => i !== idx))} className="text-gray-400 hover:text-red-500">
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+              {categories.length === 0 && <p className="text-sm text-gray-400 italic">No custom categories set.</p>}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-end pt-4 border-t">
+          <Button onClick={() => updateMutation.mutate({ allowed_resource_levels: allowedLevels, resource_categories: categories })}>Save Settings</Button>
         </div>
       </CardContent>
     </Card>

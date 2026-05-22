@@ -9,7 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogT
 import { Input } from '@/components/ui/input';
 import { Calendar, MapPin, Link as LinkIcon, Plus, Trash2, Pencil, Share2, CalendarPlus } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { format } from 'date-fns';
+import { format, isSameDay } from 'date-fns';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import LevelSelector from './LevelSelector';
@@ -31,6 +32,7 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
   const [searchParams, setSearchParams] = useSearchParams();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -289,31 +291,30 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
   };
 
   const visibleEvents = events.filter(event => {
-    const eventTime = new Date(event.start_time).getTime();
-    const isPast = Date.now() - eventTime > 24 * 60 * 60 * 1000;
-    if (isPast) return false; // Hide past events after 24hrs automatically
-    
     if (isAdmin) return true;
     const levelMatch = !event.target_levels || event.target_levels.length === 0 || event.target_levels.includes(myMembership?.level);
     const userMatch = !event.target_users || event.target_users.length === 0 || event.target_users.includes(myMembership?.user_email);
     return levelMatch && userMatch;
-  }).sort((a, b) => {
-    // Agency events on top, creator battles/streams below
-    // Assume events with 'agency' or related tags/titles or if group is agency?
-    // Since we don't have event type field, we'll sort battles/streams down based on title/description keywords
-    const isABattle = a.title?.toLowerCase().includes('battle') || a.title?.toLowerCase().includes('stream');
-    const isBBattle = b.title?.toLowerCase().includes('battle') || b.title?.toLowerCase().includes('stream');
-    
-    if (!isABattle && isBBattle) return -1;
-    if (isABattle && !isBBattle) return 1;
-    
-    return new Date(a.start_time) - new Date(b.start_time);
+  }).sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
+
+  // Extract dates with events for highlighting in calendar
+  const eventDates = visibleEvents.map(e => new Date(e.start_time));
+  
+  const selectedDateEvents = visibleEvents.filter(event => {
+    const eventTime = new Date(event.start_time);
+    return isSameDay(eventTime, selectedDate);
   });
+  
+  const upcomingEvents = visibleEvents.filter(event => {
+    const eventTime = new Date(event.start_time).getTime();
+    const isPast = Date.now() - eventTime > 24 * 60 * 60 * 1000;
+    return !isPast && !isSameDay(new Date(event.start_time), selectedDate);
+  }).slice(0, 5);
 
   return (
     <div className="space-y-6">
       {isAdmin && (
-        <div className="flex justify-end">
+        <div className="flex justify-end mb-4">
           <Dialog open={isDialogOpen} onOpenChange={(open) => !open && handleCloseDialog()}>
             <DialogTrigger asChild>
               <Button 
@@ -539,129 +540,189 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {visibleEvents.map(event => {
-          const isPast = event.start_time && new Date(event.start_time) < new Date();
-          return (
-          <Card key={event.id} className={`flex flex-col h-full hover:shadow-md transition-shadow ${isPast ? 'opacity-60 grayscale bg-gray-50' : ''}`}>
-            <CardContent className="p-4 flex flex-col gap-4 flex-1">
-              <div className="flex justify-between items-start w-full">
-                <div className={`p-2 rounded-lg text-center min-w-[70px] ${isPast ? 'bg-gray-200 text-gray-500' : 'bg-purple-100 text-purple-700'}`}>
-                  <div className="text-[10px] font-bold uppercase">
-                    {event.start_time ? new Date(event.start_time).toLocaleDateString('en-US', { 
-                      month: 'short', 
-                      timeZone: (preferences?.user_timezone && preferences.user_timezone !== 'null') ? preferences.user_timezone : undefined
-                    }) : 'TBA'}
-                  </div>
-                  <div className="text-xl font-bold">
-                    {event.start_time ? new Date(event.start_time).toLocaleDateString('en-US', { 
-                      day: 'numeric', 
-                      timeZone: (preferences?.user_timezone && preferences.user_timezone !== 'null') ? preferences.user_timezone : undefined
-                    }) : '--'}
-                  </div>
-                  <div className="text-[10px]">
-                    {event.start_time ? new Date(event.start_time).toLocaleTimeString('en-US', { 
-                      hour: 'numeric', 
-                      minute: '2-digit', 
-                      timeZone: (preferences?.user_timezone && preferences.user_timezone !== 'null') ? preferences.user_timezone : undefined
-                    }) : ''}
-                  </div>
-                </div>
-                
-                {(isAdmin || event.created_by === currentUser?.email) && (
-                  <div className="flex gap-1 -mr-2 -mt-2">
-                    <Button variant="ghost" size="icon" onClick={() => handleEdit(event)} className="text-gray-400 hover:text-purple-600 h-8 w-8" title="Edit">
-                      <Pencil className="w-4 h-4" />
-                    </Button>
-                    {isAdmin && (
-                      <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(event.id)} className="text-gray-400 hover:text-red-500 h-8 w-8" title="Delete">
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    )}
-                  </div>
-                )}
-              </div>
-              
-              <div className="flex-1">
-                <h4 className="font-bold text-lg mb-2 leading-tight line-clamp-2">{event.title}</h4>
-                <div className="prose prose-sm text-gray-600 text-xs line-clamp-3 mb-3" dangerouslySetInnerHTML={{ __html: event.description }} />
-                
-                {(() => {
-                  const now = new Date();
-                  const futureOccurrences = (event.occurrences || [])
-                    .filter(o => new Date(o.start_time) > now);
-
-                  if (futureOccurrences.length === 0) return null;
-
-                  return (
-                    <div className="text-xs text-purple-600 font-medium mb-2">
-                      +{futureOccurrences.length} future sessions
-                    </div>
-                  );
-                })()}
-
-                <div className="space-y-2 mt-auto">
-                    {event.link && (
-                      <a href={event.link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs text-blue-600 hover:underline truncate">
-                        <LinkIcon className="w-3 h-3 flex-shrink-0" /> Join Link
-                      </a>
-                    )}
-                    {event.location && (
-                      <div className="flex items-center gap-2 text-xs text-gray-500 truncate">
-                        <MapPin className="w-3 h-3 flex-shrink-0" /> {event.location}
-                      </div>
-                    )}
-                </div>
-              </div>
-
-              <div className="pt-3 border-t flex gap-2 justify-between mt-auto">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      className={`text-xs h-8 flex-1 ${isPast ? 'text-gray-500 border-gray-300' : 'text-purple-600 border-purple-200 hover:bg-purple-50'}`}
-                    >
-                      <CalendarPlus className="w-3 h-3 mr-1" /> Add to Calendar
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuItem onClick={() => window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&dates=${event.start_time.replace(/[-:]/g,'').split('.')[0]}Z/${event.end_time ? event.end_time.replace(/[-:]/g,'').split('.')[0]+'Z' : event.start_time.replace(/[-:]/g,'').split('.')[0]+'Z'}&details=${encodeURIComponent(event.description || '')}`)}>
-                      Google Calendar
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => window.open(`https://outlook.live.com/calendar/0/deeplink/compose?subject=${encodeURIComponent(event.title)}&body=${encodeURIComponent(event.description || '')}&startdt=${event.start_time}&enddt=${event.end_time || event.start_time}`)}>
-                      Outlook
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => {
-                      const ics = `BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nSUMMARY:${event.title}\nDESCRIPTION:${event.description || ''}\nDTSTART:${event.start_time.replace(/[-:]/g,'').split('.')[0]}Z\nDTEND:${(event.end_time || event.start_time).replace(/[-:]/g,'').split('.')[0]}Z\nEND:VEVENT\nEND:VCALENDAR`;
-                      const blob = new Blob([ics], { type: 'text/calendar' });
-                      const url = URL.createObjectURL(blob);
-                      const a = document.createElement('a');
-                      a.href = url;
-                      a.download = 'event.ics';
-                      a.click();
-                    }}>
-                      Apple Calendar
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleAddToMyDay(event)}>
-                      Thrive Nut My Day
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                <Button 
-                  size="sm" 
-                  variant="ghost" 
-                  className="text-xs h-8 w-8 px-0 text-gray-500"
-                  onClick={() => handleShare(event)}
-                >
-                  <Share2 className="w-3 h-3" />
-                </Button>
-              </div>
-            </CardContent>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        {/* Calendar Side */}
+        <div className="lg:col-span-1">
+          <Card className="border shadow-sm p-4 bg-white sticky top-24">
+            <CalendarComponent
+              mode="single"
+              selected={selectedDate}
+              onSelect={(date) => {
+                if (date) setSelectedDate(date);
+              }}
+              modifiers={{ hasEvent: eventDates }}
+              modifiersStyles={{
+                hasEvent: { 
+                  fontWeight: 'bold', 
+                  backgroundColor: preferences?.primary_color ? `${preferences.primary_color}20` : '#f3e8ff',
+                  color: preferences?.primary_color || '#7e22ce',
+                  borderRadius: '100%'
+                }
+              }}
+              className="w-full flex justify-center bg-transparent"
+            />
           </Card>
-        )})}
-        {visibleEvents.length === 0 && <div className="text-center py-12 text-gray-500">No upcoming events.</div>}
+        </div>
+
+        {/* Events Side */}
+        <div className="lg:col-span-2 space-y-8">
+          
+          {/* Selected Date Events */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-bold text-gray-900 border-b pb-2">
+              Events on {selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+            </h3>
+            
+            {selectedDateEvents.length === 0 ? (
+              <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-xl border border-dashed">
+                <CalendarPlus className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                No events scheduled for this day.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {selectedDateEvents.map(event => <EventCard key={event.id} event={event} />)}
+              </div>
+            )}
+          </div>
+
+          {/* Upcoming Events */}
+          {upcomingEvents.length > 0 && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-bold text-gray-900 border-b pb-2">
+                Upcoming Events
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {upcomingEvents.map(event => <EventCard key={event.id} event={event} />)}
+              </div>
+            </div>
+          )}
+
+        </div>
       </div>
     </div>
   );
+
+  // Extracted EventCard to keep render clean
+  function EventCard({ event }) {
+    const isPast = event.start_time && new Date(event.start_time) < new Date();
+    
+    return (
+      <Card className={`flex flex-col h-full hover:shadow-md transition-shadow ${isPast ? 'opacity-60 grayscale bg-gray-50' : ''}`}>
+        <CardContent className="p-4 flex flex-col gap-4 flex-1">
+          <div className="flex justify-between items-start w-full">
+            <div className={`p-2 rounded-lg text-center min-w-[70px] ${isPast ? 'bg-gray-200 text-gray-500' : 'bg-purple-100 text-purple-700'}`}>
+              <div className="text-[10px] font-bold uppercase">
+                {event.start_time ? new Date(event.start_time).toLocaleDateString('en-US', { 
+                  month: 'short', 
+                  timeZone: (preferences?.user_timezone && preferences.user_timezone !== 'null') ? preferences.user_timezone : undefined
+                }) : 'TBA'}
+              </div>
+              <div className="text-xl font-bold">
+                {event.start_time ? new Date(event.start_time).toLocaleDateString('en-US', { 
+                  day: 'numeric', 
+                  timeZone: (preferences?.user_timezone && preferences.user_timezone !== 'null') ? preferences.user_timezone : undefined
+                }) : '--'}
+              </div>
+              <div className="text-[10px]">
+                {event.start_time ? new Date(event.start_time).toLocaleTimeString('en-US', { 
+                  hour: 'numeric', 
+                  minute: '2-digit', 
+                  timeZone: (preferences?.user_timezone && preferences.user_timezone !== 'null') ? preferences.user_timezone : undefined
+                }) : ''}
+              </div>
+            </div>
+            
+            {(isAdmin || event.created_by === currentUser?.email) && (
+              <div className="flex gap-1 -mr-2 -mt-2">
+                <Button variant="ghost" size="icon" onClick={() => handleEdit(event)} className="text-gray-400 hover:text-purple-600 h-8 w-8" title="Edit">
+                  <Pencil className="w-4 h-4" />
+                </Button>
+                {isAdmin && (
+                  <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(event.id)} className="text-gray-400 hover:text-red-500 h-8 w-8" title="Delete">
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
+          
+          <div className="flex-1">
+            <h4 className="font-bold text-lg mb-2 leading-tight line-clamp-2">{event.title}</h4>
+            <div className="prose prose-sm text-gray-600 text-xs line-clamp-3 mb-3" dangerouslySetInnerHTML={{ __html: event.description }} />
+            
+            {(() => {
+              const now = new Date();
+              const futureOccurrences = (event.occurrences || [])
+                .filter(o => new Date(o.start_time) > now);
+
+              if (futureOccurrences.length === 0) return null;
+
+              return (
+                <div className="text-xs text-purple-600 font-medium mb-2">
+                  +{futureOccurrences.length} future sessions
+                </div>
+              );
+            })()}
+
+            <div className="space-y-2 mt-auto">
+                {event.link && (
+                  <a href={event.link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs text-blue-600 hover:underline truncate">
+                    <LinkIcon className="w-3 h-3 flex-shrink-0" /> Join Link
+                  </a>
+                )}
+                {event.location && (
+                  <div className="flex items-center gap-2 text-xs text-gray-500 truncate">
+                    <MapPin className="w-3 h-3 flex-shrink-0" /> {event.location}
+                  </div>
+                )}
+            </div>
+          </div>
+
+          <div className="pt-3 border-t flex gap-2 justify-between mt-auto">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className={`text-xs h-8 flex-1 ${isPast ? 'text-gray-500 border-gray-300' : 'text-purple-600 border-purple-200 hover:bg-purple-50'}`}
+                >
+                  <CalendarPlus className="w-3 h-3 mr-1" /> Add to Calendar
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&dates=${event.start_time.replace(/[-:]/g,'').split('.')[0]}Z/${event.end_time ? event.end_time.replace(/[-:]/g,'').split('.')[0]+'Z' : event.start_time.replace(/[-:]/g,'').split('.')[0]+'Z'}&details=${encodeURIComponent(event.description || '')}`)}>
+                  Google Calendar
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => window.open(`https://outlook.live.com/calendar/0/deeplink/compose?subject=${encodeURIComponent(event.title)}&body=${encodeURIComponent(event.description || '')}&startdt=${event.start_time}&enddt=${event.end_time || event.start_time}`)}>
+                  Outlook
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => {
+                  const ics = `BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nSUMMARY:${event.title}\nDESCRIPTION:${event.description || ''}\nDTSTART:${event.start_time.replace(/[-:]/g,'').split('.')[0]}Z\nDTEND:${(event.end_time || event.start_time).replace(/[-:]/g,'').split('.')[0]}Z\nEND:VEVENT\nEND:VCALENDAR`;
+                  const blob = new Blob([ics], { type: 'text/calendar' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = 'event.ics';
+                  a.click();
+                }}>
+                  Apple Calendar
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleAddToMyDay(event)}>
+                  Thrive Nut My Day
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button 
+              size="sm" 
+              variant="ghost" 
+              className="text-xs h-8 w-8 px-0 text-gray-500"
+              onClick={() => handleShare(event)}
+            >
+              <Share2 className="w-3 h-3" />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 }

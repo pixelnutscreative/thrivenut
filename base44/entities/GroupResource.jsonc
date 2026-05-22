@@ -1,0 +1,85 @@
+{
+  "name": "GroupResource",
+  "type": "object",
+  "properties": {
+    "group_id": {
+      "type": "string",
+      "description": "Reference to CreatorGroup"
+    },
+    "title": {
+      "type": "string",
+      "description": "Resource title"
+    },
+    "description": {
+      "type": "string",
+      "description": "Resource description/notes"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "link",
+        "file",
+        "image",
+        "video",
+        "audio",
+        "other",
+        "article",
+        "text"
+      ],
+      "default": "link"
+    },
+    "category": {
+      "type": "string",
+      "description": "Custom category within the group"
+    },
+    "url": {
+      "type": "string",
+      "description": "URL to resource"
+    },
+    "transcript": {
+      "type": "string",
+      "description": "Transcript for video/audio resources"
+    },
+    "submitted_by": {
+      "type": "string",
+      "description": "Email of submitter"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected"
+      ],
+      "default": "approved"
+    },
+    "approved_by": {
+      "type": "string",
+      "description": "Email of approver"
+    },
+    "target_levels": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Limit visibility to specific levels"
+    },
+    "edited_by": {
+      "type": "string"
+    },
+    "edited_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "is_pinned": {
+      "type": "boolean",
+      "default": false,
+      "description": "Pin to top of feed"
+    }
+  },
+  "required": [
+    "group_id",
+    "title"
+  ]
+}
