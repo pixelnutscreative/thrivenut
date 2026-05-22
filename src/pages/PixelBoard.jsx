@@ -18,8 +18,8 @@ import moment from 'moment';
 
 const KANBAN_COLUMNS = [
   { id: '💬 New', label: '💬 New' },
-  { id: '📦 Batched', label: '📦 Batched' },
-  { id: '🔄 In Progress', label: '🔄 In Progress' },
+  { id: '📦 Batch', label: '📦 Batch' },
+  { id: '⚙️ Processing', label: '⚙️ Processing' },
   { id: '🧠 Thinking', label: '🧠 Thinking' },
   { id: '⏳ Needs GO', label: '⏳ Needs GO' },
   { id: '📬 My Inbox', label: '📬 My Inbox' },
@@ -49,13 +49,13 @@ const mapStatus = (item) => {
   
   const s = item.status;
   if (!s || typeof s !== 'string') return '💬 New';
-  if (['💬 New', '📦 Batched', '🔄 In Progress', '🧠 Thinking', '⏳ Needs GO', '📬 My Inbox', '✅ Done', '➡️ Moved to Task'].includes(s)) return s;
+  if (['💬 New', '📦 Batch', '⚙️ Processing', '🧠 Thinking', '⏳ Needs GO', '📬 My Inbox', '✅ Done', '➡️ Moved to Task'].includes(s)) return s;
   
   if (s.includes('Done') || s === 'Reviewed') return '✅ Done';
   if (s.includes('Task')) return '➡️ Moved to Task';
   if (s.includes('Needs GO') || s === 'Answered') return '⏳ Needs GO';
-  if (s.includes('Batched')) return '📦 Batched';
-  if (s.includes('Progress') || s.includes('Inbox')) return '🔄 In Progress';
+  if (s.includes('Batch') || s.includes('Batched')) return '📦 Batch';
+  if (s.includes('Progress') || s.includes('Process') || s.includes('Inbox')) return '⚙️ Processing';
   if (s.includes('Wait') || s.includes('Hold') || s.includes('Think')) return '🧠 Thinking';
   
   return '💬 New';
@@ -338,7 +338,7 @@ export default function PixelBoard() {
     
     // Auto-update status
     if (['⏳ Needs GO'].includes(mapStatus(selectedItem))) {
-      updates.status = '🔄 In Progress';
+      updates.status = '⚙️ Processing';
     }
     
     // Squirrel Catcher (LLM based)
@@ -433,7 +433,7 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
             <Badge variant="secondary" className="text-[11px] bg-slate-100 text-slate-600 hover:bg-slate-200">{item.category}</Badge>
             <Badge variant="outline" className={`text-[11px] ${pConf.color} border-0`}>{pConf.emoji} {item.priority}</Badge>
             {item.in_batch && <Badge variant="secondary" className="text-[11px] bg-slate-800 text-white border-0">📦 In Batch</Badge>}
-            {s !== '💬 New' && s !== '📬 My Inbox' && s !== '📦 Batched' && <Badge variant="outline" className="text-[11px] bg-white border-slate-200 text-slate-500">{s}</Badge>}
+            {s !== '💬 New' && s !== '📬 My Inbox' && s !== '📦 Batch' && <Badge variant="outline" className="text-[11px] bg-white border-slate-200 text-slate-500">{s}</Badge>}
           </div>
           
           <div className="flex items-center gap-2 text-[10px] text-slate-400 font-medium">
@@ -468,7 +468,7 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                 onClick={(e) => {
                   e.stopPropagation();
                   if (!item.in_batch) {
-                    updateMutation.mutate({ id: item.id, data: { in_batch: true, status: '📦 Batched' } });
+                    updateMutation.mutate({ id: item.id, data: { in_batch: true, status: '📦 Batch' } });
                     toast.success('Added to batch!');
                   } else {
                     updateMutation.mutate({ id: item.id, data: { in_batch: false, status: '💬 New' } });
@@ -855,7 +855,7 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                         className={`h-8 font-bold flex-shrink-0 ${selectedItem.in_batch ? 'bg-[#24C4D6] hover:bg-[#1db0c0] text-white border-0' : 'border-[#24C4D6] text-[#0D626C] hover:bg-[#24C4D6]/10'}`}
                         onClick={() => {
                           if (!selectedItem.in_batch) {
-                            updateMutation.mutate({ id: selectedItem.id, data: { in_batch: true, status: '📦 Batched' } });
+                            updateMutation.mutate({ id: selectedItem.id, data: { in_batch: true, status: '📦 Batch' } });
                             toast.success('Added to batch!');
                           } else {
                             updateMutation.mutate({ id: selectedItem.id, data: { in_batch: false, status: '💬 New' } });

@@ -17,7 +17,7 @@ Deno.serve(async (req) => {
         for (const item of items) {
             await base44.entities.PixelBoard.update(item.id, { 
                 batch_ready: true, 
-                status: "🔄 In Progress",
+                status: "⚙️ Processing",
                 in_batch: false // Clear the batch flag so they leave the send queue
             });
             ids.push(item.id);
