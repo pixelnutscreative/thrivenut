@@ -168,13 +168,23 @@ export default function PixelBoard() {
       if (priorityFilter !== 'All' && item.priority !== priorityFilter) return false;
       if (statusFilter !== 'All' && mapStatus(item.status) !== statusFilter) return false;
       if (activeFilter === 'inbox' || activeFilter === 'daisy_replied') {
-        const isUnread = item.nikole_read === false || item.nikole_read === null || item.nikole_read === undefined;
-        const hasResponse = item.pixel_response && item.pixel_response.trim() !== '';
-        if (!(isUnread && hasResponse)) return false;
+        if (!item.pixel_response || item.pixel_response.trim() === '' || item.nikole_read === true) return false;
       }
       return true;
     }).sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
   }, [items, searchQuery, categoryFilter, priorityFilter, statusFilter, activeFilter]);
+
+  const getRealColCount = (colId) => {
+    return items.filter(item => {
+      // For real count, we ignore activeFilter (Inbox/Daisy Replied), but still apply Search/Category/Priority if wanted.
+      // But usually, a real column count means "how many items match this status *plus* the current category/priority/search".
+      if (searchQuery && !item.title.toLowerCase().includes(searchQuery.toLowerCase()) && !(item.details || '').toLowerCase().includes(searchQuery.toLowerCase())) return false;
+      if (categoryFilter !== 'All' && item.category !== categoryFilter) return false;
+      if (priorityFilter !== 'All' && item.priority !== priorityFilter) return false;
+      // We do NOT check activeFilter here so the counts always represent the column size
+      return mapStatus(item.status) === colId;
+    }).length;
+  };
 
   const handleAskSubmit = () => {
     if (!newQuestion.title) return;
@@ -527,10 +537,11 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
           <div className="flex gap-6 overflow-x-auto pb-4 snap-x">
             {KANBAN_COLUMNS.map(col => {
               const colItems = filteredItems.filter(item => mapStatus(item.status) === col.id);
+              const realCount = getRealColCount(col.id);
               if (col.id === '✅ Done' && isDoneCollapsed) {
                 return (
                   <div key={col.id} className="min-w-[60px] max-w-[60px] bg-slate-100/50 rounded-2xl border-2 border-slate-200 border-dashed flex flex-col items-center py-4 cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => setIsDoneCollapsed(false)}>
-                    <div className="rotate-90 whitespace-nowrap font-bold text-slate-500 mt-10 tracking-widest uppercase">{col.label} ({colItems.length})</div>
+                    <div className="rotate-90 whitespace-nowrap font-bold text-slate-500 mt-10 tracking-widest uppercase">{col.label} ({realCount})</div>
                   </div>
                 );
               }
@@ -539,7 +550,7 @@ If YES, return is_new_topic as true and extract the text. If NO, return false.`,
                 <div key={col.id} className="min-w-[220px] max-w-[220px] w-[220px] flex flex-col gap-3 snap-start">
                   <div className="flex items-center justify-between pb-2 border-b-2 border-slate-200">
                     <h3 className="font-bold text-slate-700">{col.label}</h3>
-                    <Badge variant="secondary" className="bg-slate-200 text-slate-600 border-0">{colItems.length}</Badge>
+                    <Badge variant="secondary" className="bg-slate-200 text-slate-600 border-0">{realCount}</Badge>
                   </div>
                   {col.id === '✅ Done' && (
                     <Button variant="ghost" size="sm" className="w-full text-xs text-slate-500 -mt-2" onClick={() => setIsDoneCollapsed(true)}>Minimize</Button>
