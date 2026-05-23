@@ -480,7 +480,7 @@ function ModulesView({ group, categories, modules, completedIds, isAdmin, myMemb
                                 <h4 className="font-bold text-gray-700 text-lg">{category.title}</h4>
                                 {category.description && <span className="text-sm text-gray-400">- {category.description}</span>}
                                 <span className="ml-auto text-xs font-medium text-gray-400 bg-gray-100 px-2 py-1 rounded-full">
-                                    {category.items.filter(i => completedIds.includes(i.id)).length} / {category.items.length} Completed
+                                    {category.items.filter(i => completedIds.includes(i.id)).length} / {category.items.length} Viewed
                                 </span>
                             </div>
                             
@@ -663,9 +663,11 @@ function TrainingCard({ module, isCompleted, isAdmin, onToggle, onEdit, onDelete
             <CardContent className="p-0 flex">
                 <button 
                     onClick={onToggle}
-                    className={`w-12 flex items-center justify-center border-r transition-colors ${isCompleted ? 'bg-green-100 text-green-600' : 'bg-gray-50 text-gray-300 hover:bg-gray-100'}`}
+                    className={`w-16 flex flex-col items-center justify-center border-r transition-colors flex-shrink-0 ${isCompleted ? 'bg-green-100 text-green-600' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
+                    title={isCompleted ? "Mark as unviewed" : "Mark as viewed"}
                 >
-                    {isCompleted ? <CheckCircle className="w-6 h-6" /> : <Circle className="w-6 h-6" />}
+                    {isCompleted ? <CheckCircle className="w-5 h-5" /> : <Circle className="w-5 h-5" />}
+                    <span className="text-[10px] mt-1 font-medium text-center leading-tight">{isCompleted ? 'Viewed' : 'Mark\nViewed'}</span>
                 </button>
                 <div className="flex-1 p-4 space-y-2">
                     <div className="flex justify-between items-start">
@@ -844,7 +846,7 @@ function ProgressView({ group, modules }) {
                                 <tr>
                                     <th className="px-4 py-3">Member</th>
                                     <th className="px-4 py-3">Progress</th>
-                                    <th className="px-4 py-3 text-right">Completed</th>
+                                    <th className="px-4 py-3 text-right">Viewed</th>
                                     <th className="px-4 py-3 text-right">Last Active</th>
                                 </tr>
                             </thead>

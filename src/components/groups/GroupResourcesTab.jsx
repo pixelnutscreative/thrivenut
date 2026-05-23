@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Video, FileText, Link as LinkIcon, Plus, Check, X, ExternalLink, Pencil, Trash2, Loader2 } from 'lucide-react';
+import { Video, FileText, Link as LinkIcon, Plus, Check, X, ExternalLink, Pencil, Trash2, Loader2, CheckCircle, Circle } from 'lucide-react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import LevelSelector from './LevelSelector';
@@ -47,6 +47,35 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
     if (lower.includes('pdf') || lower.includes('doc')) return 'file';
     return 'link';
   };
+
+  const { data: myViews = [] } = useQuery({
+    queryKey: ['myResourceViews', group.id, currentUser?.email],
+    queryFn: async () => {
+      if (!currentUser?.email) return [];
+      return await base44.entities.GroupResourceView.filter({ user_email: currentUser?.email });
+    },
+    enabled: !!currentUser?.email
+  });
+
+  const toggleViewMutation = useMutation({
+    mutationFn: async (resourceId) => {
+      const existing = await base44.entities.GroupResourceView.filter({ 
+          user_email: currentUser?.email,
+          resource_id: resourceId 
+      });
+      if (existing.length > 0) {
+          return base44.entities.GroupResourceView.delete(existing[0].id);
+      } else {
+          return base44.entities.GroupResourceView.create({
+              resource_id: resourceId,
+              group_id: group.id,
+              user_email: currentUser?.email,
+              viewed_date: new Date().toISOString()
+          });
+      }
+    },
+    onSuccess: () => queryClient.invalidateQueries(['myResourceViews', group.id])
+  });
 
   const { data: resources = [] } = useQuery({
     queryKey: ['groupResources', group.id],
@@ -390,10 +419,19 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
 
         <TabsContent value="library" className="grid gap-4 mt-4">
           {visibleResources.map(resource => (
-            <Card key={resource.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-4 flex gap-4 items-start">
-                <div className="p-3 bg-gray-100 rounded-lg">{getIcon(resource.type)}</div>
-                <div className="flex-1 w-full" onClick={() => setExpandedResource(expandedResource === resource.id ? null : resource.id)}>
+            <Card key={resource.id} className={`hover:shadow-md transition-shadow overflow-hidden ${myViews.some(v => v.resource_id === resource.id) ? 'bg-green-50/30 border-green-200' : ''}`}>
+              <CardContent className="p-0 flex items-stretch">
+                <button 
+                    onClick={(e) => { e.stopPropagation(); toggleViewMutation.mutate(resource.id); }}
+                    className={`w-16 flex flex-col items-center justify-center border-r transition-colors flex-shrink-0 ${myViews.some(v => v.resource_id === resource.id) ? 'bg-green-100 text-green-600' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
+                    title={myViews.some(v => v.resource_id === resource.id) ? "Mark as unviewed" : "Mark as viewed"}
+                >
+                    {myViews.some(v => v.resource_id === resource.id) ? <CheckCircle className="w-5 h-5" /> : <Circle className="w-5 h-5" />}
+                    <span className="text-[10px] mt-1 font-medium text-center leading-tight">{myViews.some(v => v.resource_id === resource.id) ? 'Viewed' : 'Mark\nViewed'}</span>
+                </button>
+                <div className="p-4 flex-1 flex gap-4 items-start w-full">
+                  <div className="p-3 bg-gray-100 rounded-lg hidden sm:block">{getIcon(resource.type)}</div>
+                  <div className="flex-1 w-full" onClick={() => setExpandedResource(expandedResource === resource.id ? null : resource.id)}>
                   <div className="flex justify-between items-start">
                     <h4 className="font-semibold hover:text-purple-600 cursor-pointer pr-4">{resource.title}</h4>
                     <div className="flex gap-1 flex-shrink-0" onClick={e => e.stopPropagation()}>
@@ -473,6 +511,7 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
                       </p>
                     )}
                   </div>
+                </div>
                 </div>
               </CardContent>
             </Card>

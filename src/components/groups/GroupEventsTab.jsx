@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogT
 import { Input } from '@/components/ui/input';
 import { Calendar, MapPin, Link as LinkIcon, Plus, Trash2, Pencil, Share2, CalendarPlus } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format, isSameDay } from 'date-fns';
 import { toast } from 'sonner';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
@@ -320,6 +321,11 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
     const isPast = Date.now() - eventTime > 24 * 60 * 60 * 1000;
     return !isPast && !isSameDay(new Date(event.start_time), selectedDate);
   }).slice(0, 5);
+
+  const pastEvents = visibleEvents.filter((event) => {
+    const eventTime = new Date(event.start_time).getTime();
+    return Date.now() - eventTime > 24 * 60 * 60 * 1000;
+  }).sort((a, b) => new Date(b.start_time) - new Date(a.start_time));
 
   return (
     <div className="space-y-6">
@@ -640,65 +646,76 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
         </div>
       }
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        {/* Calendar Side */}
-        <div className="lg:col-span-1">
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-          
-        </div>
-
-        {/* Events Side */}
-        <div className="lg:col-span-2 space-y-8">
-          
-          {/* Selected Date Events */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-bold text-gray-900 border-b pb-2">
-              Events on {selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-            </h3>
-            
-            {selectedDateEvents.length === 0 ?
-            <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-xl border border-dashed">
-                <CalendarPlus className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                No events scheduled for this day.
-              </div> :
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {selectedDateEvents.map((event) => <EventCard key={event.id} event={event} />)}
-              </div>
-            }
-          </div>
-
-          {/* Upcoming Events */}
-          {upcomingEvents.length > 0 &&
-          <div className="space-y-4">
-              <h3 className="text-lg font-bold text-gray-900 border-b pb-2">
-                Upcoming Events
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {upcomingEvents.map((event) => <EventCard key={event.id} event={event} />)}
-              </div>
+      <Tabs defaultValue="upcoming" className="w-full">
+        <TabsList className="mb-6 bg-white border shadow-sm">
+          <TabsTrigger value="upcoming" className="data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700">Upcoming Schedule</TabsTrigger>
+          <TabsTrigger value="past" className="data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700">Past Events</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="upcoming">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start mt-4">
+            <div className="lg:col-span-1">
+              <Card>
+                <CardContent className="p-4">
+                  <CalendarComponent
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={(date) => date && setSelectedDate(date)}
+                    className="w-full"
+                    modifiers={{ hasEvent: eventDates }}
+                    modifiersStyles={{
+                      hasEvent: { fontWeight: 'bold', color: preferences?.primary_color || '#9333ea', backgroundColor: '#f3e8ff', borderRadius: '100%' }
+                    }}
+                  />
+                </CardContent>
+              </Card>
             </div>
-          }
 
-        </div>
-      </div>
+            <div className="lg:col-span-2 space-y-8">
+              <div className="space-y-4">
+                <h3 className="text-lg font-bold text-gray-900 border-b pb-2">
+                  Events on {selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+                </h3>
+                
+                {selectedDateEvents.length === 0 ?
+                <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-xl border border-dashed">
+                    <CalendarPlus className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                    No events scheduled for this day.
+                  </div> :
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {selectedDateEvents.map((event) => <EventCard key={event.id} event={event} />)}
+                  </div>
+                }
+              </div>
+
+              {upcomingEvents.length > 0 &&
+              <div className="space-y-4">
+                  <h3 className="text-lg font-bold text-gray-900 border-b pb-2">
+                    Upcoming Events
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {upcomingEvents.map((event) => <EventCard key={event.id} event={event} />)}
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="past">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+            {pastEvents.length === 0 ? (
+              <div className="col-span-full text-center py-8 text-gray-500 bg-gray-50 rounded-xl border border-dashed">
+                <CalendarPlus className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                No past events found.
+              </div>
+            ) : (
+              pastEvents.map(event => <EventCard key={event.id} event={event} />)
+            )}
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>);
 
 

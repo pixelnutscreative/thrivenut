@@ -1,0 +1,24 @@
+{
+  "name": "GroupResourceView",
+  "type": "object",
+  "properties": {
+    "group_id": {
+      "type": "string"
+    },
+    "resource_id": {
+      "type": "string"
+    },
+    "user_email": {
+      "type": "string"
+    },
+    "viewed_date": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "group_id",
+    "resource_id",
+    "user_email"
+  ]
+}
