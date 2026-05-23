@@ -300,9 +300,18 @@ function MemberInviteSettings({ group }) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="member">Member</SelectItem>
-                  <SelectItem value="client">Client</SelectItem>
-                  <SelectItem value="virtual-assistant">Virtual Assistant</SelectItem>
+                  {group.type === 'agency' ? (
+                    <>
+                      <SelectItem value="member">Creator</SelectItem>
+                      <SelectItem value="manager">Manager</SelectItem>
+                    </>
+                  ) : (
+                    <>
+                      <SelectItem value="member">Member</SelectItem>
+                      <SelectItem value="client">Client</SelectItem>
+                      <SelectItem value="virtual-assistant">Virtual Assistant</SelectItem>
+                    </>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -736,7 +745,9 @@ function TabPermissionsSettings({ group }) {
   const activeTabs = availableTabs.filter(tab => !disabledFeatures.includes(tab.id));
 
   const levels = ['Invited', 'Interested', 'Subscriber', ...(group.member_levels || [])];
-  const systemRoles = ['member', 'client', 'manager', 'admin', 'virtual-assistant']; 
+  const systemRoles = group.type === 'agency' 
+    ? ['member', 'manager', 'admin', 'owner'] // Displayed as Creator, Manager, Admin, Agency Owner
+    : ['member', 'client', 'manager', 'admin', 'virtual-assistant']; 
   
   // Filter out levels that conflict with system roles (case-insensitive)
   const filteredLevels = levels.filter(l => !systemRoles.includes(l.toLowerCase()));
@@ -828,7 +839,9 @@ function TabPermissionsSettings({ group }) {
                                 onChange={() => toggleColumnVisibility(role)}
                                 className="rounded text-purple-600 focus:ring-purple-500 cursor-pointer"
                             />
-                            <span className="text-sm capitalize truncate">{role}</span>
+                            <span className="text-sm capitalize truncate">
+                              {group.type === 'agency' ? (role === 'member' ? 'creator' : role === 'owner' ? 'agency owner' : role) : role}
+                            </span>
                         </div>
                     ))}
                 </div>
@@ -848,11 +861,18 @@ function TabPermissionsSettings({ group }) {
                       <tr>
                         <th className="text-left p-3 font-semibold text-gray-700 sticky left-0 bg-gray-50 z-10 w-32 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Tab</th>
                         <th className="text-center p-3 font-semibold text-gray-700 w-24">Actions</th>
-                        {allRoles.filter(r => visibleColumns.includes(r)).map(r => (
-                          <th key={r} className="text-center p-3 capitalize font-semibold text-gray-700 min-w-[100px] whitespace-nowrap">
-                            {r}
-                          </th>
-                        ))}
+                        {allRoles.filter(r => visibleColumns.includes(r)).map(r => {
+                          let label = r;
+                          if (group.type === 'agency') {
+                            if (r === 'member') label = 'Creator';
+                            if (r === 'owner') label = 'Agency Owner';
+                          }
+                          return (
+                            <th key={r} className="text-center p-3 capitalize font-semibold text-gray-700 min-w-[100px] whitespace-nowrap">
+                              {label}
+                            </th>
+                          );
+                        })}
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
@@ -1477,18 +1497,20 @@ function GroupExperienceSettings({ group }) {
           />
         </div>
 
-        <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
-            <Label>Enable Hourly Tracking & Retainers</Label>
-            <p className="text-sm text-gray-500">
-              Show the Retainer Packages and Hourly Tracking sections on the Members tab.
-            </p>
+        {group.type === 'client-portal' && (
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>Enable Hourly Tracking & Retainers</Label>
+              <p className="text-sm text-gray-500">
+                Show the Retainer Packages and Hourly Tracking sections on the Members tab.
+              </p>
+            </div>
+            <Switch 
+              checked={toggles.enable_retainer_management}
+              onCheckedChange={(checked) => handleToggle('enable_retainer_management', checked)}
+            />
           </div>
-          <Switch 
-            checked={toggles.enable_retainer_management}
-            onCheckedChange={(checked) => handleToggle('enable_retainer_management', checked)}
-          />
-        </div>
+        )}
       </CardContent>
     </Card>
   );

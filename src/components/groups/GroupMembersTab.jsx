@@ -205,7 +205,7 @@ function MemberRowItem({ member, group, isAdmin, currentUser, queryClient, allMe
             )}
           </div>
           {/* Retainers Section Toggleable by Group Setting */}
-          {isAdmin && group.enable_retainer_management && (
+          {isAdmin && group.type === 'client-portal' && group.enable_retainer_management && (
             <div className="flex gap-3 mt-1">
               <AddRetainerPackageDialog group={group} member={member} currentUser={currentUser} />
               <ViewRetainerHistoryDialog group={group} member={member} />
@@ -305,10 +305,20 @@ function EditMemberDialog({ member, group, isAdmin, currentUser, onUpdate, allMe
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent className="z-[60]">
-                                <SelectItem value="member">Creator / Member</SelectItem>
-                                <SelectItem value="manager">Manager</SelectItem>
-                                <SelectItem value="admin">Admin</SelectItem>
-                                <SelectItem value="virtual-assistant">Virtual Assistant</SelectItem>
+                                {group.type === 'agency' ? (
+                                  <>
+                                    <SelectItem value="member">Creator</SelectItem>
+                                    <SelectItem value="manager">Manager</SelectItem>
+                                    <SelectItem value="admin">Admin</SelectItem>
+                                  </>
+                                ) : (
+                                  <>
+                                    <SelectItem value="member">Creator / Member</SelectItem>
+                                    <SelectItem value="manager">Manager</SelectItem>
+                                    <SelectItem value="admin">Admin</SelectItem>
+                                    <SelectItem value="virtual-assistant">Virtual Assistant</SelectItem>
+                                  </>
+                                )}
                             </SelectContent>
                         </Select>
                     </div>

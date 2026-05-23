@@ -544,7 +544,7 @@ const { data: featureFlags = [] } = useQuery({
   },
   {
     id: 'creator',
-    title: 'Creator Suite',
+    title: 'Creator Studio',
     color: 'text-yellow-400', // Changed to Yellow
     bgColor: 'bg-yellow-500/10',
     items: [
@@ -564,7 +564,7 @@ const { data: featureFlags = [] } = useQuery({
   },
   {
     id: 'social',
-    title: 'Social Media Suite',
+    title: 'Social Studio',
     color: 'text-orange-400', // Changed to Orange
     bgColor: 'bg-orange-500/10',
     items: [

@@ -144,12 +144,17 @@ export default function PixelBoard() {
   }, [userPrefs]);
   
   const updateColumnsMutation = useMutation({
-    mutationFn: (newCols) => {
-      const prefsId = userPrefs?.id;
-      if (!prefsId) return Promise.resolve();
-      return base44.entities.UserPreferences.update(prefsId, {
-        custom_fields: { ...(userPrefs.custom_fields || {}), pixelboard_columns: newCols }
-      });
+    mutationFn: async (newCols) => {
+      if (userPrefs?.id) {
+        return base44.entities.UserPreferences.update(userPrefs.id, {
+          custom_fields: { ...(userPrefs.custom_fields || {}), pixelboard_columns: newCols }
+        });
+      } else {
+        return base44.entities.UserPreferences.create({
+          user_email: user.email,
+          custom_fields: { pixelboard_columns: newCols }
+        });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['userPreferences'] });
@@ -305,10 +310,10 @@ export default function PixelBoard() {
     mutationFn: async (item) => {
       await base44.entities.Task.create({
         title: item.title,
-        details: item.details,
+        details: item.details || '',
         source: 'PixelBoard',
         status: 'To Do',
-        category: item.category
+        category: item.category || 'Uncategorized'
       });
       return base44.entities.PixelBoard.update(item.id, { status: '➡️ Moved to Task' });
     },
@@ -316,6 +321,9 @@ export default function PixelBoard() {
       queryClient.invalidateQueries({ queryKey: ['pixelBoard'] });
       setSelectedItem(null);
       toast.success("Sent to Tasks!");
+    },
+    onError: (err) => {
+      toast.error(`Failed to send to Task: ${err.message}`);
     }
   });
 
@@ -452,7 +460,12 @@ export default function PixelBoard() {
 
   const handleAskSubmit = (inBatch = false) => {
     if (!newQuestion.title) return;
-    createMutation.mutate({ ...newQuestion, in_batch: inBatch });
+    const { images, ...rest } = newQuestion;
+    createMutation.mutate({ 
+      ...rest, 
+      in_batch: inBatch,
+      attachment_url: images && images.length > 0 ? images.join(',') : ''
+    });
   };
 
   const uploadFilesFromEvent = async (files) => {
@@ -1000,6 +1013,36 @@ export default function PixelBoard() {
                         </SelectContent>
                       </Select>
                     </div>
+                    <div className="space-y-2 col-span-2">
+                      <Label className="font-bold text-slate-700">Images</Label>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {newQuestion.images?.map((url, i) => (
+                          <div key={i} className="relative inline-block">
+                            <img src={url} alt="Upload preview" className="h-12 w-12 rounded-md border border-slate-200 object-cover" />
+                            <button 
+                              onClick={() => setNewQuestion(prev => ({ ...prev, images: prev.images.filter((_, index) => index !== i) }))}
+                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 hover:bg-red-600 shadow-sm"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
+                        <div>
+                          <input 
+                            type="file" 
+                            id="new-question-attachment"
+                            className="hidden" 
+                            accept="image/png, image/jpeg, image/gif, image/webp"
+                            onChange={(e) => uploadImagesToNewQuestion(e.target.files)}
+                            multiple
+                          />
+                          <Button variant="outline" size="sm" className="h-12 text-[10px]" disabled={isNewQuestionUploading} onClick={() => document.getElementById('new-question-attachment').click()}>
+                            {isNewQuestionUploading ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Paperclip className="w-4 h-4 mr-1" />} Add
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                    
                     <div className="space-y-2 col-span-2">
                       <Label className="font-bold text-slate-700">Card Type</Label>
                       <Select value={newQuestion.card_type} onValueChange={v => setNewQuestion({...newQuestion, card_type: v})}>

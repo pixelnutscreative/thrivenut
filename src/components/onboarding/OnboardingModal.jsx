@@ -17,36 +17,14 @@ function OnboardingModal({ isOpen, user, onComplete }) {
   const detectedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/New_York';
   
   const [data, setData] = useState({
-    // Step 1
-    nickname: '',
-    address_as: '',
-    custom_title: '',
-    
-    // Step 2
     city: '',
     state: '',
+    country: '',
     user_timezone: detectedTimezone,
-    
-    // Step 3
+    time_format: '12h',
     favorite_color: '#1fd2ea',
-    tiktok_username: '',
-    profile_image_url: '',
-    
-    // Step 4
-    superpower: '',
-    current_battle: '',
-    
-    // Step 5
-    enable_bible_options: false,
-    
-    referral_code_input: ''
+    profile_image_url: ''
   });
-
-  useEffect(() => {
-    if (user?.full_name && !data.nickname) {
-        setData(prev => ({ ...prev, nickname: user.full_name.split(' ')[0] }));
-    }
-  }, [user]);
 
   const completeMutation = useMutation({
     mutationFn: async () => {
@@ -102,26 +80,19 @@ function OnboardingModal({ isOpen, user, onComplete }) {
 
       const prefsData = {
         onboarding_completed: true,
-        nickname: data.nickname,
-        address_as: data.address_as === 'custom' ? data.custom_title : data.address_as,
         profile_image_url: data.profile_image_url,
-        tiktok_username: data.tiktok_username,
         primary_color: data.favorite_color,
         favorite_color: data.favorite_color,
         user_timezone: data.user_timezone,
         location_city: data.city,
         location_state: data.state,
-        superpowers: data.superpower,
-        current_battles: data.current_battle,
-        enable_bible_options: data.enable_bible_options,
-        time_format: '12h',
+        location_country: data.country,
+        time_format: data.time_format,
       };
 
       const profileData = {
         user_email: user.email,
         favorite_color: data.favorite_color,
-        tiktok_username: data.tiktok_username,
-        nickname: data.nickname
       };
 
       if (targetPrefId) {
@@ -154,21 +125,27 @@ function OnboardingModal({ isOpen, user, onComplete }) {
   });
 
   const handleNext = () => {
-    if (step < 5) setStep(step + 1);
+    if (step < 2) setStep(step + 1);
     else completeMutation.mutate();
   };
 
   const canProceed = () => {
-    if (step === 1) return !!data.nickname && !!data.address_as && (data.address_as !== 'custom' || !!data.custom_title);
-    if (step === 2) return true; // Location is optional
-    if (step === 3) return !!data.favorite_color;
-    if (step === 4) return true; // Superpower & battle optional
-    if (step === 5) return true;
+    if (step === 1) return true; // location optional
+    if (step === 2) return !!data.favorite_color;
     return false;
   };
 
-  const handleClose = () => {
+  const handleClose = async () => {
     localStorage.setItem(`onboarding_completed_${user?.email}`, 'true');
+    // Also save to DB so the backend knows onboarding is done
+    try {
+      const prefs = await base44.entities.UserPreferences.filter({ user_email: user.email });
+      if (prefs.length > 0) {
+        await base44.entities.UserPreferences.update(prefs[0].id, { onboarding_completed: true });
+      } else {
+        await base44.entities.UserPreferences.create({ user_email: user.email, onboarding_completed: true });
+      }
+    } catch(e) {}
     onComplete();
   };
 
@@ -181,63 +158,51 @@ function OnboardingModal({ isOpen, user, onComplete }) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-purple-500" />
-            {step === 1 && 'Who are you?'}
-            {step === 2 && 'Where are you?'}
-            {step === 3 && 'Make it yours'}
-            {step === 4 && 'Your superpowers & battles'}
-            {step === 5 && 'Your vibe'}
+            {step === 1 && 'Where are you?'}
+            {step === 2 && 'Make it yours'}
           </DialogTitle>
         </DialogHeader>
         
         <div className="space-y-6 py-4">
           {step === 1 && (
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>What's your name / what do you want to be called?</Label>
-                <Input 
-                  value={data.nickname}
-                  onChange={(e) => setData({ ...data, nickname: e.target.value })}
-                  placeholder="e.g. Sarah"
-                />
+              <p className="text-sm text-gray-600">Tell us where you are to set your timezone correctly.</p>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>City</Label>
+                  <Input value={data.city} onChange={(e) => setData({ ...data, city: e.target.value })} placeholder="e.g. Nashville" />
+                </div>
+                <div className="space-y-2">
+                  <Label>State</Label>
+                  <Input value={data.state} onChange={(e) => setData({ ...data, state: e.target.value })} placeholder="e.g. TN" />
+                </div>
               </div>
+              
               <div className="space-y-2">
-                <Label>Choose your title</Label>
-                <Select value={data.address_as} onValueChange={v => setData({...data, address_as: v})}>
-                  <SelectTrigger><SelectValue placeholder="Select a title" /></SelectTrigger>
+                <Label>Country</Label>
+                <Input value={data.country} onChange={(e) => setData({ ...data, country: e.target.value })} placeholder="e.g. USA" />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Timezone</Label>
+                <Input value={data.user_timezone} onChange={(e) => setData({ ...data, user_timezone: e.target.value })} />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Time Format</Label>
+                <Select value={data.time_format} onValueChange={v => setData({...data, time_format: v})}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Queen 👑">Queen 👑</SelectItem>
-                    <SelectItem value="Princess 🌸">Princess 🌸</SelectItem>
-                    <SelectItem value="King 👑">King 👑</SelectItem>
-                    <SelectItem value="custom">Type your own...</SelectItem>
+                    <SelectItem value="12h">12-hour (1:00 PM)</SelectItem>
+                    <SelectItem value="24h">24-hour (13:00)</SelectItem>
                   </SelectContent>
                 </Select>
-                {data.address_as === 'custom' && (
-                  <Input 
-                    value={data.custom_title}
-                    onChange={e => setData({...data, custom_title: e.target.value})}
-                    placeholder="Enter your custom title"
-                    className="mt-2"
-                  />
-                )}
               </div>
             </div>
           )}
 
           {step === 2 && (
-            <div className="space-y-4">
-              <p className="text-sm text-gray-600">Tell us where you are so we can set your timezone correctly.</p>
-              <div className="space-y-2">
-                <Label>City / State</Label>
-                <Input
-                  value={data.city}
-                  onChange={(e) => setData({ ...data, city: e.target.value })}
-                  placeholder="e.g., Nashville, TN"
-                />
-              </div>
-            </div>
-          )}
-
-          {step === 3 && (
             <div className="space-y-6">
               <div className="space-y-2">
                 <Label>Favorite Color</Label>
@@ -247,66 +212,13 @@ function OnboardingModal({ isOpen, user, onComplete }) {
                   label="Choose UI Accent Color"
                 />
               </div>
-              <div className="space-y-2">
-                <Label>TikTok Handle (Optional)</Label>
-                <Input
-                  value={data.tiktok_username}
-                  onChange={(e) => setData({ ...data, tiktok_username: e.target.value })}
-                  placeholder="@username"
-                />
-              </div>
-              <div className="flex justify-center">
+              <div className="flex justify-center mt-6">
                 <ImageUploader 
                   currentImage={data.profile_image_url}
                   onImageChange={(url) => setData({ ...data, profile_image_url: url })}
                   size="small"
                   label="Profile Photo (Optional)"
                 />
-              </div>
-            </div>
-          )}
-
-          {step === 4 && (
-            <div className="space-y-4">
-              <p className="text-sm text-gray-600">This helps personalize your daily motivation and AI interactions.</p>
-              <div className="space-y-2">
-                <Label>I have the superpower of...</Label>
-                <Input 
-                  value={data.superpower}
-                  onChange={(e) => setData({ ...data, superpower: e.target.value })}
-                  placeholder="e.g. Creativity, ADHD, Stubbornness"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>I'm currently battling...</Label>
-                <Input 
-                  value={data.current_battle}
-                  onChange={(e) => setData({ ...data, current_battle: e.target.value })}
-                  placeholder="e.g. Procrastination, Self-doubt"
-                />
-              </div>
-            </div>
-          )}
-
-          {step === 5 && (
-            <div className="space-y-4">
-              <div className="p-4 border rounded-lg hover:border-purple-300 cursor-pointer transition-all" onClick={() => setData({...data, enable_bible_options: true})}>
-                <div className="flex items-center gap-3">
-                  <input type="radio" checked={data.enable_bible_options === true} onChange={() => {}} />
-                  <div>
-                    <div className="font-medium">YES, include Scripture</div>
-                    <div className="text-xs text-gray-500">I'd love Bible verses in my daily motivation & quotes.</div>
-                  </div>
-                </div>
-              </div>
-              <div className="p-4 border rounded-lg hover:border-purple-300 cursor-pointer transition-all" onClick={() => setData({...data, enable_bible_options: false})}>
-                <div className="flex items-center gap-3">
-                  <input type="radio" checked={data.enable_bible_options === false} onChange={() => {}} />
-                  <div>
-                    <div className="font-medium">NO, keep it general</div>
-                    <div className="text-xs text-gray-500">I prefer general positive quotes and motivation.</div>
-                  </div>
-                </div>
               </div>
             </div>
           )}
@@ -323,12 +235,12 @@ function OnboardingModal({ isOpen, user, onComplete }) {
           >
             {completeMutation.isPending ? (
               <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</>
-            ) : step === 5 ? "Finish & Thrive!" : 'Next'}
+            ) : step === 2 ? "Finish & Thrive!" : 'Next'}
           </Button>
         </div>
 
         <div className="flex gap-1 justify-center mt-4">
-          {[1, 2, 3, 4, 5].map(s => (
+          {[1, 2].map(s => (
             <div key={s} className={`h-1.5 rounded-full transition-all ${s === step ? 'w-8 bg-purple-500' : s < step ? 'w-4 bg-purple-300' : 'w-4 bg-gray-200'}`} />
           ))}
         </div>

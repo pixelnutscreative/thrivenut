@@ -737,6 +737,9 @@ export default function CreatorGroups() {
     // Global Members tab restriction: Creators can NEVER see the members list
     if (id === 'members' && !isAdmin && userRole !== 'manager') return false;
     
+    // Hide Feed tab for Agency groups
+    if (activeGroup?.type === 'agency' && id === 'feed') return false;
+
     // Check disabled features first (Global Admin Toggle) - If it's disabled here, it's disabled for everyone
     if (disabledFeatures.includes(id)) {
       // EXCEPTION: Admins must always be able to access Members tab to manage the group
@@ -1213,7 +1216,7 @@ export default function CreatorGroups() {
   return (
     <div className="min-h-screen bg-gray-50/50" style={themeStyles}>
       {/* Header */}
-      <div className="border-b sticky top-0 z-10 px-6 py-4 shadow-sm transition-colors" style={{ backgroundColor: activeGroup.settings?.menu_color || activeGroup.settings?.group_color || '#ffffff', color: (activeGroup.settings?.menu_color || activeGroup.settings?.group_color) ? '#ffffff' : '#111827' }}>
+      <div className="border-b sticky top-0 z-10 px-6 py-4 shadow-sm transition-colors" style={{ backgroundColor: activeGroup.settings?.group_color || '#ffffff', color: activeGroup.settings?.group_color ? '#ffffff' : '#111827' }}>
         <div className="max-w-6xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" onClick={() => setSearchParams(browseMode ? { mode: 'browse' } : {})}>
@@ -1222,6 +1225,9 @@ export default function CreatorGroups() {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-xl font-bold flex items-center gap-2" style={{ color: (activeGroup.settings?.menu_color || activeGroup.settings?.group_color) ? '#ffffff' : '#111827' }}>
+                  {activeGroup.type === 'agency' && activeGroup.logo_url && (
+                    <img src={activeGroup.logo_url} alt="Agency Logo" className="w-6 h-6 rounded-md object-cover" />
+                  )}
                   {activeGroup.name}
                   <GroupHeaderIcon className="w-5 h-5 opacity-80" />
                 </h1>
@@ -1405,11 +1411,21 @@ export default function CreatorGroups() {
                             <Select value={inviteRole} onValueChange={setInviteRole}>
                               <SelectTrigger><SelectValue /></SelectTrigger>
                               <SelectContent className="z-[60]">
-                                <SelectItem value="member">Member</SelectItem>
-                                <SelectItem value="client">Client</SelectItem>
-                                <SelectItem value="manager">Manager</SelectItem>
-                                <SelectItem value="admin">Admin</SelectItem>
-                                <SelectItem value="virtual-assistant">Virtual Assistant</SelectItem>
+                                {activeGroup.type === 'agency' ? (
+                                  <>
+                                    <SelectItem value="member">Creator</SelectItem>
+                                    <SelectItem value="manager">Manager</SelectItem>
+                                    <SelectItem value="admin">Admin</SelectItem>
+                                  </>
+                                ) : (
+                                  <>
+                                    <SelectItem value="member">Member</SelectItem>
+                                    <SelectItem value="client">Client</SelectItem>
+                                    <SelectItem value="manager">Manager</SelectItem>
+                                    <SelectItem value="admin">Admin</SelectItem>
+                                    <SelectItem value="virtual-assistant">Virtual Assistant</SelectItem>
+                                  </>
+                                )}
                               </SelectContent>
                             </Select>
                           </div>

@@ -424,15 +424,28 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
                   {expandedResource === resource.id && (
                     <>
                       {resource.url && (
-                        <a 
-                          href={resource.url} 
-                          target="_blank" 
-                          rel="noopener noreferrer" 
-                          className="inline-flex items-center gap-1 text-sm text-purple-600 mt-2 hover:underline"
-                          onClick={e => e.stopPropagation()}
-                        >
-                          Open Resource <ExternalLink className="w-3 h-3" />
-                        </a>
+                        <div className="flex items-center gap-4 mt-3">
+                          <a 
+                            href={resource.url} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="inline-flex items-center gap-1 text-sm bg-purple-50 text-purple-700 px-3 py-1.5 rounded-full hover:bg-purple-100 transition-colors"
+                            onClick={e => e.stopPropagation()}
+                          >
+                            Open Resource <ExternalLink className="w-3 h-3" />
+                          </a>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                navigator.clipboard.writeText(resource.url);
+                                alert("Link copied!");
+                            }}
+                            className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
+                          >
+                            <LinkIcon className="w-3 h-3" /> Copy Link
+                          </button>
+                        </div>
                       )}
                       
                       {resource.transcript && (

@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MessageSquare, Plus, CheckCircle, Clock, XCircle, Send, Bell, Settings, Pencil } from 'lucide-react';
+import { MessageSquare, Plus, CheckCircle, Clock, XCircle, Send, Bell, Settings, Pencil, Trash2 } from 'lucide-react';
 import LevelSelector from './LevelSelector';
 import MemberSelector from './MemberSelector';
 
@@ -26,8 +26,12 @@ export default function GroupRequestsTab({ group, currentUser, myMembership, isA
   const [attachments, setAttachments] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const defaultTypes = group.type === 'agency' 
+    ? ['Technical Support', 'Content Request', 'Account Access', 'Billing', 'Other'] 
+    : ['Support', 'Feature Request', 'Access Request', 'Other'];
+
   const [requestSettings, setRequestSettings] = useState(group.settings?.request_permissions || { 
-    enabled: true, allowed_levels: [], allowed_users: [], custom_types: ['Support', 'Feature Request', 'Access Request', 'Other'] 
+    enabled: true, allowed_levels: [], allowed_users: [], custom_types: defaultTypes 
   });
 
   // 1. Fetch Requests
@@ -95,6 +99,14 @@ export default function GroupRequestsTab({ group, currentUser, myMembership, isA
       });
       setIsDialogOpen(true);
   };
+
+  const deleteRequestMutation = useMutation({
+    mutationFn: (id) => base44.entities.GroupRequest.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['groupRequests', group.id]);
+      setActiveRequest(null);
+    }
+  });
 
   const updateStatusMutation = useMutation({
     mutationFn: ({ id, status }) => base44.entities.GroupRequest.update(id, { status }),
@@ -342,7 +354,8 @@ export default function GroupRequestsTab({ group, currentUser, myMembership, isA
                   isAdmin={isAdmin} 
                   setActiveRequest={setActiveRequest} 
                   handleEdit={handleEdit} 
-                  updateStatusMutation={updateStatusMutation} 
+                  updateStatusMutation={updateStatusMutation}
+                  deleteRequestMutation={deleteRequestMutation}
                 />
               ))}
               {adminRequests.length === 0 && <div className="text-gray-500 text-center py-8 col-span-full">No team requests found.</div>}
@@ -502,7 +515,7 @@ export default function GroupRequestsTab({ group, currentUser, myMembership, isA
   );
 }
 
-function RequestCard({ req, currentUser, isAdmin, setActiveRequest, handleEdit, updateStatusMutation }) {
+function RequestCard({ req, currentUser, isAdmin, setActiveRequest, handleEdit, updateStatusMutation, deleteRequestMutation }) {
   return (
     <Card className="flex flex-col">
       <CardHeader className="pb-2">
@@ -537,6 +550,11 @@ function RequestCard({ req, currentUser, isAdmin, setActiveRequest, handleEdit, 
             {isAdmin && (
                 <Button variant="ghost" size="sm" onClick={() => handleEdit(req)}>
                     <Pencil className="w-4 h-4" />
+                </Button>
+            )}
+            {isAdmin && deleteRequestMutation && (
+                <Button variant="ghost" size="sm" className="text-red-500 hover:bg-red-50 hover:text-red-600" onClick={() => { if(window.confirm('Delete this ticket?')) deleteRequestMutation.mutate(req.id); }}>
+                    <Trash2 className="w-4 h-4" />
                 </Button>
             )}
         </div>

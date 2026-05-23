@@ -9,18 +9,20 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 function UserAvatar({ email, className }) {
-  const { data: userProfile } = useQuery({
-    queryKey: ['userProfile', email],
+  const { data: profileImageUrl } = useQuery({
+    queryKey: ['userAvatar', email],
     queryFn: async () => {
-       const prefs = await base44.entities.UserPreferences.filter({ user_email: email });
-       return prefs[0];
+       if (!email) return null;
+       const prefs = await base44.entities.UserPreferences.filter({ user_email: email }, '-updated_date');
+       const validPref = prefs.find(p => p.profile_image_url);
+       return validPref?.profile_image_url || null;
     },
     staleTime: 1000 * 60 * 5 // 5 mins
   });
   
   return (
     <Avatar className={className}>
-      <AvatarImage src={userProfile?.profile_image_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`} />
+      <AvatarImage src={profileImageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`} />
       <AvatarFallback>{email ? email[0].toUpperCase() : '?'}</AvatarFallback>
     </Avatar>
   );
