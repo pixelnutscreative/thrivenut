@@ -803,12 +803,12 @@ export default function CreatorGroups() {
     if (isClientGroup) {
 
 
+
+
       // Client groups might restrict members tab, but let's allow it if not explicitly disabled
       // if (id === 'members' && !isAdmin) return false;
     } // Admin Override
-    if (isAdmin) {
-      if (id === 'sales' && !activeGroup.enable_prospect_management) return false;
-      return true;
+    if (isAdmin) {if (id === 'sales' && !activeGroup.enable_prospect_management) return false;return true;
     }
 
     return !(groupPrefs?.hidden_tabs || []).includes(id);
