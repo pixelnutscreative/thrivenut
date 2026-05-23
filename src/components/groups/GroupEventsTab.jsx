@@ -543,25 +543,25 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         {/* Calendar Side */}
         <div className="lg:col-span-1">
-          <Card className="border shadow-sm p-4 bg-white sticky top-24 hidden">
-            <CalendarComponent
-              mode="single"
-              selected={selectedDate}
-              onSelect={(date) => {
-                if (date) setSelectedDate(date);
-              }}
-              modifiers={{ hasEvent: eventDates }}
-              modifiersStyles={{
-                hasEvent: {
-                  fontWeight: 'bold',
-                  backgroundColor: preferences?.primary_color ? `${preferences.primary_color}20` : '#f3e8ff',
-                  color: preferences?.primary_color || '#7e22ce',
-                  borderRadius: '100%'
-                }
-              }}
-              className="w-full flex justify-center bg-transparent" />
-            
-          </Card>
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+          
         </div>
 
         {/* Events Side */}

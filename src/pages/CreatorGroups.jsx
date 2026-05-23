@@ -1590,7 +1590,7 @@ export default function CreatorGroups() {
           }
 
           <h2 className="text-3xl font-bold mb-4">{displayNames[currentTab] || allTabs.find((t) => t.id === currentTab)?.label || 'Dashboard'}</h2>
-          <h2 className="text-3xl font-bold mb-4 hidden">{displayNames[currentTab] || allTabs.find((t) => t.id === currentTab)?.label || 'Dashboard'}</h2>
+          
           <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-6">
             <TooltipProvider>
               <TabsList className="bg-white border p-1 rounded-xl h-auto flex-wrap gap-1 w-full justify-start">
