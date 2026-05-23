@@ -23,6 +23,7 @@ import AgencyLiveCalendar from '@/pages/AgencyLiveCalendar';
 import GroupLogoUploader from './GroupLogoUploader';
 import ProspectManagementSettings from './ProspectManagementSettings';
 import LevelSelector from './LevelSelector';
+import GroupMembersTab from './GroupMembersTab';
 
 function GroupAISettings({ group }) {
   const queryClient = useQueryClient();
@@ -95,7 +96,7 @@ function SettingsSection({ title, icon: Icon, children, defaultOpen = false }) {
   );
 }
 
-export default function GroupSettingsTab({ group }) {
+export default function GroupSettingsTab({ group, currentUser, isAdmin }) {
   return (
     <div className="space-y-6 max-w-4xl mx-auto pb-20">
       <div className="mb-8">
@@ -103,7 +104,18 @@ export default function GroupSettingsTab({ group }) {
         <p className="text-gray-500">Manage your group's appearance, features, and members.</p>
       </div>
 
-      <SettingsSection title="General" icon={Settings} defaultOpen={true}>
+      <Tabs defaultValue="settings" className="w-full">
+        <TabsList className="mb-6 bg-white border shadow-sm">
+          <TabsTrigger value="settings" className="data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700">Settings</TabsTrigger>
+          <TabsTrigger value="members" className="data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700">Members</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="members" className="space-y-6 mt-0 focus-visible:outline-none">
+          <GroupMembersTab group={group} currentUser={currentUser} isAdmin={isAdmin} />
+        </TabsContent>
+
+        <TabsContent value="settings" className="space-y-6 mt-0 focus-visible:outline-none">
+          <SettingsSection title="General" icon={Settings} defaultOpen={true}>
         <GroupNameSettings group={group} />
         <GroupAppearanceSettings group={group} />
         <GroupTypeSettings group={group} />
@@ -140,6 +152,8 @@ export default function GroupSettingsTab({ group }) {
         <TransferOwnershipSettings group={group} />
         <DeleteGroupSettings group={group} />
       </SettingsSection>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

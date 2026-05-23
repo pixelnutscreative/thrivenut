@@ -267,14 +267,21 @@ export default function CreatorGroups() {
         joined_date: new Date().toISOString()
       });
 
-      // Restricted Feature Mode (Social House)
+      // Restricted Feature Mode (Social House / Agency)
       if (group.restrict_new_members) {
         const prefs = await base44.entities.UserPreferences.filter({ user_email: user?.email });
         if (prefs.length > 0) {
-          await base44.entities.UserPreferences.update(prefs[0].id, {
-            enabled_modules: ['my_groups'], // Disable all other modules
-            is_restricted_experience: true
-          });
+          const userPrefs = prefs[0];
+          // Step 5: Thrive Member Status Detection
+          // Do not restrict users who are paying Thrive members or super fans
+          const isThriveMember = userPrefs.subscription_status === 'active' || userPrefs.is_superfan;
+          
+          if (!isThriveMember) {
+            await base44.entities.UserPreferences.update(userPrefs.id, {
+              enabled_modules: ['my_groups'], // Disable all other modules
+              is_restricted_experience: true
+            });
+          }
         }
       }
       return { group, existing: false, status: initialStatus };
@@ -679,7 +686,6 @@ export default function CreatorGroups() {
   { id: 'resources', label: displayNames.resources || 'Resources', icon: FileText, color: 'amber' },
   { id: 'training', label: displayNames.training || 'Training', icon: GraduationCap, color: 'blue' },
   { id: 'qna', label: displayNames.qna || 'Q&A', icon: HelpCircle, color: 'teal' },
-  { id: 'members', label: displayNames.members || 'Members', icon: Users, color: 'orange' },
   { id: 'requests', label: displayNames.requests || 'Requests', icon: AlertCircle, color: 'gray' },
   { id: 'sales', label: displayNames.sales || 'Sales Pipeline', icon: Target, color: 'green' }];
 
@@ -1722,12 +1728,6 @@ export default function CreatorGroups() {
               }
           </TabsContent>
 
-          <TabsContent value="members" className="focus-visible:outline-none">
-            {isTabEnabled('members') &&
-              <GroupMembersTab group={activeGroup} currentUser={user} isAdmin={isAdmin} />
-              }
-          </TabsContent>
-
           <TabsContent value="sales" className="focus-visible:outline-none">
             {isTabEnabled('sales') &&
               <GroupSalesTab group={activeGroup} isAdmin={isAdmin} />
@@ -1736,7 +1736,7 @@ export default function CreatorGroups() {
 
           {isAdmin &&
             <TabsContent value="settings" className="focus-visible:outline-none">
-              <GroupSettingsTab group={activeGroup} />
+              <GroupSettingsTab group={activeGroup} currentUser={user} isAdmin={isAdmin} />
             </TabsContent>
             }
         </Tabs>

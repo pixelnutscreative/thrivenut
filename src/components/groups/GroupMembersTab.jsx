@@ -383,7 +383,16 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
   });
 
   const approveMutation = useMutation({
-    mutationFn: (id) => base44.entities.CreatorGroupMember.update(id, { status: 'active' }),
+    mutationFn: async (id) => {
+      const updateData = { status: 'active' };
+      // "Creator Level" automatic progression logic:
+      // When users are approved in an Agency group, they automatically get assigned the Creator level.
+      if (group.type === 'agency') {
+        updateData.level = 'Creator';
+        updateData.role = 'member'; // "Creator" role maps to "member" in system
+      }
+      return base44.entities.CreatorGroupMember.update(id, updateData);
+    },
     onSuccess: () => queryClient.invalidateQueries(['groupMembers', group.id])
   });
 
