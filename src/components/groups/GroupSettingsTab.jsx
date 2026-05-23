@@ -33,7 +33,10 @@ function GroupAISettings({ group }) {
       const current = await base44.entities.CreatorGroup.get(group.id);
       return base44.entities.CreatorGroup.update(group.id, { settings: { ...current.settings, ...data } });
     },
-    onSuccess: () => queryClient.invalidateQueries(['myGroupsDetails'])
+    onSuccess: () => {
+      queryClient.invalidateQueries(['myGroupsDetails']);
+      toast.success("AI Settings saved!");
+    }
   });
 
   const toggleType = (type) => {
@@ -72,71 +75,71 @@ function GroupAISettings({ group }) {
   );
 }
 
+function SettingsSection({ title, icon: Icon, children, defaultOpen = false }) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen} className="bg-white border border-gray-200 rounded-xl shadow-sm mb-6 overflow-hidden">
+      <CollapsibleTrigger className="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors">
+        <div className="flex items-center gap-3">
+          <Icon className="w-5 h-5 text-purple-600" />
+          <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+        </div>
+        {isOpen ? <ChevronDown className="w-5 h-5 text-gray-400" /> : <ChevronRight className="w-5 h-5 text-gray-400" />}
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="p-6 border-t border-gray-100 space-y-6 bg-gray-50/50">
+          {children}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
 export default function GroupSettingsTab({ group }) {
   return (
-    <div className="space-y-6">
-      <Tabs defaultValue="general" className="w-full">
-        <TabsList className="bg-gray-100 p-1 rounded-lg w-full justify-start h-auto flex-wrap">
-          <TabsTrigger value="general" className="px-4 py-2"><Settings className="w-4 h-4 mr-2" /> General</TabsTrigger>
-          <TabsTrigger value="ai" className="px-4 py-2"><Brain className="w-4 h-4 mr-2" /> AI Assistant</TabsTrigger>
-          <TabsTrigger value="announcements" className="px-4 py-2"><Megaphone className="w-4 h-4 mr-2" /> Announcements</TabsTrigger>
-          {group.type === 'agency' && (
-             <TabsTrigger value="lives" className="px-4 py-2"><Video className="w-4 h-4 mr-2" /> Live Calendar</TabsTrigger>
-          )}
-          <TabsTrigger value="membership" className="px-4 py-2"><Users className="w-4 h-4 mr-2" /> Membership</TabsTrigger>
-          {group.type !== 'client-portal' && (
-            <TabsTrigger value="content" className="px-4 py-2"><FileText className="w-4 h-4 mr-2" /> Content</TabsTrigger>
-          )}
-          <TabsTrigger value="permissions" className="px-4 py-2"><Shield className="w-4 h-4 mr-2" /> Permissions</TabsTrigger>
-          <TabsTrigger value="danger" className="px-4 py-2 text-red-600 data-[state=active]:text-red-700 data-[state=active]:bg-red-50"><Trash2 className="w-4 h-4 mr-2" /> Danger Zone</TabsTrigger>
-        </TabsList>
+    <div className="space-y-6 max-w-4xl mx-auto pb-20">
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-gray-900">Group Settings</h1>
+        <p className="text-gray-500">Manage your group's appearance, features, and members.</p>
+      </div>
 
-        <TabsContent value="ai" className="space-y-6 mt-6">
-          <GroupAISettings group={group} />
-        </TabsContent>
+      <SettingsSection title="General" icon={Settings} defaultOpen={true}>
+        <GroupNameSettings group={group} />
+        <GroupAppearanceSettings group={group} />
+        <GroupTypeSettings group={group} />
+        <GroupLogoUploader group={group} />
+      </SettingsSection>
 
-        <TabsContent value="general" className="space-y-6 mt-6">
-          <GroupTabsManager group={group} />
-          <GroupNameSettings group={group} />
-          <GroupAppearanceSettings group={group} />
-          <GroupExperienceSettings group={group} />
-          <GroupTypeSettings group={group} />
-          <GroupLogoUploader group={group} />
-          <ProspectManagementSettings group={group} />
-          <GroupShortcutsSettings group={group} />
-          <CryptoTickerSettings group={group} />
-        </TabsContent>
+      <SettingsSection title="Navigation & Tabs" icon={GripVertical}>
+        <GroupTabsManager group={group} />
+      </SettingsSection>
 
-        <TabsContent value="announcements" className="space-y-6 mt-6">
-          <GroupAnnouncementsSettings group={group} />
-        </TabsContent>
+      <SettingsSection title="Membership" icon={Users}>
+        <GroupExperienceSettings group={group} />
+        <MemberInviteSettings group={group} />
+        {group.type !== 'agency' && <MemberLevelsSettings group={group} />}
+      </SettingsSection>
 
-        <TabsContent value="lives" className="space-y-6 mt-6">
-           <AgencyLiveCalendar group={group} />
-        </TabsContent>
+      <SettingsSection title="Permissions" icon={Shield}>
+        <TabPermissionsSettings group={group} />
+        {group.type !== 'client-portal' && <ResourceAccessSettings group={group} />}
+      </SettingsSection>
 
-        <TabsContent value="membership" className="space-y-6 mt-6">
-          <MemberInviteSettings group={group} />
-          {group.type !== 'agency' && <MemberLevelsSettings group={group} />}
-          <GroupAccessSettings group={group} />
-        </TabsContent>
+      <SettingsSection title="Integrations & Links" icon={LinkIcon}>
+        <GroupShortcutsSettings group={group} />
+        <GroupAccessSettings group={group} />
+        {group.type !== 'client-portal' && <FunnelContentSettings group={group} />}
+        {group.type === 'agency' && <AgencyLiveCalendar group={group} />}
+        <GroupAnnouncementsSettings group={group} />
+        {group.type !== 'agency' && <CryptoTickerSettings group={group} />}
+        {group.type !== 'agency' && <ProspectManagementSettings group={group} />}
+        <GroupAISettings group={group} />
+      </SettingsSection>
 
-        {group.type !== 'client-portal' && (
-          <TabsContent value="content" className="space-y-6 mt-6">
-            <FunnelContentSettings group={group} />
-            <ResourceAccessSettings group={group} />
-          </TabsContent>
-        )}
-
-        <TabsContent value="permissions" className="space-y-6 mt-6">
-          <TabPermissionsSettings group={group} />
-        </TabsContent>
-
-        <TabsContent value="danger" className="space-y-6 mt-6">
-          <TransferOwnershipSettings group={group} />
-          <DeleteGroupSettings group={group} />
-        </TabsContent>
-      </Tabs>
+      <SettingsSection title="Danger Zone" icon={AlertTriangle}>
+        <TransferOwnershipSettings group={group} />
+        <DeleteGroupSettings group={group} />
+      </SettingsSection>
     </div>
   );
 }
@@ -144,12 +147,14 @@ export default function GroupSettingsTab({ group }) {
 function GroupAppearanceSettings({ group }) {
   const queryClient = useQueryClient();
   const [menuPinned, setMenuPinned] = React.useState(group.menu_pinned || false);
-  const [menuColor, setMenuColor] = React.useState(group.menu_color || '#8B5CF6');
+  const [menuColor, setMenuColor] = React.useState(group.menu_color || group.settings?.group_color || '#8b5cf6');
+  const [groupColor, setGroupColor] = React.useState(group.settings?.group_color || '#8b5cf6');
 
   React.useEffect(() => {
     setMenuPinned(group.menu_pinned || false);
-    setMenuColor(group.menu_color || '#8B5CF6');
-  }, [group.menu_pinned, group.menu_color]);
+    setMenuColor(group.menu_color || group.settings?.group_color || '#8b5cf6');
+    setGroupColor(group.settings?.group_color || '#8b5cf6');
+  }, [group.menu_pinned, group.menu_color, group.settings?.group_color]);
 
   const updateMutation = useMutation({
     mutationFn: async (data) => {
@@ -163,8 +168,17 @@ function GroupAppearanceSettings({ group }) {
     onSuccess: () => {
       queryClient.invalidateQueries(['myGroupsDetails']);
       queryClient.invalidateQueries(['activeGroup', group.id]);
+      toast.success("Appearance settings saved");
     }
   });
+
+  const handleSave = () => {
+    updateMutation.mutate({ 
+      menu_pinned: menuPinned, 
+      menu_color: menuColor,
+      settings: { group_color: groupColor } 
+    });
+  };
 
   return (
     <Card>
@@ -174,14 +188,15 @@ function GroupAppearanceSettings({ group }) {
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-2">
-          <Label>Group Theme Color</Label>
+          <Label>Group Theme Color (Header & Buttons)</Label>
           <div className="flex items-center gap-4">
-            <ColorPicker 
-              color={group.settings?.group_color || '#8b5cf6'} 
-              onChange={(c) => updateMutation.mutate({ settings: { group_color: c } })} 
-              label="Pick a color"
+            <Input
+              type="color"
+              value={groupColor}
+              onChange={(e) => setGroupColor(e.target.value)}
+              className="w-12 h-10 p-1 cursor-pointer rounded-md border-0"
             />
-            <div className="text-sm text-gray-500 font-mono">{group.settings?.group_color || '#8b5cf6'}</div>
+            <div className="text-sm text-gray-500 font-mono">{groupColor}</div>
           </div>
         </div>
 
@@ -192,10 +207,7 @@ function GroupAppearanceSettings({ group }) {
           </div>
           <Switch
             checked={menuPinned}
-            onCheckedChange={(checked) => {
-              setMenuPinned(checked);
-              updateMutation.mutate({ menu_pinned: checked });
-            }}
+            onCheckedChange={setMenuPinned}
           />
         </div>
 
@@ -207,12 +219,18 @@ function GroupAppearanceSettings({ group }) {
                 type="color"
                 value={menuColor}
                 onChange={(e) => setMenuColor(e.target.value)}
-                onBlur={() => updateMutation.mutate({ menu_color: menuColor })}
-                className="w-12 h-10 p-1 cursor-pointer"
+                className="w-12 h-10 p-1 cursor-pointer rounded-md border-0"
               />
+              <div className="text-sm text-gray-500 font-mono">{menuColor}</div>
             </div>
           </div>
         )}
+
+        <div className="flex justify-end pt-4 border-t">
+          <Button onClick={handleSave} disabled={updateMutation.isPending}>
+            {updateMutation.isPending ? 'Saving...' : 'Save Appearance'}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
@@ -231,7 +249,10 @@ function CryptoTickerSettings({ group }) {
       const current = await base44.entities.CreatorGroup.get(group.id);
       return base44.entities.CreatorGroup.update(group.id, { settings: { ...current.settings, hide_ticker } });
     },
-    onSuccess: () => queryClient.invalidateQueries(['myGroupsDetails'])
+    onSuccess: () => {
+      queryClient.invalidateQueries(['myGroupsDetails']);
+      toast.success("Crypto Ticker settings saved!");
+    }
   });
 
   return (
@@ -261,7 +282,7 @@ function MemberInviteSettings({ group }) {
   // Allowed invite roles defaults to empty if not set (only admin/owner can invite by default logic elsewhere)
   // We'll store an array of roles that CAN invite.
   const [allowedRoles, setAllowedRoles] = useState(group.settings?.allowed_invite_roles || []);
-  const [defaultRole, setDefaultRole] = useState(group.settings?.default_invite_role || 'member');
+  const [defaultRole, setDefaultRole] = useState(group.settings?.default_invite_role || (group.type === 'agency' ? 'member' : 'member'));
   const [defaultLevel, setDefaultLevel] = useState(group.settings?.default_invite_level || 'Member');
   
   // Membership Questions
@@ -741,18 +762,22 @@ function GroupAccessSettings({ group }) {
           />
           <p className="text-xs text-gray-500">Video displayed on the public welcome mat.</p>
         </div>
-        <div className="space-y-2">
-          <Label>Trial Period (Days)</Label>
-          <Input 
-            type="number"
-            value={formData.trial_period_days} 
-            onChange={e => setFormData({...formData, trial_period_days: parseInt(e.target.value) || 0})} 
-            placeholder="0"
-          />
-          <p className="text-xs text-gray-500">Set to 0 for no trial.</p>
-        </div>
-        <div className="flex justify-end">
-          <Button onClick={() => updateMutation.mutate(formData)}>Save Settings</Button>
+        {group.type !== 'agency' && (
+          <div className="space-y-2">
+            <Label>Trial Period (Days)</Label>
+            <Input 
+              type="number"
+              value={formData.trial_period_days} 
+              onChange={e => setFormData({...formData, trial_period_days: parseInt(e.target.value) || 0})} 
+              placeholder="0"
+            />
+            <p className="text-xs text-gray-500">Set to 0 for no trial.</p>
+          </div>
+        )}
+        <div className="flex justify-end pt-4 border-t">
+          <Button onClick={() => updateMutation.mutate(formData)} disabled={updateMutation.isPending}>
+            {updateMutation.isPending ? 'Saving...' : 'Save Settings'}
+          </Button>
         </div>
       </CardContent>
     </Card>
@@ -799,14 +824,15 @@ function TabPermissionsSettings({ group }) {
   const disabledFeatures = group.settings?.disabled_features || [];
   const activeTabs = availableTabs.filter(tab => !disabledFeatures.includes(tab.id));
 
-  const levels = ['Invited', 'Interested', 'Subscriber', ...(group.member_levels || [])];
+  const baseLevels = group.type === 'agency' ? ['Invited', 'Interested'] : ['Invited', 'Interested', 'Subscriber'];
+  const levels = [...baseLevels, ...(group.member_levels || [])];
   const systemRoles = group.type === 'agency' 
-    ? ['member', 'manager', 'admin', 'owner'] // Displayed as Creator, Manager, Admin, Agency Owner
-    : ['member', 'client', 'manager', 'admin', 'virtual-assistant']; 
+    ? ['admin', 'manager', 'member'] // Displayed as Admin, Manager, Creator
+    : ['admin', 'manager', 'member', 'client', 'virtual-assistant']; 
   
   // Filter out levels that conflict with system roles (case-insensitive)
   const filteredLevels = levels.filter(l => !systemRoles.includes(l.toLowerCase()));
-  const allRoles = [...new Set([...filteredLevels, ...systemRoles])];
+  const allRoles = [...new Set([...systemRoles, ...filteredLevels])];
   
   // Initial visible columns: all system roles + active levels
   const [visibleColumns, setVisibleColumns] = useState(allRoles);
@@ -994,11 +1020,13 @@ function TabPermissionsSettings({ group }) {
 function GroupTabsManager({ group }) {
   const queryClient = useQueryClient();
   
-  const defaultOrder = [
-    'feed', 'discussion', 'events', 'meetings', 'projects', 
-    'marketing', 'assets', 'resources', 'training', 'qna', 
-    'members', 'requests'
-  ];
+  const defaultOrder = group.type === 'agency'
+    ? ['events', 'resources', 'training', 'qna', 'requests', 'feed', 'meetings', 'projects', 'marketing', 'assets', 'members', 'discussion']
+    : [
+        'feed', 'discussion', 'events', 'meetings', 'projects', 
+        'marketing', 'assets', 'resources', 'training', 'qna', 
+        'members', 'requests'
+      ];
 
   // Merge saved order with any missing default tabs
   const savedOrder = group.settings?.tab_order || defaultOrder;
@@ -1235,6 +1263,8 @@ function GroupTypeSettings({ group }) {
   // Filter types based on user role (prevent regular users from switching to Agency/Client Portal if they aren't Pro)
   const availableTypes = groupTypes.filter(t => t.key !== 'client-portal' || isProTier);
 
+  const [selectedType, setSelectedType] = useState(group.type);
+
   return (
     <Card>
       <CardHeader>
@@ -1243,25 +1273,26 @@ function GroupTypeSettings({ group }) {
           Changing the group type will affect available tabs and features.
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex items-center gap-4">
-        <div className="flex-1">
-          <Select 
-            value={group.type} 
-            onValueChange={(val) => {
-              updateMutation.mutate(val);
-            }}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {availableTypes.map(type => (
-                <SelectItem key={type.key} value={type.key}>
-                  <span className="font-medium">{type.name}</span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      <CardContent className="space-y-4">
+        <Select 
+          value={selectedType} 
+          onValueChange={setSelectedType}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {availableTypes.map(type => (
+              <SelectItem key={type.key} value={type.key}>
+                <span className="font-medium">{type.name}</span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <div className="flex justify-end pt-4 border-t">
+          <Button onClick={() => updateMutation.mutate(selectedType)} disabled={selectedType === group.type || updateMutation.isPending}>
+            {updateMutation.isPending ? 'Saving...' : 'Save Group Type'}
+          </Button>
         </div>
       </CardContent>
     </Card>
@@ -1513,6 +1544,7 @@ function GroupExperienceSettings({ group }) {
     onSuccess: () => {
       queryClient.invalidateQueries(['myGroupsDetails']);
       queryClient.invalidateQueries(['activeGroup', group.id]);
+      toast.success("Settings saved!");
     }
   });
 
