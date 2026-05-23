@@ -6,7 +6,8 @@ import { useTheme } from '../shared/useTheme';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { CheckCircle, Circle, Play, ExternalLink, Trash2, Pencil, FileText, Mic, Video, Link as LinkIcon, Search, Upload, FileAudio, FolderPlus, GripVertical, ChevronDown, ChevronRight, BarChart } from 'lucide-react';
+import { CheckCircle, Circle, Play, ExternalLink, Trash2, Pencil, FileText, Mic, Video, Link as LinkIcon, Search, Upload, FileAudio, FolderPlus, GripVertical, ChevronDown, ChevronRight, BarChart, Download, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -24,7 +25,43 @@ const VOICEOVER_TOOLS = [
   { name: 'Mini Max', url: 'https://hailuoai.com/audio', desc: 'Audio generation' }
 ];
 
-export default function GroupTrainingTab({ group, currentUser, isAdmin }) {
+function parseCSV(str) {
+  const result = [];
+  let row = [];
+  let inQuotes = false;
+  let cell = '';
+  
+  for (let i = 0; i < str.length; i++) {
+    const char = str[i];
+    if (char === '"') {
+      if (inQuotes && str[i+1] === '"') {
+        cell += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === ',' && !inQuotes) {
+      row.push(cell);
+      cell = '';
+    } else if (char === '\n' && !inQuotes) {
+      row.push(cell);
+      result.push(row);
+      row = [];
+      cell = '';
+    } else if (char === '\r' && !inQuotes) {
+      // ignore
+    } else {
+      cell += char;
+    }
+  }
+  if (cell !== '' || row.length > 0) {
+    row.push(cell);
+    result.push(row);
+  }
+  return result;
+}
+
+export default function GroupTrainingTab({ group, currentUser, isAdmin, myMembership }) {
   const { preferences } = useTheme();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -90,6 +127,7 @@ export default function GroupTrainingTab({ group, currentUser, isAdmin }) {
             modules={trainingModules} 
             completedIds={completedIds} 
             isAdmin={isAdmin}
+            myMembership={myMembership}
             currentUser={currentUser}
             searchParams={searchParams}
             setSearchParams={setSearchParams}
@@ -104,7 +142,7 @@ export default function GroupTrainingTab({ group, currentUser, isAdmin }) {
   );
 }
 
-function ModulesView({ group, categories, modules, completedIds, isAdmin, currentUser, searchParams, setSearchParams, preferences }) {
+function ModulesView({ group, categories, modules, completedIds, isAdmin, myMembership, currentUser, searchParams, setSearchParams, preferences }) {
     const queryClient = useQueryClient();
     const [searchTerm, setSearchTerm] = useState('');
     const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -114,6 +152,115 @@ function ModulesView({ group, categories, modules, completedIds, isAdmin, curren
     const [formData, setFormData] = useState({ 
         title: '', description: '', content: '', resource_url: '', resource_type: 'video', category_id: 'uncategorized', transcript: '' 
     });
+    
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+    const [previewData, setPreviewData] = useState({ modulesCount: 0, lessonsCount: 0, rows: [], errors: [] });
+    const [importing, setImporting] = useState(false);
+
+    const isSuperAdmin = currentUser?.email && ['pixelnutscreative@gmail.com', 'pixel@thrivenut.app'].includes(currentUser.email.toLowerCase());
+    const canImport = isSuperAdmin || group.owner_email === currentUser?.email || ['admin', 'owner'].includes(myMembership?.role) || myMembership?.level === 'Agency Owner';
+
+    const handleCsvUpload = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const text = event.target.result;
+            const parsed = parseCSV(text);
+            if (parsed.length < 2) {
+                toast.error("CSV file is empty or missing headers.");
+                return;
+            }
+
+            const headers = parsed[0].map(h => h.trim().toLowerCase());
+            const rows = parsed.slice(1).filter(r => r.length > 1 || (r.length === 1 && r[0].trim() !== ''));
+
+            const dataRows = rows.map(r => {
+                const obj = {};
+                headers.forEach((h, i) => {
+                    obj[h] = r[i] !== undefined ? r[i].trim() : '';
+                });
+                return obj;
+            });
+
+            const validRows = [];
+            const errors = [];
+            const moduleSet = new Set();
+
+            dataRows.forEach((row, i) => {
+                if (!row.lesson_title) {
+                    errors.push(`Row ${i + 2}: Missing lesson_title`);
+                } else {
+                    validRows.push(row);
+                    if (row.module_name) moduleSet.add(row.module_name);
+                }
+            });
+
+            setPreviewData({
+                modulesCount: moduleSet.size,
+                lessonsCount: validRows.length,
+                rows: validRows,
+                errors
+            });
+            setIsPreviewOpen(true);
+            e.target.value = null;
+        };
+        reader.readAsText(file);
+    };
+
+    const executeImport = async () => {
+        setImporting(true);
+        try {
+            const existingCats = await base44.entities.GroupTrainingCategory.filter({ group_id: group.id });
+            const catMap = {};
+            existingCats.forEach(c => catMap[c.title.toLowerCase()] = c.id);
+
+            for (const row of previewData.rows) {
+                const moduleName = row.module_name || 'General';
+                let catId = catMap[moduleName.toLowerCase()];
+                
+                if (!catId) {
+                    const newCat = await base44.entities.GroupTrainingCategory.create({
+                        group_id: group.id,
+                        title: moduleName,
+                        sort_order: Object.keys(catMap).length
+                    });
+                    catId = newCat.id;
+                    catMap[moduleName.toLowerCase()] = catId;
+                }
+                
+                let resourceUrl = '';
+                if (row.resource_type?.toLowerCase() === 'video') resourceUrl = row.video_url || row.document_url || '';
+                else resourceUrl = row.document_url || row.video_url || '';
+                
+                await base44.entities.GroupTraining.create({
+                    group_id: group.id,
+                    title: row.lesson_title,
+                    description: row.description || '',
+                    content: '',
+                    resource_url: resourceUrl,
+                    video_url: row.resource_type?.toLowerCase() === 'video' ? resourceUrl : '',
+                    resource_type: row.resource_type?.toLowerCase() || 'text',
+                    category_id: catId,
+                    transcript: row.notes_for_transcript || '',
+                    sort_order: parseInt(row.sort_order) || 0,
+                    is_pinned: row.is_pinned?.toString().toLowerCase() === 'true',
+                    active: true
+                });
+            }
+
+            toast.success(`Import complete — ${previewData.modulesCount} modules and ${previewData.lessonsCount} lessons added!`);
+            queryClient.invalidateQueries(['groupTrainingCategories', group.id]);
+            queryClient.invalidateQueries(['groupTraining', group.id]);
+            setIsPreviewOpen(false);
+        } catch (err) {
+            console.error(err);
+            toast.error("Failed to import CSV: " + err.message);
+        } finally {
+            setImporting(false);
+        }
+    };
 
     // Handle Edit from URL
     useEffect(() => {
@@ -280,20 +427,43 @@ function ModulesView({ group, categories, modules, completedIds, isAdmin, curren
                         className="pl-8 bg-white"
                     />
                 </div>
-                {isAdmin && (
-                    <div className="flex gap-2">
-                        <Button variant="outline" onClick={() => setIsCategoryDialogOpen(true)}>
-                            <FolderPlus className="w-4 h-4 mr-2" /> Categories
-                        </Button>
-                        <Button 
-                            onClick={() => setIsDialogOpen(true)}
-                            className="text-white"
-                            style={{ backgroundColor: preferences?.primary_color }}
-                        >
-                            Add Training
-                        </Button>
-                    </div>
-                )}
+                <div className="flex flex-wrap gap-2">
+                    {canImport && (
+                        <>
+                            <a 
+                                href="https://base44.app/api/apps/6a07dadd383a9c229e462e4f/files/mp/public/6a07dadd383a9c229e462e4f/66e528c90_SocialHouseCreators_TrainingTemplate.csv"
+                                download="TrainingImportTemplate.csv"
+                                className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
+                            >
+                                <Download className="w-4 h-4 mr-2" /> Download Template
+                            </a>
+                            <Button variant="outline" onClick={() => document.getElementById('csv-upload').click()}>
+                                <Upload className="w-4 h-4 mr-2" /> Import CSV
+                            </Button>
+                            <input 
+                                type="file" 
+                                id="csv-upload" 
+                                accept=".csv" 
+                                className="hidden" 
+                                onChange={handleCsvUpload} 
+                            />
+                        </>
+                    )}
+                    {isAdmin && (
+                        <>
+                            <Button variant="outline" onClick={() => setIsCategoryDialogOpen(true)}>
+                                <FolderPlus className="w-4 h-4 mr-2" /> Categories
+                            </Button>
+                            <Button 
+                                onClick={() => setIsDialogOpen(true)}
+                                className="text-white"
+                                style={{ backgroundColor: preferences?.primary_color }}
+                            >
+                                Add Training
+                            </Button>
+                        </>
+                    )}
+                </div>
             </div>
 
             {/* Categories & Modules List */}
@@ -440,6 +610,36 @@ function ModulesView({ group, categories, modules, completedIds, isAdmin, curren
                 isOpen={isCategoryDialogOpen} 
                 onClose={() => setIsCategoryDialogOpen(false)} 
             />
+
+            <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Confirm Import</DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <p className="text-gray-700">{previewData.modulesCount} modules and {previewData.lessonsCount} lessons found — ready to import?</p>
+                        {previewData.errors && previewData.errors.length > 0 && (
+                            <div className="text-red-500 text-sm mt-4 bg-red-50 p-3 rounded-lg border border-red-100 max-h-32 overflow-y-auto">
+                                <strong>Errors found:</strong>
+                                <ul className="list-disc pl-4 mt-1">
+                                    {previewData.errors.map((e, i) => <li key={i}>{e}</li>)}
+                                </ul>
+                            </div>
+                        )}
+                    </div>
+                    <DialogFooter>
+                        <Button variant="ghost" onClick={() => setIsPreviewOpen(false)}>Cancel</Button>
+                        <Button 
+                            onClick={executeImport} 
+                            disabled={importing || previewData.lessonsCount === 0}
+                            className="bg-purple-600 hover:bg-purple-700 text-white"
+                        >
+                            {importing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                            Confirm Import
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

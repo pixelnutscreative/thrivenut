@@ -1678,7 +1678,7 @@ export default function CreatorGroups() {
 
           <TabsContent value="training" className="focus-visible:outline-none">
             {isTabEnabled('training') &&
-              <GroupTrainingTab group={activeGroup} currentUser={user} isAdmin={isAdmin} />
+              <GroupTrainingTab group={activeGroup} currentUser={user} myMembership={activeMembership} isAdmin={isAdmin} />
               }
           </TabsContent>
 
