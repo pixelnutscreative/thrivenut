@@ -802,7 +802,7 @@ function TabPermissionsSettings({ group }) {
   const queryClient = useQueryClient();
   const [permissions, setPermissions] = useState(group.role_tab_permissions || {});
   const [showSaved, setShowSaved] = useState(false);
-  const [showColumnSelector, setShowColumnSelector] = useState(false);
+  const [expandedTab, setExpandedTab] = useState(null);
 
   // Fetch Group Types to determine defaults
   const { data: groupTypes = [] } = useQuery({
@@ -838,23 +838,19 @@ function TabPermissionsSettings({ group }) {
   const disabledFeatures = group.settings?.disabled_features || [];
   const activeTabs = availableTabs.filter(tab => !disabledFeatures.includes(tab.id));
 
-  const baseLevels = group.type === 'agency' ? ['Invited', 'Interested'] : ['Invited', 'Interested', 'Subscriber'];
-  const levels = [...baseLevels, ...(group.member_levels || [])];
   const systemRoles = group.type === 'agency' 
-    ? ['admin', 'manager', 'member'] // Displayed as Admin, Manager, Creator
-    : ['admin', 'manager', 'member', 'client', 'virtual-assistant']; 
-  
-  // Filter out levels that conflict with system roles (case-insensitive)
-  const filteredLevels = levels.filter(l => !systemRoles.includes(l.toLowerCase()));
-  const allRoles = [...new Set([...systemRoles, ...filteredLevels])];
-  
-  // Initial visible columns: all system roles + active levels
-  const [visibleColumns, setVisibleColumns] = useState(allRoles);
+    ? ['Admin', 'Manager', 'Creator', 'Agency Owner', 'Invited', 'Interested'] 
+    : ['Admin', 'Manager', 'Member', 'Client', 'Virtual Assistant', 'Invited', 'Interested', 'Subscriber'];
+
+  const customLevels = group.member_levels || [];
+  const filteredCustomLevels = customLevels.filter(l => !systemRoles.map(s => s.toLowerCase()).includes(l.toLowerCase()));
+  const allRoles = [...systemRoles, ...filteredCustomLevels];
 
   // Helper to determine if a tab is enabled by default for a role
-  const isDefaultEnabled = (tabId, role) => {
+  const isDefaultEnabled = (tabId, roleStr) => {
+    const role = roleStr.toLowerCase();
     // Admin/Owner always enabled by default
-    if (role === 'admin' || role === 'owner') return true;
+    if (role === 'admin' || role === 'owner' || role === 'agency owner') return true;
 
     const isClientGroup = ['client-portal', 'agency'].includes(group.type);
     const typeConfig = (groupTypes || []).find(gt => gt.key === group.type);
@@ -902,130 +898,141 @@ function TabPermissionsSettings({ group }) {
       setPermissions({ ...permissions, [tabId]: enable ? allRoles : [] });
   };
 
-  const toggleColumnVisibility = (role) => {
-    if (visibleColumns.includes(role)) {
-      setVisibleColumns(visibleColumns.filter(c => c !== role));
-    } else {
-      setVisibleColumns([...visibleColumns, role]);
+  const [newRole, setNewRole] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const addRoleMutation = useMutation({
+    mutationFn: async (role) => {
+      const current = await base44.entities.CreatorGroup.get(group.id);
+      const updatedLevels = [...new Set([...(current.member_levels || []), role])];
+      return base44.entities.CreatorGroup.update(group.id, { member_levels: updatedLevels });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['myGroupsDetails']);
+      queryClient.invalidateQueries(['activeGroup', group.id]);
+      setNewRole('');
+      setErrorMsg('');
+      toast.success('Custom role added successfully');
     }
+  });
+
+  const handleAddRole = () => {
+    if (!newRole.trim()) return;
+    const roleLower = newRole.trim().toLowerCase();
+    if (allRoles.map(l => l.toLowerCase()).includes(roleLower)) {
+      setErrorMsg('This role already exists');
+      return;
+    }
+    setErrorMsg('');
+    addRoleMutation.mutate(newRole.trim());
   };
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-start justify-between">
-        <div>
-            <CardTitle>Tab Visibility</CardTitle>
-            <CardDescription>
-              Control which roles/levels can see specific tabs.
-            </CardDescription>
-        </div>
-        <div className="relative">
-            <Button variant="outline" size="sm" onClick={() => setShowColumnSelector(!showColumnSelector)}>
-                <Settings className="w-3 h-3 mr-2" /> Columns
-            </Button>
-            {showColumnSelector && (
-                <div className="absolute right-0 top-10 bg-white border shadow-lg rounded-lg p-3 z-50 w-48 max-h-64 overflow-y-auto">
-                    <p className="text-xs font-semibold text-gray-500 mb-2 uppercase">Show Roles/Levels</p>
-                    {allRoles.map(role => (
-                        <div key={role} className="flex items-center gap-2 py-1">
-                            <input 
-                                type="checkbox" 
-                                checked={visibleColumns.includes(role)} 
-                                onChange={() => toggleColumnVisibility(role)}
-                                className="rounded text-purple-600 focus:ring-purple-500 cursor-pointer"
-                            />
-                            <span className="text-sm capitalize truncate">
-                              {group.type === 'agency' ? (role === 'member' ? 'creator' : role === 'owner' ? 'agency owner' : role) : role}
-                            </span>
-                        </div>
-                    ))}
-                </div>
-            )}
-        </div>
+      <CardHeader>
+        <CardTitle>Tab Visibility</CardTitle>
+        <CardDescription>
+          Control which roles/levels can see specific tabs.
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {activeTabs.length === 0 ? (
-            <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg">
-                No active features to configure. Enable features in the General tab first.
+            <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg border border-dashed">
+                No active features to configure. Enable features in the Navigation & Tabs section first.
             </div>
         ) : (
-            <>
-                <div className="overflow-x-auto border rounded-lg">
-                  <table className="w-full text-sm divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="text-left p-3 font-semibold text-gray-700 sticky left-0 bg-gray-50 z-10 w-32 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Tab</th>
-                        <th className="text-center p-3 font-semibold text-gray-700 w-24">Actions</th>
-                        {allRoles.filter(r => visibleColumns.includes(r)).map(r => {
-                          let label = r;
-                          if (group.type === 'agency') {
-                            if (r === 'member') label = 'Creator';
-                            if (r === 'owner') label = 'Agency Owner';
-                          }
+            <div className="space-y-3">
+              {activeTabs.map(tab => {
+                const isExpanded = expandedTab === tab.id;
+                return (
+                  <div key={tab.id} className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm">
+                    <div 
+                      className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                      onClick={() => setExpandedTab(isExpanded ? null : tab.id)}
+                    >
+                      <div className="font-semibold text-gray-900">{tab.label}</div>
+                      <div className="flex items-center gap-3">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="hidden sm:flex h-8 text-xs text-green-600 hover:text-green-700 hover:bg-green-50" 
+                          onClick={(e) => { e.stopPropagation(); toggleAll(tab.id, true); }}
+                        >
+                          Enable All
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="hidden sm:flex h-8 text-xs text-red-600 hover:text-red-700 hover:bg-red-50" 
+                          onClick={(e) => { e.stopPropagation(); toggleAll(tab.id, false); }}
+                        >
+                          Disable All
+                        </Button>
+                        {isExpanded ? <ChevronDown className="w-5 h-5 text-gray-400" /> : <ChevronRight className="w-5 h-5 text-gray-400" />}
+                      </div>
+                    </div>
+                    {isExpanded && (
+                      <div className="p-4 border-t border-gray-100 bg-gray-50/50 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div className="col-span-full flex gap-2 mb-2 sm:hidden">
+                            <Button size="sm" variant="outline" className="flex-1 text-green-600" onClick={() => toggleAll(tab.id, true)}>Enable All</Button>
+                            <Button size="sm" variant="outline" className="flex-1 text-red-600" onClick={() => toggleAll(tab.id, false)}>Disable All</Button>
+                        </div>
+                        {allRoles.map(role => {
+                          const hasExplicitPermission = permissions[tab.id] !== undefined;
+                          const isChecked = hasExplicitPermission 
+                              ? permissions[tab.id].includes(role) 
+                              : isDefaultEnabled(tab.id, role);
+                          
                           return (
-                            <th key={r} className="text-center p-3 capitalize font-semibold text-gray-700 min-w-[100px] whitespace-nowrap">
-                              {label}
-                            </th>
+                            <div key={role} className="flex flex-col gap-1.5 p-3 rounded-lg bg-white border border-gray-100 shadow-sm">
+                              <div className="flex justify-between items-center">
+                                <Label className="text-sm font-medium capitalize truncate cursor-pointer pr-2" title={role} onClick={() => togglePermission(tab.id, role)}>{role}</Label>
+                                <Switch 
+                                  checked={isChecked}
+                                  onCheckedChange={() => togglePermission(tab.id, role)}
+                                />
+                              </div>
+                              {!hasExplicitPermission && (
+                                <span className="text-[10px] text-gray-400">Using default setting</span>
+                              )}
+                            </div>
                           );
                         })}
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {activeTabs.map(tab => (
-                        <tr key={tab.id} className="hover:bg-gray-50 transition-colors">
-                          <td className="p-3 font-medium text-gray-900 sticky left-0 bg-white z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
-                            {tab.label}
-                          </td>
-                          <td className="p-3 text-center">
-                            <div className="flex justify-center gap-1">
-                                <Button variant="ghost" size="xs" className="h-6 w-6 p-0 text-gray-400 hover:text-green-600" onClick={() => toggleAll(tab.id, true)} title="Enable All">
-                                  <ArrowUp className="w-3 h-3" />
-                                </Button>
-                                <Button variant="ghost" size="xs" className="h-6 w-6 p-0 text-gray-400 hover:text-red-600" onClick={() => toggleAll(tab.id, false)} title="Disable All">
-                                  <ArrowDown className="w-3 h-3" />
-                                </Button>
-                            </div>
-                          </td>
-                          {allRoles.filter(r => visibleColumns.includes(r)).map(role => {
-                            const hasExplicitPermission = permissions[tab.id] !== undefined;
-                            const isChecked = hasExplicitPermission 
-                                ? permissions[tab.id].includes(role) 
-                                : isDefaultEnabled(tab.id, role);
-        
-                            return (
-                              <td key={role} className="text-center p-3">
-                                <input 
-                                  type="checkbox" 
-                                  checked={isChecked}
-                                  onChange={() => togglePermission(tab.id, role)}
-                                  className={`w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500 cursor-pointer ${!hasExplicitPermission ? 'opacity-40 grayscale' : ''}`}
-                                  title={!hasExplicitPermission ? "Using Default (Click to override)" : "Custom Setting"}
-                                />
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                         <span className="w-3 h-3 rounded bg-white border border-gray-300 inline-block"></span>
-                         <span className="text-xs text-gray-500">Custom</span>
-                         <span className="w-3 h-3 rounded bg-white border border-gray-300 opacity-40 grayscale inline-block ml-2"></span>
-                         <span className="text-xs text-gray-500">Default (System)</span>
-                    </div>
-                    <Button 
-                        onClick={() => updateMutation.mutate(permissions)}
-                        disabled={updateMutation.isPending}
-                        className={showSaved ? 'bg-green-600 hover:bg-green-700' : ''}
-                    >
-                        {updateMutation.isPending ? 'Saving...' : showSaved ? 'Saved!' : 'Save Permissions'}
-                    </Button>
-                </div>
-            </>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
         )}
+        <div className="flex flex-col sm:flex-row justify-between items-center mt-6 pt-4 border-t border-gray-100 gap-4">
+            <div className="flex flex-col gap-1 w-full sm:w-auto">
+              <div className="flex items-center gap-2">
+                <Input 
+                  value={newRole} 
+                  onChange={e => { setNewRole(e.target.value); setErrorMsg(''); }} 
+                  placeholder="e.g. VIP Member" 
+                  className="h-9 text-sm max-w-[200px]"
+                  onKeyDown={e => e.key === 'Enter' && handleAddRole()}
+                />
+                <Button size="sm" variant="outline" className="h-9" onClick={handleAddRole} disabled={!newRole.trim() || addRoleMutation.isPending}>
+                  <Plus className="w-4 h-4 mr-1" /> Add Custom Role
+                </Button>
+              </div>
+              {errorMsg && <p className="text-xs text-red-500 font-medium">{errorMsg}</p>}
+            </div>
+            
+            <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+              <span className="text-xs text-gray-500 hidden sm:inline-block">Click save after changes</span>
+              <Button 
+                  onClick={() => updateMutation.mutate(permissions)}
+                  disabled={updateMutation.isPending}
+                  className={showSaved ? 'bg-green-600 hover:bg-green-700 w-full sm:w-auto' : 'w-full sm:w-auto'}
+              >
+                  {updateMutation.isPending ? 'Saving...' : showSaved ? 'Saved!' : 'Save Permissions'}
+              </Button>
+            </div>
+        </div>
       </CardContent>
     </Card>
   );

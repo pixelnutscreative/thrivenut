@@ -18,6 +18,7 @@ import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import ContentQAModal from './ContentQAModal';
+import LevelSelector from './LevelSelector';
 
 const VOICEOVER_TOOLS = [
   { name: 'Voice Nut', url: 'https://ai.thenutsandbots.com/apps/ai-voiceover', desc: 'Generate AI voiceovers' },
@@ -150,7 +151,7 @@ function ModulesView({ group, categories, modules, completedIds, isAdmin, myMemb
     const [editingId, setEditingId] = useState(null);
     const [uploading, setUploading] = useState(false);
     const [formData, setFormData] = useState({ 
-        title: '', description: '', content: '', resource_url: '', resource_type: 'video', category_id: 'uncategorized', transcript: '' 
+        title: '', description: '', content: '', resource_url: '', resource_type: 'video', category_id: 'uncategorized', transcript: '', target_levels: []
     });
     
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -285,7 +286,8 @@ function ModulesView({ group, categories, modules, completedIds, isAdmin, myMemb
             resource_url: module.resource_url || module.video_url || '',
             resource_type: module.resource_type || 'video',
             category_id: module.category_id || 'uncategorized',
-            transcript: module.transcript || ''
+            transcript: module.transcript || '',
+            target_levels: module.target_levels || []
         });
         setIsDialogOpen(true);
     };
@@ -293,7 +295,7 @@ function ModulesView({ group, categories, modules, completedIds, isAdmin, myMemb
     const handleCloseDialog = () => {
         setIsDialogOpen(false);
         setEditingId(null);
-        setFormData({ title: '', description: '', content: '', resource_url: '', resource_type: 'video', category_id: 'uncategorized', transcript: '' });
+        setFormData({ title: '', description: '', content: '', resource_url: '', resource_type: 'video', category_id: 'uncategorized', transcript: '', target_levels: [] });
     };
 
     const saveMutation = useMutation({
@@ -581,6 +583,14 @@ function ModulesView({ group, categories, modules, completedIds, isAdmin, myMemb
                                 <Label>Video Transcript (for AI)</Label>
                                 <Textarea value={formData.transcript} onChange={e => setFormData({...formData, transcript: e.target.value})} rows={3} placeholder="Paste transcript..." />
                             </div>
+                        )}
+
+                        {isAdmin && (
+                            <LevelSelector 
+                                group={group} 
+                                selectedLevels={formData.target_levels} 
+                                onChange={(levels) => setFormData({...formData, target_levels: levels})} 
+                            />
                         )}
 
                         {/* Voiceover Tools */}
