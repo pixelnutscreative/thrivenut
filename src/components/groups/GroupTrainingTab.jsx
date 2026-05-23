@@ -368,7 +368,7 @@ function ModulesView({ group, categories, modules, completedIds, isAdmin, myMemb
         },
         onError: (error) => {
             console.error("Toggle mutation failed:", error);
-            alert("Failed to update status: " + error.message);
+            toast.error("Failed to update status: " + error.message);
         }
     });
 
@@ -380,7 +380,7 @@ function ModulesView({ group, categories, modules, completedIds, isAdmin, myMemb
             const { file_url } = await base44.integrations.Core.UploadFile({ file });
             setFormData(prev => ({ ...prev, resource_url: file_url }));
         } catch (error) {
-            alert("Upload failed: " + error.message);
+            toast.error("Upload failed: " + error.message);
         } finally {
             setUploading(false);
         }

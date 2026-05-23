@@ -20,6 +20,8 @@ import React, { useState } from 'react';
    import { Checkbox } from '@/components/ui/checkbox';
    import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
    import { Link } from 'react-router-dom';
+import { useGlobalDialog } from '@/components/shared/GlobalDialogProvider';
+import { toast } from 'sonner';
  
    const defaultCategories = [
      'Course', 'Zoom Meeting', 'Login', 'Recipe', 'Movie', 'Book', 'Podcast', 'Audiobook', 'Affiliate Link', 'Affiliate Portal', 
@@ -48,6 +50,7 @@ import React, { useState } from 'react';
    export default function MyResources() {
      const queryClient = useQueryClient();
      const { user, preferences } = useTheme();
+     const { prompt } = useGlobalDialog();
      const [search, setSearch] = useState('');
      const [selectedCategories, setSelectedCategories] = useState([]); // Empty = All
      const [viewFilter, setViewFilter] = useState('mine'); // 'mine', 'shared', 'all'
@@ -333,18 +336,19 @@ import React, { useState } from 'react';
                  a.download = 'links_export.csv';
                  a.click();
                } catch (e) {
-                 alert('Failed to export CSV');
+                 toast.error('Failed to export CSV');
                  console.error(e);
                }
              }}>
                <LinkIcon className="w-4 h-4 mr-2" /> Export Links
              </Button>
              <Button variant="outline" size="sm" onClick={() => {
-               const newName = prompt('Rename "My Stuff" to:', preferences?.my_resources_label || 'My Stuff');
-               if (newName && newName.trim()) {
-                 base44.entities.UserPreferences.update(preferences.id, { my_resources_label: newName.trim() })
-                   .then(() => window.location.reload()); 
-               }
+               prompt('Rename "My Stuff" to:', preferences?.my_resources_label || 'My Stuff', (newName) => {
+                 if (newName && newName.trim()) {
+                   base44.entities.UserPreferences.update(preferences.id, { my_resources_label: newName.trim() })
+                     .then(() => window.location.reload()); 
+                 }
+               });
              }}>
                <Edit2 className="w-4 h-4 mr-2" /> Rename
              </Button>
@@ -760,7 +764,7 @@ import React, { useState } from 'react';
                                }
                              } catch (e) {
                                console.error(e);
-                               alert("Failed to scan recipe. Please try again.");
+                               toast.error("Failed to scan recipe. Please try again.");
                              } finally {
                                setIsScanning(false);
                              }

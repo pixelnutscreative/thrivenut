@@ -14,6 +14,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { toast, Toaster as SonnerToaster } from 'sonner';
 import { Plus, Search, Loader2, LayoutGrid, List as ListIcon, ChevronRight, ChevronDown, Paperclip, X, RefreshCw, ChevronLeft, Trash2, Eye, Settings, EyeOff, Brain, Link as LinkIcon, UploadCloud } from 'lucide-react';
 import moment from 'moment';
+import { useGlobalDialog } from '@/components/shared/GlobalDialogProvider';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
 const KANBAN_COLUMNS = [
@@ -113,6 +114,7 @@ const getTurnIndicator = (item) => {
 export default function PixelBoard() {
   const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
+  const { confirm, prompt } = useGlobalDialog();
   const [loadingUser, setLoadingUser] = useState(true);
   
   useEffect(() => {
@@ -202,11 +204,11 @@ export default function PixelBoard() {
   const fileInputRef = useRef(null);
 
   const customConfirm = (message, onConfirm) => {
-    setConfirmDialog({ message, onConfirm });
+    confirm(message, onConfirm, { variant: 'destructive', confirmText: 'Delete' });
   };
 
   const customPrompt = (message, onConfirm) => {
-    setPromptDialog({ message, onConfirm, value: '' });
+    prompt(message, '', onConfirm);
   };
 
   const findDuplicates = () => {
@@ -457,6 +459,9 @@ export default function PixelBoard() {
       return mapStatus(item) === colId;
     }).length;
   };
+
+  // customConfirm and customPrompt have been moved to GlobalDialogProvider
+  const { confirm: confirmGlobal, prompt: promptGlobal } = useGlobalDialog();
 
   const handleAskSubmit = (inBatch = false) => {
     if (!newQuestion.title) return;
@@ -1730,56 +1735,7 @@ export default function PixelBoard() {
           </DialogContent>
         </Dialog>
 
-        {/* Custom Confirm Dialog */}
-      <Dialog open={!!confirmDialog} onOpenChange={(open) => !open && setConfirmDialog(null)}>
-        <DialogContent className="sm:max-w-[400px]">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold" style={{ color: '#24C4D6' }}>Are you sure?</DialogTitle>
-          </DialogHeader>
-          <div className="py-4 text-slate-700 font-medium">
-            {confirmDialog?.message}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmDialog(null)}>Cancel</Button>
-            <Button className="text-white font-bold" style={{ backgroundColor: '#24C4D6' }} onClick={() => {
-              if (confirmDialog?.onConfirm) confirmDialog.onConfirm();
-              setConfirmDialog(null);
-            }}>Confirm</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
-      {/* Custom Prompt Dialog */}
-      <Dialog open={!!promptDialog} onOpenChange={(open) => !open && setPromptDialog(null)}>
-        <DialogContent className="sm:max-w-[400px]">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold" style={{ color: '#24C4D6' }}>Input Required</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <Label className="text-slate-700 font-bold">{promptDialog?.message}</Label>
-            <Input 
-              autoFocus
-              className="border-2 focus-visible:ring-[#24C4D6]"
-              value={promptDialog?.value || ''} 
-              onChange={e => setPromptDialog(prev => ({...prev, value: e.target.value}))}
-              onKeyDown={e => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  if (promptDialog?.onConfirm) promptDialog.onConfirm(promptDialog.value);
-                  setPromptDialog(null);
-                }
-              }}
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setPromptDialog(null)}>Cancel</Button>
-            <Button className="text-white font-bold" style={{ backgroundColor: '#24C4D6' }} onClick={() => {
-              if (promptDialog?.onConfirm) promptDialog.onConfirm(promptDialog.value);
-              setPromptDialog(null);
-            }}>Submit</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Duplicate Finder Modal */}
       <Dialog open={duplicateFinderOpen} onOpenChange={setDuplicateFinderOpen}>

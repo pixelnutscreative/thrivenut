@@ -14,6 +14,7 @@ import { Users, Plus, Settings, Video, AlertCircle, ArrowLeft, Loader2, Building
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useTheme } from '@/components/shared/useTheme';
 import { toast } from 'sonner';
+import { useGlobalDialog } from '@/components/shared/GlobalDialogProvider';
 import { createPageUrl } from '../utils';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -42,6 +43,7 @@ import NotificationBell from '../components/notifications/NotificationBell';
 export default function CreatorGroups() {
   const { user, preferences } = useTheme();
   const queryClient = useQueryClient();
+  const { confirm, prompt } = useGlobalDialog();
   const [searchParams, setSearchParams] = useSearchParams();
   const idParam = searchParams.get('id');
   const slugParam = searchParams.get('slug');
@@ -193,7 +195,7 @@ export default function CreatorGroups() {
       }
     },
     onError: (err) => {
-      alert('Failed to delete group: ' + (err.message || 'Unknown error'));
+      toast.error('Failed to delete group: ' + (err.message || 'Unknown error'));
     }
   });
 
@@ -1187,8 +1189,9 @@ export default function CreatorGroups() {
         <p className="text-gray-500 max-w-md">You must be invited to view this group. Enter an invite code or go back.</p>
         <div className="flex gap-2">
           <Button onClick={() => {
-            const code = prompt('Enter invite code to join:');
-            if (code) joinMutation.mutate(code);
+            prompt('Enter invite code to join:', '', (code) => {
+              if (code) joinMutation.mutate(code);
+            });
           }}>Enter Invite Code</Button>
           <Button variant="outline" onClick={() => setSearchParams({})}>Back</Button>
         </div>
@@ -1242,8 +1245,9 @@ export default function CreatorGroups() {
              {!isMember &&
             <div className="flex items-center gap-2">
                    <Button onClick={() => {
-                const code = prompt("Enter invite code to join:");
-                if (code) joinMutation.mutate(code);
+                prompt("Enter invite code to join:", "", (code) => {
+                  if (code) joinMutation.mutate(code);
+                });
               }}>
                      Enter Invite Code
                    </Button>

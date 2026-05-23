@@ -11,6 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MessageSquare, Plus, CheckCircle, Clock, XCircle, Send, Bell, Settings, Pencil, Trash2 } from 'lucide-react';
+import { useGlobalDialog } from '@/components/shared/GlobalDialogProvider';
 import LevelSelector from './LevelSelector';
 import MemberSelector from './MemberSelector';
 
@@ -516,6 +517,7 @@ export default function GroupRequestsTab({ group, currentUser, myMembership, isA
 }
 
 function RequestCard({ req, currentUser, isAdmin, setActiveRequest, handleEdit, updateStatusMutation, deleteRequestMutation }) {
+  const { confirm } = useGlobalDialog();
   return (
     <Card className="flex flex-col">
       <CardHeader className="pb-2">
@@ -553,7 +555,11 @@ function RequestCard({ req, currentUser, isAdmin, setActiveRequest, handleEdit, 
                 </Button>
             )}
             {isAdmin && deleteRequestMutation && (
-                <Button variant="ghost" size="sm" className="text-red-500 hover:bg-red-50 hover:text-red-600" onClick={() => { if(window.confirm('Delete this ticket?')) deleteRequestMutation.mutate(req.id); }}>
+                <Button variant="ghost" size="sm" className="text-red-500 hover:bg-red-50 hover:text-red-600" onClick={() => {
+                  confirm('Are you sure you want to delete this ticket?', () => {
+                    deleteRequestMutation.mutate(req.id);
+                  }, { variant: 'destructive', confirmText: 'Delete' });
+                }}>
                     <Trash2 className="w-4 h-4" />
                 </Button>
             )}

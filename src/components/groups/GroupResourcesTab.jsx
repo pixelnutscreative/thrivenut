@@ -17,10 +17,13 @@ import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import LevelSelector from './LevelSelector';
 import ContentQAModal from './ContentQAModal';
+import { toast } from 'sonner';
+import { useGlobalDialog } from '@/components/shared/GlobalDialogProvider';
 
 export default function GroupResourcesTab({ group, currentUser, myMembership, isAdmin }) {
   const { preferences } = useTheme();
   const queryClient = useQueryClient();
+  const { confirm } = useGlobalDialog();
   const [searchParams, setSearchParams] = useSearchParams();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -101,7 +104,7 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
       handleCloseDialog();
     },
     onError: (err) => {
-      alert(`Error saving resource: ${err.message}`);
+      toast.error(`Error saving resource: ${err.message}`);
     }
   });
 
@@ -287,7 +290,7 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
                               setFormData({...formData, url: res.file_url});
                            }
                         } catch (err) {
-                           alert('Upload failed: ' + err.message);
+                           toast.error('Upload failed: ' + err.message);
                         } finally {
                            setIsUploading(false);
                         }
@@ -408,7 +411,11 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
                               <Plus className="w-5 h-5" />
                             </Button>
                             {isAdmin && (
-                              <Button variant="ghost" size="icon" onClick={() => { if(window.confirm('Delete this resource?')) deleteMutation.mutate(resource.id) }} className="text-red-500" title="Delete">
+                              <Button variant="ghost" size="icon" onClick={() => {
+                                confirm('Are you sure you want to delete this resource?', () => {
+                                  deleteMutation.mutate(resource.id);
+                                }, { variant: 'destructive', confirmText: 'Delete' });
+                              }} className="text-red-500" title="Delete">
                                 <Trash2 className="w-5 h-5" />
                               </Button>
                             )}

@@ -16,6 +16,7 @@ import 'react-quill/dist/quill.snow.css';
 import { useTheme } from '@/components/shared/useTheme';
 import ColorPicker from '../shared/ColorPicker';
 import { toast } from 'sonner';
+import { useGlobalDialog } from '@/components/shared/GlobalDialogProvider';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import GroupAnnouncementsSettings from './GroupAnnouncementsSettings';
 import AgencyLiveCalendar from '@/pages/AgencyLiveCalendar';
@@ -1209,6 +1210,7 @@ function GroupNameSettings({ group }) {
 function GroupTypeSettings({ group }) {
   const queryClient = useQueryClient();
   const { user, preferences } = useTheme();
+  const { confirm } = useGlobalDialog();
   
   // Admin/Pro Logic (mirrors CreatorGroups.js)
   const realUserEmail = user?.email ? user?.email.toLowerCase() : '';
@@ -1272,6 +1274,7 @@ function TransferOwnershipSettings({ group }) {
   const [confirmEmail, setConfirmEmail] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const { user } = useTheme();
+  const { confirm } = useGlobalDialog();
 
   const isOwner = user?.email?.toLowerCase() === group.owner_email?.toLowerCase();
 

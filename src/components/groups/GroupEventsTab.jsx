@@ -10,12 +10,15 @@ import { Input } from '@/components/ui/input';
 import { Calendar, MapPin, Link as LinkIcon, Plus, Trash2, Pencil, Share2, CalendarPlus } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { format, isSameDay } from 'date-fns';
+import { toast } from 'sonner';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import LevelSelector from './LevelSelector';
 import MemberSelector from './MemberSelector';
 import TimezoneSelector from '../shared/TimezoneSelector';
+import { useGlobalDialog } from '@/components/shared/GlobalDialogProvider';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 const toLocalISOString = (dateString) => {
   if (!dateString) return '';
@@ -29,6 +32,7 @@ const toLocalISOString = (dateString) => {
 export default function GroupEventsTab({ group, currentUser, myMembership, isAdmin }) {
   const { preferences } = useTheme();
   const queryClient = useQueryClient();
+  const { confirm } = useGlobalDialog();
   const [searchParams, setSearchParams] = useSearchParams();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -133,7 +137,7 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
       });
     },
     onSuccess: () => {
-      alert('Event added to My Day! (Check date if not today)');
+      toast.success('Event added to My Day! (Check date if not today)');
       queryClient.invalidateQueries(['manualEventsToday']);
     }
   });
@@ -153,13 +157,19 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
       }
     } else {
       navigator.clipboard.writeText(`${shareData.text}\n${shareData.url}`);
-      alert('Link copied to clipboard!');
+      toast.success('Link copied to clipboard!');
     }
   };
 
   const handleAddToMyDay = (event) => {
-    const isUrgent = window.confirm('Mark this event as URGENT? (It will appear at the top of your dashboard)');
-    addToMyDayMutation.mutate({ event, isUrgent });
+    confirm('Mark this event as URGENT? (It will appear at the top of your dashboard)', () => {
+      addToMyDayMutation.mutate({ event, isUrgent: true });
+    }, {
+      title: 'Urgency Options',
+      confirmText: 'Yes, mark Urgent',
+      cancelText: 'No, just normal',
+      onCancel: () => addToMyDayMutation.mutate({ event, isUrgent: false })
+    });
   };
 
   const handleEdit = (event) => {
@@ -264,7 +274,7 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
     // Validation: End time must be after start time
     for (const occ of finalOccurrences) {
       if (occ.end_time && new Date(occ.start_time) >= new Date(occ.end_time)) {
-        alert("End time must be after the start time for all sessions.");
+        toast.error("End time must be after the start time for all sessions.");
         return;
       }
     }
@@ -356,30 +366,120 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
                   <label className="text-sm font-medium">Event Dates & Times</label>
                   {(formData.occurrences || []).map((occ, idx) =>
                 <div key={occ.id || idx} className="border p-3 rounded-lg bg-gray-50 space-y-3">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 items-center">
-                        <Input
-                      type="datetime-local"
-                      value={occ.start_time}
-                      onChange={(e) => {
-                        const occurrences = [...(formData.occurrences || [])];
-                        occurrences[idx] = { ...occurrences[idx], start_time: e.target.value };
-                        setFormData({ ...formData, occurrences });
-                      }}
-                      placeholder="Start"
-                      className="bg-white" />
-                    
-                        <Input
-                      type="datetime-local"
-                      min={occ.start_time || undefined}
-                      value={occ.end_time || ''}
-                      onChange={(e) => {
-                        const occurrences = [...(formData.occurrences || [])];
-                        occurrences[idx] = { ...occurrences[idx], end_time: e.target.value };
-                        setFormData({ ...formData, occurrences });
-                      }}
-                      placeholder="End (optional)"
-                      className="bg-white" />
-                    
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+                        <div className="flex flex-col gap-1">
+                          <label className="text-xs text-gray-500">Start Date & Time</label>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button variant="outline" className="w-full justify-start text-left font-normal bg-white">
+                                <Calendar className="mr-2 h-4 w-4" />
+                                {occ.start_time ? format(new Date(occ.start_time), 'PP p') : <span>Pick a date</span>}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0 z-[9999]" align="start">
+                              <CalendarComponent
+                                mode="single"
+                                selected={occ.start_time ? new Date(occ.start_time) : undefined}
+                                onSelect={(date) => {
+                                  if (!date) return;
+                                  const currentTime = occ.start_time ? new Date(occ.start_time) : new Date();
+                                  date.setHours(currentTime.getHours());
+                                  date.setMinutes(currentTime.getMinutes());
+                                  
+                                  // Adjust for timezone offset
+                                  const offset = date.getTimezoneOffset() * 60000;
+                                  const localDate = new Date(date.getTime() - offset);
+                                  
+                                  const occurrences = [...(formData.occurrences || [])];
+                                  occurrences[idx] = { ...occurrences[idx], start_time: localDate.toISOString().slice(0, 16) };
+                                  setFormData({ ...formData, occurrences });
+                                }}
+                                initialFocus
+                              />
+                              <div className="p-3 border-t border-gray-100 flex items-center justify-between">
+                                <span className="text-sm font-medium">Time:</span>
+                                <Input 
+                                  type="time" 
+                                  value={occ.start_time ? new Date(occ.start_time).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }) : '12:00'}
+                                  onChange={(e) => {
+                                    const timeVal = e.target.value;
+                                    if (!timeVal) return;
+                                    const [hours, minutes] = timeVal.split(':').map(Number);
+                                    
+                                    const date = occ.start_time ? new Date(occ.start_time) : new Date();
+                                    date.setHours(hours);
+                                    date.setMinutes(minutes);
+                                    
+                                    // Adjust for timezone offset
+                                    const offset = date.getTimezoneOffset() * 60000;
+                                    const localDate = new Date(date.getTime() - offset);
+                                    
+                                    const occurrences = [...(formData.occurrences || [])];
+                                    occurrences[idx] = { ...occurrences[idx], start_time: localDate.toISOString().slice(0, 16) };
+                                    setFormData({ ...formData, occurrences });
+                                  }}
+                                  className="w-32 h-8"
+                                />
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                        
+                        <div className="flex flex-col gap-1">
+                          <label className="text-xs text-gray-500">End Date & Time (Optional)</label>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button variant="outline" className="w-full justify-start text-left font-normal bg-white">
+                                <Calendar className="mr-2 h-4 w-4" />
+                                {occ.end_time ? format(new Date(occ.end_time), 'PP p') : <span>Pick a date</span>}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0 z-[9999]" align="start">
+                              <CalendarComponent
+                                mode="single"
+                                selected={occ.end_time ? new Date(occ.end_time) : undefined}
+                                onSelect={(date) => {
+                                  if (!date) return;
+                                  const currentTime = occ.end_time ? new Date(occ.end_time) : (occ.start_time ? new Date(new Date(occ.start_time).getTime() + 60*60*1000) : new Date());
+                                  date.setHours(currentTime.getHours());
+                                  date.setMinutes(currentTime.getMinutes());
+                                  
+                                  const offset = date.getTimezoneOffset() * 60000;
+                                  const localDate = new Date(date.getTime() - offset);
+                                  
+                                  const occurrences = [...(formData.occurrences || [])];
+                                  occurrences[idx] = { ...occurrences[idx], end_time: localDate.toISOString().slice(0, 16) };
+                                  setFormData({ ...formData, occurrences });
+                                }}
+                                initialFocus
+                              />
+                              <div className="p-3 border-t border-gray-100 flex items-center justify-between">
+                                <span className="text-sm font-medium">Time:</span>
+                                <Input 
+                                  type="time" 
+                                  value={occ.end_time ? new Date(occ.end_time).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }) : (occ.start_time ? new Date(new Date(occ.start_time).getTime() + 60*60*1000).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }) : '13:00')}
+                                  onChange={(e) => {
+                                    const timeVal = e.target.value;
+                                    if (!timeVal) return;
+                                    const [hours, minutes] = timeVal.split(':').map(Number);
+                                    
+                                    const date = occ.end_time ? new Date(occ.end_time) : (occ.start_time ? new Date(occ.start_time) : new Date());
+                                    date.setHours(hours);
+                                    date.setMinutes(minutes);
+                                    
+                                    const offset = date.getTimezoneOffset() * 60000;
+                                    const localDate = new Date(date.getTime() - offset);
+                                    
+                                    const occurrences = [...(formData.occurrences || [])];
+                                    occurrences[idx] = { ...occurrences[idx], end_time: localDate.toISOString().slice(0, 16) };
+                                    setFormData({ ...formData, occurrences });
+                                  }}
+                                  className="w-32 h-8"
+                                />
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+                        </div>
                       </div>
                       
                       {/* Per-Occurrence Recurrence Settings */}
@@ -638,7 +738,9 @@ export default function GroupEventsTab({ group, currentUser, myMembership, isAdm
                   <Pencil className="w-4 h-4" />
                 </Button>
                 {isAdmin &&
-              <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(event.id)} className="text-gray-400 hover:text-red-500 h-8 w-8" title="Delete">
+              <Button variant="ghost" size="icon" onClick={() => {
+                confirm('Are you sure you want to delete this event?', () => deleteMutation.mutate(event.id), { variant: 'destructive', confirmText: 'Delete' });
+              }} className="text-gray-400 hover:text-red-500 h-8 w-8" title="Delete">
                     <Trash2 className="w-4 h-4" />
                   </Button>
               }
