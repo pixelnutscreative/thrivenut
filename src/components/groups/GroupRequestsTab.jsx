@@ -28,7 +28,7 @@ export default function GroupRequestsTab({ group, currentUser, myMembership, isA
   const [isUploading, setIsUploading] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const defaultTypes = group.type === 'agency' 
-    ? ['Technical Support', 'Content Request', 'Account Access', 'Billing', 'Other'] 
+    ? ['Social House / Creative', 'Technical Support', 'Content Request', 'Account Access', 'Billing', 'Other'] 
     : ['Support', 'Feature Request', 'Access Request', 'Other'];
 
   const [requestSettings, setRequestSettings] = useState(group.settings?.request_permissions || { 

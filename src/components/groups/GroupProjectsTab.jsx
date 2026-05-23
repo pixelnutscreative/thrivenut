@@ -12,6 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { format } from 'date-fns';
 import { Plus, Play, Square, Clock, Calendar, User, FileText, Trash2, CheckCircle2, Circle, MoreVertical, FileDown, Pencil, History, AlertCircle } from 'lucide-react';
 import ProjectActionsMenu from './ProjectActionsMenu';
+import { useGlobalDialog } from '@/components/shared/GlobalDialogProvider';
 import EditTaskDialog from './EditTaskDialog';
 import TimeReportDialog from './TimeReportDialog';
 
@@ -21,6 +22,7 @@ const isOwnerOrAdmin = (role) => ['owner', 'admin', 'client'].includes(role);
 
 export default function GroupProjectsTab({ group, currentUser, myMembership }) {
   const queryClient = useQueryClient();
+  const { confirm } = useGlobalDialog();
   const [activeProjectId, setActiveProjectId] = useState(null);
   const [isTimeReportOpen, setIsTimeReportOpen] = useState(false);
   
@@ -82,7 +84,10 @@ export default function GroupProjectsTab({ group, currentUser, myMembership }) {
                 {isOwnerOrAdmin(myMembership?.role) && (
                   <ProjectActionsMenu 
                     project={project} 
-                    onDelete={(e) => { e.stopPropagation(); deleteProjectMutation.mutate(project.id); }}
+                    onDelete={(e) => { 
+                      e.stopPropagation(); 
+                      confirm(`Delete project "${project.title}"?`, () => deleteProjectMutation.mutate(project.id), { variant: 'destructive', confirmText: 'Delete' }); 
+                    }}
                     onEdit={(updatedData) => updateProjectMutation.mutate({ projectIdToUpdate: project.id, data: updatedData })}
                   />
                 )}
@@ -227,6 +232,7 @@ function ProjectDetail({ projectId, group, currentUser, myMembership, onOpenRepo
 
 function TaskCard({ task, currentUser, group, projectId, canEdit, canLogTime }) {
   const queryClient = useQueryClient();
+  const { confirm } = useGlobalDialog();
   const [isRunning, setIsRunning] = useState(false);
   const [startTime, setStartTime] = useState(null);
   const [elapsed, setElapsed] = useState(0); // for visual update
@@ -354,7 +360,7 @@ function TaskCard({ task, currentUser, group, projectId, canEdit, canLogTime }) 
               variant="ghost"
               size="icon"
               onClick={() => {
-                  deleteTaskMutation.mutate(task.id);
+                confirm(`Delete task "${task.title}"?`, () => deleteTaskMutation.mutate(task.id), { variant: 'destructive', confirmText: 'Delete' });
               }}
               className="text-red-500 hover:text-red-600 hover:bg-red-50"
               title="Delete Task"

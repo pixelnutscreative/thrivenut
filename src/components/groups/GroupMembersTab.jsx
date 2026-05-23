@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Trash2, UserPlus, Shield, Plus, Package, History, Clock } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { useGlobalDialog } from '@/components/shared/GlobalDialogProvider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 function ViewRetainerHistoryDialog({ group, member }) {
@@ -231,6 +232,7 @@ function MemberRowItem({ member, group, isAdmin, currentUser, queryClient, allMe
 }
 
 function EditMemberDialog({ member, group, isAdmin, currentUser, onUpdate, allMembers }) {
+  const { confirm } = useGlobalDialog();
   const [role, setRole] = useState(member.role || 'member');
   const [level, setLevel] = useState(member.level || 'Member');
   const [assignedManager, setAssignedManager] = useState(member.assigned_manager || 'none');
@@ -343,7 +345,7 @@ function EditMemberDialog({ member, group, isAdmin, currentUser, onUpdate, allMe
         </div>
         <DialogFooter className="flex justify-between sm:justify-between">
             {canEdit ? (
-                <Button variant="destructive" size="sm" onClick={() => { if(window.confirm('Remove this member?')) removeMutation.mutate(); }}>
+                <Button variant="destructive" size="sm" onClick={() => confirm('Remove this member?', () => removeMutation.mutate(), { variant: 'destructive', confirmText: 'Remove' })}>
                     Remove Member
                 </Button>
             ) : <div />}
@@ -495,8 +497,7 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
                                            level_name: val
                                        }).then(() => {
                                            queryClient.invalidateQueries(['groupMembers', group.id]);
-                                           // Close dialog? simpler to just reload
-                                           window.location.reload(); 
+                                           // We can just rely on the query invalidation to update the UI
                                        });
                                   }}>
                                       <SelectTrigger><SelectValue placeholder="Select Level" /></SelectTrigger>
