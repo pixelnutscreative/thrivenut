@@ -98,7 +98,7 @@ export default function CreatorGroups() {
     staleTime: 300000, // 5 minutes
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    retry: 2,
+    retry: 2
   });
 
   const myMemberships = myGroupsData?.memberships || [];
@@ -150,7 +150,7 @@ export default function CreatorGroups() {
 
   // Ensure default selection when custom types exist
   useEffect(() => {
-    if (groupTypes.length > 0 && !groupTypes.some(t => t.key === newGroupType)) {
+    if (groupTypes.length > 0 && !groupTypes.some((t) => t.key === newGroupType)) {
       setNewGroupType(groupTypes[0].key);
     }
   }, [groupTypes]);
@@ -161,7 +161,7 @@ export default function CreatorGroups() {
 
   const toggleGroupVisibilityMutation = useMutation({
     mutationFn: async ({ groupId, isHidden }) => {
-      const existing = allGroupPrefs.find(p => p.group_id === groupId);
+      const existing = allGroupPrefs.find((p) => p.group_id === groupId);
       if (existing) {
         return base44.entities.UserGroupPreference.update(existing.id, { is_hidden_from_list: isHidden });
       } else {
@@ -180,7 +180,7 @@ export default function CreatorGroups() {
   const deleteGroupMutation = useMutation({
     mutationFn: async (groupId) => {
       await base44.functions.invoke('deleteCreatorGroup', { groupId });
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['myGroupsConsolidated']);
@@ -192,7 +192,7 @@ export default function CreatorGroups() {
       }
     },
     onError: (err) => {
-       alert('Failed to delete group: ' + (err.message || 'Unknown error'));
+      alert('Failed to delete group: ' + (err.message || 'Unknown error'));
     }
   });
 
@@ -208,7 +208,7 @@ export default function CreatorGroups() {
       };
 
       const response = await base44.functions.invoke('createCreatorGroup', { name, type, funnel_content });
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
       return response.data;
     },
     onSuccess: (newGroup) => {
@@ -234,9 +234,9 @@ export default function CreatorGroups() {
       const groups = await base44.entities.CreatorGroup.filter({ invite_code: code });
       if (groups.length === 0) throw new Error('Invalid invite code');
       const group = groups[0];
-      
+
       const existing = await base44.entities.CreatorGroupMember.filter({ group_id: group.id, user_email: user?.email });
-      
+
       const requireApproval = group.settings?.require_approval === true;
       // Auto-approve invite link users at Creator level
       const initialStatus = 'active';
@@ -247,8 +247,8 @@ export default function CreatorGroups() {
         // If pending, check if we can auto-activate or if approval is strictly required
         if (existing[0].status === 'pending') {
           if (!requireApproval) {
-             await base44.entities.CreatorGroupMember.update(existing[0].id, { status: 'active', role: 'member', joined_date: new Date().toISOString() });
-             return { group, existing: false, wasPending: true, activated: true };
+            await base44.entities.CreatorGroupMember.update(existing[0].id, { status: 'active', role: 'member', joined_date: new Date().toISOString() });
+            return { group, existing: false, wasPending: true, activated: true };
           }
           return { group, existing: true, status: 'pending' };
         }
@@ -263,24 +263,24 @@ export default function CreatorGroups() {
         level: initialLevel,
         joined_date: new Date().toISOString()
       });
-      
+
       // Restricted Feature Mode (Social House)
       if (group.restrict_new_members) {
         const prefs = await base44.entities.UserPreferences.filter({ user_email: user?.email });
         if (prefs.length > 0) {
-           await base44.entities.UserPreferences.update(prefs[0].id, {
-               enabled_modules: ['my_groups'] // Disable all other modules
-           });
+          await base44.entities.UserPreferences.update(prefs[0].id, {
+            enabled_modules: ['my_groups'] // Disable all other modules
+          });
         }
       }
       return { group, existing: false, status: initialStatus };
     },
     onSuccess: ({ group, existing, wasPending, activated, status }) => {
-      if (wasPending && activated) alert('Membership activated! Welcome to the group.');
-      else if (status === 'pending') alert('Request sent! An admin will review your request shortly.');
-      else if (existing) alert('You are already a member of this group!');
-      else alert('Welcome! You have joined the group.');
-      
+      if (wasPending && activated) alert('Membership activated! Welcome to the group.');else
+      if (status === 'pending') alert('Request sent! An admin will review your request shortly.');else
+      if (existing) alert('You are already a member of this group!');else
+      alert('Welcome! You have joined the group.');
+
       queryClient.invalidateQueries(['myGroupsConsolidated']);
       queryClient.invalidateQueries(['myGroupMemberships']);
       setSearchParams({ id: group.id });
@@ -292,33 +292,33 @@ export default function CreatorGroups() {
     const sessionKey = `invite_prompt_shown_${inviteCode}`;
     if (inviteCode && user?.email && !sessionStorage.getItem(sessionKey)) {
       sessionStorage.setItem(sessionKey, 'true');
-      
+
       // Auto-add them to the group
       joinMutation.mutate(inviteCode);
     }
   }, [inviteCode, user]);
 
-  const activeGroup = fetchedActiveGroup || groups.find(g => g.id === activeGroupId);
-  const activeMembership = myMemberships.find(m => m.group_id === activeGroupId);
+  const activeGroup = fetchedActiveGroup || groups.find((g) => g.id === activeGroupId);
+  const activeMembership = myMemberships.find((m) => m.group_id === activeGroupId);
 
   // Robust Membership Checks
-  const isOwnerByEmail = (activeGroup?.owner_email && user?.email && activeGroup.owner_email.toLowerCase() === user.email.toLowerCase()) || false;
-  
+  const isOwnerByEmail = activeGroup?.owner_email && user?.email && activeGroup.owner_email.toLowerCase() === user.email.toLowerCase() || false;
+
   // Admin = Super Admin OR Owner (by email) OR Explicit Admin Role OR Agency Owner Level
-  const isAdmin = isSuperAdmin || isOwnerByEmail || (activeMembership && (['owner', 'admin', 'manager'].includes(activeMembership.role) || activeMembership.level === 'Agency Owner'));
+  const isAdmin = isSuperAdmin || isOwnerByEmail || activeMembership && (['owner', 'admin', 'manager'].includes(activeMembership.role) || activeMembership.level === 'Agency Owner');
 
   // Member = Admin OR Active/Trial Status
-  const isMember = isAdmin || (!!activeMembership && (activeMembership.status === 'active' || activeMembership.status === 'trial'));
+  const isMember = isAdmin || !!activeMembership && (activeMembership.status === 'active' || activeMembership.status === 'trial');
 
   if (activeGroup && !isMember && !isAdmin) {
-     console.log('🔒 Access Denied Debug:', {
-        groupName: activeGroup.name,
-        ownerEmail: activeGroup.owner_email,
-        userEmail: user?.email,
-        isOwnerByEmail,
-        activeMembership,
-        isSuperAdmin
-     });
+    console.log('🔒 Access Denied Debug:', {
+      groupName: activeGroup.name,
+      ownerEmail: activeGroup.owner_email,
+      userEmail: user?.email,
+      isOwnerByEmail,
+      activeMembership,
+      isSuperAdmin
+    });
   }
 
   // DEBUG LOG (AFTER declarations)
@@ -330,25 +330,25 @@ export default function CreatorGroups() {
     isMember: isMember,
     isAdmin: isAdmin
   });
-  
+
   const isPending = !isAdmin && activeMembership?.status === 'pending';
-  const isInterested = !isAdmin && (activeMembership?.status === 'interested' || activeMembership?.pending_approval); 
+  const isInterested = !isAdmin && (activeMembership?.status === 'interested' || activeMembership?.pending_approval);
 
   // Invite logic: Admins can always invite. Members can invite if allowed by settings.
-  const canInvite = isAdmin || (activeGroup?.settings?.allow_member_invites === true && isMember);
+  const canInvite = isAdmin || activeGroup?.settings?.allow_member_invites === true && isMember;
 
   // Auto-fix Owner Membership if missing
   useEffect(() => {
     if (activeGroup && isOwnerByEmail && !activeMembership && !isLoadingGroups) {
-        console.log('👑 Owner missing from member list. Attempting auto-fix...');
-        base44.functions.invoke('updateMemberStatus', { 
-            action: 'fix_owner_membership', 
-            group_id: activeGroup.id, 
-            user_email: user.email 
-        }).then(() => {
-            queryClient.invalidateQueries(['myGroupsConsolidated']);
-            queryClient.invalidateQueries(['activeGroup']);
-        }).catch(err => console.error('Failed to fix owner membership:', err));
+      console.log('👑 Owner missing from member list. Attempting auto-fix...');
+      base44.functions.invoke('updateMemberStatus', {
+        action: 'fix_owner_membership',
+        group_id: activeGroup.id,
+        user_email: user.email
+      }).then(() => {
+        queryClient.invalidateQueries(['myGroupsConsolidated']);
+        queryClient.invalidateQueries(['activeGroup']);
+      }).catch((err) => console.error('Failed to fix owner membership:', err));
     }
   }, [activeGroup?.id, isOwnerByEmail, activeMembership, isLoadingGroups]);
 
@@ -357,9 +357,9 @@ export default function CreatorGroups() {
     mutationFn: async (data) => {
       const email = (data.email || '').trim().toLowerCase();
       if (!email) throw new Error('Email required');
-      
-      const roleToUse = isAdmin ? data.role : (activeGroup.settings?.default_invite_role || 'member');
-      const levelToUse = isAdmin ? 'Member' : (activeGroup.settings?.default_invite_level || 'Member');
+
+      const roleToUse = isAdmin ? data.role : activeGroup.settings?.default_invite_role || 'member';
+      const levelToUse = isAdmin ? 'Member' : activeGroup.settings?.default_invite_level || 'Member';
 
       const existing = await base44.entities.CreatorGroupMember.filter({ group_id: activeGroup.id, user_email: email });
       if (existing.length > 0) {
@@ -406,7 +406,7 @@ export default function CreatorGroups() {
     mutationFn: async ({ code, id }) => {
       // Basic validation
       if (!code || code.length < 3) throw new Error("Code too short");
-      
+
       const existing = await base44.entities.ReferralLink.filter({ referral_code: code });
       // Check if code taken by someone else
       if (existing.length > 0 && existing[0].user_email !== user?.email) {
@@ -443,10 +443,10 @@ export default function CreatorGroups() {
     if (isInviteOpen && !isReferralLoading) {
       if (myReferralLinks.length > 0) {
         // If we haven't selected one yet, or the current selection is invalid, pick the first
-        if (!selectedCodeId || !myReferralLinks.find(l => l.id === selectedCodeId)) {
-           const defaultLink = myReferralLinks[0];
-           setSelectedCodeId(defaultLink.id);
-           setEditingReferralCode(defaultLink.referral_code);
+        if (!selectedCodeId || !myReferralLinks.find((l) => l.id === selectedCodeId)) {
+          const defaultLink = myReferralLinks[0];
+          setSelectedCodeId(defaultLink.id);
+          setEditingReferralCode(defaultLink.referral_code);
         }
       } else {
         setEditingReferralCode('');
@@ -459,7 +459,7 @@ export default function CreatorGroups() {
   // Sync editing text when selection changes (for dropdown mode)
   const handleSelectionChange = (id) => {
     setSelectedCodeId(id);
-    const link = myReferralLinks.find(l => l.id === id);
+    const link = myReferralLinks.find((l) => l.id === id);
     if (link) setEditingReferralCode(link.referral_code);
   };
 
@@ -480,13 +480,13 @@ export default function CreatorGroups() {
       if (!isAlreadyTracked) {
         sessionStorage.setItem(sessionTrackedKey, 'true');
         // Track referral
-        base44.functions.invoke('trackReferral', { 
-          referralCode: referralCode, 
+        base44.functions.invoke('trackReferral', {
+          referralCode: referralCode,
           activityType: 'click',
           email: user.email,
           sourceType: 'group_invite',
           sourceDetail: activeGroupId || 'pending_invite'
-        }).catch(err => console.error('Referral track error:', err));
+        }).catch((err) => console.error('Referral track error:', err));
       }
     }
   }, [inviteCode, referralCode, user]);
@@ -516,10 +516,10 @@ export default function CreatorGroups() {
     mutationFn: async (newPrefs) => {
       // Optimistic update for sorting
       if (newPrefs.last_accessed_at) {
-         queryClient.setQueryData(['allGroupPrefs', user?.email], (old) => {
-            if (!old) return old;
-            return old.map(p => p.group_id === activeGroupId ? { ...p, last_accessed_at: newPrefs.last_accessed_at } : p);
-         });
+        queryClient.setQueryData(['allGroupPrefs', user?.email], (old) => {
+          if (!old) return old;
+          return old.map((p) => p.group_id === activeGroupId ? { ...p, last_accessed_at: newPrefs.last_accessed_at } : p);
+        });
       }
 
       if (groupPrefs?.id) {
@@ -528,31 +528,31 @@ export default function CreatorGroups() {
         // Double check if preference exists but just wasn't loaded in 'groupPrefs' query yet (rare race condition)
         const existing = await base44.entities.UserGroupPreference.filter({ user_email: user?.email, group_id: activeGroupId });
         if (existing.length > 0) {
-             return base44.entities.UserGroupPreference.update(existing[0].id, newPrefs);
+          return base44.entities.UserGroupPreference.update(existing[0].id, newPrefs);
         }
-        return base44.entities.UserGroupPreference.create({ 
-          user_email: user?.email, 
-          group_id: activeGroupId, 
-          ...newPrefs 
+        return base44.entities.UserGroupPreference.create({
+          user_email: user?.email,
+          group_id: activeGroupId,
+          ...newPrefs
         });
       }
     },
     onSuccess: () => {
-        queryClient.invalidateQueries(['groupPrefs', user?.email, activeGroupId]);
-        queryClient.invalidateQueries(['allGroupPrefs']);
+      queryClient.invalidateQueries(['groupPrefs', user?.email, activeGroupId]);
+      queryClient.invalidateQueries(['allGroupPrefs']);
     }
   });
 
   // Track last accessed
   useEffect(() => {
     if (activeGroupId && user?.email && groupPrefs) {
-        // Only update if it's been more than 5 minutes or never set
-        const last = groupPrefs.last_accessed_at ? new Date(groupPrefs.last_accessed_at) : new Date(0);
-        const now = new Date();
-        const diff = now - last;
-        if (diff > 5 * 60 * 1000) {
-            updatePrefsMutation.mutate({ last_accessed_at: now.toISOString() });
-        }
+      // Only update if it's been more than 5 minutes or never set
+      const last = groupPrefs.last_accessed_at ? new Date(groupPrefs.last_accessed_at) : new Date(0);
+      const now = new Date();
+      const diff = now - last;
+      if (diff > 5 * 60 * 1000) {
+        updatePrefsMutation.mutate({ last_accessed_at: now.toISOString() });
+      }
     }
   }, [activeGroupId, user?.email, groupPrefs?.id]);
 
@@ -566,12 +566,12 @@ export default function CreatorGroups() {
   // --- Retainer Balance Calculation ---
   // Only fetch for Client Portal groups
   const isClientPortal = ['client-portal', 'agency'].includes(activeGroup?.type);
-  
+
   const { data: retainerBalance } = useQuery({
     queryKey: ['retainerBalance', activeGroupId],
     queryFn: async () => {
       if (!activeGroupId) return null;
-      
+
       // 1. Get total purchased hours (GroupMemberRetainerPackage)
       // Note: Assuming we want sum of ALL packages in the group (typically 1 client)
       const packages = await base44.entities.GroupMemberRetainerPackage.filter({ group_id: activeGroupId });
@@ -583,15 +583,15 @@ export default function CreatorGroups() {
       // But we can filter TimeEntry by... wait, TimeEntry schema doesn't have group_id. 
       // We must fetch projects first.
       const projects = await base44.entities.GroupProject.filter({ group_id: activeGroupId });
-      const projectIds = projects.map(p => p.id);
-      
+      const projectIds = projects.map((p) => p.id);
+
       let logged = 0;
       if (projectIds.length > 0) {
-         // This is a bit inefficient if many projects, but fine for now. 
-         // Ideally TimeEntry should have group_id.
-         const timePromises = projectIds.map(pid => base44.entities.TimeEntry.filter({ project_id: pid }));
-         const allTime = await Promise.all(timePromises);
-         logged = allTime.flat().reduce((sum, t) => sum + (t.hours || 0), 0);
+        // This is a bit inefficient if many projects, but fine for now. 
+        // Ideally TimeEntry should have group_id.
+        const timePromises = projectIds.map((pid) => base44.entities.TimeEntry.filter({ project_id: pid }));
+        const allTime = await Promise.all(timePromises);
+        logged = allTime.flat().reduce((sum, t) => sum + (t.hours || 0), 0);
       }
 
       // 3. Get total meeting hours (MeetingRecording)
@@ -607,7 +607,7 @@ export default function CreatorGroups() {
     enabled: !!activeGroupId && isClientPortal
   });
 
-  const showLoading = isLoading || (activeGroupId && isActiveGroupLoading) || (isLoadingGroups && myMemberships.length > 0 && !activeGroupId && !browseMode);
+  const showLoading = isLoading || activeGroupId && isActiveGroupLoading || isLoadingGroups && myMemberships.length > 0 && !activeGroupId && !browseMode;
 
   if (showLoading) {
     return <div className="flex justify-center items-center h-screen"><Loader2 className="w-8 h-8 animate-spin text-purple-600" /></div>;
@@ -616,78 +616,78 @@ export default function CreatorGroups() {
   // Handle case where group ID is in URL but group not found
   if (activeGroupId && !activeGroup && !isActiveGroupLoading) {
     return (
-        <div className="flex flex-col items-center justify-center h-screen p-6 text-center">
+      <div className="flex flex-col items-center justify-center h-screen p-6 text-center">
             <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
             <h2 className="text-xl font-bold text-gray-900">Group Not Found</h2>
             <p className="text-gray-500 mt-2">This group may have been deleted or you don't have permission to view it.</p>
             <Button className="mt-4" onClick={() => setSearchParams({})}>Back to My Groups</Button>
-        </div>
-    );
+        </div>);
+
   }
 
   const getGroupIcon = (type) => {
     switch (type) {
-      case 'agency': return Building;
-      case 'family': return Home;
-      case 'collective': return Sparkles;
-      case 'mastermind': return Brain;
-      case 'project': return Briefcase;
-      default: return Users;
+      case 'agency':return Building;
+      case 'family':return Home;
+      case 'collective':return Sparkles;
+      case 'mastermind':return Brain;
+      case 'project':return Briefcase;
+      default:return Users;
     }
   };
 
   const getGroupColorClass = (type) => {
-    const t = (groupTypes || []).find(gt => gt.key === type);
+    const t = (groupTypes || []).find((gt) => gt.key === type);
     if (t?.badge_class) return t.badge_class;
     switch (type) {
-      case 'agency': return 'bg-purple-100 text-purple-600';
-      case 'family': return 'bg-green-100 text-green-600';
-      case 'collective': return 'bg-pink-100 text-pink-600';
-      case 'mastermind': return 'bg-amber-100 text-amber-600';
-      case 'project': return 'bg-blue-100 text-blue-600';
-      default: return 'bg-gray-100 text-gray-600';
+      case 'agency':return 'bg-purple-100 text-purple-600';
+      case 'family':return 'bg-green-100 text-green-600';
+      case 'collective':return 'bg-pink-100 text-pink-600';
+      case 'mastermind':return 'bg-amber-100 text-amber-600';
+      case 'project':return 'bg-blue-100 text-blue-600';
+      default:return 'bg-gray-100 text-gray-600';
     }
   };
 
   const getGroupLabel = (type) => {
-    const t = (groupTypes || []).find(gt => gt.key === type);
+    const t = (groupTypes || []).find((gt) => gt.key === type);
     if (t?.name) return t.name.toUpperCase();
     switch (type) {
-      case 'agency': return 'AGENCY';
-      case 'family': return 'FAMILY';
-      case 'collective': return 'COLLECTIVE';
-      case 'mastermind': return 'MASTERMIND';
-      case 'project': return 'PROJECT';
-      default: return 'COMMUNITY';
+      case 'agency':return 'AGENCY';
+      case 'family':return 'FAMILY';
+      case 'collective':return 'COLLECTIVE';
+      case 'mastermind':return 'MASTERMIND';
+      case 'project':return 'PROJECT';
+      default:return 'COMMUNITY';
     }
   };
 
   const displayNames = activeGroup?.settings?.display_names || {};
 
   const allTabs = [
-    { id: 'feed', label: displayNames.feed || 'Feed', icon: Bell, color: 'purple' },
-    { id: 'discussion', label: displayNames.discussion || 'Discussion', icon: MessageSquare, color: 'teal' },
-    { id: 'events', label: displayNames.events || 'Events', icon: Calendar, color: 'pink' },
-    { id: 'meetings', label: displayNames.meetings || 'Meetings', icon: Video, color: 'rose' },
-    { id: 'projects', label: displayNames.projects || 'Projects', icon: Briefcase, color: 'indigo' },
-    { id: 'marketing', label: displayNames.marketing || 'Marketing', icon: Printer, color: 'indigo' },
-    { id: 'assets', label: displayNames.assets || 'Brand & Assets', icon: Sparkles, color: 'pink' },
-    { id: 'resources', label: displayNames.resources || 'Resources', icon: FileText, color: 'amber' },
-    { id: 'training', label: displayNames.training || 'Training', icon: GraduationCap, color: 'blue' },
-    { id: 'qna', label: displayNames.qna || 'Q&A', icon: HelpCircle, color: 'teal' },
-    { id: 'members', label: displayNames.members || 'Members', icon: Users, color: 'orange' },
-    { id: 'requests', label: displayNames.requests || 'Requests', icon: AlertCircle, color: 'gray' },
-    { id: 'sales', label: displayNames.sales || 'Sales Pipeline', icon: Target, color: 'green' },
-  ];
+  { id: 'feed', label: displayNames.feed || 'Feed', icon: Bell, color: 'purple' },
+  { id: 'discussion', label: displayNames.discussion || 'Discussion', icon: MessageSquare, color: 'teal' },
+  { id: 'events', label: displayNames.events || 'Events', icon: Calendar, color: 'pink' },
+  { id: 'meetings', label: displayNames.meetings || 'Meetings', icon: Video, color: 'rose' },
+  { id: 'projects', label: displayNames.projects || 'Projects', icon: Briefcase, color: 'indigo' },
+  { id: 'marketing', label: displayNames.marketing || 'Marketing', icon: Printer, color: 'indigo' },
+  { id: 'assets', label: displayNames.assets || 'Brand & Assets', icon: Sparkles, color: 'pink' },
+  { id: 'resources', label: displayNames.resources || 'Resources', icon: FileText, color: 'amber' },
+  { id: 'training', label: displayNames.training || 'Training', icon: GraduationCap, color: 'blue' },
+  { id: 'qna', label: displayNames.qna || 'Q&A', icon: HelpCircle, color: 'teal' },
+  { id: 'members', label: displayNames.members || 'Members', icon: Users, color: 'orange' },
+  { id: 'requests', label: displayNames.requests || 'Requests', icon: AlertCircle, color: 'gray' },
+  { id: 'sales', label: displayNames.sales || 'Sales Pipeline', icon: Target, color: 'green' }];
+
 
   // Determine if this group is a "Client Group" (agency or client-portal)
   const isClientGroup = ['client-portal', 'agency'].includes(activeGroup?.type);
-  
+
   // All tabs are now potentially available, controlled by Group Type settings
   const availableTabs = allTabs;
 
   // Sort tabs based on group settings
-  const tabOrder = activeGroup?.settings?.tab_order || allTabs.map(t => t.id);
+  const tabOrder = activeGroup?.settings?.tab_order || allTabs.map((t) => t.id);
   availableTabs.sort((a, b) => {
     const indexA = tabOrder.indexOf(a.id);
     const indexB = tabOrder.indexOf(b.id);
@@ -701,23 +701,23 @@ export default function CreatorGroups() {
 
   const toggleTabVisibility = (tabId) => {
     const hidden = groupPrefs?.hidden_tabs || [];
-    const newHidden = hidden.includes(tabId) 
-      ? hidden.filter(id => id !== tabId)
-      : [...hidden, tabId];
+    const newHidden = hidden.includes(tabId) ?
+    hidden.filter((id) => id !== tabId) :
+    [...hidden, tabId];
     updatePrefsMutation.mutate({ hidden_tabs: newHidden });
   };
 
-  const typeConfig = (groupTypes || []).find(gt => gt.key === activeGroup?.type);
+  const typeConfig = (groupTypes || []).find((gt) => gt.key === activeGroup?.type);
   const allowed = typeConfig?.enabled_tabs && typeConfig.enabled_tabs.length > 0 ? new Set(typeConfig.enabled_tabs) : null;
-  const defaultTab = allowed && !allowed.has('feed') ? (Array.from(allowed)[0] || 'feed') : 'feed';
+  const defaultTab = allowed && !allowed.has('feed') ? Array.from(allowed)[0] || 'feed' : 'feed';
 
   // If prospect management is enabled, and it's the default tab, make it the default
   if (activeGroup?.enable_prospect_management && defaultTab === 'sales') return 'sales';
-  
+
   const currentTab = activeTab || defaultTab;
 
   const handleTabChange = (val) => {
-    setSearchParams(prev => {
+    setSearchParams((prev) => {
       const newParams = new URLSearchParams(prev);
       newParams.set('tab', val);
       return newParams;
@@ -736,7 +736,7 @@ export default function CreatorGroups() {
 
     // Global Members tab restriction: Creators can NEVER see the members list
     if (id === 'members' && !isAdmin && userRole !== 'manager') return false;
-    
+
     // Hide Feed tab for Agency groups
     if (activeGroup?.type === 'agency' && id === 'feed') return false;
 
@@ -752,60 +752,60 @@ export default function CreatorGroups() {
 
     // Sales Tab - Only if enabled for this group
     if (id === 'sales') {
-        return activeGroup.enable_prospect_management === true;
+      return activeGroup.enable_prospect_management === true;
     }
 
     // Check for explicit permissions from Group Settings next
     const permissions = activeGroup?.role_tab_permissions;
     if (permissions && permissions[id] !== undefined) {
-       // If the tab is configured in permissions, use that configuration STRICTLY
-       const attributes = [userRole, userLevel, userStatus].filter(Boolean);
-       const allowedList = permissions[id];
-       const hasPermission = attributes.some(attr => allowedList.includes(attr));
-       
-       if (isAdmin) return true;
-       // Ensure Feed is visible if enabled globally, preventing accidental lockout via permissions
-       if (id === 'feed' && !disabledFeatures.includes('feed')) return true;
-       
-       return hasPermission;
+      // If the tab is configured in permissions, use that configuration STRICTLY
+      const attributes = [userRole, userLevel, userStatus].filter(Boolean);
+      const allowedList = permissions[id];
+      const hasPermission = attributes.some((attr) => allowedList.includes(attr));
+
+      if (isAdmin) return true;
+      // Ensure Feed is visible if enabled globally, preventing accidental lockout via permissions
+      if (id === 'feed' && !disabledFeatures.includes('feed')) return true;
+
+      return hasPermission;
     }
 
     // If Custom Navigation is enabled, and the tab is NOT disabled (checked above), 
     // it should be enabled for everyone
     if (hasCustomNavigation) {
-       return true; 
+      return true;
     }
 
     // Legacy/Default logic (if no custom navigation set)
     // Check Group Type configuration (Source of Truth for features)
     if (allowed && !allowed.has(id)) {
-        // If not allowed by Group Type, hide it (unless admin)
-        // Admin always sees everything to configure/manage, OR should we hide it even for admin if disabled at type level?
-        // User requested: "if I remove or add some thing, then all the Agency category groups get that feature added or removed"
-        // This implies it should be removed for everyone including admins if the feature is disabled for the group type.
-        // However, usually admins need access to data. But for "Features", if a feature is off, it should be off.
-        // Let's stick to hiding it for non-admins first, or maybe everyone. 
-        // If I hide it for admin, they can't manage data if they accidentally turn it off.
-        // But the user said "feature added or removed".
-        // Let's hide it for everyone if not in `allowed`.
-        // BUT, existing code had `if (!isAdmin) return false`. 
-        // Let's enforce it for everyone, so the feature truly disappears.
-        return false;
+      // If not allowed by Group Type, hide it (unless admin)
+      // Admin always sees everything to configure/manage, OR should we hide it even for admin if disabled at type level?
+      // User requested: "if I remove or add some thing, then all the Agency category groups get that feature added or removed"
+      // This implies it should be removed for everyone including admins if the feature is disabled for the group type.
+      // However, usually admins need access to data. But for "Features", if a feature is off, it should be off.
+      // Let's stick to hiding it for non-admins first, or maybe everyone. 
+      // If I hide it for admin, they can't manage data if they accidentally turn it off.
+      // But the user said "feature added or removed".
+      // Let's hide it for everyone if not in `allowed`.
+      // BUT, existing code had `if (!isAdmin) return false`. 
+      // Let's enforce it for everyone, so the feature truly disappears.
+      return false;
     }
 
     // Client Role Default (Legacy - can be removed if GroupType config is robust, but keeping for safety for now)
     if (userRole === 'client' && ['feed', 'projects', 'meetings', 'marketing', 'assets', 'resources', 'requests', 'discussion'].includes(id)) {
-        return true;
+      return true;
     }
 
     if (id === 'members' && !isAdmin && activeMembership?.role !== 'manager') return false;
 
     if (isClientGroup) {
-        // Client groups might restrict members tab, but let's allow it if not explicitly disabled
-        // if (id === 'members' && !isAdmin) return false;
-    }
-    
-    // Admin Override
+
+
+      // Client groups might restrict members tab, but let's allow it if not explicitly disabled
+      // if (id === 'members' && !isAdmin) return false;
+    } // Admin Override
     if (isAdmin) {
       if (id === 'sales' && !activeGroup.enable_prospect_management) return false;
       return true;
@@ -824,17 +824,17 @@ export default function CreatorGroups() {
 
     const permissions = activeGroup?.role_tab_permissions;
     if (permissions && permissions[id] !== undefined) {
-       return permissions[id].includes('member') || permissions[id].includes('Member');
+      return permissions[id].includes('member') || permissions[id].includes('Member');
     }
-    
+
     // If Custom Navigation is enabled, and not disabled, it IS visible to members
     if (hasCustomNavigation) {
-       return true;
+      return true;
     }
-    
+
     // Fallback defaults for member role (Legacy/Default)
     if (isClientGroup) {
-        return ['feed', 'events', 'qna', 'resources', 'training', 'discussion', 'members'].includes(id);
+      return ['feed', 'events', 'qna', 'resources', 'training', 'discussion', 'members'].includes(id);
     }
 
     if (allowed && !allowed.has(id)) return false;
@@ -853,41 +853,41 @@ export default function CreatorGroups() {
       let resultGroups = [];
 
       if (!browseMode) {
-        resultGroups = safeGroups.filter(g => {
+        resultGroups = safeGroups.filter((g) => {
           if (!g || !g.id) return false;
-          const pref = allGroupPrefs.find(p => p.group_id === g.id);
+          const pref = allGroupPrefs.find((p) => p.group_id === g.id);
           return showHidden || !pref?.is_hidden_from_list;
         });
       } else {
         // Browse Mode: Combine my groups + public groups
         const allGroupsMap = new Map();
-        
-        safeGroups.forEach(g => { if (g && g.id) allGroupsMap.set(g.id, g); });
-        safeBrowseGroups.forEach(g => { if (g && g.id) allGroupsMap.set(g.id, g); });
 
-        resultGroups = Array.from(allGroupsMap.values()).filter(g => {
+        safeGroups.forEach((g) => {if (g && g.id) allGroupsMap.set(g.id, g);});
+        safeBrowseGroups.forEach((g) => {if (g && g.id) allGroupsMap.set(g.id, g);});
+
+        resultGroups = Array.from(allGroupsMap.values()).filter((g) => {
           if (!g) return false;
           const isPublic = g.allow_public_discovery === true;
           const isOwner = g.owner_email === user?.email;
-          const isMember = safeMemberships.some(m => m.group_id === g.id);
-          
+          const isMember = safeMemberships.some((m) => m.group_id === g.id);
+
           return isPublic || isSuperAdmin || isOwner || isMember;
         });
       }
 
       // Sort by last accessed
       return resultGroups.sort((a, b) => {
-          const prefA = allGroupPrefs.find(p => p.group_id === a.id);
-          const prefB = allGroupPrefs.find(p => p.group_id === b.id);
-          
-          const lastA = prefA?.last_accessed_at ? new Date(prefA.last_accessed_at) : new Date(0);
-          const lastB = prefB?.last_accessed_at ? new Date(prefB.last_accessed_at) : new Date(0);
+        const prefA = allGroupPrefs.find((p) => p.group_id === a.id);
+        const prefB = allGroupPrefs.find((p) => p.group_id === b.id);
 
-          if (lastA.getTime() !== lastB.getTime()) {
-              return lastB.getTime() - lastA.getTime();
-          }
-          
-          return new Date(b.created_date) - new Date(a.created_date);
+        const lastA = prefA?.last_accessed_at ? new Date(prefA.last_accessed_at) : new Date(0);
+        const lastB = prefB?.last_accessed_at ? new Date(prefB.last_accessed_at) : new Date(0);
+
+        if (lastA.getTime() !== lastB.getTime()) {
+          return lastB.getTime() - lastA.getTime();
+        }
+
+        return new Date(b.created_date) - new Date(a.created_date);
       });
     };
 
@@ -906,30 +906,30 @@ export default function CreatorGroups() {
           </div>
           <div className="flex items-center gap-2">
              <div className="flex bg-gray-100 p-1 rounded-lg">
-              <Button 
-                size="sm" 
-                variant={viewMode === 'grid' ? 'white' : 'ghost'} 
+              <Button
+                size="sm"
+                variant={viewMode === 'grid' ? 'white' : 'ghost'}
                 className={`h-8 px-2 ${viewMode === 'grid' ? 'bg-white shadow-sm' : ''}`}
-                onClick={() => setViewMode('grid')}
-              >
+                onClick={() => setViewMode('grid')}>
+                
                 <LayoutGrid className="w-4 h-4" />
               </Button>
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 variant={viewMode === 'table' ? 'white' : 'ghost'}
                 className={`h-8 px-2 ${viewMode === 'table' ? 'bg-white shadow-sm' : ''}`}
-                onClick={() => setViewMode('table')}
-              >
+                onClick={() => setViewMode('table')}>
+                
                 <List className="w-4 h-4" />
               </Button>
             </div>
             
-            <Button 
-              size="sm" 
-              variant={showHidden ? "secondary" : "outline"} 
+            <Button
+              size="sm"
+              variant={showHidden ? "secondary" : "outline"}
               onClick={() => setShowHidden(!showHidden)}
-              title={showHidden ? "Hide Hidden Groups" : "Show All Groups"}
-            >
+              title={showHidden ? "Hide Hidden Groups" : "Show All Groups"}>
+              
               {showHidden ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </Button>
 
@@ -951,41 +951,41 @@ export default function CreatorGroups() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="z-[60]" position="popper">
-                        {groupTypes?.filter(t => t.key !== 'client-portal' || isProTier).map(type => (
-                          <SelectItem key={type.key} value={type.key}>
+                        {groupTypes?.filter((t) => t.key !== 'client-portal' || isProTier).map((type) =>
+                        <SelectItem key={type.key} value={type.key}>
                             <div className="flex flex-col text-left py-1">
                               <span className="font-semibold">{type.name}</span>
                               <span className="text-xs text-gray-500">{type.description}</span>
                             </div>
                           </SelectItem>
-                        ))}
+                        )}
                       </SelectContent>
                     </Select>
                     <p className="text-xs text-gray-500">
-                      {newGroupType === 'agency' 
-                        ? 'Official business groups for agencies, coaching, or brands. This creates your Agency entity.' 
-                        : newGroupType === 'client-portal'
-                        ? 'Private workspace for client projects, time tracking, and meeting records.'
-                        : 'Create a space for collaboration, sharing, and growth.'}
+                      {newGroupType === 'agency' ?
+                      'Official business groups for agencies, coaching, or brands. This creates your Agency entity.' :
+                      newGroupType === 'client-portal' ?
+                      'Private workspace for client projects, time tracking, and meeting records.' :
+                      'Create a space for collaboration, sharing, and growth.'}
                     </p>
                   </div>
                   <div className="space-y-2">
                     <Label>Group Name</Label>
-                    <Input 
-                      value={newGroupName} 
-                      onChange={(e) => setNewGroupName(e.target.value)} 
-                      placeholder="e.g. The Treehouse" 
-                    />
+                    <Input
+                      value={newGroupName}
+                      onChange={(e) => setNewGroupName(e.target.value)}
+                      placeholder="e.g. The Treehouse" />
+                    
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button 
-                     onClick={() => createGroupMutation.mutate({ name: newGroupName, type: newGroupType })} 
-                     disabled={!newGroupName || createGroupMutation.isPending}
-                  >
-                    {createGroupMutation.isPending ? (
-                       <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Creating...</>
-                    ) : 'Create Group'}
+                  <Button
+                    onClick={() => createGroupMutation.mutate({ name: newGroupName, type: newGroupType })}
+                    disabled={!newGroupName || createGroupMutation.isPending}>
+                    
+                    {createGroupMutation.isPending ?
+                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Creating...</> :
+                    'Create Group'}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -993,30 +993,30 @@ export default function CreatorGroups() {
           </div>
         </div>
 
-        {viewMode === 'grid' ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {displayedGroups.map(group => {
-              const GroupIcon = getGroupIcon(group.type);
-              const colorClass = getGroupColorClass(group.type);
-              
-              const customColor = group.settings?.group_color;
-              const iconStyle = customColor ? { backgroundColor: customColor + '20', color: customColor } : {};
-              const iconClass = customColor ? '' : colorClass;
+        {viewMode === 'grid' ?
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {displayedGroups.map((group) => {
+            const GroupIcon = getGroupIcon(group.type);
+            const colorClass = getGroupColorClass(group.type);
 
-              const pref = allGroupPrefs.find(p => p.group_id === group.id);
-              const isHidden = pref?.is_hidden_from_list;
-              const membership = myMemberships.find(m => m.group_id === group.id);
-              const isMember = !!membership;
+            const customColor = group.settings?.group_color;
+            const iconStyle = customColor ? { backgroundColor: customColor + '20', color: customColor } : {};
+            const iconClass = customColor ? '' : colorClass;
 
-              return (
-                <Card key={group.id} className={`hover:shadow-lg transition-all cursor-pointer group ${isHidden ? 'opacity-60 bg-gray-50' : ''}`} onClick={() => setSearchParams({ id: group.id })}>
+            const pref = allGroupPrefs.find((p) => p.group_id === group.id);
+            const isHidden = pref?.is_hidden_from_list;
+            const membership = myMemberships.find((m) => m.group_id === group.id);
+            const isMember = !!membership;
+
+            return (
+              <Card key={group.id} className={`hover:shadow-lg transition-all cursor-pointer group ${isHidden ? 'opacity-60 bg-gray-50' : ''}`} onClick={() => setSearchParams({ id: group.id })}>
                   <CardContent className="p-6">
                     <div className="flex justify-between items-start mb-4">
                       <div className="flex items-center gap-3">
-                        <div 
-                          className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg ${iconClass}`}
-                          style={iconStyle}
-                        >
+                        <div
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg ${iconClass}`}
+                        style={iconStyle}>
+                        
                           {group.logo_url ? <img src={group.logo_url} alt="Group Logo" className="w-full h-full object-cover rounded-xl" /> : group.name[0]}
                         </div>
                         <h3 className="text-xl font-bold group-hover:text-purple-600 transition-colors">{group.name}</h3>
@@ -1026,27 +1026,27 @@ export default function CreatorGroups() {
                         <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${colorClass.replace('text-', 'text-opacity-80 text-').replace('bg-', 'bg-opacity-50 bg-')}`}>
                           {getGroupLabel(group.type)}
                         </span>
-                        {group.owner_email === user?.email && (
-                          <span className="text-[10px] border px-2 py-0.5 rounded-full text-gray-500">Owner</span>
-                        )}
-                        {!isMember && browseMode && (
-                           <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">New</span>
-                        )}
-                        {isHidden && (
-                          <span className="text-[10px] bg-gray-200 px-2 py-0.5 rounded-full text-gray-500 flex items-center gap-1">
+                        {group.owner_email === user?.email &&
+                      <span className="text-[10px] border px-2 py-0.5 rounded-full text-gray-500">Owner</span>
+                      }
+                        {!isMember && browseMode &&
+                      <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">New</span>
+                      }
+                        {isHidden &&
+                      <span className="text-[10px] bg-gray-200 px-2 py-0.5 rounded-full text-gray-500 flex items-center gap-1">
                             <EyeOff className="w-3 h-3" /> Hidden
                           </span>
-                        )}
+                      }
                       </div>
                     </div>
                     <p className="text-sm text-gray-500 line-clamp-2 mb-2">{group.description || 'No description yet.'}</p>
                   </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        ) : (
-          <Card>
+                </Card>);
+
+          })}
+          </div> :
+
+        <Card>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -1057,25 +1057,25 @@ export default function CreatorGroups() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {displayedGroups.map(group => {
-                  const pref = allGroupPrefs.find(p => p.group_id === group.id);
-                  const isHidden = pref?.is_hidden_from_list;
-                  const isOwner = group.owner_email === user?.email;
-                  const membership = myMemberships.find(m => m.group_id === group.id);
-                  const isMember = !!membership;
+                {displayedGroups.map((group) => {
+                const pref = allGroupPrefs.find((p) => p.group_id === group.id);
+                const isHidden = pref?.is_hidden_from_list;
+                const isOwner = group.owner_email === user?.email;
+                const membership = myMemberships.find((m) => m.group_id === group.id);
+                const isMember = !!membership;
 
-                  const customColor = group.settings?.group_color;
-                  const iconStyle = customColor ? { backgroundColor: customColor + '20', color: customColor } : {};
-                  const iconClass = customColor ? '' : getGroupColorClass(group.type);
+                const customColor = group.settings?.group_color;
+                const iconStyle = customColor ? { backgroundColor: customColor + '20', color: customColor } : {};
+                const iconClass = customColor ? '' : getGroupColorClass(group.type);
 
-                  return (
-                    <TableRow key={group.id} className={isHidden ? 'opacity-60 bg-gray-50' : ''}>
+                return (
+                  <TableRow key={group.id} className={isHidden ? 'opacity-60 bg-gray-50' : ''}>
                       <TableCell className="font-medium cursor-pointer" onClick={() => setSearchParams({ id: group.id })}>
                         <div className="flex items-center gap-3">
-                           <div 
-                             className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm ${iconClass}`}
-                             style={iconStyle}
-                           >
+                           <div
+                          className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm ${iconClass}`}
+                          style={iconStyle}>
+                          
                               {group.logo_url ? <img src={group.logo_url} alt="Group Logo" className="w-full h-full object-cover rounded-lg" /> : group.name[0]}
                            </div>
                            {group.name}
@@ -1083,70 +1083,70 @@ export default function CreatorGroups() {
                       </TableCell>
                       <TableCell>{getGroupLabel(group.type)}</TableCell>
                       <TableCell>
-                        {isOwner ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                        {isOwner ?
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
                             Owner
-                          </span>
-                        ) : isMember ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                          </span> :
+                      isMember ?
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                             Member
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          </span> :
+
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                             Discover
                           </span>
-                        )}
+                      }
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
-                           {isMember && (
-                             <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  toggleGroupVisibilityMutation.mutate({ groupId: group.id, isHidden: !isHidden });
-                                }}
-                                title={isHidden ? "Show Group" : "Hide Group"}
-                             >
+                           {isMember &&
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleGroupVisibilityMutation.mutate({ groupId: group.id, isHidden: !isHidden });
+                          }}
+                          title={isHidden ? "Show Group" : "Hide Group"}>
+                          
                                 {isHidden ? <EyeOff className="w-4 h-4 text-gray-400" /> : <Eye className="w-4 h-4 text-gray-400" />}
                              </Button>
-                           )}
-                           {isOwner && (
-                             <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  if (window.confirm(`Are you sure you want to delete ${group.name}? This cannot be undone.`)) {
-                                    deleteGroupMutation.mutate(group.id);
-                                  }
-                                }}
-                                className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                             >
+                        }
+                           {isOwner &&
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (window.confirm(`Are you sure you want to delete ${group.name}? This cannot be undone.`)) {
+                              deleteGroupMutation.mutate(group.id);
+                            }
+                          }}
+                          className="text-red-500 hover:text-red-600 hover:bg-red-50">
+                          
                                 <Trash2 className="w-4 h-4" />
                              </Button>
-                           )}
+                        }
                            </div>
                            </TableCell>
-                           </TableRow>
-                           );
-                           })}
+                           </TableRow>);
+
+              })}
                            </TableBody>
             </Table>
           </Card>
-        )}
+        }
 
-        {displayedGroups.length === 0 && (
-          <div className="col-span-full text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed">
+        {displayedGroups.length === 0 &&
+        <div className="col-span-full text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed">
             <Users className="w-12 h-12 mx-auto text-gray-300 mb-3" />
             <h3 className="text-lg font-medium text-gray-900">No Groups Found</h3>
             <p className="text-gray-500 mb-4">{showHidden ? "No groups match your filters." : "You haven't joined any groups yet."}</p>
             <Button variant="outline" onClick={() => setIsCreateOpen(true)}>Create Your First Group</Button>
           </div>
-        )}
-      </div>
-    );
+        }
+      </div>);
+
   }
 
   // DASHBOARD VIEW
@@ -1164,8 +1164,8 @@ export default function CreatorGroups() {
           You have requested to join <strong>{activeGroup.name}</strong>. An admin needs to approve your request before you can access the dashboard.
         </p>
         <Button variant="outline" onClick={() => setSearchParams({})}>Back to My Groups</Button>
-      </div>
-    );
+      </div>);
+
   }
 
   // Redirect Interested users (handled in useEffect above)
@@ -1192,25 +1192,25 @@ export default function CreatorGroups() {
           }}>Enter Invite Code</Button>
           <Button variant="outline" onClick={() => setSearchParams({})}>Back</Button>
         </div>
-      </div>
-    );
+      </div>);
+
   }
 
   if (!activeGroup) {
     return (
-        <div className="flex flex-col items-center justify-center h-screen p-6 text-center">
+      <div className="flex flex-col items-center justify-center h-screen p-6 text-center">
             <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
             <h2 className="text-xl font-bold text-gray-900">Error: Group Data Unavailable</h2>
             <p className="text-gray-500 mt-2">There was an issue loading this group. Please try again or go back to your groups list.</p>
             <Button className="mt-4" onClick={() => setSearchParams({})}>Back to My Groups</Button>
-        </div>
-    );
+        </div>);
+
   }
 
   // Override theme colors if group has a custom color
   const themeStyles = activeGroup.settings?.group_color ? {
     '--primary-color': activeGroup.settings.group_color,
-    '--accent-color': activeGroup.settings.group_color,
+    '--accent-color': activeGroup.settings.group_color
   } : {};
 
   return (
@@ -1224,10 +1224,10 @@ export default function CreatorGroups() {
             </Button>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold flex items-center gap-2" style={{ color: (activeGroup.settings?.menu_color || activeGroup.settings?.group_color) ? '#ffffff' : '#111827' }}>
-                  {activeGroup.type === 'agency' && activeGroup.logo_url && (
-                    <img src={activeGroup.logo_url} alt="Agency Logo" className="w-6 h-6 rounded-md object-cover" />
-                  )}
+                <h1 className="text-xl font-bold flex items-center gap-2" style={{ color: activeGroup.settings?.menu_color || activeGroup.settings?.group_color ? '#ffffff' : '#111827' }}>
+                  {activeGroup.type === 'agency' && activeGroup.logo_url &&
+                  <img src={activeGroup.logo_url} alt="Agency Logo" className="w-6 h-6 rounded-md object-cover" />
+                  }
                   {activeGroup.name}
                   <GroupHeaderIcon className="w-5 h-5 opacity-80" />
                 </h1>
@@ -1239,16 +1239,16 @@ export default function CreatorGroups() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-             {!isMember && (
-                <div className="flex items-center gap-2">
+             {!isMember &&
+            <div className="flex items-center gap-2">
                    <Button onClick={() => {
-                     const code = prompt("Enter invite code to join:");
-                     if (code) joinMutation.mutate(code);
-                   }}>
+                const code = prompt("Enter invite code to join:");
+                if (code) joinMutation.mutate(code);
+              }}>
                      Enter Invite Code
                    </Button>
                 </div>
-             )}
+            }
             <Dialog>
               {/* Customize View button temporarily hidden */}
               <DialogContent>
@@ -1257,7 +1257,7 @@ export default function CreatorGroups() {
                 </DialogHeader>
                 <div className="py-4 space-y-3">
                   <p className="text-sm text-gray-500 mb-2">Toggle visibility of sections on your dashboard.</p>
-                  {(typeConfig?.enabled_tabs?.length ? availableTabs.filter(t => typeConfig.enabled_tabs.includes(t.id)) : availableTabs).map(tab => {
+                  {(typeConfig?.enabled_tabs?.length ? availableTabs.filter((t) => typeConfig.enabled_tabs.includes(t.id)) : availableTabs).map((tab) => {
                     const isHidden = (groupPrefs?.hidden_tabs || []).includes(tab.id);
                     const Icon = tab.icon;
                     return (
@@ -1269,22 +1269,22 @@ export default function CreatorGroups() {
                           <span className="font-medium">{tab.label}</span>
                         </div>
                         <Switch checked={!isHidden} onCheckedChange={() => toggleTabVisibility(tab.id)} />
-                      </div>
-                    );
+                      </div>);
+
                   })}
                 </div>
               </DialogContent>
             </Dialog>
             
-            {isAdmin && (
-              <div className="text-right hidden sm:block">
+            {isAdmin &&
+            <div className="text-right hidden sm:block">
                 <code className="text-xs bg-gray-100 px-2 py-1 rounded block text-center mb-1">Code: {activeGroup.invite_code}</code>
               </div>
-            )}
+            }
 
             {/* Invite Button */}
-            {canInvite && (
-              <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
+            {canInvite &&
+            <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
                 <DialogTrigger asChild>
                   <Button size="sm" className="hidden sm:flex bg-purple-600 hover:bg-purple-700 text-white shadow-sm border-0">
                     <UserPlus className="w-4 h-4 mr-2" /> Invite
@@ -1298,50 +1298,50 @@ export default function CreatorGroups() {
                     </CardDescription>
                   </DialogHeader>
                   
-                  {isReferralLoading ? (
-                    <div className="py-8 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-purple-600" /></div>
-                  ) : inviteStep === 'check' ? (
-                    <div className="space-y-4 py-4">
+                  {isReferralLoading ?
+                <div className="py-8 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-purple-600" /></div> :
+                inviteStep === 'check' ?
+                <div className="space-y-4 py-4">
                       <div className="bg-purple-50 p-4 rounded-lg border border-purple-100">
                         <h4 className="font-semibold text-purple-900 mb-1">Select Referral Code</h4>
                         <p className="text-sm text-purple-700 mb-3">
                           Choose which code to attach to your invite link.
                         </p>
                         
-                        {myReferralLinks.length > 1 ? (
-                          <div className="space-y-2">
+                        {myReferralLinks.length > 1 ?
+                    <div className="space-y-2">
                             <Label>Select Code</Label>
                             <Select value={selectedCodeId} onValueChange={handleSelectionChange}>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select a code" />
                               </SelectTrigger>
                               <SelectContent>
-                                {myReferralLinks.map(link => (
-                                  <SelectItem key={link.id} value={link.id}>
+                                {myReferralLinks.map((link) =>
+                          <SelectItem key={link.id} value={link.id}>
                                     {link.referral_code}
                                   </SelectItem>
-                                ))}
+                          )}
                               </SelectContent>
                             </Select>
                             <p className="text-xs text-gray-500">
                               You have multiple codes. Select one to use.
                             </p>
-                          </div>
-                        ) : (
-                          <div className="space-y-2">
+                          </div> :
+
+                    <div className="space-y-2">
                             <Label>Your Code</Label>
                             <div className="flex gap-2">
-                              <Input 
-                                value={editingReferralCode} 
-                                onChange={(e) => setEditingReferralCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
-                                placeholder="YOURCODE" 
-                                className="font-mono uppercase tracking-wider"
-                              />
-                              <Button 
-                                variant="outline" 
-                                onClick={() => referralCodeMutation.mutate({ code: editingReferralCode, id: selectedCodeId })}
-                                disabled={referralCodeMutation.isPending || (selectedCodeId && myReferralLinks.find(l=>l.id===selectedCodeId)?.referral_code === editingReferralCode)}
-                              >
+                              <Input
+                          value={editingReferralCode}
+                          onChange={(e) => setEditingReferralCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
+                          placeholder="YOURCODE"
+                          className="font-mono uppercase tracking-wider" />
+                        
+                              <Button
+                          variant="outline"
+                          onClick={() => referralCodeMutation.mutate({ code: editingReferralCode, id: selectedCodeId })}
+                          disabled={referralCodeMutation.isPending || selectedCodeId && myReferralLinks.find((l) => l.id === selectedCodeId)?.referral_code === editingReferralCode}>
+                          
                                 {referralCodeMutation.isPending ? '...' : 'Save'}
                               </Button>
                             </div>
@@ -1349,20 +1349,20 @@ export default function CreatorGroups() {
                               {myReferralLinks.length === 1 ? "You can customize your code here. Click Save to update." : "Create a unique code for yourself."}
                             </p>
                           </div>
-                        )}
+                    }
                       </div>
                       <DialogFooter>
-                        <Button 
-                          onClick={() => setInviteStep('link')} 
-                          disabled={!editingReferralCode}
-                          className="w-full"
-                        >
+                        <Button
+                      onClick={() => setInviteStep('link')}
+                      disabled={!editingReferralCode}
+                      className="w-full">
+                      
                           Continue with {editingReferralCode}
                         </Button>
                       </DialogFooter>
-                    </div>
-                  ) : (
-                    <Tabs defaultValue="link" className="w-full">
+                    </div> :
+
+                <Tabs defaultValue="link" className="w-full">
                       <TabsList className="grid w-full grid-cols-2">
                         <TabsTrigger value="link">Share Link</TabsTrigger>
                         {isAdmin && <TabsTrigger value="email">Direct Add</TabsTrigger>}
@@ -1374,20 +1374,20 @@ export default function CreatorGroups() {
                             Copy this unique link to invite people. It includes your referral code <strong>{editingReferralCode}</strong>.
                           </p>
                           <div className="flex items-center gap-2">
-                            <Input 
-                              readOnly 
-                              value={`${window.location.hostname === 'localhost' ? window.location.origin : 'https://thrive.pixelnutscreative.com'}/CreatorGroups?invite=${activeGroup.invite_code}&ref=${editingReferralCode}`} 
-                              className="bg-gray-50 font-mono text-xs"
-                            />
-                            <Button 
-                              size="icon" 
-                              variant="outline" 
-                              onClick={() => {
-                                const baseUrl = window.location.hostname === 'localhost' ? window.location.origin : 'https://thrive.pixelnutscreative.com';
-                                navigator.clipboard.writeText(`${baseUrl}/CreatorGroups?invite=${activeGroup.invite_code}&ref=${editingReferralCode}`);
-                                alert("Link copied!");
-                              }}
-                            >
+                            <Input
+                          readOnly
+                          value={`${window.location.hostname === 'localhost' ? window.location.origin : 'https://thrive.pixelnutscreative.com'}/CreatorGroups?invite=${activeGroup.invite_code}&ref=${editingReferralCode}`}
+                          className="bg-gray-50 font-mono text-xs" />
+                        
+                            <Button
+                          size="icon"
+                          variant="outline"
+                          onClick={() => {
+                            const baseUrl = window.location.hostname === 'localhost' ? window.location.origin : 'https://thrive.pixelnutscreative.com';
+                            navigator.clipboard.writeText(`${baseUrl}/CreatorGroups?invite=${activeGroup.invite_code}&ref=${editingReferralCode}`);
+                            alert("Link copied!");
+                          }}>
+                          
                               <LinkIcon className="w-4 h-4" />
                             </Button>
                           </div>
@@ -1400,71 +1400,71 @@ export default function CreatorGroups() {
                         </Button>
                       </TabsContent>
 
-                      {isAdmin && (
-                        <TabsContent value="email" className="space-y-4 py-4">
+                      {isAdmin &&
+                  <TabsContent value="email" className="space-y-4 py-4">
                           <div className="space-y-2">
                             <Label>Email Address</Label>
-                            <Input value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} placeholder="user@example.com" />
+                            <Input value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder="user@example.com" />
                           </div>
                           <div className="space-y-2">
                             <Label>Role</Label>
                             <Select value={inviteRole} onValueChange={setInviteRole}>
                               <SelectTrigger><SelectValue /></SelectTrigger>
                               <SelectContent className="z-[60]">
-                                {activeGroup.type === 'agency' ? (
-                                  <>
+                                {activeGroup.type === 'agency' ?
+                          <>
                                     <SelectItem value="member">Creator</SelectItem>
                                     <SelectItem value="manager">Manager</SelectItem>
                                     <SelectItem value="admin">Admin</SelectItem>
-                                  </>
-                                ) : (
-                                  <>
+                                  </> :
+
+                          <>
                                     <SelectItem value="member">Member</SelectItem>
                                     <SelectItem value="client">Client</SelectItem>
                                     <SelectItem value="manager">Manager</SelectItem>
                                     <SelectItem value="admin">Admin</SelectItem>
                                     <SelectItem value="virtual-assistant">Virtual Assistant</SelectItem>
                                   </>
-                                )}
+                          }
                               </SelectContent>
                             </Select>
                           </div>
-                          <Button 
-                            onClick={() => inviteMutation.mutate({ email: inviteEmail, role: inviteRole })} 
-                            disabled={!inviteEmail || inviteMutation.isPending} 
-                            className="w-full"
-                          >
+                          <Button
+                      onClick={() => inviteMutation.mutate({ email: inviteEmail, role: inviteRole })}
+                      disabled={!inviteEmail || inviteMutation.isPending}
+                      className="w-full">
+                      
                             {inviteMutation.isPending ? 'Inviting...' : 'Send Direct Invite'}
                           </Button>
                         </TabsContent>
-                      )}
+                  }
                     </Tabs>
-                  )}
+                }
                 </DialogContent>
               </Dialog>
-            )}
+            }
 
             {/* Mobile AI Button */}
-            {(activeGroup.type === 'client-portal' || activeGroup.type === 'agency') && (
-              <Button 
-                size="sm" 
-                className="lg:hidden bg-gradient-to-r from-violet-600 to-indigo-600 text-white border-0 shadow-sm"
-                onClick={() => setIsAIMobileOpen(true)}
-              >
+            {(activeGroup.type === 'client-portal' || activeGroup.type === 'agency') &&
+            <Button
+              size="sm"
+              className="lg:hidden bg-gradient-to-r from-violet-600 to-indigo-600 text-white border-0 shadow-sm"
+              onClick={() => setIsAIMobileOpen(true)}>
+              
                 <Sparkles className="w-4 h-4" />
               </Button>
-            )}
+            }
             
             {/* Mobile Invite Button (Icon Only) */}
-            {canInvite && (
-               <Button 
-                 size="sm" 
-                 className="sm:hidden bg-purple-600 hover:bg-purple-700 text-white border-0 shadow-sm"
-                 onClick={() => setIsInviteOpen(true)}
-               >
+            {canInvite &&
+            <Button
+              size="sm"
+              className="sm:hidden bg-purple-600 hover:bg-purple-700 text-white border-0 shadow-sm"
+              onClick={() => setIsInviteOpen(true)}>
+              
                  <UserPlus className="w-4 h-4" />
                </Button>
-            )}
+            }
           </div>
         </div>
       </div>
@@ -1473,12 +1473,12 @@ export default function CreatorGroups() {
       <Dialog open={isAIMobileOpen} onOpenChange={setIsAIMobileOpen}>
         <DialogContent className="p-0 border-0 h-[80vh] max-h-[600px] flex flex-col bg-transparent shadow-none">
            <div className="bg-white rounded-xl overflow-hidden flex-1 shadow-2xl">
-              <GroupAICompanion 
-                  groupId={activeGroup.id} 
-                  groupName={activeGroup.name}
-                  className="w-full h-full border-0 shadow-none"
-                  defaultOpen={true}
-              />
+              <GroupAICompanion
+              groupId={activeGroup.id}
+              groupName={activeGroup.name}
+              className="w-full h-full border-0 shadow-none"
+              defaultOpen={true} />
+            
            </div>
         </DialogContent>
       </Dialog>
@@ -1489,45 +1489,45 @@ export default function CreatorGroups() {
         <div className="lg:col-span-1 space-y-6 order-2 lg:order-1">
 
           {/* AI Companion for Client Portals (Desktop) */}
-          {(activeGroup.type === 'client-portal' || activeGroup.type === 'agency') && (
-              <div className="hidden lg:block">
-                  <GroupAICompanion 
-                      groupId={activeGroup.id} 
-                      groupName={activeGroup.name}
-                      className="w-full"
-                      defaultOpen={false}
-                  />
+          {(activeGroup.type === 'client-portal' || activeGroup.type === 'agency') &&
+          <div className="hidden lg:block">
+                  <GroupAICompanion
+              groupId={activeGroup.id}
+              groupName={activeGroup.name}
+              className="w-full"
+              defaultOpen={false} />
+            
               </div>
-          )}
+          }
 
           {/* Calendar Widget */}
           <GroupCalendarWidget group={activeGroup} myMembership={activeMembership} isAdmin={isAdmin} />
 
           {/* Crypto Ticker for Group */}
-          {activeGroup.settings?.hide_ticker !== true && (
-            <CryptoTickerWidget 
-              portfolio={activeGroup.crypto_tickers || []}
-              onUpdatePortfolio={(tickers) => updateGroupMutation.mutate({ crypto_tickers: tickers })}
-              title="Group Tickers"
-            />
-          )}
+          {activeGroup.settings?.hide_ticker !== true &&
+          <CryptoTickerWidget
+            portfolio={activeGroup.crypto_tickers || []}
+            onUpdatePortfolio={(tickers) => updateGroupMutation.mutate({ crypto_tickers: tickers })}
+            title="Group Tickers" />
 
-          {shortcuts.length > 0 && (
-            <Card>
+          }
+
+          {shortcuts.length > 0 &&
+          <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm uppercase text-gray-500 font-bold flex items-center gap-2">
                   <LinkIcon className="w-4 h-4" /> Quick Links
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {shortcuts.map(shortcut => (
-                  <a 
-                    key={shortcut.id} 
-                    href={shortcut.url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 transition-colors border border-transparent hover:border-gray-200"
-                  >
+                {shortcuts.map((shortcut) =>
+              <a
+                key={shortcut.id}
+                href={shortcut.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 transition-colors border border-transparent hover:border-gray-200">
+                
                     <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
                       <ExternalLink className="w-4 h-4" />
                     </div>
@@ -1536,10 +1536,10 @@ export default function CreatorGroups() {
                       <div className="text-xs text-gray-400 truncate">{(shortcut.url || '').replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0]}</div>
                     </div>
                   </a>
-                ))}
+              )}
               </CardContent>
             </Card>
-          )}
+          }
         </div>
 
         <div className="lg:col-span-3 order-1 lg:order-2">
@@ -1549,8 +1549,8 @@ export default function CreatorGroups() {
           </div>
 
           {/* Retainer Balance Header (Hourly Tracking Hidden) */}
-          {false && retainerBalance && activeGroup.enable_retainer_management && (retainerBalance.purchased > 0 || isAdmin) && activeGroup.settings?.hide_retainer_balance !== true && (
-            <div className="bg-white rounded-xl p-4 border shadow-sm mb-6 flex flex-col sm:flex-row justify-between items-center gap-4 bg-gradient-to-r from-white to-purple-50/50">
+          {false && retainerBalance && activeGroup.enable_retainer_management && (retainerBalance.purchased > 0 || isAdmin) && activeGroup.settings?.hide_retainer_balance !== true &&
+          <div className="bg-white rounded-xl p-4 border shadow-sm mb-6 flex flex-col sm:flex-row justify-between items-center gap-4 bg-gradient-to-r from-white to-purple-50/50">
                <div className="flex items-center gap-3">
                   <div className="p-3 bg-purple-100 text-purple-600 rounded-lg">
                      <Clock className="w-6 h-6" />
@@ -1563,12 +1563,12 @@ export default function CreatorGroups() {
                   </div>
                </div>
                <div className="flex items-center gap-6">
-                 <Button 
-                   variant="outline" 
-                   size="sm" 
-                   className="hidden sm:flex bg-white/50 hover:bg-white"
-                   onClick={() => setShowTimeReport(true)}
-                 >
+                 <Button
+                variant="outline"
+                size="sm"
+                className="hidden sm:flex bg-white/50 hover:bg-white"
+                onClick={() => setShowTimeReport(true)}>
+                
                    <FileText className="w-4 h-4 mr-2" /> View Report
                  </Button>
                  <div className="text-right">
@@ -1579,25 +1579,25 @@ export default function CreatorGroups() {
                  </div>
                </div>
             </div>
-          )}
+          }
 
-          {showTimeReport && (
-            <TimeReportDialog 
-              isOpen={showTimeReport} 
-              onClose={() => setShowTimeReport(false)} 
-              groupId={activeGroupId} 
-            />
-          )}
+          {showTimeReport &&
+          <TimeReportDialog
+            isOpen={showTimeReport}
+            onClose={() => setShowTimeReport(false)}
+            groupId={activeGroupId} />
 
-          <h2 className="text-3xl font-bold mb-4">{displayNames[currentTab] || allTabs.find(t => t.id === currentTab)?.label || 'Dashboard'}</h2>
-          <h2 className="text-3xl font-bold mb-4">{displayNames[currentTab] || allTabs.find(t => t.id === currentTab)?.label || 'Dashboard'}</h2>
+          }
+
+          <h2 className="text-3xl font-bold mb-4">{displayNames[currentTab] || allTabs.find((t) => t.id === currentTab)?.label || 'Dashboard'}</h2>
+          <h2 className="text-3xl font-bold mb-4 hidden">{displayNames[currentTab] || allTabs.find((t) => t.id === currentTab)?.label || 'Dashboard'}</h2>
           <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-6">
             <TooltipProvider>
               <TabsList className="bg-white border p-1 rounded-xl h-auto flex-wrap gap-1 w-full justify-start">
-                {availableTabs.map(tab => {
+                {availableTabs.map((tab) => {
                   const enabled = isTabEnabled(tab.id);
-                  if (!enabled) return null; 
-                  
+                  if (!enabled) return null;
+
                   // Check visibility for regular members
                   const isMemberVisible = isVisibleToRegularMember(tab.id);
                   const isAdminOnly = isAdmin && !isMemberVisible;
@@ -1607,44 +1607,44 @@ export default function CreatorGroups() {
                   return (
                     <Tooltip key={tab.id}>
                       <TooltipTrigger asChild>
-                        <TabsTrigger 
-                          value={tab.id} 
+                        <TabsTrigger
+                          value={tab.id}
                           className={`
                             relative flex items-center transition-all duration-200 rounded-lg
                             ${isActive ? `px-4 py-2 bg-${tab.color}-100 text-${tab.color}-700 shadow-sm` : 'px-3 py-2 text-gray-500 md:hover:bg-gray-100 active:bg-gray-100 md:hover:text-gray-900'}
                             ${isAdminOnly && !isActive ? 'opacity-40 grayscale' : ''}
-                          `}
-                        >
+                          `}>
+                          
                           <Icon className={`w-4 h-4 ${isActive ? 'mr-2' : ''}`} />
-                          {isActive && (
-                            <span className="font-medium text-sm">
+                          {isActive &&
+                          <span className="font-medium text-sm">
                               {activeGroup.settings?.display_names?.[tab.id] || tab.label}
                             </span>
-                          )}
+                          }
                           
                           {/* Admin indicator dot if minimized */}
-                          {isAdminOnly && !isActive && (
-                            <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-gray-400 rounded-full" title="Admin Only" />
-                          )}
+                          {isAdminOnly && !isActive &&
+                          <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-gray-400 rounded-full" title="Admin Only" />
+                          }
                         </TabsTrigger>
                       </TooltipTrigger>
                       <TooltipContent>
                         <p>{tab.label}{isAdminOnly ? " (Admin Only)" : ""}</p>
                       </TooltipContent>
-                    </Tooltip>
-                  );
+                    </Tooltip>);
+
                 })}
                 
-                {isAdmin && (
-                  <Tooltip>
+                {isAdmin &&
+                <Tooltip>
                     <TooltipTrigger asChild>
-                      <TabsTrigger 
-                        value="settings" 
-                        className={`
+                      <TabsTrigger
+                      value="settings"
+                      className={`
                           ml-auto rounded-lg transition-all duration-200
                           ${currentTab === 'settings' ? 'px-4 py-2 bg-gray-800 text-white' : 'px-3 py-2 text-gray-500 md:hover:bg-gray-100 active:bg-gray-100'}
-                        `}
-                      >
+                        `}>
+                      
                         <Settings className={`w-4 h-4 ${currentTab === 'settings' ? 'mr-2' : ''}`} />
                         {currentTab === 'settings' && <span>Settings</span>}
                       </TabsTrigger>
@@ -1653,99 +1653,99 @@ export default function CreatorGroups() {
                       <p>Group Settings</p>
                     </TooltipContent>
                   </Tooltip>
-                )}
+                }
               </TabsList>
             </TooltipProvider>
 
           <TabsContent value="feed" className="focus-visible:outline-none">
-            {isTabEnabled('feed') && (
+            {isTabEnabled('feed') &&
               <GroupFeedTab group={activeGroup} currentUser={user} myMembership={activeMembership} isAdmin={isAdmin} />
-            )}
+              }
           </TabsContent>
 
           <TabsContent value="events" className="focus-visible:outline-none">
-            {isTabEnabled('events') && (
+            {isTabEnabled('events') &&
               <div className="space-y-6">
                 {isAdmin && <GroupBattleApprovals groupId={activeGroupId} isAdmin={isAdmin} />}
                 <GroupEventsTab group={activeGroup} currentUser={user} myMembership={activeMembership} isAdmin={isAdmin} />
               </div>
-            )}
+              }
           </TabsContent>
 
           <TabsContent value="qna" className="focus-visible:outline-none">
-            {isTabEnabled('qna') && (
+            {isTabEnabled('qna') &&
               <GroupQnATab group={activeGroup} currentUser={user} myMembership={activeMembership} isAdmin={isAdmin} />
-            )}
+              }
           </TabsContent>
 
           <TabsContent value="resources" className="focus-visible:outline-none">
-            {isTabEnabled('resources') && (
+            {isTabEnabled('resources') &&
               <GroupResourcesTab group={activeGroup} currentUser={user} myMembership={activeMembership} isAdmin={isAdmin} />
-            )}
+              }
           </TabsContent>
 
           <TabsContent value="training" className="focus-visible:outline-none">
-            {isTabEnabled('training') && (
+            {isTabEnabled('training') &&
               <GroupTrainingTab group={activeGroup} currentUser={user} isAdmin={isAdmin} />
-            )}
+              }
           </TabsContent>
 
           <TabsContent value="projects" className="focus-visible:outline-none">
-            {isTabEnabled('projects') && (
+            {isTabEnabled('projects') &&
               <GroupProjectsTab group={activeGroup} currentUser={user} myMembership={activeMembership} />
-            )}
+              }
           </TabsContent>
 
           <TabsContent value="meetings" className="focus-visible:outline-none">
-            {isTabEnabled('meetings') && (
+            {isTabEnabled('meetings') &&
               <GroupMeetingsTab group={activeGroup} currentUser={user} isAdmin={isAdmin} />
-            )}
+              }
           </TabsContent>
 
           <TabsContent value="marketing" className="focus-visible:outline-none">
-            {isTabEnabled('marketing') && (
+            {isTabEnabled('marketing') &&
               <MarketingOrdersTab group={activeGroup} isAdmin={isAdmin} />
-            )}
+              }
           </TabsContent>
 
           <TabsContent value="assets" className="focus-visible:outline-none">
-            {isTabEnabled('assets') && (
+            {isTabEnabled('assets') &&
               <GroupAssetsTab group={activeGroup} isAdmin={isAdmin} />
-            )}
+              }
           </TabsContent>
 
           <TabsContent value="discussion" className="focus-visible:outline-none">
-            {isTabEnabled('discussion') && (
+            {isTabEnabled('discussion') &&
               <GroupDiscussionTab group={activeGroup} currentUser={user} isAdmin={isAdmin} />
-            )}
+              }
           </TabsContent>
 
           <TabsContent value="requests" className="focus-visible:outline-none">
-            {isTabEnabled('requests') && (
+            {isTabEnabled('requests') &&
               <GroupRequestsTab group={activeGroup} currentUser={user} isAdmin={isAdmin} />
-            )}
+              }
           </TabsContent>
 
           <TabsContent value="members" className="focus-visible:outline-none">
-            {isTabEnabled('members') && (
+            {isTabEnabled('members') &&
               <GroupMembersTab group={activeGroup} currentUser={user} isAdmin={isAdmin} />
-            )}
+              }
           </TabsContent>
 
           <TabsContent value="sales" className="focus-visible:outline-none">
-            {isTabEnabled('sales') && (
+            {isTabEnabled('sales') &&
               <GroupSalesTab group={activeGroup} isAdmin={isAdmin} />
-            )}
+              }
           </TabsContent>
 
-          {isAdmin && (
+          {isAdmin &&
             <TabsContent value="settings" className="focus-visible:outline-none">
               <GroupSettingsTab group={activeGroup} />
             </TabsContent>
-          )}
+            }
         </Tabs>
       </div>
     </div>
-  </div>
-  );
+  </div>);
+
 }
