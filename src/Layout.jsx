@@ -407,6 +407,37 @@ const { data: featureFlags = [] } = useQuery({
     return isBibleBeliever ? 'Prayer Requests' : 'Send Light & Love';
   };
 
+  const isAgencyCreator = preferences?.is_restricted_experience;
+  const agencyGroup = myMenuGroups.find(g => g.type === 'agency');
+  const agencyFeatures = agencyGroup?.settings?.agency_features || {};
+
+  const isAllowedForAgencyCreator = (item) => {
+    if (!isAgencyCreator || isAdmin) return true;
+    
+    // Pinned group tabs (The Agency Group itself)
+    if (item.path && item.path.startsWith('CreatorGroups?id=')) return true;
+
+    // Feature Gates
+    if (item.path === 'Dashboard') return !!agencyFeatures.my_day;
+    if (item.path === 'MyTasks' || item.path === 'Tasks') return !!agencyFeatures.creator_studio;
+    if (item.path === 'TheCloset') return !!agencyFeatures.creator_studio;
+    if (item.path === 'SavedMotivations') return !!agencyFeatures.creator_studio; // Content Ideas
+    if (item.path === 'Habits') return !!agencyFeatures.goals_habits;
+    if (item.path === 'Goals') return !!agencyFeatures.goals_habits;
+    if (item.path === 'BrainDump') return !!agencyFeatures.brain_dump;
+    if (item.path === 'PromptLibrary') return !!agencyFeatures.creator_studio;
+    if (item.path === 'ContentMarketplace') return !!agencyFeatures.creator_studio;
+    if (item.path === 'ContentCreatorHub') return !!agencyFeatures.creator_studio;
+    if (item.path === 'Profile') return true;
+
+    if (['MentalHealth', 'Wellness', 'Supplements', 'Medications', 'ActivityTracker'].includes(item.path)) {
+      return !!agencyFeatures.health_wellness;
+    }
+
+    // Everything else is hidden
+    return false;
+  };
+
   // --- MENU GROUPS (Collapsible) ---
   const menuGroups = [
   // Pinned Groups (Top Level)
@@ -763,6 +794,8 @@ const { data: featureFlags = [] } = useQuery({
 
                 // Filter items based on permissions/modules to see if group should be visible
                 const visibleItems = group.items.filter(item => {
+                   if (!isAllowedForAgencyCreator(item)) return false;
+
                    // Feature Flag Check
                    if (item.moduleId) {
                      const isGloballyEnabled = getFeatureFlag(item.moduleId);

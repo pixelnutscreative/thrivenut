@@ -105,14 +105,14 @@ function App() {
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
-        <Router>
-          <GlobalDialogProvider>
+        <GlobalDialogProvider>
+          <Router>
             <NavigationTracker />
             <AuthenticatedApp />
-          </GlobalDialogProvider>
-        </Router>
-        <Toaster toastOptions={{ style: { background: '#24C4D6', color: '#fff', border: 'none' }, duration: 3000 }} />
-        <VisualEditAgent />
+          </Router>
+          <Toaster toastOptions={{ style: { background: '#24C4D6', color: '#fff', border: 'none' }, duration: 3000 }} />
+          <VisualEditAgent />
+        </GlobalDialogProvider>
       </QueryClientProvider>
     </AuthProvider>
   )
