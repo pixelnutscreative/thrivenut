@@ -52,9 +52,9 @@ export default function DashboardGoalsSection({ userEmail }) {
                 : 0;
 
               return (
-                <div key={goal.id} className="space-y-1 cursor-pointer" onClick={() => setSelectedGoal(goal)}>
+                <div key={goal.id} className={`space-y-1 cursor-pointer transition-all duration-500 ${progress >= 100 ? 'opacity-50 scale-95 origin-top' : ''}`} onClick={() => setSelectedGoal(goal)}>
                   <div className="flex justify-between items-center">
-                    <span className="font-medium text-gray-800 text-sm">{goal.title}</span>
+                    <span className={`font-medium text-sm ${progress >= 100 ? 'line-through text-gray-500' : 'text-gray-800'}`}>{goal.title}</span>
                     <span className="text-gray-400 text-sm">{progress}%</span>
                   </div>
                   <div className="w-full bg-gray-100 rounded-full h-2">

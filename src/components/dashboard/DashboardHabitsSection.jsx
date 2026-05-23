@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Flame, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
@@ -90,11 +91,27 @@ export default function DashboardHabitsSection({ userEmail }) {
           {habits.slice(0, 5).map(habit => (
             <div key={habit.id} className="flex items-center justify-between">
               <div className="flex items-center gap-3">
+                <Checkbox 
+                  checked={habitLogs.some(l => l.habit_id === habit.id && l.date === todayStr)}
+                  onCheckedChange={async (checked) => {
+                    if (checked) {
+                      await base44.entities.HabitLog.create({
+                        habit_id: habit.id,
+                        date: todayStr,
+                        created_by: userEmail
+                      });
+                    } else {
+                      const log = habitLogs.find(l => l.habit_id === habit.id && l.date === todayStr);
+                      if (log) await base44.entities.HabitLog.delete(log.id);
+                    }
+                    queryClient.invalidateQueries(['habitLogs', userEmail]);
+                  }}
+                />
                 <div 
-                  className="w-10 h-10 rounded-lg flex-shrink-0" 
+                  className="w-8 h-8 rounded-lg flex-shrink-0" 
                   style={{ backgroundColor: habit.color || '#F59E0B' }}
                 />
-                <span className="font-medium text-gray-800 text-sm">{habit.name}</span>
+                <span className={`font-medium text-sm transition-all ${habitLogs.some(l => l.habit_id === habit.id && l.date === todayStr) ? 'text-gray-400 line-through scale-95 origin-left' : 'text-gray-800'}`}>{habit.name}</span>
               </div>
               <div className="flex items-center gap-1 font-bold text-gray-700">
                 <Flame className="w-4 h-4 text-orange-500" />

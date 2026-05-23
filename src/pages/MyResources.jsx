@@ -160,6 +160,7 @@ import React, { useState } from 'react';
 
        const payload = {
          ...data,
+         name: data.title,
          url: cleanUrl,
          categories: finalCategories,
          category: finalCategories[0], // Sync primary category

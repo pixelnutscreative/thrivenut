@@ -48,16 +48,19 @@ Deno.serve(async (req) => {
 
         // 3. Fetch Broad Context Data
         
+        const settings = group[0]?.settings || {};
+        const contextTypes = settings.ai_training_context || ['events', 'resources', 'qna', 'training'];
+
         // Parallel fetching for speed
         const [resources, meetings, projects, posts, events, orders, qnas, trainings] = await Promise.all([
-            base44.entities.GroupResource.filter({ group_id: groupId }),
-            base44.entities.MeetingRecording.filter({ group_id: groupId }),
-            base44.entities.GroupProject.filter({ group_id: groupId }),
-            base44.entities.GroupPost.filter({ group_id: groupId }, '-created_date', 20), // Last 20 posts
-            base44.entities.GroupEvent.filter({ group_id: groupId }),
-            base44.entities.MarketingOrder.filter({ group_id: groupId }),
-            base44.entities.GroupQnA.filter({ group_id: groupId }),
-            base44.entities.GroupTraining.filter({ group_id: groupId })
+            contextTypes.includes('resources') ? base44.entities.GroupResource.filter({ group_id: groupId }) : Promise.resolve([]),
+            contextTypes.includes('meetings') ? base44.entities.MeetingRecording.filter({ group_id: groupId }) : Promise.resolve([]),
+            contextTypes.includes('projects') ? base44.entities.GroupProject.filter({ group_id: groupId }) : Promise.resolve([]),
+            contextTypes.includes('posts') ? base44.entities.GroupPost.filter({ group_id: groupId }, '-created_date', 20) : Promise.resolve([]), // Last 20 posts
+            contextTypes.includes('events') ? base44.entities.GroupEvent.filter({ group_id: groupId }) : Promise.resolve([]),
+            base44.entities.MarketingOrder.filter({ group_id: groupId }), // Internal use
+            contextTypes.includes('qna') ? base44.entities.GroupQnA.filter({ group_id: groupId }) : Promise.resolve([]),
+            contextTypes.includes('training') ? base44.entities.GroupTraining.filter({ group_id: groupId }) : Promise.resolve([])
         ]);
 
         // Tasks (nested in projects)

@@ -135,7 +135,6 @@ export default function ColorPicker({ color, onChange, label, className, trigger
     setInternalColor(newHex);
     setHsb(newHsb);
     hsbRef.current = newHsb; // Keep ref in sync
-    if (onChangeRef.current) onChangeRef.current(newHex);
   }, []);
 
   // --- Wheel Interaction ---
@@ -230,7 +229,6 @@ export default function ColorPicker({ color, onChange, label, className, trigger
       const newHsb = hexToHsb(result.sRGBHex);
       setHsb(newHsb);
       hsbRef.current = newHsb;
-      if (onChange) onChange(result.sRGBHex);
     } catch (e) {
       // User cancelled
     }
@@ -276,7 +274,6 @@ export default function ColorPicker({ color, onChange, label, className, trigger
         const newHsb = hexToHsb(hex);
         setHsb(newHsb);
         hsbRef.current = newHsb;
-        if (onChange) onChange(hex);
       }
     }
   };
@@ -514,7 +511,10 @@ export default function ColorPicker({ color, onChange, label, className, trigger
         </div>
         
         <div className="pt-4 border-t border-gray-100 mt-4 flex justify-end">
-          <Button onClick={() => setIsOpen(false)} className="w-full font-semibold">Confirm Color</Button>
+          <Button onClick={() => {
+            if (onChange) onChange(internalColor);
+            setIsOpen(false);
+          }} className="w-full font-semibold">Confirm Color</Button>
         </div>
       </DialogContent>
     </Dialog>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -9,12 +9,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { X, Plus, Save, Link as LinkIcon, Trash2, ArrowUp, ArrowDown, ChevronDown, ChevronRight, AlertTriangle, Settings, Users, FileText, Lock, Shield, GripVertical, Megaphone, Video } from 'lucide-react';
+import { X, Plus, Save, Link as LinkIcon, Trash2, ArrowUp, ArrowDown, ChevronDown, ChevronRight, AlertTriangle, Settings, Users, FileText, Lock, Shield, GripVertical, Megaphone, Video, Brain } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { useTheme } from '@/components/shared/useTheme';
 import ColorPicker from '../shared/ColorPicker';
+import { toast } from 'sonner';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import GroupAnnouncementsSettings from './GroupAnnouncementsSettings';
 import AgencyLiveCalendar from '@/pages/AgencyLiveCalendar';
@@ -22,12 +23,61 @@ import GroupLogoUploader from './GroupLogoUploader';
 import ProspectManagementSettings from './ProspectManagementSettings';
 import LevelSelector from './LevelSelector';
 
+function GroupAISettings({ group }) {
+  const queryClient = useQueryClient();
+  const [contextTypes, setContextTypes] = React.useState(group.settings?.ai_training_context || ['events', 'resources', 'qna', 'training']);
+
+  const updateMutation = useMutation({
+    mutationFn: async (data) => {
+      const current = await base44.entities.CreatorGroup.get(group.id);
+      return base44.entities.CreatorGroup.update(group.id, { settings: { ...current.settings, ...data } });
+    },
+    onSuccess: () => queryClient.invalidateQueries(['myGroupsDetails'])
+  });
+
+  const toggleType = (type) => {
+    setContextTypes(prev => {
+      const next = prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type];
+      updateMutation.mutate({ ai_training_context: next });
+      return next;
+    });
+  };
+
+  const types = [
+    { id: 'events', label: 'Events' },
+    { id: 'resources', label: 'Resources' },
+    { id: 'qna', label: 'Q&A' },
+    { id: 'training', label: 'Training' },
+    { id: 'posts', label: 'Discussions / Feed' },
+    { id: 'projects', label: 'Projects & Tasks' },
+    { id: 'meetings', label: 'Meetings' },
+  ];
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>AI Assistant Training Data</CardTitle>
+        <CardDescription>Select which sections the AI should read to answer member questions.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {types.map(t => (
+          <div key={t.id} className="flex items-center justify-between">
+            <Label>{t.label}</Label>
+            <Switch checked={contextTypes.includes(t.id)} onCheckedChange={() => toggleType(t.id)} />
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function GroupSettingsTab({ group }) {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="general" className="w-full">
         <TabsList className="bg-gray-100 p-1 rounded-lg w-full justify-start h-auto flex-wrap">
           <TabsTrigger value="general" className="px-4 py-2"><Settings className="w-4 h-4 mr-2" /> General</TabsTrigger>
+          <TabsTrigger value="ai" className="px-4 py-2"><Brain className="w-4 h-4 mr-2" /> AI Assistant</TabsTrigger>
           <TabsTrigger value="announcements" className="px-4 py-2"><Megaphone className="w-4 h-4 mr-2" /> Announcements</TabsTrigger>
           {group.type === 'agency' && (
              <TabsTrigger value="lives" className="px-4 py-2"><Video className="w-4 h-4 mr-2" /> Live Calendar</TabsTrigger>
@@ -39,6 +89,10 @@ export default function GroupSettingsTab({ group }) {
           <TabsTrigger value="permissions" className="px-4 py-2"><Shield className="w-4 h-4 mr-2" /> Permissions</TabsTrigger>
           <TabsTrigger value="danger" className="px-4 py-2 text-red-600 data-[state=active]:text-red-700 data-[state=active]:bg-red-50"><Trash2 className="w-4 h-4 mr-2" /> Danger Zone</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="ai" className="space-y-6 mt-6">
+          <GroupAISettings group={group} />
+        </TabsContent>
 
         <TabsContent value="general" className="space-y-6 mt-6">
           <GroupTabsManager group={group} />
@@ -220,7 +274,7 @@ function MemberInviteSettings({ group }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['activeGroup', group.id]);
-      alert('Invite settings updated!');
+      toast.success('Invite settings updated!');
     }
   });
 
@@ -530,7 +584,7 @@ function FunnelContentSettings({ group }) {
     mutationFn: (data) => base44.entities.CreatorGroup.update(group.id, data),
     onSuccess: () => {
       queryClient.invalidateQueries(['myGroupsDetails']);
-      alert('Funnel content updated!');
+      toast.success('Funnel content updated!');
     }
   });
 
@@ -657,7 +711,7 @@ function GroupAccessSettings({ group }) {
     mutationFn: (data) => base44.entities.CreatorGroup.update(group.id, data),
     onSuccess: () => {
       queryClient.invalidateQueries(['myGroupsDetails']);
-      alert('Access settings updated!');
+      toast.success('Access settings updated!');
     }
   });
 
@@ -1111,10 +1165,10 @@ function GroupNameSettings({ group }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['myGroupsDetails']);
-      alert('Group settings updated!');
+      toast.success('Group settings updated!');
     },
     onError: (err) => {
-      alert(err.message);
+      toast.error(err.message);
     }
   });
 
@@ -1192,9 +1246,7 @@ function GroupTypeSettings({ group }) {
           <Select 
             value={group.type} 
             onValueChange={(val) => {
-              if (window.confirm('Changing group type may hide/show certain tabs. Continue?')) {
-                updateMutation.mutate(val);
-              }
+              updateMutation.mutate(val);
             }}
           >
             <SelectTrigger>
@@ -1238,11 +1290,11 @@ function TransferOwnershipSettings({ group }) {
       setIsOpen(false);
       setNewOwnerEmail('');
       setConfirmEmail('');
-      alert('Ownership transferred successfully!');
+      toast.success('Ownership transferred successfully!');
       window.location.reload();
     },
     onError: (err) => {
-      alert(err.message || 'Failed to transfer ownership');
+      toast.error(err.message || 'Failed to transfer ownership');
     }
   });
 
@@ -1293,9 +1345,7 @@ function TransferOwnershipSettings({ group }) {
                         variant="outline" 
                         disabled={!newOwnerEmail || newOwnerEmail !== confirmEmail || transferMutation.isPending}
                         onClick={() => {
-                            if (window.confirm(`Are you sure you want to transfer ownership of ${group.name} to ${newOwnerEmail}?`)) {
-                                transferMutation.mutate();
-                            }
+                            transferMutation.mutate();
                         }}
                         className="w-full border-amber-300 text-amber-800 hover:bg-amber-100 hover:text-amber-900"
                     >

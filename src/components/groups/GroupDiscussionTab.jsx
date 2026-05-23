@@ -31,6 +31,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { MessageSquare, Image as ImageIcon, BarChart2, MoreVertical, Trash2, Send, ThumbsUp, Loader2, Plus, X } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { formatDistanceToNow } from 'date-fns';
+import { toast } from 'sonner';
 
 export default function GroupDiscussionTab({ group, currentUser, isAdmin }) {
   const [isCreating, setIsCreating] = useState(false);
@@ -80,7 +81,7 @@ function CreatePostForm({ group, currentUser, onCancel }) {
     onSuccess: async (newPost) => {
       queryClient.invalidateQueries(['groupDiscussion', group.id]);
       onCancel();
-      alert("Discussion posted successfully! Group members will be notified.");
+      toast.success("Discussion posted successfully! Group members will be notified.");
 
       // Notify group members
       try {
@@ -106,7 +107,7 @@ function CreatePostForm({ group, currentUser, onCancel }) {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       setMediaUrl(file_url);
     } catch (err) {
-      alert("Upload failed");
+      toast.error("Upload failed");
     } finally {
       setIsUploading(false);
     }
@@ -114,7 +115,7 @@ function CreatePostForm({ group, currentUser, onCancel }) {
 
   const handleSubmit = () => {
     const finalOptions = type === 'poll' ? pollOptions.filter(o => o.trim()) : [];
-    if (type === 'poll' && finalOptions.length < 2) return alert("Poll needs at least 2 options");
+    if (type === 'poll' && finalOptions.length < 2) return toast.error("Poll needs at least 2 options");
     
     createMutation.mutate({
       content,

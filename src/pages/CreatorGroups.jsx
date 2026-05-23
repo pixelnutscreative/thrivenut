@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Users, Plus, Settings, Video, AlertCircle, ArrowLeft, Loader2, Building, Home, Heart, Sparkles, Brain, Briefcase, Calendar, MessageSquare, FileText, Bell, Eye, EyeOff, Link as LinkIcon, ExternalLink, Clock, Trash2, Filter, LayoutGrid, List, Lock, Printer, UserPlus, Target, GraduationCap, HelpCircle } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useTheme } from '@/components/shared/useTheme';
+import { toast } from 'sonner';
 import { createPageUrl } from '../utils';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -269,23 +270,24 @@ export default function CreatorGroups() {
         const prefs = await base44.entities.UserPreferences.filter({ user_email: user?.email });
         if (prefs.length > 0) {
           await base44.entities.UserPreferences.update(prefs[0].id, {
-            enabled_modules: ['my_groups'] // Disable all other modules
+            enabled_modules: ['my_groups'], // Disable all other modules
+            is_restricted_experience: true
           });
         }
       }
       return { group, existing: false, status: initialStatus };
     },
     onSuccess: ({ group, existing, wasPending, activated, status }) => {
-      if (wasPending && activated) alert('Membership activated! Welcome to the group.');else
-      if (status === 'pending') alert('Request sent! An admin will review your request shortly.');else
-      if (existing) alert('You are already a member of this group!');else
-      alert('Welcome! You have joined the group.');
+      if (wasPending && activated) toast.success('Membership activated! Welcome to the group.');else
+      if (status === 'pending') toast.success('Request sent! An admin will review your request shortly.');else
+      if (existing) toast.success('You are already a member of this group!');else
+      toast.success('Welcome! You have joined the group.');
 
       queryClient.invalidateQueries(['myGroupsConsolidated']);
       queryClient.invalidateQueries(['myGroupMemberships']);
       setSearchParams({ id: group.id });
     },
-    onError: () => alert('Invalid invite code or error joining.')
+    onError: () => toast.error('Invalid invite code or error joining.')
   });
 
   useEffect(() => {
@@ -384,7 +386,7 @@ export default function CreatorGroups() {
       queryClient.invalidateQueries(['groupMembers', activeGroup.id]);
       setIsInviteOpen(false);
       setInviteEmail('');
-      alert('Member invited successfully!');
+      toast.success('Member invited successfully!');
     }
   });
 
@@ -434,9 +436,9 @@ export default function CreatorGroups() {
       // Don't auto-advance for "Save" action, user will click Continue. 
       // Actually, user flow: "Save" -> Updates code -> Then they can continue.
       // But prompt says "Make them hit a save button ... and it has to update".
-      alert("Code updated successfully!");
+      toast.success("Code updated successfully!");
     },
-    onError: (err) => alert(err.message)
+    onError: (err) => toast.error(err.message)
   });
 
   useEffect(() => {
@@ -1118,9 +1120,7 @@ export default function CreatorGroups() {
                           size="icon"
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (window.confirm(`Are you sure you want to delete ${group.name}? This cannot be undone.`)) {
-                              deleteGroupMutation.mutate(group.id);
-                            }
+                            deleteGroupMutation.mutate(group.id);
                           }}
                           className="text-red-500 hover:text-red-600 hover:bg-red-50">
                           
@@ -1385,7 +1385,7 @@ export default function CreatorGroups() {
                           onClick={() => {
                             const baseUrl = window.location.hostname === 'localhost' ? window.location.origin : 'https://thrive.pixelnutscreative.com';
                             navigator.clipboard.writeText(`${baseUrl}/CreatorGroups?invite=${activeGroup.invite_code}&ref=${editingReferralCode}`);
-                            alert("Link copied!");
+                            toast.success("Link copied!");
                           }}>
                           
                               <LinkIcon className="w-4 h-4" />
@@ -1445,15 +1445,12 @@ export default function CreatorGroups() {
             }
 
             {/* Mobile AI Button */}
-            {(activeGroup.type === 'client-portal' || activeGroup.type === 'agency') &&
             <Button
               size="sm"
               className="lg:hidden bg-gradient-to-r from-violet-600 to-indigo-600 text-white border-0 shadow-sm"
               onClick={() => setIsAIMobileOpen(true)}>
-              
-                <Sparkles className="w-4 h-4" />
-              </Button>
-            }
+              <Sparkles className="w-4 h-4" />
+            </Button>
             
             {/* Mobile Invite Button (Icon Only) */}
             {canInvite &&
@@ -1488,17 +1485,15 @@ export default function CreatorGroups() {
         {/* Shortcuts & Crypto Sidebar */}
         <div className="lg:col-span-1 space-y-6 order-2 lg:order-1">
 
-          {/* AI Companion for Client Portals (Desktop) */}
-          {(activeGroup.type === 'client-portal' || activeGroup.type === 'agency') &&
+          {/* AI Companion (Desktop) */}
           <div className="hidden lg:block">
-                  <GroupAICompanion
+            <GroupAICompanion
               groupId={activeGroup.id}
               groupName={activeGroup.name}
               className="w-full"
-              defaultOpen={false} />
-            
-              </div>
-          }
+              defaultOpen={false} 
+            />
+          </div>
 
           {/* Calendar Widget */}
           <GroupCalendarWidget group={activeGroup} myMembership={activeMembership} isAdmin={isAdmin} />
@@ -1586,10 +1581,7 @@ export default function CreatorGroups() {
             isOpen={showTimeReport}
             onClose={() => setShowTimeReport(false)}
             groupId={activeGroupId} />
-
           }
-
-          <h2 className="text-3xl font-bold mb-4">{displayNames[currentTab] || allTabs.find((t) => t.id === currentTab)?.label || 'Dashboard'}</h2>
           
           <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-6">
             <TooltipProvider>

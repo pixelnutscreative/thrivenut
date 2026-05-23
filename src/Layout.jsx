@@ -21,6 +21,7 @@ import TikTokAccessGate from './components/access/TikTokAccessGate';
 import ImpersonationBanner, { getEffectiveUserEmail, isImpersonating } from './components/admin/ImpersonationBanner';
 import NotificationBell from './components/notifications/NotificationBell';
 import FloatingHelpButton from './components/support/FloatingHelpButton';
+import GlobalSearch from './components/shared/GlobalSearch';
 import QuickActionsBarV2 from './components/widgets/QuickActionsBarV2';
 import SoundCloudPlayer, { FloatingSoundCloudPlayer, MobileSoundCloudPopup } from './components/widgets/SoundCloudPlayer.jsx';
 import AnnouncementBar from './components/announcements/AnnouncementBar';
@@ -725,6 +726,7 @@ const { data: featureFlags = [] } = useQuery({
             </h1>
           </div>
           <div className="flex items-center gap-2">
+            {user && <GlobalSearch userEmail={effectiveEmail} />}
             {user && <NotificationBell userEmail={effectiveEmail} isDark={isMenuDark} />}
             <Button
                 variant="ghost"
@@ -1034,7 +1036,12 @@ const { data: featureFlags = [] } = useQuery({
                   Let's Thrive!
                 </h1>}
               </div>
-              {!isNavCollapsed && user && <NotificationBell userEmail={effectiveEmail} isDark={isMenuDark} />}
+              {!isNavCollapsed && user && (
+                <div className="flex gap-2">
+                  <GlobalSearch userEmail={effectiveEmail} />
+                  <NotificationBell userEmail={effectiveEmail} isDark={isMenuDark} />
+                </div>
+              )}
             </div>
             {!isNavCollapsed && <p className={`text-sm ${menuSubtextClass}`}>Crush your goals, thrive daily</p>}
           </div>
