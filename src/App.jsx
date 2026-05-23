@@ -10,6 +10,7 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import React, { useEffect } from 'react';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
+import { GlobalDialogProvider } from '@/components/shared/GlobalDialogProvider';
 import PixelBoard from './pages/PixelBoard';
 import MyTasks from './pages/MyTasks';
 import MyLinks from './pages/MyLinks';
@@ -105,8 +106,10 @@ function App() {
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
         <Router>
-          <NavigationTracker />
-          <AuthenticatedApp />
+          <GlobalDialogProvider>
+            <NavigationTracker />
+            <AuthenticatedApp />
+          </GlobalDialogProvider>
         </Router>
         <Toaster toastOptions={{ style: { background: '#24C4D6', color: '#fff', border: 'none' }, duration: 3000 }} />
         <VisualEditAgent />
