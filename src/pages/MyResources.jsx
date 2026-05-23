@@ -210,6 +210,10 @@ import { toast } from 'sonner';
          setIsAddOpen(false);
          setEditingItem(null);
          resetForm();
+         toast.success("Resource saved successfully!");
+       },
+       onError: (err) => {
+         toast.error(err.message || 'Failed to save resource');
        }
      });
  

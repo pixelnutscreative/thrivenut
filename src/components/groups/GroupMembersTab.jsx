@@ -437,11 +437,7 @@ export default function GroupMembersTab({ group, currentUser, isAdmin }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h3 className="text-lg font-semibold">Group Members</h3>
-          <p className="text-sm text-gray-500">Manage who has access to this group</p>
-        </div>
+      <div className="flex justify-end items-center">
       </div>
 
       {/* Pending Applications (Interested -> Member) */}

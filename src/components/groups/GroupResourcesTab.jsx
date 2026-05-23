@@ -258,8 +258,7 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold">Shared Resources</h3>
-        {canUpload && (
+        {canUpload ? (
           <Dialog open={isDialogOpen} onOpenChange={(open) => !open && handleCloseDialog()}>
           <DialogTrigger asChild>
             <Button 
@@ -380,11 +379,11 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
               </DialogFooter>
             </div>
           </DialogContent>
-        </Dialog>
-        )}
-      </div>
+          </Dialog>
+          ) : <div />}
+          </div>
 
-      <Tabs defaultValue="library" className="w-full">
+          <Tabs defaultValue="library" className="w-full">
         <TabsList>
           <TabsTrigger value="library">Library ({visibleResources.length})</TabsTrigger>
           {isAdmin && pendingResources.length > 0 && (
@@ -484,7 +483,7 @@ export default function GroupResourcesTab({ group, currentUser, myMembership, is
                             onClick={(e) => {
                                 e.stopPropagation();
                                 navigator.clipboard.writeText(resource.url);
-                                alert("Link copied!");
+                                toast.success("Link copied!");
                             }}
                             className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
                           >

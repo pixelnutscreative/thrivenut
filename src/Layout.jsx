@@ -411,7 +411,7 @@ const { data: featureFlags = [] } = useQuery({
   const agencyGroup = myMenuGroups.find(g => g.type === 'agency');
   const agencyFeatures = agencyGroup?.settings?.agency_features || {};
 
-  const checkFeature = (key) => agencyFeatures[key] !== false;
+  const checkFeature = (key) => agencyFeatures[key] === true; // Default OFF
 
   const isAllowedForAgencyCreator = (item) => {
     if (!isAgencyCreator || isAdmin) return true;
@@ -426,11 +426,15 @@ const { data: featureFlags = [] } = useQuery({
     if (item.path === 'SavedMotivations') return checkFeature('creator_studio'); // Content Ideas
     if (item.path === 'Habits') return checkFeature('goals_habits');
     if (item.path === 'Goals') return checkFeature('goals_habits');
+    if (item.path === 'QuickNotes') return checkFeature('goals_habits');
+    if (item.path === 'VisionBoard') return checkFeature('goals_habits');
+    if (item.path === 'Journal') return checkFeature('goals_habits');
+    if (item.path === 'Finance') return checkFeature('goals_habits');
     if (item.path === 'BrainDump') return checkFeature('brain_dump');
     if (item.path === 'PromptLibrary') return checkFeature('creator_studio');
     if (item.path === 'ContentMarketplace') return checkFeature('creator_studio');
     if (item.path === 'ContentCreatorHub') return checkFeature('creator_studio');
-    if (item.path === 'Profile') return true;
+    if (item.path === 'Profile') return checkFeature('full_profile');
 
     if (['MentalHealth', 'Wellness', 'Supplements', 'Medications', 'ActivityTracker'].includes(item.path)) {
       return checkFeature('health_wellness');
@@ -1367,12 +1371,12 @@ const { data: featureFlags = [] } = useQuery({
         </div>
 
         {/* Main Content Area */}
-        <div className={`hidden lg:block ${isNavCollapsed ? 'ml-24' : 'ml-72'} transition-all duration-300`} style={{ paddingTop: '80px' }}>
+        <div className={`hidden lg:block ${isNavCollapsed ? 'ml-24' : 'ml-72'} transition-all duration-300`} style={{ paddingTop: (!isAgencyCreator || isAdmin || checkFeature('quick_actions')) ? '80px' : '0px' }}>
           {children}
         </div>
 
         {/* Mobile Main Content */}
-        <div className="lg:hidden" style={{ paddingTop: '140px' }}>
+        <div className="lg:hidden" style={{ paddingTop: (!isAgencyCreator || isAdmin || checkFeature('quick_actions')) ? '140px' : '64px' }}>
         {children}
         </div>
 

@@ -219,7 +219,6 @@ export default function GroupRequestsTab({ group, currentUser, myMembership, isA
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
-            <h3 className="text-xl font-bold">Support & Requests</h3>
             {isAdmin && (
                 <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
                     <DialogTrigger asChild>
@@ -299,7 +298,7 @@ export default function GroupRequestsTab({ group, currentUser, myMembership, isA
                   <SelectValue placeholder="Type" />
                 </SelectTrigger>
                 <SelectContent className="z-[60] bg-white">
-                  {(requestSettings.custom_types || ['Support', 'Feature Request', 'Access Request', 'Other']).map(type => (
+                  {(requestSettings.custom_types || defaultTypes).map(type => (
                     <SelectItem key={type} value={type}>{type}</SelectItem>
                   ))}
                 </SelectContent>

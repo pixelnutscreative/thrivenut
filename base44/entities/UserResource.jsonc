@@ -29,6 +29,12 @@
       "type": "string",
       "default": "Uncategorized"
     },
+    "categories": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "subcategory": {
       "type": "string"
     },
@@ -67,10 +73,22 @@
     },
     "notes": {
       "type": "string"
+    },
+    "user_email": {
+      "type": "string"
+    },
+    "visibility": {
+      "type": "string"
+    },
+    "group_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     }
   },
   "required": [
-    "name",
-    "url"
-  ]
+    "name"
+  ],
+  "additionalProperties": true
 }

@@ -53,14 +53,14 @@ Deno.serve(async (req) => {
 
         // Parallel fetching for speed
         const [resources, meetings, projects, posts, events, orders, qnas, trainings] = await Promise.all([
-            contextTypes.includes('resources') ? base44.entities.GroupResource.filter({ group_id: groupId }) : Promise.resolve([]),
-            contextTypes.includes('meetings') ? base44.entities.MeetingRecording.filter({ group_id: groupId }) : Promise.resolve([]),
-            contextTypes.includes('projects') ? base44.entities.GroupProject.filter({ group_id: groupId }) : Promise.resolve([]),
-            contextTypes.includes('posts') ? base44.entities.GroupPost.filter({ group_id: groupId }, '-created_date', 20) : Promise.resolve([]), // Last 20 posts
-            contextTypes.includes('events') ? base44.entities.GroupEvent.filter({ group_id: groupId }) : Promise.resolve([]),
-            base44.entities.MarketingOrder.filter({ group_id: groupId }), // Internal use
-            contextTypes.includes('qna') ? base44.entities.GroupQnA.filter({ group_id: groupId }) : Promise.resolve([]),
-            contextTypes.includes('training') ? base44.entities.GroupTraining.filter({ group_id: groupId }) : Promise.resolve([])
+            contextTypes.includes('resources') ? base44.entities.GroupResource.filter({ group_id: groupId }, null, 100) : Promise.resolve([]),
+            contextTypes.includes('meetings') ? base44.entities.MeetingRecording.filter({ group_id: groupId }, '-meeting_date', 100) : Promise.resolve([]),
+            contextTypes.includes('projects') ? base44.entities.GroupProject.filter({ group_id: groupId }, null, 100) : Promise.resolve([]),
+            contextTypes.includes('posts') ? base44.entities.GroupPost.filter({ group_id: groupId }, '-created_date', 50) : Promise.resolve([]), // Last 50 posts
+            contextTypes.includes('events') ? base44.entities.GroupEvent.filter({ group_id: groupId }, '-start_time', 100) : Promise.resolve([]),
+            base44.entities.MarketingOrder.filter({ group_id: groupId }, null, 100), // Internal use
+            contextTypes.includes('qna') ? base44.entities.GroupQnA.filter({ group_id: groupId }, null, 100) : Promise.resolve([]),
+            contextTypes.includes('training') ? base44.entities.GroupTraining.filter({ group_id: groupId }, null, 100) : Promise.resolve([])
         ]);
 
         // Tasks (nested in projects)
@@ -122,7 +122,7 @@ Deno.serve(async (req) => {
         // Prepare Messages
         const systemPrompt = `You are a helpful AI assistant for the "${group[0]?.name}" group. 
         You have access to the group's data (resources, meetings, tasks, posts, etc.).
-        Answer the user's question based on this context.
+        Answer the user's question based on this context. Perform fuzzy matching and partial word matching when users search for specific items (e.g., if a user asks for "test", match items like "Test Event 2").
         If the answer isn't in the context, say so politely.
         Context:
         ${context.substring(0, 50000)}` // Hard limit to prevent token overflow
@@ -157,6 +157,14 @@ Deno.serve(async (req) => {
             user_email: user.email,
             role: 'assistant',
             content: answer
+        });
+
+        // 5. Log to AIConversationLog for Admin Review
+        await base44.entities.AIConversationLog.create({
+            group_id: groupId,
+            user_email: user.email,
+            message: question,
+            response: answer
         });
 
         return Response.json({ answer });

@@ -19,7 +19,8 @@ Deno.serve(async (req) => {
             asked_by, 
             card_color = '#24C4D6', 
             page_location, 
-            group_tag 
+            group_tag,
+            attachment_url
         } = body;
 
         if (!title) {
@@ -32,6 +33,7 @@ Deno.serve(async (req) => {
             status,
             category,
             priority,
+            attachment_url,
             asked_by: asked_by || (user ? user.full_name : 'API'),
             card_color,
             custom_fields: {

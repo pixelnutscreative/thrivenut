@@ -354,9 +354,7 @@ function TaskCard({ task, currentUser, group, projectId, canEdit, canLogTime }) 
               variant="ghost"
               size="icon"
               onClick={() => {
-                if (window.confirm(`Are you sure you want to delete this task: ${task.title}?`)) {
                   deleteTaskMutation.mutate(task.id);
-                }
               }}
               className="text-red-500 hover:text-red-600 hover:bg-red-50"
               title="Delete Task"

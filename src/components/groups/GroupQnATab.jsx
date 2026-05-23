@@ -153,8 +153,7 @@ export default function GroupQnATab({ group, currentUser, myMembership, isAdmin 
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold">Community Q&A</h3>
+      <div className="flex justify-end items-center">
         <Dialog open={isDialogOpen} onOpenChange={(open) => !open && handleCloseDialog()}>
           <DialogTrigger asChild>
             <Button onClick={() => setIsDialogOpen(true)}><HelpCircle className="w-4 h-4 mr-2" /> Ask a Question</Button>

@@ -59,19 +59,39 @@ function GroupAISettings({ group }) {
   ];
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>AI Assistant Training Data</CardTitle>
-        <CardDescription>Select which sections the AI should read to answer member questions.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <CollapsibleCard title="AI Assistant Training Data" description="Select which sections the AI should read to answer member questions." defaultOpen={true}>
+      <div className="space-y-4 mt-4">
         {types.map(t => (
           <div key={t.id} className="flex items-center justify-between">
             <Label>{t.label}</Label>
             <Switch checked={contextTypes.includes(t.id)} onCheckedChange={() => toggleType(t.id)} />
           </div>
         ))}
-      </CardContent>
+      </div>
+    </CollapsibleCard>
+  );
+}
+
+function CollapsibleCard({ title, description, children, defaultOpen = false, className = "" }) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+  return (
+    <Card className={`shadow-sm mb-6 ${className}`}>
+      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+        <CollapsibleTrigger className="w-full text-left">
+          <CardHeader className="flex flex-row items-center justify-between p-5 hover:bg-gray-50 transition-colors rounded-t-xl cursor-pointer">
+            <div className="flex flex-col gap-1">
+              <CardTitle>{title}</CardTitle>
+              {description && <CardDescription>{description}</CardDescription>}
+            </div>
+            {isOpen ? <ChevronDown className="w-5 h-5 text-gray-400 shrink-0 ml-4" /> : <ChevronRight className="w-5 h-5 text-gray-400 shrink-0 ml-4" />}
+          </CardHeader>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <CardContent className="pt-0 space-y-4">
+            {children}
+          </CardContent>
+        </CollapsibleContent>
+      </Collapsible>
     </Card>
   );
 }
@@ -99,19 +119,26 @@ function SettingsSection({ title, icon: Icon, children, defaultOpen = false }) {
 export default function GroupSettingsTab({ group, currentUser, isAdmin }) {
   return (
     <div className="space-y-6 max-w-4xl mx-auto pb-20">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Group Settings</h1>
-        <p className="text-gray-500">Manage your group's appearance, features, and members.</p>
-      </div>
-
       <Tabs defaultValue="settings" className="w-full">
-        <TabsList className="mb-6 bg-white border shadow-sm">
+        <TabsList className="mb-6 bg-white border shadow-sm flex-wrap h-auto p-1">
           <TabsTrigger value="settings" className="data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700">Settings</TabsTrigger>
           <TabsTrigger value="members" className="data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700">Members</TabsTrigger>
+          {group.type === 'agency' && <TabsTrigger value="features" className="data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700">Features</TabsTrigger>}
+          <TabsTrigger value="ai" className="data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700">AI</TabsTrigger>
         </TabsList>
 
         <TabsContent value="members" className="space-y-6 mt-0 focus-visible:outline-none">
           <GroupMembersTab group={group} currentUser={currentUser} isAdmin={isAdmin} />
+        </TabsContent>
+
+        {group.type === 'agency' && (
+          <TabsContent value="features" className="space-y-6 mt-0 focus-visible:outline-none">
+            <AgencyFeaturesSettings group={group} />
+          </TabsContent>
+        )}
+
+        <TabsContent value="ai" className="space-y-6 mt-0 focus-visible:outline-none">
+          <GroupAISettings group={group} />
         </TabsContent>
 
         <TabsContent value="settings" className="space-y-6 mt-0 focus-visible:outline-none">
@@ -124,7 +151,6 @@ export default function GroupSettingsTab({ group, currentUser, isAdmin }) {
 
       <SettingsSection title="Navigation & Tabs" icon={GripVertical}>
         <GroupTabsManager group={group} />
-        {group.type === 'agency' && <AgencyFeaturesSettings group={group} />}
       </SettingsSection>
 
       <SettingsSection title="Membership" icon={Users}>
@@ -146,7 +172,6 @@ export default function GroupSettingsTab({ group, currentUser, isAdmin }) {
         <GroupAnnouncementsSettings group={group} />
         {group.type !== 'agency' && <CryptoTickerSettings group={group} />}
         {group.type !== 'agency' && <ProspectManagementSettings group={group} />}
-        <GroupAISettings group={group} />
       </SettingsSection>
 
       <SettingsSection title="Danger Zone" icon={AlertTriangle}>
@@ -196,23 +221,13 @@ function GroupAppearanceSettings({ group }) {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Appearance & Display</CardTitle>
-        <CardDescription>Customize colors and how this group appears in the app navigation.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="space-y-2">
-          <Label>Group Theme Color (Header & Buttons)</Label>
-          <div className="flex items-center gap-4">
-            <Input
-              type="color"
-              value={groupColor}
-              onChange={(e) => setGroupColor(e.target.value)}
-              className="w-12 h-10 p-1 cursor-pointer rounded-md border-0"
-            />
-            <div className="text-sm text-gray-500 font-mono">{groupColor}</div>
-          </div>
+    <CollapsibleCard title="Appearance & Display" description="Customize colors and how this group appears in the app navigation." defaultOpen={false}>
+        <div className="space-y-2 mt-4">
+          <ColorPicker
+            color={groupColor}
+            onChange={(c) => setGroupColor(c)}
+            label="Group Theme Color (Header & Buttons)"
+          />
         </div>
 
         <div className="flex items-center justify-between pt-4 border-t">
@@ -227,17 +242,12 @@ function GroupAppearanceSettings({ group }) {
         </div>
 
         {menuPinned && (
-          <div className="space-y-2">
-            <Label>Sidebar Menu Color</Label>
-            <div className="flex gap-2 items-center">
-              <Input
-                type="color"
-                value={menuColor}
-                onChange={(e) => setMenuColor(e.target.value)}
-                className="w-12 h-10 p-1 cursor-pointer rounded-md border-0"
-              />
-              <div className="text-sm text-gray-500 font-mono">{menuColor}</div>
-            </div>
+          <div className="space-y-2 mt-4">
+            <ColorPicker
+              color={menuColor}
+              onChange={(c) => setMenuColor(c)}
+              label="Sidebar Menu Color"
+            />
           </div>
         )}
 
@@ -246,8 +256,7 @@ function GroupAppearanceSettings({ group }) {
             {updateMutation.isPending ? 'Saving...' : 'Save Appearance'}
           </Button>
         </div>
-      </CardContent>
-    </Card>
+    </CollapsibleCard>
   );
 }
 
@@ -271,12 +280,8 @@ function CryptoTickerSettings({ group }) {
   });
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Crypto Ticker</CardTitle>
-        <CardDescription>Show or hide the group ticker in the sidebar.</CardDescription>
-      </CardHeader>
-      <CardContent className="flex items-center justify-between">
+    <CollapsibleCard title="Crypto Ticker" description="Show or hide the group ticker in the sidebar." defaultOpen={false}>
+      <div className="flex items-center justify-between mt-4">
         <span className="text-sm text-gray-600">Show ticker on dashboard</span>
         <Switch
           checked={showTicker}
@@ -285,8 +290,8 @@ function CryptoTickerSettings({ group }) {
             updateMutation.mutate(!checked);
           }}
         />
-      </CardContent>
-    </Card>
+      </div>
+    </CollapsibleCard>
   );
 }
 
@@ -346,12 +351,8 @@ function MemberInviteSettings({ group }) {
   const roles = ['member', 'client', 'virtual-assistant', 'manager'];
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Member Invitations</CardTitle>
-        <CardDescription>Control who can invite members and how new members join.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-8">
+    <CollapsibleCard title="Member Invitations" description="Control who can invite members and how new members join." defaultOpen={false}>
+      <div className="space-y-8 mt-4">
         
         {/* Who Can Invite Section */}
         <div className="space-y-4">
@@ -457,8 +458,8 @@ function MemberInviteSettings({ group }) {
         <div className="flex justify-end pt-4 border-t">
           <Button onClick={handleSave} disabled={updateMutation.isPending}>Save All Changes</Button>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </CollapsibleCard>
   );
 }
 
@@ -488,15 +489,8 @@ function MemberLevelsSettings({ group }) {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Member Levels & Roles</CardTitle>
-        <CardDescription>
-          Define custom levels for your members (e.g., Winners, Leaders, Champions). 
-          You can use these to control visibility of posts, events, and resources.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <CollapsibleCard title="Member Levels & Roles" description="Define custom levels for your members (e.g., Winners, Leaders, Champions). You can use these to control visibility of posts, events, and resources." defaultOpen={false}>
+      <div className="space-y-4 mt-4">
         <div className="flex gap-2">
           <Input 
             placeholder="Level Name (e.g. Diamond Leader)" 
@@ -522,8 +516,8 @@ function MemberLevelsSettings({ group }) {
             {updateMutation.isPending ? 'Saving...' : 'Save Levels'}
           </Button>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </CollapsibleCard>
   );
 }
 
@@ -542,12 +536,8 @@ function ResourceAccessSettings({ group }) {
   });
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Resource Uploads</CardTitle>
-        <CardDescription>Control which levels can upload resources (Admins always can).</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <CollapsibleCard title="Resource Uploads" description="Control which levels can upload resources (Admins always can)." defaultOpen={false}>
+      <div className="space-y-4 mt-4">
         <div className="space-y-2">
           <Label className="text-base font-semibold">Upload Permissions</Label>
           <LevelSelector 
@@ -599,8 +589,8 @@ function ResourceAccessSettings({ group }) {
         <div className="flex justify-end pt-4 border-t">
           <Button onClick={() => updateMutation.mutate({ allowed_resource_levels: allowedLevels, resource_categories: categories })}>Save Settings</Button>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </CollapsibleCard>
   );
 }
 
@@ -630,12 +620,8 @@ function FunnelContentSettings({ group }) {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Funnel Content (Invited → Interested)</CardTitle>
-        <CardDescription>Configure the content for the Welcome Mat and Interested Dashboard.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-8">
+    <CollapsibleCard title="Funnel Content (Invited → Interested)" description="Configure the content for the Welcome Mat and Interested Dashboard." defaultOpen={false}>
+      <div className="space-y-8 mt-4">
         
         {/* Welcome Mat Section */}
         <div className="space-y-4">
@@ -731,8 +717,8 @@ function FunnelContentSettings({ group }) {
         <div className="flex justify-end pt-4">
           <Button onClick={() => updateMutation.mutate(formData)}>Save Funnel Content</Button>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </CollapsibleCard>
   );
 }
 
@@ -753,12 +739,8 @@ function GroupAccessSettings({ group }) {
   });
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Membership & Access</CardTitle>
-        <CardDescription>Configure how users join and access your group.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <CollapsibleCard title="Membership & Access" description="Configure how users join and access your group." defaultOpen={false}>
+      <div className="space-y-4 mt-4">
         <div className="space-y-2">
           <Label>Sign Up / Payment URL</Label>
           <Input 
@@ -794,8 +776,8 @@ function GroupAccessSettings({ group }) {
             {updateMutation.isPending ? 'Saving...' : 'Save Settings'}
           </Button>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </CollapsibleCard>
   );
 }
 
@@ -929,14 +911,8 @@ function TabPermissionsSettings({ group }) {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Tab Visibility</CardTitle>
-        <CardDescription>
-          Control which roles/levels can see specific tabs.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <CollapsibleCard title="Tab Visibility" description="Control which roles/levels can see specific tabs." defaultOpen={false}>
+      <div className="space-y-4 mt-4">
         {activeTabs.length === 0 ? (
             <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg border border-dashed">
                 No active features to configure. Enable features in the Navigation & Tabs section first.
@@ -1034,8 +1010,8 @@ function TabPermissionsSettings({ group }) {
               </Button>
             </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </CollapsibleCard>
   );
 }
 
@@ -1128,14 +1104,8 @@ function GroupTabsManager({ group }) {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Group Navigation & Features</CardTitle>
-        <CardDescription>
-          Enable/disable features and drag to reorder tabs in your group navigation.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
+    <CollapsibleCard title="Group Navigation & Features" description="Enable/disable features and drag to reorder tabs in your group navigation." defaultOpen={false}>
+      <div className="mt-4">
         <DragDropContext onDragEnd={onDragEnd}>
           <Droppable droppableId="tabs">
             {(provided) => (
@@ -1192,8 +1162,8 @@ function GroupTabsManager({ group }) {
             </Button>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </CollapsibleCard>
   );
 }
 
@@ -1224,12 +1194,8 @@ function GroupNameSettings({ group }) {
   });
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Group Details</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
+    <CollapsibleCard title="Group Details" defaultOpen={false}>
+        <div className="space-y-2 mt-4">
           <Label>Group Name</Label>
           <Input value={name} onChange={e => setName(e.target.value)} />
         </div>
@@ -1252,8 +1218,7 @@ function GroupNameSettings({ group }) {
         <div className="flex justify-end">
           <Button onClick={() => updateMutation.mutate({ name, description, slug })} disabled={!name}>Update Details</Button>
         </div>
-      </CardContent>
-    </Card>
+    </CollapsibleCard>
   );
 }
 
@@ -1498,12 +1463,8 @@ function GroupShortcutsSettings({ group }) {
   });
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Shortcut Links</CardTitle>
-        <CardDescription>Add quick access links for your members (e.g. Login portals, Tools)</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <CollapsibleCard title="Shortcut Links" description="Add quick access links for your members (e.g. Login portals, Tools)" defaultOpen={false}>
+      <div className="space-y-4 mt-4">
         <div className="flex gap-2 items-end">
           <div className="flex-1 space-y-1">
             <Label>Title</Label>
@@ -1533,8 +1494,8 @@ function GroupShortcutsSettings({ group }) {
           ))}
           {shortcuts.length === 0 && <div className="text-center py-4 text-gray-400 text-sm">No shortcuts added.</div>}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </CollapsibleCard>
   );
 }
 
@@ -1571,12 +1532,8 @@ function GroupExperienceSettings({ group }) {
   });
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">Member Experience</CardTitle>
-        <CardDescription>Control the onboarding and app experience for new members.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
+    <CollapsibleCard title="Member Experience" description="Control the onboarding and app experience for new members." defaultOpen={false}>
+      <div className="space-y-6 mt-4">
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
             <Label>Restricted Feature Mode (Social House)</Label>
@@ -1618,8 +1575,8 @@ function GroupExperienceSettings({ group }) {
             />
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </CollapsibleCard>
   );
 }
 
@@ -1628,12 +1585,13 @@ function GroupExperienceSettings({ group }) {
 function AgencyFeaturesSettings({ group }) {
   const queryClient = useQueryClient();
   const [features, setFeatures] = useState(group.settings?.agency_features || {
-    my_day: true,
-    creator_studio: true,
-    goals_habits: true,
-    brain_dump: true,
-    health_wellness: true,
-    quick_actions: true
+    my_day: false,
+    creator_studio: false,
+    goals_habits: false,
+    brain_dump: false,
+    health_wellness: false,
+    quick_actions: false,
+    full_profile: false
   });
 
   const updateMutation = useMutation({
@@ -1661,18 +1619,13 @@ function AgencyFeaturesSettings({ group }) {
     { key: 'goals_habits', label: 'Goals & Habits', desc: 'Allow access to Goals and Habits modules' },
     { key: 'brain_dump', label: 'Brain Dump', desc: 'Allow access to Brain Dump' },
     { key: 'health_wellness', label: 'Health & Wellness', desc: 'Allow access to Mental Health, Wellness, Supplements, etc.' },
+    { key: 'full_profile', label: 'Full Profile', desc: 'Allow access to the Profile page' },
     { key: 'quick_actions', label: 'Quick Actions Bar', desc: 'Show the floating Quick Actions menu at the bottom' }
   ];
 
   return (
-    <Card className="mt-6 border-purple-200 shadow-sm">
-      <CardHeader className="bg-purple-50/50 rounded-t-xl">
-        <CardTitle className="text-purple-900">App Module Access</CardTitle>
-        <CardDescription>
-          Control which main app modules are visible to members in the Restricted Experience (Agency Creators).
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4 pt-6">
+    <CollapsibleCard title="App Module Access" description="Control which main app modules are visible to members in the Restricted Experience (Agency Creators)." defaultOpen={true} className="mt-6 border-purple-200 shadow-sm">
+      <div className="space-y-4 pt-4">
         {featureList.map(f => (
           <div key={f.key} className="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-lg shadow-sm">
             <div className="space-y-0.5 pr-4">
@@ -1680,12 +1633,12 @@ function AgencyFeaturesSettings({ group }) {
               <p className="text-xs text-gray-500">{f.desc}</p>
             </div>
             <Switch 
-              checked={features[f.key] !== false} 
+              checked={features[f.key] === true} 
               onCheckedChange={(checked) => handleToggle(f.key, checked)}
             />
           </div>
         ))}
-      </CardContent>
-    </Card>
+      </div>
+    </CollapsibleCard>
   );
 }
