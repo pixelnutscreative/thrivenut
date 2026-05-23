@@ -124,6 +124,7 @@ export default function GroupSettingsTab({ group, currentUser, isAdmin }) {
 
       <SettingsSection title="Navigation & Tabs" icon={GripVertical}>
         <GroupTabsManager group={group} />
+        {group.type === 'agency' && <AgencyFeaturesSettings group={group} />}
       </SettingsSection>
 
       <SettingsSection title="Membership" icon={Users}>
@@ -1623,3 +1624,68 @@ function GroupExperienceSettings({ group }) {
 }
 
 // GroupTabOrderSettings removed, logic moved to GroupTabsManager
+
+function AgencyFeaturesSettings({ group }) {
+  const queryClient = useQueryClient();
+  const [features, setFeatures] = useState(group.settings?.agency_features || {
+    my_day: true,
+    creator_studio: true,
+    goals_habits: true,
+    brain_dump: true,
+    health_wellness: true,
+    quick_actions: true
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async (data) => {
+      const current = await base44.entities.CreatorGroup.get(group.id);
+      return base44.entities.CreatorGroup.update(group.id, { 
+        settings: { ...current.settings, agency_features: data } 
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['myGroupsDetails']);
+      toast.success("App module access updated!");
+    }
+  });
+
+  const handleToggle = (key, checked) => {
+    const newFeatures = { ...features, [key]: checked };
+    setFeatures(newFeatures);
+    updateMutation.mutate(newFeatures);
+  };
+
+  const featureList = [
+    { key: 'my_day', label: 'My Day (Dashboard)', desc: 'Allow access to the main dashboard' },
+    { key: 'creator_studio', label: 'Creator Studio', desc: 'Allow access to Tasks, The Closet, Prompt Library, Content Marketplace, etc.' },
+    { key: 'goals_habits', label: 'Goals & Habits', desc: 'Allow access to Goals and Habits modules' },
+    { key: 'brain_dump', label: 'Brain Dump', desc: 'Allow access to Brain Dump' },
+    { key: 'health_wellness', label: 'Health & Wellness', desc: 'Allow access to Mental Health, Wellness, Supplements, etc.' },
+    { key: 'quick_actions', label: 'Quick Actions Bar', desc: 'Show the floating Quick Actions menu at the bottom' }
+  ];
+
+  return (
+    <Card className="mt-6 border-purple-200 shadow-sm">
+      <CardHeader className="bg-purple-50/50 rounded-t-xl">
+        <CardTitle className="text-purple-900">App Module Access</CardTitle>
+        <CardDescription>
+          Control which main app modules are visible to members in the Restricted Experience (Agency Creators).
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4 pt-6">
+        {featureList.map(f => (
+          <div key={f.key} className="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-lg shadow-sm">
+            <div className="space-y-0.5 pr-4">
+              <Label className="text-base font-semibold text-gray-800">{f.label}</Label>
+              <p className="text-xs text-gray-500">{f.desc}</p>
+            </div>
+            <Switch 
+              checked={features[f.key] !== false} 
+              onCheckedChange={(checked) => handleToggle(f.key, checked)}
+            />
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+}

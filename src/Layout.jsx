@@ -411,6 +411,8 @@ const { data: featureFlags = [] } = useQuery({
   const agencyGroup = myMenuGroups.find(g => g.type === 'agency');
   const agencyFeatures = agencyGroup?.settings?.agency_features || {};
 
+  const checkFeature = (key) => agencyFeatures[key] !== false;
+
   const isAllowedForAgencyCreator = (item) => {
     if (!isAgencyCreator || isAdmin) return true;
     
@@ -418,20 +420,20 @@ const { data: featureFlags = [] } = useQuery({
     if (item.path && item.path.startsWith('CreatorGroups?id=')) return true;
 
     // Feature Gates
-    if (item.path === 'Dashboard') return !!agencyFeatures.my_day;
-    if (item.path === 'MyTasks' || item.path === 'Tasks') return !!agencyFeatures.creator_studio;
-    if (item.path === 'TheCloset') return !!agencyFeatures.creator_studio;
-    if (item.path === 'SavedMotivations') return !!agencyFeatures.creator_studio; // Content Ideas
-    if (item.path === 'Habits') return !!agencyFeatures.goals_habits;
-    if (item.path === 'Goals') return !!agencyFeatures.goals_habits;
-    if (item.path === 'BrainDump') return !!agencyFeatures.brain_dump;
-    if (item.path === 'PromptLibrary') return !!agencyFeatures.creator_studio;
-    if (item.path === 'ContentMarketplace') return !!agencyFeatures.creator_studio;
-    if (item.path === 'ContentCreatorHub') return !!agencyFeatures.creator_studio;
+    if (item.path === 'Dashboard') return checkFeature('my_day');
+    if (item.path === 'MyTasks' || item.path === 'Tasks') return checkFeature('creator_studio');
+    if (item.path === 'TheCloset') return checkFeature('creator_studio');
+    if (item.path === 'SavedMotivations') return checkFeature('creator_studio'); // Content Ideas
+    if (item.path === 'Habits') return checkFeature('goals_habits');
+    if (item.path === 'Goals') return checkFeature('goals_habits');
+    if (item.path === 'BrainDump') return checkFeature('brain_dump');
+    if (item.path === 'PromptLibrary') return checkFeature('creator_studio');
+    if (item.path === 'ContentMarketplace') return checkFeature('creator_studio');
+    if (item.path === 'ContentCreatorHub') return checkFeature('creator_studio');
     if (item.path === 'Profile') return true;
 
     if (['MentalHealth', 'Wellness', 'Supplements', 'Medications', 'ActivityTracker'].includes(item.path)) {
-      return !!agencyFeatures.health_wellness;
+      return checkFeature('health_wellness');
     }
 
     // Everything else is hidden
@@ -1408,7 +1410,7 @@ const { data: featureFlags = [] } = useQuery({
         </Button>
       )}
 
-      {user && effectiveEmail && preferences && !mobileMenuOpen && !preferences.is_restricted_experience &&
+      {user && effectiveEmail && preferences && !mobileMenuOpen && (!isAgencyCreator || isAdmin || checkFeature('quick_actions')) &&
         <QuickActionsBarV2
           preferences={preferences}
           primaryColor={primaryColor}
