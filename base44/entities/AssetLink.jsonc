@@ -1,0 +1,75 @@
+{
+  "name": "AssetLink",
+  "type": "object",
+  "properties": {
+    "content_card_id": {
+      "type": "string",
+      "description": "Parent content card ID"
+    },
+    "asset_type": {
+      "type": "string",
+      "enum": [
+        "raw_clip",
+        "thumbnail",
+        "cover",
+        "overlay",
+        "background",
+        "final_export",
+        "transcript",
+        "project_link"
+      ],
+      "description": "Type of asset"
+    },
+    "url": {
+      "type": "string",
+      "description": "Asset URL"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "planned",
+        "generated",
+        "edited",
+        "final"
+      ],
+      "default": "planned",
+      "description": "Asset status"
+    },
+    "format": {
+      "type": "string",
+      "enum": [
+        "vertical",
+        "horizontal",
+        "square"
+      ],
+      "description": "Asset format/orientation"
+    },
+    "layer_role": {
+      "type": "string",
+      "enum": [
+        "background",
+        "overlay",
+        "transparent"
+      ],
+      "description": "Layer role for compositing"
+    },
+    "version_label": {
+      "type": "string",
+      "enum": [
+        "v1",
+        "v2",
+        "final"
+      ],
+      "description": "Version label"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Asset notes"
+    }
+  },
+  "required": [
+    "content_card_id",
+    "asset_type",
+    "url"
+  ]
+}

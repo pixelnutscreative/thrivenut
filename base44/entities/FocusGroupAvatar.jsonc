@@ -1,0 +1,34 @@
+{
+  "name": "FocusGroupAvatar",
+  "type": "object",
+  "properties": {
+    "brand_id": {
+      "type": "string",
+      "description": "Associated brand ID"
+    },
+    "name": {
+      "type": "string",
+      "description": "Avatar/persona name"
+    },
+    "persona_description": {
+      "type": "string",
+      "description": "Detailed persona description"
+    },
+    "pain_points": {
+      "type": "string",
+      "description": "Avatar's pain points"
+    },
+    "buying_triggers": {
+      "type": "string",
+      "description": "What triggers this persona to buy"
+    },
+    "preferences": {
+      "type": "string",
+      "description": "Content and communication preferences"
+    }
+  },
+  "required": [
+    "brand_id",
+    "name"
+  ]
+}

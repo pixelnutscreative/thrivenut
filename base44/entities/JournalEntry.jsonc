@@ -1,0 +1,101 @@
+{
+  "name": "JournalEntry",
+  "type": "object",
+  "properties": {
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "title": {
+      "type": "string"
+    },
+    "content": {
+      "type": "string"
+    },
+    "summary": {
+      "type": "string"
+    },
+    "mood_tag": {
+      "type": "string"
+    },
+    "entry_type": {
+      "type": "string",
+      "default": "general"
+    },
+    "background_image": {
+      "type": "string"
+    },
+    "is_private": {
+      "type": "boolean",
+      "default": true
+    },
+    "family_member_id": {
+      "type": "string",
+      "description": "If created by a managed family member profile"
+    },
+    "is_hidden": {
+      "type": "boolean",
+      "default": false
+    },
+    "ai_reframe_enabled": {
+      "type": "boolean",
+      "default": false
+    },
+    "ai_suggestions": {
+      "type": "string"
+    },
+    "user_reflection": {
+      "type": "string"
+    },
+    "is_kids_journal": {
+      "type": "boolean",
+      "default": false
+    },
+    "kids_data": {
+      "type": "object",
+      "properties": {
+        "feeling": {
+          "type": "string"
+        },
+        "weather": {
+          "type": "string"
+        },
+        "goal_today": {
+          "type": "string"
+        },
+        "goal_completed": {
+          "type": "boolean"
+        },
+        "water_intake": {
+          "type": "number"
+        },
+        "sleep_hours": {
+          "type": "number"
+        },
+        "activity_desc": {
+          "type": "string"
+        },
+        "breakfast": {
+          "type": "string"
+        },
+        "lunch": {
+          "type": "string"
+        },
+        "dinner": {
+          "type": "string"
+        },
+        "snacks": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "mood": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "date",
+    "content"
+  ]
+}

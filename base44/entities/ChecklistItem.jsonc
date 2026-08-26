@@ -1,0 +1,27 @@
+{
+  "name": "ChecklistItem",
+  "type": "object",
+  "properties": {
+    "checklist_template_id": {
+      "type": "string",
+      "description": "Parent checklist template ID"
+    },
+    "label": {
+      "type": "string",
+      "description": "Item label"
+    },
+    "optional_tool_id": {
+      "type": "string",
+      "description": "Optional linked tool ID"
+    },
+    "required_for_mvp": {
+      "type": "boolean",
+      "default": false,
+      "description": "Required for minimum viable product"
+    }
+  },
+  "required": [
+    "checklist_template_id",
+    "label"
+  ]
+}

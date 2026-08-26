@@ -1,0 +1,33 @@
+{
+  "name": "SocialNetwork",
+  "type": "object",
+  "properties": {
+    "brand_id": {
+      "type": "string",
+      "description": "Brand this network belongs to"
+    },
+    "platform": {
+      "type": "string",
+      "enum": [
+        "tiktok",
+        "instagram",
+        "facebook",
+        "youtube",
+        "twitter",
+        "linkedin",
+        "pinterest",
+        "other"
+      ],
+      "description": "Social media platform"
+    },
+    "handle": {
+      "type": "string",
+      "description": "Username or handle (without @)"
+    }
+  },
+  "required": [
+    "brand_id",
+    "platform",
+    "handle"
+  ]
+}

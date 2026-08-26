@@ -1,0 +1,43 @@
+{
+  "name": "Brand",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Brand name"
+    },
+    "logo_url": {
+      "type": "string",
+      "description": "Brand logo URL"
+    },
+    "brand_document_url": {
+      "type": "string",
+      "description": "URL of uploaded brand PDF document"
+    },
+    "description": {
+      "type": "string",
+      "description": "Brand/business description (AI-extracted from PDF)"
+    },
+    "target_audience": {
+      "type": "string",
+      "description": "Target audience (AI-extracted from PDF)"
+    },
+    "tone_voice": {
+      "type": "string",
+      "description": "Brand tone and voice (AI-extracted from PDF)"
+    },
+    "color_palette_json": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Brand color palette"
+    },
+    "font_preferences_json": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Font preferences"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

@@ -1,0 +1,490 @@
+{
+  "name": "UserProfile",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "Owner email"
+    },
+    "real_name": {
+      "type": "string",
+      "description": "User's real name"
+    },
+    "nickname": {
+      "type": "string",
+      "description": "User's nickname"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Profile image URL"
+    },
+    "color": {
+      "type": "string",
+      "description": "User's color preference"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "birthday": {
+      "type": "string",
+      "format": "date"
+    },
+    "generation": {
+      "type": "string",
+      "enum": [
+        "Gen Z",
+        "Millennial",
+        "Gen X",
+        "Boomer",
+        "Silent",
+        "Other"
+      ]
+    },
+    "gender": {
+      "type": "string"
+    },
+    "is_veteran": {
+      "type": "boolean",
+      "default": false
+    },
+    "veteran_branch": {
+      "type": "string"
+    },
+    "military_branch": {
+      "type": "string",
+      "description": "Legacy field, sync with veteran_branch"
+    },
+    "is_in_recovery": {
+      "type": "boolean",
+      "default": false
+    },
+    "recovery_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "sobriety_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Sync with recovery_date"
+    },
+    "family_roles": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "occupation": {
+      "type": "string"
+    },
+    "is_service_professional": {
+      "type": "boolean",
+      "default": false
+    },
+    "service_type": {
+      "type": "string"
+    },
+    "is_mlm": {
+      "type": "boolean",
+      "default": false
+    },
+    "businesses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "business_name": {
+            "type": "string"
+          },
+          "business_phone": {
+            "type": "string"
+          },
+          "business_email": {
+            "type": "string"
+          },
+          "business_website": {
+            "type": "string"
+          },
+          "social_links": {
+            "type": "object"
+          }
+        }
+      },
+      "default": []
+    },
+    "clothing_sizes": {
+      "type": "object",
+      "properties": {
+        "top": {
+          "type": "string"
+        },
+        "bottom": {
+          "type": "string"
+        },
+        "shoe": {
+          "type": "string"
+        },
+        "dress": {
+          "type": "string"
+        },
+        "ring": {
+          "type": "string"
+        },
+        "hat": {
+          "type": "string"
+        },
+        "bra": {
+          "type": "string"
+        },
+        "other": {
+          "type": "string"
+        }
+      },
+      "default": {}
+    },
+    "interests": {
+      "type": "string",
+      "description": "Things they like, hobbies"
+    },
+    "wish_list": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "type": "string"
+          },
+          "link": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      },
+      "default": []
+    },
+    "allergies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "mild",
+              "moderate",
+              "severe",
+              "life_threatening"
+            ]
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      },
+      "default": []
+    },
+    "dietary_restrictions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Vegan, gluten-free, etc"
+    },
+    "food_preferences": {
+      "type": "object",
+      "properties": {
+        "likes": {
+          "type": "string"
+        },
+        "dislikes": {
+          "type": "string"
+        },
+        "favorite_restaurants": {
+          "type": "string"
+        }
+      },
+      "default": {}
+    },
+    "beauty_profile": {
+      "type": "object",
+      "properties": {
+        "hair_color_preference": {
+          "type": "string"
+        },
+        "nail_polish_preference": {
+          "type": "string"
+        },
+        "makeup_notes": {
+          "type": "string"
+        },
+        "scent_notes": {
+          "type": "string"
+        },
+        "skincare_notes": {
+          "type": "string"
+        }
+      },
+      "default": {}
+    },
+    "style_profile": {
+      "type": "object",
+      "properties": {
+        "vibe": {
+          "type": "string"
+        },
+        "favorite_brands": {
+          "type": "string"
+        },
+        "favorite_materials": {
+          "type": "string"
+        },
+        "disliked_materials": {
+          "type": "string"
+        },
+        "jewelry_style": {
+          "type": "string"
+        }
+      },
+      "default": {}
+    },
+    "favorite_color": {
+      "type": "string",
+      "description": "User's favorite color"
+    },
+    "social_links": {
+      "type": "object",
+      "properties": {
+        "instagram": {
+          "type": "string"
+        },
+        "twitter": {
+          "type": "string"
+        },
+        "youtube": {
+          "type": "string"
+        },
+        "twitch": {
+          "type": "string"
+        },
+        "facebook": {
+          "type": "string"
+        },
+        "linkedin": {
+          "type": "string"
+        },
+        "pinterest": {
+          "type": "string"
+        },
+        "website": {
+          "type": "string"
+        },
+        "tiktok": {
+          "type": "string"
+        },
+        "discord": {
+          "type": "string"
+        }
+      },
+      "default": {}
+    },
+    "privacy_settings": {
+      "type": "object",
+      "properties": {
+        "share_sizes": {
+          "type": "boolean",
+          "default": true
+        },
+        "share_wishlist": {
+          "type": "boolean",
+          "default": true
+        },
+        "share_allergies": {
+          "type": "boolean",
+          "default": true
+        },
+        "share_socials": {
+          "type": "boolean",
+          "default": true
+        },
+        "share_recovery": {
+          "type": "boolean",
+          "default": true
+        },
+        "share_military": {
+          "type": "boolean",
+          "default": true
+        },
+        "share_color": {
+          "type": "boolean",
+          "default": true
+        },
+        "share_beauty": {
+          "type": "boolean",
+          "default": true
+        },
+        "share_style": {
+          "type": "boolean",
+          "default": true
+        },
+        "share_creator_info": {
+          "type": "boolean",
+          "default": true
+        },
+        "share_moments": {
+          "type": "boolean",
+          "default": true
+        }
+      },
+      "default": {}
+    },
+    "allow_sharing": {
+      "type": "boolean",
+      "default": true,
+      "description": "Allow others to view this profile by email"
+    },
+    "allow_suggestions": {
+      "type": "boolean",
+      "default": true,
+      "description": "Allow others to make suggestions"
+    },
+    "family_share_code": {
+      "type": "string",
+      "description": "Code for family members to access your profile info"
+    },
+    "tiktok_username": {
+      "type": "string",
+      "description": "TikTok username without @"
+    },
+    "display_name": {
+      "type": "string",
+      "description": "TikTok display name"
+    },
+    "phonetic": {
+      "type": "string",
+      "description": "Phonetic spelling for pronunciation"
+    },
+    "role": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Roles like creator, gifter, mod, etc"
+    },
+    "creator_notes": {
+      "type": "string",
+      "description": "Public notes about your creator persona"
+    },
+    "calendar_enabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Track live schedule"
+    },
+    "is_gifter": {
+      "type": "boolean",
+      "default": false
+    },
+    "mods_for": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "their_mods": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "other_tiktok_accounts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "live_stream_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "live_agency": {
+      "type": "string"
+    },
+    "shop_agency": {
+      "type": "string"
+    },
+    "started_going_live": {
+      "type": "string",
+      "format": "date"
+    },
+    "clubs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "custom_clubs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "moments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "funny",
+              "milestone",
+              "sweet",
+              "serious",
+              "other"
+            ],
+            "default": "funny"
+          },
+          "story": {
+            "type": "string"
+          }
+        }
+      },
+      "default": []
+    },
+    "is_trusted_creator": {
+      "type": "boolean",
+      "default": false,
+      "description": "Can post to showcase without approval"
+    }
+  },
+  "required": [
+    "user_email"
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "name": "CharacterReference",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the character"
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of the character"
+    },
+    "images": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 7,
+      "default": [],
+      "description": "Array of image URLs (up to 7) for AI reference"
+    },
+    "prompt_snippet": {
+      "type": "string",
+      "description": "AI instructions for character consistency"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

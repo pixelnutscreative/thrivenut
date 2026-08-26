@@ -1,0 +1,38 @@
+{
+  "name": "DeletionRequest",
+  "type": "object",
+  "properties": {
+    "item_type": {
+      "type": "string",
+      "description": "Type of item to delete (e.g., ContentCard, Campaign, Asset)"
+    },
+    "item_id": {
+      "type": "string",
+      "description": "ID of item to delete"
+    },
+    "reason": {
+      "type": "string",
+      "description": "Reason for deletion"
+    },
+    "requested_by": {
+      "type": "string",
+      "description": "User who requested deletion"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected"
+      ],
+      "default": "pending",
+      "description": "Request status"
+    }
+  },
+  "required": [
+    "item_type",
+    "item_id",
+    "reason",
+    "requested_by"
+  ]
+}

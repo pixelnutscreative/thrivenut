@@ -1,0 +1,117 @@
+{
+  "name": "Notification",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Notification title"
+    },
+    "message": {
+      "type": "string",
+      "description": "Notification message (supports HTML formatting)"
+    },
+    "link": {
+      "type": "string",
+      "description": "Optional link"
+    },
+    "button_text": {
+      "type": "string",
+      "description": "Call-to-action button text"
+    },
+    "button_url": {
+      "type": "string",
+      "description": "Call-to-action button URL"
+    },
+    "button_color": {
+      "type": "string",
+      "default": "#8b5cf6",
+      "description": "Button color hex code or start color if gradient"
+    },
+    "color_end": {
+      "type": "string",
+      "description": "End color for gradient"
+    },
+    "style_type": {
+      "type": "string",
+      "enum": [
+        "solid",
+        "gradient"
+      ],
+      "default": "solid",
+      "description": "Background style type"
+    },
+    "animation_direction": {
+      "type": "string",
+      "enum": [
+        "none",
+        "left",
+        "right",
+        "up",
+        "down"
+      ],
+      "default": "none",
+      "description": "Marquee animation direction"
+    },
+    "animation_speed": {
+      "type": "string",
+      "enum": [
+        "slow",
+        "normal",
+        "fast"
+      ],
+      "default": "normal",
+      "description": "Speed of the marquee"
+    },
+    "start_time": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When to start showing this announcement"
+    },
+    "end_time": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When to stop showing this announcement"
+    },
+    "allow_save": {
+      "type": "boolean",
+      "default": true,
+      "description": "Allow users to save this notification"
+    },
+    "target_audience": {
+      "type": "string",
+      "enum": [
+        "all",
+        "tiktok_users",
+        "admin"
+      ],
+      "default": "all",
+      "description": "Who should see this notification (broadcast)"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Specific user to target (overrides target_audience)"
+    },
+    "group_id": {
+      "type": "string",
+      "description": "Specific group to target"
+    },
+    "type": {
+      "type": "string",
+      "default": "system",
+      "description": "Type of notification (system, group_post, announcement, etc)"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Is this notification active"
+    },
+    "created_by": {
+      "type": "string",
+      "description": "Admin who created this"
+    }
+  },
+  "required": [
+    "title",
+    "message"
+  ]
+}

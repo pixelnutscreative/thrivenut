@@ -1,0 +1,64 @@
+{
+  "name": "CarryoverTask",
+  "type": "object",
+  "properties": {
+    "original_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the task was originally scheduled"
+    },
+    "task_type": {
+      "type": "string",
+      "enum": [
+        "selfcare",
+        "medication",
+        "supplement",
+        "pet",
+        "reminder",
+        "content",
+        "goal",
+        "calendar"
+      ],
+      "description": "Type of task"
+    },
+    "task_id": {
+      "type": "string",
+      "description": "Original task identifier"
+    },
+    "task_label": {
+      "type": "string",
+      "description": "Display label for the task"
+    },
+    "task_data": {
+      "type": "object",
+      "description": "Additional task data"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "rescheduled",
+        "skipped",
+        "completed"
+      ],
+      "default": "pending",
+      "description": "Current status of carryover task"
+    },
+    "rescheduled_to": {
+      "type": "string",
+      "format": "date",
+      "description": "Date task was rescheduled to"
+    },
+    "action_taken_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the user took action on this task"
+    }
+  },
+  "required": [
+    "original_date",
+    "task_type",
+    "task_id",
+    "task_label"
+  ]
+}

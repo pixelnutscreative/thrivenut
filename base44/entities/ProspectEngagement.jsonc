@@ -1,0 +1,41 @@
+{
+  "name": "ProspectEngagement",
+  "type": "object",
+  "properties": {
+    "prospect_id": {
+      "type": "string",
+      "description": "ID of the CreatorGroup (prospect) this engagement belongs to"
+    },
+    "engagement_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Date and time of the engagement"
+    },
+    "engagement_type": {
+      "type": "string",
+      "enum": [
+        "call",
+        "email",
+        "meeting",
+        "message",
+        "note",
+        "other"
+      ],
+      "description": "Type of interaction"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Detailed notes about the engagement"
+    },
+    "created_by_email": {
+      "type": "string",
+      "description": "Email of the user who logged this engagement"
+    }
+  },
+  "required": [
+    "prospect_id",
+    "engagement_date",
+    "engagement_type",
+    "notes"
+  ]
+}

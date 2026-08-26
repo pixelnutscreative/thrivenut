@@ -1,0 +1,26 @@
+{
+  "name": "InventoryShareLink",
+  "type": "object",
+  "properties": {
+    "token": {
+      "type": "string",
+      "description": "Unique access token"
+    },
+    "mod_username": {
+      "type": "string",
+      "description": "Username of the mod this link is for"
+    },
+    "creator_email": {
+      "type": "string",
+      "description": "Email of the creator who owns the inventory"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "token",
+    "creator_email"
+  ]
+}

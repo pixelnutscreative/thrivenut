@@ -1,0 +1,23 @@
+{
+  "name": "UserToolPreference",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "User email or ID"
+    },
+    "tool_category": {
+      "type": "string",
+      "description": "Tool category"
+    },
+    "tool_id": {
+      "type": "string",
+      "description": "Preferred tool ID for this category"
+    }
+  },
+  "required": [
+    "user_id",
+    "tool_category",
+    "tool_id"
+  ]
+}

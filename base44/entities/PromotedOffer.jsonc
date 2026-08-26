@@ -1,0 +1,40 @@
+{
+  "name": "PromotedOffer",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Offer name"
+    },
+    "offer_type": {
+      "type": "string",
+      "enum": [
+        "tool",
+        "affiliate",
+        "product",
+        "mlm"
+      ],
+      "description": "Type of offer"
+    },
+    "affiliate_link": {
+      "type": "string",
+      "description": "Affiliate tracking link"
+    },
+    "program_signup_link": {
+      "type": "string",
+      "description": "Program signup link"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes"
+    },
+    "owner": {
+      "type": "string",
+      "description": "Owner email"
+    }
+  },
+  "required": [
+    "name",
+    "offer_type"
+  ]
+}

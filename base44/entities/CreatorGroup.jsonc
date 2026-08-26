@@ -1,0 +1,256 @@
+{
+  "name": "CreatorGroup",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the group"
+    },
+    "slug": {
+      "type": "string",
+      "description": "Unique URL slug for the group"
+    },
+    "description": {
+      "type": "string",
+      "description": "Short description or tagline"
+    },
+    "owner_email": {
+      "type": "string",
+      "description": "Email of the owner"
+    },
+    "logo_url": {
+      "type": "string",
+      "description": "URL to group logo/icon"
+    },
+    "cover_image_url": {
+      "type": "string",
+      "description": "URL to group cover image"
+    },
+    "invite_code": {
+      "type": "string",
+      "description": "Unique code for joining"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "family",
+        "business",
+        "agency",
+        "mlm",
+        "mastermind",
+        "coaching",
+        "collective",
+        "client-portal",
+        "other",
+        "subscription",
+        "project",
+        "course",
+        "interest",
+        "health",
+        "faith",
+        "support",
+        "local",
+        "niche-content",
+        "membership"
+      ],
+      "default": "other"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "archived",
+        "deleted"
+      ],
+      "default": "active"
+    },
+    "is_paid_tier": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this group requires/is a paid tier"
+    },
+    "member_levels": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [
+        "Member"
+      ],
+      "description": "Custom levels (e.g. VIP, Inner Circle)"
+    },
+    "crypto_tickers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "color": {
+            "type": "string"
+          }
+        }
+      },
+      "default": [],
+      "description": "Crypto tokens to track for this group"
+    },
+    "settings": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Flexible settings object"
+    },
+    "allow_public_discovery": {
+      "type": "boolean",
+      "default": false,
+      "description": "Show in public browse list"
+    },
+    "welcome_video_url": {
+      "type": "string",
+      "description": "Legacy URL for welcome video on welcome mat"
+    },
+    "signup_url": {
+      "type": "string",
+      "description": "External URL for payment/signup"
+    },
+    "trial_period_days": {
+      "type": "integer",
+      "default": 0,
+      "description": "Length of trial in days (0 = no trial)"
+    },
+    "role_tab_permissions": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "description": "Map of Tab ID to array of allowed roles/levels"
+    },
+    "welcome_mat_title": {
+      "type": "string",
+      "description": "Title for the Welcome Mat page"
+    },
+    "welcome_mat_description": {
+      "type": "string",
+      "description": "Rich text description for the Welcome Mat page"
+    },
+    "welcome_mat_video_url": {
+      "type": "string",
+      "description": "YouTube video URL for the Welcome Mat page"
+    },
+    "welcome_mat_button_text": {
+      "type": "string",
+      "default": "I'm Interested",
+      "description": "CTA button text on Welcome Mat"
+    },
+    "interested_dashboard_header": {
+      "type": "string",
+      "description": "Rich text header for the Interested Dashboard"
+    },
+    "interested_signup_info": {
+      "type": "string",
+      "description": "Rich text instructions for signing up"
+    },
+    "interested_video_url": {
+      "type": "string",
+      "description": "Video URL for the Interested Dashboard (signup instructions)"
+    },
+    "interested_attribution_prompt": {
+      "type": "string",
+      "default": "Who shared this with you?",
+      "description": "Label for the attribution input"
+    },
+    "enable_retainer_management": {
+      "type": "boolean",
+      "default": false,
+      "description": "Enable retainer/hours package management for this group"
+    },
+    "contact_person_name": {
+      "type": "string",
+      "description": "Primary contact person for the prospect"
+    },
+    "contact_person_phone": {
+      "type": "string",
+      "description": "Phone number of the primary contact"
+    },
+    "contact_person_email": {
+      "type": "string",
+      "description": "Email of the primary contact"
+    },
+    "employee_count": {
+      "type": "number",
+      "description": "Number of employees at the prospect's company"
+    },
+    "number_of_locations": {
+      "type": "number",
+      "description": "Number of physical locations for the prospect's company"
+    },
+    "industry": {
+      "type": "string",
+      "description": "Industry of the prospect's company"
+    },
+    "corporate_address": {
+      "type": "string",
+      "description": "Main corporate address of the prospect's company"
+    },
+    "sales_stage": {
+      "type": "string",
+      "enum": [
+        "new",
+        "contacted",
+        "qualified",
+        "proposal",
+        "negotiation",
+        "won",
+        "lost",
+        "nurture",
+        "archived"
+      ],
+      "default": "new",
+      "description": "Current stage in the sales pipeline"
+    },
+    "next_follow_up_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Date and time for the next scheduled follow-up"
+    },
+    "is_hidden": {
+      "type": "boolean",
+      "default": false,
+      "description": "If true, hide this prospect from the main active view"
+    },
+    "enable_prospect_management": {
+      "type": "boolean",
+      "default": false,
+      "description": "Enable sales pipeline and lead tracking features for this group"
+    },
+    "menu_pinned": {
+      "type": "boolean",
+      "default": false,
+      "description": "If true, show in the main sidebar menu above categories"
+    },
+    "menu_color": {
+      "type": "string",
+      "description": "Custom color for the menu item"
+    },
+    "restrict_new_members": {
+      "type": "boolean",
+      "default": false,
+      "description": "If true, restrict new members' enabled features to only essential ones"
+    },
+    "force_landing_page": {
+      "type": "boolean",
+      "default": false,
+      "description": "If true, force new members to land on this group page"
+    }
+  },
+  "required": [
+    "name",
+    "owner_email"
+  ]
+}

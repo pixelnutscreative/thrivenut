@@ -1,0 +1,102 @@
+{
+  "name": "LoveAwayEntry",
+  "type": "object",
+  "properties": {
+    "loveaway_id": {
+      "type": "string",
+      "description": "Reference to LoveAway"
+    },
+    "contact_id": {
+      "type": "string",
+      "description": "TikTokContact ID of entrant"
+    },
+    "username": {
+      "type": "string",
+      "description": "TikTok username"
+    },
+    "display_name": {
+      "type": "string",
+      "description": "Display name"
+    },
+    "favorite_color": {
+      "type": "string",
+      "description": "Their favorite color (from contact)"
+    },
+    "base_entries": {
+      "type": "number",
+      "default": 1,
+      "description": "Base number of entries before multipliers"
+    },
+    "multiplier": {
+      "type": "number",
+      "default": 1,
+      "description": "Manual multiplier applied to this entry"
+    },
+    "multipliers_applied": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "value": {
+            "type": "number"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "default": [],
+      "description": "List of multipliers that were applied"
+    },
+    "final_entry_count": {
+      "type": "number",
+      "default": 1,
+      "description": "Final entries after all multipliers"
+    },
+    "entry_method": {
+      "type": "string",
+      "description": "How they entered (purchase, gift, etc)"
+    },
+    "entry_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When they entered"
+    },
+    "is_superfan": {
+      "type": "boolean",
+      "default": false,
+      "description": "SuperFan status at time of entry"
+    },
+    "is_subscriber": {
+      "type": "boolean",
+      "default": false,
+      "description": "Subscriber status at time of entry"
+    },
+    "is_mod": {
+      "type": "boolean",
+      "default": false,
+      "description": "Mod status at time of entry"
+    },
+    "following_since": {
+      "type": "string",
+      "format": "date",
+      "description": "When they started following (for loyalty bonus)"
+    },
+    "referrals_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of friends referred"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Entry notes"
+    }
+  },
+  "required": [
+    "loveaway_id",
+    "username"
+  ]
+}

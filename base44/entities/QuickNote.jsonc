@@ -1,0 +1,39 @@
+{
+  "name": "QuickNote",
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": [
+        "idea",
+        "negative_thought",
+        "gratitude",
+        "food_log",
+        "note",
+        "reminder"
+      ],
+      "default": "note",
+      "description": "Type of quick note"
+    },
+    "content": {
+      "type": "string",
+      "description": "The note content"
+    },
+    "reframe": {
+      "type": "string",
+      "description": "Reframed thought (for negative thoughts)"
+    },
+    "is_processed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this note has been processed/reviewed"
+    },
+    "category": {
+      "type": "string",
+      "description": "Optional category for organization"
+    }
+  },
+  "required": [
+    "content"
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "name": "Habit",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the habit"
+    },
+    "description": {
+      "type": "string",
+      "description": "Optional description"
+    },
+    "frequency": {
+      "type": "string",
+      "enum": [
+        "daily",
+        "weekly",
+        "monthly",
+        "specific_days"
+      ],
+      "default": "daily",
+      "description": "How often to perform the habit"
+    },
+    "target_days": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+          "Sunday"
+        ]
+      },
+      "default": [],
+      "description": "Specific days of the week if frequency is specific_days"
+    },
+    "monthly_date": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 31,
+      "description": "Day of the month for monthly habits"
+    },
+    "color": {
+      "type": "string",
+      "default": "#F59E0B",
+      "description": "Color code for the habit"
+    },
+    "current_streak": {
+      "type": "number",
+      "default": 0,
+      "description": "Current active streak count"
+    },
+    "best_streak": {
+      "type": "number",
+      "default": 0,
+      "description": "All-time best streak"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether the habit is currently active"
+    },
+    "archived_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the habit was archived"
+    }
+  },
+  "required": [
+    "name",
+    "frequency"
+  ]
+}

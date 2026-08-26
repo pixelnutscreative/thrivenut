@@ -1,0 +1,66 @@
+{
+  "name": "TikTokCreator",
+  "type": "object",
+  "properties": {
+    "username": {
+      "type": "string",
+      "description": "TikTok username (without @)"
+    },
+    "engagement_frequency": {
+      "type": "string",
+      "enum": [
+        "daily",
+        "weekly",
+        "multiple_per_week"
+      ],
+      "default": "weekly",
+      "description": "How often to engage"
+    },
+    "specific_days": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "Sunday",
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday"
+        ]
+      },
+      "description": "Specific days for engagement (if multiple per week)"
+    },
+    "engagement_history": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "default": [],
+      "description": "Log of engagement timestamps"
+    },
+    "last_engaged_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Last time you engaged with this creator"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Notes about this creator"
+    },
+    "color": {
+      "type": "string",
+      "default": "#8B5CF6",
+      "description": "Custom color for this creator"
+    },
+    "category_id": {
+      "type": "string",
+      "description": "Reference to EngagementCategory"
+    }
+  },
+  "required": [
+    "username"
+  ]
+}

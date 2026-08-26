@@ -1,0 +1,49 @@
+{
+  "name": "ProfileSuggestion",
+  "type": "object",
+  "properties": {
+    "to_email": {
+      "type": "string",
+      "description": "Who the suggestion is for"
+    },
+    "from_email": {
+      "type": "string",
+      "description": "Who made the suggestion"
+    },
+    "from_name": {
+      "type": "string",
+      "description": "Name of suggester"
+    },
+    "suggestion_type": {
+      "type": "string",
+      "enum": [
+        "wish_list_item",
+        "style_update",
+        "other"
+      ],
+      "default": "wish_list_item"
+    },
+    "content": {
+      "type": "object",
+      "description": "The suggestion data (e.g. {item: '...', link: '...' })"
+    },
+    "message": {
+      "type": "string",
+      "description": "Optional note"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "accepted",
+        "rejected"
+      ],
+      "default": "pending"
+    }
+  },
+  "required": [
+    "to_email",
+    "suggestion_type",
+    "content"
+  ]
+}

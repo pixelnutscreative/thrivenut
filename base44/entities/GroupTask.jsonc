@@ -1,0 +1,52 @@
+{
+  "name": "GroupTask",
+  "type": "object",
+  "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "Reference to GroupProject"
+    },
+    "title": {
+      "type": "string",
+      "description": "Task title"
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed description of the task"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "todo",
+        "in-progress",
+        "review",
+        "completed"
+      ],
+      "default": "todo"
+    },
+    "assignee_email": {
+      "type": "string",
+      "description": "Email of the assigned user"
+    },
+    "created_by": {
+      "type": "string",
+      "description": "Email of the user who created the task"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "estimated_hours": {
+      "type": "number",
+      "description": "Estimated hours to complete"
+    },
+    "sort_order": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "project_id",
+    "title"
+  ]
+}

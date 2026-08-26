@@ -1,0 +1,131 @@
+{
+  "name": "Pet",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Pet's name"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "dog",
+        "cat",
+        "bird",
+        "fish",
+        "reptile",
+        "rabbit",
+        "hamster",
+        "other"
+      ],
+      "description": "Type of pet"
+    },
+    "other_type": {
+      "type": "string",
+      "description": "Custom pet type if 'other' selected"
+    },
+    "breed": {
+      "type": "string",
+      "description": "Breed if applicable"
+    },
+    "birthday": {
+      "type": "string",
+      "format": "date",
+      "description": "Pet's birthday or adoption date"
+    },
+    "photo_url": {
+      "type": "string",
+      "description": "Photo of the pet"
+    },
+    "feeding_schedule": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "time": {
+            "type": "string"
+          },
+          "food_type": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "string"
+          }
+        }
+      },
+      "default": [],
+      "description": "Feeding times and amounts"
+    },
+    "activity_schedule": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "activity_type": {
+            "type": "string",
+            "enum": [
+              "walk",
+              "playtime",
+              "outdoor_time",
+              "training",
+              "grooming",
+              "other"
+            ]
+          },
+          "times_per_day": {
+            "type": "number"
+          },
+          "preferred_time": {
+            "type": "string"
+          },
+          "duration_minutes": {
+            "type": "number"
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      },
+      "default": [],
+      "description": "Activity schedule (walks, playtime, etc.)"
+    },
+    "medication_schedule": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "time": {
+            "type": "string"
+          },
+          "dosage": {
+            "type": "string"
+          },
+          "frequency": {
+            "type": "string"
+          }
+        }
+      },
+      "default": [],
+      "description": "Pet medications"
+    },
+    "vet_name": {
+      "type": "string",
+      "description": "Veterinarian name"
+    },
+    "vet_phone": {
+      "type": "string",
+      "description": "Vet phone number"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes"
+    }
+  },
+  "required": [
+    "name",
+    "type"
+  ]
+}

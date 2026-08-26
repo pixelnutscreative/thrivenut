@@ -1,0 +1,130 @@
+{
+  "name": "LoveAway",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Love Away name/title"
+    },
+    "description": {
+      "type": "string",
+      "description": "What they can win"
+    },
+    "prize_value": {
+      "type": "string",
+      "description": "Approximate value or description"
+    },
+    "entry_mode": {
+      "type": "string",
+      "enum": [
+        "tiktok",
+        "generic"
+      ],
+      "default": "tiktok",
+      "description": "Type of participants (TikTok users or generic names)"
+    },
+    "entry_methods": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "purchase",
+          "gift_any",
+          "gift_specific",
+          "attendance",
+          "shares",
+          "taps",
+          "manual"
+        ]
+      },
+      "default": [],
+      "description": "How people can enter"
+    },
+    "required_gift_name": {
+      "type": "string",
+      "description": "Specific gift required (if gift_specific selected)"
+    },
+    "minimum_gift_value": {
+      "type": "number",
+      "description": "Minimum gift value in diamonds/coins"
+    },
+    "entries_per_action": {
+      "type": "number",
+      "default": 1,
+      "description": "Base entries per qualifying action"
+    },
+    "multipliers_enabled": {
+      "type": "object",
+      "additionalProperties": true,
+      "default": {},
+      "description": "Which multipliers are active for this giveaway"
+    },
+    "multiplier_values": {
+      "type": "object",
+      "additionalProperties": true,
+      "default": {},
+      "description": "Custom multiplier values"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When entries open"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When to draw winner"
+    },
+    "winner_contact_id": {
+      "type": "string",
+      "description": "TikTokContact ID of winner"
+    },
+    "winner_entry_id": {
+      "type": "string",
+      "description": "ID of the specific winning entry"
+    },
+    "winner_username": {
+      "type": "string",
+      "description": "Winner's TikTok username"
+    },
+    "drawn_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When winner was selected"
+    },
+    "item_sent": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the prize has been sent"
+    },
+    "sent_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the prize was sent"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "upcoming",
+        "active",
+        "closed",
+        "winner_selected",
+        "archived"
+      ],
+      "default": "upcoming",
+      "description": "Love Away status"
+    },
+    "total_entries": {
+      "type": "number",
+      "default": 0,
+      "description": "Total entry count"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes"
+    }
+  },
+  "required": [
+    "title"
+  ]
+}

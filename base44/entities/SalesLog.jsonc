@@ -1,0 +1,44 @@
+{
+  "name": "SalesLog",
+  "type": "object",
+  "properties": {
+    "promoted_offer_id": {
+      "type": "string",
+      "description": "Associated promoted offer ID"
+    },
+    "campaign_id": {
+      "type": "string",
+      "description": "Associated campaign ID"
+    },
+    "brand_id": {
+      "type": "string",
+      "description": "Associated brand ID"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Sale date"
+    },
+    "sale_amount": {
+      "type": "number",
+      "description": "Sale amount in dollars"
+    },
+    "commission_amount": {
+      "type": "number",
+      "description": "Commission earned in dollars"
+    },
+    "buyer_name_or_handle": {
+      "type": "string",
+      "description": "Buyer name or social handle (optional)"
+    },
+    "source_platform": {
+      "type": "string",
+      "description": "Platform where sale originated"
+    }
+  },
+  "required": [
+    "promoted_offer_id",
+    "date",
+    "sale_amount"
+  ]
+}

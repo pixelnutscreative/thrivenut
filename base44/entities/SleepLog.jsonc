@@ -1,0 +1,33 @@
+{
+  "name": "SleepLog",
+  "type": "object",
+  "properties": {
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date (night of sleep)"
+    },
+    "hours": {
+      "type": "number",
+      "description": "Hours of sleep"
+    },
+    "quality": {
+      "type": "string",
+      "enum": [
+        "excellent",
+        "good",
+        "fair",
+        "poor"
+      ],
+      "description": "Sleep quality"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Notes about sleep"
+    }
+  },
+  "required": [
+    "date",
+    "hours"
+  ]
+}

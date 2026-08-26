@@ -1,0 +1,22 @@
+{
+  "name": "FeatureFlag",
+  "type": "object",
+  "properties": {
+    "feature_id": {
+      "type": "string",
+      "description": "Unique ID of the feature (must match moduleId)"
+    },
+    "is_enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether the feature is enabled globally"
+    },
+    "label": {
+      "type": "string",
+      "description": "Human readable label"
+    }
+  },
+  "required": [
+    "feature_id"
+  ]
+}

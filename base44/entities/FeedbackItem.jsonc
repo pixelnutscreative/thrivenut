@@ -1,0 +1,95 @@
+{
+  "name": "FeedbackItem",
+  "type": "object",
+  "properties": {
+    "category": {
+      "type": "string",
+      "enum": [
+        "bug",
+        "feature",
+        "ui",
+        "integration",
+        "wellness",
+        "mental_health",
+        "song_generator",
+        "dashboard",
+        "onboarding",
+        "resources",
+        "calendar",
+        "contacts",
+        "goals",
+        "other"
+      ],
+      "description": "Category of the feedback item"
+    },
+    "title": {
+      "type": "string",
+      "description": "Short title of the item"
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed description"
+    },
+    "my_thoughts": {
+      "type": "string",
+      "description": "Developer/AI notes on implementation"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "in_progress",
+        "completed",
+        "wont_do",
+        "needs_info"
+      ],
+      "default": "pending",
+      "description": "Current status"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "urgent"
+      ],
+      "default": "medium",
+      "description": "Priority level"
+    },
+    "submitted_by": {
+      "type": "string",
+      "description": "Who submitted this item"
+    },
+    "completed_date": {
+      "type": "string",
+      "format": "date",
+      "description": "When it was completed"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional admin notes"
+    },
+    "queued_for_batch": {
+      "type": "boolean",
+      "default": false,
+      "description": "Marked for next batch processing"
+    },
+    "batch_order": {
+      "type": "number",
+      "description": "Order within batch queue"
+    },
+    "screenshot_url": {
+      "type": "string",
+      "description": "URL of uploaded screenshot or video"
+    },
+    "video_url": {
+      "type": "string",
+      "description": "URL of video showing the issue/feature"
+    }
+  },
+  "required": [
+    "title",
+    "category"
+  ]
+}

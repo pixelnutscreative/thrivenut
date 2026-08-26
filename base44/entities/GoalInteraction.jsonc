@@ -1,0 +1,59 @@
+{
+  "name": "GoalInteraction",
+  "type": "object",
+  "properties": {
+    "goal_id": {
+      "type": "string",
+      "description": "Reference to the goal"
+    },
+    "goal_title": {
+      "type": "string",
+      "description": "Goal title for display"
+    },
+    "step_id": {
+      "type": "string",
+      "description": "Optional reference to a specific step"
+    },
+    "from_email": {
+      "type": "string",
+      "description": "Email of the person sending the interaction"
+    },
+    "from_name": {
+      "type": "string",
+      "description": "Name of the sender"
+    },
+    "to_email": {
+      "type": "string",
+      "description": "Email of the goal owner"
+    },
+    "interaction_type": {
+      "type": "string",
+      "enum": [
+        "nudge",
+        "reaction",
+        "offer_help",
+        "cheer"
+      ],
+      "description": "Type of interaction"
+    },
+    "emoji": {
+      "type": "string",
+      "description": "Emoji reaction (for reaction type)"
+    },
+    "message": {
+      "type": "string",
+      "description": "Optional message with the interaction"
+    },
+    "is_read": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the goal owner has seen this"
+    }
+  },
+  "required": [
+    "goal_id",
+    "from_email",
+    "to_email",
+    "interaction_type"
+  ]
+}

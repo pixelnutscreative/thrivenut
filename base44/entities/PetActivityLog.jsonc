@@ -1,0 +1,27 @@
+{
+  "name": "PetActivityLog",
+  "type": "object",
+  "properties": {
+    "pet_id": {
+      "type": "string",
+      "description": "Reference to the pet"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of the log"
+    },
+    "completed_tasks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Task keys that were completed (e.g., feeding_0, activity_1_0)"
+    }
+  },
+  "required": [
+    "pet_id",
+    "date"
+  ]
+}

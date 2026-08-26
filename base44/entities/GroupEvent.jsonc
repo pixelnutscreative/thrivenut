@@ -1,0 +1,86 @@
+{
+  "name": "GroupEvent",
+  "type": "object",
+  "properties": {
+    "group_id": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "start_time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "end_time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "occurrences": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "start_time": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "end_time": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "start_time"
+        ]
+      },
+      "default": []
+    },
+    "location": {
+      "type": "string"
+    },
+    "link": {
+      "type": "string"
+    },
+    "created_by": {
+      "type": "string"
+    },
+    "target_levels": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "target_users": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Visible only to these specific users"
+    },
+    "edited_by": {
+      "type": "string",
+      "description": "Email of the admin who last edited this event"
+    },
+    "edited_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of the last edit"
+    },
+    "is_pinned": {
+      "type": "boolean",
+      "default": false,
+      "description": "Pin to top of feed"
+    }
+  },
+  "required": [
+    "group_id",
+    "title",
+    "start_time"
+  ]
+}

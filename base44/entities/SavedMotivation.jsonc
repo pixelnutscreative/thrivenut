@@ -1,0 +1,49 @@
+{
+  "name": "SavedMotivation",
+  "type": "object",
+  "properties": {
+    "content": {
+      "type": "string",
+      "description": "The motivation text"
+    },
+    "reference": {
+      "type": "string",
+      "description": "Bible reference or attribution if applicable"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "scripture",
+        "quote",
+        "affirmation",
+        "motivational",
+        "ai_generated"
+      ],
+      "description": "Type of motivation"
+    },
+    "category": {
+      "type": "string",
+      "description": "User-defined category for organization"
+    },
+    "image_prompts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "AI-generated image prompt ideas"
+    },
+    "used_for_content": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this has been used for social content"
+    },
+    "notes": {
+      "type": "string",
+      "description": "User notes about this motivation"
+    }
+  },
+  "required": [
+    "content"
+  ]
+}

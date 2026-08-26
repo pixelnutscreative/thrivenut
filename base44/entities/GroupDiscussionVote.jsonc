@@ -1,0 +1,20 @@
+{
+  "name": "GroupDiscussionVote",
+  "type": "object",
+  "properties": {
+    "post_id": {
+      "type": "string"
+    },
+    "user_email": {
+      "type": "string"
+    },
+    "option_index": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "post_id",
+    "user_email",
+    "option_index"
+  ]
+}

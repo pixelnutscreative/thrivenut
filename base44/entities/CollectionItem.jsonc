@@ -1,0 +1,53 @@
+{
+  "name": "CollectionItem",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Name of the movie, book, item, etc."
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "watch",
+        "read",
+        "research",
+        "buy",
+        "return",
+        "visit",
+        "listen",
+        "try",
+        "bucket_list",
+        "other"
+      ],
+      "default": "watch",
+      "description": "Type of list"
+    },
+    "recommended_by": {
+      "type": "string",
+      "description": "Who told you about this?"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "completed",
+        "archived"
+      ],
+      "default": "pending",
+      "description": "Status of the item"
+    },
+    "link": {
+      "type": "string",
+      "description": "URL or link"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional details"
+    }
+  },
+  "required": [
+    "title",
+    "category"
+  ]
+}

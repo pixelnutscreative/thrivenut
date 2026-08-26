@@ -1,0 +1,44 @@
+{
+  "name": "PrayerInteraction",
+  "type": "object",
+  "properties": {
+    "prayer_request_id": {
+      "type": "string",
+      "description": "Reference to the prayer request"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "prayed",
+        "message",
+        "scripture"
+      ],
+      "description": "Type of interaction"
+    },
+    "message": {
+      "type": "string",
+      "description": "Encouragement message or written prayer"
+    },
+    "scripture_reference": {
+      "type": "string",
+      "description": "Scripture reference shared"
+    },
+    "scripture_text": {
+      "type": "string",
+      "description": "Scripture text shared"
+    },
+    "is_anonymous": {
+      "type": "boolean",
+      "default": false,
+      "description": "Pray anonymously"
+    },
+    "sender_display_name": {
+      "type": "string",
+      "description": "Display name of sender"
+    }
+  },
+  "required": [
+    "prayer_request_id",
+    "type"
+  ]
+}

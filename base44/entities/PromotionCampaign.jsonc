@@ -1,0 +1,100 @@
+{
+  "name": "PromotionCampaign",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Campaign name"
+    },
+    "campaign_type": {
+      "type": "string",
+      "enum": [
+        "tool_promotion",
+        "affiliate_promotion",
+        "product_promotion",
+        "workshop_course",
+        "event_live",
+        "mlm_network_marketing",
+        "seasonal_promotion"
+      ],
+      "description": "Type of campaign"
+    },
+    "brand_id": {
+      "type": "string",
+      "description": "Associated brand ID"
+    },
+    "primary_offer_id": {
+      "type": "string",
+      "description": "Primary promoted offer ID (optional)"
+    },
+    "goal": {
+      "type": "string",
+      "enum": [
+        "sell",
+        "register",
+        "attend",
+        "nurture",
+        "awareness"
+      ],
+      "description": "Campaign goal"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Campaign start date"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Campaign end date"
+    },
+    "description": {
+      "type": "string",
+      "description": "Campaign description"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "planning",
+        "active",
+        "completed",
+        "evergreen"
+      ],
+      "default": "planning",
+      "description": "Campaign status"
+    },
+    "outcome_summary": {
+      "type": "string",
+      "description": "Summary notes about campaign outcome and results"
+    },
+    "is_affiliate_program": {
+      "type": "boolean",
+      "default": false,
+      "description": "Is this an admin-managed affiliate program for users to opt into?"
+    },
+    "affiliate_product": {
+      "type": "string",
+      "enum": [
+        "thrive",
+        "pixels_toolbox",
+        "nuts_bots"
+      ],
+      "description": "Which affiliate product this promotes (if is_affiliate_program = true)"
+    },
+    "affiliate_commission_rate": {
+      "type": "number",
+      "default": 22,
+      "description": "Commission percentage for this affiliate program"
+    },
+    "requires_annual_subscription": {
+      "type": "boolean",
+      "default": true,
+      "description": "Only annual subscribers can access this campaign"
+    }
+  },
+  "required": [
+    "name",
+    "campaign_type",
+    "brand_id"
+  ]
+}

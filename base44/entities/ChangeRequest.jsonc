@@ -1,0 +1,28 @@
+{
+  "name": "ChangeRequest",
+  "type": "object",
+  "properties": {
+    "content_card_id": {
+      "type": "string",
+      "description": "Content card ID to be changed"
+    },
+    "message": {
+      "type": "string",
+      "description": "Change request message"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected"
+      ],
+      "default": "pending",
+      "description": "Request status"
+    }
+  },
+  "required": [
+    "content_card_id",
+    "message"
+  ]
+}

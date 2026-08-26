@@ -1,0 +1,22 @@
+{
+  "name": "SharedClub",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Club name"
+    },
+    "is_approved": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this club has been approved for the master list"
+    },
+    "submitted_by": {
+      "type": "string",
+      "description": "Email of user who submitted this club"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

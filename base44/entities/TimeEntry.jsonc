@@ -1,0 +1,42 @@
+{
+  "name": "TimeEntry",
+  "type": "object",
+  "properties": {
+    "task_id": {
+      "type": "string",
+      "description": "Reference to GroupTask"
+    },
+    "project_id": {
+      "type": "string",
+      "description": "Reference to GroupProject (for easier querying)"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Who performed the work"
+    },
+    "hours": {
+      "type": "number",
+      "description": "Hours worked"
+    },
+    "description": {
+      "type": "string",
+      "description": "Work description"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of work"
+    },
+    "is_manual": {
+      "type": "boolean",
+      "default": false,
+      "description": "True if manually entered, False if timed"
+    }
+  },
+  "required": [
+    "task_id",
+    "user_email",
+    "hours",
+    "date"
+  ]
+}

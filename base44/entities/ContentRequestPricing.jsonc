@@ -1,0 +1,44 @@
+{
+  "name": "ContentRequestPricing",
+  "type": "object",
+  "properties": {
+    "request_type": {
+      "type": "string",
+      "enum": [
+        "battle_poster",
+        "battle_poster_with_loser",
+        "fan_sticker_single",
+        "fan_sticker_set",
+        "digital_twin_initial",
+        "digital_twin_additional",
+        "greenscreen_background",
+        "greenscreen_title",
+        "nutpal",
+        "engagement_live_song",
+        "gift_gallery_song",
+        "thank_you_song",
+        "custom_song",
+        "logo",
+        "other"
+      ],
+      "description": "Type of content"
+    },
+    "base_price": {
+      "type": "number",
+      "description": "Base price in dollars"
+    },
+    "description": {
+      "type": "string",
+      "description": "What's included"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Is this pricing option active"
+    }
+  },
+  "required": [
+    "request_type",
+    "base_price"
+  ]
+}

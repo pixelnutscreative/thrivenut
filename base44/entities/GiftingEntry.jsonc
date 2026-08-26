@@ -1,0 +1,85 @@
+{
+  "name": "GiftingEntry",
+  "type": "object",
+  "properties": {
+    "gifter_id": {
+      "type": "string",
+      "description": "Reference to the Gifter"
+    },
+    "gifter_username": {
+      "type": "string",
+      "description": "Gifter's TikTok username"
+    },
+    "gifter_screen_name": {
+      "type": "string",
+      "description": "Gifter's display name"
+    },
+    "gifter_phonetic": {
+      "type": "string",
+      "description": "How to pronounce the gifter's name"
+    },
+    "gift_id": {
+      "type": "string",
+      "description": "Reference to the Gift"
+    },
+    "gift_name": {
+      "type": "string",
+      "description": "Name of the gift given"
+    },
+    "rank": {
+      "type": "string",
+      "enum": [
+        "1st",
+        "2nd",
+        "3rd",
+        "shoutout"
+      ],
+      "description": "Placement rank"
+    },
+    "shoutout_reason": {
+      "type": "string",
+      "description": "Reason for special shoutout (when rank is shoutout)"
+    },
+    "week": {
+      "type": "string",
+      "format": "date",
+      "description": "Week of the gifting"
+    },
+    "campaign_tag": {
+      "type": "string",
+      "description": "Optional campaign tag"
+    },
+    "owner_email": {
+      "type": "string",
+      "description": "Email of the account this entry belongs to (for impersonation support)"
+    },
+    "amount": {
+      "type": "string",
+      "description": "Amount gifted or watch time (for top gifters/viewers songs)"
+    },
+    "entry_type": {
+      "type": "string",
+      "enum": [
+        "gift_gallery",
+        "top_viewers",
+        "top_gifters"
+      ],
+      "default": "gift_gallery",
+      "description": "Type of entry"
+    },
+    "time_period": {
+      "type": "string",
+      "enum": [
+        "current_live",
+        "last_7_days",
+        "last_30_days",
+        "last_60_days"
+      ],
+      "description": "Time period for top viewers/gifters"
+    }
+  },
+  "required": [
+    "rank",
+    "week"
+  ]
+}

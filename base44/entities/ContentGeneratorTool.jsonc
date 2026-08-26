@@ -1,0 +1,81 @@
+{
+  "name": "ContentGeneratorTool",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the tool (e.g. Dreamy Nut)"
+    },
+    "description": {
+      "type": "string",
+      "description": "Short description for the dropdown"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "thrive",
+        "ai",
+        "nuts"
+      ],
+      "description": "Which section this tool belongs to"
+    },
+    "icon": {
+      "type": "string",
+      "description": "Emoji or icon name"
+    },
+    "input_fields": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "text",
+              "textarea",
+              "select",
+              "boolean"
+            ]
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "placeholder": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Fields to show in the form"
+    },
+    "prompt_template": {
+      "type": "string",
+      "description": "Template for the AI prompt. Use {{fieldName}} for variables."
+    },
+    "output_type": {
+      "type": "string",
+      "enum": [
+        "text",
+        "image",
+        "video_script"
+      ],
+      "default": "text"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "name",
+    "category"
+  ]
+}

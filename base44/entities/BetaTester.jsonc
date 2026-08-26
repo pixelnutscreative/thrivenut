@@ -1,0 +1,53 @@
+{
+  "name": "BetaTester",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "Email of the beta tester"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "active",
+        "completed",
+        "expired",
+        "waitlist"
+      ],
+      "default": "pending",
+      "description": "Beta tester status"
+    },
+    "applied_date": {
+      "type": "string",
+      "format": "date",
+      "description": "When they applied"
+    },
+    "trial_start": {
+      "type": "string",
+      "format": "date",
+      "description": "When the trial started"
+    },
+    "trial_end": {
+      "type": "string",
+      "format": "date",
+      "description": "When the trial ends"
+    },
+    "feedback_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of feedback items submitted"
+    },
+    "discount_code": {
+      "type": "string",
+      "description": "Discount code earned"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Admin notes about this tester"
+    }
+  },
+  "required": [
+    "user_email"
+  ]
+}

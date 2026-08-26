@@ -1,0 +1,57 @@
+{
+  "name": "GiftedPowerUp",
+  "type": "object",
+  "properties": {
+    "recipient_name": {
+      "type": "string",
+      "description": "Display name or username of who you gave it to"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "Glove",
+        "Hammer",
+        "Lightning2",
+        "Lightning3",
+        "TimeExtender",
+        "Mist"
+      ],
+      "default": "Glove",
+      "description": "Type of power-up"
+    },
+    "quantity": {
+      "type": "number",
+      "default": 1,
+      "description": "How many you gave them"
+    },
+    "given_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date you gave it to them"
+    },
+    "given_time": {
+      "type": "string",
+      "default": "12:00",
+      "description": "Time you gave it (HH:mm) for precise 5-day expiry"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When it expires (5 days after given)"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Notes about the gift (e.g. for which battle)"
+    },
+    "is_used": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether they've used it or it expired"
+    }
+  },
+  "required": [
+    "recipient_name",
+    "type",
+    "given_date"
+  ]
+}

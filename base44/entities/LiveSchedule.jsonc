@@ -1,0 +1,115 @@
+{
+  "name": "LiveSchedule",
+  "type": "object",
+  "properties": {
+    "host_username": {
+      "type": "string",
+      "description": "TikTok username of the live host"
+    },
+    "recurring_days": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+          "Sunday"
+        ]
+      },
+      "description": "Days of the week for recurring lives"
+    },
+    "time": {
+      "type": "string",
+      "description": "Time of the live (e.g., '7:00 PM', '10:30 AM')"
+    },
+    "creator_timezone": {
+      "type": "string",
+      "default": "America/New_York",
+      "description": "Creator's timezone (e.g., 'America/New_York', 'Europe/London')"
+    },
+    "live_types": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "regular",
+          "pop_up",
+          "battle",
+          "tt_shop",
+          "daily_heart_me",
+          "engagement_live",
+          "multi_guest",
+          "co_host",
+          "teaching"
+        ]
+      },
+      "default": [
+        "regular"
+      ],
+      "description": "Types of live stream (can be multiple)"
+    },
+    "custom_type": {
+      "type": "string",
+      "description": "Custom live type if 'other' is selected"
+    },
+    "group_id": {
+      "type": "string",
+      "description": "Optional group ID if this live is associated with an agency/group"
+    },
+    "uses_tikfinity": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the creator uses Tikfinity"
+    },
+    "uses_live_studio": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the creator uses TikTok LIVE Studio"
+    },
+    "priority": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 10,
+      "default": 1,
+      "description": "Priority level (1-10, 1 being highest)"
+    },
+    "is_recurring": {
+      "type": "boolean",
+      "default": true,
+      "description": "If this is a regular weekly schedule"
+    },
+    "specific_date": {
+      "type": "string",
+      "format": "date",
+      "description": "For one-time lives, specific date"
+    },
+    "audience_restriction": {
+      "type": "string",
+      "enum": [
+        "all_ages",
+        "18+"
+      ],
+      "default": "all_ages",
+      "description": "Audience restriction for battles and co-hosting"
+    },
+    "video_guide_url": {
+      "type": "string",
+      "description": "URL to educational video about live type selection"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Notes about the live"
+    },
+    "created_by": {
+      "type": "string",
+      "description": "Email of user who created this schedule"
+    }
+  },
+  "required": [
+    "host_username"
+  ]
+}

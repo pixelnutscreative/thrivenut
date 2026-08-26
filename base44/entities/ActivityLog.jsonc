@@ -1,0 +1,108 @@
+{
+  "name": "ActivityLog",
+  "type": "object",
+  "properties": {
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of activity"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "simple",
+        "advanced"
+      ],
+      "default": "simple"
+    },
+    "simple_activity": {
+      "type": "string",
+      "description": "Name of activity for simple mode (e.g. 'Walk', 'Yoga')"
+    },
+    "duration_minutes": {
+      "type": "number",
+      "description": "Duration in minutes"
+    },
+    "intensity": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "extreme"
+      ],
+      "description": "Perceived intensity"
+    },
+    "calories_burned": {
+      "type": "number",
+      "description": "Estimated calories burned"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Notes about the workout"
+    },
+    "location_type": {
+      "type": "string",
+      "enum": [
+        "indoor",
+        "outdoor",
+        "gym",
+        "home"
+      ],
+      "default": "indoor"
+    },
+    "exercises": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "sets": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "reps": {
+                  "type": "number"
+                },
+                "weight": {
+                  "type": "number"
+                },
+                "weight_unit": {
+                  "type": "string",
+                  "enum": [
+                    "lbs",
+                    "kg"
+                  ],
+                  "default": "lbs"
+                },
+                "rest_seconds": {
+                  "type": "number"
+                },
+                "is_warmup": {
+                  "type": "boolean"
+                },
+                "is_failure": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "is_superset": {
+            "type": "boolean"
+          },
+          "superset_id": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "List of exercises for advanced mode"
+    }
+  },
+  "required": [
+    "date",
+    "mode"
+  ]
+}

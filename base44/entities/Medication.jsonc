@@ -1,0 +1,74 @@
+{
+  "name": "Medication",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the medication"
+    },
+    "dosage": {
+      "type": "string",
+      "description": "User-entered dosage (e.g., '20mg', '1 tablet')"
+    },
+    "frequency": {
+      "type": "string",
+      "enum": [
+        "once_daily",
+        "twice_daily",
+        "three_times_daily",
+        "as_needed",
+        "weekly"
+      ],
+      "default": "once_daily",
+      "description": "How often to take the medication"
+    },
+    "time_category": {
+      "type": "string",
+      "enum": [
+        "upon_awakening",
+        "with_breakfast",
+        "morning_snack",
+        "30_min_before_lunch",
+        "with_lunch",
+        "afternoon_snack",
+        "with_dinner",
+        "before_bed",
+        "empty_stomach_morning",
+        "empty_stomach_evening",
+        "other"
+      ],
+      "default": "with_breakfast",
+      "description": "When to take the medication"
+    },
+    "other_time_category": {
+      "type": "string",
+      "description": "Custom timing if 'other' is selected"
+    },
+    "prescribing_doctor": {
+      "type": "string",
+      "description": "Name of prescribing physician"
+    },
+    "prescription_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date medication was prescribed"
+    },
+    "notes": {
+      "type": "string",
+      "description": "User notes about effects or reminders"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether this medication is currently being taken"
+    },
+    "label_image_url": {
+      "type": "string",
+      "description": "URL of uploaded medication label image"
+    }
+  },
+  "required": [
+    "name",
+    "dosage"
+  ]
+}

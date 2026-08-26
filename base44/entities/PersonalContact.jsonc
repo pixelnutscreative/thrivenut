@@ -1,0 +1,407 @@
+{
+  "name": "PersonalContact",
+  "type": "object",
+  "properties": {
+    "tiktok_contact_id": {
+      "type": "string",
+      "description": "Foreign key to the public TikTokContact profile. Can be null if it's a non-TikTok contact."
+    },
+    "linked_user_email": {
+      "type": "string",
+      "description": "Email of the Thrive user this contact is linked to for syncing data"
+    },
+    "name": {
+      "type": "string",
+      "description": "The user's personal name for this contact (can be different from TikTok display name)"
+    },
+    "nickname": {
+      "type": "string",
+      "description": "A personal nickname for the contact"
+    },
+    "photo_url": {
+      "type": "string",
+      "description": "User's personal photo for this contact"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Contact's phone number (private)"
+    },
+    "email": {
+      "type": "string",
+      "description": "Contact's email address (private)"
+    },
+    "birthday": {
+      "type": "string",
+      "format": "date",
+      "description": "Contact's birthday (private)"
+    },
+    "relationship": {
+      "type": "string",
+      "enum": [
+        "family",
+        "friend",
+        "colleague",
+        "tiktok",
+        "other"
+      ],
+      "default": "other",
+      "description": "User's personal relationship with this contact"
+    },
+    "gender": {
+      "type": "string",
+      "enum": [
+        "Female",
+        "Male",
+        "Non-binary",
+        "Other",
+        "Prefer not to say"
+      ],
+      "description": "Contact's gender (private)"
+    },
+    "generation": {
+      "type": "string",
+      "enum": [
+        "Gen Z",
+        "Millennial",
+        "Gen X",
+        "Boomer",
+        "Silent",
+        "Other"
+      ],
+      "description": "Contact's generation (private)"
+    },
+    "is_veteran": {
+      "type": "boolean",
+      "default": false,
+      "description": "Is this contact a veteran? (private)"
+    },
+    "veteran_branch": {
+      "type": "string",
+      "enum": [
+        "ARMY",
+        "NAVY",
+        "AF",
+        "NG",
+        "USMC",
+        "USCG",
+        "Other"
+      ],
+      "description": "Veteran's branch of service (private)"
+    },
+    "is_in_recovery": {
+      "type": "boolean",
+      "default": false,
+      "description": "Is this contact in recovery? (private)"
+    },
+    "sobriety_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Contact's sobriety date (private)"
+    },
+    "family_roles": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Specific family roles (e.g., 'Mom', 'Brother') (private)"
+    },
+    "occupation": {
+      "type": "string",
+      "description": "Contact's occupation (private)"
+    },
+    "is_service_professional": {
+      "type": "boolean",
+      "default": false,
+      "description": "Is this contact a service professional? (private)"
+    },
+    "service_type": {
+      "type": "string",
+      "enum": [
+        "first_responder",
+        "healthcare",
+        "nonprofit",
+        "ministry",
+        "military_family",
+        "education",
+        "other"
+      ],
+      "description": "Type of service professional (private)"
+    },
+    "is_mlm": {
+      "type": "boolean",
+      "default": false,
+      "description": "Is this contact involved in MLM? (private)"
+    },
+    "notes": {
+      "type": "string",
+      "description": "User's private notes about this contact"
+    },
+    "is_favorite": {
+      "type": "boolean",
+      "default": false,
+      "description": "User's personal favorite status for this contact"
+    },
+    "engagement_enabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Enable engagement tracking for this contact (private)"
+    },
+    "engagement_frequency": {
+      "type": "string",
+      "enum": [
+        "daily",
+        "multiple_per_week",
+        "monthly",
+        "weekly"
+      ],
+      "default": "multiple_per_week",
+      "description": "How often the user wants to engage with this contact"
+    },
+    "engagement_days": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "Sunday",
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday"
+        ]
+      },
+      "description": "Specific days for engagement (private)"
+    },
+    "engagement_day_of_month": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 31,
+      "description": "Specific day of month for engagement (private)"
+    },
+    "color": {
+      "type": "string",
+      "default": "#000000",
+      "description": "User's custom color for this contact's card (private)"
+    },
+    "met_through_id": {
+      "type": "string",
+      "description": "How the user met this contact (FK to another contact or custom string) (private)"
+    },
+    "met_through_name": {
+      "type": "string",
+      "description": "Name of the person/event through which contact was met (private)"
+    },
+    "found_on_fyp": {
+      "type": "boolean",
+      "default": false,
+      "description": "Was this contact found on TikTok's FYP? (private)"
+    },
+    "clubs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Clubs/groups this contact belongs to (private for user)"
+    },
+    "custom_clubs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Custom clubs/groups for this contact (private for user)"
+    },
+    "categories": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Custom categories for this contact (private for user)"
+    },
+    "clothing_sizes": {
+      "type": "object",
+      "properties": {
+        "top": {
+          "type": "string"
+        },
+        "bottom": {
+          "type": "string"
+        },
+        "shoe": {
+          "type": "string"
+        },
+        "dress": {
+          "type": "string"
+        },
+        "ring": {
+          "type": "string"
+        },
+        "hat": {
+          "type": "string"
+        },
+        "bra": {
+          "type": "string"
+        }
+      },
+      "default": {}
+    },
+    "allergies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "mild",
+              "moderate",
+              "severe",
+              "life_threatening"
+            ]
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      },
+      "default": []
+    },
+    "dietary_restrictions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "food_preferences": {
+      "type": "object",
+      "properties": {
+        "likes": {
+          "type": "string"
+        },
+        "dislikes": {
+          "type": "string"
+        },
+        "favorite_restaurants": {
+          "type": "string"
+        }
+      },
+      "default": {}
+    },
+    "wish_list": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "type": "string"
+          },
+          "link": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      },
+      "default": []
+    },
+    "beauty_profile": {
+      "type": "object",
+      "properties": {
+        "hair_color": {
+          "type": "string"
+        },
+        "nail_preference": {
+          "type": "string"
+        },
+        "makeup_notes": {
+          "type": "string"
+        },
+        "scent_notes": {
+          "type": "string"
+        }
+      },
+      "default": {}
+    },
+    "style_profile": {
+      "type": "object",
+      "properties": {
+        "vibe": {
+          "type": "string"
+        },
+        "favorite_brands": {
+          "type": "string"
+        },
+        "jewelry_style": {
+          "type": "string"
+        }
+      },
+      "default": {}
+    },
+    "businesses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "website": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      },
+      "default": []
+    },
+    "moments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "funny",
+              "milestone",
+              "sweet",
+              "serious",
+              "other"
+            ],
+            "default": "funny"
+          },
+          "story": {
+            "type": "string"
+          }
+        }
+      },
+      "default": []
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

@@ -1,0 +1,93 @@
+{
+  "name": "CreatorGroupMember",
+  "type": "object",
+  "properties": {
+    "group_id": {
+      "type": "string",
+      "description": "Reference to CreatorGroup"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Email of the member"
+    },
+    "name": {
+      "type": "string",
+      "description": "Display name of the member (cached from source or user input)"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "owner",
+        "admin",
+        "manager",
+        "member",
+        "client",
+        "virtual-assistant"
+      ],
+      "default": "member",
+      "description": "System role"
+    },
+    "level": {
+      "type": "string",
+      "description": "Custom level name (e.g. 'VIP', 'Invited', 'Interested')"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "pending",
+        "invited",
+        "banned",
+        "left",
+        "interested",
+        "trial",
+        "trial_expired"
+      ],
+      "default": "active",
+      "description": "Membership status"
+    },
+    "joined_date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "recruited_by": {
+      "type": "string",
+      "description": "Email of person who recruited them"
+    },
+    "assigned_manager_email": {
+      "type": "string",
+      "description": "Email of the assigned manager for this member"
+    },
+    "referred_by_name": {
+      "type": "string",
+      "description": "Name entered by user for attribution"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Admin notes"
+    },
+    "is_paid_member": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the user has paid"
+    },
+    "trial_end_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When trial expires"
+    },
+    "pending_approval": {
+      "type": "boolean",
+      "default": false,
+      "description": "Awaiting admin approval (e.g. for Interested -> Member)"
+    },
+    "proof_of_payment_url": {
+      "type": "string",
+      "description": "URL of uploaded receipt/proof"
+    }
+  },
+  "required": [
+    "group_id",
+    "user_email"
+  ]
+}

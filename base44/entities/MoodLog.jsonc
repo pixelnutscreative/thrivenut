@@ -1,0 +1,43 @@
+{
+  "name": "MoodLog",
+  "type": "object",
+  "properties": {
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of log"
+    },
+    "time": {
+      "type": "string",
+      "description": "Time mood was logged (HH:mm format)"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Exact time mood was logged"
+    },
+    "mood": {
+      "type": "string",
+      "enum": [
+        "amazing",
+        "good",
+        "okay",
+        "low",
+        "struggling"
+      ],
+      "description": "Mood rating"
+    },
+    "note": {
+      "type": "string",
+      "description": "Why they feel this way (e.g., had a great call, event, etc.)"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Optional notes about mood (legacy)"
+    }
+  },
+  "required": [
+    "date",
+    "mood"
+  ]
+}

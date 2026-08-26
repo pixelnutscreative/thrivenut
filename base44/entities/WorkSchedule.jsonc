@@ -1,0 +1,119 @@
+{
+  "name": "WorkSchedule",
+  "type": "object",
+  "properties": {
+    "job_title": {
+      "type": "string",
+      "description": "Job title or role"
+    },
+    "employer": {
+      "type": "string",
+      "description": "Company/employer name"
+    },
+    "work_location": {
+      "type": "string",
+      "enum": [
+        "home",
+        "office",
+        "remote",
+        "hybrid",
+        "on_site"
+      ],
+      "default": "office",
+      "description": "Where you work"
+    },
+    "address": {
+      "type": "string",
+      "description": "Work address (for commute)"
+    },
+    "commute_minutes": {
+      "type": "number",
+      "description": "One-way commute time in minutes"
+    },
+    "schedule_type": {
+      "type": "string",
+      "enum": [
+        "fixed",
+        "rotating",
+        "on_call",
+        "flexible"
+      ],
+      "default": "fixed",
+      "description": "Type of work schedule"
+    },
+    "regular_hours": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "day": {
+            "type": "string",
+            "enum": [
+              "Monday",
+              "Tuesday",
+              "Wednesday",
+              "Thursday",
+              "Friday",
+              "Saturday",
+              "Sunday"
+            ]
+          },
+          "start_time": {
+            "type": "string",
+            "description": "e.g., 09:00"
+          },
+          "end_time": {
+            "type": "string",
+            "description": "e.g., 17:00"
+          }
+        }
+      },
+      "default": [],
+      "description": "Regular work hours by day"
+    },
+    "on_call_schedule": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "start_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      },
+      "default": [],
+      "description": "On-call periods"
+    },
+    "show_on_dashboard": {
+      "type": "boolean",
+      "default": true,
+      "description": "Display on My Day schedule"
+    },
+    "suggest_commute_content": {
+      "type": "boolean",
+      "default": false,
+      "description": "Suggest educational content/Bible during commute"
+    },
+    "is_primary_job": {
+      "type": "boolean",
+      "default": true,
+      "description": "Is this the primary job?"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Currently active job"
+    }
+  },
+  "required": [
+    "job_title"
+  ]
+}

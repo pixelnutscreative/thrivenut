@@ -1,0 +1,78 @@
+{
+  "name": "AIToolPurchase",
+  "type": "object",
+  "properties": {
+    "buyer_email": {
+      "type": "string",
+      "description": "Email of the person who purchased"
+    },
+    "referred_by_user_id": {
+      "type": "string",
+      "description": "Email of user who referred this purchase"
+    },
+    "product_type": {
+      "type": "string",
+      "enum": [
+        "pixels_ai_toolbox",
+        "nuts_and_bots",
+        "nuts_and_bots_plus_ai"
+      ],
+      "description": "Which product was purchased"
+    },
+    "subscription_type": {
+      "type": "string",
+      "enum": [
+        "annual",
+        "monthly"
+      ],
+      "description": "Subscription billing type"
+    },
+    "purchase_amount": {
+      "type": "number",
+      "description": "Amount paid in dollars"
+    },
+    "purchase_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the purchase was made"
+    },
+    "stripe_payment_id": {
+      "type": "string",
+      "description": "Stripe payment/subscription ID if purchased via Thrive"
+    },
+    "external_purchase": {
+      "type": "boolean",
+      "default": false,
+      "description": "True if purchased via High-Level (Nuts & Bots)"
+    },
+    "credit_earned": {
+      "type": "number",
+      "default": 0,
+      "description": "Credit amount earned by referrer (22% of purchase)"
+    },
+    "credit_applied_to_user": {
+      "type": "string",
+      "description": "User email who received the credit"
+    },
+    "verified": {
+      "type": "boolean",
+      "default": false,
+      "description": "Verified after 2-week refund period + onboarding"
+    },
+    "verified_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When purchase was verified"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Admin notes"
+    }
+  },
+  "required": [
+    "buyer_email",
+    "product_type",
+    "subscription_type",
+    "purchase_amount"
+  ]
+}

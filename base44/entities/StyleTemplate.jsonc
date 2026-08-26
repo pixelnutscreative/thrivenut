@@ -1,0 +1,40 @@
+{
+  "name": "StyleTemplate",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Style name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Style description"
+    },
+    "preview_image_url": {
+      "type": "string",
+      "description": "Preview image showing the style"
+    },
+    "style_prompt_snippet": {
+      "type": "string",
+      "description": "AI prompt snippet for this style"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "realistic",
+        "artistic",
+        "animated",
+        "cinematic",
+        "abstract",
+        "vintage",
+        "modern",
+        "3d"
+      ],
+      "description": "Style category"
+    }
+  },
+  "required": [
+    "name",
+    "style_prompt_snippet"
+  ]
+}

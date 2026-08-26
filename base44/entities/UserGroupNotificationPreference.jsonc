@@ -1,0 +1,39 @@
+{
+  "name": "UserGroupNotificationPreference",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "Thrive user_id of the member"
+    },
+    "collaboration_group_id": {
+      "type": "string",
+      "description": "ID of the CollaborationGroup these preferences apply to"
+    },
+    "mute_all_notifications": {
+      "type": "boolean",
+      "default": false,
+      "description": "If true, user receives no notifications from this group"
+    },
+    "muted_message_types": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "announcement",
+          "battle_alert",
+          "meeting_invite",
+          "training_info",
+          "call_to_action",
+          "general"
+        ]
+      },
+      "default": [],
+      "description": "Specific message types the user wants to mute (even if not muting all)"
+    }
+  },
+  "required": [
+    "user_id",
+    "collaboration_group_id"
+  ]
+}

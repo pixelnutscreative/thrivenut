@@ -1,0 +1,53 @@
+{
+  "name": "PixelsPlaceSection",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Section title"
+    },
+    "description": {
+      "type": "string",
+      "description": "Section description"
+    },
+    "section_type": {
+      "type": "string",
+      "enum": [
+        "workshops",
+        "ai_toolbox",
+        "shop",
+        "fun_zone",
+        "resources",
+        "quick_links",
+        "custom"
+      ],
+      "description": "Type of section"
+    },
+    "content": {
+      "type": "object",
+      "description": "Section-specific content (JSON)"
+    },
+    "sort_order": {
+      "type": "number",
+      "default": 100,
+      "description": "Display order"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Show this section"
+    },
+    "icon": {
+      "type": "string",
+      "description": "Icon name from lucide-react"
+    },
+    "color": {
+      "type": "string",
+      "description": "Section accent color"
+    }
+  },
+  "required": [
+    "title",
+    "section_type"
+  ]
+}

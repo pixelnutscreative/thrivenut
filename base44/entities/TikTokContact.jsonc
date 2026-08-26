@@ -1,0 +1,254 @@
+{
+  "name": "TikTokContact",
+  "type": "object",
+  "properties": {
+    "username": {
+      "type": "string",
+      "description": "TikTok username without @"
+    },
+    "display_name": {
+      "type": "string",
+      "description": "Display name on TikTok"
+    },
+    "real_name": {
+      "type": "string",
+      "description": "Real name of the contact"
+    },
+    "nickname": {
+      "type": "string",
+      "description": "Nickname"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Profile picture URL"
+    },
+    "phonetic": {
+      "type": "string",
+      "description": "Phonetic spelling for pronunciation"
+    },
+    "role": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Roles like creator, gifter, mod, etc"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Public notes about this TikTok account"
+    },
+    "tiktok_notes_text": {
+      "type": "string",
+      "description": "Additional notes text"
+    },
+    "calendar_enabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Track their live schedule"
+    },
+    "is_gifter": {
+      "type": "boolean",
+      "default": false
+    },
+    "is_battle_sniper": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this contact is a battle sniper"
+    },
+    "mods_for": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "their_mods": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "other_tiktok_accounts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "default": []
+    },
+    "live_stream_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "live_agency": {
+      "type": "string"
+    },
+    "shop_agency": {
+      "type": "string"
+    },
+    "started_going_live": {
+      "type": "string"
+    },
+    "social_links": {
+      "type": "object",
+      "default": {},
+      "additionalProperties": true
+    },
+    "is_claimed_by_thrive_user": {
+      "type": "boolean",
+      "default": false,
+      "description": "Has a Thrive user claimed this as their account?"
+    },
+    "claimed_by_email": {
+      "type": "string",
+      "description": "Email of Thrive user who claimed this account"
+    },
+    "claim_code": {
+      "type": "string",
+      "description": "Unique code for claiming this account"
+    },
+    "claim_status": {
+      "type": "string",
+      "enum": [
+        "unclaimed",
+        "pending",
+        "claimed"
+      ],
+      "default": "unclaimed"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string"
+    },
+    "birthday": {
+      "type": "string"
+    },
+    "generation": {
+      "type": "string"
+    },
+    "gender": {
+      "type": "string"
+    },
+    "is_veteran": {
+      "type": "boolean",
+      "default": false
+    },
+    "veteran_branch": {
+      "type": "string"
+    },
+    "is_in_recovery": {
+      "type": "boolean",
+      "default": false
+    },
+    "sobriety_date": {
+      "type": "string"
+    },
+    "family_roles": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "occupation": {
+      "type": "string"
+    },
+    "is_service_professional": {
+      "type": "boolean",
+      "default": false
+    },
+    "service_type": {
+      "type": "string"
+    },
+    "is_mlm": {
+      "type": "boolean",
+      "default": false
+    },
+    "personal_notes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "businesses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "clubs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "custom_clubs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "engagement_enabled": {
+      "type": "boolean",
+      "default": false
+    },
+    "engagement_frequency": {
+      "type": "string"
+    },
+    "engagement_days": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "engagement_day_of_month": {
+      "type": "number"
+    },
+    "found_on_fyf": {
+      "type": "boolean",
+      "default": false
+    },
+    "met_through_id": {
+      "type": "string"
+    },
+    "battle_inventory": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "is_favorite": {
+      "type": "boolean",
+      "default": false
+    },
+    "is_irl_contact": {
+      "type": "boolean",
+      "default": false
+    },
+    "color": {
+      "type": "string"
+    },
+    "categories": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "moments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "default": []
+    }
+  },
+  "required": [
+    "username"
+  ]
+}

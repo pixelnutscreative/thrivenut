@@ -1,0 +1,24 @@
+{
+  "name": "GroupTrainingCompletion",
+  "type": "object",
+  "properties": {
+    "group_id": {
+      "type": "string",
+      "description": "Reference to CreatorGroup for easier reporting"
+    },
+    "training_id": {
+      "type": "string"
+    },
+    "user_email": {
+      "type": "string"
+    },
+    "completed_date": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "training_id",
+    "user_email"
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "name": "UserGroupPreference",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string"
+    },
+    "group_id": {
+      "type": "string"
+    },
+    "hidden_tabs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "tab_order": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "hidden_feed_items": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "IDs of feed items (posts, events, etc) that user has hidden"
+    },
+    "is_hidden_from_list": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether to hide this group from the main list (e.g. for presentations)"
+    },
+    "last_accessed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when user last accessed this group"
+    },
+    "menu_pinned": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this group is pinned to the top of the navigation menu"
+    }
+  },
+  "required": [
+    "user_email",
+    "group_id"
+  ]
+}

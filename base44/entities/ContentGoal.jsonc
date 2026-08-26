@@ -1,0 +1,204 @@
+{
+  "name": "ContentGoal",
+  "type": "object",
+  "properties": {
+    "week_starting": {
+      "type": "string",
+      "format": "date",
+      "description": "Monday of the week this goal is for"
+    },
+    "scheduled_posts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "day_of_week": {
+            "type": "string",
+            "enum": [
+              "Monday",
+              "Tuesday",
+              "Wednesday",
+              "Thursday",
+              "Friday",
+              "Saturday",
+              "Sunday"
+            ]
+          },
+          "time": {
+            "type": "string"
+          },
+          "completed": {
+            "type": "boolean",
+            "default": false
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "content_formats": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "duet",
+                "sync",
+                "training",
+                "series",
+                "Q&A",
+                "tutorial",
+                "unboxing",
+                "haul"
+              ]
+            },
+            "default": []
+          }
+        },
+        "required": [
+          "day_of_week",
+          "time"
+        ]
+      },
+      "default": [],
+      "description": "Scheduled content creation sessions"
+    },
+    "scheduled_lives": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "day_of_week": {
+            "type": "string",
+            "enum": [
+              "Monday",
+              "Tuesday",
+              "Wednesday",
+              "Thursday",
+              "Friday",
+              "Saturday",
+              "Sunday"
+            ]
+          },
+          "time": {
+            "type": "string"
+          },
+          "completed": {
+            "type": "boolean",
+            "default": false
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "audience_restriction": {
+            "type": "string",
+            "enum": [
+              "all_ages",
+              "18+"
+            ],
+            "default": "all_ages"
+          },
+          "is_recurring": {
+            "type": "boolean",
+            "default": false
+          },
+          "is_shareable": {
+            "type": "boolean",
+            "default": false
+          },
+          "added_to_tiktok_events": {
+            "type": "boolean",
+            "default": false
+          },
+          "posted_in_discord": {
+            "type": "boolean",
+            "default": false
+          },
+          "shared_to_story": {
+            "type": "boolean",
+            "default": false
+          },
+          "tiktok_shop_items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "url": {
+                  "type": "string",
+                  "format": "url"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "url",
+                "name"
+              ]
+            },
+            "default": []
+          }
+        },
+        "required": [
+          "day_of_week",
+          "time"
+        ]
+      },
+      "default": [],
+      "description": "Scheduled live streams"
+    },
+    "scheduled_engagement": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "day_of_week": {
+            "type": "string",
+            "enum": [
+              "Monday",
+              "Tuesday",
+              "Wednesday",
+              "Thursday",
+              "Friday",
+              "Saturday",
+              "Sunday"
+            ]
+          },
+          "time": {
+            "type": "string"
+          },
+          "completed": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": [
+          "day_of_week",
+          "time"
+        ]
+      },
+      "default": [],
+      "description": "Scheduled engagement sessions"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Weekly notes or reflections"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "planning",
+        "in_progress",
+        "completed"
+      ],
+      "default": "planning",
+      "description": "Week status"
+    }
+  },
+  "required": [
+    "week_starting"
+  ]
+}

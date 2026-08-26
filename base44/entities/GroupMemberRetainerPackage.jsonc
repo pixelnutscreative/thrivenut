@@ -1,0 +1,36 @@
+{
+  "name": "GroupMemberRetainerPackage",
+  "type": "object",
+  "properties": {
+    "group_id": {
+      "type": "string",
+      "description": "ID of the group"
+    },
+    "member_email": {
+      "type": "string",
+      "description": "Email of the member"
+    },
+    "hours_purchased": {
+      "type": "number",
+      "description": "Number of hours"
+    },
+    "package_name": {
+      "type": "string",
+      "description": "Name of the package"
+    },
+    "purchase_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of purchase"
+    },
+    "purchased_by": {
+      "type": "string",
+      "description": "Admin who added it"
+    }
+  },
+  "required": [
+    "group_id",
+    "member_email",
+    "hours_purchased"
+  ]
+}

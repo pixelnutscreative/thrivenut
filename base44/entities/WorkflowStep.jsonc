@@ -1,0 +1,34 @@
+{
+  "name": "WorkflowStep",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Step name"
+    },
+    "order": {
+      "type": "number",
+      "description": "Display order"
+    },
+    "applies_to_campaign_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Which campaign types this applies to"
+    },
+    "applies_to_content_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Which content types this applies to"
+    }
+  },
+  "required": [
+    "name",
+    "order"
+  ]
+}

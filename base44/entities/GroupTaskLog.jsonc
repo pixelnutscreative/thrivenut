@@ -1,0 +1,26 @@
+{
+  "name": "GroupTaskLog",
+  "type": "object",
+  "properties": {
+    "task_id": {
+      "type": "string",
+      "description": "ID of the task being modified"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "User who made the change"
+    },
+    "change_summary": {
+      "type": "string",
+      "description": "Human readable summary of changes"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "task_id",
+    "change_summary"
+  ]
+}

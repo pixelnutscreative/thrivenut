@@ -1,0 +1,123 @@
+{
+  "name": "ContentCard",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Content title"
+    },
+    "brand_id": {
+      "type": "string",
+      "description": "Associated brand ID"
+    },
+    "campaign_id": {
+      "type": "string",
+      "description": "Associated campaign ID (optional)"
+    },
+    "content_type": {
+      "type": "string",
+      "enum": [
+        "video",
+        "post",
+        "email",
+        "sms",
+        "live",
+        "blog",
+        "promo",
+        "long_form",
+        "carousel",
+        "story",
+        "reel"
+      ],
+      "description": "Type of content"
+    },
+    "intent": {
+      "type": "string",
+      "enum": [
+        "grow",
+        "sell",
+        "remind",
+        "nurture",
+        "authority"
+      ],
+      "description": "Content intent"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "idea",
+        "in_progress",
+        "ready",
+        "scheduled",
+        "posted",
+        "follow_up"
+      ],
+      "default": "idea",
+      "description": "Content status"
+    },
+    "current_workflow_step_id": {
+      "type": "string",
+      "description": "Current workflow step ID"
+    },
+    "owner": {
+      "type": "string",
+      "description": "Owner email or user ID"
+    },
+    "assigned_va": {
+      "type": "string",
+      "description": "Assigned VA email or user ID"
+    },
+    "script_approved": {
+      "type": "boolean",
+      "default": false,
+      "description": "Script approval status"
+    },
+    "assets_locked": {
+      "type": "boolean",
+      "default": false,
+      "description": "Assets locked for editing"
+    },
+    "edit_locked": {
+      "type": "boolean",
+      "default": false,
+      "description": "Content locked from editing"
+    },
+    "outcome_result": {
+      "type": "string",
+      "enum": [
+        "worked",
+        "didnt_work",
+        "meh"
+      ],
+      "description": "Outcome tracking"
+    },
+    "outcome_notes": {
+      "type": "string",
+      "description": "Notes about outcome"
+    },
+    "reuse_toggle": {
+      "type": "boolean",
+      "default": false,
+      "description": "Mark for reuse"
+    },
+    "is_affiliate_content": {
+      "type": "boolean",
+      "default": false,
+      "description": "Is this content for promoting affiliate products"
+    },
+    "affiliate_placeholder_fields": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Fields that need user to replace (e.g., [YOUR_REFERRAL_LINK], [YOUR_NAME])"
+    }
+  },
+  "required": [
+    "title",
+    "brand_id",
+    "content_type",
+    "intent"
+  ]
+}

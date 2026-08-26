@@ -1,0 +1,27 @@
+{
+  "name": "CustomCoin",
+  "type": "object",
+  "properties": {
+    "symbol": {
+      "type": "string",
+      "description": "Unique symbol for the coin (e.g. PNIC)"
+    },
+    "name": {
+      "type": "string",
+      "description": "Full name of the coin"
+    },
+    "current_price": {
+      "type": "number",
+      "description": "Current price in USD"
+    },
+    "updated_by": {
+      "type": "string",
+      "description": "Email of admin who updated it"
+    }
+  },
+  "required": [
+    "symbol",
+    "name",
+    "current_price"
+  ]
+}

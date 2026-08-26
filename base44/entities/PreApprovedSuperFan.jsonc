@@ -1,0 +1,22 @@
+{
+  "name": "PreApprovedSuperFan",
+  "type": "object",
+  "properties": {
+    "tiktok_username": {
+      "type": "string",
+      "description": "TikTok username (without @) that is pre-approved for TikTok features"
+    },
+    "added_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this username was added to the pre-approved list"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Optional notes about this SuperFan"
+    }
+  },
+  "required": [
+    "tiktok_username"
+  ]
+}

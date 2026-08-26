@@ -1,0 +1,32 @@
+{
+  "name": "GroupAIChatMessage",
+  "type": "object",
+  "properties": {
+    "group_id": {
+      "type": "string"
+    },
+    "user_email": {
+      "type": "string"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "user",
+        "assistant"
+      ]
+    },
+    "content": {
+      "type": "string"
+    },
+    "context_used": {
+      "type": "string",
+      "description": "Summary of context used for this answer"
+    }
+  },
+  "required": [
+    "group_id",
+    "user_email",
+    "role",
+    "content"
+  ]
+}

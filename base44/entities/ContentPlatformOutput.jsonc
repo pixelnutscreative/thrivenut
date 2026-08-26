@@ -1,0 +1,52 @@
+{
+  "name": "ContentPlatformOutput",
+  "type": "object",
+  "properties": {
+    "content_card_id": {
+      "type": "string",
+      "description": "Parent content card ID"
+    },
+    "platform": {
+      "type": "string",
+      "enum": [
+        "TikTok",
+        "YouTube",
+        "Facebook",
+        "LinkedIn",
+        "Pinterest",
+        "Email",
+        "SMS"
+      ],
+      "description": "Platform for this output"
+    },
+    "caption_or_copy": {
+      "type": "string",
+      "description": "Platform-specific caption or copy"
+    },
+    "seo_keywords": {
+      "type": "string",
+      "description": "SEO keywords"
+    },
+    "hook": {
+      "type": "string",
+      "description": "Content hook"
+    },
+    "cta": {
+      "type": "string",
+      "description": "Call to action"
+    },
+    "schedule_datetime": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Scheduled publish date/time"
+    },
+    "platform_notes": {
+      "type": "string",
+      "description": "Platform-specific notes"
+    }
+  },
+  "required": [
+    "content_card_id",
+    "platform"
+  ]
+}

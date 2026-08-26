@@ -1,0 +1,27 @@
+{
+  "name": "SupplementLog",
+  "type": "object",
+  "properties": {
+    "supplement_id": {
+      "type": "string",
+      "description": "Reference to the supplement"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of the log"
+    },
+    "doses_taken": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "default": [],
+      "description": "Which dose numbers were taken (1, 2, 3 for multi-dose)"
+    }
+  },
+  "required": [
+    "supplement_id",
+    "date"
+  ]
+}

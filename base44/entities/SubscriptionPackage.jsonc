@@ -1,0 +1,115 @@
+{
+  "name": "SubscriptionPackage",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the package (e.g. 'Social Media Suite')"
+    },
+    "description": {
+      "type": "string",
+      "description": "Public description"
+    },
+    "price": {
+      "type": "number",
+      "description": "Regular price in cents (e.g. 3300 for $33.00)"
+    },
+    "currency": {
+      "type": "string",
+      "default": "usd"
+    },
+    "interval": {
+      "type": "string",
+      "enum": [
+        "month",
+        "quarter",
+        "year",
+        "lifetime",
+        "one_time"
+      ],
+      "description": "Billing interval"
+    },
+    "stripe_price_id": {
+      "type": "string",
+      "description": "Optional: Specific Stripe Price ID if not using dynamic pricing"
+    },
+    "included_modules": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Modules to enable (e.g. 'tiktok', 'goals')"
+    },
+    "included_pages": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Specific pages to unlock"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "is_sale": {
+      "type": "boolean",
+      "default": false
+    },
+    "sale_price": {
+      "type": "number",
+      "description": "Sale price in cents"
+    },
+    "sale_end_date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "group_type": {
+      "type": "string",
+      "enum": [
+        "personal",
+        "business",
+        "agency",
+        "mlm",
+        "none"
+      ],
+      "default": "none",
+      "description": "If this package grants special group creation rights"
+    },
+    "max_groups": {
+      "type": "number",
+      "default": 1
+    },
+    "sort_order": {
+      "type": "number",
+      "default": 0
+    },
+    "features_list": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "List of bullet points to display on the pricing card"
+    },
+    "badge_text": {
+      "type": "string",
+      "description": "Text for the corner badge (e.g. 'BEST VALUE')"
+    },
+    "highlight_color": {
+      "type": "string",
+      "description": "Color theme for the card (e.g. 'purple', 'teal', 'amber')"
+    },
+    "button_text": {
+      "type": "string",
+      "default": "Get Started",
+      "description": "Text for the CTA button"
+    }
+  },
+  "required": [
+    "name",
+    "price",
+    "interval"
+  ]
+}

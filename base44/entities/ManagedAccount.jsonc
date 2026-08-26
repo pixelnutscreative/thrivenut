@@ -1,0 +1,40 @@
+{
+  "name": "ManagedAccount",
+  "type": "object",
+  "properties": {
+    "tiktok_username": {
+      "type": "string",
+      "description": "TikTok username for this managed account"
+    },
+    "display_name": {
+      "type": "string",
+      "description": "Display name for easy identification"
+    },
+    "claimed_by_email": {
+      "type": "string",
+      "description": "Email of user who claimed this account (null if unclaimed)"
+    },
+    "claimed_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the account was claimed"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive",
+        "deleted"
+      ],
+      "default": "active",
+      "description": "Account status"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Admin notes about this account"
+    }
+  },
+  "required": [
+    "tiktok_username"
+  ]
+}

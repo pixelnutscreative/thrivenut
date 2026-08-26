@@ -1,0 +1,73 @@
+{
+  "name": "ReferralActivity",
+  "type": "object",
+  "properties": {
+    "referral_code": {
+      "type": "string",
+      "description": "Full referral code used (e.g., pixel-tiktok1)"
+    },
+    "base_code": {
+      "type": "string",
+      "description": "Base referral code (e.g., pixel)"
+    },
+    "tracking_identifier": {
+      "type": "string",
+      "description": "Optional tracking suffix (e.g., tiktok1, email-campaign)"
+    },
+    "referrer_email": {
+      "type": "string",
+      "description": "Email of the person who owns the referral link"
+    },
+    "referred_email": {
+      "type": "string",
+      "description": "Email of the person who was referred (null for clicks)"
+    },
+    "activity_type": {
+      "type": "string",
+      "enum": [
+        "click",
+        "click_existing",
+        "signup",
+        "upgrade"
+      ],
+      "description": "Type of activity"
+    },
+    "source_type": {
+      "type": "string",
+      "enum": [
+        "url",
+        "text",
+        "email",
+        "social_post",
+        "print",
+        "group_invite",
+        "other"
+      ],
+      "description": "Where the referral link was shared"
+    },
+    "source_detail": {
+      "type": "string",
+      "description": "Specific details about the source (URL, email subject, description, etc.)"
+    },
+    "activity_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the activity occurred"
+    },
+    "ip_address": {
+      "type": "string",
+      "description": "IP address of the person who clicked"
+    },
+    "user_agent": {
+      "type": "string",
+      "description": "Browser user agent"
+    }
+  },
+  "required": [
+    "referral_code",
+    "base_code",
+    "referrer_email",
+    "activity_type",
+    "activity_date"
+  ]
+}

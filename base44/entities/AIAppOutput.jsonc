@@ -1,0 +1,82 @@
+{
+  "name": "AIAppOutput",
+  "type": "object",
+  "properties": {
+    "app_id": {
+      "type": "string",
+      "description": "Reference to AIApp entity"
+    },
+    "output_url": {
+      "type": "string",
+      "description": "URL of generated output (image, text, etc.)"
+    },
+    "name": {
+      "type": "string",
+      "description": "Custom name for this output"
+    },
+    "keywords": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Keywords/tags for easy searching"
+    },
+    "prompt_text": {
+      "type": "string",
+      "description": "The prompt used to generate this output"
+    },
+    "character_reference_id": {
+      "type": "string",
+      "description": "Character reference used (if any)"
+    },
+    "brand_id": {
+      "type": "string",
+      "description": "Brand used (if any)"
+    },
+    "style_template_id": {
+      "type": "string",
+      "description": "Style template used (if any)"
+    },
+    "is_shared": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether user has shared this to gallery"
+    },
+    "admin_approved": {
+      "type": "boolean",
+      "default": false,
+      "description": "Admin approval for public gallery"
+    },
+    "rating": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 5,
+      "description": "User rating (1-5 stars)"
+    },
+    "comments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "author_email": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "default": [],
+      "description": "User comments on this output"
+    }
+  },
+  "required": [
+    "app_id",
+    "output_url"
+  ]
+}

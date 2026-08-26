@@ -1,0 +1,55 @@
+{
+  "name": "GroupMessage",
+  "type": "object",
+  "properties": {
+    "collaboration_group_id": {
+      "type": "string",
+      "description": "ID of the CollaborationGroup this message is sent to"
+    },
+    "sender_user_id": {
+      "type": "string",
+      "description": "Thrive user_id of the person who sent this message (typically group owner)"
+    },
+    "title": {
+      "type": "string",
+      "description": "Subject/title of the message"
+    },
+    "content": {
+      "type": "string",
+      "description": "Message body - supports rich text/HTML for Zoom links, instructions, etc."
+    },
+    "message_type": {
+      "type": "string",
+      "enum": [
+        "announcement",
+        "battle_alert",
+        "meeting_invite",
+        "training_info",
+        "call_to_action",
+        "general"
+      ],
+      "default": "general",
+      "description": "Type of message - allows users to filter/mute specific types"
+    },
+    "action_link": {
+      "type": "string",
+      "description": "Optional URL for call to action (Zoom link, battle page, etc.)"
+    },
+    "scheduled_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Optional - for scheduled future messages"
+    },
+    "is_urgent": {
+      "type": "boolean",
+      "default": false,
+      "description": "Highlights this as an urgent/important message"
+    }
+  },
+  "required": [
+    "collaboration_group_id",
+    "sender_user_id",
+    "title",
+    "content"
+  ]
+}

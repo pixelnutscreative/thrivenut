@@ -1,0 +1,96 @@
+{
+  "name": "CleaningTask",
+  "type": "object",
+  "properties": {
+    "task_name": {
+      "type": "string",
+      "description": "Name of the cleaning task"
+    },
+    "room": {
+      "type": "string",
+      "enum": [
+        "kitchen",
+        "bathroom",
+        "bedroom",
+        "living_room",
+        "dining_room",
+        "laundry",
+        "garage",
+        "yard",
+        "other"
+      ],
+      "description": "Room or area"
+    },
+    "description": {
+      "type": "string",
+      "description": "What needs to be done"
+    },
+    "estimated_minutes": {
+      "type": "number",
+      "description": "How long it typically takes"
+    },
+    "frequency": {
+      "type": "string",
+      "enum": [
+        "daily",
+        "weekly",
+        "biweekly",
+        "monthly"
+      ],
+      "default": "weekly",
+      "description": "How often this needs doing"
+    },
+    "assigned_to": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Family member IDs assigned to this task"
+    },
+    "preferred_day": {
+      "type": "string",
+      "enum": [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday",
+        "any"
+      ],
+      "default": "any",
+      "description": "Best day to do this"
+    },
+    "last_completed": {
+      "type": "string",
+      "format": "date",
+      "description": "Last time this was done"
+    },
+    "skipped_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Times skipped (ADHD grace tracking)"
+    },
+    "grace_period_days": {
+      "type": "number",
+      "default": 3,
+      "description": "Days before auto-push to next occurrence"
+    },
+    "is_recurring": {
+      "type": "boolean",
+      "default": true,
+      "description": "Automatically repeats"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Active task"
+    }
+  },
+  "required": [
+    "task_name",
+    "room"
+  ]
+}

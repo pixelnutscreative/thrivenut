@@ -1,0 +1,44 @@
+{
+  "name": "MeetingRecording",
+  "type": "object",
+  "properties": {
+    "group_id": {
+      "type": "string",
+      "description": "Reference to CreatorGroup"
+    },
+    "title": {
+      "type": "string",
+      "description": "Meeting title"
+    },
+    "meeting_date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "hours": {
+      "type": "number",
+      "default": 0,
+      "description": "Duration in hours to deduct from retainer"
+    },
+    "attendees": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Array of attendee emails"
+    },
+    "video_url": {
+      "type": "string",
+      "description": "URL to recording"
+    },
+    "transcript": {
+      "type": "string",
+      "description": "Full text transcript"
+    }
+  },
+  "required": [
+    "group_id",
+    "title",
+    "meeting_date"
+  ]
+}

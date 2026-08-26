@@ -1,0 +1,26 @@
+{
+  "name": "ChecklistTemplate",
+  "type": "object",
+  "properties": {
+    "workflow_step_id": {
+      "type": "string",
+      "description": "Associated workflow step ID"
+    },
+    "platform": {
+      "type": "string",
+      "description": "Specific platform (or 'all')"
+    },
+    "content_type": {
+      "type": "string",
+      "description": "Specific content type (or 'all')"
+    },
+    "display_order": {
+      "type": "number",
+      "default": 0,
+      "description": "Display order"
+    }
+  },
+  "required": [
+    "workflow_step_id"
+  ]
+}

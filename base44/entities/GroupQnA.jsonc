@@ -1,0 +1,73 @@
+{
+  "name": "GroupQnA",
+  "type": "object",
+  "properties": {
+    "group_id": {
+      "type": "string"
+    },
+    "question": {
+      "type": "string"
+    },
+    "answer": {
+      "type": "string"
+    },
+    "asked_by_email": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "published",
+        "rejected"
+      ],
+      "default": "pending",
+      "description": "Status of the QnA"
+    },
+    "target_levels": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Visible only to these levels"
+    },
+    "target_roles": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Visible only to these roles"
+    },
+    "target_users": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Visible only to these specific users"
+    },
+    "edited_by": {
+      "type": "string"
+    },
+    "edited_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "answered_by": {
+      "type": "string"
+    },
+    "answered_date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "details": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "group_id",
+    "question"
+  ]
+}

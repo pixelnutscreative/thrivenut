@@ -1,0 +1,103 @@
+{
+  "name": "AnnouncementBar",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Internal name for this bar"
+    },
+    "message": {
+      "type": "string",
+      "description": "Announcement message"
+    },
+    "link": {
+      "type": "string",
+      "description": "Link URL"
+    },
+    "background_type": {
+      "type": "string",
+      "enum": [
+        "solid",
+        "gradient"
+      ],
+      "default": "solid",
+      "description": "Background type"
+    },
+    "background_color": {
+      "type": "string",
+      "default": "#3b82f6",
+      "description": "Background color hex"
+    },
+    "gradient_color_start": {
+      "type": "string",
+      "description": "Gradient start color"
+    },
+    "gradient_color_end": {
+      "type": "string",
+      "description": "Gradient end color"
+    },
+    "text_color": {
+      "type": "string",
+      "default": "#ffffff",
+      "description": "Text color hex"
+    },
+    "google_font": {
+      "type": "string",
+      "default": "Poppins",
+      "description": "Google font name"
+    },
+    "schedule_type": {
+      "type": "string",
+      "enum": [
+        "manual",
+        "scheduled",
+        "recurring"
+      ],
+      "default": "manual",
+      "description": "How this bar is triggered"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": false,
+      "description": "Manually toggle on/off"
+    },
+    "recurring_schedule": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "day": {
+            "type": "string",
+            "enum": [
+              "Monday",
+              "Tuesday",
+              "Wednesday",
+              "Thursday",
+              "Friday",
+              "Saturday",
+              "Sunday"
+            ]
+          },
+          "time": {
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string",
+            "default": "America/Los_Angeles"
+          }
+        }
+      },
+      "default": [],
+      "description": "Recurring schedule (e.g., Tuesday/Thursday at 8am PST)"
+    },
+    "display_order": {
+      "type": "number",
+      "default": 0,
+      "description": "Display priority (higher = shows first)"
+    }
+  },
+  "required": [
+    "name",
+    "message"
+  ]
+}

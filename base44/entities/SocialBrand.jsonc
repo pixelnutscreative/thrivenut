@@ -1,0 +1,18 @@
+{
+  "name": "SocialBrand",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "Owner of the brand"
+    },
+    "name": {
+      "type": "string",
+      "description": "Brand name (e.g. Personal, Client X)"
+    }
+  },
+  "required": [
+    "user_email",
+    "name"
+  ]
+}

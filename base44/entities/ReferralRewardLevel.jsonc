@@ -1,0 +1,41 @@
+{
+  "name": "ReferralRewardLevel",
+  "type": "object",
+  "properties": {
+    "level": {
+      "type": "number",
+      "description": "Reward level number"
+    },
+    "signups_required": {
+      "type": "number",
+      "description": "How many signups needed to reach this level"
+    },
+    "reward_name": {
+      "type": "string",
+      "description": "Name of the reward (e.g., Bronze Star, Silver Crown)"
+    },
+    "reward_description": {
+      "type": "string",
+      "description": "What they get at this level"
+    },
+    "reward_emoji": {
+      "type": "string",
+      "description": "Emoji icon for this level"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Is this level active"
+    },
+    "sort_order": {
+      "type": "number",
+      "default": 0,
+      "description": "Display order"
+    }
+  },
+  "required": [
+    "level",
+    "signups_required",
+    "reward_name"
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "name": "ThriveReferralReward",
+  "type": "object",
+  "properties": {
+    "level": {
+      "type": "number",
+      "description": "Reward level (1, 2, 3, etc.)"
+    },
+    "points_required": {
+      "type": "number",
+      "description": "Total points needed to unlock this reward"
+    },
+    "reward_name": {
+      "type": "string",
+      "description": "Name of the reward"
+    },
+    "reward_description": {
+      "type": "string",
+      "description": "What the user gets"
+    },
+    "reward_emoji": {
+      "type": "string",
+      "description": "Emoji for the reward"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Is this reward active"
+    }
+  },
+  "required": [
+    "level",
+    "points_required",
+    "reward_name"
+  ]
+}

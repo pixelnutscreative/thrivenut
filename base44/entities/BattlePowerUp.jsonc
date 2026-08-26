@@ -1,0 +1,62 @@
+{
+  "name": "BattlePowerUp",
+  "type": "object",
+  "properties": {
+    "contact_id": {
+      "type": "string",
+      "description": "ID of the TikTokContact who has the item"
+    },
+    "contact_name": {
+      "type": "string",
+      "description": "Display name of the person"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "Glove",
+        "Mist",
+        "Sniper",
+        "Jet",
+        "Sub",
+        "Other"
+      ],
+      "default": "Glove",
+      "description": "Type of power up"
+    },
+    "quantity": {
+      "type": "number",
+      "default": 1,
+      "description": "How many they have"
+    },
+    "acquired_date": {
+      "type": "string",
+      "format": "date",
+      "description": "When they got it"
+    },
+    "acquired_time": {
+      "type": "string",
+      "default": "12:00",
+      "description": "Time acquired (HH:mm) for precise 5-day expiry"
+    },
+    "expires_date": {
+      "type": "string",
+      "format": "date",
+      "description": "When it expires (5 days after acquired)"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Full ISO expiry timestamp"
+    },
+    "is_used": {
+      "type": "boolean",
+      "default": false,
+      "description": "If the item has been used/depleted"
+    }
+  },
+  "required": [
+    "contact_name",
+    "type",
+    "acquired_date"
+  ]
+}

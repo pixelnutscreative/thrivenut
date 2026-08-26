@@ -1,0 +1,74 @@
+{
+  "name": "ContentSubmission",
+  "type": "object",
+  "properties": {
+    "request_id": {
+      "type": "string",
+      "description": "ID of the ContentRequest this submission responds to"
+    },
+    "creator_email": {
+      "type": "string",
+      "description": "Email of the creator submitting"
+    },
+    "creator_name": {
+      "type": "string",
+      "description": "Name of the creator"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Watermarked or public preview image"
+    },
+    "unwatermarked_image_url": {
+      "type": "string",
+      "description": "Clean image for requester (only shared if they win)"
+    },
+    "description": {
+      "type": "string",
+      "description": "Creator's description of their design"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected",
+        "winner"
+      ],
+      "default": "pending",
+      "description": "Status of this submission"
+    },
+    "nutpal_style_id": {
+      "type": "string",
+      "description": "Optional: Link to a specific NutPal style"
+    },
+    "additional_files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "file_url": {
+            "type": "string"
+          },
+          "file_type": {
+            "type": "string",
+            "enum": [
+              "main_poster",
+              "losing_poster",
+              "battle_background",
+              "reference"
+            ]
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      },
+      "default": [],
+      "description": "Additional files for full sets (losing poster, backgrounds, etc)"
+    }
+  },
+  "required": [
+    "creator_email",
+    "image_url"
+  ]
+}

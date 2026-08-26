@@ -1,0 +1,106 @@
+{
+  "name": "FamilyMember",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "nickname": {
+      "type": "string"
+    },
+    "relationship": {
+      "type": "string",
+      "enum": [
+        "child",
+        "spouse",
+        "parent",
+        "sibling",
+        "close_friend",
+        "extended_family",
+        "other"
+      ],
+      "default": "child"
+    },
+    "age": {
+      "type": "number"
+    },
+    "birthday": {
+      "type": "string",
+      "description": "YYYY-MM-DD"
+    },
+    "sobriety_date": {
+      "type": "string",
+      "description": "YYYY-MM-DD"
+    },
+    "profile_image_url": {
+      "type": "string"
+    },
+    "favorite_color": {
+      "type": "string"
+    },
+    "is_child_account": {
+      "type": "boolean",
+      "default": false
+    },
+    "is_managed": {
+      "type": "boolean",
+      "default": false,
+      "description": "If true, this is a profile managed by the parent (no separate login)"
+    },
+    "pin_code": {
+      "type": "string",
+      "description": "4-digit PIN for switching to/from this profile"
+    },
+    "linked_user_email": {
+      "type": "string",
+      "description": "If they have their own login, link it here"
+    },
+    "allowed_modules": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [
+        "tasks",
+        "journal",
+        "goals",
+        "weather",
+        "profile"
+      ]
+    },
+    "clothing_sizes": {
+      "type": "object"
+    },
+    "interests": {
+      "type": "string"
+    },
+    "wish_list": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "beauty_profile": {
+      "type": "object"
+    },
+    "style_profile": {
+      "type": "object"
+    },
+    "food_profile": {
+      "type": "object"
+    },
+    "memorable_moments": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

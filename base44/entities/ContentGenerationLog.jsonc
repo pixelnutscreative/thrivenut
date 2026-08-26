@@ -1,0 +1,25 @@
+{
+  "name": "ContentGenerationLog",
+  "type": "object",
+  "properties": {
+    "content": {
+      "type": "string",
+      "description": "The generated text content"
+    },
+    "type": {
+      "type": "string",
+      "description": "Type of content (motivation, goal_step, etc.)"
+    },
+    "tone": {
+      "type": "string",
+      "description": "Tone used for generation"
+    },
+    "reference": {
+      "type": "string",
+      "description": "Reference or source if applicable"
+    }
+  },
+  "required": [
+    "content"
+  ]
+}

@@ -1,0 +1,85 @@
+{
+  "name": "CollaborationGroup",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Group name (e.g., 'Sarah's Creator Pod', 'AgencyX Battle Team')"
+    },
+    "description": {
+      "type": "string",
+      "description": "Purpose and details of this group"
+    },
+    "owner_user_id": {
+      "type": "string",
+      "description": "Thrive user_id of the individual manager/agency admin who created and manages this group"
+    },
+    "group_type": {
+      "type": "string",
+      "enum": [
+        "personal_manager",
+        "agency_official"
+      ],
+      "description": "Type of group - determines features and monetization"
+    },
+    "members": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Array of Thrive user_ids who are members of this group"
+    },
+    "invited_members": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Array of user_ids with pending invitations"
+    },
+    "shared_tiktok_contact_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Array of TikTokContact IDs (references) shared within this group - NOT copies of data"
+    },
+    "settings": {
+      "type": "object",
+      "default": {},
+      "description": "Group-level settings (default_notification_preferences, member_roles, auto_approve_shares, etc.)"
+    },
+    "monetization_tier": {
+      "type": "string",
+      "enum": [
+        "free",
+        "standard",
+        "agency_pro"
+      ],
+      "default": "free",
+      "description": "Subscription tier for this group - unlocks features"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive",
+        "pending_payment",
+        "archived"
+      ],
+      "default": "active",
+      "description": "Current status of the group"
+    },
+    "payment_plan_id": {
+      "type": "string",
+      "description": "Stripe subscription/product ID if group requires payment"
+    }
+  },
+  "required": [
+    "name",
+    "owner_user_id",
+    "group_type"
+  ]
+}

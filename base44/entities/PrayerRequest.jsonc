@@ -1,0 +1,123 @@
+{
+  "name": "PrayerRequest",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Brief title of the prayer request"
+    },
+    "description": {
+      "type": "string",
+      "description": "Full prayer request details"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "health",
+        "family",
+        "finances",
+        "relationships",
+        "work",
+        "spiritual",
+        "praise",
+        "other"
+      ],
+      "default": "other",
+      "description": "Category of request"
+    },
+    "request_type": {
+      "type": "string",
+      "enum": [
+        "prayer",
+        "light_and_love"
+      ],
+      "default": "prayer",
+      "description": "Prayer (Bible believers) or Light & Love (non-Bible)"
+    },
+    "is_urgent": {
+      "type": "boolean",
+      "default": false,
+      "description": "Mark as urgent prayer need"
+    },
+    "is_anonymous": {
+      "type": "boolean",
+      "default": false,
+      "description": "Hide requester's name from others"
+    },
+    "is_private": {
+      "type": "boolean",
+      "default": false,
+      "description": "Private prayer, only visible to creator or assigned person"
+    },
+    "assigned_person": {
+      "type": "string",
+      "description": "Name or ID of person this prayer is assigned to (for private intercession)"
+    },
+    "allow_messages": {
+      "type": "boolean",
+      "default": true,
+      "description": "Allow others to send encouragement messages"
+    },
+    "is_answered": {
+      "type": "boolean",
+      "default": false,
+      "description": "Mark as answered prayer"
+    },
+    "is_closed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Request is closed (no longer active)"
+    },
+    "answered_date": {
+      "type": "string",
+      "format": "date",
+      "description": "When the prayer was answered"
+    },
+    "testimony": {
+      "type": "string",
+      "description": "Testimony of how prayer was answered"
+    },
+    "updates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "content": {
+            "type": "string"
+          },
+          "is_answer": {
+            "type": "boolean"
+          }
+        }
+      },
+      "default": [],
+      "description": "Updates and answered prayer testimonies"
+    },
+    "visibility": {
+      "type": "string",
+      "enum": [
+        "public",
+        "community",
+        "private"
+      ],
+      "default": "community",
+      "description": "Who can see this request"
+    },
+    "prayer_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of people who have prayed"
+    },
+    "requester_display_name": {
+      "type": "string",
+      "description": "Display name if not anonymous"
+    }
+  },
+  "required": [
+    "title"
+  ]
+}

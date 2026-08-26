@@ -1,0 +1,23 @@
+{
+  "name": "NotificationRead",
+  "type": "object",
+  "properties": {
+    "notification_id": {
+      "type": "string",
+      "description": "Notification ID"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "User who read it"
+    },
+    "read_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When it was read"
+    }
+  },
+  "required": [
+    "notification_id",
+    "user_email"
+  ]
+}

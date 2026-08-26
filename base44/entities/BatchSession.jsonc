@@ -1,0 +1,31 @@
+{
+  "name": "BatchSession",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Batch session name"
+    },
+    "brand_id": {
+      "type": "string",
+      "description": "Associated brand ID"
+    },
+    "campaign_id": {
+      "type": "string",
+      "description": "Associated campaign ID"
+    },
+    "workflow_step_id": {
+      "type": "string",
+      "description": "Which workflow step this batch focuses on"
+    },
+    "filters": {
+      "type": "object",
+      "description": "Filter criteria (missing assets, incomplete checklist items, etc.)",
+      "default": {}
+    }
+  },
+  "required": [
+    "name",
+    "workflow_step_id"
+  ]
+}

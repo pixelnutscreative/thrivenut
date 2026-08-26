@@ -1,0 +1,158 @@
+{
+  "name": "BattlePlan",
+  "type": "object",
+  "properties": {
+    "opponent": {
+      "type": "string",
+      "description": "Who we are battling"
+    },
+    "battle_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the battle is"
+    },
+    "mist_strategy": {
+      "type": "string",
+      "enum": [
+        "Yes",
+        "No",
+        "Agreed No Mist",
+        "Mist at End",
+        "Mist on Bonus"
+      ],
+      "default": "No",
+      "description": "Plan for mist"
+    },
+    "glove_assignments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "position": {
+            "type": "number"
+          },
+          "contact_id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "glove",
+              "hammer",
+              "lightning2",
+              "lightning3"
+            ],
+            "description": "Type of throw (glove, hammer, or lightning bolt for 2nd/3rd position)"
+          },
+          "drop_timing": {
+            "type": "string",
+            "enum": [
+              "beginning",
+              "first_bonus",
+              "middle_bonus",
+              "end"
+            ],
+            "description": "When to drop this gift during the battle"
+          }
+        }
+      },
+      "default": [],
+      "description": "List of glove/hammer/lightning assignments (max 10)"
+    },
+    "strategy_notes": {
+      "type": "string",
+      "description": "General strategy notes (gloves at start, etc)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Planned",
+        "Active",
+        "Completed"
+      ],
+      "default": "Planned"
+    },
+    "group_id": {
+      "type": "string",
+      "description": "Group ID if shared with a group, null if private"
+    },
+    "approval_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected"
+      ],
+      "description": "Approval status when shared with group (null if private)"
+    },
+    "creator_name": {
+      "type": "string",
+      "description": "Username/display name of who created the battle"
+    },
+    "our_mvps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "rank": {
+            "type": "number",
+            "enum": [
+              1,
+              2,
+              3
+            ],
+            "description": "MVP rank (1st, 2nd, 3rd)"
+          },
+          "username": {
+            "type": "string"
+          },
+          "gifts_received": {
+            "type": "number"
+          }
+        }
+      },
+      "default": [],
+      "description": "Top 3 MVPs from our side"
+    },
+    "opponent_mvps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "rank": {
+            "type": "number",
+            "enum": [
+              1,
+              2,
+              3
+            ],
+            "description": "MVP rank (1st, 2nd, 3rd)"
+          },
+          "username": {
+            "type": "string"
+          },
+          "gifts_received": {
+            "type": "number"
+          }
+        }
+      },
+      "default": [],
+      "description": "Top 3 MVPs from opponent side"
+    },
+    "battle_screenshot_url": {
+      "type": "string",
+      "description": "URL of the battle results screenshot"
+    },
+    "battle_completed_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the battle actually occurred"
+    }
+  },
+  "required": [
+    "opponent"
+  ]
+}

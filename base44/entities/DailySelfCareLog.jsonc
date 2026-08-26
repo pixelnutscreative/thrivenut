@@ -1,0 +1,146 @@
+{
+  "name": "DailySelfCareLog",
+  "type": "object",
+  "properties": {
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of self-care log"
+    },
+    "shower_completed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Has taken a shower today"
+    },
+    "breakfast_completed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Ate breakfast"
+    },
+    "breakfast_notes": {
+      "type": "string",
+      "description": "What was eaten for breakfast"
+    },
+    "lunch_completed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Ate lunch"
+    },
+    "lunch_notes": {
+      "type": "string",
+      "description": "What was eaten for lunch"
+    },
+    "dinner_completed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Ate dinner"
+    },
+    "dinner_notes": {
+      "type": "string",
+      "description": "What was eaten for dinner"
+    },
+    "brushed_teeth_morning": {
+      "type": "boolean",
+      "default": false,
+      "description": "Brushed teeth in the morning"
+    },
+    "brushed_teeth_night": {
+      "type": "boolean",
+      "default": false,
+      "description": "Brushed teeth at night"
+    },
+    "took_medications": {
+      "type": "boolean",
+      "default": false,
+      "description": "Took required medications"
+    },
+    "took_supplements": {
+      "type": "boolean",
+      "default": false,
+      "description": "Took supplements/vitamins"
+    },
+    "drank_water": {
+      "type": "boolean",
+      "default": false,
+      "description": "Drank water today"
+    },
+    "water_morning": {
+      "type": "boolean",
+      "default": false,
+      "description": "Morning water check-in"
+    },
+    "water_midday": {
+      "type": "boolean",
+      "default": false,
+      "description": "Midday water check-in"
+    },
+    "water_afternoon": {
+      "type": "boolean",
+      "default": false,
+      "description": "Afternoon water check-in"
+    },
+    "water_evening": {
+      "type": "boolean",
+      "default": false,
+      "description": "Evening water check-in"
+    },
+    "physical_activity": {
+      "type": "boolean",
+      "default": false,
+      "description": "Did physical activity today"
+    },
+    "bible_reading_morning": {
+      "type": "boolean",
+      "default": false,
+      "description": "Morning Bible reading"
+    },
+    "bible_reading_night": {
+      "type": "boolean",
+      "default": false,
+      "description": "Night Bible reading"
+    },
+    "elimination_grades": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "type": "string"
+          },
+          "grade": {
+            "type": "string",
+            "enum": [
+              "great",
+              "good",
+              "okay",
+              "struggled"
+            ]
+          }
+        }
+      },
+      "default": [],
+      "description": "Daily grades for items being eliminated"
+    },
+    "completed_care_reminders": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "IDs of care reminders completed today"
+    },
+    "fasting_started": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When fasting period started"
+    },
+    "fasting_ended": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When eating window opened"
+    }
+  },
+  "required": [
+    "date"
+  ]
+}

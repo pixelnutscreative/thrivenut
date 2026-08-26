@@ -1,0 +1,69 @@
+{
+  "name": "GeneratedSong",
+  "type": "object",
+  "properties": {
+    "song_type": {
+      "type": "string",
+      "description": "Type of song (gift_gallery, battle_hype, etc.)"
+    },
+    "song_type_label": {
+      "type": "string",
+      "description": "Human readable label for song type"
+    },
+    "lyrics": {
+      "type": "string",
+      "description": "The generated song lyrics"
+    },
+    "title": {
+      "type": "string",
+      "description": "Optional title for the song"
+    },
+    "tone": {
+      "type": "string",
+      "description": "Tone used for generation"
+    },
+    "gifters": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "rank": {
+            "type": "string"
+          },
+          "gift": {
+            "type": "string"
+          }
+        }
+      },
+      "default": [],
+      "description": "Gifters included in the song"
+    },
+    "milestone": {
+      "type": "string",
+      "description": "Milestone text if applicable"
+    },
+    "custom_prompt": {
+      "type": "string",
+      "description": "Custom prompt if applicable"
+    },
+    "is_favorite": {
+      "type": "boolean",
+      "default": false,
+      "description": "Mark as favorite"
+    },
+    "owner_email": {
+      "type": "string",
+      "description": "Email of the account this song belongs to (for impersonation support)"
+    }
+  },
+  "required": [
+    "song_type",
+    "lyrics"
+  ]
+}

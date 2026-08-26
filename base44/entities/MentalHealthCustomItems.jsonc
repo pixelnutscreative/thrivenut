@@ -1,0 +1,37 @@
+{
+  "name": "MentalHealthCustomItems",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "User who submitted this item"
+    },
+    "item_text": {
+      "type": "string",
+      "description": "The custom mental health item text"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "conditions",
+        "goals"
+      ],
+      "description": "Whether this is a condition or goal"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected"
+      ],
+      "default": "pending",
+      "description": "Admin review status"
+    }
+  },
+  "required": [
+    "user_email",
+    "item_text",
+    "category"
+  ]
+}

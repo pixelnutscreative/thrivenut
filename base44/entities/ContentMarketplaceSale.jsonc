@@ -1,0 +1,56 @@
+{
+  "name": "ContentMarketplaceSale",
+  "type": "object",
+  "properties": {
+    "submission_id": {
+      "type": "string",
+      "description": "ID of the ContentSubmission being sold"
+    },
+    "creator_email": {
+      "type": "string",
+      "description": "Email of creator who made it"
+    },
+    "buyer_email": {
+      "type": "string",
+      "description": "Email of person who bought it"
+    },
+    "sale_price": {
+      "type": "number",
+      "description": "How much it sold for"
+    },
+    "creator_payout": {
+      "type": "number",
+      "description": "Amount creator will receive (after any fees)"
+    },
+    "sale_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When purchased"
+    },
+    "payout_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "scheduled",
+        "paid"
+      ],
+      "default": "pending",
+      "description": "Payout status"
+    },
+    "payout_date": {
+      "type": "string",
+      "format": "date",
+      "description": "When creator was paid"
+    },
+    "stripe_payment_intent_id": {
+      "type": "string",
+      "description": "Stripe payment ID"
+    }
+  },
+  "required": [
+    "submission_id",
+    "creator_email",
+    "buyer_email",
+    "sale_price"
+  ]
+}

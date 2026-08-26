@@ -1,0 +1,59 @@
+{
+  "name": "GroupRequest",
+  "type": "object",
+  "properties": {
+    "group_id": {
+      "type": "string"
+    },
+    "user_email": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "new",
+        "pending",
+        "in_progress",
+        "resolved",
+        "closed"
+      ],
+      "default": "new"
+    },
+    "type": {
+      "type": "string",
+      "default": "Support"
+    },
+    "target_levels": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "target_users": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "edited_by": {
+      "type": "string"
+    },
+    "edited_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "group_id",
+    "user_email",
+    "title"
+  ]
+}

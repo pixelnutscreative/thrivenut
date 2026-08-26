@@ -1,0 +1,93 @@
+{
+  "name": "CycleLog",
+  "type": "object",
+  "properties": {
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of log"
+    },
+    "flow_level": {
+      "type": "string",
+      "enum": [
+        "none",
+        "spotting",
+        "light",
+        "medium",
+        "heavy"
+      ],
+      "default": "none",
+      "description": "Menstrual flow intensity"
+    },
+    "symptoms": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "cramps",
+          "headache",
+          "bloating",
+          "tender_breasts",
+          "acne",
+          "fatigue",
+          "backache",
+          "nausea",
+          "cravings",
+          "mood_swings",
+          "hot_flashes",
+          "night_sweats",
+          "brain_fog",
+          "insomnia",
+          "joint_pain",
+          "anxiety",
+          "irritability",
+          "do_not_care",
+          "pee_trip"
+        ]
+      },
+      "default": [],
+      "description": "Physical and emotional symptoms"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes"
+    },
+    "stage": {
+      "type": "string",
+      "enum": [
+        "menstruation",
+        "follicular",
+        "ovulation",
+        "luteal",
+        "perimenopause",
+        "menopause",
+        "postmenopause"
+      ],
+      "description": "Estimated cycle stage or life phase"
+    },
+    "bathroom_trips": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of times got up to pee at night"
+    },
+    "sweaty_nights": {
+      "type": "boolean",
+      "default": false,
+      "description": "Had sweaty nights/night sweats"
+    },
+    "do_not_care_status": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "extreme"
+      ],
+      "default": "low",
+      "description": "Level of not caring today"
+    }
+  },
+  "required": [
+    "date"
+  ]
+}

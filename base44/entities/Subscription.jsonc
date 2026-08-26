@@ -1,0 +1,60 @@
+{
+  "name": "Subscription",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "User's email"
+    },
+    "stripe_customer_id": {
+      "type": "string",
+      "description": "Stripe customer ID"
+    },
+    "stripe_subscription_id": {
+      "type": "string",
+      "description": "Stripe subscription ID"
+    },
+    "plan_type": {
+      "type": "string",
+      "enum": [
+        "monthly",
+        "annual",
+        "ai_toolbox_bundle",
+        "free_trial"
+      ],
+      "description": "Subscription plan type"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "cancelled",
+        "past_due",
+        "trialing",
+        "expired"
+      ],
+      "default": "active",
+      "description": "Subscription status"
+    },
+    "current_period_start": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Current billing period start"
+    },
+    "current_period_end": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Current billing period end"
+    },
+    "cancel_at_period_end": {
+      "type": "boolean",
+      "default": false,
+      "description": "Will cancel at end of period"
+    }
+  },
+  "required": [
+    "user_email",
+    "plan_type",
+    "status"
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "name": "GoalShare",
+  "type": "object",
+  "properties": {
+    "sharer_email": {
+      "type": "string",
+      "description": "Email of the user sharing their goals"
+    },
+    "sharer_name": {
+      "type": "string",
+      "description": "Name of the sharer for display"
+    },
+    "viewer_email": {
+      "type": "string",
+      "description": "Email of the user who can view the goals"
+    },
+    "viewer_name": {
+      "type": "string",
+      "description": "Name of the viewer for display"
+    },
+    "relationship": {
+      "type": "string",
+      "enum": [
+        "mentor",
+        "mentee",
+        "family",
+        "friend",
+        "coworker",
+        "tiktok_creator",
+        "other"
+      ],
+      "description": "Type of relationship"
+    },
+    "shared_goal_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Specific goal IDs being shared (if empty, uses shared_goal_types)"
+    },
+    "shared_goal_types": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "tiktok",
+          "personal",
+          "wellness",
+          "all"
+        ]
+      },
+      "default": [
+        "all"
+      ],
+      "description": "Which goal types are being shared (legacy, used if shared_goal_ids is empty)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "accepted",
+        "declined"
+      ],
+      "default": "pending",
+      "description": "Status of the sharing invitation"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Optional note about this connection"
+    }
+  },
+  "required": [
+    "sharer_email",
+    "viewer_email"
+  ]
+}

@@ -1,0 +1,80 @@
+{
+  "name": "AIApp",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the AI app"
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of what the app does"
+    },
+    "app_icon_url": {
+      "type": "string",
+      "description": "URL of the app icon (manual upload)"
+    },
+    "ai_icon_prompt": {
+      "type": "string",
+      "description": "Prompt used to generate the app icon with AI"
+    },
+    "app_type": {
+      "type": "string",
+      "enum": [
+        "image",
+        "text",
+        "code",
+        "conversational",
+        "video",
+        "music",
+        "sfx"
+      ],
+      "description": "Type of AI app"
+    },
+    "config_json": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "App-specific configuration (input fields, settings, etc.)"
+    },
+    "is_published": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the app is published to the marketplace"
+    },
+    "approval_status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "pending",
+        "approved",
+        "rejected"
+      ],
+      "default": "draft",
+      "description": "Admin approval status for marketplace"
+    },
+    "usage_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of times the app has been used"
+    },
+    "average_rating": {
+      "type": "number",
+      "default": 0,
+      "description": "Average rating from users"
+    },
+    "comments_enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether comments are enabled"
+    },
+    "sharing_enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether output sharing is enabled"
+    }
+  },
+  "required": [
+    "name",
+    "app_type"
+  ]
+}

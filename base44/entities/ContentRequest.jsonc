@@ -1,0 +1,200 @@
+{
+  "name": "ContentRequest",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Title of the content request"
+    },
+    "description": {
+      "type": "string",
+      "description": "Details of what they want created"
+    },
+    "request_type": {
+      "type": "string",
+      "enum": [
+        "battle_poster",
+        "battle_poster_full_set",
+        "fan_sticker_single",
+        "fan_sticker_set",
+        "digital_twin_initial",
+        "digital_twin_additional",
+        "greenscreen_background",
+        "greenscreen_title",
+        "nutpal",
+        "engagement_live_song",
+        "gift_gallery_song",
+        "thank_you_song",
+        "custom_song",
+        "logo",
+        "other"
+      ],
+      "description": "Type of content requested"
+    },
+    "song_type": {
+      "type": "string",
+      "enum": [
+        "hype",
+        "chill",
+        "emotional",
+        "funny",
+        "epic"
+      ],
+      "description": "Type of song if request_type is a song"
+    },
+    "budget": {
+      "type": "number",
+      "description": "Budget for this request in dollars"
+    },
+    "duration_days": {
+      "type": "number",
+      "description": "How many days until deadline (1-14 days)"
+    },
+    "rush_multiplier": {
+      "type": "number",
+      "default": 1,
+      "description": "Price multiplier for rush orders"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "open",
+        "in_progress",
+        "completed",
+        "cancelled"
+      ],
+      "default": "open",
+      "description": "Status of the request"
+    },
+    "assigned_to_email": {
+      "type": "string",
+      "description": "Email of creator assigned to this job"
+    },
+    "admin_assigned_cost": {
+      "type": "number",
+      "description": "Cost assigned by admin for direct assignment"
+    },
+    "contest_mode": {
+      "type": "boolean",
+      "default": true,
+      "description": "Is this a contest (multiple submissions) or direct assignment"
+    },
+    "deadline": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Calculated deadline based on duration_days"
+    },
+    "payment_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "paid_upfront",
+        "released_to_creator"
+      ],
+      "default": "pending",
+      "description": "Payment status"
+    },
+    "stripe_payment_intent_id": {
+      "type": "string",
+      "description": "Stripe payment ID for upfront payment"
+    },
+    "requester_name": {
+      "type": "string",
+      "description": "Name of person requesting"
+    },
+    "requester_email": {
+      "type": "string",
+      "description": "Email of person requesting"
+    },
+    "selected_submission_id": {
+      "type": "string",
+      "description": "ID of winning submission"
+    },
+    "reference_images": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Reference images uploaded by requester"
+    },
+    "coupon_code": {
+      "type": "string",
+      "description": "Coupon code applied to this request"
+    },
+    "discount_amount": {
+      "type": "number",
+      "default": 0,
+      "description": "Discount applied from coupon"
+    },
+    "final_price": {
+      "type": "number",
+      "description": "Final price after discounts and rush fees"
+    },
+    "battle_plan_id": {
+      "type": "string",
+      "description": "Associated BattlePlan ID for battle poster requests"
+    },
+    "opponent_name": {
+      "type": "string",
+      "description": "Opponent name (for battle posters)"
+    },
+    "creator_paypal_email": {
+      "type": "string",
+      "description": "PayPal email of winning creator"
+    },
+    "payment_proof_url": {
+      "type": "string",
+      "description": "Screenshot/proof of payment uploaded by requester"
+    },
+    "payment_verified_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When payment proof was uploaded"
+    },
+    "fulfillment_status": {
+      "type": "string",
+      "enum": [
+        "awaiting_submission",
+        "submitted",
+        "awaiting_payment",
+        "payment_received",
+        "completed"
+      ],
+      "default": "awaiting_submission",
+      "description": "Fulfillment stage for battle posters"
+    },
+    "artwork_delivered_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Final artwork URLs delivered to requester"
+    },
+    "revision_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of revisions requested"
+    },
+    "free_revision_used": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the single free revision has been used"
+    },
+    "revision_notes": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "default": [],
+      "description": "History of revision requests with dates and fees"
+    }
+  },
+  "required": [
+    "title",
+    "request_type",
+    "budget",
+    "duration_days"
+  ]
+}

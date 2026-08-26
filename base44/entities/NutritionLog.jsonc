@@ -1,0 +1,30 @@
+{
+  "name": "NutritionLog",
+  "type": "object",
+  "properties": {
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of log"
+    },
+    "items_added": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Healthy items added today (e.g., 'Leafy Greens', 'Protein', 'Probiotics')"
+    },
+    "custom_goals": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Custom nutrition goals the user wants to hit"
+    }
+  },
+  "required": [
+    "date"
+  ]
+}

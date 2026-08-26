@@ -1,0 +1,50 @@
+{
+  "name": "SuperFanVerification",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "Email of the user requesting verification"
+    },
+    "tiktok_username": {
+      "type": "string",
+      "description": "User's TikTok username"
+    },
+    "screenshot_url": {
+      "type": "string",
+      "description": "URL of uploaded screenshot proof"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "denied"
+      ],
+      "default": "pending",
+      "description": "Verification status"
+    },
+    "admin_notes": {
+      "type": "string",
+      "description": "Notes from admin review"
+    },
+    "reviewed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the verification was reviewed"
+    },
+    "preview_started_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the 7-day preview started"
+    },
+    "preview_expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the 7-day preview expires"
+    }
+  },
+  "required": [
+    "user_email"
+  ]
+}

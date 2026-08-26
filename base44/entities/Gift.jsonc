@@ -1,0 +1,25 @@
+{
+  "name": "Gift",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Gift name (e.g. Lion, Doughnut)"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "URL of the gift image"
+    },
+    "league_range": {
+      "type": "string",
+      "description": "Which league(s) it appears in (e.g. A1-A3)"
+    },
+    "coin_value": {
+      "type": "number",
+      "description": "Cost in TikTok coins"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

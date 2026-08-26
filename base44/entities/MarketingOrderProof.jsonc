@@ -1,0 +1,46 @@
+{
+  "name": "MarketingOrderProof",
+  "type": "object",
+  "properties": {
+    "order_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string",
+      "description": "e.g. Option 1, Version 2"
+    },
+    "description": {
+      "type": "string"
+    },
+    "file_url": {
+      "type": "string"
+    },
+    "content_type": {
+      "type": "string",
+      "enum": [
+        "image",
+        "pdf",
+        "other"
+      ],
+      "default": "image"
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected"
+      ],
+      "default": "pending"
+    }
+  },
+  "required": [
+    "order_id",
+    "name",
+    "file_url"
+  ]
+}

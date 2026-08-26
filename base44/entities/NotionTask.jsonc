@@ -1,0 +1,58 @@
+{
+  "name": "NotionTask",
+  "type": "object",
+  "properties": {
+    "notion_id": {
+      "type": "string",
+      "description": "The Notion page/task ID"
+    },
+    "title": {
+      "type": "string",
+      "description": "Task title from Notion"
+    },
+    "status": {
+      "type": "string",
+      "description": "Task status from Notion"
+    },
+    "priority": {
+      "type": "string",
+      "description": "Task priority"
+    },
+    "category": {
+      "type": "string",
+      "description": "Task category"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Due date if set"
+    },
+    "notion_url": {
+      "type": "string",
+      "description": "URL to the Notion page"
+    },
+    "properties": {
+      "type": "object",
+      "description": "All other Notion properties as key-value pairs"
+    },
+    "scheduled_for_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date this task is scheduled in the app"
+    },
+    "completed_in_app": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this task was completed in the app"
+    },
+    "last_synced": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last sync timestamp from Notion"
+    }
+  },
+  "required": [
+    "notion_id",
+    "title"
+  ]
+}

@@ -1,0 +1,91 @@
+{
+  "name": "FinanceItem",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the subscription or expense"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Cost amount"
+    },
+    "currency": {
+      "type": "string",
+      "default": "USD",
+      "description": "Currency code"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "subscription",
+        "trial",
+        "one-time"
+      ],
+      "default": "subscription",
+      "description": "Type of expense"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "software",
+        "entertainment",
+        "utilities",
+        "business",
+        "personal",
+        "other"
+      ],
+      "default": "other",
+      "description": "Expense category"
+    },
+    "billing_cycle": {
+      "type": "string",
+      "enum": [
+        "monthly",
+        "yearly",
+        "one-time",
+        "weekly"
+      ],
+      "default": "monthly",
+      "description": "Frequency of billing"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Next payment date or trial end date"
+    },
+    "reminder_date": {
+      "type": "string",
+      "format": "date",
+      "description": "When to remind user (especially for trials)"
+    },
+    "auto_renew": {
+      "type": "boolean",
+      "default": true,
+      "description": "Does it auto renew?"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "cancelled",
+        "expired"
+      ],
+      "default": "active",
+      "description": "Status of the subscription"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Cancellation instructions or notes"
+    },
+    "website_url": {
+      "type": "string",
+      "description": "URL to manage subscription"
+    }
+  },
+  "required": [
+    "name",
+    "type",
+    "due_date"
+  ]
+}

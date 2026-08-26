@@ -1,0 +1,101 @@
+{
+  "name": "SupportTicket",
+  "type": "object",
+  "properties": {
+    "subject": {
+      "type": "string",
+      "description": "Brief description of the issue"
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed description of the issue or request"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "bug",
+        "feature_request",
+        "question",
+        "feedback",
+        "other"
+      ],
+      "default": "question",
+      "description": "Type of ticket"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "urgent"
+      ],
+      "default": "medium",
+      "description": "Priority level"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "open",
+        "in_progress",
+        "waiting_on_user",
+        "resolved",
+        "closed"
+      ],
+      "default": "open",
+      "description": "Current status"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Email of the user who submitted"
+    },
+    "admin_notes": {
+      "type": "string",
+      "description": "Internal notes from admin"
+    },
+    "resolution": {
+      "type": "string",
+      "description": "How the ticket was resolved"
+    },
+    "screenshot_url": {
+      "type": "string",
+      "description": "Optional screenshot"
+    },
+    "video_url": {
+      "type": "string",
+      "description": "Optional video URL"
+    },
+    "messages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "sender": {
+            "type": "string",
+            "description": "Email of sender"
+          },
+          "sender_type": {
+            "type": "string",
+            "enum": [
+              "user",
+              "admin"
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "default": [],
+      "description": "Conversation thread"
+    }
+  },
+  "required": [
+    "subject",
+    "type"
+  ]
+}

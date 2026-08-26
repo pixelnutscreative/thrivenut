@@ -1,0 +1,36 @@
+{
+  "name": "GroupProject",
+  "type": "object",
+  "properties": {
+    "group_id": {
+      "type": "string",
+      "description": "Reference to CreatorGroup"
+    },
+    "title": {
+      "type": "string",
+      "description": "Project title"
+    },
+    "description": {
+      "type": "string",
+      "description": "Project description"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "completed",
+        "archived",
+        "on_hold"
+      ],
+      "default": "active"
+    },
+    "color": {
+      "type": "string",
+      "description": "Project color label"
+    }
+  },
+  "required": [
+    "group_id",
+    "title"
+  ]
+}

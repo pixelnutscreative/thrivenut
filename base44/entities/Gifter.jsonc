@@ -1,0 +1,22 @@
+{
+  "name": "Gifter",
+  "type": "object",
+  "properties": {
+    "username": {
+      "type": "string",
+      "description": "TikTok handle (e.g. @SheriD777)"
+    },
+    "screen_name": {
+      "type": "string",
+      "description": "What the host sees (e.g. Sheri D)"
+    },
+    "phonetic": {
+      "type": "string",
+      "description": "How to pronounce it (e.g. Sheri Dee Seven Seven Seven)"
+    }
+  },
+  "required": [
+    "username",
+    "screen_name"
+  ]
+}

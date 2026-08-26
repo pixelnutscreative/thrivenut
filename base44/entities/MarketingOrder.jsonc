@@ -1,0 +1,133 @@
+{
+  "name": "MarketingOrder",
+  "type": "object",
+  "properties": {
+    "group_id": {
+      "type": "string"
+    },
+    "client_email": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string",
+      "description": "Short title of the job"
+    },
+    "description": {
+      "type": "string",
+      "description": "Full specs: dimensions, material, etc."
+    },
+    "needed_by_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "shipping_address": {
+      "type": "string"
+    },
+    "tracking_code": {
+      "type": "string"
+    },
+    "carrier": {
+      "type": "string"
+    },
+    "budget": {
+      "type": "number",
+      "description": "Client's optional budget"
+    },
+    "vendor_quotes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "default": []
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "need_specs",
+        "quoting",
+        "pending_quote",
+        "awaiting_selection",
+        "designing",
+        "in_progress",
+        "proofing",
+        "changes_requested",
+        "approved",
+        "artwork_approved",
+        "awaiting_payment",
+        "paid",
+        "printing",
+        "production",
+        "shipped",
+        "completed",
+        "archived"
+      ],
+      "default": "quoting"
+    },
+    "custom_status_label": {
+      "type": "string",
+      "description": "Override label for the status"
+    },
+    "invoice_url": {
+      "type": "string",
+      "description": "External URL for payment/invoice"
+    },
+    "our_price": {
+      "type": "number",
+      "description": "Price in cents"
+    },
+    "currency": {
+      "type": "string",
+      "default": "usd"
+    },
+    "selected_proof_id": {
+      "type": "string"
+    },
+    "stripe_payment_intent_id": {
+      "type": "string"
+    },
+    "is_hidden": {
+      "type": "boolean",
+      "default": false
+    },
+    "admin_notes": {
+      "type": "string"
+    },
+    "quote_variations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "price": {
+            "type": "number"
+          }
+        }
+      },
+      "default": []
+    },
+    "selected_variation_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "group_id",
+    "client_email",
+    "title"
+  ]
+}

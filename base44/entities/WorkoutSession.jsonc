@@ -1,0 +1,57 @@
+{
+  "name": "WorkoutSession",
+  "type": "object",
+  "properties": {
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of workout"
+    },
+    "name": {
+      "type": "string",
+      "description": "Workout name (e.g. Push Day)"
+    },
+    "exercises": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "sets": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "reps": {
+                  "type": "number"
+                },
+                "weight": {
+                  "type": "number"
+                },
+                "completed": {
+                  "type": "boolean",
+                  "default": true
+                }
+              }
+            }
+          }
+        }
+      },
+      "description": "List of exercises and sets"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Notes about the workout"
+    },
+    "duration_minutes": {
+      "type": "number",
+      "description": "Total duration"
+    }
+  },
+  "required": [
+    "date",
+    "name"
+  ]
+}

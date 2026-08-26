@@ -1,0 +1,54 @@
+{
+  "name": "AccountDeletionRequest",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "Email of user requesting account deletion"
+    },
+    "requested_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When deletion was requested"
+    },
+    "scheduled_deletion_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When account will be permanently deleted (30 days from request)"
+    },
+    "actual_deletion_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When account was actually deleted"
+    },
+    "cancelled_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When deletion was cancelled by user"
+    },
+    "reason": {
+      "type": "string",
+      "description": "User's reason for leaving"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "completed",
+        "cancelled"
+      ],
+      "default": "pending",
+      "description": "Status of deletion request"
+    },
+    "records_deleted": {
+      "type": "number",
+      "description": "Total number of records deleted"
+    }
+  },
+  "required": [
+    "user_email",
+    "requested_date",
+    "scheduled_deletion_date",
+    "status"
+  ]
+}

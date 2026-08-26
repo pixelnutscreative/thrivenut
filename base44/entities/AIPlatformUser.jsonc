@@ -1,0 +1,64 @@
+{
+  "name": "AIPlatformUser",
+  "type": "object",
+  "properties": {
+    "user_name": {
+      "type": "string"
+    },
+    "user_email": {
+      "type": "string"
+    },
+    "platform": {
+      "type": "string",
+      "enum": [
+        "pixels_toolbox",
+        "lets_go_nuts",
+        "both"
+      ]
+    },
+    "subscription_tier": {
+      "type": "string"
+    },
+    "subscription_status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "cancelled",
+        "expired"
+      ]
+    },
+    "renewal_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "stripe_subscription_id": {
+      "type": "string"
+    },
+    "has_nuts_and_bots": {
+      "type": "boolean",
+      "default": false
+    },
+    "has_digital_twin": {
+      "type": "boolean",
+      "default": false
+    },
+    "includes_social_access": {
+      "type": "boolean",
+      "default": false
+    },
+    "tiktok_contact_id": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "is_trusted_creator": {
+      "type": "boolean",
+      "default": false,
+      "description": "If true, content submissions are automatically approved"
+    }
+  },
+  "required": [
+    "user_email"
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "name": "ReferralPointsConfig",
+  "type": "object",
+  "properties": {
+    "config_key": {
+      "type": "string",
+      "enum": [
+        "points_per_signup",
+        "points_per_upgrade"
+      ],
+      "description": "What this config controls"
+    },
+    "points_value": {
+      "type": "number",
+      "default": 10,
+      "description": "How many points to award"
+    }
+  },
+  "required": [
+    "config_key",
+    "points_value"
+  ]
+}

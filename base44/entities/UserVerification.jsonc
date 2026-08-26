@@ -1,0 +1,64 @@
+{
+  "name": "UserVerification",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "Email of user being verified"
+    },
+    "signup_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When they signed up"
+    },
+    "referral_code_used": {
+      "type": "string",
+      "description": "Referral code they used (legacy field)"
+    },
+    "referred_by_code": {
+      "type": "string",
+      "description": "Referral code that brought them here"
+    },
+    "has_logged_in": {
+      "type": "boolean",
+      "default": false,
+      "description": "User has logged in at least once"
+    },
+    "has_completed_onboarding": {
+      "type": "boolean",
+      "default": false,
+      "description": "Completed setup wizard"
+    },
+    "days_active": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of unique days user was active"
+    },
+    "last_activity_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last time user was active"
+    },
+    "is_real_user": {
+      "type": "boolean",
+      "default": false,
+      "description": "Verified as real user (not fake signup)"
+    },
+    "verification_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When verified as real"
+    },
+    "verification_method": {
+      "type": "string",
+      "enum": [
+        "auto",
+        "manual_admin"
+      ],
+      "description": "How they were verified"
+    }
+  },
+  "required": [
+    "user_email"
+  ]
+}

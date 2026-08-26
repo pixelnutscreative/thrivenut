@@ -1,0 +1,33 @@
+{
+  "name": "SettingsTab",
+  "type": "object",
+  "properties": {
+    "tab_id": {
+      "type": "string",
+      "description": "Unique tab identifier (e.g., 'profile', 'social')"
+    },
+    "label": {
+      "type": "string",
+      "description": "Display label"
+    },
+    "icon": {
+      "type": "string",
+      "description": "Lucide icon name"
+    },
+    "sort_order": {
+      "type": "number",
+      "default": 100,
+      "description": "Display order"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Show this tab"
+    }
+  },
+  "required": [
+    "tab_id",
+    "label",
+    "icon"
+  ]
+}

@@ -1,0 +1,102 @@
+{
+  "name": "CareReminder",
+  "type": "object",
+  "properties": {
+    "person_name": {
+      "type": "string",
+      "description": "Name of person being cared for"
+    },
+    "relationship": {
+      "type": "string",
+      "enum": [
+        "parent",
+        "grandparent",
+        "child",
+        "spouse",
+        "sibling",
+        "other_family",
+        "friend",
+        "client"
+      ],
+      "description": "Relationship to this person"
+    },
+    "reminder_type": {
+      "type": "string",
+      "enum": [
+        "medication",
+        "bedtime",
+        "meal",
+        "goodnight_message",
+        "checkup",
+        "appointment",
+        "exercise",
+        "other"
+      ],
+      "description": "Type of reminder"
+    },
+    "title": {
+      "type": "string",
+      "description": "Reminder title"
+    },
+    "description": {
+      "type": "string",
+      "description": "Details about the reminder"
+    },
+    "time": {
+      "type": "string",
+      "description": "Time for the reminder"
+    },
+    "specific_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Specific date for one-time reminders"
+    },
+    "days": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+          "Sunday"
+        ]
+      },
+      "default": [],
+      "description": "Days of the week for recurring reminders"
+    },
+    "is_recurring": {
+      "type": "boolean",
+      "default": false,
+      "description": "Is this a recurring reminder"
+    },
+    "recurring_frequency": {
+      "type": "string",
+      "enum": [
+        "daily",
+        "weekly",
+        "monthly",
+        "custom"
+      ],
+      "default": "daily",
+      "description": "Frequency if recurring"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether reminder is active"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes"
+    }
+  },
+  "required": [
+    "person_name",
+    "reminder_type",
+    "title"
+  ]
+}

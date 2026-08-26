@@ -1,0 +1,24 @@
+{
+  "name": "WaterLog",
+  "type": "object",
+  "properties": {
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of log"
+    },
+    "glasses": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of glasses consumed"
+    },
+    "goal_glasses": {
+      "type": "number",
+      "default": 8,
+      "description": "Daily goal"
+    }
+  },
+  "required": [
+    "date"
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "name": "InputFieldTemplate",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Template name"
+    },
+    "field_config": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Field configuration (label, type, options, etc.)"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "text",
+        "image",
+        "style",
+        "brand",
+        "social",
+        "other"
+      ],
+      "default": "other",
+      "description": "Field category"
+    }
+  },
+  "required": [
+    "name",
+    "field_config"
+  ]
+}

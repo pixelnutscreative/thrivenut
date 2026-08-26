@@ -1,0 +1,89 @@
+{
+  "name": "CreatorPortfolio",
+  "type": "object",
+  "properties": {
+    "creator_email": {
+      "type": "string"
+    },
+    "creator_name": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "content_type": {
+      "type": "string",
+      "enum": [
+        "image",
+        "text",
+        "image_with_text",
+        "song",
+        "video",
+        "nutpal",
+        "other",
+        "poem",
+        "digital_twin"
+      ],
+      "default": "image"
+    },
+    "image_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "text_content": {
+      "type": "string"
+    },
+    "external_link": {
+      "type": "string"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "ai_tool_name": {
+      "type": "string"
+    },
+    "is_nutpal": {
+      "type": "boolean",
+      "default": false
+    },
+    "style_id": {
+      "type": "string",
+      "description": "ID of the NutPal style if is_nutpal is true"
+    },
+    "approval_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected"
+      ],
+      "default": "pending"
+    },
+    "likes_count": {
+      "type": "number",
+      "default": 0
+    },
+    "is_featured": {
+      "type": "boolean",
+      "default": false
+    },
+    "prompt_used": {
+      "type": "string",
+      "description": "Prompt used for generation (Digital Twin etc)"
+    }
+  },
+  "required": [
+    "creator_email",
+    "title"
+  ]
+}

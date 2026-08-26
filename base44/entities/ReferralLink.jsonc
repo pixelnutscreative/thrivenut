@@ -1,0 +1,77 @@
+{
+  "name": "ReferralLink",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "Owner of the referral link"
+    },
+    "referral_code": {
+      "type": "string",
+      "description": "Unique code for sharing (e.g., pixel123)"
+    },
+    "code_label": {
+      "type": "string",
+      "description": "Optional label for this code (e.g., TikTok, Instagram, Email)"
+    },
+    "total_clicks": {
+      "type": "number",
+      "default": 0,
+      "description": "Total clicks on the referral link (New Visitors)"
+    },
+    "total_existing_clicks": {
+      "type": "number",
+      "default": 0,
+      "description": "Total clicks by existing members"
+    },
+    "total_signups": {
+      "type": "number",
+      "default": 0,
+      "description": "Total users who signed up via this link"
+    },
+    "total_upgrades": {
+      "type": "number",
+      "default": 0,
+      "description": "Total users who upgraded to Social Add-on"
+    },
+    "reward_level": {
+      "type": "number",
+      "default": 1,
+      "description": "Current reward level achieved"
+    },
+    "rewards_earned": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "level": {
+            "type": "number"
+          },
+          "reward_name": {
+            "type": "string"
+          },
+          "earned_date": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "default": [],
+      "description": "History of rewards earned"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Is this referral link active"
+    },
+    "is_primary": {
+      "type": "boolean",
+      "default": false,
+      "description": "Is this the primary referral code"
+    }
+  },
+  "required": [
+    "user_email",
+    "referral_code"
+  ]
+}

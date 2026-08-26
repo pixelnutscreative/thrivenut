@@ -1,0 +1,33 @@
+{
+  "name": "PreApprovedEmail",
+  "type": "object",
+  "properties": {
+    "email": {
+      "type": "string",
+      "description": "Pre-approved email address"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "ai_tools",
+        "nuts_and_bots",
+        "superfan",
+        "manual"
+      ],
+      "default": "manual",
+      "description": "Where this approval came from"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Optional notes about this person"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether this approval is active"
+    }
+  },
+  "required": [
+    "email"
+  ]
+}

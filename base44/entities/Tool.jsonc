@@ -1,0 +1,31 @@
+{
+  "name": "Tool",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Tool name"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "Images",
+        "Video",
+        "Audio",
+        "SEO",
+        "Scheduling",
+        "Transcripts"
+      ],
+      "description": "Tool category"
+    },
+    "url": {
+      "type": "string",
+      "description": "Tool URL"
+    }
+  },
+  "required": [
+    "name",
+    "category",
+    "url"
+  ]
+}

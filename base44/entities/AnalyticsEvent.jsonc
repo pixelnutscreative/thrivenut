@@ -1,0 +1,40 @@
+{
+  "name": "AnalyticsEvent",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "Email of the user"
+    },
+    "path": {
+      "type": "string",
+      "description": "Page path"
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "page_view",
+        "action",
+        "active_tick"
+      ],
+      "default": "page_view"
+    },
+    "session_id": {
+      "type": "string",
+      "description": "Unique session identifier"
+    },
+    "duration_seconds": {
+      "type": "number",
+      "description": "DELTA ONLY - seconds since last tick for active_tick events"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional event details",
+      "additionalProperties": true
+    }
+  },
+  "required": [
+    "path",
+    "event_type"
+  ]
+}

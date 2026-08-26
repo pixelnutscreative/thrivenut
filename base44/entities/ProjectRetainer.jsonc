@@ -1,0 +1,31 @@
+{
+  "name": "ProjectRetainer",
+  "type": "object",
+  "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "Reference to GroupProject"
+    },
+    "hours_added": {
+      "type": "number",
+      "description": "Number of hours added to the budget"
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of the package (e.g. '10 Hour Block')"
+    },
+    "date_added": {
+      "type": "string",
+      "format": "date",
+      "description": "Date these hours were added"
+    },
+    "added_by": {
+      "type": "string",
+      "description": "User who added the hours"
+    }
+  },
+  "required": [
+    "project_id",
+    "hours_added"
+  ]
+}

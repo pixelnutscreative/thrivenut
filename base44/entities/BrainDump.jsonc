@@ -1,0 +1,34 @@
+{
+  "name": "BrainDump",
+  "type": "object",
+  "properties": {
+    "content": {
+      "type": "string",
+      "description": "Quick thought or idea"
+    },
+    "is_processed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Has this been turned into a task or organized"
+    },
+    "converted_to_task_id": {
+      "type": "string",
+      "description": "Task ID if converted"
+    },
+    "category": {
+      "type": "string",
+      "description": "Optional category"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Tags for organization"
+    }
+  },
+  "required": [
+    "content"
+  ]
+}

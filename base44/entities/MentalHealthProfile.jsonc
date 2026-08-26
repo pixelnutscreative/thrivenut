@@ -1,0 +1,149 @@
+{
+  "name": "MentalHealthProfile",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "Email of the user this profile belongs to"
+    },
+    "conditions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "List of mental health conditions (user-defined)"
+    },
+    "diagnosed_by": {
+      "type": "string",
+      "description": "Name of healthcare provider who made diagnosis"
+    },
+    "diagnosis_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of diagnosis"
+    },
+    "treatment_plan": {
+      "type": "string",
+      "description": "General notes about treatment plan"
+    },
+    "emergency_contact_name": {
+      "type": "string",
+      "description": "Name of emergency contact"
+    },
+    "emergency_contact_phone": {
+      "type": "string",
+      "description": "Phone number of emergency contact"
+    },
+    "therapist_name": {
+      "type": "string",
+      "description": "Name of therapist or counselor"
+    },
+    "therapist_phone": {
+      "type": "string",
+      "description": "Therapist contact information"
+    },
+    "require_medication_before_features": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether to require medication check-in before accessing certain features"
+    },
+    "restricted_features": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "tiktok",
+          "social",
+          "goals",
+          "journal"
+        ]
+      },
+      "default": [],
+      "description": "Which features require medication check-in"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes about mental health journey"
+    },
+    "accessibility_mode": {
+      "type": "string",
+      "enum": [
+        "standard",
+        "simplified"
+      ],
+      "default": "standard",
+      "description": "User's preferred accessibility mode"
+    },
+    "enable_self_care_gating": {
+      "type": "boolean",
+      "default": false,
+      "description": "If certain modules are gated by self-care completion"
+    },
+    "required_self_care_tasks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "List of self-care tasks required for gating"
+    },
+    "gated_modules": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "List of modules gated by self-care completion"
+    },
+    "mental_health_struggles": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "User-identified mental health struggles"
+    },
+    "improvement_goals": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "User-identified mental health improvement goals"
+    },
+    "enable_ai_journaling": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether AI therapeutic journaling is enabled"
+    },
+    "show_daily_affirmations": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether daily affirmations are shown on dashboard"
+    },
+    "use_simplified_interface": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether to use a simplified UI interface"
+    },
+    "reduce_animations": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether to reduce animations for sensitive users"
+    },
+    "use_checklists": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether to use checklists for tasks"
+    },
+    "is_bible_believer": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the user identifies as a Bible believer"
+    }
+  },
+  "required": [
+    "user_email"
+  ]
+}

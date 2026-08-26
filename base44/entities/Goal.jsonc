@@ -1,0 +1,148 @@
+{
+  "name": "Goal",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Goal title"
+    },
+    "emoji": {
+      "type": "string",
+      "description": "Optional emoji icon for the goal (defaults to target)"
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed description"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "spiritual",
+        "health",
+        "personal",
+        "financial",
+        "relationship",
+        "learning",
+        "career",
+        "creative",
+        "create_content",
+        "engage_community",
+        "other"
+      ],
+      "default": "personal",
+      "description": "Goal category"
+    },
+    "custom_category_name": {
+      "type": "string",
+      "description": "Custom category name when 'other' is selected"
+    },
+    "vision_board_category": {
+      "type": "string",
+      "enum": [
+        "personal",
+        "business",
+        "family",
+        "project",
+        "nonprofit",
+        "child",
+        "other"
+      ],
+      "description": "Vision board grouping category"
+    },
+    "vision_image_url": {
+      "type": "string",
+      "description": "Vision board image URL for this goal"
+    },
+    "goal_type": {
+      "type": "string",
+      "enum": [
+        "habit",
+        "project",
+        "milestone",
+        "learning",
+        "preparation"
+      ],
+      "default": "project",
+      "description": "Type of goal"
+    },
+    "frequency": {
+      "type": "string",
+      "enum": [
+        "daily",
+        "weekly",
+        "monthly",
+        "one-time"
+      ],
+      "default": "one-time",
+      "description": "How often to track this goal"
+    },
+    "target_value": {
+      "type": "number",
+      "default": 0,
+      "description": "Target value for habit goals"
+    },
+    "current_value": {
+      "type": "number",
+      "default": 0,
+      "description": "Current progress value"
+    },
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "completed": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
+      "default": [],
+      "description": "Mini-goals or milestones"
+    },
+    "target_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Target completion date"
+    },
+    "shared_with": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Email addresses of people this goal is shared with"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "paused",
+        "completed",
+        "archived"
+      ],
+      "default": "active",
+      "description": "Goal status"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "When goal started"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Goal deadline or completion date"
+    }
+  },
+  "required": [
+    "title",
+    "category"
+  ]
+}

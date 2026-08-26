@@ -1,0 +1,35 @@
+{
+  "name": "GeneratedContentHistory",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string"
+    },
+    "tool_id": {
+      "type": "string",
+      "description": "ID of the ContentGeneratorTool used"
+    },
+    "tool_name": {
+      "type": "string"
+    },
+    "content": {
+      "type": "string",
+      "description": "The generated text or image URL"
+    },
+    "content_type": {
+      "type": "string",
+      "enum": [
+        "text",
+        "image"
+      ]
+    },
+    "inputs": {
+      "type": "object",
+      "description": "The inputs used to generate this"
+    }
+  },
+  "required": [
+    "user_email",
+    "content"
+  ]
+}

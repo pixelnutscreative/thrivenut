@@ -1,0 +1,91 @@
+{
+  "name": "CouponCode",
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "string",
+      "description": "Coupon code (e.g., THRIVE10)"
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of the coupon (e.g. Christmas Gift)"
+    },
+    "credit_amount": {
+      "type": "number",
+      "description": "Dollar value of this coupon (for discounts)"
+    },
+    "grant_subscription_package_id": {
+      "type": "string",
+      "description": "ID of the subscription package to grant (if this is an access code)"
+    },
+    "discount_type": {
+      "type": "string",
+      "enum": [
+        "fixed",
+        "percentage",
+        "full_access"
+      ],
+      "default": "fixed",
+      "description": "Type of discount"
+    },
+    "assigned_to_email": {
+      "type": "string",
+      "description": "User who earned this coupon (for referral system)"
+    },
+    "unlocked_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When user unlocked it"
+    },
+    "is_used": {
+      "type": "boolean",
+      "default": false,
+      "description": "Has this coupon been redeemed"
+    },
+    "used_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When coupon was used"
+    },
+    "redeemed_by_email": {
+      "type": "string",
+      "description": "Email of user who redeemed it"
+    },
+    "used_on_request_id": {
+      "type": "string",
+      "description": "Content request where coupon was used"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "available",
+        "assigned",
+        "redeemed",
+        "expired"
+      ],
+      "default": "available",
+      "description": "Coupon status"
+    },
+    "expiration_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When coupon expires"
+    },
+    "minimum_purchase": {
+      "type": "number",
+      "default": 0,
+      "description": "Minimum purchase amount required"
+    },
+    "applicable_to": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Which request types this coupon applies to (empty = all)"
+    }
+  },
+  "required": [
+    "code"
+  ]
+}

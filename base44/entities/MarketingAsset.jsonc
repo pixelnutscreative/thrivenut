@@ -1,0 +1,62 @@
+{
+  "name": "MarketingAsset",
+  "type": "object",
+  "properties": {
+    "group_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "file_url": {
+      "type": "string"
+    },
+    "file_type": {
+      "type": "string",
+      "enum": [
+        "image",
+        "video",
+        "document",
+        "font",
+        "other"
+      ],
+      "default": "other"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "linked_brand_id": {
+      "type": "string",
+      "description": "If this asset belongs to a specific brand kit"
+    },
+    "linked_project_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "IDs of GroupProject this asset is related to"
+    },
+    "linked_order_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "IDs of MarketingOrder this asset is related to"
+    },
+    "is_archived": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "group_id",
+    "name",
+    "file_url"
+  ]
+}

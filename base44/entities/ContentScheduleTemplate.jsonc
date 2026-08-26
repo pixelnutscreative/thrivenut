@@ -1,0 +1,119 @@
+{
+  "name": "ContentScheduleTemplate",
+  "type": "object",
+  "properties": {
+    "scheduled_posts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "frequency": {
+            "type": "string"
+          },
+          "day_of_week": {
+            "type": "string"
+          },
+          "days": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "time": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "content_formats": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "default": [],
+      "description": "Recurring post schedule template"
+    },
+    "scheduled_lives": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "frequency": {
+            "type": "string"
+          },
+          "day_of_week": {
+            "type": "string"
+          },
+          "days": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "time": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "audience_restriction": {
+            "type": "string"
+          },
+          "is_recurring": {
+            "type": "boolean"
+          },
+          "is_shareable": {
+            "type": "boolean"
+          },
+          "tiktok_shop_items": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "default": [],
+      "description": "Recurring live schedule template"
+    },
+    "scheduled_engagement": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "frequency": {
+            "type": "string"
+          },
+          "day_of_week": {
+            "type": "string"
+          },
+          "days": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "time": {
+            "type": "string"
+          }
+        }
+      },
+      "default": [],
+      "description": "Recurring engagement schedule template"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Default weekly notes"
+    }
+  },
+  "required": []
+}

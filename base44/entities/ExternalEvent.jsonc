@@ -1,0 +1,61 @@
+{
+  "name": "ExternalEvent",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "time": {
+      "type": "string"
+    },
+    "is_urgent": {
+      "type": "boolean",
+      "default": false
+    },
+    "color": {
+      "type": "string",
+      "description": "Optional color for the event, especially if urgent"
+    },
+    "is_completed": {
+      "type": "boolean",
+      "default": false
+    },
+    "notes": {
+      "type": "string"
+    },
+    "platform": {
+      "type": "string",
+      "enum": [
+        "TikTok",
+        "YouTube",
+        "Zoom",
+        "Group",
+        "Other"
+      ]
+    },
+    "host_username": {
+      "type": "string"
+    },
+    "url": {
+      "type": "string"
+    },
+    "link": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "title",
+    "date",
+    "time"
+  ]
+}

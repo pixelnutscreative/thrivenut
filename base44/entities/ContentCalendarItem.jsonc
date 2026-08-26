@@ -1,0 +1,164 @@
+{
+  "name": "ContentCalendarItem",
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": [
+        "post",
+        "schedule",
+        "live",
+        "engagement",
+        "dm_check"
+      ],
+      "description": "Type of content"
+    },
+    "title": {
+      "type": "string",
+      "description": "Title"
+    },
+    "topic": {
+      "type": "string",
+      "description": "Topic or what it is about"
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed description of what they do"
+    },
+    "day_of_week": {
+      "type": "string",
+      "enum": [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday"
+      ],
+      "description": "Primary day (legacy)"
+    },
+    "recurring_days": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+          "Sunday"
+        ]
+      },
+      "default": [],
+      "description": "Days of the week for recurring content"
+    },
+    "time": {
+      "type": "string",
+      "description": "Time (e.g., 10:00 AM)"
+    },
+    "is_recurring": {
+      "type": "boolean",
+      "default": true,
+      "description": "Repeats weekly"
+    },
+    "specific_date": {
+      "type": "string",
+      "format": "date",
+      "description": "For one-time events"
+    },
+    "audience": {
+      "type": "string",
+      "enum": [
+        "all_ages",
+        "18+"
+      ],
+      "default": "all_ages",
+      "description": "Audience restriction"
+    },
+    "share_to_directory": {
+      "type": "boolean",
+      "default": false,
+      "description": "Show in Discover Creators"
+    },
+    "live_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [
+        "regular"
+      ],
+      "description": "Types of live stream (can be multiple)"
+    },
+    "platforms": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [
+        "tiktok"
+      ],
+      "description": "Streaming platforms (tiktok, youtube, twitch, facebook, instagram, zoom, in_person, other)"
+    },
+    "has_giveaway": {
+      "type": "boolean",
+      "default": false,
+      "description": "Has a giveaway during the live"
+    },
+    "must_be_present": {
+      "type": "boolean",
+      "default": false,
+      "description": "Must be present to win giveaway"
+    },
+    "requires_registration": {
+      "type": "boolean",
+      "default": false,
+      "description": "Registration required to attend"
+    },
+    "superfan_only": {
+      "type": "boolean",
+      "default": false,
+      "description": "Only for SuperFans"
+    },
+    "is_in_person": {
+      "type": "boolean",
+      "default": false,
+      "description": "In-person event"
+    },
+    "city": {
+      "type": "string",
+      "description": "City for in-person events"
+    },
+    "state": {
+      "type": "string",
+      "description": "State for in-person events"
+    },
+    "address": {
+      "type": "string",
+      "description": "Address for in-person events"
+    },
+    "stream_url": {
+      "type": "string",
+      "description": "URL for Zoom or other streaming platform"
+    },
+    "completed_dates": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Dates when this was completed"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Optional notes"
+    }
+  },
+  "required": [
+    "type",
+    "time"
+  ]
+}

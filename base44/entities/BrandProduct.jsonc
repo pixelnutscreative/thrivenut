@@ -1,0 +1,26 @@
+{
+  "name": "BrandProduct",
+  "type": "object",
+  "properties": {
+    "brand_id": {
+      "type": "string",
+      "description": "Reference to Brand entity"
+    },
+    "name": {
+      "type": "string",
+      "description": "Product/offer name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Product description"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Product image URL"
+    }
+  },
+  "required": [
+    "brand_id",
+    "name"
+  ]
+}
