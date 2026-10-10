@@ -15,6 +15,9 @@ import PixelBoard from './pages/PixelBoard';
 import MyTasks from './pages/MyTasks';
 import MyLinks from './pages/MyLinks';
 import PromptLibrary from './pages/PromptLibrary';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
+import About from './pages/About';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -83,6 +86,9 @@ const AuthenticatedApp = () => {
           <PromptLibrary />
         </LayoutWrapper>
       } />
+      <Route path="/PrivacyPolicy" element={<PrivacyPolicy />} />
+      <Route path="/TermsOfService" element={<TermsOfService />} />
+      <Route path="/About" element={<About />} />
       {Object.entries(Pages).map(([path, Page]) => (
         <Route
           key={path}

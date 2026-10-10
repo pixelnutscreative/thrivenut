@@ -34,6 +34,7 @@ import OnboardingModal from '../components/onboarding/OnboardingModal';
 import { getEffectiveUserEmail } from '../components/admin/ImpersonationBanner';
 import { useTheme } from '../components/shared/useTheme';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { createPageUrl } from '../utils';
 import People from './People';
 
 
@@ -226,33 +227,24 @@ export default function Settings() {
       delete cleanData.updated_date;
       delete cleanData.created_by;
       
-      console.log('📤 SAVING PREFERENCES:', { effectiveEmail, cleanData });
-      
       if (preferences?.id) {
-        const result = await base44.entities.UserPreferences.update(preferences.id, cleanData);
-        console.log('✅ PREFERENCES UPDATED:', result);
-        return result;
+        return await base44.entities.UserPreferences.update(preferences.id, cleanData);
       } else {
-        const result = await base44.entities.UserPreferences.create({
+        return await base44.entities.UserPreferences.create({
           user_email: effectiveEmail,
           ...cleanData,
           onboarding_completed: true
         });
-        console.log('✅ PREFERENCES CREATED:', result);
-        return result;
       }
     },
     onSuccess: async () => {
-      console.log('🔄 INVALIDATING & REFETCHING CACHE');
-      // Critical: Invalidate cache immediately
       await queryClient.invalidateQueries({ queryKey: ['preferences', effectiveEmail] });
       await queryClient.invalidateQueries({ queryKey: ['userProfile', effectiveEmail] });
       await queryClient.invalidateQueries({ queryKey: ['platformConfig'] });
-      // Force immediate refetch
       await queryClient.refetchQueries({ queryKey: ['preferences', effectiveEmail] });
     },
     onError: (error) => {
-      console.error('❌ PREFERENCES SAVE FAILED:', error);
+      console.error('Save failed:', error);
     }
   });
 
@@ -301,8 +293,6 @@ export default function Settings() {
     setSaveStatus('saving');
     const promises = [];
     
-    console.log('💾 SAVE INITIATED - Preferences & Profile', { prefData, profileData });
-    
     // Always save if we have data, regardless of whether record exists (mutation handles create)
     if (prefData && Object.keys(prefData).length > 0) {
       promises.push(updatePreferencesMutation.mutateAsync(prefData));
@@ -315,16 +305,14 @@ export default function Settings() {
     
     try {
       if (promises.length > 0) {
-        const results = await Promise.all(promises);
-        console.log('✅ ALL SAVES SUCCESSFUL:', results);
+        await Promise.all(promises);
         setSaveStatus('saved');
         setTimeout(() => setSaveStatus('idle'), 3000);
       } else {
-        console.warn('⚠️ NO DATA TO SAVE');
         setSaveStatus('idle');
       }
     } catch (error) {
-      console.error("❌ ERROR SAVING SETTINGS:", error);
+      console.error("Error saving settings:", error);
       setSaveStatus('error');
       setTimeout(() => setSaveStatus('idle'), 3000);
     }
@@ -916,6 +904,18 @@ export default function Settings() {
 
           </Tabs>
 
+          {/* Legal & Account Links */}
+          <Card className="mt-6">
+            <CardContent className="pt-6 space-y-3">
+              <h3 className="font-semibold text-gray-800 mb-2">Legal & Account</h3>
+              <div className="flex flex-wrap gap-3">
+                <a href={createPageUrl('About')} className="min-h-[44px] flex items-center px-4 py-2 text-sm text-teal-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">About ThriveNut</a>
+                <a href={createPageUrl('PrivacyPolicy')} className="min-h-[44px] flex items-center px-4 py-2 text-sm text-teal-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">Privacy Policy</a>
+                <a href={createPageUrl('TermsOfService')} className="min-h-[44px] flex items-center px-4 py-2 text-sm text-purple-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">Terms of Service</a>
+                <a href={createPageUrl('Support')} className="min-h-[44px] flex items-center px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">Support</a>
+              </div>
+            </CardContent>
+          </Card>
 
           </div>
           </div>

@@ -751,6 +751,12 @@ export default function Home() {
       {/* Footer */}
       <footer className="border-t border-gray-800 py-8">
         <div className="max-w-6xl mx-auto px-4 text-center text-gray-500">
+          <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 mb-4">
+            <Link to={createPageUrl('About')} className="min-h-[44px] flex items-center text-sm hover:text-teal-400 transition-colors">About</Link>
+            <Link to={createPageUrl('PrivacyPolicy')} className="min-h-[44px] flex items-center text-sm hover:text-teal-400 transition-colors">Privacy Policy</Link>
+            <Link to={createPageUrl('TermsOfService')} className="min-h-[44px] flex items-center text-sm hover:text-teal-400 transition-colors">Terms of Service</Link>
+            <Link to={createPageUrl('Support')} className="min-h-[44px] flex items-center text-sm hover:text-teal-400 transition-colors">Support</Link>
+          </div>
           <p>Made with 💜 by <a href="https://tiktok.com/@pixelnutscreative" target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:underline">@PixelNutsCreative</a></p>
         </div>
       </footer>
